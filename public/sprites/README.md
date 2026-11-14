@@ -25,11 +25,11 @@ Keep the silhouette readable at 56 logical pixels. Large boss PNGs are drawn aro
 
 Run `npm run sync-assets` in the game directory. The zero-dependency script copies only regular lowercase PNG filenames matching `^[a-z][a-z0-9_]*\.png$` from the optional read-only source `../../design/assets/sprites/`. It scans the destination and writes a sorted array manifest. It never deletes existing destination art, creates the source, or fails because the source is absent/empty. Uppercase extensions, hyphens, directories and symlinks are skipped. Canvas and HTML share a loaded-only registry; malformed manifests, missing files and decode failures retain the built-in fallback. Vite's `BASE_URL` supports relative/subdirectory hosting. HTML refreshes once the initial asset batch settles.
 
-The lists below are the complete P2 catalog: **145 PNGs**, including four basic held weapons and eight combat VFX added to P1. Characters, objects, props, weapons and avatars should be transparent RGBA PNG at 256×256 or 512×512 with clear margins. Keep feet near the lower center so gold hero disks remain visible. Level/status badges, energy, hits, shields, weapon effects and input positions remain dynamic.
+The lists below are the complete P3 catalog: **166 PNGs**, including four basic held weapons and eight combat VFX added to P1. Characters, objects, props, weapons and avatars should be transparent RGBA PNG at 256×256 or 512×512 with clear margins. Keep feet near the lower center so gold hero disks remain visible. Level/status badges, energy, hits, shields, weapon effects and input positions remain dynamic.
 
 ## Four maps and tile aliases
 
-Maps fill the exact **6×7** board, **576×672** logical pixels at `(32,188)` on the **640×1216** stage. The supplied maps are **768×896**. Roads and endpoints align to 96px cells; the sole guardian uses the current map's final player path point. Maps may be opaque and are clipped to the board. Static G/R/S/C tiles never paint over external maps; route arrows and subtle grid lines remain. Open/broken tile changes and the `1/2` repair tag are live overlays.
+Maps fill the entire **1280×720** landscape stage. The **9×5** board spans **936×520** logical pixels at `(172,72)`, with **104px** cells. The supplied map PNGs are **1280×720**; their scenic rim stays visible without an opaque board card. The guardian uses the active route endpoint. Static G/R/S/C tiles never paint over external maps; route arrows and subtle grid lines remain. Open/broken tile changes and the `1/2` repair tag are live overlays.
 
 `map_sunny_backyard`, `map_sakura_onsen`, `map_midnight_kitchen`, `map_cat_tower_maze`.
 
@@ -110,3 +110,31 @@ Use `weapon_<id>` (preferred). Direct `<id>` aliases also work; prefixed IDs win
 - `logo_capy`: transparent square brand mascot, recommended 256×256 or 512×512, legible at 40–64 logical pixels.
 
 The existing menu illustration and brand SVG remain the fallback. No remote art or web fonts are fetched.
+
+## P3 walking frames and HUD stickers
+
+Ground enemies alternate their base and walk2 art using path progress; flyers flap at 12 fps. Stun freezes the pose, vertical segments retain horizontal facing, and missing frames use base art.
+
+- `box_kraken_walk2`
+- `buff_roo_walk2`
+- `charmed_rat_walk2`
+- `crab_walk2`
+- `diva_kitty_walk2`
+- `dj_rat_king_walk2`
+- `dr_clippers_walk2`
+- `hornet_queen_walk2`
+- `husky_wrecker_walk2`
+- `killer_bee_walk2`
+- `king_skunk_walk2`
+- `mega_roomba_walk2`
+- `rat_walk2`
+- `roach_walk2`
+- `sad_rain_frog_walk2`
+- `screaming_marmot_walk2`
+- `trash_coon_walk2`
+- `ui_bell_summon`
+- `ui_compendium_book`
+- `ui_fish_food`
+- `ui_shop_bag`
+
+Regular enemies use a 98px base box; bosses use 126px. The four HUD icons are illustrated fish food, summon bell, compendium book and shop bag. Art does not change gameplay hitboxes.
