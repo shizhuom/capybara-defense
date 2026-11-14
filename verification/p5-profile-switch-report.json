@@ -1,0 +1,226 @@
+{
+  "label": "p5",
+  "production": true,
+  "success": true,
+  "cases": [
+    {
+      "name": "Playing test restore discards old battle and restores exact backup without delayed or new-battle leakage",
+      "passed": true,
+      "evidence": {
+        "returnedToMenu": true,
+        "backupRemoved": true,
+        "afterRestore": {
+          "coins": 123,
+          "wins": 0,
+          "matches": 0,
+          "fragments": [],
+          "awardedBattles": [],
+          "schemaVersion": 2,
+          "tutorialCompleted": true,
+          "tutorialRewardClaimed": true,
+          "weaponFragments": {},
+          "unlockedWeapons": [],
+          "equippedWeapons": {},
+          "ownedProps": {},
+          "equippedActiveProps": [],
+          "equippedPassiveProps": [],
+          "freeLotteryTickets": 0,
+          "shop": null,
+          "stars": 0,
+          "highestStars": 0,
+          "winStreak": 0,
+          "bestWinStreak": 0,
+          "selectedMap": "auto",
+          "avatarId": "capybara",
+          "unlockedAvatars": [
+            "capybara",
+            "hamster",
+            "squirrel",
+            "bee"
+          ],
+          "mergedHeroes": [],
+          "settings": {
+            "musicVolume": 0.5,
+            "soundVolume": 0.75,
+            "showDamageNumbers": true,
+            "developerMode": false
+          }
+        },
+        "afterFrames": {
+          "coins": 123,
+          "wins": 0,
+          "matches": 0,
+          "fragments": [],
+          "awardedBattles": [],
+          "schemaVersion": 2,
+          "tutorialCompleted": true,
+          "tutorialRewardClaimed": true,
+          "weaponFragments": {},
+          "unlockedWeapons": [],
+          "equippedWeapons": {},
+          "ownedProps": {},
+          "equippedActiveProps": [],
+          "equippedPassiveProps": [],
+          "freeLotteryTickets": 0,
+          "shop": null,
+          "stars": 0,
+          "highestStars": 0,
+          "winStreak": 0,
+          "bestWinStreak": 0,
+          "selectedMap": "auto",
+          "avatarId": "capybara",
+          "unlockedAvatars": [
+            "capybara",
+            "hamster",
+            "squirrel",
+            "bee"
+          ],
+          "mergedHeroes": [],
+          "settings": {
+            "musicVolume": 0.5,
+            "soundVolume": 0.75,
+            "showDamageNumbers": true,
+            "developerMode": false
+          }
+        },
+        "normalBattleAfterRestore": {
+          "coins": 123,
+          "wins": 0,
+          "matches": 1,
+          "fragments": [],
+          "awardedBattles": [
+            "1794692942467-2"
+          ],
+          "schemaVersion": 2,
+          "tutorialCompleted": true,
+          "tutorialRewardClaimed": true,
+          "weaponFragments": {},
+          "unlockedWeapons": [],
+          "equippedWeapons": {},
+          "ownedProps": {},
+          "equippedActiveProps": [],
+          "equippedPassiveProps": [],
+          "freeLotteryTickets": 0,
+          "shop": null,
+          "stars": 0,
+          "highestStars": 0,
+          "winStreak": 0,
+          "bestWinStreak": 0,
+          "selectedMap": "auto",
+          "avatarId": "capybara",
+          "unlockedAvatars": [
+            "capybara",
+            "hamster",
+            "squirrel",
+            "bee"
+          ],
+          "mergedHeroes": [],
+          "settings": {
+            "musicVolume": 0.5,
+            "soundVolume": 0.75,
+            "showDamageNumbers": true,
+            "developerMode": false
+          }
+        }
+      }
+    },
+    {
+      "name": "Playing normal enable discards old battle; repeated enable preserves active test battle and original backup",
+      "passed": true,
+      "evidence": {
+        "returnedToMenu": true,
+        "backup": {
+          "coins": 123,
+          "wins": 0,
+          "matches": 0,
+          "fragments": [],
+          "awardedBattles": [],
+          "schemaVersion": 2,
+          "tutorialCompleted": true,
+          "tutorialRewardClaimed": true,
+          "weaponFragments": {},
+          "unlockedWeapons": [],
+          "equippedWeapons": {},
+          "ownedProps": {},
+          "equippedActiveProps": [],
+          "equippedPassiveProps": [],
+          "freeLotteryTickets": 0,
+          "shop": null,
+          "stars": 0,
+          "highestStars": 0,
+          "winStreak": 0,
+          "bestWinStreak": 0,
+          "selectedMap": "auto",
+          "avatarId": "capybara",
+          "unlockedAvatars": [
+            "capybara",
+            "hamster",
+            "squirrel",
+            "bee"
+          ],
+          "mergedHeroes": [],
+          "settings": {
+            "musicVolume": 0.5,
+            "soundVolume": 0.75,
+            "showDamageNumbers": true,
+            "developerMode": false
+          }
+        },
+        "repeatedEnableRetainedBattle": true
+      }
+    },
+    {
+      "name": "Normal restore without backup retains the current ordinary battle",
+      "passed": true,
+      "evidence": {
+        "normalSettlement": {
+          "coins": 123,
+          "wins": 0,
+          "matches": 1,
+          "fragments": [],
+          "awardedBattles": [
+            "1794692947403-1"
+          ],
+          "schemaVersion": 2,
+          "tutorialCompleted": true,
+          "tutorialRewardClaimed": true,
+          "weaponFragments": {},
+          "unlockedWeapons": [],
+          "equippedWeapons": {},
+          "ownedProps": {},
+          "equippedActiveProps": [],
+          "equippedPassiveProps": [],
+          "freeLotteryTickets": 0,
+          "shop": null,
+          "stars": 0,
+          "highestStars": 0,
+          "winStreak": 0,
+          "bestWinStreak": 0,
+          "selectedMap": "auto",
+          "avatarId": "capybara",
+          "unlockedAvatars": [
+            "capybara",
+            "hamster",
+            "squirrel",
+            "bee"
+          ],
+          "mergedHeroes": [],
+          "settings": {
+            "musicVolume": 0.5,
+            "soundVolume": 0.75,
+            "showDamageNumbers": true,
+            "developerMode": false
+          }
+        }
+      }
+    },
+    {
+      "name": "Restore profile write failure preserves active test battle, backup, test save and test controls",
+      "passed": true,
+      "evidence": {
+        "failedRestorePreservedAll": true
+      }
+    }
+  ],
+  "errors": []
+}

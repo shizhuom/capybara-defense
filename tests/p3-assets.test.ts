@@ -3,13 +3,13 @@ import { describe, expect, it } from 'vitest';
 import { MAP_IDS } from '../src/config/maps';
 import { BOSS_IDS } from '../src/config/enemies';
 
-const manifest: string[] = JSON.parse(readFileSync('public/sprites/manifest.json', 'utf8'));
-const png = (id: string) => readFileSync(`public/sprites/${id}.png`);
+const manifest: string[] = JSON.parse(readFileSync('public/assets/sprites/manifest.json', 'utf8'));
+const png = (id: string) => readFileSync(`public/assets/sprites/${id}.png`);
 
 describe('P3 shipped landscape artwork', () => {
   it('contains all shipped unique safe IDs with decodable PNG headers', () => {
-    expect(manifest).toHaveLength(173);
-    expect(new Set(manifest).size).toBe(173);
+    expect(manifest).toHaveLength(185);
+    expect(new Set(manifest).size).toBe(185);
     for (const id of manifest) {
       expect(id).toMatch(/^[a-z][a-z0-9_]*$/);
       const data = png(id);

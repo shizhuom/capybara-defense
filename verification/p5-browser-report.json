@@ -1,0 +1,2714 @@
+{
+  "at": "2026-11-14T21:45:47.515Z",
+  "checks": [
+    "desktop: all seven ledger states, two languages, scroll endpoints, equip toggle and ticket transaction",
+    "desktop: five actual guide steps, unblocked targets, +20 once, safe board taps and in-battle replay",
+    "mobile-landscape: all seven ledger states, two languages, scroll endpoints, equip toggle and ticket transaction",
+    "mobile-landscape: five actual guide steps, unblocked targets, +20 once, safe board taps and in-battle replay",
+    "Console/pageerror: 0"
+  ],
+  "errors": [],
+  "screenshots": [
+    "p5-desktop-compendium.png",
+    "p5-desktop-compendium-growth.png",
+    "p5-desktop-compendium-en.png",
+    "p5-desktop-armory.png",
+    "p5-desktop-armory-equip.png",
+    "p5-desktop-market.png",
+    "p5-desktop-lottery.png",
+    "p5-desktop-lottery-machine.png",
+    "p5-desktop-rank.png",
+    "p5-desktop-profile.png",
+    "p5-desktop-settings.png",
+    "p5-desktop-settings-en.png",
+    "p5-desktop-tutorial-1.png",
+    "p5-desktop-tutorial-2.png",
+    "p5-desktop-tutorial-3.png",
+    "p5-desktop-tutorial-4.png",
+    "p5-desktop-tutorial-5.png",
+    "p5-mobile-landscape-compendium.png",
+    "p5-mobile-landscape-compendium-growth.png",
+    "p5-mobile-landscape-compendium-en.png",
+    "p5-mobile-landscape-armory.png",
+    "p5-mobile-landscape-armory-equip.png",
+    "p5-mobile-landscape-market.png",
+    "p5-mobile-landscape-lottery.png",
+    "p5-mobile-landscape-lottery-machine.png",
+    "p5-mobile-landscape-rank.png",
+    "p5-mobile-landscape-profile.png",
+    "p5-mobile-landscape-settings.png",
+    "p5-mobile-landscape-settings-en.png",
+    "p5-mobile-landscape-tutorial-1.png",
+    "p5-mobile-landscape-tutorial-2.png",
+    "p5-mobile-landscape-tutorial-3.png",
+    "p5-mobile-landscape-tutorial-4.png",
+    "p5-mobile-landscape-tutorial-5.png"
+  ],
+  "measurements": [
+    {
+      "label": {},
+      "viewport": {
+        "w": 1280,
+        "h": 720
+      },
+      "dialog": {
+        "x": 120,
+        "y": 43.203125,
+        "width": 1040,
+        "height": 633.59375,
+        "top": 43.203125,
+        "right": 1160,
+        "bottom": 676.796875,
+        "left": 120
+      },
+      "header": {
+        "x": 124,
+        "y": 47.203125,
+        "width": 1032,
+        "height": 101.890625,
+        "top": 47.203125,
+        "right": 1156,
+        "bottom": 149.09375,
+        "left": 124
+      },
+      "tabs": {
+        "x": 124,
+        "y": 149.09375,
+        "width": 1032,
+        "height": 53.59375,
+        "top": 149.09375,
+        "right": 1156,
+        "bottom": 202.6875,
+        "left": 124
+      },
+      "body": {
+        "x": 124,
+        "y": 202.6875,
+        "width": 1032,
+        "height": 470.109375,
+        "top": 202.6875,
+        "right": 1156,
+        "bottom": 672.796875,
+        "left": 124
+      },
+      "clip": [
+        {
+          "name": "ledger-body",
+          "w": 1032,
+          "sw": 1032,
+          "h": 470,
+          "sh": 788
+        }
+      ],
+      "text": "温泉图鉴百科每一位伙伴，都有自己的高光时刻英雄 2/12 · 神兵 36/36中EN×合成总览 12基础萌宠 19传说英雄 12捣蛋怪物 17奇葩神兵 36黑市道具 20合成总览🐾 基底 ╲ 穿搭 🎩大侠斗笠特工墨镜魔法尖帽熊猫功夫阿宝食铁兽教父太极滚滚橘猫靴子剑客喵加特林喵喵利波特柴犬斩铁修勾疾速旺财🔒 呆滞陷阱：柴犬不能与法师帽合成！奇遇配对＋→无名刀鹅＋→铁山靠鸡神＋→拾荒浣熊王＋→孤寡蛙王功夫阿宝💮 已收录＋→功夫阿宝⚔️ 38⚡ 1.4/s🎯 1.6🔋 8基础成长（未计装备）等级攻击力每秒攻击次数射程（格）充能攻击次数Lv.1381.41.68Lv.2611.41.68Lv.3971.41.67Lv.41561.41.66Lv.52491.41.66肚皮震地 · 每 8 次普攻震地：周围 2.2 格造成 350% 伤害，眩晕 2 秒。专属神兵千年神竹棍同系推荐塑料苍蝇拍同系推荐人字拖",
+      "headings": [
+        {
+          "x": 230,
+          "y": 57.203125,
+          "width": 765.921875,
+          "height": 30,
+          "top": 57.203125,
+          "right": 995.921875,
+          "bottom": 87.203125,
+          "left": 230
+        },
+        {
+          "x": 230,
+          "y": 92.203125,
+          "width": 765.921875,
+          "height": 16.890625,
+          "top": 92.203125,
+          "right": 995.921875,
+          "bottom": 109.09375,
+          "left": 230
+        }
+      ]
+    },
+    {
+      "label": {},
+      "viewport": {
+        "w": 1280,
+        "h": 720
+      },
+      "dialog": {
+        "x": 120,
+        "y": 43.203125,
+        "width": 1040,
+        "height": 633.59375,
+        "top": 43.203125,
+        "right": 1160,
+        "bottom": 676.796875,
+        "left": 120
+      },
+      "header": {
+        "x": 124,
+        "y": 47.203125,
+        "width": 1032,
+        "height": 99.890625,
+        "top": 47.203125,
+        "right": 1156,
+        "bottom": 147.09375,
+        "left": 124
+      },
+      "tabs": {
+        "x": 124,
+        "y": 147.09375,
+        "width": 1032,
+        "height": 53.59375,
+        "top": 147.09375,
+        "right": 1156,
+        "bottom": 200.6875,
+        "left": 124
+      },
+      "body": {
+        "x": 124,
+        "y": 200.6875,
+        "width": 1032,
+        "height": 472.109375,
+        "top": 200.6875,
+        "right": 1156,
+        "bottom": 672.796875,
+        "left": 124
+      },
+      "clip": [
+        {
+          "name": "ledger-body",
+          "w": 1032,
+          "sw": 1032,
+          "h": 472,
+          "sh": 809
+        }
+      ],
+      "text": "Onsen Field GuideEvery friend has a moment to shineHeroes 2/12 · Weapons 36/36ZHEN×Merge matrix 12Pets & ingredients 19Legendary heroes 12Garden troublemakers 17Oddball weapons 36Market props 20Merge matrix🐾 Base ╲ Gear 🎩Bamboo HatAgent ShadesWizard HatPandaKung-Fu PoBamboo MafiaZen MasterOrange CatPuss-in-HatMeowfia BossPurr-cererShiba InuSamurai DogeDoge Wick🔒 Daze trap: Shiba cannot merge with Wizard Hat!Special pairings＋→Ronin Goose＋→Ballin’ Rooster＋→Rocket Coon＋→Pepe KingKung-Fu Po💮 Collected＋→Kung-Fu Po⚔️ 38⚡ 1.4/s🎯 1.6🔋 8Base growth (before equipment)LevelDamageAttacks per secondRange (tiles)Attacks to chargeLv.1381.41.68Lv.2611.41.68Lv.3971.41.67Lv.41561.41.66Lv.52491.41.66Belly Quake · Every 8 hits: slam a 2.2-tile area for 350% damage and stun for 2 seconds.Signature weaponDragon BambooSame-family recommendationFly SwatterSame-family recommendationFlip-Flop",
+      "headings": [
+        {
+          "x": 230,
+          "y": 57.203125,
+          "width": 765.75,
+          "height": 30,
+          "top": 57.203125,
+          "right": 995.75,
+          "bottom": 87.203125,
+          "left": 230
+        },
+        {
+          "x": 230,
+          "y": 92.203125,
+          "width": 765.75,
+          "height": 16.890625,
+          "top": 92.203125,
+          "right": 995.75,
+          "bottom": 109.09375,
+          "left": 230
+        }
+      ]
+    },
+    {
+      "label": {},
+      "viewport": {
+        "w": 1280,
+        "h": 720
+      },
+      "dialog": {
+        "x": 120,
+        "y": 43.203125,
+        "width": 1040,
+        "height": 633.59375,
+        "top": 43.203125,
+        "right": 1160,
+        "bottom": 676.796875,
+        "left": 120
+      },
+      "header": {
+        "x": 124,
+        "y": 47.203125,
+        "width": 1032,
+        "height": 107,
+        "top": 47.203125,
+        "right": 1156,
+        "bottom": 154.203125,
+        "left": 124
+      },
+      "tabs": {
+        "x": 124,
+        "y": 154.203125,
+        "width": 1032,
+        "height": 53,
+        "top": 154.203125,
+        "right": 1156,
+        "bottom": 207.203125,
+        "left": 124
+      },
+      "body": {
+        "x": 124,
+        "y": 207.203125,
+        "width": 1032,
+        "height": 465.59375,
+        "top": 207.203125,
+        "right": 1156,
+        "bottom": 672.796875,
+        "left": 124
+      },
+      "clip": [
+        {
+          "name": "ledger-body",
+          "w": 1032,
+          "sw": 1032,
+          "h": 466,
+          "sh": 5152
+        }
+      ],
+      "text": "神兵锻造坊奇葩神兵，也要配给合适的英雄99993中EN×神兵锻造坊浣熊黑市 & 扭蛋12 英雄配装总览功夫阿宝千年神竹棍×靴子剑客喵猫抓板双刀×斩铁修勾尚方宝咸鱼×无名刀鹅村霸大铁锅×食铁兽教父食铁兽火箭筒×加特林喵松果加特林×疾速旺财8倍镜红点激光×拾荒浣熊王黄金破烂迫击炮×太极滚滚阴阳猫薄荷炉×喵利波特黑洞吸尘器×铁山靠鸡神金箍火焰球×孤寡蛙王蛙皇扩音权杖×已收集 36 / 36英雄只能穿戴同系神兵；同一神兵换人时自动卸下。品质伤害加成与词条同时生效。默认排序橙品优先全部🎋 冷兵器🕶️ 热兵器🧙 法器白 · 普通 · 🎋 冷兵器塑料苍蝇拍基础伤害 +12%朴实无华，基础伤害 +12%。碎片 0 / 1选择同系英雄选择同系英雄功夫阿宝靴子剑客喵斩铁修勾无名刀鹅白 · 普通 · 🎋 冷兵器人字拖基础伤害 +12%基础伤害 +12%。攻击距离 +0.3 格。碎片 0 / 1选择同系英雄选择同系英雄功夫阿宝靴子剑客喵斩铁修勾无名刀鹅绿 · 稀有 · 🎋 冷兵器老头乐痒痒挠基础伤害 +20%基础伤害 +20%。攻击距离 +0.5 格。碎片 0 / 2选择同系英雄选择同系英雄功夫阿宝靴子剑客喵斩铁修勾无名刀鹅绿 · 稀有 · 🎋 冷兵器冻硬法棍基础伤害 +20%基础伤害 +20%。普攻 15% 概率击退目标 0.35 格。碎片 0 / 2选择同系英雄选择同系英雄功夫阿宝靴子剑客喵斩铁修勾无名刀鹅蓝 · 卓越 · 🎋 冷兵器老妈鸡毛掸基础伤害 +30%基础伤害 +30%。连续普攻同一目标，每次攻速 +6%，最多 +48%；换目标重置。碎片 0 / 3选择同系英雄选择同系英雄功夫阿宝靴子剑客喵斩铁修勾无名刀鹅蓝 · 卓越 · 🎋 冷兵器折叠板凳基础伤害 +30%基础伤害 +30%。普攻 15% 概率眩晕目标 0.6 秒。碎片 0 / 3选择同系英雄选择同系英雄功夫阿宝靴子剑客喵斩铁修勾无名刀鹅紫 · 史诗 · 🎋 冷兵器实木擀面杖基础伤害 +42%基础伤害 +42%。每 8 次普攻挥出气浪，对目标周围 1.6 格造成 180% 溅射伤害。碎片 0 / 4选择同系英雄选择同系英雄功夫阿宝靴子剑客喵斩铁修勾无名刀鹅紫 · 史诗 · 🎋 冷兵器带刺榴莲锤基础伤害 +42%基础伤害 +42%。击杀后攻速 +45%，持续 2.5 秒。碎片 0 / 4选择同系英雄选择同系英雄功夫阿宝靴子剑客喵斩铁修勾无名刀鹅橙 · 传说 · 🎋 冷兵器猫抓板双刀基础伤害 +58%基础伤害 +58%。击杀释放 4 片 80% 伤害猫爪飞刃。靴子剑客喵专属：十字跳斩强化 6 次，附加每秒 35% 伤害的 3 秒流血。✦ 本命觉醒：靴子剑客喵碎片 0 / 5★✓选择同系英雄选择同系英雄功夫阿宝靴子剑客喵斩铁修勾无名刀鹅已穿戴：靴子剑客喵卸下橙 · 传说 · 🎋 冷兵器千年神竹棍基础伤害 +58%基础伤害 +58%。普攻 18% 概率在 1 格内召唤竹笋，造成 220% 伤害并晕 0.8 秒。功夫阿宝专属：肚皮震地范围 +30%，额外召唤一圈竹笋。✦ 本命觉醒：功夫阿宝碎片 0 / 5★✓选择同系英雄选择同系英雄功夫阿宝靴子剑客喵斩铁修勾无名刀鹅已穿戴：功夫阿宝卸下橙 · 传说 · 🎋 冷兵器尚方宝咸鱼基础伤害 +58%基础伤害 +58%。击杀释放 2 道 100% 伤害咸鱼剑气随机追敌。斩铁修勾专属：Bonk 斩杀线提升至 35%，且必放剑气。✦ 本命觉醒：斩铁修勾碎片 0 / 5★✓选择同系英雄选择同系英雄功夫阿宝靴子剑客喵斩铁修勾无名刀鹅已穿戴：斩铁修勾卸下橙 · 传说 · 🎋 冷兵器村霸大铁锅基础伤害 +58%基础伤害 +58%。普攻 15% 概率抛飞砸地，造成 300% 范围伤害。无名刀鹅专属：七进七出由 7 次升级为 10 次冲刺。✦ 本命觉醒：无名刀鹅碎片 0 / 5★✓选择同系英雄选择同系英雄功夫阿宝靴子剑客喵斩铁修勾无名刀鹅已穿戴：无名刀鹅卸下白 · 普通 · 🕶️ 热兵器橡皮筋指枪基础伤害 +12%基础伤害 +12%。碎片 0 / 1选择同系英雄选择同系英雄食铁兽教父加特林喵疾速旺财拾荒浣熊王白 · 普通 · 🕶️ 热兵器小黄鸭滋水枪基础伤害 +12%基础伤害 +12%。射程 +0.4 格。碎片 0 / 1选择同系英雄选择同系英雄食铁兽教父加特林喵疾速旺财拾荒浣熊王绿 · 稀有 · 🕶️ 热兵器全自动泡泡机基础伤害 +20%基础伤害 +20%。普攻 15% 概率使目标减速 25%，持续 1.5 秒。碎片 0 / 2选择同系英雄选择同系英雄食铁兽教父加特林喵疾速旺财拾荒浣熊王绿 · 稀有 · 🕶️ 热兵器网球发球机基础伤害 +20%基础伤害 +20%。普攻 20% 概率弹射 1 个相邻敌人，造成 70% 伤害。碎片 0 / 2选择同系英雄选择同系英雄食铁兽教父加特林喵疾速旺财拾荒浣熊王蓝 · 卓越 · 🕶️ 热兵器飓风吹风机基础伤害 +30%基础伤害 +30%。普攻 15% 概率吹出热浪，每秒灼烧 35% 伤害，持续 3 秒。碎片 0 / 3选择同系英雄选择同系英雄食铁兽教父加特林喵疾速旺财拾荒浣熊王蓝 · 卓越 · 🕶️ 热兵器高压洗车水枪基础伤害 +30%基础伤害 +30%。连续普攻同一目标，每次攻速 +10%，最多 +60%；换目标重置。碎片 0 / 3选择同系英雄选择同系英雄食铁兽教父加特林喵疾速旺财拾荒浣熊王紫 · 史诗 · 🕶️ 热兵器爆米花机炮基础伤害 +42%基础伤害 +42%。每 8 次普攻打出爆裂玉米弹，对 1.2 格区域造成 200% 伤害。碎片 0 / 4选择同系英雄选择同系英雄食铁兽教父加特林喵疾速旺财拾荒浣熊王紫 · 史诗 · 🕶️ 热兵器摇钱树弹弓基础伤害 +42%基础伤害 +42%。首次命中某敌人时，25% 概率获得 +1 小鱼干。碎片 0 / 4选择同系英雄选择同系英雄食铁兽教父加特林喵疾速旺财拾荒浣熊王橙 · 传说 · 🕶️ 热兵器食铁兽火箭筒基础伤害 +58%基础伤害 +58%。普攻 15% 概率打出火龙笋点燃路径，每秒 35% 伤害持续 3 秒。食铁兽教父专属：火箭雨由 5 发升至 8 发。✦ 本命觉醒：食铁兽教父碎片 0 / 5★✓选择同系英雄选择同系英雄食铁兽教父加特林喵疾速旺财拾荒浣熊王已穿戴：食铁兽教父卸下橙 · 传说 · 🕶️ 热兵器松果加特林基础伤害 +58%基础伤害 +58%。每 10 次普攻额外齐射 6 发追踪鱼刺导弹。加特林喵专属：鱼骨弹幕延长至 4 秒。✦ 本命觉醒：加特林喵碎片 0 / 5★✓选择同系英雄选择同系英雄食铁兽教父加特林喵疾速旺财拾荒浣熊王已穿戴：加特林喵卸下橙 · 传说 · 🕶️ 热兵器8倍镜红点激光基础伤害 +58%基础伤害 +58%。射程 +35%，距离越远伤害越高，最多 +50%。疾速旺财专属：双枪悬赏掉小鱼干概率提升至 85%。✦ 本命觉醒：疾速旺财碎片 0 / 5★✓选择同系英雄选择同系英雄食铁兽教父加特林喵疾速旺财拾荒浣熊王已穿戴：疾速旺财卸下橙 · 传说 · 🕶️ 热兵器黄金破烂迫击炮基础伤害 +58%基础伤害 +58%。命中时 45% 概率弹射下一个敌人。拾荒浣熊王专属：顺走鱼干概率翻倍，破烂重炮范围 +40%。✦ 本命觉醒：拾荒浣熊王碎片 0 / 5★✓选择同系英雄选择同系英雄食铁兽教父加特林喵疾速旺财拾荒浣熊王已穿戴：拾荒浣熊王卸下白 · 普通 · 🧙 法器逗猫羽毛棒基础伤害 +12%基础伤害 +12%。碎片 0 / 1选择同系英雄选择同系英雄太极滚滚喵利波特铁山靠鸡神孤寡蛙王白 · 普通 · 🧙 法器静电气球基础伤害 +12%基础伤害 +12%。攻速 +10%。碎片 0 / 1选择同系英雄选择同系英雄太极滚滚喵利波特铁山靠鸡神孤寡蛙王绿 · 稀有 · 🧙 法器雷神电蚊拍基础伤害 +20%基础伤害 +20%。普攻 15% 概率电麻目标 0.4 秒。碎片 0 / 2选择同系英雄选择同系英雄太极滚滚喵利波特铁山靠鸡神孤寡蛙王绿 · 稀有 · 🧙 法器毛线水晶球基础伤害 +20%基础伤害 +20%。大招充能要求减少 1 次普攻。碎片 0 / 2选择同系英雄选择同系英雄太极滚滚喵利波特铁山靠鸡神孤寡蛙王蓝 · 卓越 · 🧙 法器蹦迪灯球基础伤害 +30%基础伤害 +30%。普攻 15% 概率鼓舞周围 1.5 格友军，攻速 +20% 持续 4 秒。碎片 0 / 3选择同系英雄选择同系英雄太极滚滚喵利波特铁山靠鸡神孤寡蛙王蓝 · 卓越 · 🧙 法器七彩毛线团基础伤害 +30%基础伤害 +30%。击杀飞出 4 团毛线随机追敌，每团造成 80% 伤害。碎片 0 / 3选择同系英雄选择同系英雄太极滚滚喵利波特铁山靠鸡神孤寡蛙王紫 · 史诗 · 🧙 法器流星猫抓板基础伤害 +42%基础伤害 +42%。普攻 12% 概率轰炸目标 1.2 格区域，造成 240% 伤害。碎片 0 / 4选择同系英雄选择同系英雄太极滚滚喵利波特铁山靠鸡神孤寡蛙王紫 · 史诗 · 🧙 法器赛博木鱼基础伤害 +42%基础伤害 +42%。每 9 次普攻：全队攻速 +15% 持续 3 秒，并对周围 1.6 格敌人造成 180% 伤害。碎片 0 / 4选择同系英雄选择同系英雄太极滚滚喵利波特铁山靠鸡神孤寡蛙王橙 · 传说 · 🧙 法器阴阳猫薄荷炉基础伤害 +58%基础伤害 +58%。每 8 次普攻交替触发增伤 35% 持续 4 秒，或每秒 35% 的 3 秒毒雾。太极滚滚专属：太极阵发射双倍阴阳波。✦ 本命觉醒：太极滚滚碎片 0 / 5★✓选择同系英雄选择同系英雄太极滚滚喵利波特铁山靠鸡神孤寡蛙王已穿戴：太极滚滚卸下橙 · 传说 · 🧙 法器黑洞吸尘器基础伤害 +58%基础伤害 +58%。普攻 15% 概率旋涡聚怪，最多拉近 1 格并晕 0.8 秒。喵利波特专属：毛线雷暴弹射上限由 6 次升至 10 次。✦ 本命觉醒：喵利波特碎片 0 / 5★✓选择同系英雄选择同系英雄太极滚滚喵利波特铁山靠鸡神孤寡蛙王已穿戴：喵利波特卸下橙 · 传说 · 🧙 法器金箍火焰球基础伤害 +58%基础伤害 +58%。每次普攻命中对周围 0.85 格造成 40% 火焰溅射。铁山靠鸡神专属：火焰球弹射由 8 次升至 12 次。✦ 本命觉醒：铁山靠鸡神碎片 0 / 5★✓选择同系英雄选择同系英雄太极滚滚喵利波特铁山靠鸡神孤寡蛙王已穿戴：铁山靠鸡神卸下橙 · 传说 · 🧙 法器蛙皇扩音权杖基础伤害 +58%基础伤害 +58%。对减速或中毒敌人伤害 +35%。孤寡蛙王专属：音波持续 6 秒且使护甲归零。✦ 本命觉醒：孤寡蛙王碎片 0 / 5★✓选择同系英雄选择同系英雄太极滚滚喵利波特铁山靠鸡神孤寡蛙王已穿戴：孤寡蛙王卸下回收溢出碎片保留解锁所需碎片，只回收已解锁神兵的多余碎片。白 · 普通每片 +8 金币绿 · 稀有每片 +15 金币蓝 · 卓越每片 +30 金币紫 · 史诗每片 +60 金币橙 · 传说每片 +120 金币回收溢出碎片",
+      "headings": [
+        {
+          "x": 230,
+          "y": 73.25,
+          "width": 746.125,
+          "height": 30,
+          "top": 73.25,
+          "right": 976.125,
+          "bottom": 103.25,
+          "left": 230
+        },
+        {
+          "x": 230,
+          "y": 108.25,
+          "width": 746.125,
+          "height": 16.890625,
+          "top": 108.25,
+          "right": 976.125,
+          "bottom": 125.140625,
+          "left": 230
+        }
+      ]
+    },
+    {
+      "label": {},
+      "viewport": {
+        "w": 1280,
+        "h": 720
+      },
+      "dialog": {
+        "x": 120,
+        "y": 43.203125,
+        "width": 1040,
+        "height": 633.59375,
+        "top": 43.203125,
+        "right": 1160,
+        "bottom": 676.796875,
+        "left": 120
+      },
+      "header": {
+        "x": 124,
+        "y": 47.203125,
+        "width": 1032,
+        "height": 107,
+        "top": 47.203125,
+        "right": 1156,
+        "bottom": 154.203125,
+        "left": 124
+      },
+      "tabs": {
+        "x": 124,
+        "y": 154.203125,
+        "width": 1032,
+        "height": 53,
+        "top": 154.203125,
+        "right": 1156,
+        "bottom": 207.203125,
+        "left": 124
+      },
+      "body": {
+        "x": 124,
+        "y": 207.203125,
+        "width": 1032,
+        "height": 465.59375,
+        "top": 207.203125,
+        "right": 1156,
+        "bottom": 672.796875,
+        "left": 124
+      },
+      "clip": [
+        {
+          "name": "ledger-body",
+          "w": 1032,
+          "sw": 1032,
+          "h": 466,
+          "sh": 5367
+        }
+      ],
+      "text": "Weapon WorkshopA curious weapon for the right hero99993ZHEN×Weapon WorkshopRaccoon Market & Gacha12-Hero Loadout Overview＋Kung-Fu PoEmpty handsPuss-in-HatCardboard Twin-Blades×Samurai DogeSalted Excalibur×Ronin GooseHonk Iron Wok×Bamboo MafiaBamboo Bazooka×Meowfia BossAcorn Minigun×Doge WickRed-Dot Sniper×Rocket CoonGolden Junk Mortar×Zen MasterYin-Yang Burner×Purr-cererCosmic Vacuum×Ballin’ RoosterBlazing Dunk Ball×Pepe KingPepe Megaphone×Collected 36 / 36Heroes wear weapons of their family. Equipping a weapon moves it from its previous hero. Rarity damage and weapon effects both apply.Default orderOrange firstAll🎋 Melee🕶️ Ranged🧙 MagicWhite · Common · 🎋 MeleeFly SwatterBase damage +12%A trusty swatter; base damage +12%.Fragments 0 / 1Choose a matching heroChoose a matching heroKung-Fu PoPuss-in-HatSamurai DogeRonin GooseWhite · Common · 🎋 MeleeFlip-FlopBase damage +12%Base damage +12%. Attack range +0.3 tiles.Fragments 0 / 1Choose a matching heroChoose a matching heroKung-Fu PoPuss-in-HatSamurai DogeRonin GooseGreen · Rare · 🎋 MeleeBack ScratcherBase damage +20%Base damage +20%. Attack range +0.5 tiles.Fragments 0 / 2Choose a matching heroChoose a matching heroKung-Fu PoPuss-in-HatSamurai DogeRonin GooseGreen · Rare · 🎋 MeleeFrozen BaguetteBase damage +20%Base damage +20%. Basic attacks have a 15% chance to knock the target back 0.35 tiles.Fragments 0 / 2Choose a matching heroChoose a matching heroKung-Fu PoPuss-in-HatSamurai DogeRonin GooseBlue · Superior · 🎋 MeleeMom's Feather DusterBase damage +30%Base damage +30%. Consecutive basic attacks on one target stack +6% attack speed, up to +48%; changing target resets stacks.Fragments 0 / 3Choose a matching heroChoose a matching heroKung-Fu PoPuss-in-HatSamurai DogeRonin GooseBlue · Superior · 🎋 MeleeFolding StoolBase damage +30%Base damage +30%. Basic attacks have a 15% chance to stun for 0.6s.Fragments 0 / 3Choose a matching heroChoose a matching heroKung-Fu PoPuss-in-HatSamurai DogeRonin GoosePurple · Epic · 🎋 MeleeHeavy Rolling PinBase damage +42%Base damage +42%. Every 8 basic attacks release a wave dealing 180% splash damage within 1.6 tiles of the target.Fragments 0 / 4Choose a matching heroChoose a matching heroKung-Fu PoPuss-in-HatSamurai DogeRonin GoosePurple · Epic · 🎋 MeleeSpiky DurianBase damage +42%Base damage +42%. Kills grant +45% attack speed for 2.5s.Fragments 0 / 4Choose a matching heroChoose a matching heroKung-Fu PoPuss-in-HatSamurai DogeRonin GooseOrange · Legendary · 🎋 MeleeCardboard Twin-BladesBase damage +58%Base damage +58%. Kills launch 4 claw blades for 80% damage each. Puss in Hat awakening: 6 empowered cross slashes, inflicting bleed for 35% damage per second for 3s.✦ Signature awakening: Puss-in-HatFragments 0 / 5★✓Choose a matching heroChoose a matching heroKung-Fu PoPuss-in-HatSamurai DogeRonin GooseEquipped: Puss-in-HatUnequipOrange · Legendary · 🎋 MeleeDragon BambooBase damage +58%Base damage +58%. Basic attacks have an 18% chance to summon bamboo within 1 tile, dealing 220% damage and stunning for 0.8s. Kungfu Po awakening: belly quake radius +30% and an extra bamboo ring.✦ Signature awakening: Kung-Fu PoFragments 0 / 5★Choose a matching heroChoose a matching heroKung-Fu PoPuss-in-HatSamurai DogeRonin GooseOrange · Legendary · 🎋 MeleeSalted ExcaliburBase damage +58%Base damage +58%. Kills release 2 random fish sword waves for 100% damage each. Samurai Doge awakening: Bonk executes at 35% health and always releases sword waves.✦ Signature awakening: Samurai DogeFragments 0 / 5★✓Choose a matching heroChoose a matching heroKung-Fu PoPuss-in-HatSamurai DogeRonin GooseEquipped: Samurai DogeUnequipOrange · Legendary · 🎋 MeleeHonk Iron WokBase damage +58%Base damage +58%. Basic attacks have a 15% chance to toss and slam for 300% area damage. Ronin Goose awakening: 7 dashes become 10.✦ Signature awakening: Ronin GooseFragments 0 / 5★✓Choose a matching heroChoose a matching heroKung-Fu PoPuss-in-HatSamurai DogeRonin GooseEquipped: Ronin GooseUnequipWhite · Common · 🕶️ RangedRubber BandBase damage +12%Base damage +12%.Fragments 0 / 1Choose a matching heroChoose a matching heroBamboo MafiaMeowfia BossDoge WickRocket CoonWhite · Common · 🕶️ RangedDuck SquirterBase damage +12%Base damage +12%. Attack range +0.4 tiles.Fragments 0 / 1Choose a matching heroChoose a matching heroBamboo MafiaMeowfia BossDoge WickRocket CoonGreen · Rare · 🕶️ RangedBubble BlasterBase damage +20%Base damage +20%. Basic attacks have a 15% chance to slow the target by 25% for 1.5s.Fragments 0 / 2Choose a matching heroChoose a matching heroBamboo MafiaMeowfia BossDoge WickRocket CoonGreen · Rare · 🕶️ RangedTennis LauncherBase damage +20%Base damage +20%. Basic attacks have a 20% chance to bounce to 1 nearby enemy for 70% damage.Fragments 0 / 2Choose a matching heroChoose a matching heroBamboo MafiaMeowfia BossDoge WickRocket CoonBlue · Superior · 🕶️ RangedTurbo Hair DryerBase damage +30%Base damage +30%. Basic attacks have a 15% chance to burn with hot air for 35% damage per second for 3s.Fragments 0 / 3Choose a matching heroChoose a matching heroBamboo MafiaMeowfia BossDoge WickRocket CoonBlue · Superior · 🕶️ RangedPower WasherBase damage +30%Base damage +30%. Consecutive basic attacks on one target stack +10% attack speed, up to +60%; changing target resets stacks.Fragments 0 / 3Choose a matching heroChoose a matching heroBamboo MafiaMeowfia BossDoge WickRocket CoonPurple · Epic · 🕶️ RangedPopcorn CannonBase damage +42%Base damage +42%. Every 8 basic attacks fire exploding corn for 200% damage within 1.2 tiles.Fragments 0 / 4Choose a matching heroChoose a matching heroBamboo MafiaMeowfia BossDoge WickRocket CoonPurple · Epic · 🕶️ RangedLucky SlingshotBase damage +42%Base damage +42%. The first hit on each enemy has a 25% chance to grant +1 food.Fragments 0 / 4Choose a matching heroChoose a matching heroBamboo MafiaMeowfia BossDoge WickRocket CoonOrange · Legendary · 🕶️ RangedBamboo BazookaBase damage +58%Base damage +58%. Basic attacks have a 15% chance to ignite the path for 35% damage per second for 3s. Bamboo Mafia awakening: rocket rain fires 8 rockets instead of 5.✦ Signature awakening: Bamboo MafiaFragments 0 / 5★✓Choose a matching heroChoose a matching heroBamboo MafiaMeowfia BossDoge WickRocket CoonEquipped: Bamboo MafiaUnequipOrange · Legendary · 🕶️ RangedAcorn MinigunBase damage +58%Base damage +58%. Every 10 basic attacks launch 6 homing fishbone missiles. Meowfia awakening: fishbone barrage lasts 4s.✦ Signature awakening: Meowfia BossFragments 0 / 5★✓Choose a matching heroChoose a matching heroBamboo MafiaMeowfia BossDoge WickRocket CoonEquipped: Meowfia BossUnequipOrange · Legendary · 🕶️ RangedRed-Dot SniperBase damage +58%Base damage +58%. Range +35%; damage scales with distance up to +50%. Doge Wick awakening: dual-pistol bounty grants food with an 85% chance.✦ Signature awakening: Doge WickFragments 0 / 5★✓Choose a matching heroChoose a matching heroBamboo MafiaMeowfia BossDoge WickRocket CoonEquipped: Doge WickUnequipOrange · Legendary · 🕶️ RangedGolden Junk MortarBase damage +58%Base damage +58%. Hits have a 45% chance to bounce to another enemy. Rocket Coon awakening: food theft chance doubles and junk artillery radius increases by 40%.✦ Signature awakening: Rocket CoonFragments 0 / 5★✓Choose a matching heroChoose a matching heroBamboo MafiaMeowfia BossDoge WickRocket CoonEquipped: Rocket CoonUnequipWhite · Common · 🧙 MagicFeather TeaserBase damage +12%Base damage +12%.Fragments 0 / 1Choose a matching heroChoose a matching heroZen MasterPurr-cererBallin’ RoosterPepe KingWhite · Common · 🧙 MagicStatic BalloonBase damage +12%Base damage +12%. Attack speed +10%.Fragments 0 / 1Choose a matching heroChoose a matching heroZen MasterPurr-cererBallin’ RoosterPepe KingGreen · Rare · 🧙 MagicBug ZapperBase damage +20%Base damage +20%. Basic attacks have a 15% chance to stun for 0.4s.Fragments 0 / 2Choose a matching heroChoose a matching heroZen MasterPurr-cererBallin’ RoosterPepe KingGreen · Rare · 🧙 MagicYarn OrbBase damage +20%Base damage +20%. Ultimate charge requirement is reduced by 1 basic attack.Fragments 0 / 2Choose a matching heroChoose a matching heroZen MasterPurr-cererBallin’ RoosterPepe KingBlue · Superior · 🧙 MagicDisco BallBase damage +30%Base damage +30%. Basic attacks have a 15% chance to grant allies within 1.5 tiles +20% attack speed for 4s.Fragments 0 / 3Choose a matching heroChoose a matching heroZen MasterPurr-cererBallin’ RoosterPepe KingBlue · Superior · 🧙 MagicRainbow YarnBase damage +30%Base damage +30%. Kills launch 4 yarn balls at random enemies, each dealing 80% damage.Fragments 0 / 3Choose a matching heroChoose a matching heroZen MasterPurr-cererBallin’ RoosterPepe KingPurple · Epic · 🧙 MagicMeteor ScratcherBase damage +42%Base damage +42%. Basic attacks have a 12% chance to bombard a 1.2-tile area for 240% damage.Fragments 0 / 4Choose a matching heroChoose a matching heroZen MasterPurr-cererBallin’ RoosterPepe KingPurple · Epic · 🧙 MagicCyber Wooden FishBase damage +42%Base damage +42%. Every 9 basic attacks grant the team +15% attack speed for 3s and deal 180% damage to enemies within 1.6 tiles.Fragments 0 / 4Choose a matching heroChoose a matching heroZen MasterPurr-cererBallin’ RoosterPepe KingOrange · Legendary · 🧙 MagicYin-Yang BurnerBase damage +58%Base damage +58%. Every 8 basic attacks alternate +35% damage for 4s and poison mist dealing 35% damage per second for 3s. Zen Master awakening: the yin-yang array fires double waves.✦ Signature awakening: Zen MasterFragments 0 / 5★✓Choose a matching heroChoose a matching heroZen MasterPurr-cererBallin’ RoosterPepe KingEquipped: Zen MasterUnequipOrange · Legendary · 🧙 MagicCosmic VacuumBase damage +58%Base damage +58%. Basic attacks have a 15% chance to pull enemies up to 1 tile and stun for 0.8s. Purrcerer awakening: yarn storm bounces 10 times instead of 6.✦ Signature awakening: Purr-cererFragments 0 / 5★✓Choose a matching heroChoose a matching heroZen MasterPurr-cererBallin’ RoosterPepe KingEquipped: Purr-cererUnequipOrange · Legendary · 🧙 MagicBlazing Dunk BallBase damage +58%Base damage +58%. Each basic hit deals 40% fire splash within 0.85 tiles. Ballin Rooster awakening: flame ball bounces 12 times instead of 8.✦ Signature awakening: Ballin’ RoosterFragments 0 / 5★✓Choose a matching heroChoose a matching heroZen MasterPurr-cererBallin’ RoosterPepe KingEquipped: Ballin’ RoosterUnequipOrange · Legendary · 🧙 MagicPepe MegaphoneBase damage +58%Base damage +58%. Damage +35% against slowed or poisoned enemies. Pepe King awakening: sound waves last 6s and reduce armor to zero.✦ Signature awakening: Pepe KingFragments 0 / 5★✓Choose a matching heroChoose a matching heroZen MasterPurr-cererBallin’ RoosterPepe KingEquipped: Pepe KingUnequipRecycle surplus fragmentsKeeps the unlock threshold; recycles only surplus fragments of unlocked weapons.White · Common+8 coins eachGreen · Rare+15 coins eachBlue · Superior+30 coins eachPurple · Epic+60 coins eachOrange · Legendary+120 coins eachRecycle surplus fragments",
+      "headings": [
+        {
+          "x": 230,
+          "y": 73.25,
+          "width": 746.125,
+          "height": 30,
+          "top": 73.25,
+          "right": 976.125,
+          "bottom": 103.25,
+          "left": 230
+        },
+        {
+          "x": 230,
+          "y": 108.25,
+          "width": 746.125,
+          "height": 16.890625,
+          "top": 108.25,
+          "right": 976.125,
+          "bottom": 125.140625,
+          "left": 230
+        }
+      ]
+    },
+    {
+      "label": {},
+      "viewport": {
+        "w": 1280,
+        "h": 720
+      },
+      "dialog": {
+        "x": 120,
+        "y": 43.203125,
+        "width": 1040,
+        "height": 633.59375,
+        "top": 43.203125,
+        "right": 1160,
+        "bottom": 676.796875,
+        "left": 120
+      },
+      "header": {
+        "x": 124,
+        "y": 47.203125,
+        "width": 1032,
+        "height": 107,
+        "top": 47.203125,
+        "right": 1156,
+        "bottom": 154.203125,
+        "left": 124
+      },
+      "tabs": {
+        "x": 124,
+        "y": 154.203125,
+        "width": 1032,
+        "height": 53,
+        "top": 154.203125,
+        "right": 1156,
+        "bottom": 207.203125,
+        "left": 124
+      },
+      "body": {
+        "x": 124,
+        "y": 207.203125,
+        "width": 1032,
+        "height": 465.59375,
+        "top": 207.203125,
+        "right": 1156,
+        "bottom": 672.796875,
+        "left": 124
+      },
+      "clip": [
+        {
+          "name": "ledger-body",
+          "w": 1032,
+          "sw": 1032,
+          "h": 466,
+          "sh": 468
+        },
+        {
+          "name": "market-stall",
+          "w": 539,
+          "sw": 539,
+          "h": 424,
+          "sh": 672
+        },
+        {
+          "name": "market-backpack",
+          "w": 429,
+          "sw": 429,
+          "h": 424,
+          "sh": 893
+        }
+      ],
+      "text": "浣熊黑市 & 扭蛋挑点好东西，带上伙伴去守护99993中EN×神兵锻造坊浣熊黑市 & 扭蛋道具货架九宫格扭蛋浣熊的小摊 · 今日好物刷新 · 20 金币二手回收箱⚡ 主动 · 等级 0 / 1移除己方 1 级单位或散件，立即返还 5 小鱼干；回收窝中铁锹获得 4 小鱼干。购买 · 85 金币临期罐头⚡ 主动 · 等级 0 / 155% 概率增加 1 颗橘子，45% 概率失去 1 颗；可降至 0 并立即败北！购买 · 60 金币狂欢派对🛡️ 被动 · 等级 0 / 1全体萌宠攻速 +38%，但本局所有害虫移动速度 +12%。购买 · 100 金币随身出战挂板主动 · 2成长奶瓶强力粘鼠板被动 · 6黄金寻宝犬自动发铲机果盘加量断电干扰器金牌训宠证望远镜猫爬架配装在下一局生效已拥有道具 · 点击装卸 成长奶瓶主动 · 等级 1 / 1卸下 强力粘鼠板主动 · 等级 1 / 1卸下 黄金寻宝犬被动 · 等级 1 / 1卸下 自动发铲机被动 · 等级 1 / 1卸下 果盘加量被动 · 等级 1 / 1卸下 断电干扰器被动 · 等级 1 / 1卸下 金牌训宠证被动 · 等级 3 / 3卸下 望远镜猫爬架被动 · 等级 1 / 1卸下",
+      "headings": [
+        {
+          "x": 230,
+          "y": 73.25,
+          "width": 746.125,
+          "height": 30,
+          "top": 73.25,
+          "right": 976.125,
+          "bottom": 103.25,
+          "left": 230
+        },
+        {
+          "x": 230,
+          "y": 108.25,
+          "width": 746.125,
+          "height": 16.890625,
+          "top": 108.25,
+          "right": 976.125,
+          "bottom": 125.140625,
+          "left": 230
+        }
+      ]
+    },
+    {
+      "label": {},
+      "viewport": {
+        "w": 1280,
+        "h": 720
+      },
+      "dialog": {
+        "x": 120,
+        "y": 43.203125,
+        "width": 1040,
+        "height": 633.59375,
+        "top": 43.203125,
+        "right": 1160,
+        "bottom": 676.796875,
+        "left": 120
+      },
+      "header": {
+        "x": 124,
+        "y": 47.203125,
+        "width": 1032,
+        "height": 107,
+        "top": 47.203125,
+        "right": 1156,
+        "bottom": 154.203125,
+        "left": 124
+      },
+      "tabs": {
+        "x": 124,
+        "y": 154.203125,
+        "width": 1032,
+        "height": 53,
+        "top": 154.203125,
+        "right": 1156,
+        "bottom": 207.203125,
+        "left": 124
+      },
+      "body": {
+        "x": 124,
+        "y": 207.203125,
+        "width": 1032,
+        "height": 465.59375,
+        "top": 207.203125,
+        "right": 1156,
+        "bottom": 672.796875,
+        "left": 124
+      },
+      "clip": [
+        {
+          "name": "ledger-body",
+          "w": 1032,
+          "sw": 1032,
+          "h": 466,
+          "sh": 468
+        },
+        {
+          "name": "market-stall",
+          "w": 539,
+          "sw": 539,
+          "h": 424,
+          "sh": 700
+        },
+        {
+          "name": "market-backpack",
+          "w": 429,
+          "sw": 429,
+          "h": 424,
+          "sh": 873
+        }
+      ],
+      "text": "Raccoon Market & GachaPack a little luck for your next defense99993ZHEN×Weapon WorkshopRaccoon Market & GachaShopLotteryRaccoon’s stall · Today’s findsRefresh · 20 coinsSecondhand Recycle Bin⚡ Active · Level 0 / 1Remove an allied level 1 unit or component and gain 5 food; recycle a nest shovel for 4 food.Buy · 85 coinsExpired Can⚡ Active · Level 0 / 155% chance to gain 1 orange; 45% chance to lose 1. Reaching 0 oranges causes immediate defeat!Buy · 60 coinsHyper Party🛡️ Passive · Level 0 / 1All pets gain +38% attack speed, but all pests gain +12% movement speed this battle.Buy · 100 coinsReady-to-go loadoutActive · 2Growth BottleSuper Glue TrapPassive · 6Golden Treasure DogeAuto Shovel DispenserExtra Fruit PlatterEMP JammerGold Trainer Badge+EmptyLoadout applies next battleOwned props · Tap to equip or remove Growth BottleActive · Level 1 / 1Unequip Super Glue TrapActive · Level 1 / 1Unequip Golden Treasure DogePassive · Level 1 / 1Unequip Auto Shovel DispenserPassive · Level 1 / 1Unequip Extra Fruit PlatterPassive · Level 1 / 1Unequip EMP JammerPassive · Level 1 / 1Unequip Gold Trainer BadgePassive · Level 3 / 3Unequip Telescope Cat PerchPassive · Level 1 / 1Equip",
+      "headings": [
+        {
+          "x": 230,
+          "y": 73.25,
+          "width": 746.125,
+          "height": 30,
+          "top": 73.25,
+          "right": 976.125,
+          "bottom": 103.25,
+          "left": 230
+        },
+        {
+          "x": 230,
+          "y": 108.25,
+          "width": 746.125,
+          "height": 16.890625,
+          "top": 108.25,
+          "right": 976.125,
+          "bottom": 125.140625,
+          "left": 230
+        }
+      ]
+    },
+    {
+      "label": {},
+      "viewport": {
+        "w": 1280,
+        "h": 720
+      },
+      "dialog": {
+        "x": 120,
+        "y": 43.203125,
+        "width": 1040,
+        "height": 633.59375,
+        "top": 43.203125,
+        "right": 1160,
+        "bottom": 676.796875,
+        "left": 120
+      },
+      "header": {
+        "x": 124,
+        "y": 47.203125,
+        "width": 1032,
+        "height": 107,
+        "top": 47.203125,
+        "right": 1156,
+        "bottom": 154.203125,
+        "left": 124
+      },
+      "tabs": {
+        "x": 124,
+        "y": 154.203125,
+        "width": 1032,
+        "height": 53,
+        "top": 154.203125,
+        "right": 1156,
+        "bottom": 207.203125,
+        "left": 124
+      },
+      "body": {
+        "x": 124,
+        "y": 207.203125,
+        "width": 1032,
+        "height": 465.59375,
+        "top": 207.203125,
+        "right": 1156,
+        "bottom": 672.796875,
+        "left": 124
+      },
+      "clip": [
+        {
+          "name": "ledger-body",
+          "w": 1032,
+          "sw": 1032,
+          "h": 466,
+          "sh": 468
+        },
+        {
+          "name": "market-stall",
+          "w": 539,
+          "sw": 539,
+          "h": 424,
+          "sh": 531
+        },
+        {
+          "name": "market-backpack",
+          "w": 429,
+          "sw": 429,
+          "h": 424,
+          "sh": 893
+        }
+      ],
+      "text": "浣熊黑市 & 扭蛋挑点好东西，带上伙伴去守护99993中EN×神兵锻造坊浣熊黑市 & 扭蛋道具货架九宫格扭蛋幸运九宫格 · 转出小惊喜护主大肥橘 ×1神秘猫薄荷 ×1香蕉皮小径 ×1松果加特林碎片 ×1扭一次1优先免费券，否则 60 金币金币 ×40摇钱树弹弓碎片 ×1金币 ×160金币 ×80优先使用免费券；没有券消耗 60 金币。已满级道具自动换成等价金币。随身出战挂板主动 · 2成长奶瓶强力粘鼠板被动 · 6黄金寻宝犬自动发铲机果盘加量断电干扰器金牌训宠证+空槽配装在下一局生效已拥有道具 · 点击装卸 成长奶瓶主动 · 等级 1 / 1卸下 强力粘鼠板主动 · 等级 1 / 1卸下 黄金寻宝犬被动 · 等级 1 / 1卸下 自动发铲机被动 · 等级 1 / 1卸下 果盘加量被动 · 等级 1 / 1卸下 断电干扰器被动 · 等级 1 / 1卸下 金牌训宠证被动 · 等级 3 / 3卸下 望远镜猫爬架被动 · 等级 1 / 1穿戴",
+      "headings": [
+        {
+          "x": 230,
+          "y": 73.25,
+          "width": 746.125,
+          "height": 30,
+          "top": 73.25,
+          "right": 976.125,
+          "bottom": 103.25,
+          "left": 230
+        },
+        {
+          "x": 230,
+          "y": 108.25,
+          "width": 746.125,
+          "height": 16.890625,
+          "top": 108.25,
+          "right": 976.125,
+          "bottom": 125.140625,
+          "left": 230
+        }
+      ]
+    },
+    {
+      "label": {},
+      "viewport": {
+        "w": 1280,
+        "h": 720
+      },
+      "dialog": {
+        "x": 120,
+        "y": 43.203125,
+        "width": 1040,
+        "height": 633.59375,
+        "top": 43.203125,
+        "right": 1160,
+        "bottom": 676.796875,
+        "left": 120
+      },
+      "header": {
+        "x": 124,
+        "y": 47.203125,
+        "width": 1032,
+        "height": 107,
+        "top": 47.203125,
+        "right": 1156,
+        "bottom": 154.203125,
+        "left": 124
+      },
+      "tabs": {
+        "x": 124,
+        "y": 154.203125,
+        "width": 1032,
+        "height": 53,
+        "top": 154.203125,
+        "right": 1156,
+        "bottom": 207.203125,
+        "left": 124
+      },
+      "body": {
+        "x": 124,
+        "y": 207.203125,
+        "width": 1032,
+        "height": 465.59375,
+        "top": 207.203125,
+        "right": 1156,
+        "bottom": 672.796875,
+        "left": 124
+      },
+      "clip": [
+        {
+          "name": "ledger-body",
+          "w": 1032,
+          "sw": 1032,
+          "h": 466,
+          "sh": 468
+        },
+        {
+          "name": "market-stall",
+          "w": 539,
+          "sw": 539,
+          "h": 424,
+          "sh": 670
+        },
+        {
+          "name": "market-backpack",
+          "w": 429,
+          "sw": 429,
+          "h": 424,
+          "sh": 987
+        }
+      ],
+      "text": "Raccoon Market & GachaPack a little luck for your next defense99992ZHEN×Weapon WorkshopRaccoon Market & GachaShopLotteryLucky nine · A little surpriseGuardian Giant Tabby ×1Mystery Catnip ×1Banana Peel Path ×1Acorn Minigun fragment ×1Spin once1Free ticket first, otherwise 60 coinsCoins ×40Lucky Slingshot fragment ×1Coins ×160Coins ×80Free tickets are used first; without a ticket, a spin costs 60 coins. Maxed props automatically convert to their coin price.You wonGuardian Giant Tabby ×1Ready-to-go loadoutActive · 2Growth BottleSuper Glue TrapPassive · 6Golden Treasure DogeAuto Shovel DispenserExtra Fruit PlatterEMP JammerGold Trainer Badge+EmptyLoadout applies next battleOwned props · Tap to equip or remove Growth BottleActive · Level 1 / 1Unequip Super Glue TrapActive · Level 1 / 1Unequip Golden Treasure DogePassive · Level 1 / 1Unequip Auto Shovel DispenserPassive · Level 1 / 1Unequip Guardian Giant TabbyPassive · Level 1 / 1Equip Extra Fruit PlatterPassive · Level 1 / 1Unequip EMP JammerPassive · Level 1 / 1Unequip Gold Trainer BadgePassive · Level 3 / 3Unequip Telescope Cat PerchPassive · Level 1 / 1Equip",
+      "headings": [
+        {
+          "x": 230,
+          "y": 73.25,
+          "width": 746.125,
+          "height": 30,
+          "top": 73.25,
+          "right": 976.125,
+          "bottom": 103.25,
+          "left": 230
+        },
+        {
+          "x": 230,
+          "y": 108.25,
+          "width": 746.125,
+          "height": 16.890625,
+          "top": 108.25,
+          "right": 976.125,
+          "bottom": 125.140625,
+          "left": 230
+        }
+      ]
+    },
+    {
+      "label": {},
+      "viewport": {
+        "w": 1280,
+        "h": 720
+      },
+      "dialog": {
+        "x": 120,
+        "y": 43.203125,
+        "width": 1040,
+        "height": 633.59375,
+        "top": 43.203125,
+        "right": 1160,
+        "bottom": 676.796875,
+        "left": 120
+      },
+      "header": {
+        "x": 124,
+        "y": 47.203125,
+        "width": 1032,
+        "height": 107,
+        "top": 47.203125,
+        "right": 1156,
+        "bottom": 154.203125,
+        "left": 124
+      },
+      "tabs": {
+        "x": 124,
+        "y": 154.203125,
+        "width": 1032,
+        "height": 53,
+        "top": 154.203125,
+        "right": 1156,
+        "bottom": 207.203125,
+        "left": 124
+      },
+      "body": {
+        "x": 124,
+        "y": 207.203125,
+        "width": 1032,
+        "height": 465.59375,
+        "top": 207.203125,
+        "right": 1156,
+        "bottom": 672.796875,
+        "left": 124
+      },
+      "clip": [
+        {
+          "name": "ledger-body",
+          "w": 1032,
+          "sw": 1032,
+          "h": 466,
+          "sh": 1690
+        }
+      ],
+      "text": "温泉风云榜铲屎官们，今天也要稳稳守住！180×6.2中EN×守护者名片温泉风云榜温泉小设置第 53 段水豚真神★ 180 颗星已达最高段位当前怪物强度 · 水豚真神♥ HP ×6.2➜ 移速 +28%🐾 每波 +13双 Boss：6 / 8 / 9 / 10 波护甲 +10% · 首领技能间隔 -25% · 第 3 波先锋首领升段后兽潮更密集、血厚甲坚；高段位还会出现双 Boss！本地榜样与我的即时排名🥈情绪稳定祖师爷水豚真神137 胜 / 163 场 · 胜率 84% 168🥇我水豚真神41 胜 / 50 场 · 胜率 82%👈 我在这里 180🥉后院退休园长水豚真神121 胜 / 148 场 · 胜率 82% 1504竹林扫地僧水豚真神106 胜 / 131 场 · 胜率 81% 1305孤寡不孤单水豚真神91 胜 / 116 场 · 胜率 78% 1106黑市常客森林君王 IV79 胜 / 103 场 · 胜率 77% 967皇冠小短腿后院霸主 III69 胜 / 92 场 · 胜率 75% 848篮球练习生皇家园长 II60 胜 / 81 场 · 胜率 74% 729熊猫不熬夜萌宠统帅 I51 胜 / 70 场 · 胜率 73% 6010鹅村扛把子训宠宗师 I42 胜 / 60 场 · 胜率 70% 5011厨房摸鱼王宠物营养师 I35 胜 / 51 场 · 胜率 69% 4012温泉泡泡糖温泉馆主 II28 胜 / 42 场 · 胜率 67% 3213猫咖打工喵猫咖店长 III21 胜 / 33 场 · 胜率 64% 2414早八遛狗人溜狗达人 V16 胜 / 25 场 · 胜率 64% 1815瓜子不离手溜狗达人 II11 胜 / 19 场 · 胜率 58% 1216隔壁二哈主人见习铲屎官 IV6 胜 / 12 场 · 胜率 50% 6",
+      "headings": [
+        {
+          "x": 230,
+          "y": 73.25,
+          "width": 730.875,
+          "height": 30,
+          "top": 73.25,
+          "right": 960.875,
+          "bottom": 103.25,
+          "left": 230
+        },
+        {
+          "x": 230,
+          "y": 108.25,
+          "width": 730.875,
+          "height": 16.890625,
+          "top": 108.25,
+          "right": 960.875,
+          "bottom": 125.140625,
+          "left": 230
+        }
+      ]
+    },
+    {
+      "label": {},
+      "viewport": {
+        "w": 1280,
+        "h": 720
+      },
+      "dialog": {
+        "x": 120,
+        "y": 43.203125,
+        "width": 1040,
+        "height": 633.59375,
+        "top": 43.203125,
+        "right": 1160,
+        "bottom": 676.796875,
+        "left": 120
+      },
+      "header": {
+        "x": 124,
+        "y": 47.203125,
+        "width": 1032,
+        "height": 107,
+        "top": 47.203125,
+        "right": 1156,
+        "bottom": 154.203125,
+        "left": 124
+      },
+      "tabs": {
+        "x": 124,
+        "y": 154.203125,
+        "width": 1032,
+        "height": 53,
+        "top": 154.203125,
+        "right": 1156,
+        "bottom": 207.203125,
+        "left": 124
+      },
+      "body": {
+        "x": 124,
+        "y": 207.203125,
+        "width": 1032,
+        "height": 465.59375,
+        "top": 207.203125,
+        "right": 1156,
+        "bottom": 672.796875,
+        "left": 124
+      },
+      "clip": [
+        {
+          "name": "ledger-body",
+          "w": 1032,
+          "sw": 1032,
+          "h": 466,
+          "sh": 1648
+        }
+      ],
+      "text": "Onsen Hall of FameA friendly league of steadfast keepers180×6.2ZHEN×Keeper PassportOnsen Hall of FameCozy SettingsRank 53Capybara God★ 180 starsHighest rank reachedCurrent enemy strength · Capybara God♥ HP ×6.2➜ Speed +28%🐾 +13 / waveDouble Boss: waves 6 / 8 / 9 / 10Armor +10% · Boss skill interval -25% · Wave 3 vanguard BossHigher ranks bring denser, tougher waves and eventually two Bosses at once!Local keepers and your live ranking🥈Grandmaster of CalmCapybara God137 wins / 163 matches · 84% win rate 168🥇YouCapybara God41 wins / 50 matches · 82% win rate👈 You are here 180🥉Retired Garden WardenCapybara God121 wins / 148 matches · 82% win rate 1504Bamboo SweeperCapybara God106 wins / 131 matches · 81% win rate 1305Never Lonely FrogCapybara God91 wins / 116 matches · 78% win rate 1106Market RegularForest Monarch IV79 wins / 103 matches · 77% win rate 967Crowned Short LegsBackyard Overlord III69 wins / 92 matches · 75% win rate 848Basketball TraineeRoyal Warden II60 wins / 81 matches · 74% win rate 729Early Bedtime PandaCritter Marshal I51 wins / 70 matches · 73% win rate 6010Village Goose BossPet Grandmaster I42 wins / 60 matches · 70% win rate 5011Kitchen DaydreamerChef Keeper I35 wins / 51 matches · 69% win rate 4012Onsen BubblegumOnsen Master II28 wins / 42 matches · 67% win rate 3213Cafe Cat KeeperCat Cafe Boss III21 wins / 33 matches · 64% win rate 2414Morning Dog WalkerDog Walker V16 wins / 25 matches · 64% win rate 1815Seed Snack CaptainDog Walker II11 wins / 19 matches · 58% win rate 1216The Husky Next DoorRookie Keeper IV6 wins / 12 matches · 50% win rate 6",
+      "headings": [
+        {
+          "x": 230,
+          "y": 73.25,
+          "width": 730.875,
+          "height": 30,
+          "top": 73.25,
+          "right": 960.875,
+          "bottom": 103.25,
+          "left": 230
+        },
+        {
+          "x": 230,
+          "y": 108.25,
+          "width": 730.875,
+          "height": 16.890625,
+          "top": 108.25,
+          "right": 960.875,
+          "bottom": 125.140625,
+          "left": 230
+        }
+      ]
+    },
+    {
+      "label": {},
+      "viewport": {
+        "w": 1280,
+        "h": 720
+      },
+      "dialog": {
+        "x": 120,
+        "y": 43.203125,
+        "width": 1040,
+        "height": 633.59375,
+        "top": 43.203125,
+        "right": 1160,
+        "bottom": 676.796875,
+        "left": 120
+      },
+      "header": {
+        "x": 124,
+        "y": 47.203125,
+        "width": 1032,
+        "height": 107,
+        "top": 47.203125,
+        "right": 1156,
+        "bottom": 154.203125,
+        "left": 124
+      },
+      "tabs": {
+        "x": 124,
+        "y": 154.203125,
+        "width": 1032,
+        "height": 53,
+        "top": 154.203125,
+        "right": 1156,
+        "bottom": 207.203125,
+        "left": 124
+      },
+      "body": {
+        "x": 124,
+        "y": 207.203125,
+        "width": 1032,
+        "height": 465.59375,
+        "top": 207.203125,
+        "right": 1156,
+        "bottom": 672.796875,
+        "left": 124
+      },
+      "clip": [
+        {
+          "name": "ledger-body",
+          "w": 1032,
+          "sw": 1032,
+          "h": 466,
+          "sh": 1222
+        }
+      ],
+      "text": "守护者名片您的温泉守护手账180×6.2中EN×守护者名片温泉风云榜温泉小设置温泉守护者通行证第 53 段水豚真神★ 180 颗星已达最高段位守护胜率82%41 胜 / 50 场 · 胜率 82%当前 / 最高连胜4 / 9图鉴收藏英雄 2/12 · 神兵 36/36当前怪物强度 · 水豚真神♥ HP ×6.2➜ 移速 +28%🐾 每波 +13双 Boss：6 / 8 / 9 / 10 波挑一枚头像火漆章泡澡本豚初始免费头像。💮 当前头像瓜子仓鼠初始免费头像。已解锁 · 点击佩戴松果松鼠初始免费头像。已解锁 · 点击佩戴勤劳蜜蜂初始免费头像。已解锁 · 点击佩戴橘猫剑客赢得第 1 场胜利。已解锁 · 点击佩戴墨镜旺财达成 3 连胜。已解锁 · 点击佩戴叼刀恶霸鹅达成 5 连胜。已解锁 · 点击佩戴功夫滚滚合成过功夫阿宝。已解锁 · 点击佩戴篮球鸡神合成过铁山靠鸡神。已解锁 · 点击佩戴皇冠蛙王合成过孤寡蛙王。已解锁 · 点击佩戴黑市浣熊拥有 6 种不同道具。已解锁 · 点击佩戴尚方咸鱼解锁 12 把不同神兵。已解锁 · 点击佩戴神竹宗师拥有任意 1 把橙品神兵。已解锁 · 点击佩戴樱花水豚达到猫咖店长（段位 10）。已解锁 · 点击佩戴黄金柯基达到萌宠统帅（段位 30）。已解锁 · 点击佩戴佛系真神豚达到水豚真神（段位 50）。已解锁 · 点击佩戴",
+      "headings": [
+        {
+          "x": 230,
+          "y": 73.25,
+          "width": 730.875,
+          "height": 30,
+          "top": 73.25,
+          "right": 960.875,
+          "bottom": 103.25,
+          "left": 230
+        },
+        {
+          "x": 230,
+          "y": 108.25,
+          "width": 730.875,
+          "height": 16.890625,
+          "top": 108.25,
+          "right": 960.875,
+          "bottom": 125.140625,
+          "left": 230
+        }
+      ]
+    },
+    {
+      "label": {},
+      "viewport": {
+        "w": 1280,
+        "h": 720
+      },
+      "dialog": {
+        "x": 120,
+        "y": 43.203125,
+        "width": 1040,
+        "height": 633.59375,
+        "top": 43.203125,
+        "right": 1160,
+        "bottom": 676.796875,
+        "left": 120
+      },
+      "header": {
+        "x": 124,
+        "y": 47.203125,
+        "width": 1032,
+        "height": 107,
+        "top": 47.203125,
+        "right": 1156,
+        "bottom": 154.203125,
+        "left": 124
+      },
+      "tabs": {
+        "x": 124,
+        "y": 154.203125,
+        "width": 1032,
+        "height": 53,
+        "top": 154.203125,
+        "right": 1156,
+        "bottom": 207.203125,
+        "left": 124
+      },
+      "body": {
+        "x": 124,
+        "y": 207.203125,
+        "width": 1032,
+        "height": 465.59375,
+        "top": 207.203125,
+        "right": 1156,
+        "bottom": 672.796875,
+        "left": 124
+      },
+      "clip": [
+        {
+          "name": "ledger-body",
+          "w": 1032,
+          "sw": 1032,
+          "h": 466,
+          "sh": 1201
+        }
+      ],
+      "text": "Keeper PassportYour personal keeper notebook180×6.2ZHEN×Keeper PassportOnsen Hall of FameCozy SettingsONSEN KEEPER PASSRank 53Capybara God★ 180 starsHighest rank reachedDefense win rate82%41 wins / 50 matches · 82% win rateCurrent / best streak4 / 9Field collectionHeroes 2/12 · Weapons 36/36Current enemy strength · Capybara God♥ HP ×6.2➜ Speed +28%🐾 +13 / waveDouble Boss: waves 6 / 8 / 9 / 10Choose an avatar sealBathing CapybaraAvailable from the start.💮 Current avatarSeed HamsterAvailable from the start.Unlocked · select to equipAcorn SquirrelAvailable from the start.Unlocked · select to equipWorker BeeAvailable from the start.Unlocked · select to equipOrange Cat SwordsmanWin your first battle.Unlocked · select to equipDoge AgentReach a streak of 3 wins.Unlocked · select to equipKnife Goose BullyReach a streak of 5 wins.Unlocked · select to equipKung Fu PandaMerge Kung-Fu Po at least once.Unlocked · select to equipBasketball RoosterMerge Ballin’ Rooster at least once.Unlocked · select to equipCrowned Frog KingMerge Pepe King at least once.Unlocked · select to equipMarket RaccoonOwn 6 different props.Unlocked · select to equipSalted ExcaliburUnlock 12 different weapons.Unlocked · select to equipBamboo GrandmasterOwn at least 1 orange weapon.Unlocked · select to equipSakura CapybaraReach Cat Cafe Boss (rank 10).Unlocked · select to equipGolden CorgiReach Critter Marshal (rank 30).Unlocked · select to equipZen Capybara GodReach Capybara God (rank 50).Unlocked · select to equip",
+      "headings": [
+        {
+          "x": 230,
+          "y": 73.25,
+          "width": 730.875,
+          "height": 30,
+          "top": 73.25,
+          "right": 960.875,
+          "bottom": 103.25,
+          "left": 230
+        },
+        {
+          "x": 230,
+          "y": 108.25,
+          "width": 730.875,
+          "height": 16.890625,
+          "top": 108.25,
+          "right": 960.875,
+          "bottom": 125.140625,
+          "left": 230
+        }
+      ]
+    },
+    {
+      "label": {},
+      "viewport": {
+        "w": 1280,
+        "h": 720
+      },
+      "dialog": {
+        "x": 260,
+        "y": 43.203125,
+        "width": 760,
+        "height": 633.59375,
+        "top": 43.203125,
+        "right": 1020,
+        "bottom": 676.796875,
+        "left": 260
+      },
+      "header": {
+        "x": 264,
+        "y": 47.203125,
+        "width": 752,
+        "height": 99,
+        "top": 47.203125,
+        "right": 1016,
+        "bottom": 146.203125,
+        "left": 264
+      },
+      "tabs": {
+        "x": 264,
+        "y": 146.203125,
+        "width": 752,
+        "height": 53,
+        "top": 146.203125,
+        "right": 1016,
+        "bottom": 199.203125,
+        "left": 264
+      },
+      "body": {
+        "x": 264,
+        "y": 199.203125,
+        "width": 752,
+        "height": 473.59375,
+        "top": 199.203125,
+        "right": 1016,
+        "bottom": 672.796875,
+        "left": 264
+      },
+      "clip": [
+        {
+          "name": "ledger-body",
+          "w": 752,
+          "sw": 752,
+          "h": 474,
+          "sh": 515
+        }
+      ],
+      "text": "温泉小设置调到最舒服的节奏，再慢慢玩中EN×守护者名片温泉风云榜温泉小设置背景音乐 50%游戏音效 75%显示伤害数字让每一次命中的数字浮出来开发者沙盒面板显示后院测试台与调试工具中EN📖 重新体验新手引导重新开一局，用固定教学包慢慢学；首次完成送 20 金币。设置即时保存并生效",
+      "headings": [
+        {
+          "x": 370,
+          "y": 69.25,
+          "width": 485.921875,
+          "height": 30,
+          "top": 69.25,
+          "right": 855.921875,
+          "bottom": 99.25,
+          "left": 370
+        },
+        {
+          "x": 370,
+          "y": 104.25,
+          "width": 485.921875,
+          "height": 16.890625,
+          "top": 104.25,
+          "right": 855.921875,
+          "bottom": 121.140625,
+          "left": 370
+        }
+      ]
+    },
+    {
+      "label": {},
+      "viewport": {
+        "w": 1280,
+        "h": 720
+      },
+      "dialog": {
+        "x": 260,
+        "y": 43.203125,
+        "width": 760,
+        "height": 633.59375,
+        "top": 43.203125,
+        "right": 1020,
+        "bottom": 676.796875,
+        "left": 260
+      },
+      "header": {
+        "x": 264,
+        "y": 47.203125,
+        "width": 752,
+        "height": 99,
+        "top": 47.203125,
+        "right": 1016,
+        "bottom": 146.203125,
+        "left": 264
+      },
+      "tabs": {
+        "x": 264,
+        "y": 146.203125,
+        "width": 752,
+        "height": 53,
+        "top": 146.203125,
+        "right": 1016,
+        "bottom": 199.203125,
+        "left": 264
+      },
+      "body": {
+        "x": 264,
+        "y": 199.203125,
+        "width": 752,
+        "height": 473.59375,
+        "top": 199.203125,
+        "right": 1016,
+        "bottom": 672.796875,
+        "left": 264
+      },
+      "clip": [
+        {
+          "name": "ledger-body",
+          "w": 752,
+          "sw": 752,
+          "h": 474,
+          "sh": 512
+        }
+      ],
+      "text": "Cozy SettingsFind your rhythm and settle inZHEN×Keeper PassportOnsen Hall of FameCozy SettingsBackground music 50%Sound effects 75%Show damage numbersShow floating numbers when attacks hitDeveloper SandboxShow backyard tools and debugging controlsZHEN📖 Replay the tutorialStart a fresh guided battle with a fixed pack. Your first completion earns 20 coins.Settings save and apply immediately",
+      "headings": [
+        {
+          "x": 370,
+          "y": 69.25,
+          "width": 485.75,
+          "height": 30,
+          "top": 69.25,
+          "right": 855.75,
+          "bottom": 99.25,
+          "left": 370
+        },
+        {
+          "x": 370,
+          "y": 104.25,
+          "width": 485.75,
+          "height": 16.890625,
+          "top": 104.25,
+          "right": 855.75,
+          "bottom": 121.140625,
+          "left": 370
+        }
+      ]
+    },
+    {
+      "label": "desktop-step1",
+      "bubble": {
+        "x": 450,
+        "y": 310,
+        "width": 430,
+        "height": 167.0625,
+        "top": 310,
+        "right": 880,
+        "bottom": 477.0625,
+        "left": 450
+      },
+      "targets": [
+        {
+          "x": 780,
+          "y": 610,
+          "width": 248,
+          "height": 92,
+          "top": 610,
+          "right": 1028,
+          "bottom": 702,
+          "left": 780
+        }
+      ],
+      "w": 1280,
+      "h": 720,
+      "step": "1"
+    },
+    {
+      "label": "desktop-step2",
+      "bubble": {
+        "x": 450,
+        "y": 310,
+        "width": 430,
+        "height": 167.0625,
+        "top": 310,
+        "right": 880,
+        "bottom": 477.0625,
+        "left": 450
+      },
+      "targets": [
+        {
+          "x": 380,
+          "y": 176,
+          "width": 104,
+          "height": 104,
+          "top": 176,
+          "right": 484,
+          "bottom": 280,
+          "left": 380
+        },
+        {
+          "x": 252,
+          "y": 610,
+          "width": 92,
+          "height": 92,
+          "top": 610,
+          "right": 344,
+          "bottom": 702,
+          "left": 252
+        }
+      ],
+      "w": 1280,
+      "h": 720,
+      "step": "2"
+    },
+    {
+      "label": "desktop-step3",
+      "bubble": {
+        "x": 450,
+        "y": 310,
+        "width": 430,
+        "height": 167.0625,
+        "top": 310,
+        "right": 880,
+        "bottom": 477.0625,
+        "left": 450
+      },
+      "targets": [
+        {
+          "x": 380,
+          "y": 176,
+          "width": 104,
+          "height": 104,
+          "top": 176,
+          "right": 484,
+          "bottom": 280,
+          "left": 380
+        },
+        {
+          "x": 356,
+          "y": 610,
+          "width": 92,
+          "height": 92,
+          "top": 610,
+          "right": 448,
+          "bottom": 702,
+          "left": 356
+        }
+      ],
+      "w": 1280,
+      "h": 720,
+      "step": "3"
+    },
+    {
+      "label": "desktop-step4",
+      "bubble": {
+        "x": 450,
+        "y": 310,
+        "width": 430,
+        "height": 220.0625,
+        "top": 310,
+        "right": 880,
+        "bottom": 530.0625,
+        "left": 450
+      },
+      "targets": [
+        {
+          "x": 564,
+          "y": 610,
+          "width": 92,
+          "height": 92,
+          "top": 610,
+          "right": 656,
+          "bottom": 702,
+          "left": 564
+        },
+        {
+          "x": 460,
+          "y": 610,
+          "width": 92,
+          "height": 92,
+          "top": 610,
+          "right": 552,
+          "bottom": 702,
+          "left": 460
+        }
+      ],
+      "w": 1280,
+      "h": 720,
+      "step": "4"
+    },
+    {
+      "label": "desktop-step5",
+      "bubble": {
+        "x": 450,
+        "y": 310,
+        "width": 430,
+        "height": 208.234375,
+        "top": 310,
+        "right": 880,
+        "bottom": 518.234375,
+        "left": 450
+      },
+      "targets": [
+        {
+          "x": 956.3125,
+          "y": 12,
+          "width": 94.296875,
+          "height": 46,
+          "top": 12,
+          "right": 1050.609375,
+          "bottom": 58,
+          "left": 956.3125
+        }
+      ],
+      "w": 1280,
+      "h": 720,
+      "step": "5"
+    },
+    {
+      "label": {},
+      "viewport": {
+        "w": 844,
+        "h": 390
+      },
+      "dialog": {
+        "x": 25.3125,
+        "y": 23.40625,
+        "width": 793.359375,
+        "height": 343.1875,
+        "top": 23.40625,
+        "right": 818.671875,
+        "bottom": 366.59375,
+        "left": 25.3125
+      },
+      "header": {
+        "x": 29.3125,
+        "y": 27.40625,
+        "width": 785.359375,
+        "height": 60,
+        "top": 27.40625,
+        "right": 814.671875,
+        "bottom": 87.40625,
+        "left": 29.3125
+      },
+      "tabs": {
+        "x": 29.3125,
+        "y": 87.40625,
+        "width": 785.359375,
+        "height": 44.296875,
+        "top": 87.40625,
+        "right": 814.671875,
+        "bottom": 131.703125,
+        "left": 29.3125
+      },
+      "body": {
+        "x": 29.3125,
+        "y": 131.703125,
+        "width": 785.359375,
+        "height": 230.890625,
+        "top": 131.703125,
+        "right": 814.671875,
+        "bottom": 362.59375,
+        "left": 29.3125
+      },
+      "clip": [
+        {
+          "name": "ledger-body",
+          "w": 785,
+          "sw": 785,
+          "h": 231,
+          "sh": 898
+        }
+      ],
+      "text": "温泉图鉴百科每一位伙伴，都有自己的高光时刻英雄 2/12 · 神兵 36/36中EN×合成总览 12基础萌宠 19传说英雄 12捣蛋怪物 17奇葩神兵 36黑市道具 20合成总览🐾 基底 ╲ 穿搭 🎩大侠斗笠特工墨镜魔法尖帽熊猫功夫阿宝食铁兽教父太极滚滚橘猫靴子剑客喵加特林喵喵利波特柴犬斩铁修勾疾速旺财🔒 呆滞陷阱：柴犬不能与法师帽合成！奇遇配对＋→无名刀鹅＋→铁山靠鸡神＋→拾荒浣熊王＋→孤寡蛙王功夫阿宝💮 已收录＋→功夫阿宝⚔️ 38⚡ 1.4/s🎯 1.6🔋 8基础成长（未计装备）等级攻击力每秒攻击次数射程（格）充能攻击次数Lv.1381.41.68Lv.2611.41.68Lv.3971.41.67Lv.41561.41.66Lv.52491.41.66肚皮震地 · 每 8 次普攻震地：周围 2.2 格造成 350% 伤害，眩晕 2 秒。专属神兵千年神竹棍同系推荐塑料苍蝇拍同系推荐人字拖",
+      "headings": [
+        {
+          "x": 93.3125,
+          "y": 32.40625,
+          "width": 579.28125,
+          "height": 24,
+          "top": 32.40625,
+          "right": 672.59375,
+          "bottom": 56.40625,
+          "left": 93.3125
+        },
+        {
+          "x": 0,
+          "y": 0,
+          "width": 0,
+          "height": 0,
+          "top": 0,
+          "right": 0,
+          "bottom": 0,
+          "left": 0
+        }
+      ]
+    },
+    {
+      "label": {},
+      "viewport": {
+        "w": 844,
+        "h": 390
+      },
+      "dialog": {
+        "x": 25.3125,
+        "y": 23.40625,
+        "width": 793.359375,
+        "height": 343.1875,
+        "top": 23.40625,
+        "right": 818.671875,
+        "bottom": 366.59375,
+        "left": 25.3125
+      },
+      "header": {
+        "x": 29.3125,
+        "y": 27.40625,
+        "width": 785.359375,
+        "height": 59,
+        "top": 27.40625,
+        "right": 814.671875,
+        "bottom": 86.40625,
+        "left": 29.3125
+      },
+      "tabs": {
+        "x": 29.3125,
+        "y": 86.40625,
+        "width": 785.359375,
+        "height": 44.296875,
+        "top": 86.40625,
+        "right": 814.671875,
+        "bottom": 130.703125,
+        "left": 29.3125
+      },
+      "body": {
+        "x": 29.3125,
+        "y": 130.703125,
+        "width": 785.359375,
+        "height": 231.890625,
+        "top": 130.703125,
+        "right": 814.671875,
+        "bottom": 362.59375,
+        "left": 29.3125
+      },
+      "clip": [
+        {
+          "name": "ledger-body",
+          "w": 785,
+          "sw": 785,
+          "h": 232,
+          "sh": 898
+        }
+      ],
+      "text": "Onsen Field GuideEvery friend has a moment to shineHeroes 2/12 · Weapons 36/36ZHEN×Merge matrix 12Pets & ingredients 19Legendary heroes 12Garden troublemakers 17Oddball weapons 36Market props 20Merge matrix🐾 Base ╲ Gear 🎩Bamboo HatAgent ShadesWizard HatPandaKung-Fu PoBamboo MafiaZen MasterOrange CatPuss-in-HatMeowfia BossPurr-cererShiba InuSamurai DogeDoge Wick🔒 Daze trap: Shiba cannot merge with Wizard Hat!Special pairings＋→Ronin Goose＋→Ballin’ Rooster＋→Rocket Coon＋→Pepe KingKung-Fu Po💮 Collected＋→Kung-Fu Po⚔️ 38⚡ 1.4/s🎯 1.6🔋 8Base growth (before equipment)LevelDamageAttacks per secondRange (tiles)Attacks to chargeLv.1381.41.68Lv.2611.41.68Lv.3971.41.67Lv.41561.41.66Lv.52491.41.66Belly Quake · Every 8 hits: slam a 2.2-tile area for 350% damage and stun for 2 seconds.Signature weaponDragon BambooSame-family recommendationFly SwatterSame-family recommendationFlip-Flop",
+      "headings": [
+        {
+          "x": 93.3125,
+          "y": 33.40625,
+          "width": 579.109375,
+          "height": 24,
+          "top": 33.40625,
+          "right": 672.421875,
+          "bottom": 57.40625,
+          "left": 93.3125
+        },
+        {
+          "x": 0,
+          "y": 0,
+          "width": 0,
+          "height": 0,
+          "top": 0,
+          "right": 0,
+          "bottom": 0,
+          "left": 0
+        }
+      ]
+    },
+    {
+      "label": {},
+      "viewport": {
+        "w": 844,
+        "h": 390
+      },
+      "dialog": {
+        "x": 25.3125,
+        "y": 23.40625,
+        "width": 793.359375,
+        "height": 343.1875,
+        "top": 23.40625,
+        "right": 818.671875,
+        "bottom": 366.59375,
+        "left": 25.3125
+      },
+      "header": {
+        "x": 29.3125,
+        "y": 27.40625,
+        "width": 785.359375,
+        "height": 59,
+        "top": 27.40625,
+        "right": 814.671875,
+        "bottom": 86.40625,
+        "left": 29.3125
+      },
+      "tabs": {
+        "x": 29.3125,
+        "y": 86.40625,
+        "width": 785.359375,
+        "height": 38,
+        "top": 86.40625,
+        "right": 814.671875,
+        "bottom": 124.40625,
+        "left": 29.3125
+      },
+      "body": {
+        "x": 29.3125,
+        "y": 124.40625,
+        "width": 785.359375,
+        "height": 238.1875,
+        "top": 124.40625,
+        "right": 814.671875,
+        "bottom": 362.59375,
+        "left": 29.3125
+      },
+      "clip": [
+        {
+          "name": "ledger-body",
+          "w": 785,
+          "sw": 785,
+          "h": 238,
+          "sh": 7071
+        }
+      ],
+      "text": "神兵锻造坊奇葩神兵，也要配给合适的英雄99993中EN×神兵锻造坊浣熊黑市 & 扭蛋12 英雄配装总览功夫阿宝千年神竹棍×靴子剑客喵猫抓板双刀×斩铁修勾尚方宝咸鱼×无名刀鹅村霸大铁锅×食铁兽教父食铁兽火箭筒×加特林喵松果加特林×疾速旺财8倍镜红点激光×拾荒浣熊王黄金破烂迫击炮×太极滚滚阴阳猫薄荷炉×喵利波特黑洞吸尘器×铁山靠鸡神金箍火焰球×孤寡蛙王蛙皇扩音权杖×已收集 36 / 36英雄只能穿戴同系神兵；同一神兵换人时自动卸下。品质伤害加成与词条同时生效。默认排序橙品优先全部🎋 冷兵器🕶️ 热兵器🧙 法器白 · 普通 · 🎋 冷兵器塑料苍蝇拍基础伤害 +12%朴实无华，基础伤害 +12%。碎片 0 / 1选择同系英雄选择同系英雄功夫阿宝靴子剑客喵斩铁修勾无名刀鹅白 · 普通 · 🎋 冷兵器人字拖基础伤害 +12%基础伤害 +12%。攻击距离 +0.3 格。碎片 0 / 1选择同系英雄选择同系英雄功夫阿宝靴子剑客喵斩铁修勾无名刀鹅绿 · 稀有 · 🎋 冷兵器老头乐痒痒挠基础伤害 +20%基础伤害 +20%。攻击距离 +0.5 格。碎片 0 / 2选择同系英雄选择同系英雄功夫阿宝靴子剑客喵斩铁修勾无名刀鹅绿 · 稀有 · 🎋 冷兵器冻硬法棍基础伤害 +20%基础伤害 +20%。普攻 15% 概率击退目标 0.35 格。碎片 0 / 2选择同系英雄选择同系英雄功夫阿宝靴子剑客喵斩铁修勾无名刀鹅蓝 · 卓越 · 🎋 冷兵器老妈鸡毛掸基础伤害 +30%基础伤害 +30%。连续普攻同一目标，每次攻速 +6%，最多 +48%；换目标重置。碎片 0 / 3选择同系英雄选择同系英雄功夫阿宝靴子剑客喵斩铁修勾无名刀鹅蓝 · 卓越 · 🎋 冷兵器折叠板凳基础伤害 +30%基础伤害 +30%。普攻 15% 概率眩晕目标 0.6 秒。碎片 0 / 3选择同系英雄选择同系英雄功夫阿宝靴子剑客喵斩铁修勾无名刀鹅紫 · 史诗 · 🎋 冷兵器实木擀面杖基础伤害 +42%基础伤害 +42%。每 8 次普攻挥出气浪，对目标周围 1.6 格造成 180% 溅射伤害。碎片 0 / 4选择同系英雄选择同系英雄功夫阿宝靴子剑客喵斩铁修勾无名刀鹅紫 · 史诗 · 🎋 冷兵器带刺榴莲锤基础伤害 +42%基础伤害 +42%。击杀后攻速 +45%，持续 2.5 秒。碎片 0 / 4选择同系英雄选择同系英雄功夫阿宝靴子剑客喵斩铁修勾无名刀鹅橙 · 传说 · 🎋 冷兵器猫抓板双刀基础伤害 +58%基础伤害 +58%。击杀释放 4 片 80% 伤害猫爪飞刃。靴子剑客喵专属：十字跳斩强化 6 次，附加每秒 35% 伤害的 3 秒流血。✦ 本命觉醒：靴子剑客喵碎片 0 / 5★✓选择同系英雄选择同系英雄功夫阿宝靴子剑客喵斩铁修勾无名刀鹅已穿戴：靴子剑客喵卸下橙 · 传说 · 🎋 冷兵器千年神竹棍基础伤害 +58%基础伤害 +58%。普攻 18% 概率在 1 格内召唤竹笋，造成 220% 伤害并晕 0.8 秒。功夫阿宝专属：肚皮震地范围 +30%，额外召唤一圈竹笋。✦ 本命觉醒：功夫阿宝碎片 0 / 5★✓选择同系英雄选择同系英雄功夫阿宝靴子剑客喵斩铁修勾无名刀鹅已穿戴：功夫阿宝卸下橙 · 传说 · 🎋 冷兵器尚方宝咸鱼基础伤害 +58%基础伤害 +58%。击杀释放 2 道 100% 伤害咸鱼剑气随机追敌。斩铁修勾专属：Bonk 斩杀线提升至 35%，且必放剑气。✦ 本命觉醒：斩铁修勾碎片 0 / 5★✓选择同系英雄选择同系英雄功夫阿宝靴子剑客喵斩铁修勾无名刀鹅已穿戴：斩铁修勾卸下橙 · 传说 · 🎋 冷兵器村霸大铁锅基础伤害 +58%基础伤害 +58%。普攻 15% 概率抛飞砸地，造成 300% 范围伤害。无名刀鹅专属：七进七出由 7 次升级为 10 次冲刺。✦ 本命觉醒：无名刀鹅碎片 0 / 5★✓选择同系英雄选择同系英雄功夫阿宝靴子剑客喵斩铁修勾无名刀鹅已穿戴：无名刀鹅卸下白 · 普通 · 🕶️ 热兵器橡皮筋指枪基础伤害 +12%基础伤害 +12%。碎片 0 / 1选择同系英雄选择同系英雄食铁兽教父加特林喵疾速旺财拾荒浣熊王白 · 普通 · 🕶️ 热兵器小黄鸭滋水枪基础伤害 +12%基础伤害 +12%。射程 +0.4 格。碎片 0 / 1选择同系英雄选择同系英雄食铁兽教父加特林喵疾速旺财拾荒浣熊王绿 · 稀有 · 🕶️ 热兵器全自动泡泡机基础伤害 +20%基础伤害 +20%。普攻 15% 概率使目标减速 25%，持续 1.5 秒。碎片 0 / 2选择同系英雄选择同系英雄食铁兽教父加特林喵疾速旺财拾荒浣熊王绿 · 稀有 · 🕶️ 热兵器网球发球机基础伤害 +20%基础伤害 +20%。普攻 20% 概率弹射 1 个相邻敌人，造成 70% 伤害。碎片 0 / 2选择同系英雄选择同系英雄食铁兽教父加特林喵疾速旺财拾荒浣熊王蓝 · 卓越 · 🕶️ 热兵器飓风吹风机基础伤害 +30%基础伤害 +30%。普攻 15% 概率吹出热浪，每秒灼烧 35% 伤害，持续 3 秒。碎片 0 / 3选择同系英雄选择同系英雄食铁兽教父加特林喵疾速旺财拾荒浣熊王蓝 · 卓越 · 🕶️ 热兵器高压洗车水枪基础伤害 +30%基础伤害 +30%。连续普攻同一目标，每次攻速 +10%，最多 +60%；换目标重置。碎片 0 / 3选择同系英雄选择同系英雄食铁兽教父加特林喵疾速旺财拾荒浣熊王紫 · 史诗 · 🕶️ 热兵器爆米花机炮基础伤害 +42%基础伤害 +42%。每 8 次普攻打出爆裂玉米弹，对 1.2 格区域造成 200% 伤害。碎片 0 / 4选择同系英雄选择同系英雄食铁兽教父加特林喵疾速旺财拾荒浣熊王紫 · 史诗 · 🕶️ 热兵器摇钱树弹弓基础伤害 +42%基础伤害 +42%。首次命中某敌人时，25% 概率获得 +1 小鱼干。碎片 0 / 4选择同系英雄选择同系英雄食铁兽教父加特林喵疾速旺财拾荒浣熊王橙 · 传说 · 🕶️ 热兵器食铁兽火箭筒基础伤害 +58%基础伤害 +58%。普攻 15% 概率打出火龙笋点燃路径，每秒 35% 伤害持续 3 秒。食铁兽教父专属：火箭雨由 5 发升至 8 发。✦ 本命觉醒：食铁兽教父碎片 0 / 5★✓选择同系英雄选择同系英雄食铁兽教父加特林喵疾速旺财拾荒浣熊王已穿戴：食铁兽教父卸下橙 · 传说 · 🕶️ 热兵器松果加特林基础伤害 +58%基础伤害 +58%。每 10 次普攻额外齐射 6 发追踪鱼刺导弹。加特林喵专属：鱼骨弹幕延长至 4 秒。✦ 本命觉醒：加特林喵碎片 0 / 5★✓选择同系英雄选择同系英雄食铁兽教父加特林喵疾速旺财拾荒浣熊王已穿戴：加特林喵卸下橙 · 传说 · 🕶️ 热兵器8倍镜红点激光基础伤害 +58%基础伤害 +58%。射程 +35%，距离越远伤害越高，最多 +50%。疾速旺财专属：双枪悬赏掉小鱼干概率提升至 85%。✦ 本命觉醒：疾速旺财碎片 0 / 5★✓选择同系英雄选择同系英雄食铁兽教父加特林喵疾速旺财拾荒浣熊王已穿戴：疾速旺财卸下橙 · 传说 · 🕶️ 热兵器黄金破烂迫击炮基础伤害 +58%基础伤害 +58%。命中时 45% 概率弹射下一个敌人。拾荒浣熊王专属：顺走鱼干概率翻倍，破烂重炮范围 +40%。✦ 本命觉醒：拾荒浣熊王碎片 0 / 5★✓选择同系英雄选择同系英雄食铁兽教父加特林喵疾速旺财拾荒浣熊王已穿戴：拾荒浣熊王卸下白 · 普通 · 🧙 法器逗猫羽毛棒基础伤害 +12%基础伤害 +12%。碎片 0 / 1选择同系英雄选择同系英雄太极滚滚喵利波特铁山靠鸡神孤寡蛙王白 · 普通 · 🧙 法器静电气球基础伤害 +12%基础伤害 +12%。攻速 +10%。碎片 0 / 1选择同系英雄选择同系英雄太极滚滚喵利波特铁山靠鸡神孤寡蛙王绿 · 稀有 · 🧙 法器雷神电蚊拍基础伤害 +20%基础伤害 +20%。普攻 15% 概率电麻目标 0.4 秒。碎片 0 / 2选择同系英雄选择同系英雄太极滚滚喵利波特铁山靠鸡神孤寡蛙王绿 · 稀有 · 🧙 法器毛线水晶球基础伤害 +20%基础伤害 +20%。大招充能要求减少 1 次普攻。碎片 0 / 2选择同系英雄选择同系英雄太极滚滚喵利波特铁山靠鸡神孤寡蛙王蓝 · 卓越 · 🧙 法器蹦迪灯球基础伤害 +30%基础伤害 +30%。普攻 15% 概率鼓舞周围 1.5 格友军，攻速 +20% 持续 4 秒。碎片 0 / 3选择同系英雄选择同系英雄太极滚滚喵利波特铁山靠鸡神孤寡蛙王蓝 · 卓越 · 🧙 法器七彩毛线团基础伤害 +30%基础伤害 +30%。击杀飞出 4 团毛线随机追敌，每团造成 80% 伤害。碎片 0 / 3选择同系英雄选择同系英雄太极滚滚喵利波特铁山靠鸡神孤寡蛙王紫 · 史诗 · 🧙 法器流星猫抓板基础伤害 +42%基础伤害 +42%。普攻 12% 概率轰炸目标 1.2 格区域，造成 240% 伤害。碎片 0 / 4选择同系英雄选择同系英雄太极滚滚喵利波特铁山靠鸡神孤寡蛙王紫 · 史诗 · 🧙 法器赛博木鱼基础伤害 +42%基础伤害 +42%。每 9 次普攻：全队攻速 +15% 持续 3 秒，并对周围 1.6 格敌人造成 180% 伤害。碎片 0 / 4选择同系英雄选择同系英雄太极滚滚喵利波特铁山靠鸡神孤寡蛙王橙 · 传说 · 🧙 法器阴阳猫薄荷炉基础伤害 +58%基础伤害 +58%。每 8 次普攻交替触发增伤 35% 持续 4 秒，或每秒 35% 的 3 秒毒雾。太极滚滚专属：太极阵发射双倍阴阳波。✦ 本命觉醒：太极滚滚碎片 0 / 5★✓选择同系英雄选择同系英雄太极滚滚喵利波特铁山靠鸡神孤寡蛙王已穿戴：太极滚滚卸下橙 · 传说 · 🧙 法器黑洞吸尘器基础伤害 +58%基础伤害 +58%。普攻 15% 概率旋涡聚怪，最多拉近 1 格并晕 0.8 秒。喵利波特专属：毛线雷暴弹射上限由 6 次升至 10 次。✦ 本命觉醒：喵利波特碎片 0 / 5★✓选择同系英雄选择同系英雄太极滚滚喵利波特铁山靠鸡神孤寡蛙王已穿戴：喵利波特卸下橙 · 传说 · 🧙 法器金箍火焰球基础伤害 +58%基础伤害 +58%。每次普攻命中对周围 0.85 格造成 40% 火焰溅射。铁山靠鸡神专属：火焰球弹射由 8 次升至 12 次。✦ 本命觉醒：铁山靠鸡神碎片 0 / 5★✓选择同系英雄选择同系英雄太极滚滚喵利波特铁山靠鸡神孤寡蛙王已穿戴：铁山靠鸡神卸下橙 · 传说 · 🧙 法器蛙皇扩音权杖基础伤害 +58%基础伤害 +58%。对减速或中毒敌人伤害 +35%。孤寡蛙王专属：音波持续 6 秒且使护甲归零。✦ 本命觉醒：孤寡蛙王碎片 0 / 5★✓选择同系英雄选择同系英雄太极滚滚喵利波特铁山靠鸡神孤寡蛙王已穿戴：孤寡蛙王卸下回收溢出碎片保留解锁所需碎片，只回收已解锁神兵的多余碎片。白 · 普通每片 +8 金币绿 · 稀有每片 +15 金币蓝 · 卓越每片 +30 金币紫 · 史诗每片 +60 金币橙 · 传说每片 +120 金币回收溢出碎片",
+      "headings": [
+        {
+          "x": 93.3125,
+          "y": 43.40625,
+          "width": 457.1875,
+          "height": 24,
+          "top": 43.40625,
+          "right": 550.5,
+          "bottom": 67.40625,
+          "left": 93.3125
+        },
+        {
+          "x": 0,
+          "y": 0,
+          "width": 0,
+          "height": 0,
+          "top": 0,
+          "right": 0,
+          "bottom": 0,
+          "left": 0
+        }
+      ]
+    },
+    {
+      "label": {},
+      "viewport": {
+        "w": 844,
+        "h": 390
+      },
+      "dialog": {
+        "x": 25.3125,
+        "y": 23.40625,
+        "width": 793.359375,
+        "height": 343.1875,
+        "top": 23.40625,
+        "right": 818.671875,
+        "bottom": 366.59375,
+        "left": 25.3125
+      },
+      "header": {
+        "x": 29.3125,
+        "y": 27.40625,
+        "width": 785.359375,
+        "height": 59,
+        "top": 27.40625,
+        "right": 814.671875,
+        "bottom": 86.40625,
+        "left": 29.3125
+      },
+      "tabs": {
+        "x": 29.3125,
+        "y": 86.40625,
+        "width": 785.359375,
+        "height": 38,
+        "top": 86.40625,
+        "right": 814.671875,
+        "bottom": 124.40625,
+        "left": 29.3125
+      },
+      "body": {
+        "x": 29.3125,
+        "y": 124.40625,
+        "width": 785.359375,
+        "height": 238.1875,
+        "top": 124.40625,
+        "right": 814.671875,
+        "bottom": 362.59375,
+        "left": 29.3125
+      },
+      "clip": [
+        {
+          "name": "ledger-body",
+          "w": 785,
+          "sw": 785,
+          "h": 238,
+          "sh": 7283
+        }
+      ],
+      "text": "Weapon WorkshopA curious weapon for the right hero99993ZHEN×Weapon WorkshopRaccoon Market & Gacha12-Hero Loadout Overview＋Kung-Fu PoEmpty handsPuss-in-HatCardboard Twin-Blades×Samurai DogeSalted Excalibur×Ronin GooseHonk Iron Wok×Bamboo MafiaBamboo Bazooka×Meowfia BossAcorn Minigun×Doge WickRed-Dot Sniper×Rocket CoonGolden Junk Mortar×Zen MasterYin-Yang Burner×Purr-cererCosmic Vacuum×Ballin’ RoosterBlazing Dunk Ball×Pepe KingPepe Megaphone×Collected 36 / 36Heroes wear weapons of their family. Equipping a weapon moves it from its previous hero. Rarity damage and weapon effects both apply.Default orderOrange firstAll🎋 Melee🕶️ Ranged🧙 MagicWhite · Common · 🎋 MeleeFly SwatterBase damage +12%A trusty swatter; base damage +12%.Fragments 0 / 1Choose a matching heroChoose a matching heroKung-Fu PoPuss-in-HatSamurai DogeRonin GooseWhite · Common · 🎋 MeleeFlip-FlopBase damage +12%Base damage +12%. Attack range +0.3 tiles.Fragments 0 / 1Choose a matching heroChoose a matching heroKung-Fu PoPuss-in-HatSamurai DogeRonin GooseGreen · Rare · 🎋 MeleeBack ScratcherBase damage +20%Base damage +20%. Attack range +0.5 tiles.Fragments 0 / 2Choose a matching heroChoose a matching heroKung-Fu PoPuss-in-HatSamurai DogeRonin GooseGreen · Rare · 🎋 MeleeFrozen BaguetteBase damage +20%Base damage +20%. Basic attacks have a 15% chance to knock the target back 0.35 tiles.Fragments 0 / 2Choose a matching heroChoose a matching heroKung-Fu PoPuss-in-HatSamurai DogeRonin GooseBlue · Superior · 🎋 MeleeMom's Feather DusterBase damage +30%Base damage +30%. Consecutive basic attacks on one target stack +6% attack speed, up to +48%; changing target resets stacks.Fragments 0 / 3Choose a matching heroChoose a matching heroKung-Fu PoPuss-in-HatSamurai DogeRonin GooseBlue · Superior · 🎋 MeleeFolding StoolBase damage +30%Base damage +30%. Basic attacks have a 15% chance to stun for 0.6s.Fragments 0 / 3Choose a matching heroChoose a matching heroKung-Fu PoPuss-in-HatSamurai DogeRonin GoosePurple · Epic · 🎋 MeleeHeavy Rolling PinBase damage +42%Base damage +42%. Every 8 basic attacks release a wave dealing 180% splash damage within 1.6 tiles of the target.Fragments 0 / 4Choose a matching heroChoose a matching heroKung-Fu PoPuss-in-HatSamurai DogeRonin GoosePurple · Epic · 🎋 MeleeSpiky DurianBase damage +42%Base damage +42%. Kills grant +45% attack speed for 2.5s.Fragments 0 / 4Choose a matching heroChoose a matching heroKung-Fu PoPuss-in-HatSamurai DogeRonin GooseOrange · Legendary · 🎋 MeleeCardboard Twin-BladesBase damage +58%Base damage +58%. Kills launch 4 claw blades for 80% damage each. Puss in Hat awakening: 6 empowered cross slashes, inflicting bleed for 35% damage per second for 3s.✦ Signature awakening: Puss-in-HatFragments 0 / 5★✓Choose a matching heroChoose a matching heroKung-Fu PoPuss-in-HatSamurai DogeRonin GooseEquipped: Puss-in-HatUnequipOrange · Legendary · 🎋 MeleeDragon BambooBase damage +58%Base damage +58%. Basic attacks have an 18% chance to summon bamboo within 1 tile, dealing 220% damage and stunning for 0.8s. Kungfu Po awakening: belly quake radius +30% and an extra bamboo ring.✦ Signature awakening: Kung-Fu PoFragments 0 / 5★Choose a matching heroChoose a matching heroKung-Fu PoPuss-in-HatSamurai DogeRonin GooseOrange · Legendary · 🎋 MeleeSalted ExcaliburBase damage +58%Base damage +58%. Kills release 2 random fish sword waves for 100% damage each. Samurai Doge awakening: Bonk executes at 35% health and always releases sword waves.✦ Signature awakening: Samurai DogeFragments 0 / 5★✓Choose a matching heroChoose a matching heroKung-Fu PoPuss-in-HatSamurai DogeRonin GooseEquipped: Samurai DogeUnequipOrange · Legendary · 🎋 MeleeHonk Iron WokBase damage +58%Base damage +58%. Basic attacks have a 15% chance to toss and slam for 300% area damage. Ronin Goose awakening: 7 dashes become 10.✦ Signature awakening: Ronin GooseFragments 0 / 5★✓Choose a matching heroChoose a matching heroKung-Fu PoPuss-in-HatSamurai DogeRonin GooseEquipped: Ronin GooseUnequipWhite · Common · 🕶️ RangedRubber BandBase damage +12%Base damage +12%.Fragments 0 / 1Choose a matching heroChoose a matching heroBamboo MafiaMeowfia BossDoge WickRocket CoonWhite · Common · 🕶️ RangedDuck SquirterBase damage +12%Base damage +12%. Attack range +0.4 tiles.Fragments 0 / 1Choose a matching heroChoose a matching heroBamboo MafiaMeowfia BossDoge WickRocket CoonGreen · Rare · 🕶️ RangedBubble BlasterBase damage +20%Base damage +20%. Basic attacks have a 15% chance to slow the target by 25% for 1.5s.Fragments 0 / 2Choose a matching heroChoose a matching heroBamboo MafiaMeowfia BossDoge WickRocket CoonGreen · Rare · 🕶️ RangedTennis LauncherBase damage +20%Base damage +20%. Basic attacks have a 20% chance to bounce to 1 nearby enemy for 70% damage.Fragments 0 / 2Choose a matching heroChoose a matching heroBamboo MafiaMeowfia BossDoge WickRocket CoonBlue · Superior · 🕶️ RangedTurbo Hair DryerBase damage +30%Base damage +30%. Basic attacks have a 15% chance to burn with hot air for 35% damage per second for 3s.Fragments 0 / 3Choose a matching heroChoose a matching heroBamboo MafiaMeowfia BossDoge WickRocket CoonBlue · Superior · 🕶️ RangedPower WasherBase damage +30%Base damage +30%. Consecutive basic attacks on one target stack +10% attack speed, up to +60%; changing target resets stacks.Fragments 0 / 3Choose a matching heroChoose a matching heroBamboo MafiaMeowfia BossDoge WickRocket CoonPurple · Epic · 🕶️ RangedPopcorn CannonBase damage +42%Base damage +42%. Every 8 basic attacks fire exploding corn for 200% damage within 1.2 tiles.Fragments 0 / 4Choose a matching heroChoose a matching heroBamboo MafiaMeowfia BossDoge WickRocket CoonPurple · Epic · 🕶️ RangedLucky SlingshotBase damage +42%Base damage +42%. The first hit on each enemy has a 25% chance to grant +1 food.Fragments 0 / 4Choose a matching heroChoose a matching heroBamboo MafiaMeowfia BossDoge WickRocket CoonOrange · Legendary · 🕶️ RangedBamboo BazookaBase damage +58%Base damage +58%. Basic attacks have a 15% chance to ignite the path for 35% damage per second for 3s. Bamboo Mafia awakening: rocket rain fires 8 rockets instead of 5.✦ Signature awakening: Bamboo MafiaFragments 0 / 5★✓Choose a matching heroChoose a matching heroBamboo MafiaMeowfia BossDoge WickRocket CoonEquipped: Bamboo MafiaUnequipOrange · Legendary · 🕶️ RangedAcorn MinigunBase damage +58%Base damage +58%. Every 10 basic attacks launch 6 homing fishbone missiles. Meowfia awakening: fishbone barrage lasts 4s.✦ Signature awakening: Meowfia BossFragments 0 / 5★✓Choose a matching heroChoose a matching heroBamboo MafiaMeowfia BossDoge WickRocket CoonEquipped: Meowfia BossUnequipOrange · Legendary · 🕶️ RangedRed-Dot SniperBase damage +58%Base damage +58%. Range +35%; damage scales with distance up to +50%. Doge Wick awakening: dual-pistol bounty grants food with an 85% chance.✦ Signature awakening: Doge WickFragments 0 / 5★✓Choose a matching heroChoose a matching heroBamboo MafiaMeowfia BossDoge WickRocket CoonEquipped: Doge WickUnequipOrange · Legendary · 🕶️ RangedGolden Junk MortarBase damage +58%Base damage +58%. Hits have a 45% chance to bounce to another enemy. Rocket Coon awakening: food theft chance doubles and junk artillery radius increases by 40%.✦ Signature awakening: Rocket CoonFragments 0 / 5★✓Choose a matching heroChoose a matching heroBamboo MafiaMeowfia BossDoge WickRocket CoonEquipped: Rocket CoonUnequipWhite · Common · 🧙 MagicFeather TeaserBase damage +12%Base damage +12%.Fragments 0 / 1Choose a matching heroChoose a matching heroZen MasterPurr-cererBallin’ RoosterPepe KingWhite · Common · 🧙 MagicStatic BalloonBase damage +12%Base damage +12%. Attack speed +10%.Fragments 0 / 1Choose a matching heroChoose a matching heroZen MasterPurr-cererBallin’ RoosterPepe KingGreen · Rare · 🧙 MagicBug ZapperBase damage +20%Base damage +20%. Basic attacks have a 15% chance to stun for 0.4s.Fragments 0 / 2Choose a matching heroChoose a matching heroZen MasterPurr-cererBallin’ RoosterPepe KingGreen · Rare · 🧙 MagicYarn OrbBase damage +20%Base damage +20%. Ultimate charge requirement is reduced by 1 basic attack.Fragments 0 / 2Choose a matching heroChoose a matching heroZen MasterPurr-cererBallin’ RoosterPepe KingBlue · Superior · 🧙 MagicDisco BallBase damage +30%Base damage +30%. Basic attacks have a 15% chance to grant allies within 1.5 tiles +20% attack speed for 4s.Fragments 0 / 3Choose a matching heroChoose a matching heroZen MasterPurr-cererBallin’ RoosterPepe KingBlue · Superior · 🧙 MagicRainbow YarnBase damage +30%Base damage +30%. Kills launch 4 yarn balls at random enemies, each dealing 80% damage.Fragments 0 / 3Choose a matching heroChoose a matching heroZen MasterPurr-cererBallin’ RoosterPepe KingPurple · Epic · 🧙 MagicMeteor ScratcherBase damage +42%Base damage +42%. Basic attacks have a 12% chance to bombard a 1.2-tile area for 240% damage.Fragments 0 / 4Choose a matching heroChoose a matching heroZen MasterPurr-cererBallin’ RoosterPepe KingPurple · Epic · 🧙 MagicCyber Wooden FishBase damage +42%Base damage +42%. Every 9 basic attacks grant the team +15% attack speed for 3s and deal 180% damage to enemies within 1.6 tiles.Fragments 0 / 4Choose a matching heroChoose a matching heroZen MasterPurr-cererBallin’ RoosterPepe KingOrange · Legendary · 🧙 MagicYin-Yang BurnerBase damage +58%Base damage +58%. Every 8 basic attacks alternate +35% damage for 4s and poison mist dealing 35% damage per second for 3s. Zen Master awakening: the yin-yang array fires double waves.✦ Signature awakening: Zen MasterFragments 0 / 5★✓Choose a matching heroChoose a matching heroZen MasterPurr-cererBallin’ RoosterPepe KingEquipped: Zen MasterUnequipOrange · Legendary · 🧙 MagicCosmic VacuumBase damage +58%Base damage +58%. Basic attacks have a 15% chance to pull enemies up to 1 tile and stun for 0.8s. Purrcerer awakening: yarn storm bounces 10 times instead of 6.✦ Signature awakening: Purr-cererFragments 0 / 5★✓Choose a matching heroChoose a matching heroZen MasterPurr-cererBallin’ RoosterPepe KingEquipped: Purr-cererUnequipOrange · Legendary · 🧙 MagicBlazing Dunk BallBase damage +58%Base damage +58%. Each basic hit deals 40% fire splash within 0.85 tiles. Ballin Rooster awakening: flame ball bounces 12 times instead of 8.✦ Signature awakening: Ballin’ RoosterFragments 0 / 5★✓Choose a matching heroChoose a matching heroZen MasterPurr-cererBallin’ RoosterPepe KingEquipped: Ballin’ RoosterUnequipOrange · Legendary · 🧙 MagicPepe MegaphoneBase damage +58%Base damage +58%. Damage +35% against slowed or poisoned enemies. Pepe King awakening: sound waves last 6s and reduce armor to zero.✦ Signature awakening: Pepe KingFragments 0 / 5★✓Choose a matching heroChoose a matching heroZen MasterPurr-cererBallin’ RoosterPepe KingEquipped: Pepe KingUnequipRecycle surplus fragmentsKeeps the unlock threshold; recycles only surplus fragments of unlocked weapons.White · Common+8 coins eachGreen · Rare+15 coins eachBlue · Superior+30 coins eachPurple · Epic+60 coins eachOrange · Legendary+120 coins eachRecycle surplus fragments",
+      "headings": [
+        {
+          "x": 93.3125,
+          "y": 43.40625,
+          "width": 457.015625,
+          "height": 24,
+          "top": 43.40625,
+          "right": 550.328125,
+          "bottom": 67.40625,
+          "left": 93.3125
+        },
+        {
+          "x": 0,
+          "y": 0,
+          "width": 0,
+          "height": 0,
+          "top": 0,
+          "right": 0,
+          "bottom": 0,
+          "left": 0
+        }
+      ]
+    },
+    {
+      "label": {},
+      "viewport": {
+        "w": 844,
+        "h": 390
+      },
+      "dialog": {
+        "x": 25.3125,
+        "y": 23.40625,
+        "width": 793.359375,
+        "height": 343.1875,
+        "top": 23.40625,
+        "right": 818.671875,
+        "bottom": 366.59375,
+        "left": 25.3125
+      },
+      "header": {
+        "x": 29.3125,
+        "y": 27.40625,
+        "width": 785.359375,
+        "height": 59,
+        "top": 27.40625,
+        "right": 814.671875,
+        "bottom": 86.40625,
+        "left": 29.3125
+      },
+      "tabs": {
+        "x": 29.3125,
+        "y": 86.40625,
+        "width": 785.359375,
+        "height": 38,
+        "top": 86.40625,
+        "right": 814.671875,
+        "bottom": 124.40625,
+        "left": 29.3125
+      },
+      "body": {
+        "x": 29.3125,
+        "y": 124.40625,
+        "width": 785.359375,
+        "height": 238.1875,
+        "top": 124.40625,
+        "right": 814.671875,
+        "bottom": 362.59375,
+        "left": 29.3125
+      },
+      "clip": [
+        {
+          "name": "ledger-body",
+          "w": 785,
+          "sw": 785,
+          "h": 238,
+          "sh": 240
+        },
+        {
+          "name": "market-stall",
+          "w": 416,
+          "sw": 416,
+          "h": 212,
+          "sh": 629
+        },
+        {
+          "name": "market-backpack",
+          "w": 331,
+          "sw": 331,
+          "h": 212,
+          "sh": 720
+        }
+      ],
+      "text": "浣熊黑市 & 扭蛋挑点好东西，带上伙伴去守护99993中EN×神兵锻造坊浣熊黑市 & 扭蛋道具货架九宫格扭蛋浣熊的小摊 · 今日好物刷新 · 20 金币滚筒洗衣机⚡ 主动 · 等级 0 / 1对英雄组件或 1 级基础宠使用，旋转 3 秒后变成新的随机英雄组件。购买 · 90 金币神秘猫薄荷⚡ 主动 · 等级 0 / 1己方全场单位攻速 +45%，持续 8 秒。购买 · 110 金币盲盒特训哨⚡ 主动 · 等级 0 / 1己方单位 65% 概率升 1 级，35% 概率降 1 级，最低 1 级。购买 · 80 金币随身出战挂板主动 · 2成长奶瓶强力粘鼠板被动 · 6黄金寻宝犬自动发铲机果盘加量断电干扰器金牌训宠证望远镜猫爬架配装在下一局生效已拥有道具 · 点击装卸 成长奶瓶主动 · 等级 1 / 1卸下 强力粘鼠板主动 · 等级 1 / 1卸下 黄金寻宝犬被动 · 等级 1 / 1卸下 自动发铲机被动 · 等级 1 / 1卸下 果盘加量被动 · 等级 1 / 1卸下 断电干扰器被动 · 等级 1 / 1卸下 金牌训宠证被动 · 等级 3 / 3卸下 望远镜猫爬架被动 · 等级 1 / 1卸下",
+      "headings": [
+        {
+          "x": 93.3125,
+          "y": 43.40625,
+          "width": 457.1875,
+          "height": 24,
+          "top": 43.40625,
+          "right": 550.5,
+          "bottom": 67.40625,
+          "left": 93.3125
+        },
+        {
+          "x": 0,
+          "y": 0,
+          "width": 0,
+          "height": 0,
+          "top": 0,
+          "right": 0,
+          "bottom": 0,
+          "left": 0
+        }
+      ]
+    },
+    {
+      "label": {},
+      "viewport": {
+        "w": 844,
+        "h": 390
+      },
+      "dialog": {
+        "x": 25.3125,
+        "y": 23.40625,
+        "width": 793.359375,
+        "height": 343.1875,
+        "top": 23.40625,
+        "right": 818.671875,
+        "bottom": 366.59375,
+        "left": 25.3125
+      },
+      "header": {
+        "x": 29.3125,
+        "y": 27.40625,
+        "width": 785.359375,
+        "height": 59,
+        "top": 27.40625,
+        "right": 814.671875,
+        "bottom": 86.40625,
+        "left": 29.3125
+      },
+      "tabs": {
+        "x": 29.3125,
+        "y": 86.40625,
+        "width": 785.359375,
+        "height": 38,
+        "top": 86.40625,
+        "right": 814.671875,
+        "bottom": 124.40625,
+        "left": 29.3125
+      },
+      "body": {
+        "x": 29.3125,
+        "y": 124.40625,
+        "width": 785.359375,
+        "height": 238.1875,
+        "top": 124.40625,
+        "right": 814.671875,
+        "bottom": 362.59375,
+        "left": 29.3125
+      },
+      "clip": [
+        {
+          "name": "ledger-body",
+          "w": 785,
+          "sw": 785,
+          "h": 238,
+          "sh": 240
+        },
+        {
+          "name": "market-stall",
+          "w": 416,
+          "sw": 416,
+          "h": 212,
+          "sh": 676
+        },
+        {
+          "name": "market-backpack",
+          "w": 331,
+          "sw": 331,
+          "h": 212,
+          "sh": 697
+        }
+      ],
+      "text": "Raccoon Market & GachaPack a little luck for your next defense99993ZHEN×Weapon WorkshopRaccoon Market & GachaShopLotteryRaccoon’s stall · Today’s findsRefresh · 20 coinsSpin Washer⚡ Active · Level 0 / 1Wash a hero component or level 1 basic pet for 3s into a new random hero component.Buy · 90 coinsMystery Catnip⚡ Active · Level 0 / 1All allied units gain +45% attack speed for 8s.Buy · 110 coinsMystery Training Whistle⚡ Active · Level 0 / 1An allied unit has a 65% chance to gain 1 level and a 35% chance to lose 1 level, minimum level 1.Buy · 80 coinsReady-to-go loadoutActive · 2Growth BottleSuper Glue TrapPassive · 6Golden Treasure DogeAuto Shovel DispenserExtra Fruit PlatterEMP JammerGold Trainer Badge+EmptyLoadout applies next battleOwned props · Tap to equip or remove Growth BottleActive · Level 1 / 1Unequip Super Glue TrapActive · Level 1 / 1Unequip Golden Treasure DogePassive · Level 1 / 1Unequip Auto Shovel DispenserPassive · Level 1 / 1Unequip Extra Fruit PlatterPassive · Level 1 / 1Unequip EMP JammerPassive · Level 1 / 1Unequip Gold Trainer BadgePassive · Level 3 / 3Unequip Telescope Cat PerchPassive · Level 1 / 1Equip",
+      "headings": [
+        {
+          "x": 93.3125,
+          "y": 43.40625,
+          "width": 457.015625,
+          "height": 24,
+          "top": 43.40625,
+          "right": 550.328125,
+          "bottom": 67.40625,
+          "left": 93.3125
+        },
+        {
+          "x": 0,
+          "y": 0,
+          "width": 0,
+          "height": 0,
+          "top": 0,
+          "right": 0,
+          "bottom": 0,
+          "left": 0
+        }
+      ]
+    },
+    {
+      "label": {},
+      "viewport": {
+        "w": 844,
+        "h": 390
+      },
+      "dialog": {
+        "x": 25.3125,
+        "y": 23.40625,
+        "width": 793.359375,
+        "height": 343.1875,
+        "top": 23.40625,
+        "right": 818.671875,
+        "bottom": 366.59375,
+        "left": 25.3125
+      },
+      "header": {
+        "x": 29.3125,
+        "y": 27.40625,
+        "width": 785.359375,
+        "height": 59,
+        "top": 27.40625,
+        "right": 814.671875,
+        "bottom": 86.40625,
+        "left": 29.3125
+      },
+      "tabs": {
+        "x": 29.3125,
+        "y": 86.40625,
+        "width": 785.359375,
+        "height": 38,
+        "top": 86.40625,
+        "right": 814.671875,
+        "bottom": 124.40625,
+        "left": 29.3125
+      },
+      "body": {
+        "x": 29.3125,
+        "y": 124.40625,
+        "width": 785.359375,
+        "height": 238.1875,
+        "top": 124.40625,
+        "right": 814.671875,
+        "bottom": 362.59375,
+        "left": 29.3125
+      },
+      "clip": [
+        {
+          "name": "ledger-body",
+          "w": 785,
+          "sw": 785,
+          "h": 238,
+          "sh": 240
+        },
+        {
+          "name": "market-stall",
+          "w": 416,
+          "sw": 416,
+          "h": 212,
+          "sh": 349
+        },
+        {
+          "name": "market-backpack",
+          "w": 331,
+          "sw": 331,
+          "h": 212,
+          "sh": 720
+        }
+      ],
+      "text": "浣熊黑市 & 扭蛋挑点好东西，带上伙伴去守护99993中EN×神兵锻造坊浣熊黑市 & 扭蛋道具货架九宫格扭蛋幸运九宫格 · 转出小惊喜VIP招宠海报 ×1望远镜猫爬架 ×1香蕉皮小径 ×1黑洞吸尘器碎片 ×1扭一次1优先免费券，否则 60 金币金币 ×40带刺榴莲锤碎片 ×1金币 ×160金币 ×80优先使用免费券；没有券消耗 60 金币。已满级道具自动换成等价金币。随身出战挂板主动 · 2成长奶瓶强力粘鼠板被动 · 6黄金寻宝犬自动发铲机果盘加量断电干扰器金牌训宠证+空槽配装在下一局生效已拥有道具 · 点击装卸 成长奶瓶主动 · 等级 1 / 1卸下 强力粘鼠板主动 · 等级 1 / 1卸下 黄金寻宝犬被动 · 等级 1 / 1卸下 自动发铲机被动 · 等级 1 / 1卸下 果盘加量被动 · 等级 1 / 1卸下 断电干扰器被动 · 等级 1 / 1卸下 金牌训宠证被动 · 等级 3 / 3卸下 望远镜猫爬架被动 · 等级 1 / 1穿戴",
+      "headings": [
+        {
+          "x": 93.3125,
+          "y": 43.40625,
+          "width": 457.1875,
+          "height": 24,
+          "top": 43.40625,
+          "right": 550.5,
+          "bottom": 67.40625,
+          "left": 93.3125
+        },
+        {
+          "x": 0,
+          "y": 0,
+          "width": 0,
+          "height": 0,
+          "top": 0,
+          "right": 0,
+          "bottom": 0,
+          "left": 0
+        }
+      ]
+    },
+    {
+      "label": {},
+      "viewport": {
+        "w": 844,
+        "h": 390
+      },
+      "dialog": {
+        "x": 25.3125,
+        "y": 23.40625,
+        "width": 793.359375,
+        "height": 343.1875,
+        "top": 23.40625,
+        "right": 818.671875,
+        "bottom": 366.59375,
+        "left": 25.3125
+      },
+      "header": {
+        "x": 29.3125,
+        "y": 27.40625,
+        "width": 785.359375,
+        "height": 59,
+        "top": 27.40625,
+        "right": 814.671875,
+        "bottom": 86.40625,
+        "left": 29.3125
+      },
+      "tabs": {
+        "x": 29.3125,
+        "y": 86.40625,
+        "width": 785.359375,
+        "height": 38,
+        "top": 86.40625,
+        "right": 814.671875,
+        "bottom": 124.40625,
+        "left": 29.3125
+      },
+      "body": {
+        "x": 29.3125,
+        "y": 124.40625,
+        "width": 785.359375,
+        "height": 238.1875,
+        "top": 124.40625,
+        "right": 814.671875,
+        "bottom": 362.59375,
+        "left": 29.3125
+      },
+      "clip": [
+        {
+          "name": "ledger-body",
+          "w": 785,
+          "sw": 785,
+          "h": 238,
+          "sh": 240
+        },
+        {
+          "name": "market-stall",
+          "w": 416,
+          "sw": 416,
+          "h": 212,
+          "sh": 467
+        },
+        {
+          "name": "market-backpack",
+          "w": 331,
+          "sw": 331,
+          "h": 212,
+          "sh": 697
+        }
+      ],
+      "text": "Raccoon Market & GachaPack a little luck for your next defense99992ZHEN×Weapon WorkshopRaccoon Market & GachaShopLotteryLucky nine · A little surpriseVIP Pet Poster ×1Telescope Cat Perch ×1Banana Peel Path ×1Cosmic Vacuum fragment ×1Spin once1Free ticket first, otherwise 60 coinsCoins ×40Spiky Durian fragment ×1Coins ×160Coins ×80Free tickets are used first; without a ticket, a spin costs 60 coins. Maxed props automatically convert to their coin price.You wonSpiky Durian fragment ×1Ready-to-go loadoutActive · 2Growth BottleSuper Glue TrapPassive · 6Golden Treasure DogeAuto Shovel DispenserExtra Fruit PlatterEMP JammerGold Trainer Badge+EmptyLoadout applies next battleOwned props · Tap to equip or remove Growth BottleActive · Level 1 / 1Unequip Super Glue TrapActive · Level 1 / 1Unequip Golden Treasure DogePassive · Level 1 / 1Unequip Auto Shovel DispenserPassive · Level 1 / 1Unequip Extra Fruit PlatterPassive · Level 1 / 1Unequip EMP JammerPassive · Level 1 / 1Unequip Gold Trainer BadgePassive · Level 3 / 3Unequip Telescope Cat PerchPassive · Level 1 / 1Equip",
+      "headings": [
+        {
+          "x": 93.3125,
+          "y": 43.40625,
+          "width": 457.015625,
+          "height": 24,
+          "top": 43.40625,
+          "right": 550.328125,
+          "bottom": 67.40625,
+          "left": 93.3125
+        },
+        {
+          "x": 0,
+          "y": 0,
+          "width": 0,
+          "height": 0,
+          "top": 0,
+          "right": 0,
+          "bottom": 0,
+          "left": 0
+        }
+      ]
+    },
+    {
+      "label": {},
+      "viewport": {
+        "w": 844,
+        "h": 390
+      },
+      "dialog": {
+        "x": 25.3125,
+        "y": 23.40625,
+        "width": 793.359375,
+        "height": 343.1875,
+        "top": 23.40625,
+        "right": 818.671875,
+        "bottom": 366.59375,
+        "left": 25.3125
+      },
+      "header": {
+        "x": 29.3125,
+        "y": 27.40625,
+        "width": 785.359375,
+        "height": 59,
+        "top": 27.40625,
+        "right": 814.671875,
+        "bottom": 86.40625,
+        "left": 29.3125
+      },
+      "tabs": {
+        "x": 29.3125,
+        "y": 86.40625,
+        "width": 785.359375,
+        "height": 38,
+        "top": 86.40625,
+        "right": 814.671875,
+        "bottom": 124.40625,
+        "left": 29.3125
+      },
+      "body": {
+        "x": 29.3125,
+        "y": 124.40625,
+        "width": 785.359375,
+        "height": 238.1875,
+        "top": 124.40625,
+        "right": 814.671875,
+        "bottom": 362.59375,
+        "left": 29.3125
+      },
+      "clip": [
+        {
+          "name": "ledger-body",
+          "w": 785,
+          "sw": 785,
+          "h": 238,
+          "sh": 1669
+        }
+      ],
+      "text": "温泉风云榜铲屎官们，今天也要稳稳守住！180×6.2中EN×守护者名片温泉风云榜温泉小设置第 53 段水豚真神★ 180 颗星已达最高段位当前怪物强度 · 水豚真神♥ HP ×6.2➜ 移速 +28%🐾 每波 +13双 Boss：6 / 8 / 9 / 10 波护甲 +10% · 首领技能间隔 -25% · 第 3 波先锋首领升段后兽潮更密集、血厚甲坚；高段位还会出现双 Boss！本地榜样与我的即时排名🥈情绪稳定祖师爷水豚真神137 胜 / 163 场 · 胜率 84% 168🥇我水豚真神41 胜 / 50 场 · 胜率 82%👈 我在这里 180🥉后院退休园长水豚真神121 胜 / 148 场 · 胜率 82% 1504竹林扫地僧水豚真神106 胜 / 131 场 · 胜率 81% 1305孤寡不孤单水豚真神91 胜 / 116 场 · 胜率 78% 1106黑市常客森林君王 IV79 胜 / 103 场 · 胜率 77% 967皇冠小短腿后院霸主 III69 胜 / 92 场 · 胜率 75% 848篮球练习生皇家园长 II60 胜 / 81 场 · 胜率 74% 729熊猫不熬夜萌宠统帅 I51 胜 / 70 场 · 胜率 73% 6010鹅村扛把子训宠宗师 I42 胜 / 60 场 · 胜率 70% 5011厨房摸鱼王宠物营养师 I35 胜 / 51 场 · 胜率 69% 4012温泉泡泡糖温泉馆主 II28 胜 / 42 场 · 胜率 67% 3213猫咖打工喵猫咖店长 III21 胜 / 33 场 · 胜率 64% 2414早八遛狗人溜狗达人 V16 胜 / 25 场 · 胜率 64% 1815瓜子不离手溜狗达人 II11 胜 / 19 场 · 胜率 58% 1216隔壁二哈主人见习铲屎官 IV6 胜 / 12 场 · 胜率 50% 6",
+      "headings": [
+        {
+          "x": 93.3125,
+          "y": 43.40625,
+          "width": 444.796875,
+          "height": 24,
+          "top": 43.40625,
+          "right": 538.109375,
+          "bottom": 67.40625,
+          "left": 93.3125
+        },
+        {
+          "x": 0,
+          "y": 0,
+          "width": 0,
+          "height": 0,
+          "top": 0,
+          "right": 0,
+          "bottom": 0,
+          "left": 0
+        }
+      ]
+    },
+    {
+      "label": {},
+      "viewport": {
+        "w": 844,
+        "h": 390
+      },
+      "dialog": {
+        "x": 25.3125,
+        "y": 23.40625,
+        "width": 793.359375,
+        "height": 343.1875,
+        "top": 23.40625,
+        "right": 818.671875,
+        "bottom": 366.59375,
+        "left": 25.3125
+      },
+      "header": {
+        "x": 29.3125,
+        "y": 27.40625,
+        "width": 785.359375,
+        "height": 59,
+        "top": 27.40625,
+        "right": 814.671875,
+        "bottom": 86.40625,
+        "left": 29.3125
+      },
+      "tabs": {
+        "x": 29.3125,
+        "y": 86.40625,
+        "width": 785.359375,
+        "height": 38,
+        "top": 86.40625,
+        "right": 814.671875,
+        "bottom": 124.40625,
+        "left": 29.3125
+      },
+      "body": {
+        "x": 29.3125,
+        "y": 124.40625,
+        "width": 785.359375,
+        "height": 238.1875,
+        "top": 124.40625,
+        "right": 814.671875,
+        "bottom": 362.59375,
+        "left": 29.3125
+      },
+      "clip": [
+        {
+          "name": "ledger-body",
+          "w": 785,
+          "sw": 785,
+          "h": 238,
+          "sh": 1642
+        }
+      ],
+      "text": "Onsen Hall of FameA friendly league of steadfast keepers180×6.2ZHEN×Keeper PassportOnsen Hall of FameCozy SettingsRank 53Capybara God★ 180 starsHighest rank reachedCurrent enemy strength · Capybara God♥ HP ×6.2➜ Speed +28%🐾 +13 / waveDouble Boss: waves 6 / 8 / 9 / 10Armor +10% · Boss skill interval -25% · Wave 3 vanguard BossHigher ranks bring denser, tougher waves and eventually two Bosses at once!Local keepers and your live ranking🥈Grandmaster of CalmCapybara God137 wins / 163 matches · 84% win rate 168🥇YouCapybara God41 wins / 50 matches · 82% win rate👈 You are here 180🥉Retired Garden WardenCapybara God121 wins / 148 matches · 82% win rate 1504Bamboo SweeperCapybara God106 wins / 131 matches · 81% win rate 1305Never Lonely FrogCapybara God91 wins / 116 matches · 78% win rate 1106Market RegularForest Monarch IV79 wins / 103 matches · 77% win rate 967Crowned Short LegsBackyard Overlord III69 wins / 92 matches · 75% win rate 848Basketball TraineeRoyal Warden II60 wins / 81 matches · 74% win rate 729Early Bedtime PandaCritter Marshal I51 wins / 70 matches · 73% win rate 6010Village Goose BossPet Grandmaster I42 wins / 60 matches · 70% win rate 5011Kitchen DaydreamerChef Keeper I35 wins / 51 matches · 69% win rate 4012Onsen BubblegumOnsen Master II28 wins / 42 matches · 67% win rate 3213Cafe Cat KeeperCat Cafe Boss III21 wins / 33 matches · 64% win rate 2414Morning Dog WalkerDog Walker V16 wins / 25 matches · 64% win rate 1815Seed Snack CaptainDog Walker II11 wins / 19 matches · 58% win rate 1216The Husky Next DoorRookie Keeper IV6 wins / 12 matches · 50% win rate 6",
+      "headings": [
+        {
+          "x": 93.3125,
+          "y": 43.40625,
+          "width": 444.625,
+          "height": 24,
+          "top": 43.40625,
+          "right": 537.9375,
+          "bottom": 67.40625,
+          "left": 93.3125
+        },
+        {
+          "x": 0,
+          "y": 0,
+          "width": 0,
+          "height": 0,
+          "top": 0,
+          "right": 0,
+          "bottom": 0,
+          "left": 0
+        }
+      ]
+    },
+    {
+      "label": {},
+      "viewport": {
+        "w": 844,
+        "h": 390
+      },
+      "dialog": {
+        "x": 25.3125,
+        "y": 23.40625,
+        "width": 793.359375,
+        "height": 343.1875,
+        "top": 23.40625,
+        "right": 818.671875,
+        "bottom": 366.59375,
+        "left": 25.3125
+      },
+      "header": {
+        "x": 29.3125,
+        "y": 27.40625,
+        "width": 785.359375,
+        "height": 59,
+        "top": 27.40625,
+        "right": 814.671875,
+        "bottom": 86.40625,
+        "left": 29.3125
+      },
+      "tabs": {
+        "x": 29.3125,
+        "y": 86.40625,
+        "width": 785.359375,
+        "height": 38,
+        "top": 86.40625,
+        "right": 814.671875,
+        "bottom": 124.40625,
+        "left": 29.3125
+      },
+      "body": {
+        "x": 29.3125,
+        "y": 124.40625,
+        "width": 785.359375,
+        "height": 238.1875,
+        "top": 124.40625,
+        "right": 814.671875,
+        "bottom": 362.59375,
+        "left": 29.3125
+      },
+      "clip": [
+        {
+          "name": "ledger-body",
+          "w": 785,
+          "sw": 785,
+          "h": 238,
+          "sh": 1231
+        }
+      ],
+      "text": "守护者名片您的温泉守护手账180×6.2中EN×守护者名片温泉风云榜温泉小设置温泉守护者通行证第 53 段水豚真神★ 180 颗星已达最高段位守护胜率82%41 胜 / 50 场 · 胜率 82%当前 / 最高连胜4 / 9图鉴收藏英雄 2/12 · 神兵 36/36当前怪物强度 · 水豚真神♥ HP ×6.2➜ 移速 +28%🐾 每波 +13双 Boss：6 / 8 / 9 / 10 波挑一枚头像火漆章泡澡本豚初始免费头像。💮 当前头像瓜子仓鼠初始免费头像。已解锁 · 点击佩戴松果松鼠初始免费头像。已解锁 · 点击佩戴勤劳蜜蜂初始免费头像。已解锁 · 点击佩戴橘猫剑客赢得第 1 场胜利。已解锁 · 点击佩戴墨镜旺财达成 3 连胜。已解锁 · 点击佩戴叼刀恶霸鹅达成 5 连胜。已解锁 · 点击佩戴功夫滚滚合成过功夫阿宝。已解锁 · 点击佩戴篮球鸡神合成过铁山靠鸡神。已解锁 · 点击佩戴皇冠蛙王合成过孤寡蛙王。已解锁 · 点击佩戴黑市浣熊拥有 6 种不同道具。已解锁 · 点击佩戴尚方咸鱼解锁 12 把不同神兵。已解锁 · 点击佩戴神竹宗师拥有任意 1 把橙品神兵。已解锁 · 点击佩戴樱花水豚达到猫咖店长（段位 10）。已解锁 · 点击佩戴黄金柯基达到萌宠统帅（段位 30）。已解锁 · 点击佩戴佛系真神豚达到水豚真神（段位 50）。已解锁 · 点击佩戴",
+      "headings": [
+        {
+          "x": 93.3125,
+          "y": 43.40625,
+          "width": 444.796875,
+          "height": 24,
+          "top": 43.40625,
+          "right": 538.109375,
+          "bottom": 67.40625,
+          "left": 93.3125
+        },
+        {
+          "x": 0,
+          "y": 0,
+          "width": 0,
+          "height": 0,
+          "top": 0,
+          "right": 0,
+          "bottom": 0,
+          "left": 0
+        }
+      ]
+    },
+    {
+      "label": {},
+      "viewport": {
+        "w": 844,
+        "h": 390
+      },
+      "dialog": {
+        "x": 25.3125,
+        "y": 23.40625,
+        "width": 793.359375,
+        "height": 343.1875,
+        "top": 23.40625,
+        "right": 818.671875,
+        "bottom": 366.59375,
+        "left": 25.3125
+      },
+      "header": {
+        "x": 29.3125,
+        "y": 27.40625,
+        "width": 785.359375,
+        "height": 59,
+        "top": 27.40625,
+        "right": 814.671875,
+        "bottom": 86.40625,
+        "left": 29.3125
+      },
+      "tabs": {
+        "x": 29.3125,
+        "y": 86.40625,
+        "width": 785.359375,
+        "height": 38,
+        "top": 86.40625,
+        "right": 814.671875,
+        "bottom": 124.40625,
+        "left": 29.3125
+      },
+      "body": {
+        "x": 29.3125,
+        "y": 124.40625,
+        "width": 785.359375,
+        "height": 238.1875,
+        "top": 124.40625,
+        "right": 814.671875,
+        "bottom": 362.59375,
+        "left": 29.3125
+      },
+      "clip": [
+        {
+          "name": "ledger-body",
+          "w": 785,
+          "sw": 785,
+          "h": 238,
+          "sh": 1290
+        }
+      ],
+      "text": "Keeper PassportYour personal keeper notebook180×6.2ZHEN×Keeper PassportOnsen Hall of FameCozy SettingsONSEN KEEPER PASSRank 53Capybara God★ 180 starsHighest rank reachedDefense win rate82%41 wins / 50 matches · 82% win rateCurrent / best streak4 / 9Field collectionHeroes 2/12 · Weapons 36/36Current enemy strength · Capybara God♥ HP ×6.2➜ Speed +28%🐾 +13 / waveDouble Boss: waves 6 / 8 / 9 / 10Choose an avatar sealBathing CapybaraAvailable from the start.💮 Current avatarSeed HamsterAvailable from the start.Unlocked · select to equipAcorn SquirrelAvailable from the start.Unlocked · select to equipWorker BeeAvailable from the start.Unlocked · select to equipOrange Cat SwordsmanWin your first battle.Unlocked · select to equipDoge AgentReach a streak of 3 wins.Unlocked · select to equipKnife Goose BullyReach a streak of 5 wins.Unlocked · select to equipKung Fu PandaMerge Kung-Fu Po at least once.Unlocked · select to equipBasketball RoosterMerge Ballin’ Rooster at least once.Unlocked · select to equipCrowned Frog KingMerge Pepe King at least once.Unlocked · select to equipMarket RaccoonOwn 6 different props.Unlocked · select to equipSalted ExcaliburUnlock 12 different weapons.Unlocked · select to equipBamboo GrandmasterOwn at least 1 orange weapon.Unlocked · select to equipSakura CapybaraReach Cat Cafe Boss (rank 10).Unlocked · select to equipGolden CorgiReach Critter Marshal (rank 30).Unlocked · select to equipZen Capybara GodReach Capybara God (rank 50).Unlocked · select to equip",
+      "headings": [
+        {
+          "x": 93.3125,
+          "y": 43.40625,
+          "width": 444.625,
+          "height": 24,
+          "top": 43.40625,
+          "right": 537.9375,
+          "bottom": 67.40625,
+          "left": 93.3125
+        },
+        {
+          "x": 0,
+          "y": 0,
+          "width": 0,
+          "height": 0,
+          "top": 0,
+          "right": 0,
+          "bottom": 0,
+          "left": 0
+        }
+      ]
+    },
+    {
+      "label": {},
+      "viewport": {
+        "w": 844,
+        "h": 390
+      },
+      "dialog": {
+        "x": 42,
+        "y": 23.40625,
+        "width": 760,
+        "height": 343.1875,
+        "top": 23.40625,
+        "right": 802,
+        "bottom": 366.59375,
+        "left": 42
+      },
+      "header": {
+        "x": 46,
+        "y": 27.40625,
+        "width": 752,
+        "height": 59,
+        "top": 27.40625,
+        "right": 798,
+        "bottom": 86.40625,
+        "left": 46
+      },
+      "tabs": {
+        "x": 46,
+        "y": 86.40625,
+        "width": 752,
+        "height": 38,
+        "top": 86.40625,
+        "right": 798,
+        "bottom": 124.40625,
+        "left": 46
+      },
+      "body": {
+        "x": 46,
+        "y": 124.40625,
+        "width": 752,
+        "height": 238.1875,
+        "top": 124.40625,
+        "right": 798,
+        "bottom": 362.59375,
+        "left": 46
+      },
+      "clip": [
+        {
+          "name": "ledger-body",
+          "w": 752,
+          "sw": 752,
+          "h": 238,
+          "sh": 499
+        }
+      ],
+      "text": "温泉小设置调到最舒服的节奏，再慢慢玩中EN×守护者名片温泉风云榜温泉小设置背景音乐 50%游戏音效 75%显示伤害数字让每一次命中的数字浮出来开发者沙盒面板显示后院测试台与调试工具中EN📖 重新体验新手引导重新开一局，用固定教学包慢慢学；首次完成送 20 金币。设置即时保存并生效",
+      "headings": [
+        {
+          "x": 110,
+          "y": 43.40625,
+          "width": 545.921875,
+          "height": 24,
+          "top": 43.40625,
+          "right": 655.921875,
+          "bottom": 67.40625,
+          "left": 110
+        },
+        {
+          "x": 0,
+          "y": 0,
+          "width": 0,
+          "height": 0,
+          "top": 0,
+          "right": 0,
+          "bottom": 0,
+          "left": 0
+        }
+      ]
+    },
+    {
+      "label": {},
+      "viewport": {
+        "w": 844,
+        "h": 390
+      },
+      "dialog": {
+        "x": 42,
+        "y": 23.40625,
+        "width": 760,
+        "height": 343.1875,
+        "top": 23.40625,
+        "right": 802,
+        "bottom": 366.59375,
+        "left": 42
+      },
+      "header": {
+        "x": 46,
+        "y": 27.40625,
+        "width": 752,
+        "height": 59,
+        "top": 27.40625,
+        "right": 798,
+        "bottom": 86.40625,
+        "left": 46
+      },
+      "tabs": {
+        "x": 46,
+        "y": 86.40625,
+        "width": 752,
+        "height": 38,
+        "top": 86.40625,
+        "right": 798,
+        "bottom": 124.40625,
+        "left": 46
+      },
+      "body": {
+        "x": 46,
+        "y": 124.40625,
+        "width": 752,
+        "height": 238.1875,
+        "top": 124.40625,
+        "right": 798,
+        "bottom": 362.59375,
+        "left": 46
+      },
+      "clip": [
+        {
+          "name": "ledger-body",
+          "w": 752,
+          "sw": 752,
+          "h": 238,
+          "sh": 496
+        }
+      ],
+      "text": "Cozy SettingsFind your rhythm and settle inZHEN×Keeper PassportOnsen Hall of FameCozy SettingsBackground music 50%Sound effects 75%Show damage numbersShow floating numbers when attacks hitDeveloper SandboxShow backyard tools and debugging controlsZHEN📖 Replay the tutorialStart a fresh guided battle with a fixed pack. Your first completion earns 20 coins.Settings save and apply immediately",
+      "headings": [
+        {
+          "x": 110,
+          "y": 43.40625,
+          "width": 545.75,
+          "height": 24,
+          "top": 43.40625,
+          "right": 655.75,
+          "bottom": 67.40625,
+          "left": 110
+        },
+        {
+          "x": 0,
+          "y": 0,
+          "width": 0,
+          "height": 0,
+          "top": 0,
+          "right": 0,
+          "bottom": 0,
+          "left": 0
+        }
+      ]
+    },
+    {
+      "label": "mobile-landscape-step1",
+      "bubble": {
+        "x": 319.0625,
+        "y": 167.90625,
+        "width": 256.53125,
+        "height": 127.96875,
+        "top": 167.90625,
+        "right": 575.59375,
+        "bottom": 295.875,
+        "left": 319.0625
+      },
+      "targets": [
+        {
+          "x": 497.8125,
+          "y": 330.390625,
+          "width": 134.328125,
+          "height": 49.828125,
+          "top": 330.390625,
+          "right": 632.140625,
+          "bottom": 380.21875,
+          "left": 497.8125
+        }
+      ],
+      "w": 844,
+      "h": 390,
+      "step": "1"
+    },
+    {
+      "label": "mobile-landscape-step2",
+      "bubble": {
+        "x": 319.0625,
+        "y": 167.90625,
+        "width": 256.53125,
+        "height": 127.96875,
+        "top": 167.90625,
+        "right": 575.59375,
+        "bottom": 295.875,
+        "left": 319.0625
+      },
+      "targets": [
+        {
+          "x": 281.15625,
+          "y": 95.328125,
+          "width": 56.328125,
+          "height": 56.328125,
+          "top": 95.328125,
+          "right": 337.484375,
+          "bottom": 151.65625,
+          "left": 281.15625
+        },
+        {
+          "x": 211.8125,
+          "y": 330.390625,
+          "width": 49.828125,
+          "height": 49.828125,
+          "top": 330.390625,
+          "right": 261.640625,
+          "bottom": 380.21875,
+          "left": 211.8125
+        }
+      ],
+      "w": 844,
+      "h": 390,
+      "step": "2"
+    },
+    {
+      "label": "mobile-landscape-step3",
+      "bubble": {
+        "x": 319.0625,
+        "y": 167.90625,
+        "width": 256.53125,
+        "height": 112.375,
+        "top": 167.90625,
+        "right": 575.59375,
+        "bottom": 280.28125,
+        "left": 319.0625
+      },
+      "targets": [
+        {
+          "x": 281.15625,
+          "y": 95.328125,
+          "width": 56.328125,
+          "height": 56.328125,
+          "top": 95.328125,
+          "right": 337.484375,
+          "bottom": 151.65625,
+          "left": 281.15625
+        },
+        {
+          "x": 268.15625,
+          "y": 330.390625,
+          "width": 49.828125,
+          "height": 49.828125,
+          "top": 330.390625,
+          "right": 317.984375,
+          "bottom": 380.21875,
+          "left": 268.15625
+        }
+      ],
+      "w": 844,
+      "h": 390,
+      "step": "3"
+    },
+    {
+      "label": "mobile-landscape-step4",
+      "bubble": {
+        "x": 319.0625,
+        "y": 167.90625,
+        "width": 256.53125,
+        "height": 154.484375,
+        "top": 167.90625,
+        "right": 575.59375,
+        "bottom": 322.390625,
+        "left": 319.0625
+      },
+      "targets": [
+        {
+          "x": 380.8125,
+          "y": 330.390625,
+          "width": 49.828125,
+          "height": 49.828125,
+          "top": 330.390625,
+          "right": 430.640625,
+          "bottom": 380.21875,
+          "left": 380.8125
+        },
+        {
+          "x": 324.484375,
+          "y": 330.390625,
+          "width": 49.828125,
+          "height": 49.828125,
+          "top": 330.390625,
+          "right": 374.3125,
+          "bottom": 380.21875,
+          "left": 324.484375
+        }
+      ],
+      "w": 844,
+      "h": 390,
+      "step": "4"
+    },
+    {
+      "label": "mobile-landscape-step5",
+      "bubble": {
+        "x": 319.0625,
+        "y": 167.90625,
+        "width": 256.53125,
+        "height": 153.96875,
+        "top": 167.90625,
+        "right": 575.59375,
+        "bottom": 321.875,
+        "left": 319.0625
+      },
+      "targets": [
+        {
+          "x": 584.546875,
+          "y": 6.484375,
+          "width": 55.484375,
+          "height": 24.90625,
+          "top": 6.484375,
+          "right": 640.03125,
+          "bottom": 31.390625,
+          "left": 584.546875
+        }
+      ],
+      "w": 844,
+      "h": 390,
+      "step": "5"
+    }
+  ],
+  "passed": true
+}

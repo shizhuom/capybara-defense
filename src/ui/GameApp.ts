@@ -1,4 +1,5 @@
 import { BattleEngine } from '../core/BattleEngine';
+import { MergeSystem } from '../core/MergeSystem';
 import type { BattleState, CommandResult, Interaction, MapId, Profile, Unit, UnitLocation } from '../core/types';
 import { UNITS, BEE_PRODUCTION, ECONOMY, getSummonCost, SHOVEL_PRODUCTION } from '../config/units';
 import { HEROES } from '../config/heroes';
@@ -17,6 +18,7 @@ import './m3.css';
 import './p1.css';
 import './p3-components.css';
 import './p3.css';
+import './p5.css';
 import { liveUnitCardMarkup } from './LiveUnitCard';
 import { getBeeProduction } from '../core/UnitStats';
 import { courtyardMarkup } from './CourtyardView';
@@ -51,6 +53,7 @@ export class GameApp {
   private liveStamp = '';
   private rotateDismissed = false;
   private tutorialPointerAction?: string;
+  private ledgerStamp='';
   private speed: 1 | 2 = 1;
   private selectedId?: number;
   private shovelSelected = false;
@@ -163,9 +166,10 @@ export class GameApp {
   start(): void {
     this.closeDialog(false);
     this.overlayReturn = null; this.modalReturn = null;
-    this.engine = new BattleEngine({ mapId: this.devMapOverride ?? resolveMap(this.profile), rankIndex: getRank(this.profile.stars).index, loadouts: { player: structuredClone(this.profile) } });
+    this.engine = new BattleEngine({ tutorialGuided: !this.profile.tutorialCompleted, mapId: this.devMapOverride ?? resolveMap(this.profile), rankIndex: getRank(this.profile.stars).index, loadouts: { player: structuredClone(this.profile) } });
     this.engine.start();
     this.tutorialStep = this.profile.tutorialCompleted ? 'done' : 1;
+    this.engine.setTutorialHold(this.tutorialStep!=='done');
     this.tutorialStamp = ''; this.bossStamp = '';
     this.speed = 1;
     this.completedId = '';
@@ -250,9 +254,9 @@ export class GameApp {
     const active = state?.phase === 'playing';
     if(this.assetsDirty && !this.drag && !this.propDrag) {
       this.assetsDirty=false; force=true;
-      this.quickStamp=''; this.battlePropsStamp=''; this.bossStamp='';
+      this.quickStamp=''; this.battlePropsStamp=''; this.bossStamp='';this.tutorialStamp='';
       this.root.querySelector('.brand-mark')!.innerHTML=sceneSticker('logo_capy',capyLogo,54);
-      const ids=['ui_fish_food','ui_bell_summon','ui_compendium_book','ui_shop_bag','orange','ui_trophy_rank','ui_map_sign'] as const;
+      const ids=['ui_fish_food','ui_bell_summon','ui_compendium_book','ui_shop_bag','orange','ui_trophy_rank','ui_map_sign','ui_header_compendium','ui_header_armory','ui_header_market','ui_header_rank','ui_header_profile','ui_header_settings','ui_tutorial_pointer','ui_tutorial_capy','ui_coin_gold','ui_star_rank','ui_ticket_gacha','ui_skull_threat'] as const;
       for(const id of ids)this.root.querySelectorAll<HTMLElement>(`#stage [data-sticker="${id}"]`).forEach(el=>{el.outerHTML=sceneSticker(id,'',Number(el.getAttribute('width'))||34);});
     }
     const developer = isDeveloperMode(location.search,this.profile.settings);
@@ -439,10 +443,12 @@ export class GameApp {
     const state=this.engine?.state, overlay=this.element('tutorial-overlay');
     overlay.hidden=!state||state.phase!=='playing'||this.tutorialStep==='done';
     if(overlay.hidden||!state)return;
-    const stamp=JSON.stringify([this.tutorialStep,getLanguage(),this.selectedId,state.grid,state.units.map(unit=>[unit.id,unit.kind,unit.level,unit.location])]);
+    const button=this.root.querySelector<HTMLElement>('#battle-hud [data-action="recipes"]')?.getBoundingClientRect(),bounds=this.canvas.getBoundingClientRect();
+    const guide=button&&bounds.width&&bounds.height?{x:(button.left-bounds.left)/bounds.width*STAGE.width,y:(button.top-bounds.top)/bounds.height*STAGE.height,w:button.width/bounds.width*STAGE.width,h:button.height/bounds.height*STAGE.height}:undefined;
+    const stamp=JSON.stringify([this.tutorialStep,getLanguage(),guide,this.selectedId,state.grid,state.units.map(unit=>[unit.id,unit.kind,unit.level,unit.location])]);
     if(stamp===this.tutorialStamp)return;
     this.tutorialStamp=stamp;
-    overlay.innerHTML=tutorialMarkup(this.tutorialStep,state,this.selectedId);
+    overlay.innerHTML=tutorialMarkup(this.tutorialStep,state,this.selectedId,guide);
   }
 
   private progressTutorial(action:TutorialAction):void {
@@ -452,6 +458,7 @@ export class GameApp {
       const result=finishTutorial(this.profile,action!=='skip');
       if(!this.persistProfile(result.profile))return;
       this.tutorialStep='done';this.tutorialStamp='';
+      this.engine?.setTutorialHold(false);
       this.notify(action==='skip'?'p1.tutorialSkipped':result.awarded?'p1.tutorialReward':'p1.tutorialDone');
     }else {this.tutorialStep=next;this.refresh();}
   }
@@ -544,6 +551,12 @@ export class GameApp {
 
   private renderDialog(): void {
     const kind = this.dialogKind;
+    const ledgerPage=!!kind&&['recipes','armory','market','profile','leaderboard','settings'].includes(kind);
+    const stamp=JSON.stringify([kind,kind==='recipes'?this.compendium.tab:kind==='market'?this.meta.tab:kind==='armory'?[this.meta.family,this.meta.orangeFirst]:null]);
+    const scrolls=['.ledger-body','.market-stall','.market-backpack'].map(selector=>({selector,top:stamp===this.ledgerStamp?this.dialog.querySelector<HTMLElement>(selector)?.scrollTop??0:0}));
+    this.ledgerStamp=stamp;
+    this.dialog.classList.toggle('ledger-dialog',ledgerPage);
+    this.dialog.classList.toggle('settings-dialog',kind==='settings');
     this.dialog.classList.toggle('recipe-dialog', kind === 'recipes');
     this.dialog.classList.toggle('meta-dialog', kind === 'armory' || kind === 'market');
     this.dialog.classList.toggle('profile-dialog', kind === 'profile' || kind === 'leaderboard');
@@ -557,22 +570,29 @@ export class GameApp {
     } else if (kind === 'pause' && this.engine) {
       this.dialog.innerHTML = `<div class="dialog-decoration" aria-hidden="true">♨</div><span class="eyebrow">${tr('pause.eyebrow')}</span><h2 id="dialog-title">${tr('pause.title')}</h2><p class="dialog-subtitle">${tr('pause.subtitle')}</p><h3>${tr('pause.loot')}</h3><div class="loot-columns"><section><h4>${tr('loot.you')}</h4>${this.lootMarkup(this.engine.state.sides.player.loot)}</section></div><p class="dialog-rule">${tr('pause.rule')}</p><button type="button" class="button button-teal" data-action="resume" autofocus>${tr('pause.keep')}</button><button type="button" class="text-button surrender-button" data-action="surrender">${tr('pause.surrender')}</button>`;
     } else if (kind === 'recipes') {
-      // The host owns the persistent modal controls; catalog content scrolls below.
-      this.dialog.innerHTML = this.compendium.markup(this.profile).replace(/<button[^>]*data-action="close-recipes"[^>]*>[\s\S]*?<\/button>/,'');
+      this.dialog.innerHTML = this.compendium.markup(this.profile);
     } else if (kind === 'result' && this.engine?.state.result) {
       const result = this.engine.state.result;
       const won = result.winner === 'player';
-      this.dialog.innerHTML = `<div class="result-sticker" aria-hidden="true">${won ? '🍊' : '☁'}</div><span class="eyebrow">${tr('result.time', { time: clock(result.elapsed) })}</span><h2 id="dialog-title">${tr(won ? 'result.win' : 'result.loss')}</h2><p class="dialog-subtitle">${tr(won ? 'result.winSub' : 'result.lossSub')}</p><p class="result-reason">${tr(`result.reason.${result.reason}`)}</p><div class="result-rewards"><span><b>+${won ? result.coins : 0}</b><small>${tr('profile.coins')}</small></span><span><b>+${won ? result.loot.length : 0}</b><small>${tr('profile.fragments')}</small></span></div><h3>${tr('result.pool')}</h3>${this.lootMarkup(result.loot)}<p class="save-note">${tr(this.savedResult ? 'result.awarded' : 'result.memory')}</p><button type="button" class="button button-teal" data-action="start" autofocus>${tr('result.again')}</button><button type="button" class="text-button back-menu" data-action="menu">${tr('result.menu')}</button>`;
+      this.dialog.innerHTML = `<div class="result-sticker" aria-hidden="true">${won ? '🍊' : '☁'}</div><span class="eyebrow">${tr('result.time', { time: clock(result.elapsed) })}</span><h2 id="dialog-title">${tr(won ? 'result.win' : 'result.loss')}</h2><p class="dialog-subtitle">${tr(won ? 'result.winSub' : 'result.lossSub')}</p><p class="result-reason">${tr(`result.reason.${result.reason}`)}</p><div class="result-rewards"><span>${sceneSticker('ui_coin_gold','',38)}<b>+${won ? result.coins : 0}</b><small>${tr('profile.coins')}</small></span><span><b>+${won ? result.loot.length : 0}</b><small>${tr('profile.fragments')}</small></span></div><h3>${tr('result.pool')}</h3>${this.lootMarkup(result.loot)}<p class="save-note">${tr(this.savedResult ? 'result.awarded' : 'result.memory')}</p><button type="button" class="button button-teal" data-action="start" autofocus>${tr('result.again')}</button><button type="button" class="text-button back-menu" data-action="menu">${tr('result.menu')}</button>`;
     }
     if (kind === 'pause') this.dialog.insertAdjacentHTML('beforeend', `<div class="meta-tabs"><button type="button" data-action="profile">${tr('m3.profile')}</button><button type="button" data-action="settings">${tr('m3.settings')}</button></div>`);
-    if (kind === 'result' && this.engine?.state.result?.winner === 'player') this.dialog.insertAdjacentHTML('beforeend', `<p class="ticket-reward">🎟 ${tr('m2.freeTicket')}</p>${this.newWeapons.length ? `<section class="unlock-reward"><h3>✦ ${tr('m2.newWeapons')}</h3>${this.newWeapons.map(id => `<p>${tr(`weapon.${id}`)}</p>`).join('')}</section>` : ''}`);
+    if (kind === 'result' && this.engine?.state.result?.winner === 'player') this.dialog.insertAdjacentHTML('beforeend', `<p class="ticket-reward">${sceneSticker('ui_ticket_gacha','',32)} ${tr('m2.freeTicket')}</p>${this.newWeapons.length ? `<section class="unlock-reward"><h3>✦ ${tr('m2.newWeapons')}</h3>${this.newWeapons.map(id => `<p>${tr(`weapon.${id}`)}</p>`).join('')}</section>` : ''}`);
     if (kind === 'result' && this.engine?.state.result) {
       const rank = getRank(this.profile.stars), won = this.engine.state.result.winner === 'player';
-      this.dialog.querySelector('.result-rewards')?.insertAdjacentHTML('afterend', `<section class="rank-result" role="status"><strong>${tr('m3.starChange', { change: this.resultStars > 0 ? `+${this.resultStars}` : this.resultStars, stars: this.profile.stars })}</strong>${this.savedResult && !won && this.resultStars === 0 ? `<p>${tr(this.previousRank < 10 ? 'm3.protected' : 'm3.floorProtected')}</p>` : ''}${won && this.resultStars > 1 ? `<p>${tr('m3.streakBonus')}</p>` : ''}${rank.index > this.previousRank ? `<h3>${tr('m3.promotion', { rank: t(`rank.${rank.index}`) })}</h3>` : ''}${this.newAvatars.length ? `<h3>${tr('m3.newAvatars')}</h3>${this.newAvatars.map(id => `<p>${tr(`avatar.${id}`)}</p>`).join('')}` : ''}</section>`);
+      this.dialog.querySelector('.result-rewards')?.insertAdjacentHTML('afterend', `<section class="rank-result" role="status">${sceneSticker('ui_star_rank','',32)}<strong>${tr('m3.starChange', { change: this.resultStars > 0 ? `+${this.resultStars}` : this.resultStars, stars: this.profile.stars })}</strong>${this.savedResult && !won && this.resultStars === 0 ? `<p>${tr(this.previousRank < 10 ? 'm3.protected' : 'm3.floorProtected')}</p>` : ''}${won && this.resultStars > 1 ? `<p>${tr('m3.streakBonus')}</p>` : ''}${rank.index > this.previousRank ? `<h3>${tr('m3.promotion', { rank: t(`rank.${rank.index}`) })}</h3>` : ''}${this.newAvatars.length ? `<h3>${tr('m3.newAvatars')}</h3>${this.newAvatars.map(id => `<p>${tr(`avatar.${id}`)}</p>`).join('')}` : ''}</section>`);
     }
-    if (kind) {
+    if (kind&&!ledgerPage) {
       const language=`<div class="language-switch dialog-language" role="group" aria-label="${tr('app.language')}"><button type="button" data-action="zh-CN" class="${getLanguage() === 'zh-CN' ? 'selected' : ''}" aria-pressed="${getLanguage() === 'zh-CN'}">中</button><button type="button" data-action="en" class="${getLanguage() === 'en' ? 'selected' : ''}" aria-pressed="${getLanguage() === 'en'}">EN</button></div>`;
       this.dialog.insertAdjacentHTML('afterbegin',kind==='recipes'?`<div class="compendium-toolbar">${language}<button type="button" class="compendium-close icon-button" data-action="close-recipes" aria-label="${tr('recipe.close')}">×</button></div>`:language);
+    }
+    for(const {selector,top} of scrolls){
+      const body=this.dialog.querySelector<HTMLElement>(selector);
+      if(body){
+        // Restore before another synchronous render reads it; smooth scrolling starts at zero.
+        const behavior=body.style.scrollBehavior;
+        body.style.scrollBehavior='auto';body.scrollTop=top;body.style.scrollBehavior=behavior;
+      }
     }
     this.focusCompendium();
   }
@@ -685,7 +705,7 @@ export class GameApp {
     if(result.ok){
       if(dug)this.progressTutorial('dig');
       if(result.key==='hint.deployed'&&this.engine?.state.units.some(unit=>unit.id===result.unitId&&unit.side==='player'&&unit.location.zone==='board'))this.progressTutorial('deploy');
-      if(result.key==='hint.merged'||result.key==='hint.fed')this.progressTutorial('merge');
+      if((result.key==='hint.merged'||result.key==='hint.fed')&&(this.tutorialStep!==4||this.engine?.state.units.some(unit=>unit.id===result.unitId&&!!HEROES[unit.kind])))this.progressTutorial('merge');
     }
   }
 
@@ -699,12 +719,14 @@ export class GameApp {
       : hit.kind === 'cell' && unit.location.zone === 'board' && unit.location.col === hit.col && unit.location.row === hit.row));
   }
 
-  private activate(hit: Hit): void {
+  private activate(hit: Hit, options:{dragged?:boolean;fromKeyboard?:boolean}={}): void {
     if (!this.canInteract() || !this.engine) return;
+    const tap=!options.dragged&&!options.fromKeyboard;
     if (this.selectedProp) {
       const prop = PROPS[this.selectedProp];
       const unit = this.unitAt(hit);
       const result = this.engine.useProp(this.selectedProp, prop.target === 'road' && hit.kind === 'cell' ? { col: hit.col, row: hit.row } : { unitId: unit?.id });
+      if(tap&&!result.ok&&['m2.invalidTarget','hint.toolOnly','hint.maxLevel'].includes(result.key)){this.clearSelection();this.refresh();return;}
       if (result.ok) this.selectedProp = undefined;
       this.apply(result); this.refresh(); return;
     }
@@ -717,6 +739,7 @@ export class GameApp {
       return;
     }
     if (this.shovelSelected) {
+      if(tap&&(hit.kind!=='cell'||!['G','B'].includes(this.engine.state.grid[hit.row]?.[hit.col]))){this.clearSelection();this.refresh();return;}
       if (hit.kind === 'cell') {
         this.apply(this.engine.dig(hit.col, hit.row));
         if (this.engine.state.sides.player.shovels === 0) this.shovelSelected = false;
@@ -725,6 +748,20 @@ export class GameApp {
       return;
     }
     const target = this.unitAt(hit);
+    const selected=this.engine.state.units.find(unit=>unit.id===this.selectedId);
+    if(tap&&selected){
+      if(target?.id===selected.id){this.clearSelection();this.refresh();return;}
+      if(target&&selected.kind!=='shovel'){
+        const outcome=MergeSystem.combine(selected,target);
+        if(!outcome.ok||!outcome.unit||outcome.swap){this.selectedId=target.id;this.refresh();return;}
+      }
+      if(!target){
+        const tile=hit.kind==='cell'?this.engine.state.grid[hit.row]?.[hit.col]:undefined;
+        if(selected.kind==='shovel'?hit.kind==='cell'&&!['G','B'].includes(tile!):selected.location.zone==='board'||hit.kind==='cell'&&tile!=='O'){
+          this.clearSelection();this.refresh();return;
+        }
+      }
+    }
     if (this.selectedId && target?.id !== this.selectedId) {
       const location: UnitLocation = hit.kind === 'bench' ? { zone: 'bench', slot: hit.slot } : { zone: 'board', col: hit.col, row: hit.row };
       this.apply(this.engine.move(this.selectedId, location));
@@ -755,6 +792,8 @@ export class GameApp {
       void this.sound.unlock().catch(() => undefined);
       const action=(event.target as HTMLElement).closest<HTMLElement>('[data-action]')?.dataset.action;
       this.tutorialPointerAction=action==='tutorial-ack'||action==='tutorial-skip'?action:undefined;
+      const target=event.target as HTMLElement;
+      if(!this.dialog.open&&!this.drag&&target!==this.canvas&&!target.closest('button,input,select,textarea,a,dialog,canvas,#live-unit-card,.tutorial-bubble,#dev-tools,[data-target]')){this.clearSelection();this.refresh();}
     }, { passive: true });
     this.root.addEventListener('keydown', () => { void this.sound.unlock().catch(() => undefined); });
     this.root.addEventListener('input', event => {
@@ -809,7 +848,7 @@ export class GameApp {
       const bounds = this.canvas.getBoundingClientRect();
       if (event.clientX >= bounds.left && event.clientX <= bounds.right && event.clientY >= bounds.top && event.clientY <= bounds.bottom && this.canInteract()) {
         if (PROPS[drag.id].target === 'self') { const result = this.engine!.useProp(drag.id); if (result.ok) this.selectedProp = undefined; this.apply(result); }
-        else if (hit) this.activate(hit);
+        else if (hit) this.activate(hit,{dragged:true});
       }
       this.refresh();
     });
@@ -821,7 +860,7 @@ export class GameApp {
       event.preventDefault();
       if (element.dataset.target) {
         const [kind, first, second] = element.dataset.target.split(':');
-        this.activate(kind === 'cell' ? { kind, col: Number(first), row: Number(second) } : kind === 'bench' ? { kind, slot: Number(first) } : { kind: 'shovel' });
+        this.activate(kind === 'cell' ? { kind, col: Number(first), row: Number(second) } : kind === 'bench' ? { kind, slot: Number(first) } : { kind: 'shovel' },{fromKeyboard:true});
         return;
       }
       const action=element.dataset.action!;
@@ -849,6 +888,7 @@ export class GameApp {
       this.drag.point = this.point(event);
       if ((this.drag.id || this.drag.shovel) && Math.hypot(this.drag.point.x - this.drag.start.x, this.drag.point.y - this.drag.start.y) > 9) {
         this.drag.moved = true;
+        this.selectedProp = undefined;
         this.selectedId = this.drag.id;
         this.shovelSelected = this.drag.shovel;
       }
@@ -859,11 +899,11 @@ export class GameApp {
       const point = this.point(event);
       const hit = this.renderer.hitTest(point.x, point.y);
       this.cancelDrag();
-      if (!this.canInteract() || !hit) { this.refresh(); return; }
+      if (!this.canInteract() || !hit) { if(!drag.moved)this.clearSelection();this.refresh(); return; }
       if (drag.moved) {
         this.selectedId = drag.id;
         this.shovelSelected = drag.shovel;
-        if (hit.kind !== 'shovel' || this.engine?.state.units.some(unit => unit.id === drag.id && unit.kind === 'shovel' && unit.location.zone === 'bench')) this.activate(hit);
+        if (hit.kind !== 'shovel' || this.engine?.state.units.some(unit => unit.id === drag.id && unit.kind === 'shovel' && unit.location.zone === 'bench')) this.activate(hit,{dragged:true});
       } else this.activate(hit);
       this.refresh();
     });
@@ -908,10 +948,7 @@ export class GameApp {
     if(action==='tutorial-skip'||action==='tutorial-ack'){this.progressTutorial(action==='tutorial-skip'?'skip':'acknowledge');return;}
     if(action==='tutorial-replay'){
       if(!this.persistProfile(replayTutorial(this.profile)))return;
-      if(this.engine&&this.engine.state.phase!=='finished'){
-        this.tutorialStep=1;this.tutorialStamp='';this.closeProfileScreen();
-      }else this.notify('p1.tutorialReplayReady');
-      this.refresh();return;
+      this.start();return;
     }
     if (this.profileScreens.action(action)) return;
     if (action === 'profile' || action === 'leaderboard' || action === 'settings' || action === 'brand') { this.openProfileScreen(action === 'brand' ? 'profile' : action); return; }
@@ -960,7 +997,7 @@ export class GameApp {
     if (action === 'clear') { this.clearSelection(); this.refresh(); return; }
     if (action === 'pause') { this.pause(); return; }
     if (action === 'resume') { this.closeDialog(true); this.refresh(); this.canvas.focus({ preventScroll: true }); return; }
-    if (action === 'recipes') { this.openModal('recipes'); return; }
+    if (action === 'recipes') { if(this.tutorialStep===5)this.progressTutorial('open-compendium');this.openModal('recipes'); return; }
     if (action === 'close-recipes') { this.closeModal(); return; }
     if (action === 'surrender') {
       if (this.engine?.state.phase === 'paused') { this.closeDialog(false); this.engine.surrender(); if (this.engine.state.result) this.finish(this.engine.state); }
@@ -983,6 +1020,8 @@ export class GameApp {
       const result = this.engine.summon();
       if (result.ok) { this.cancelDrag(); this.sound.play('summon'); this.progressTutorial('summon'); }
       this.apply(result);
+      // The placement lesson asks the player to select a pet themselves.
+      if(result.ok&&this.tutorialStep===2)this.clearSelection();
     }
     else if (action === 'food') { this.engine.addFood(500); this.notify('hint.foodAdded'); }
     else if (action === 'grant') this.apply(this.engine.grant(this.element<HTMLSelectElement>('dev-unit').value));

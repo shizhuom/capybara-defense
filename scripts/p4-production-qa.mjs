@@ -43,11 +43,11 @@ try{
   await nestedPage.goto(`http://127.0.0.1:4175${prefix}`,{waitUntil:'networkidle'});
   await nestedPage.locator('[data-action="start"]').click();await nestedPage.locator('[data-action="tutorial-skip"]').click();
   await nestedPage.waitForTimeout(200);
-  assert.ok(nestedRequests.some(url=>url===`${prefix}sprites/manifest.json`));
+  assert.ok(nestedRequests.some(url=>url===`${prefix}assets/sprites/manifest.json`));
   assert.ok(nestedRequests.some(url=>url===`${prefix}audio/manifest.json`));
-  assert.ok(nestedRequests.filter(url=>url.endsWith('.png')).length>=173);
+  assert.ok(nestedRequests.filter(url=>url.endsWith('.png')).length>=185);
   assert.ok(nestedRequests.every(url=>url.startsWith(prefix)));
   await nestedPage.screenshot({path:path.join(root,'verification/p4-subdirectory-mobile.png')});await nested.close();
-  mark('Built bundle mounted at /p4-check/game/ resolves JS/CSS, all173 PNGs and audio manifest beneath that directory');
+  mark('Built bundle mounted at /p4-check/game/ resolves JS/CSS, all185 PNGs and audio manifest beneath that directory');
   assert.deepEqual(errors,[]);mark('Production + subdirectory console/pageerror:0');
 }finally{fs.writeFileSync(path.join(root,'verification/p4-production-report.json'),JSON.stringify({checks,errors,requests},null,2));await browser.close();}

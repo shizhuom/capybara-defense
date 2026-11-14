@@ -232,7 +232,7 @@ try{
   await click('inspect-book:kungfu_po');
   assert.ok(await page.locator('[data-compendium-kind="kungfu_po"]').filter({visible:true}).count());
   await click('book:matrix');await settle();await snap('compendium-matrix');
-  const title=await page.locator('.p3-compendium > h2').boundingBox(),dialog=await page.locator('#game-dialog').boundingBox();
+  const title=await page.locator('.ledger-header h2').boundingBox(),dialog=await page.locator('#game-dialog').boundingBox();
   assert.ok(title.y>=dialog.y&&title.y+title.height<=dialog.y+dialog.height,'Switching from a deep-link to matrix resets content scroll');
   for(const tab of ['matrix','pets','heroes','bosses','weapons','props']){await click(`book:${tab}`);await noRawKeys();}
   await click('book:pets');await snap('compendium-pets');await click('close-recipes');

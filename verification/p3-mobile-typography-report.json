@@ -1,13 +1,13 @@
 {
-  "at": "2026-11-14T19:52:28.967Z",
+  "at": "2026-11-14T21:40:30.507Z",
   "checks": [
-    "phone-landscape-zh-CN: readable contained menu and three tutorial steps with real touch summon/deploy/acknowledge",
+    "phone-landscape-zh-CN: readable contained menu and five tutorial steps with real touch summon/deploy/acknowledge",
     "phone-landscape-zh-CN: readable Boss status with non-overlapping resource and control docks",
-    "phone-landscape-en: readable contained menu and three tutorial steps with real touch summon/deploy/acknowledge",
+    "phone-landscape-en: readable contained menu and five tutorial steps with real touch summon/deploy/acknowledge",
     "phone-landscape-en: readable Boss status with non-overlapping resource and control docks",
-    "portrait-zh-CN: readable contained menu and three tutorial steps with real touch summon/deploy/acknowledge",
+    "portrait-zh-CN: readable contained menu and five tutorial steps with real touch summon/deploy/acknowledge",
     "portrait-zh-CN: readable Boss status with non-overlapping resource and control docks",
-    "portrait-en: readable contained menu and three tutorial steps with real touch summon/deploy/acknowledge",
+    "portrait-en: readable contained menu and five tutorial steps with real touch summon/deploy/acknowledge",
     "portrait-en: readable Boss status with non-overlapping resource and control docks",
     "Mobile typography console/pageerror:0"
   ],
@@ -25,7 +25,7 @@
         {
           "selector": ".profile-pill strong",
           "size": 12,
-          "text": "🪙 0　⭐ 0"
+          "text": "0　 0"
         },
         {
           "selector": ".menu-system .language-switch button",
@@ -96,12 +96,12 @@
         {
           "selector": ".tutorial-bubble strong",
           "size": 14,
-          "text": "01 · 摇铃叫伙伴"
+          "text": "STEP 1/51 · 摇铃，叫来五位伙伴"
         },
         {
           "selector": ".tutorial-bubble p",
           "size": 12,
-          "text": "摇铃抽5位伙伴。费用10→12→14粮；再抽可换整窝。"
+          "text": "点下方铃铛，用 10 小鱼干抽 5 个伙伴！再抽需 12、14…；旧窝会换新。教学时怪物会耐心等你。"
         },
         {
           "selector": ".tutorial-bubble button",
@@ -110,10 +110,10 @@
         }
       ],
       "bubble": {
-        "left": 220.921875,
-        "top": 222.28125,
-        "right": 623.0625,
-        "bottom": 287.28125
+        "left": 319.0625,
+        "top": 167.90625,
+        "right": 575.59375,
+        "bottom": 295.875
       },
       "stage": {
         "left": 75.328125,
@@ -129,12 +129,12 @@
         {
           "selector": ".tutorial-bubble strong",
           "size": 14,
-          "text": "02 · 安排一个工位"
+          "text": "STEP 2/52 · 把伙伴放上白色肉垫"
         },
         {
           "selector": ".tutorial-bubble p",
           "size": 12,
-          "text": "把伙伴拖到白垫；把铁锹拖到草地开荒。"
+          "text": "点亮的小仓鼠，再点箭头指向的空肉垫，就能上场防守。也可拖过去；草坪要先用铲子开垦。"
         },
         {
           "selector": ".tutorial-bubble button",
@@ -143,10 +143,10 @@
         }
       ],
       "bubble": {
-        "left": 220.921875,
-        "top": 233.984375,
-        "right": 623.0625,
-        "bottom": 298.984375
+        "left": 319.0625,
+        "top": 167.90625,
+        "right": 575.59375,
+        "bottom": 295.875
       },
       "stage": {
         "left": 75.328125,
@@ -162,12 +162,12 @@
         {
           "selector": ".tutorial-bubble strong",
           "size": 14,
-          "text": "03 · 金圈就是好搭档"
+          "text": "STEP 3/53 · 同种同星，叠出更强伙伴"
         },
         {
           "selector": ".tutorial-bubble p",
           "size": 12,
-          "text": "同名同级宠可合成；给英雄喂配对散件可升星。"
+          "text": "把另一只 1 星仓鼠叠到仓鼠身上，合成 2 星！点击一只再点另一只，或直接拖拽。"
         },
         {
           "selector": ".tutorial-bubble button",
@@ -181,10 +181,81 @@
         }
       ],
       "bubble": {
-        "left": 220.921875,
-        "top": 62.390625,
-        "right": 623.0625,
-        "bottom": 153.390625
+        "left": 319.0625,
+        "top": 167.90625,
+        "right": 575.59375,
+        "bottom": 306.28125
+      },
+      "stage": {
+        "left": 75.328125,
+        "top": 0,
+        "right": 768.65625,
+        "bottom": 389.984375
+      }
+    },
+    {
+      "label": "phone-landscape-zh-CN",
+      "screen": "tutorial4",
+      "sizes": [
+        {
+          "selector": ".tutorial-bubble strong",
+          "size": 14,
+          "text": "STEP 4/54 · 动物 + 穿搭 = 传说英雄"
+        },
+        {
+          "selector": ".tutorial-bubble p",
+          "size": 12,
+          "text": "把熊猫与大侠斗笠叠在一起，功夫阿宝登场！英雄还能吃对应配方散件升级。若已合出或换过窝，可点下方继续。"
+        },
+        {
+          "selector": ".tutorial-bubble button",
+          "size": 12,
+          "text": "跳过"
+        }
+      ],
+      "bubble": {
+        "left": 319.0625,
+        "top": 167.90625,
+        "right": 575.59375,
+        "bottom": 322.390625
+      },
+      "stage": {
+        "left": 75.328125,
+        "top": 0,
+        "right": 768.65625,
+        "bottom": 389.984375
+      }
+    },
+    {
+      "label": "phone-landscape-zh-CN",
+      "screen": "tutorial5",
+      "sizes": [
+        {
+          "selector": ".tutorial-bubble strong",
+          "size": 14,
+          "text": "STEP 5/55 · 图鉴就是你的合成小抄"
+        },
+        {
+          "selector": ".tutorial-bubble p",
+          "size": 12,
+          "text": "点右上角【图鉴】，查看完整配方与各星级攻击、攻速！动物属性卡的小书也能直达。完成教学送 20 金币。"
+        },
+        {
+          "selector": ".tutorial-bubble button",
+          "size": 12,
+          "text": "跳过"
+        },
+        {
+          "selector": ".tutorial-bubble button",
+          "size": 12,
+          "text": "明白啦 · 领取奖励"
+        }
+      ],
+      "bubble": {
+        "left": 319.0625,
+        "top": 167.90625,
+        "right": 575.59375,
+        "bottom": 321.875
       },
       "stage": {
         "left": 75.328125,
@@ -205,7 +276,7 @@
         {
           "selector": ".boss-numbers",
           "size": 12,
-          "text": "700 / 700"
+          "text": "595 / 595"
         }
       ],
       "hintSizes": [
@@ -266,7 +337,7 @@
         {
           "selector": ".profile-pill strong",
           "size": 12,
-          "text": "🪙 0　⭐ 0"
+          "text": "0　 0"
         },
         {
           "selector": ".menu-system .language-switch button",
@@ -337,12 +408,12 @@
         {
           "selector": ".tutorial-bubble strong",
           "size": 14,
-          "text": "01 · Ring for friends"
+          "text": "STEP 1/51 · Ring for five friends"
         },
         {
           "selector": ".tutorial-bubble p",
           "size": 12,
-          "text": "Ring for 5 companions. Cost: 10→12→14. Redraw swaps the"
+          "text": "Tap the bell: 10 food brings 5 friends! Later packs cos"
         },
         {
           "selector": ".tutorial-bubble button",
@@ -351,10 +422,10 @@
         }
       ],
       "bubble": {
-        "left": 220.921875,
-        "top": 222.28125,
-        "right": 623.0625,
-        "bottom": 285.28125
+        "left": 319.0625,
+        "top": 167.90625,
+        "right": 575.59375,
+        "bottom": 295.875
       },
       "stage": {
         "left": 75.328125,
@@ -370,12 +441,12 @@
         {
           "selector": ".tutorial-bubble strong",
           "size": 14,
-          "text": "02 · Make a little room"
+          "text": "STEP 2/52 · Place a friend on a paw pad"
         },
         {
           "selector": ".tutorial-bubble p",
           "size": 12,
-          "text": "Drag pets to white mats. Dig grass with a shovel."
+          "text": "Tap the glowing hamster, then the empty pad at the arro"
         },
         {
           "selector": ".tutorial-bubble button",
@@ -384,10 +455,10 @@
         }
       ],
       "bubble": {
-        "left": 220.921875,
-        "top": 233.984375,
-        "right": 623.0625,
-        "bottom": 296.984375
+        "left": 319.0625,
+        "top": 167.90625,
+        "right": 575.59375,
+        "bottom": 295.875
       },
       "stage": {
         "left": 75.328125,
@@ -403,12 +474,12 @@
         {
           "selector": ".tutorial-bubble strong",
           "size": 14,
-          "text": "03 · Follow the golden ring"
+          "text": "STEP 3/53 · Matching pets gain a star"
         },
         {
           "selector": ".tutorial-bubble p",
           "size": 12,
-          "text": "Merge matching pets; feed heroes their ingredients."
+          "text": "Stack two level 1 hamsters to make level 2! Tap one the"
         },
         {
           "selector": ".tutorial-bubble button",
@@ -422,10 +493,81 @@
         }
       ],
       "bubble": {
-        "left": 220.921875,
-        "top": 62.390625,
-        "right": 623.0625,
-        "bottom": 151.390625
+        "left": 319.0625,
+        "top": 167.90625,
+        "right": 575.59375,
+        "bottom": 321.875
+      },
+      "stage": {
+        "left": 75.328125,
+        "top": 0,
+        "right": 768.65625,
+        "bottom": 389.984375
+      }
+    },
+    {
+      "label": "phone-landscape-en",
+      "screen": "tutorial4",
+      "sizes": [
+        {
+          "selector": ".tutorial-bubble strong",
+          "size": 14,
+          "text": "STEP 4/54 · A pet + gear makes a hero"
+        },
+        {
+          "selector": ".tutorial-bubble p",
+          "size": 12,
+          "text": "Stack Panda and Bamboo Hat to summon Kungfu Po! Feed re"
+        },
+        {
+          "selector": ".tutorial-bubble button",
+          "size": 12,
+          "text": "Skip"
+        }
+      ],
+      "bubble": {
+        "left": 319.0625,
+        "top": 167.90625,
+        "right": 575.59375,
+        "bottom": 322.390625
+      },
+      "stage": {
+        "left": 75.328125,
+        "top": 0,
+        "right": 768.65625,
+        "bottom": 389.984375
+      }
+    },
+    {
+      "label": "phone-landscape-en",
+      "screen": "tutorial5",
+      "sizes": [
+        {
+          "selector": ".tutorial-bubble strong",
+          "size": 14,
+          "text": "STEP 5/55 · The Guide has every recipe"
+        },
+        {
+          "selector": ".tutorial-bubble p",
+          "size": 12,
+          "text": "Tap Guide at the top right for recipes, damage and atta"
+        },
+        {
+          "selector": ".tutorial-bubble button",
+          "size": 12,
+          "text": "Skip"
+        },
+        {
+          "selector": ".tutorial-bubble button",
+          "size": 12,
+          "text": "Got it · Claim reward"
+        }
+      ],
+      "bubble": {
+        "left": 319.0625,
+        "top": 167.90625,
+        "right": 575.59375,
+        "bottom": 322.390625
       },
       "stage": {
         "left": 75.328125,
@@ -446,7 +588,7 @@
         {
           "selector": ".boss-numbers",
           "size": 12,
-          "text": "700 / 700"
+          "text": "595 / 595"
         }
       ],
       "hintSizes": [
@@ -507,7 +649,7 @@
         {
           "selector": ".profile-pill strong",
           "size": 12,
-          "text": "🪙 0　⭐ 0"
+          "text": "0　 0"
         },
         {
           "selector": ".menu-system .language-switch button",
@@ -578,12 +720,12 @@
         {
           "selector": ".tutorial-bubble strong",
           "size": 14,
-          "text": "01 · 摇铃叫伙伴"
+          "text": "STEP 1/51 · 摇铃，叫来五位伙伴"
         },
         {
           "selector": ".tutorial-bubble p",
           "size": 12,
-          "text": "摇铃抽5位伙伴。费用10→12→14粮；再抽可换整窝。"
+          "text": "点下方铃铛，用 10 小鱼干抽 5 个伙伴！再抽需 12、14…；旧窝会换新。教学时怪物会耐心等你。"
         },
         {
           "selector": ".tutorial-bubble button",
@@ -593,7 +735,7 @@
       ],
       "bubble": {
         "left": 8,
-        "top": 172.515625,
+        "top": 95.3125,
         "right": 382,
         "bottom": 248.3125
       },
@@ -611,12 +753,12 @@
         {
           "selector": ".tutorial-bubble strong",
           "size": 14,
-          "text": "02 · 安排一个工位"
+          "text": "STEP 2/52 · 把伙伴放上白色肉垫"
         },
         {
           "selector": ".tutorial-bubble p",
           "size": 12,
-          "text": "把伙伴拖到白垫；把铁锹拖到草地开荒。"
+          "text": "点亮的小仓鼠，再点箭头指向的空肉垫，就能上场防守。也可拖过去；草坪要先用铲子开垦。"
         },
         {
           "selector": ".tutorial-bubble button",
@@ -626,7 +768,7 @@
       ],
       "bubble": {
         "left": 8,
-        "top": 172.515625,
+        "top": 95.3125,
         "right": 382,
         "bottom": 248.3125
       },
@@ -644,12 +786,12 @@
         {
           "selector": ".tutorial-bubble strong",
           "size": 14,
-          "text": "03 · 金圈就是好搭档"
+          "text": "STEP 3/53 · 同种同星，叠出更强伙伴"
         },
         {
           "selector": ".tutorial-bubble p",
           "size": 12,
-          "text": "同名同级宠可合成；给英雄喂配对散件可升星。"
+          "text": "把另一只 1 星仓鼠叠到仓鼠身上，合成 2 星！点击一只再点另一只，或直接拖拽。"
         },
         {
           "selector": ".tutorial-bubble button",
@@ -664,7 +806,78 @@
       ],
       "bubble": {
         "left": 8,
-        "top": 141.515625,
+        "top": 64.3125,
+        "right": 382,
+        "bottom": 248.3125
+      },
+      "stage": {
+        "left": 0,
+        "top": 312.3125,
+        "right": 390,
+        "bottom": 531.6875
+      }
+    },
+    {
+      "label": "portrait-zh-CN",
+      "screen": "tutorial4",
+      "sizes": [
+        {
+          "selector": ".tutorial-bubble strong",
+          "size": 14,
+          "text": "STEP 4/54 · 动物 + 穿搭 = 传说英雄"
+        },
+        {
+          "selector": ".tutorial-bubble p",
+          "size": 12,
+          "text": "把熊猫与大侠斗笠叠在一起，功夫阿宝登场！英雄还能吃对应配方散件升级。若已合出或换过窝，可点下方继续。"
+        },
+        {
+          "selector": ".tutorial-bubble button",
+          "size": 12,
+          "text": "跳过"
+        }
+      ],
+      "bubble": {
+        "left": 8,
+        "top": 42.3125,
+        "right": 382,
+        "bottom": 248.3125
+      },
+      "stage": {
+        "left": 0,
+        "top": 312.3125,
+        "right": 390,
+        "bottom": 531.6875
+      }
+    },
+    {
+      "label": "portrait-zh-CN",
+      "screen": "tutorial5",
+      "sizes": [
+        {
+          "selector": ".tutorial-bubble strong",
+          "size": 14,
+          "text": "STEP 5/55 · 图鉴就是你的合成小抄"
+        },
+        {
+          "selector": ".tutorial-bubble p",
+          "size": 12,
+          "text": "点右上角【图鉴】，查看完整配方与各星级攻击、攻速！动物属性卡的小书也能直达。完成教学送 20 金币。"
+        },
+        {
+          "selector": ".tutorial-bubble button",
+          "size": 12,
+          "text": "跳过"
+        },
+        {
+          "selector": ".tutorial-bubble button",
+          "size": 12,
+          "text": "明白啦 · 领取奖励"
+        }
+      ],
+      "bubble": {
+        "left": 8,
+        "top": 64.3125,
         "right": 382,
         "bottom": 248.3125
       },
@@ -687,7 +900,7 @@
         {
           "selector": ".boss-numbers",
           "size": 12,
-          "text": "700 / 700"
+          "text": "595 / 595"
         }
       ],
       "hintSizes": [
@@ -748,7 +961,7 @@
         {
           "selector": ".profile-pill strong",
           "size": 12,
-          "text": "🪙 0　⭐ 0"
+          "text": "0　 0"
         },
         {
           "selector": ".menu-system .language-switch button",
@@ -819,12 +1032,12 @@
         {
           "selector": ".tutorial-bubble strong",
           "size": 14,
-          "text": "01 · Ring for friends"
+          "text": "STEP 1/51 · Ring for five friends"
         },
         {
           "selector": ".tutorial-bubble p",
           "size": 12,
-          "text": "Ring for 5 companions. Cost: 10→12→14. Redraw swaps the"
+          "text": "Tap the bell: 10 food brings 5 friends! Later packs cos"
         },
         {
           "selector": ".tutorial-bubble button",
@@ -834,7 +1047,7 @@
       ],
       "bubble": {
         "left": 8,
-        "top": 174.515625,
+        "top": 95.3125,
         "right": 382,
         "bottom": 248.3125
       },
@@ -852,12 +1065,12 @@
         {
           "selector": ".tutorial-bubble strong",
           "size": 14,
-          "text": "02 · Make a little room"
+          "text": "STEP 2/52 · Place a friend on a paw pad"
         },
         {
           "selector": ".tutorial-bubble p",
           "size": 12,
-          "text": "Drag pets to white mats. Dig grass with a shovel."
+          "text": "Tap the glowing hamster, then the empty pad at the arro"
         },
         {
           "selector": ".tutorial-bubble button",
@@ -867,7 +1080,7 @@
       ],
       "bubble": {
         "left": 8,
-        "top": 174.515625,
+        "top": 95.3125,
         "right": 382,
         "bottom": 248.3125
       },
@@ -885,12 +1098,12 @@
         {
           "selector": ".tutorial-bubble strong",
           "size": 14,
-          "text": "03 · Follow the golden ring"
+          "text": "STEP 3/53 · Matching pets gain a star"
         },
         {
           "selector": ".tutorial-bubble p",
           "size": 12,
-          "text": "Merge matching pets; feed heroes their ingredients."
+          "text": "Stack two level 1 hamsters to make level 2! Tap one the"
         },
         {
           "selector": ".tutorial-bubble button",
@@ -905,7 +1118,78 @@
       ],
       "bubble": {
         "left": 8,
-        "top": 143.515625,
+        "top": 64.3125,
+        "right": 382,
+        "bottom": 248.3125
+      },
+      "stage": {
+        "left": 0,
+        "top": 312.3125,
+        "right": 390,
+        "bottom": 531.6875
+      }
+    },
+    {
+      "label": "portrait-en",
+      "screen": "tutorial4",
+      "sizes": [
+        {
+          "selector": ".tutorial-bubble strong",
+          "size": 14,
+          "text": "STEP 4/54 · A pet + gear makes a hero"
+        },
+        {
+          "selector": ".tutorial-bubble p",
+          "size": 12,
+          "text": "Stack Panda and Bamboo Hat to summon Kungfu Po! Feed re"
+        },
+        {
+          "selector": ".tutorial-bubble button",
+          "size": 12,
+          "text": "Skip"
+        }
+      ],
+      "bubble": {
+        "left": 8,
+        "top": 24.3125,
+        "right": 382,
+        "bottom": 248.3125
+      },
+      "stage": {
+        "left": 0,
+        "top": 312.3125,
+        "right": 390,
+        "bottom": 531.6875
+      }
+    },
+    {
+      "label": "portrait-en",
+      "screen": "tutorial5",
+      "sizes": [
+        {
+          "selector": ".tutorial-bubble strong",
+          "size": 14,
+          "text": "STEP 5/55 · The Guide has every recipe"
+        },
+        {
+          "selector": ".tutorial-bubble p",
+          "size": 12,
+          "text": "Tap Guide at the top right for recipes, damage and atta"
+        },
+        {
+          "selector": ".tutorial-bubble button",
+          "size": 12,
+          "text": "Skip"
+        },
+        {
+          "selector": ".tutorial-bubble button",
+          "size": 12,
+          "text": "Got it · Claim reward"
+        }
+      ],
+      "bubble": {
+        "left": 8,
+        "top": 64.3125,
         "right": 382,
         "bottom": 248.3125
       },
@@ -928,7 +1212,7 @@
         {
           "selector": ".boss-numbers",
           "size": 12,
-          "text": "700 / 700"
+          "text": "595 / 595"
         }
       ],
       "hintSizes": [

@@ -1,0 +1,47 @@
+import {it,expect,afterEach,vi} from 'vitest';
+import {Compendium} from '../src/ui/Compendium';
+import {MetaScreens} from '../src/ui/MetaScreens';
+import {ProfileScreens} from '../src/ui/ProfileScreens';
+import {createProfile,createLotteryPrizes,spinLottery} from '../src/core/MetaProgression';
+import {WEAPONS} from '../src/config/weapons';
+import {setLanguage,t} from '../src/i18n/i18n';
+import {p5Zh,p5En} from '../src/i18n/p5';
+afterEach(()=>{vi.unstubAllGlobals();setLanguage('zh-CN');});
+it('charges the P5 60-coin gacha price atomically and always uses a free ticket first',()=>{
+ const p={...createProfile(),coins:60},prizes=createLotteryPrizes(p,()=>0);
+ const paid=spinLottery(p,prizes,()=>0);expect(paid.ok).toBe(true);expect(paid.profile.coins).toBe(0);expect(p.coins).toBe(60);
+ expect(spinLottery({...p,coins:59},prizes,()=>0).ok).toBe(false);
+ const free=spinLottery({...p,freeLotteryTickets:1},prizes,()=>0);expect(free.profile.coins).toBe(60);expect(free.profile.freeLotteryTickets).toBe(0);
+});
+it.each(['zh-CN','en'] as const)('provides a fixed header, tabs and inner body in every ledger page (%s)',lang=>{
+ setLanguage(lang);const p=createProfile(),meta=new MetaScreens(()=>p,()=>{},()=>{},()=>{}),profile=new ProfileScreens(()=>p,()=>true,()=>{},()=>{});
+ const pages=[new Compendium().markup(p),meta.markup('armory'),meta.markup('market'),...(['profile','leaderboard','settings'] as const).map(s=>profile.markup(s))];
+ for(const html of pages){expect(html).toContain('ledger-shell');expect(html).toContain('ledger-header');expect(html).toContain('ledger-tabs');expect(html).toContain('ledger-body');expect(html).toContain('id="dialog-title"');expect(html).not.toMatch(/>p5\.[\w.]+</);}
+});
+it('rounds attack growth, rate and range, and labels the matrix corner and collection progress',()=>{
+ const p=createProfile(),book=new Compendium(),html=book.markup(p);
+ for(const damage of [38,61,97,156,249])expect(html).toContain(`<td>${damage}</td>`);
+ expect(html).not.toMatch(/60\.8|97\.28|155\.648/);expect(html).toContain('matrix-corner');expect(html).toContain('0/12');expect(html).toContain('0/36');
+ book.openTo('panda');expect(book.markup(p)).toContain('0.67');
+});
+it('has exactly four matching hero equip chips, retains selects, and toggles equip atomically',()=>{
+ let p={...createProfile(),unlockedWeapons:['m10_bamboo_staff']};
+ const data=new Map();vi.stubGlobal('window',{localStorage:{getItem:(k:string)=>data.get(k)??null,setItem:(k:string,v:string)=>data.set(k,v)}});
+ const meta=new MetaScreens(()=>p,next=>{p=next;},()=>{},()=>{});
+ let html=meta.markup('armory');expect(html.match(/data-action="meta-equip:m10_bamboo_staff:/g)).toHaveLength(4);expect(html).toContain('select data-weapon="m10_bamboo_staff"');
+ meta.action('meta-equip:m10_bamboo_staff:kungfu_po');expect(p.equippedWeapons.kungfu_po).toBe('m10_bamboo_staff');
+ html=meta.markup('armory');expect(html).toContain('hero-equip-chip equipped');meta.action('meta-equip:m10_bamboo_staff:kungfu_po');expect(p.equippedWeapons.kungfu_po).toBeUndefined();
+ expect(html.match(/data-rarity=/g)).toHaveLength(5);expect(html.match(/data-loadout-hero=/g)).toHaveLength(12);
+});
+it('keeps the market backpack visible on both tabs and retains all settings semantics and profile links',()=>{
+ const p=createProfile(),meta=new MetaScreens(()=>p,()=>{},()=>{},()=>{}),profile=new ProfileScreens(()=>p,()=>true,()=>{},()=>{});
+ for(const tab of ['shop','lottery'] as const){meta.tab=tab;const html=meta.markup('market');expect(html).toContain('market-split');expect(html.match(/class="prop-slot /g)).toHaveLength(8);expect(html).toContain('inventory-grid');}
+ for(const page of ['profile','leaderboard','settings'] as const){const html=profile.markup(page);for(const action of ['profile','leaderboard','settings'])expect(html).toContain(`data-action="${action}"`);}
+ const settings=profile.markup('settings');expect(settings.match(/type="range"/g)).toHaveLength(2);expect(settings.match(/type="checkbox"/g)).toHaveLength(2);expect(settings).toContain('tutorial-replay');
+ const rank=profile.markup('leaderboard');expect(rank).toContain('rank-podium');expect(rank).toContain('threat-banner');expect(rank.match(/data-player=/g)).toHaveLength(16);
+});
+it('has complete P5 bilingual keys and retains all 36 weapons',()=>{
+ expect(Object.keys(p5Zh).sort()).toEqual(Object.keys(p5En).sort());
+ for(const lang of ['zh-CN','en'] as const){setLanguage(lang);for(const key of Object.keys(p5Zh))expect(t(key)).not.toBe(key);}
+ expect(Object.keys(WEAPONS)).toHaveLength(36);
+});

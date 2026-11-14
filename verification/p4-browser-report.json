@@ -1,5 +1,5 @@
 {
-  "at": "2026-11-14T20:02:18.606Z",
+  "at": "2026-11-14T21:27:44.762Z",
   "checks": [
     "desktop: zh/en art, clear composition, seven hub routes, map selection and battle round trip",
     "mobile-landscape: zh/en art, clear composition, seven hub routes, map selection and battle round trip",
@@ -33,12 +33,12 @@
       },
       "title": {
         "x": 420,
-        "y": 62.56255340576172,
+        "y": 62.58760070800781,
         "width": 600,
-        "height": 200,
-        "top": 62.56255340576172,
+        "height": 199.99998474121094,
+        "top": 62.58760070800781,
         "right": 1020,
-        "bottom": 262.5625534057617,
+        "bottom": 262.58758544921875,
         "left": 420
       },
       "start": {
@@ -64,11 +64,11 @@
       "profile": {
         "x": 20.15625,
         "y": 59.578125,
-        "width": 201.65625,
-        "height": 69.890625,
+        "width": 212.65625,
+        "height": 74.90625,
         "top": 59.578125,
-        "right": 221.8125,
-        "bottom": 129.46875,
+        "right": 232.8125,
+        "bottom": 134.484375,
         "left": 20.15625
       },
       "system": {
@@ -194,11 +194,11 @@
           "rect": {
             "x": 20.15625,
             "y": 59.578125,
-            "width": 201.65625,
-            "height": 69.890625,
+            "width": 212.65625,
+            "height": 74.90625,
             "top": 59.578125,
-            "right": 221.8125,
-            "bottom": 129.46875,
+            "right": 232.8125,
+            "bottom": 134.484375,
             "left": 20.15625
           },
           "clickable": true,
@@ -400,7 +400,7 @@
           "hit": true
         }
       ],
-      "raw": "见习铲屎官 I🪙 0　⭐ 0\n    中EN⚙\n    \n    自动轮换后院樱花 🔒厨房 🔒猫塔 🔒\n    \n    图鉴神兵0/36\n    商店段位"
+      "raw": "见习铲屎官 I 0　 0\n    中EN⚙\n    \n    自动轮换后院樱花 🔒厨房 🔒猫塔 🔒\n    \n    图鉴神兵0/36\n    商店段位"
     },
     {
       "label": "desktop en",
@@ -448,10 +448,10 @@
         "x": 20.15625,
         "y": 59.578125,
         "width": 223.484375,
-        "height": 69.890625,
+        "height": 71.90625,
         "top": 59.578125,
         "right": 243.640625,
-        "bottom": 129.46875,
+        "bottom": 131.484375,
         "left": 20.15625
       },
       "system": {
@@ -578,10 +578,10 @@
             "x": 20.15625,
             "y": 59.578125,
             "width": 223.484375,
-            "height": 69.890625,
+            "height": 71.90625,
             "top": 59.578125,
             "right": 243.640625,
-            "bottom": 129.46875,
+            "bottom": 131.484375,
             "left": 20.15625
           },
           "clickable": true,
@@ -783,7 +783,7 @@
           "hit": true
         }
       ],
-      "raw": "Rookie Keeper I🪙 0　⭐ 0\n    中EN⚙\n    \n    AutoBackyardSakura 🔒Kitchen 🔒Cat tower 🔒\n    \n    GuideArmory0/36\n    ShopRank"
+      "raw": "Rookie Keeper I 0　 0\n    中EN⚙\n    \n    AutoBackyardSakura 🔒Kitchen 🔒Cat tower 🔒\n    \n    GuideArmory0/36\n    ShopRank"
     },
     {
       "label": "mobile-landscape zh",
@@ -799,12 +799,12 @@
       },
       "title": {
         "x": 259.0546875,
-        "y": 8.0790376663208,
+        "y": 8.21451187133789,
         "width": 325.859375,
         "height": 108.609375,
-        "top": 8.0790376663208,
+        "top": 8.21451187133789,
         "right": 584.9140625,
-        "bottom": 116.6884126663208,
+        "bottom": 116.82388687133789,
         "left": 259.0546875
       },
       "start": {
@@ -830,11 +830,11 @@
       "profile": {
         "x": 85.03125,
         "y": 7.015625,
-        "width": 112.546875,
-        "height": 42.5625,
+        "width": 123.234375,
+        "height": 46.359375,
         "top": 7.015625,
-        "right": 197.578125,
-        "bottom": 49.578125,
+        "right": 208.265625,
+        "bottom": 53.375,
         "left": 85.03125
       },
       "system": {
@@ -960,11 +960,11 @@
           "rect": {
             "x": 85.03125,
             "y": 7.015625,
-            "width": 112.546875,
-            "height": 42.5625,
+            "width": 123.234375,
+            "height": 46.359375,
             "top": 7.015625,
-            "right": 197.578125,
-            "bottom": 49.578125,
+            "right": 208.265625,
+            "bottom": 53.375,
             "left": 85.03125
           },
           "clickable": true,
@@ -1166,7 +1166,7 @@
           "hit": true
         }
       ],
-      "raw": "见习铲屎官 I🪙 0　⭐ 0\n    中EN⚙\n    \n    自动轮换后院樱花 🔒厨房 🔒猫塔 🔒\n    \n    图鉴神兵0/36\n    商店段位"
+      "raw": "见习铲屎官 I 0　 0\n    中EN⚙\n    \n    自动轮换后院樱花 🔒厨房 🔒猫塔 🔒\n    \n    图鉴神兵0/36\n    商店段位"
     },
     {
       "label": "mobile-landscape en",
@@ -1214,10 +1214,10 @@
         "x": 85.03125,
         "y": 7.015625,
         "width": 134.328125,
-        "height": 40.5625,
+        "height": 44.359375,
         "top": 7.015625,
         "right": 219.359375,
-        "bottom": 47.578125,
+        "bottom": 51.375,
         "left": 85.03125
       },
       "system": {
@@ -1344,10 +1344,10 @@
             "x": 85.03125,
             "y": 7.015625,
             "width": 134.328125,
-            "height": 40.5625,
+            "height": 44.359375,
             "top": 7.015625,
             "right": 219.359375,
-            "bottom": 47.578125,
+            "bottom": 51.375,
             "left": 85.03125
           },
           "clickable": true,
@@ -1549,7 +1549,7 @@
           "hit": true
         }
       ],
-      "raw": "Rookie Keeper I🪙 0　⭐ 0\n    中EN⚙\n    \n    AutoBackyardSakura 🔒Kitchen 🔒Cat tower 🔒\n    \n    GuideArmory0/36\n    ShopRank"
+      "raw": "Rookie Keeper I 0　 0\n    中EN⚙\n    \n    AutoBackyardSakura 🔒Kitchen 🔒Cat tower 🔒\n    \n    GuideArmory0/36\n    ShopRank"
     },
     {
       "label": "mobile-portrait zh",
@@ -1565,12 +1565,12 @@
       },
       "title": {
         "x": 103.3515625,
-        "y": 316.58868408203125,
+        "y": 316.79180908203125,
         "width": 183.296875,
         "height": 61.09375,
-        "top": 316.58868408203125,
+        "top": 316.79180908203125,
         "right": 286.6484375,
-        "bottom": 377.68243408203125,
+        "bottom": 377.88555908203125,
         "left": 103.3515625
       },
       "start": {
@@ -1596,10 +1596,10 @@
       "profile": {
         "x": 5.453125,
         "y": 260.3125,
-        "width": 111.96875,
+        "width": 127.0625,
         "height": 44,
         "top": 260.3125,
-        "right": 117.421875,
+        "right": 132.515625,
         "bottom": 304.3125,
         "left": 5.453125
       },
@@ -1735,10 +1735,10 @@
           "rect": {
             "x": 5.453125,
             "y": 260.3125,
-            "width": 111.96875,
+            "width": 127.0625,
             "height": 44,
             "top": 260.3125,
-            "right": 117.421875,
+            "right": 132.515625,
             "bottom": 304.3125,
             "left": 5.453125
           },
@@ -1941,7 +1941,7 @@
           "hit": true
         }
       ],
-      "raw": "见习铲屎官 I🪙 0　⭐ 0\n    中EN⚙\n    \n    自动轮换后院樱花 🔒厨房 🔒猫塔 🔒\n    \n    图鉴神兵0/36\n    商店段位"
+      "raw": "见习铲屎官 I 0　 0\n    中EN⚙\n    \n    自动轮换后院樱花 🔒厨房 🔒猫塔 🔒\n    \n    图鉴神兵0/36\n    商店段位"
     },
     {
       "label": "mobile-portrait en",
@@ -2333,7 +2333,7 @@
           "hit": true
         }
       ],
-      "raw": "Rookie Keeper I🪙 0　⭐ 0\n    中EN⚙\n    \n    AutoBackyardSakura 🔒Kitchen 🔒Cat tower 🔒\n    \n    GuideArmory0/36\n    ShopRank"
+      "raw": "Rookie Keeper I 0　 0\n    中EN⚙\n    \n    AutoBackyardSakura 🔒Kitchen 🔒Cat tower 🔒\n    \n    GuideArmory0/36\n    ShopRank"
     },
     {
       "label": "delayed assets",
@@ -2381,10 +2381,10 @@
         "x": 20.15625,
         "y": 59.578125,
         "width": 223.484375,
-        "height": 69.890625,
+        "height": 71.90625,
         "top": 59.578125,
         "right": 243.640625,
-        "bottom": 129.46875,
+        "bottom": 131.484375,
         "left": 20.15625
       },
       "system": {
@@ -2511,10 +2511,10 @@
             "x": 20.15625,
             "y": 59.578125,
             "width": 223.484375,
-            "height": 69.890625,
+            "height": 71.90625,
             "top": 59.578125,
             "right": 243.640625,
-            "bottom": 129.46875,
+            "bottom": 131.484375,
             "left": 20.15625
           },
           "clickable": true,
@@ -2716,7 +2716,7 @@
           "hit": true
         }
       ],
-      "raw": "Rookie Keeper I🪙 0　⭐ 0\n    中EN⚙\n    CAPYBARA!CHILL DEFENSE\n    AutoBackyardSakura 🔒Kitchen 🔒Cat tower 🔒\n    Let’s get chilling\n    GuideArmory0/36\n    ShopRank"
+      "raw": "Rookie Keeper I 0　 0\n    中EN⚙\n    CAPYBARA!CHILL DEFENSE\n    AutoBackyardSakura 🔒Kitchen 🔒Cat tower 🔒\n    Let’s get chilling\n    GuideArmory0/36\n    ShopRank"
     },
     {
       "label": "high-rank 1440",
@@ -2763,11 +2763,11 @@
       "profile": {
         "x": 20.15625,
         "y": 59.578125,
-        "width": 296.15625,
-        "height": 69.890625,
+        "width": 307.15625,
+        "height": 71.90625,
         "top": 59.578125,
-        "right": 316.3125,
-        "bottom": 129.46875,
+        "right": 327.3125,
+        "bottom": 131.484375,
         "left": 20.15625
       },
       "system": {
@@ -2887,14 +2887,14 @@
           "left": 182.34375
         },
         {
-          "x": 1257.890625,
+          "x": 1258.09375,
           "y": 718.3125,
-          "width": 57.5625,
+          "width": 57.359375,
           "height": 22.15625,
           "top": 718.3125,
           "right": 1315.453125,
           "bottom": 740.46875,
-          "left": 1257.890625
+          "left": 1258.09375
         }
       ],
       "controls": [
@@ -2903,11 +2903,11 @@
           "rect": {
             "x": 20.15625,
             "y": 59.578125,
-            "width": 296.15625,
-            "height": 69.890625,
+            "width": 307.15625,
+            "height": 71.90625,
             "top": 59.578125,
-            "right": 316.3125,
-            "bottom": 129.46875,
+            "right": 327.3125,
+            "bottom": 131.484375,
             "left": 20.15625
           },
           "clickable": true,
@@ -3109,7 +3109,7 @@
           "hit": true
         }
       ],
-      "raw": "Capybara God🪙 999999　⭐ 1000\n    中EN⚙\n    \n    AutoBackyardSakuraKitchenCat tower\n    \n    GuideArmory0/36\n    Shop🎟 999Rank"
+      "raw": "Capybara God 999999　 1000\n    中EN⚙\n    \n    AutoBackyardSakuraKitchenCat tower\n    \n    GuideArmory0/36\n    Shop 999Rank"
     },
     {
       "label": "high-rank 844",
@@ -3156,11 +3156,11 @@
       "profile": {
         "x": 85.03125,
         "y": 7.015625,
-        "width": 168.078125,
-        "height": 40.5625,
+        "width": 173.328125,
+        "height": 44.359375,
         "top": 7.015625,
-        "right": 253.109375,
-        "bottom": 47.578125,
+        "right": 258.359375,
+        "bottom": 51.375,
         "left": 85.03125
       },
       "system": {
@@ -3280,14 +3280,14 @@
           "left": 158.765625
         },
         {
-          "x": 660.65625,
+          "x": 660.484375,
           "y": 324.25,
-          "width": 44.25,
+          "width": 44.421875,
           "height": 17.765625,
           "top": 324.25,
           "right": 704.90625,
           "bottom": 342.015625,
-          "left": 660.65625
+          "left": 660.484375
         }
       ],
       "controls": [
@@ -3296,11 +3296,11 @@
           "rect": {
             "x": 85.03125,
             "y": 7.015625,
-            "width": 168.078125,
-            "height": 40.5625,
+            "width": 173.328125,
+            "height": 44.359375,
             "top": 7.015625,
-            "right": 253.109375,
-            "bottom": 47.578125,
+            "right": 258.359375,
+            "bottom": 51.375,
             "left": 85.03125
           },
           "clickable": true,
@@ -3502,7 +3502,7 @@
           "hit": true
         }
       ],
-      "raw": "Capybara God🪙 999999　⭐ 1000\n    中EN⚙\n    \n    AutoBackyardSakuraKitchenCat tower\n    \n    GuideArmory0/36\n    Shop🎟 999Rank"
+      "raw": "Capybara God 999999　 1000\n    中EN⚙\n    \n    AutoBackyardSakuraKitchenCat tower\n    \n    GuideArmory0/36\n    Shop 999Rank"
     },
     {
       "label": "high-rank 390",
@@ -3549,10 +3549,10 @@
       "profile": {
         "x": 5.453125,
         "y": 260.3125,
-        "width": 167.5,
+        "width": 183.3125,
         "height": 44,
         "top": 260.3125,
-        "right": 172.953125,
+        "right": 188.765625,
         "bottom": 304.3125,
         "left": 5.453125
       },
@@ -3682,14 +3682,14 @@
           "left": 75.015625
         },
         {
-          "x": 286.484375,
+          "x": 286.3125,
           "y": 500.359375,
-          "width": 44.71875,
+          "width": 44.890625,
           "height": 16.390625,
           "top": 500.359375,
           "right": 331.203125,
           "bottom": 516.75,
-          "left": 286.484375
+          "left": 286.3125
         }
       ],
       "controls": [
@@ -3698,10 +3698,10 @@
           "rect": {
             "x": 5.453125,
             "y": 260.3125,
-            "width": 167.5,
+            "width": 183.3125,
             "height": 44,
             "top": 260.3125,
-            "right": 172.953125,
+            "right": 188.765625,
             "bottom": 304.3125,
             "left": 5.453125
           },
@@ -3904,7 +3904,7 @@
           "hit": true
         }
       ],
-      "raw": "Capybara God🪙 999999　⭐ 1000\n    中EN⚙\n    \n    AutoBackyardSakuraKitchenCat tower\n    \n    GuideArmory0/36\n    Shop🎟 999Rank"
+      "raw": "Capybara God 999999　 1000\n    中EN⚙\n    \n    AutoBackyardSakuraKitchenCat tower\n    \n    GuideArmory0/36\n    Shop 999Rank"
     },
     {
       "label": "high-rank 320",
@@ -3951,10 +3951,10 @@
       "profile": {
         "x": 4.46875,
         "y": 142,
-        "width": 167.5,
+        "width": 183.3125,
         "height": 44,
         "top": 142,
-        "right": 171.96875,
+        "right": 187.78125,
         "bottom": 186,
         "left": 4.46875
       },
@@ -4084,14 +4084,14 @@
           "left": 73.609375
         },
         {
-          "x": 217.890625,
+          "x": 217.71875,
           "y": 347.390625,
-          "width": 44.71875,
+          "width": 44.890625,
           "height": 16.390625,
           "top": 347.390625,
           "right": 262.609375,
           "bottom": 363.78125,
-          "left": 217.890625
+          "left": 217.71875
         }
       ],
       "controls": [
@@ -4100,10 +4100,10 @@
           "rect": {
             "x": 4.46875,
             "y": 142,
-            "width": 167.5,
+            "width": 183.3125,
             "height": 44,
             "top": 142,
-            "right": 171.96875,
+            "right": 187.78125,
             "bottom": 186,
             "left": 4.46875
           },
@@ -4306,7 +4306,7 @@
           "hit": true
         }
       ],
-      "raw": "Capybara God🪙 999999　⭐ 1000\n    中EN⚙\n    \n    AutoBackyardSakuraKitchenCat tower\n    \n    GuideArmory0/36\n    Shop🎟 999Rank"
+      "raw": "Capybara God 999999　 1000\n    中EN⚙\n    \n    AutoBackyardSakuraKitchenCat tower\n    \n    GuideArmory0/36\n    Shop 999Rank"
     }
   ],
   "passed": true

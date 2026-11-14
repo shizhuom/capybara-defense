@@ -4,6 +4,7 @@ export interface PropDefinition {
   cooldown:number; target:'unit'|'road'|'self'|'passive'; icon:string;
   name:LocalizedText; description:LocalizedText;
 }
+export const META_PRICES={shopRefresh:20,lottery:60} as const;
 type PropRow = [string,string,string,number,number,number,PropDefinition['target'],string,string,string,number?];
 const active:PropRow[] = [
   ['washer','滚筒洗衣机','Spin Washer',2,90,28,'unit','🧺','对英雄组件或 1 级基础宠使用，旋转 3 秒后变成新的随机英雄组件。','Wash a hero component or level 1 basic pet for 3s into a new random hero component.'],

@@ -1,4 +1,4 @@
-﻿import type { MapId } from '../core/types';
+import type { MapId } from '../core/types';
 
 export interface RankDifficulty {
   hpMultiplier:number; speedMultiplier:number; extraCount:number;
@@ -27,16 +27,16 @@ export interface RankDefinition {
 }
 const maps:MapId[]=['sunny_backyard','sakura_onsen','midnight_kitchen','cat_tower_maze'];
 const tiers = [
-  {zh:'见习铲屎官',en:'Rookie Keeper',hp:[1,1.08],coins:35},
-  {zh:'溜狗达人',en:'Dog Walker',hp:[1.1,1.18],coins:45},
-  {zh:'猫咖店长',en:'Cat Cafe Boss',hp:[1.2,1.3],coins:55},
-  {zh:'温泉馆主',en:'Onsen Master',hp:[1.32,1.42],coins:65},
-  {zh:'宠物营养师',en:'Chef Keeper',hp:[1.45,1.55],coins:75},
-  {zh:'训宠宗师',en:'Pet Grandmaster',hp:[1.58,1.7],coins:85},
-  {zh:'萌宠统帅',en:'Critter Marshal',hp:[1.72,1.85],coins:95},
-  {zh:'皇家园长',en:'Royal Warden',hp:[1.88,2],coins:110},
-  {zh:'后院霸主',en:'Backyard Overlord',hp:[2.05,2.2],coins:125},
-  {zh:'森林君王',en:'Forest Monarch',hp:[2.25,2.45],coins:140},
+  {zh:'见习铲屎官',en:'Rookie Keeper'},
+  {zh:'溜狗达人',en:'Dog Walker'},
+  {zh:'猫咖店长',en:'Cat Cafe Boss'},
+  {zh:'温泉馆主',en:'Onsen Master'},
+  {zh:'宠物营养师',en:'Chef Keeper'},
+  {zh:'训宠宗师',en:'Pet Grandmaster'},
+  {zh:'萌宠统帅',en:'Critter Marshal'},
+  {zh:'皇家园长',en:'Royal Warden'},
+  {zh:'后院霸主',en:'Backyard Overlord'},
+  {zh:'森林君王',en:'Forest Monarch'},
 ];
 export const RANKS:RankDefinition[]=Array.from({length:54},(_,index)=>{
   const god=index>=50; const tier=tiers[Math.min(9,Math.floor(index/5))];const sub=index%5;
@@ -52,4 +52,3 @@ export function getRank(stars:number):RankDefinition {
   for(let index=RANKS.length-1;index>0;index--) if(total>=RANKS[index].minStars) return RANKS[index];
   return RANKS[0];
 }
-

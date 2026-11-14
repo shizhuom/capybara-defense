@@ -1,0 +1,338 @@
+/* Late overrides for the illustrated ledger and hands-on guide. */
+.page-shell .tutorial-bubble { left:var(--bubble-left);right:auto;width:var(--bubble-width);padding:12px 16px;border:3px solid #765133;border-radius:22px 22px 22px 6px;background:#fff5db;box-shadow:0 5px 0 #76513355; }
+.tutorial-heading>svg,.tutorial-heading>img { width:52px;height:52px;flex:none; }
+.page-shell .tutorial-bubble .tutorial-heading { gap:8px; }
+.page-shell .tutorial-bubble strong { font-size:clamp(14px,1.45cqw,20px);line-height:1.25; }
+.page-shell .tutorial-bubble p { font-size:clamp(12px,1.2cqw,16px);line-height:1.5;margin:9px 0; }
+.tutorial-equation { display:flex;align-items:center;justify-content:center;gap:7px;font-size:14px; }
+.tutorial-equation>* { flex-shrink:0; }
+.tutorial-dots { margin-top:10px; }
+.tutorial-dots i { width:20px;height:20px;font-size:12px;font-style:normal;text-align:center;line-height:20px;background:#e6d9bd;color:#6a4b35; }
+.tutorial-dots .current { width:26px;border-radius:10px;background:#eab459;color:#493021; }
+.tutorial-dots .completed { background:#bfd1a1; }
+.tutorial-spotlight.tutorial-source { box-shadow:0 0 14px 4px #ffe8a5; }
+.tutorial-arrow { position:absolute;inset:0;width:100%;height:100%;overflow:visible; }
+.tutorial-arrow>path { fill:none;stroke:#ffe080;stroke-width:5;stroke-dasharray:10 8;filter:drop-shadow(0 2px 1px #6a492f);animation:guide-flow 1s linear infinite; }
+.tutorial-pointer { position:absolute;width:4.7%;filter:drop-shadow(1px 3px 2px #69442688);animation:guide-paw 1.6s ease-in-out infinite; }
+.tutorial-pointer>* { width:100%;height:auto; }
+@keyframes guide-flow { to { stroke-dashoffset:-36; } }
+@keyframes guide-paw { 50% { transform:translateY(-6px) rotate(-8deg); } }
+@media(max-height:500px) and (orientation:landscape) {
+  .page-shell .tutorial-bubble { padding:6px 10px;width:37%; }
+  .tutorial-heading>svg,.tutorial-heading>img { width:34px;height:34px; }
+  .page-shell .tutorial-bubble p { margin:4px 0;line-height:1.3; }
+  .tutorial-equation>*[data-sticker] { width:26px;height:26px; }
+  .tutorial-dots { margin-top:4px; }
+}
+@media(max-width:760px) and (orientation:portrait) {
+  .page-shell .tutorial-bubble { left:8px;right:8px;width:auto;top:auto!important;bottom:calc(100% + 64px);max-height:calc(50dvh - 28.125vw - 76px);overflow:auto;padding:10px; }
+}
+@media(prefers-reduced-motion:reduce) { .tutorial-arrow>path,.tutorial-pointer { animation:none; } }
+/* Warm walnut frame, stitched parchment, and fixed illustrated bookmarks. */
+#game-dialog.ledger-dialog { width:min(94vw,1040px);height:min(88dvh,650px);max-height:min(88dvh,650px);max-width:none;padding:0;border:4px solid #3d2616;border-radius:26px;background:#b18150;color:#493421;overflow:hidden;box-shadow:0 16px 52px #140e0c88,0 0 0 3px #d5af79; }
+#game-dialog.ledger-dialog[open] { display:flex; }
+#game-dialog.settings-dialog { width:min(92vw,760px); }
+.ledger-shell { display:flex;flex-direction:column;width:100%;height:100%;min-height:0;overflow:hidden;background:#f9edcf; }
+.ledger-header { display:flex;align-items:center;gap:12px;flex:none;min-height:98px;padding:10px 18px;background:repeating-linear-gradient(3deg,#9d7045 0px,#a7794b 4px,#a37547 7px,#9d7045 9px);border-bottom:3px solid #694428;box-shadow:inset 0 -3px 0 #c59b63; }
+.ledger-mascot { display:grid;place-items:center;flex:none;width:76px;height:76px;filter:drop-shadow(0 3px 1px #4d2d2380); }
+.ledger-mascot>* { width:100%;height:100%;object-fit:contain; }
+.ledger-heading { flex:1;min-width:0; }
+#game-dialog .ledger-heading h2 { padding:0;margin:0;color:#fff5d9;text-shadow:0 2px #573a24;font-size:25px;line-height:1.2;letter-spacing:.03em; }
+#game-dialog .ledger-heading p { margin:5px 0 0;color:#ffebc3;font-size:13px;line-height:1.3; }
+.ledger-header-end { display:flex;flex-direction:column;gap:8px;align-items:flex-end;flex:none; }
+.ledger-header .compendium-toolbar { display:flex;gap:10px;align-items:center;position:static;margin:0;padding:0;background:none;border:0;box-shadow:none; }
+.ledger-header .dialog-language { position:static;display:flex;margin:0; }
+.ledger-header .dialog-language button,.settings-language button { min-width:34px;min-height:30px;font-size:13px;border-color:#7f5634; }
+#game-dialog .ledger-close { display:grid;place-items:center;position:static;flex:none;width:42px;height:42px;min-width:42px;border:2px solid #653e30;border-radius:50%;background:#bc6a4e;color:#fff2db;font-size:27px;line-height:1;box-shadow:0 3px 0 #68452e; }
+.ledger-wallet { display:flex;gap:7px; }
+.ledger-wallet>span { display:flex;align-items:center;gap:4px;background:#fff1cf;padding:2px 8px;border:1px solid #6b4a2d;border-radius:20px;font-size:16px;font-variant-numeric:tabular-nums; }
+.ledger-wallet svg,.ledger-wallet img { flex:none; }
+.collection-badge { display:inline-block;font-size:12px;font-weight:800;background:#f9e4b5;border:1px dashed #795834;border-radius:7px;padding:2px 7px;margin-top:5px; }
+#game-dialog .ledger-tabs { display:flex;align-items:stretch;gap:6px;flex:none;position:static;z-index:1;margin:0;padding:8px 16px 0;border:0;border-bottom:2px solid #b79762;background:#d8bb85;overflow-x:auto;flex-wrap:nowrap;scrollbar-width:thin; }
+#game-dialog .ledger-tabs button { flex:1 0 auto;display:flex;align-items:center;justify-content:center;gap:5px;min-height:43px;margin:0;padding:6px 13px;border:1px solid #9d7a48;border-bottom:0;border-radius:12px 12px 0 0;background:#e7c995;color:#66472d;font-size:14px;font-weight:800;line-height:1.15;box-shadow:inset 0 2px #ffebbd; }
+#game-dialog .ledger-tabs button[aria-selected="true"],#game-dialog .ledger-tabs button[aria-pressed="true"] { background:#fff5db;color:#47301e;box-shadow:inset 0 4px #b97a48;border-color:#86603b; }
+#game-dialog .ledger-tabs button [data-sticker] { display:block;width:26px;height:26px; }
+.ledger-body { flex:1;min-height:0;overflow:auto;padding:18px 22px 24px;overscroll-behavior:contain;scroll-behavior:smooth;scrollbar-color:#af8454 #edddba;scrollbar-width:thin;outline-offset:-3px;background:linear-gradient(90deg,transparent 9px,#bc9b6733 10px,transparent 11px),repeating-linear-gradient(0deg,#fbefd5 0px,#fbefd5 27px,#ddc59a33 28px); }
+.ledger-body:focus:not(:focus-visible) { outline:none; }
+.ledger-body:after { content:'';display:block;height:2px; }
+#game-dialog.ledger-dialog .battle-shop-banner { flex:none;margin:0;padding:5px 18px;border-radius:0;font-size:12px; }
+.ledger-body h3 { font-size:17px; }
+.ledger-body p { font-size:14px;line-height:1.5; }
+.ledger-body small { font-size:12px;line-height:1.35; }
+.ledger-body button { touch-action:manipulation; }
+.ledger-body button:focus-visible,.ledger-tabs button:focus-visible,.ledger-close:focus-visible { outline:3px solid #287b73;outline-offset:2px; }
+.ledger-body .compendium-detail { position:static;min-width:0; }
+.ledger-body .encyclopedia-grid { grid-template-columns:repeat(2,minmax(0,1fr));gap:16px; }
+.ledger-body .encyclopedia-card { position:relative;border:1px solid #c2aa80;border-top:7px solid var(--rarity,#b6bf91);border-radius:5px 6px 10px 5px;box-shadow:2px 4px 0 #8c6d4730;background:#fffaf0;padding:14px; }
+.ledger-body .book-heading { min-width:0; }
+.ledger-body .book-heading h4 { font-size:19px; }
+.ledger-body .collection-state { display:inline-block;transform:rotate(-4deg);border:1px dashed #ad7565;border-radius:5px;color:#926453;font-size:12px;padding:1px 5px;margin-top:6px; }
+.ledger-body .book-growth { background:#f7ecd3;border:1px solid #d0b68c;border-radius:7px; }
+.ledger-body .book-growth td,.ledger-body .book-growth th { padding:7px 4px; }
+.ledger-body .book-growth tbody tr:nth-child(even) { background:#ecdfc1; }
+.ledger-body .matrix-corner { font-size:12px;color:#886640;background:linear-gradient(32deg,#dfcfae 49%,#a88a5c 50%,#f6e9cd 51%);border-radius:7px;line-height:1.8;padding:6px; }
+.ledger-body .merge-matrix td button { box-shadow:1px 2px 0 #90715033;border-color:#d6bd92; }
+.ledger-body .pet-catalog .encyclopedia-card { padding:0;border-top-width:4px; }
+.ledger-body .pet-catalog button { min-height:94px; }
+.rarity-0 { --rarity:#9e9789; }.rarity-1 { --rarity:#6da352; }.rarity-2 { --rarity:#4f8fb8; }.rarity-3 { --rarity:#8f67b8; }.rarity-4 { --rarity:#e09a2b; }
+/* Hero miniatures and three-column weapon workshop. */
+.ledger-body .hero-overview { background:#ddc397;border:1px solid #9a764a;border-radius:14px;padding:10px 12px;margin:0; }
+.ledger-body .hero-overview h3 { margin:0 0 8px;font-size:15px; }
+.ledger-body .hero-loadout-grid { display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:7px; }
+.ledger-body .hero-loadout-grid article { min-width:0;display:flex;align-items:center;gap:5px;padding:5px;border:1px solid #b6986d;border-radius:9px;background:#fff0d4; }
+.hero-stand-art { position:relative;flex:none;width:46px;height:43px; }
+.hero-stand-art>i { position:absolute;bottom:-2px;right:-4px;background:#f8ebcc;border:1px solid #b49a71;border-radius:50%;font-style:normal; }
+.hero-stand-art>i>* { display:block; }
+.ledger-body .hero-loadout-grid strong { font-size:12px;line-height:1.2; }
+.ledger-body .hero-loadout-grid small { font-size:10px;line-height:1.2; }
+.ledger-body .hero-loadout-grid article>div { min-width:0; }
+.ledger-body .weapon-grid { grid-template-columns:repeat(3,minmax(0,1fr));gap:15px; }
+.ledger-body .weapon-card { padding:13px;position:relative;border:2px solid #b99a69;border-top:8px solid var(--rarity);border-radius:13px 13px 8px 8px;box-shadow:2px 4px 0 #96704635;background:#fff5dc; }
+.ledger-body .weapon-card p { font-size:13px;line-height:1.5; }
+.ledger-body .weapon-card h3 { font-size:17px; }
+.ledger-body .weapon-card.locked { background:#eae0cb; }
+.ledger-body .weapon-card.locked .weapon-sticker { filter:saturate(.55); }
+.hero-equip-chips { display:flex;justify-content:center;gap:9px;margin:12px 0 5px; }
+.hero-equip-chip { position:relative;display:grid;place-items:center;flex:none;width:44px;height:44px;padding:3px;border:2px solid #b89764;border-radius:50%;background:#f9e9c4; }
+.hero-equip-chip.signature { border-color:#dcac45; }
+.hero-equip-chip.equipped { background:#d8e7af;border:3px solid #76914a;box-shadow:0 0 0 2px #e6c266; }
+.hero-equip-chip>i,.hero-equip-chip>b { position:absolute;font-style:normal;right:-2px;top:-10px;color:#b77c1b;background:#fff4c5;border-radius:50%;font-size:14px;line-height:18px;width:18px;text-align:center; }
+.hero-equip-chip>b { top:auto;bottom:-5px;background:#65844b;color:#fff; }
+.ledger-body .equip-hero { font-size:12px;margin-top:9px; }
+.ledger-body .equip-hero select { font-size:12px;min-height:32px;padding:4px; }
+.ledger-body .sort-tabs,.ledger-body .family-tabs { margin:10px 0; }
+.ledger-body .recycle-panel { border:2px dashed #b6935e;background:#e4d3b0; }
+.ledger-body .rarity-checks { gap:8px; }
+.ledger-body .rarity-toggle { position:relative;display:flex;flex-direction:column;padding:8px 12px 8px 30px;border:2px solid var(--rarity);border-radius:24px;background:#fff7e5;font-size:13px;cursor:pointer; }
+.rarity-toggle:has(input:checked) { box-shadow:inset 0 0 0 2px var(--rarity); }
+.rarity-toggle input { position:absolute;left:10px;top:12px;accent-color:var(--rarity); }
+.ledger-body .rarity-checks small { padding:0;font-size:10px; }
+/* The right loadout remains visible while the left stall is browsed. */
+.market-split { display:grid;grid-template-columns:minmax(0,1.25fr) minmax(0,1fr);gap:18px;height:100%;min-height:0; }
+.market-stall,.market-backpack { min-width:0;min-height:0;overflow-y:auto;overscroll-behavior:contain;scrollbar-width:thin;padding:0 4px 20px; }
+.market-backpack { border-left:2px dashed #bd9d69;padding-left:14px; }
+.market-subtabs { margin:0 0 8px; }
+.stall-awning { background:repeating-linear-gradient(90deg,#b96c51 0 32px,#ebc69a 32px 64px);padding:18px 12px 11px;border:2px solid #966240;border-radius:13px 13px 10px 10px;box-shadow:0 4px 0 #8d644133;text-align:center;text-shadow:0 1px 0 #ffe9bd; }
+.ledger-body .market-stall .shop-grid { grid-template-columns:repeat(2,minmax(0,1fr));gap:10px; }
+.ledger-body .shop-card { padding:12px;background:#fff4d8;border:2px solid #bc9661;border-top:6px solid var(--rarity);box-shadow:0 4px 0 #c6a478; }
+.ledger-body .shop-card h3 { font-size:16px;margin:5px 0; }
+.ledger-body .shop-card p { font-size:13px;line-height:1.45; }
+.ledger-body .shop-card .button { font-size:13px;border-radius:10px; }
+.ledger-body .loadout-panel { margin:0 0 14px;padding:11px;background:#e6d1a8;border:2px solid #b18d58; }
+.ledger-body .loadout-panel h3 { margin:0 0 6px; }
+.ledger-body .prop-slots { grid-template-columns:repeat(3,minmax(0,1fr));gap:7px; }
+.ledger-body .slot-group:first-of-type .prop-slots { grid-template-columns:repeat(2,minmax(0,1fr)); }
+.ledger-body .prop-slot { min-height:60px;border:2px dashed #b79a69;background:#fff4d7; }
+.ledger-body .prop-slot small { font-size:11px; }
+.ledger-body .inventory-grid { gap:7px; }
+.ledger-body .inventory-prop { padding:9px;background:#fff4db; }
+.ledger-body .inventory-prop>b { display:flex;align-items:center;gap:4px;font-size:12px; }
+.ledger-body .inventory-prop small,.ledger-body .inventory-prop strong { font-size:11px; }
+.ledger-body .inventory-prop.equipped { background:#dfe9c2; }
+.ledger-body .lottery-grid { position:relative;gap:7px;border:12px solid #a97846;border-radius:24px;padding:9px;background:#62462f;box-shadow:0 0 0 3px #d2ac6a,inset 0 0 0 2px #4f3623;outline:4px dotted #ffe7a1;outline-offset:-8px; }
+.ledger-body .lottery-cell { background:#fff0d0;border:2px solid #c49b62;border-radius:13px;min-height:91px;padding:6px; }
+.ledger-body .lottery-cell small { font-size:11px;line-height:1.2; }
+.ledger-body .lottery-cell.lit { background:#ffe28a;box-shadow:0 0 15px 4px #ffe587; }
+.ledger-body .lottery-center { background:radial-gradient(circle,#f6d27d,#c98445);color:#5b371d;border:3px solid #eac36e;border-radius:22px;box-shadow:0 0 15px #efcf6f88;font-size:19px;padding:7px; }
+.ledger-body .lottery-center small { font-size:11px; }
+/* Passport, threat bulletin and the podium. */
+.threat-banner { display:flex;align-items:center;gap:12px;padding:12px 16px;background:#e8d4a8;border:2px solid #b99961;border-radius:14px; }
+.threat-banner>svg,.threat-banner>img { flex:none; }
+.threat-banner strong { font-size:16px; }
+.threat-banner small { display:block;margin-top:5px; }
+.threat-values { display:flex;gap:7px;flex-wrap:wrap;margin-top:6px;font-size:13px;font-weight:800; }
+.threat-values>span { background:#fff2cf;padding:3px 7px;border:1px solid #d7ba83;border-radius:9px; }
+.rank-podium { display:grid;grid-template-columns:1fr 1.13fr 1fr;align-items:end;gap:14px;margin:22px 0;padding:0;list-style:none; }
+.ledger-body .podium-card { display:flex;flex-direction:column;text-align:center;gap:7px;border:3px solid #baa17b;border-bottom-width:10px;padding:12px;border-radius:22px 22px 10px 10px;background:#e9e5dc; }
+.ledger-body .podium-1 { border-color:#d2a44c;background:linear-gradient(#fff3cb,#ead5a2);padding-top:22px;padding-bottom:20px; }
+.ledger-body .podium-3 { border-color:#b98660;background:#eed7bb; }
+.ledger-body .podium-card .place-number { font-size:28px; }
+.ledger-body .podium-card>span>svg,.ledger-body .podium-card>span>img { width:68px;height:68px; }
+.ledger-body .leaderboard-row { border-color:#bb9a66;font-size:15px; }
+.ledger-body .leaderboard-row small { font-size:12px; }
+.ledger-body .leaderboard-row.is-player { border-color:#7c974f;background:#e8edcc;box-shadow:0 0 0 2px #cdb56b; }
+.rank-stars { display:flex;align-items:center;gap:4px; }
+.rank-stars>* { width:22px;height:22px; }
+.you-here { color:#547846;font-size:12px; }
+.keeper-passport { border:3px solid #947047;box-shadow:inset 0 0 0 4px #e8cca1;background:#f0dcb7;border-radius:18px;padding:18px; }
+.keeper-passport>h3 { text-align:center;letter-spacing:.15em;color:#765233;margin:0 0 13px;font-size:17px; }
+.passport-layout { display:grid;grid-template-columns:minmax(0,.8fr) minmax(0,1.2fr);gap:18px;align-items:center; }
+.ledger-body .keeper-passport .rank-card { background:#fff4d8;border:1px dashed #b99562;display:flex;flex-direction:column;align-items:center;text-align:center;padding:16px;margin:0;min-width:0; }
+.ledger-body .keeper-passport .rank-avatar>* { width:88px;height:88px; }
+.ledger-body .rank-card strong { font-size:20px; }
+.ledger-body .rank-card b,.ledger-body .rank-card small { font-size:13px; }
+.passport-stats { display:grid;grid-template-columns:1fr 1fr;gap:10px; }
+.passport-stats>article,.passport-stats>button { display:flex;flex-direction:column;justify-content:center;gap:6px;padding:14px 10px;border:2px dashed #bc9565;border-radius:12px;background:#fff4d8;text-align:center;min-width:0;color:#6a482d; }
+.passport-stats>article>b { font-size:20px; }
+.passport-stats>article>span { font-size:12px; }
+.passport-stats .threat-banner { flex-direction:column;padding:0;border:0;background:none;gap:4px; }
+.passport-stats .threat-banner strong { font-size:12px; }
+.passport-stats .threat-values { justify-content:center;gap:3px;font-size:10px; }
+.avatar-wall-heading { text-align:center;margin:22px 0 12px; }
+.ledger-body .avatar-grid { grid-template-columns:repeat(4,minmax(0,1fr));gap:13px; }
+.ledger-body .avatar-card { border:1px solid #c2a478;border-radius:15px;background:#fff2d8;padding:13px;gap:7px; }
+.avatar-seal { display:grid;place-items:center;width:84px;height:84px;border:3px solid #c29a78;border-radius:50%;background:radial-gradient(#fff1ce,#c59779);box-shadow:0 3px 0 #997354; }
+.ledger-body .avatar-card[aria-pressed="true"] { background:#e3e9bc;border:3px solid #78924d; }
+.ledger-body .avatar-card strong { font-size:15px; }
+.ledger-body .avatar-card small,.ledger-body .avatar-card b { font-size:12px;line-height:1.4; }
+/* Chunky audio rails and accessible native capsule switches. */
+.ledger-body .settings-form { margin:0;gap:19px; }
+.ledger-body .wood-slider { padding:12px 15px;border:1px dashed #be9c66;background:#f2dfb8;border-radius:13px;gap:11px;font-size:16px;font-weight:700; }
+.wood-slider input[type="range"] { appearance:none;height:12px;border:2px solid #9a7146;background:linear-gradient(#bf9763,#ddba83);border-radius:20px;cursor:pointer; }
+.wood-slider input[type="range"]::-webkit-slider-thumb { appearance:none;width:26px;height:26px;border:3px solid #85603b;border-radius:50%;background:#fff2cf;box-shadow:0 3px 0 #8d684544; }
+.wood-slider input[type="range"]::-moz-range-thumb { width:22px;height:22px;border:3px solid #85603b;border-radius:50%;background:#fff2cf; }
+.setting-toggles { display:grid;grid-template-columns:1fr 1fr;gap:12px; }
+.ledger-body .capsule-setting { position:relative;display:flex;align-items:center;gap:12px;padding:15px 12px;border:1px dashed #c09e69;border-radius:16px;background:#f7e8c9;cursor:pointer; }
+.capsule-setting input { position:absolute;left:12px;top:calc(50% - 15px);width:54px;height:30px;opacity:0;cursor:pointer; }
+.capsule-setting .toggle-knob { width:54px;height:30px;border:2px solid #9a7851;border-radius:30px;background:#c8b79a;flex:none;pointer-events:none; }
+.toggle-knob:after { content:'';display:block;width:22px;height:22px;border:1px solid #ac8a5b;border-radius:50%;margin:2px;background:#fff5d8;transition:transform .15s; }
+.capsule-setting:has(input:checked) .toggle-knob { background:#94af70; }
+.capsule-setting:has(input:checked) .toggle-knob:after { transform:translateX(23px); }
+.capsule-setting:has(input:focus-visible) { outline:3px solid #347d73; }
+.ledger-body .capsule-setting>span { display:flex;flex-direction:column;gap:5px;font-size:14px; }
+.ledger-body .capsule-setting small { font-size:12px;font-weight:400; }
+.settings-language { display:flex;justify-content:center; }
+.settings-language .dialog-language { position:static; }
+.tutorial-replay-card { display:flex;align-items:center;gap:14px;border:2px solid #bb9157;border-radius:18px;background:#f3dc9c;padding:12px 16px;text-align:left;color:#66452a;box-shadow:0 4px 0 #b4915c; }
+.tutorial-replay-card>span { display:grid;gap:6px; }
+.tutorial-replay-card b { font-size:18px; }
+.tutorial-replay-card>svg,.tutorial-replay-card>img { flex:none; }
+.ledger-body .settings-saved { text-align:center;margin:0;font-size:12px;color:#866a47; }
+.profile-pill strong { display:flex;align-items:center;gap:4px; }
+.profile-pill strong>svg,.profile-pill strong>img { width:1.65em;height:1.65em; }
+.hub-dock .ticket-badge { display:flex;align-items:center;gap:2px; }
+.hub-dock .ticket-badge>* { width:1.15em;height:1.15em; }
+@media(max-width:900px) {
+  .ledger-header { min-height:76px;padding:7px 12px;gap:8px; }
+  .ledger-mascot { width:60px;height:60px; }
+  #game-dialog .ledger-heading h2 { font-size:21px; }
+  #game-dialog .ledger-heading p { font-size:11px; }
+  .ledger-header-end { gap:3px; }
+  #game-dialog .ledger-close { width:36px;height:36px;min-width:36px; }
+  .ledger-wallet>span { font-size:13px;padding:1px 5px; }
+  .ledger-wallet svg,.ledger-wallet img { width:20px;height:20px; }
+  .ledger-body { padding:12px 15px 20px; }
+  #game-dialog .ledger-tabs { padding:5px 10px 0;gap:4px; }
+  #game-dialog .ledger-tabs button { padding:5px 9px;min-height:36px;font-size:13px; }
+  #game-dialog .ledger-tabs button [data-sticker] { width:22px;height:22px; }
+  .ledger-body .hero-loadout-grid { grid-template-columns:repeat(4,minmax(0,1fr)); }
+  .ledger-body .weapon-grid { grid-template-columns:repeat(2,minmax(0,1fr)); }
+  .ledger-body .book-heading h4 { font-size:17px; }
+  .market-split { gap:10px; }
+  .market-backpack { padding-left:9px; }
+  .ledger-body .lottery-cell { min-height:78px; }
+  .ledger-body .shop-card { padding:9px; }
+}
+@media(max-width:600px) {
+  #game-dialog.ledger-dialog { width:96vw;height:90dvh;max-height:90dvh;border-radius:18px; }
+  .ledger-header { gap:6px;padding:8px; }
+  .ledger-mascot { width:44px;height:44px; }
+  #game-dialog .ledger-heading h2 { font-size:17px; }
+  #game-dialog .ledger-heading p { display:none; }
+  .ledger-header-end { gap:4px; }
+  .ledger-wallet { gap:3px; }
+  .ledger-wallet>span { font-size:12px; }
+  .ledger-header .compendium-toolbar { gap:4px; }
+  .ledger-header .dialog-language button { min-width:25px;font-size:11px;padding:3px; }
+  #game-dialog .ledger-close { width:30px;height:30px;min-width:30px;font-size:22px; }
+  .collection-badge { font-size:10px; }
+  .ledger-body { padding:12px; }
+  .compendium-split,.passport-layout { grid-template-columns:1fr; }
+  .ledger-body .encyclopedia-grid,.ledger-body .weapon-grid { grid-template-columns:1fr; }
+  .ledger-body .hero-loadout-grid { display:flex;overflow-x:auto;padding-bottom:5px; }
+  .ledger-body .hero-loadout-grid article { flex:0 0 134px; }
+  .market-split { height:auto;grid-template-columns:1fr; }
+  .market-stall,.market-backpack { overflow:visible; }
+  .market-backpack { border-left:0;border-top:2px dashed #bd9d69;padding-top:12px; }
+  .rank-podium { gap:6px; }
+  .ledger-body .podium-card { padding:6px;border-width:2px; }
+  .ledger-body .podium-card strong { font-size:12px; }
+  .ledger-body .podium-card small { font-size:10px; }
+  .ledger-body .podium-card>span>svg,.ledger-body .podium-card>span>img { width:48px;height:48px; }
+  .ledger-body .avatar-grid { gap:6px; }
+  .ledger-body .avatar-card { padding:6px; }
+  .avatar-seal { width:54px;height:54px; }
+  .avatar-seal>* { width:48px!important;height:48px!important; }
+  .ledger-body .avatar-card strong { font-size:12px; }
+  .ledger-body .avatar-card small,.ledger-body .avatar-card b { font-size:10px; }
+  .setting-toggles { grid-template-columns:1fr; }
+}
+@media(max-height:500px) and (orientation:landscape) {
+  .ledger-header { min-height:58px;padding:5px 10px; }
+  .ledger-mascot { width:46px;height:46px; }
+  .ledger-header-end { flex-direction:row;align-items:center;gap:8px; }
+  #game-dialog .ledger-heading h2 { font-size:20px; }
+  #game-dialog .ledger-heading p { display:none; }
+  .collection-badge { margin-top:3px;font-size:10px; }
+  .ledger-wallet { gap:4px; }
+  #game-dialog .ledger-tabs { padding-top:3px; }
+  #game-dialog .ledger-tabs button { min-height:33px;font-size:12px; }
+  .ledger-body { padding:10px 13px 16px; }
+  .ledger-body .market-subtabs { margin:0 0 6px; }
+  .ledger-body .market-subtabs button { padding:5px 10px;font-size:12px; }
+  .ledger-body .stall-awning { padding:8px 10px;margin:8px 0;font-size:14px; }
+  .ledger-body .shop-refresh { min-height:33px;padding:6px;font-size:12px; }
+  .ledger-body .loadout-panel { padding:8px;margin-bottom:9px; }
+  .ledger-body .loadout-panel h3 { font-size:14px;margin:0; }
+  .ledger-body .slot-group h4 { font-size:11px;margin:5px 0; }
+  .ledger-body .prop-slots { grid-template-columns:repeat(6,minmax(0,1fr));gap:4px; }
+  .ledger-body .prop-slot { min-height:42px;padding:3px; }
+  .ledger-body .prop-slot small { display:none; }
+  .ledger-body .prop-slot img,.ledger-body .prop-slot svg { width:30px;height:30px;max-width:100%; }
+}
+/* Finishing details from the P5 art specification. */
+.ledger-header .ledger-close:active { transform:translateY(2px);box-shadow:0 1px 0 #68452e; }
+.ledger-body .book-heading>.book-sticker,.ledger-body .book-heading>span[aria-hidden] { border-radius:50%;background:radial-gradient(#f6e3ac,#fbf0d4 65%,transparent 67%); }
+.ledger-body .merge-matrix .locked-pair { border:1px dashed #ad8a61;border-radius:10px;color:#926b48;padding:8px; }
+.ledger-body .hero-loadout-grid article { position:relative;padding-right:16px; }
+.ledger-body .hero-loadout-grid .stand-equipped { background:#e8ebcb;border:1px solid #8e9b5e;box-shadow:inset 0 0 0 1px #d3b368; }
+.stand-unequip { position:absolute;right:1px;top:1px;border:0;background:#c6ae86;color:#5d432c;border-radius:50%;width:17px;height:17px;padding:0;font-size:13px;line-height:1; }
+.stand-empty .hero-stand-art>i { border-style:dashed; }
+.ledger-body .weapon-sticker { display:grid;place-items:center;width:72px;height:72px;border:1px solid var(--rarity);border-radius:50%;background:radial-gradient(#fff8e4,#e9d8ac);box-shadow:0 3px 0 #94784a33; }
+.ledger-body .weapon-card.rarity-4 { background:linear-gradient(145deg,#fff8e0,#f3dfaa); }
+.ledger-body .shop-icon { display:grid;place-items:center;align-self:center;width:76px;height:76px;border-radius:50%;background:radial-gradient(#ead7ac,#fff5dc 70%); }
+.ledger-body .shop-card .button { background:#e0b365;color:#553820;border:2px solid #ab7a40; }
+.gacha-price { display:flex;align-items:center;justify-content:center;gap:4px;font-size:19px; }
+.gacha-price>*[data-sticker] { width:30px;height:30px; }
+.ledger-body .lottery-cell.lit { animation:gacha-glow .7s ease-in-out infinite alternate; }
+@keyframes gacha-glow { to { box-shadow:0 0 20px 6px #ffd36f; } }
+.rank-threat-banner { display:grid;grid-template-columns:minmax(0,.7fr) minmax(0,1.3fr);gap:14px;align-items:stretch; }
+.ledger-body .rank-threat-banner .rank-card { margin:0;padding:10px;background:#f4e0b3;border:2px solid #b99961; }
+.ledger-body .rank-threat-banner .rank-card strong { font-size:18px; }
+.ledger-body .rank-threat-banner p { font-size:12px;margin:6px 2px 0; }
+.wood-slider output { min-width:52px;text-align:center;border-radius:12px;padding:2px 7px;background:#dfb66d;border:1px solid #b88d4d;color:#644222; }
+.ledger-body .cozy-range { background:linear-gradient(to right,#91ac6d 0 var(--range-fill),#d8ba87 var(--range-fill) 100%); }
+.ledger-body .cozy-range::-webkit-slider-thumb { background:#eab66a; }
+.ledger-body .cozy-range::-moz-range-thumb { background:#eab66a; }
+.tutorial-step-pill { display:block;width:max-content;font-size:10px;line-height:1.3;letter-spacing:.08em;color:#917044;background:#f4dfac;border-radius:8px;padding:1px 6px;margin-bottom:3px; }
+@media(max-height:500px) and (orientation:landscape) {
+ .tutorial-step-pill { display:inline-block;margin:0 6px 0 0;font-size:9px; }
+ .rank-threat-banner { grid-template-columns:minmax(0,.7fr) minmax(0,1.3fr);gap:8px; }
+ .ledger-body .rank-threat-banner .rank-card strong { font-size:15px; }
+ .ledger-body .rank-threat-banner .rank-avatar>* { width:50px;height:50px; }
+ .rank-threat-banner .threat-banner { padding:8px;gap:7px; }
+ .rank-threat-banner .threat-banner>img,.rank-threat-banner .threat-banner>svg { width:36px;height:36px; }
+ .rank-threat-banner .threat-banner strong { font-size:13px; }
+ .rank-threat-banner .threat-values { font-size:11px; }
+ .gacha-price { font-size:16px; }
+}
+@media(max-width:600px) {
+ #game-dialog.ledger-dialog { width:94vw;height:88dvh;max-height:88dvh; }
+ .rank-threat-banner { grid-template-columns:1fr; }
+ .ledger-header-end .ledger-wallet { max-width:100px;flex-wrap:wrap;justify-content:flex-end; }
+}
+@media(prefers-reduced-motion:reduce) { .ledger-body .lottery-cell.lit { animation:none; } }
+.ledger-body .pet-catalog button { padding-bottom:9px; }
+.ledger-body .pet-catalog .collection-state { font-size:10px;margin-top:5px; }
+.ledger-body .slot-group:not(:first-of-type) .prop-slot { border-radius:30px; }
+@media(max-height:500px) and (orientation:landscape) {
+ .ledger-body .gacha-machine-frame .lottery-grid { border-width:6px;padding:3px;gap:4px;margin:4px auto; }
+ .ledger-body .gacha-machine-frame .lottery-cell { min-height:0;padding:2px;border-width:1px; }
+ .ledger-body .gacha-machine-frame .lottery-cell>span { display:flex;line-height:1; }
+ .ledger-body .gacha-machine-frame .lottery-cell span>[data-sticker] { width:40px;height:40px; }
+ .ledger-body .gacha-machine-frame .lottery-cell small { display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:12px;max-width:100%;font-size:11px; }
+ .ledger-body .gacha-machine-frame .lottery-center { min-height:0;padding:3px;border-width:2px;font-size:14px; }
+ .ledger-body .gacha-machine-frame .lottery-center b { font-size:14px;line-height:1.1;margin-bottom:2px; }
+ .ledger-body .gacha-machine-frame .lottery-center small { display:none; }
+ .ledger-body .gacha-machine-frame .gacha-price>[data-sticker] { width:24px;height:24px; }
+}

@@ -1,0 +1,200 @@
+{
+    "verifiedAt":  "2026-11-14T21:51:23.9461948Z",
+    "command":  "npm test -- --reporter=json --outputFile=.runtime/p5-full-tests.json",
+    "success":  true,
+    "total":  826,
+    "passed":  826,
+    "failed":  0,
+    "suites":  [
+                   {
+                       "file":  "tests/balance-v2.test.ts",
+                       "status":  "passed",
+                       "tests":  11
+                   },
+                   {
+                       "file":  "tests/battle.test.ts",
+                       "status":  "passed",
+                       "tests":  32
+                   },
+                   {
+                       "file":  "tests/combat-details.test.ts",
+                       "status":  "passed",
+                       "tests":  13
+                   },
+                   {
+                       "file":  "tests/grid.test.ts",
+                       "status":  "passed",
+                       "tests":  3
+                   },
+                   {
+                       "file":  "tests/m2-i18n.test.ts",
+                       "status":  "passed",
+                       "tests":  3
+                   },
+                   {
+                       "file":  "tests/m2-meta.test.ts",
+                       "status":  "passed",
+                       "tests":  21
+                   },
+                   {
+                       "file":  "tests/m2-props.test.ts",
+                       "status":  "passed",
+                       "tests":  23
+                   },
+                   {
+                       "file":  "tests/m2-render.test.ts",
+                       "status":  "passed",
+                       "tests":  27
+                   },
+                   {
+                       "file":  "tests/m2-weapons.test.ts",
+                       "status":  "passed",
+                       "tests":  71
+                   },
+                   {
+                       "file":  "tests/m3-bosses.test.ts",
+                       "status":  "passed",
+                       "tests":  19
+                   },
+                   {
+                       "file":  "tests/m3-i18n.test.ts",
+                       "status":  "passed",
+                       "tests":  3
+                   },
+                   {
+                       "file":  "tests/m3-maps.test.ts",
+                       "status":  "passed",
+                       "tests":  21
+                   },
+                   {
+                       "file":  "tests/m3-progression.test.ts",
+                       "status":  "passed",
+                       "tests":  103
+                   },
+                   {
+                       "file":  "tests/m3-render.test.ts",
+                       "status":  "passed",
+                       "tests":  16
+                   },
+                   {
+                       "file":  "tests/m3-sound.test.ts",
+                       "status":  "passed",
+                       "tests":  21
+                   },
+                   {
+                       "file":  "tests/merge.test.ts",
+                       "status":  "passed",
+                       "tests":  36
+                   },
+                   {
+                       "file":  "tests/p1-assets.test.ts",
+                       "status":  "passed",
+                       "tests":  10
+                   },
+                   {
+                       "file":  "tests/p1-audio-manifest.test.ts",
+                       "status":  "passed",
+                       "tests":  16
+                   },
+                   {
+                       "file":  "tests/p1-core.test.ts",
+                       "status":  "passed",
+                       "tests":  36
+                   },
+                   {
+                       "file":  "tests/p1-render.test.ts",
+                       "status":  "passed",
+                       "tests":  23
+                   },
+                   {
+                       "file":  "tests/p1-sound.test.ts",
+                       "status":  "passed",
+                       "tests":  34
+                   },
+                   {
+                       "file":  "tests/p1-ui.test.ts",
+                       "status":  "passed",
+                       "tests":  17
+                   },
+                   {
+                       "file":  "tests/p2-core.test.ts",
+                       "status":  "passed",
+                       "tests":  37
+                   },
+                   {
+                       "file":  "tests/p2-render.test.ts",
+                       "status":  "passed",
+                       "tests":  59
+                   },
+                   {
+                       "file":  "tests/p2-ui.test.ts",
+                       "status":  "passed",
+                       "tests":  20
+                   },
+                   {
+                       "file":  "tests/p3-assets.test.ts",
+                       "status":  "passed",
+                       "tests":  7
+                   },
+                   {
+                       "file":  "tests/p3-components.test.ts",
+                       "status":  "passed",
+                       "tests":  12
+                   },
+                   {
+                       "file":  "tests/p3-core.test.ts",
+                       "status":  "passed",
+                       "tests":  17
+                   },
+                   {
+                       "file":  "tests/p3-render.test.ts",
+                       "status":  "passed",
+                       "tests":  21
+                   },
+                   {
+                       "file":  "tests/p3-ui.test.ts",
+                       "status":  "passed",
+                       "tests":  25
+                   },
+                   {
+                       "file":  "tests/p4-menu.test.ts",
+                       "status":  "passed",
+                       "tests":  9
+                   },
+                   {
+                       "file":  "tests/p4-start-screen.test.ts",
+                       "status":  "passed",
+                       "tests":  13
+                   },
+                   {
+                       "file":  "tests/p5-assets.test.ts",
+                       "status":  "passed",
+                       "tests":  2
+                   },
+                   {
+                       "file":  "tests/p5-difficulty.test.ts",
+                       "status":  "passed",
+                       "tests":  25
+                   },
+                   {
+                       "file":  "tests/p5-ledger.test.ts",
+                       "status":  "passed",
+                       "tests":  7
+                   },
+                   {
+                       "file":  "tests/p5-tutorial.test.ts",
+                       "status":  "passed",
+                       "tests":  2
+                   },
+                   {
+                       "file":  "tests/render.test.ts",
+                       "status":  "passed",
+                       "tests":  3
+                   },
+                   {
+                       "file":  "tests/ui.test.ts",
+                       "status":  "passed",
+                       "tests":  8
+                   }
+               ]
+}

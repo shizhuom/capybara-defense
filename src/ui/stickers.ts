@@ -45,6 +45,20 @@ const tools:Record<string,string>={
   shovel:p('M0 -7 V-29 M-10 -29 V-39 H10 V-29Z','none','#b39a79',6)+p('M-15 -7 H15 L12 18 0 33 -12 18Z','#bbc8b9')+p('M0 0 V23','none','#e3e5cd',3),
   sprinkler:r(-28,-6,47,29,'#e9c977')+r(-15,-25,25,22,'#b4d5cf')+p('M9 -19 H27 L34 -11','none','#c8a157',5)+e(-17,24,8,8,'#798b80')+e(15,24,8,8,'#798b80')+p('M26 -3 L38 -8 M26 3 H42 M26 9 L38 15','none','#94c8d0',3),
 };
+Object.assign(tools,{
+  ui_header_compendium:head('#d6b38c')+`<g transform="translate(0 21) scale(.75)">${tools.ui_compendium_book}</g>`,
+  ui_header_armory:head('#e0c5a1')+p('M-34 28 L20 -26 31 -15 -23 39Z','#a9bbb5')+p('M-26 13 L-7 32 M-22 27 L-34 39','none','#ae7951',6),
+  ui_header_market:head('#b3aa9b')+p('M-25 -5 L-5 0 -8 12 -25 7 M25 -5 L5 0 8 12 25 7Z','#5b5149')+r(-29,19,58,20,'#dfb47c')+p('M-29 20 Q-18 32 -8 20 Q4 32 15 20 Q27 32 29 20','#c87961'),
+  ui_header_rank:head('#dcc19a')+p('M-23 -18 L-28 -39 -9 -29 0 -43 10 -29 29 -39 23 -18Z','#f1c65a')+orange(0,26),
+  ui_header_profile:head('#c9aa88')+r(-31,12,62,29,'#f1d8ad')+e(-17,27,7,8,'#d0a675')+p('M-3 22 H22 M-3 30 H17'),
+  ui_header_settings:head('#c3ae91')+e(20,22,17,17,'#b3bfae')+e(20,22,7,7,'#f7e4b9')+p('M20 1 V8 M20 36 V43 M-1 22 H6 M34 22 H41','none','#b3bfae',8),
+  ui_tutorial_pointer:p('M-22 15 V-7 Q-22 -18 -13 -15 V-28 Q-13 -40 -4 -35 V-9 Q4 -21 11 -15 Q21 -18 25 -6 Q37 -6 32 8 L22 33 H-13Z','#e4c7a0')+e(4,16,9,7,'#c58e77')+e(-9,3,3,4,'#c58e77')+e(3,-1,3,4,'#c58e77')+e(16,3,3,4,'#c58e77'),
+  ui_tutorial_capy:head('#d1b08a')+orange(0,-29)+p('M-17 17 Q0 28 17 17')+p('M-31 17 Q-43 5 -39 -8 M31 17 Q43 5 39 -8','none','#e6be92',7),
+  ui_coin_gold:e(0,0,31,34,'#e2b04d')+e(0,-2,23,26,'#f6d77d')+p('M0 -17 L5 -5 18 -5 8 3 11 16 0 9 -11 16 -8 3 -18 -5 -5 -5Z','#e5ac43'),
+  ui_star_rank:p('M0 -38 L11 -13 39 -10 18 9 23 37 0 23 -23 37 -18 9 -39 -10 -11 -13Z','#f0cc68')+e(-9,1,2,4,ink)+e(9,1,2,4,ink)+p('M-5 12 Q0 17 5 12'),
+  ui_ticket_gacha:p('M-37 -22 H37 V-7 Q23 0 37 7 V22 H-37 V7 Q-23 0 -37 -7Z','#edc393')+p('M-18 -20 V20','none','#b78b60',2)+p('M9 -13 L13 -4 23 -3 16 4 18 14 9 9 0 14 2 4 -5 -3 5 -4Z','#c78571'),
+  ui_skull_threat:p('M-26 6 Q-38 -25 -13 -34 Q13 -42 28 -17 Q36 2 21 15 V31 H-20 V15Z','#f8ecd2')+e(-13,-3,8,10,'#7a6553')+e(13,-3,8,10,'#7a6553')+p('M0 6 L-5 15 H5Z','#7a6553')+p('M-11 25 V33 M0 25 V33 M11 25 V33'),
+});
 const props:Record<string,string>={
   washer:r(-29,-30,58,62,'#b6c9c1')+r(-24,-25,48,11,'#f5e4bb')+e(0,10,20,20,'#f8f2d9')+e(0,10,13,13,'#a1c7cb')+p('M-10 9 Q0 0 10 11 Q0 21 -10 9Z','#d6b1be'),
   clay:e(0,12,28,17,'#cbb0cc')+p('M-22 3 Q-25 -18 -9 -17 Q-3 -35 13 -22 Q29 -15 23 6Z','#dcbdd0')+e(-8,-4,3,4,'#f5dfad')+p('M3 11 Q15 -2 20 8','none','#a681aa',4),
@@ -86,7 +100,7 @@ export function unitSticker(kind:string,size=40):string {
   if(['hamster','squirrel','bee'].includes(key))return avatarSticker(key,n);
   return `<span role="img" aria-label="${key}" data-sticker="${key}" style="display:inline-grid;place-items:center;width:${n}px;height:${n}px;font-size:${Math.round(n*.63)}px">${escapeHtml(UNIT_ICONS[key])}</span>`;
 }
-export function sceneSticker(id:'menu_banner'|'logo_capy'|'sprinkler'|'shovel'|'ui_compendium_book'|'ui_fish_food'|'ui_bell_summon'|'ui_shop_bag'|'orange'|'ui_trophy_rank'|'ui_map_sign',fallback:string,size?:number):string {
+export function sceneSticker(id:'menu_banner'|'logo_capy'|'sprinkler'|'shovel'|'ui_compendium_book'|'ui_fish_food'|'ui_bell_summon'|'ui_shop_bag'|'orange'|'ui_trophy_rank'|'ui_map_sign'|'ui_header_compendium'|'ui_header_armory'|'ui_header_market'|'ui_header_rank'|'ui_header_profile'|'ui_header_settings'|'ui_tutorial_pointer'|'ui_tutorial_capy'|'ui_coin_gold'|'ui_star_rank'|'ui_ticket_gacha'|'ui_skull_threat',fallback:string,size?:number):string {
   const n=sizeOf(size??(id==='menu_banner'?400:64),64);
   return image(id,n)||(Object.hasOwn(tools,id)?geometry(id,tools[id],n):fallback);
 }

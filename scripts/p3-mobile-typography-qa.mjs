@@ -67,9 +67,12 @@ try{
       await page.locator('[data-action="tutorial-ack"]').waitFor();
       assert.equal(await page.evaluate(()=>window.__CAPY_DEBUG__.profile.tutorialCompleted),false,'Deploying must not click through to the newly positioned acknowledgement');
       await tutorial(page,label,3,portrait);await tap('tutorial-ack');
+      await page.locator('[data-tutorial-step="4"]').waitFor();await tutorial(page,label,4,portrait);
+      await touch(402,656);await touch(506,656);
+      await page.locator('[data-tutorial-step="5"]').waitFor();await tutorial(page,label,5,portrait);await tap('tutorial-ack');
       await page.locator('.tutorial-bubble').waitFor({state:'hidden'});
       assert.equal(await page.evaluate(()=>window.__CAPY_DEBUG__.profile.tutorialRewardClaimed),true);
-      mark(`${label}: readable contained menu and three tutorial steps with real touch summon/deploy/acknowledge`);
+      mark(`${label}: readable contained menu and five tutorial steps with real touch summon/deploy/acknowledge`);
       await page.evaluate(()=>{const e=window.__CAPY_DEBUG__.engine;e.state.sides.player.loadout.equippedActiveProps=['milk_bottle'];e.state.units.find(u=>u.location.zone==='board').statuses.SEALED=5;e.spawnEnemy('husky_wrecker','player');e.tick(.12);e.tick=()=>{};});await page.waitForTimeout(200);
       const bossSizes=await fonts(page,['.boss-heading strong','.boss-numbers','.boss-skill span']);
       const boss=await box(page,'#boss-banner'),control=await box(page,'.control-dock'),resource=await box(page,'.resource-dock');

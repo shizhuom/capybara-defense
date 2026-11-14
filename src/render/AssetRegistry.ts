@@ -5,7 +5,7 @@ export class AssetRegistry {
   private settled = false;
   readonly ready: Promise<void>;
 
-  constructor(private readonly base = `${import.meta.env.BASE_URL || './'}sprites/`) {
+  constructor(private readonly base = `${import.meta.env.BASE_URL || './'}assets/sprites/`) {
     this.ready = this.loadManifest().then(()=>{
       this.settled=true;
       for(const callback of this.callbacks){try{callback();}catch{/* A consumer cannot prevent other refreshes. */}}

@@ -42,10 +42,10 @@ describe('P3 visual compendium',()=>{
       if(tab==='heroes'){
         expect(html.match(/data-weapon-role="signature"/g)).toHaveLength(12);
         expect(html.match(/data-weapon-role="recommendation"/g)).toHaveLength(24);
-        expect(html).toContain('249.0368');
+        expect(html).toContain('<td>249</td>');
       }
     }
-    book.openTo('hamster');expect(book.markup(profile)).toContain('18.6');expect(book.markup(profile)).toContain('1.4');
+    book.openTo('hamster');expect(book.markup(profile)).toContain('<td>19</td>');expect(book.markup(profile)).toContain('1.4');
     book.openTo('panda');expect(book.markup(profile).match(/data-growth-unavailable=/g)).toHaveLength(4);
     book.openTo('bee');const bee=book.markup(profile);
     expect(bee.match(/data-growth-unavailable=/g)).toHaveLength(2);expect(bee).toContain('+2 / 7s');

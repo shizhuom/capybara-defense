@@ -1,6 +1,6 @@
 import { FRAGMENTS } from '../config/enemies';
 import { HERO_FAMILIES, RARITY_RULES, WEAPONS, rollWeapon } from '../config/weapons';
-import { PROPS } from '../config/props';
+import { PROPS,META_PRICES } from '../config/props';
 import { HEROES } from '../config/heroes';
 import { AVATARS, DEFAULT_AVATARS } from '../config/avatars';
 import { DEFAULT_SETTINGS, getUnlockedMaps, unlockAchievements, updateSettings } from './PlayerProgression';
@@ -121,9 +121,9 @@ export function ensureDailyShop(profile:Profile,day:string,random:()=>number):Pr
   p.shop={day,offers:shopOffers(p,random)};return unlockAchievements(p);
 }
 export function refreshShop(profile:Profile,day:string,random:()=>number):MetaResult {
-  if(profile.coins<20) return fail(profile,'meta.insufficientCoins');
+  if(profile.coins<META_PRICES.shopRefresh) return fail(profile,'meta.insufficientCoins');
   if(!Object.values(PROPS).some(p=>(profile.ownedProps[p.id]??0)<p.maxLevel)) return fail(profile,'meta.shopEmpty');
-  const p=copy(profile);p.coins-=20;p.shop={day,offers:shopOffers(p,random)};return success(p,'meta.shopRefreshed',-20);
+  const p=copy(profile);p.coins-=META_PRICES.shopRefresh;p.shop={day,offers:shopOffers(p,random)};return success(p,'meta.shopRefreshed',-META_PRICES.shopRefresh);
 }
 /** Replace one newly capped item without rerolling the other shelf slots. */
 function replaceCappedShopOffer(profile:Profile,id:string):void {
@@ -154,8 +154,8 @@ export function spinLottery(profile:Profile,prizes:LotteryPrize[],random:()=>num
     (prize.type==='coins'?[40,80,160].includes(prize.amount):prize.type==='prop'?typeof prize.id==='string'&&has(PROPS,prize.id)&&prize.amount===1:
       prize.type==='fragment'&&typeof prize.id==='string'&&has(WEAPONS,prize.id)&&WEAPONS[prize.id].rarity>=3&&prize.amount===1);
   if(prizes.length!==8||!prizes.every(valid)) return fail(profile,'meta.invalidPrizes');
-  if(profile.freeLotteryTickets<=0&&profile.coins<80) return fail(profile,'meta.insufficientCoins');
-  let p=copy(profile);if(p.freeLotteryTickets>0) p.freeLotteryTickets--;else p.coins-=80;
+  if(profile.freeLotteryTickets<=0&&profile.coins<META_PRICES.lottery) return fail(profile,'meta.insufficientCoins');
+  let p=copy(profile);if(p.freeLotteryTickets>0) p.freeLotteryTickets--;else p.coins-=META_PRICES.lottery;
   const index=Math.floor(sample(random)*prizes.length);const prize={...prizes[index]};let newWeapons:string[]=[];
   if(prize.type==='coins') p.coins+=prize.amount;
   else if(prize.type==='prop') {

@@ -1,4 +1,4 @@
-import {copyFile,mkdir,readdir,writeFile,lstat,realpath} from 'node:fs/promises';
+import {copyFile,mkdir,readdir,readFile,writeFile,lstat,realpath} from 'node:fs/promises';
 import path from 'node:path';
 import {fileURLToPath} from 'node:url';
 
@@ -27,7 +27,7 @@ async function pngNames(directory){
   catch(error){if(error.code==='ENOENT')return [];throw error;}
 }
 /** Copies optional local art without deleting an existing destination override. */
-export async function syncAssets({sourceDir=path.resolve(projectRoot,'../../design/assets/sprites'),targetDir=path.resolve(projectRoot,'public/sprites')}={}){
+export async function syncAssets({sourceDir=path.resolve(projectRoot,'../../design/assets/sprites'),targetDir=path.resolve(projectRoot,'public/assets/sprites')}={}){
   targetDir=path.resolve(targetDir);
   await checkTargetDirectory(targetDir);
   const source=await pngNames(sourceDir);
@@ -36,7 +36,11 @@ export async function syncAssets({sourceDir=path.resolve(projectRoot,'../../desi
   for(const name of targets)await rejectLink(path.join(targetDir,name));
   for(const name of source)await copyFile(path.join(sourceDir,name),path.join(targetDir,name));
   const ids=(await pngNames(targetDir)).map(name=>name.slice(0,-4));
-  await writeFile(path.join(targetDir,'manifest.json'),`${JSON.stringify(ids,null,2)}\n`);
+  let sourceManifest;
+  try{sourceManifest=await readFile(path.join(sourceDir,'manifest.json'),'utf8');}catch(error){if(error.code!=='ENOENT')throw error;}
+  let supplied;try{supplied=JSON.parse(sourceManifest??'null');}catch{/* Rebuild an invalid optional source. */}
+  const exact=Array.isArray(supplied)&&supplied.length===ids.length&&new Set(supplied).size===ids.length&&supplied.every(id=>ids.includes(id));
+  await writeFile(path.join(targetDir,'manifest.json'),exact?sourceManifest:`${JSON.stringify(ids,null,2)}\n`);
   console.log(`Sprites: copied ${source.length}; manifest contains ${ids.length} images${source.length?'':' (optional source absent or empty)'}.`);
   return ids;
 }

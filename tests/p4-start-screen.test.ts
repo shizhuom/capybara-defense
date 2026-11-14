@@ -44,9 +44,9 @@ describe('P4 dedicated splash rendering',()=>{
   ['start_splash_bg',1280,720],['title_logo_zh',960,320],['title_logo_en',960,320],
   ['ui_btn_start_zh',520,220],['ui_btn_start_en',520,220],['ui_trophy_rank',256,256],['ui_map_sign',256,256],
  ] as const)('ships %s at its intended aspect ratio', (id,width,height)=>{
-  const manifest=JSON.parse(readFileSync('public/sprites/manifest.json','utf8'));
+  const manifest=JSON.parse(readFileSync('public/assets/sprites/manifest.json','utf8'));
   expect(manifest).toContain(id);
-  const data=readFileSync(`public/sprites/${id}.png`);
+  const data=readFileSync(`public/assets/sprites/${id}.png`);
   expect([data.readUInt32BE(16),data.readUInt32BE(20)]).toEqual([width,height]);
  });
 });

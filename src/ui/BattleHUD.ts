@@ -1,6 +1,7 @@
 import type { BattleState, GameSettings } from '../core/types';
 import { ENEMIES } from '../config/enemies';
 import { FIRST_WAVE_PREPARATION, WAVE_DURATION } from '../config/waves';
+import {getRankDifficulty} from '../config/ranks';
 
 export function getMusicMode(state?:BattleState, browsing=false):'menu'|'battle'|'boss' {
   if(!state||browsing||state.phase!=='playing')return 'menu';
@@ -16,7 +17,7 @@ export function getBossHUD(state: BattleState) {
     .sort((a,b) => b.progress-a.progress || a.id-b.id);
   const boss = bosses[0];
   if (!boss) return null;
-  const interval = ENEMIES[boss.kind].interval;
+  const interval = ENEMIES[boss.kind].interval*getRankDifficulty(state.rankIndex).bossCooldownScale;
   return {id:boss.id, kind:boss.kind, count:bosses.length, hp:Math.max(0,Math.ceil(boss.hp)), maxHp:Math.ceil(boss.maxHp),
     fraction:Math.max(0,Math.min(1,boss.hp/boss.maxHp)), cooldown:Math.max(0,Math.ceil(boss.abilityCooldown)),
     cooldownFraction:Math.max(0,Math.min(1,boss.abilityCooldown/interval)), warning:boss.abilityCooldown<=2};

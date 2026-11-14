@@ -60,7 +60,7 @@ describe('P1 bilingual encyclopedia', () => {
   it.each(['zh-CN','en'] as const)('shows each weapon current unlock state and its fragment requirement in %s', lang => {
     setLanguage(lang);
     const book=new Compendium(), profile=createProfile(); book.tab='weapons';
-    const ids=Object.keys(WEAPONS), unlocked=lang==='en'?'Unlocked':'已解锁', locked=lang==='en'?'Locked':'未解锁';
+    const ids=Object.keys(WEAPONS), unlocked=t('p5.collected'), locked=t('p5.locked');
     for(const unlockedIds of [[],[ids[1]],ids]) {
       profile.unlockedWeapons=[...unlockedIds];
       const html=book.markup(profile);
@@ -94,7 +94,7 @@ describe('P1 bilingual encyclopedia', () => {
   it('marks only actually merged heroes as collected', () => {
     const book=new Compendium(), profile=createProfile(); book.select('heroes'); profile.mergedHeroes=['kungfu_po'];
     const html=book.markup(profile);
-    expect((html.match(/class="recipe-card encyclopedia-card collected"/g)??[])).toHaveLength(1);
+    expect((html.match(/class="recipe-card encyclopedia-card rarity-4 collected"/g)??[])).toHaveLength(1);
     expect(html).toContain('data-entry="kungfu_po"');
   });
   it('covers all new phrases and all twelve counter tips in both languages', () => {

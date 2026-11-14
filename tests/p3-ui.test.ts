@@ -50,6 +50,65 @@ beforeEach(()=>{
 });
 afterEach(()=>{setLanguage('zh-CN');vi.unstubAllGlobals();});
 
+describe('P5 safe selection and tutorial integration',()=>{
+  const pad={kind:'cell',col:2,row:1};
+  function setup(kind='hamster'){
+    const h=harness();h.app.refresh=()=>{};const id=h.engine.grant(kind).unitId!;h.app.selectedId=id;
+    return {...h,unit:h.engine.state.units.find(u=>u.id===id)!};
+  }
+  it.each([[0,1],[0,0],[8,2]])('silently clears animal selection on non-placeable tile %i,%i',(col,row)=>{
+    const {app,unit}=setup();app.activate({kind:'cell',col,row});expect(app.selectedId).toBeUndefined();expect(unit.location.zone).toBe('bench');expect(app.toast).toBeUndefined();
+  });
+  it('deploys a bench pet on tap, but clears a board pet on an empty pad or bench instead of teleporting',()=>{
+    const {app,unit}=setup();app.activate(pad);expect(unit.location).toEqual({zone:'board',col:2,row:1});
+    app.selectedId=unit.id;app.activate({kind:'cell',col:3,row:1});expect(unit.location).toEqual({zone:'board',col:2,row:1});expect(app.selectedId).toBeUndefined();
+    app.selectedId=unit.id;app.activate({kind:'bench',slot:0});expect(unit.location.zone).toBe('board');expect(app.selectedId).toBeUndefined();
+  });
+  it('focuses an incompatible pet on tap, merges a true pair, and retains explicit drag / keyboard moves',()=>{
+    const {app,engine,unit}=setup();unit.location={zone:'board',col:2,row:1};
+    const other=engine.grant('squirrel').unitId!;app.activate({kind:'bench',slot:0});expect(app.selectedId).toBe(other);expect(unit.location.zone).toBe('board');
+    app.selectedId=unit.id;app.activate({kind:'bench',slot:0},{dragged:true});expect(unit.location).toEqual({zone:'bench',slot:0});
+    app.selectedId=unit.id;app.activate({kind:'cell',col:6,row:1},{fromKeyboard:true});expect(unit.location).toEqual({zone:'board',col:6,row:1});
+    engine.grant('hamster');app.selectedId=unit.id;app.activate({kind:'bench',slot:0});expect(engine.state.units.some(u=>u.kind==='hamster'&&u.level===2)).toBe(true);
+  });
+  it('clears a same-unit tap, invalid shovel tap and invalid targeted prop without a toast or cooldown',()=>{
+    const {app,engine,unit}=setup();app.activate({kind:'bench',slot:0});expect(app.selectedId).toBeUndefined();
+    app.shovelSelected=true;app.activate({kind:'cell',col:1,row:0});expect(app.shovelSelected).toBe(false);expect(app.toast).toBeUndefined();
+    engine.syncPreparationLoadout({ownedProps:{milk_bottle:1},equippedActiveProps:['milk_bottle']});app.selectedProp='milk_bottle';
+    app.activate({kind:'cell',col:1,row:0});expect(app.selectedProp).toBeUndefined();expect(engine.state.sides.player.propCooldowns.milk_bottle).toBeUndefined();expect(unit.level).toBe(1);
+  });
+  it('replays into a new guaranteed-pack battle, and opening Guide at step5 awards exactly once and releases hold',()=>{
+    const {app,engine}=harness();app.refresh=()=>{};app.profile.tutorialCompleted=true;app.action('tutorial-replay');
+    expect(app.engine).not.toBe(engine);expect(app.engine.options.tutorialGuided).toBe(true);app.engine.tick(30);expect(app.engine.state.spawned).toBe(0);
+    app.action('summon');expect(app.selectedId).toBeUndefined();expect(app.engine.state.units.map((u:any)=>u.kind)).toEqual(['hamster','hamster','panda','hat_bamboo','squirrel']);
+    app.compendium=new Compendium();app.tutorialStep=5;const coins=app.profile.coins;app.action('recipes');expect(app.tutorialStep).toBe('done');expect(app.profile.coins).toBe(coins+20);
+    app.action('close-recipes');app.engine.tick(19);expect(app.engine.state.spawned).toBeGreaterThan(0);
+  });
+  it('lets an intentional animal drag take over from a selected prop without consuming it',()=>{
+    const {app,engine,canvas,unit}=setup();unit.location={zone:'board',col:2,row:1};const otherId=engine.grant('squirrel').unitId!;
+    engine.syncPreparationLoadout({ownedProps:{milk_bottle:1},equippedActiveProps:['milk_bottle']});app.selectedProp='milk_bottle';
+    app.renderer.hitTest=vi.fn().mockReturnValueOnce({kind:'cell',col:2,row:1}).mockReturnValueOnce({kind:'bench',slot:0});app.bindEvents();
+    const event={pointerId:7,isPrimary:true,button:0,clientX:100,clientY:100,preventDefault:()=>{}};
+    canvas.fire('pointerdown',event);canvas.fire('pointermove',{...event,clientX:150});canvas.fire('pointerup',{...event,clientX:150});
+    expect(unit.location).toEqual({zone:'bench',slot:0});expect(engine.state.units.find(u=>u.id===otherId)?.level).toBe(1);expect(engine.state.sides.player.propCooldowns.milk_bottle).toBeUndefined();expect(app.selectedProp).toBeUndefined();
+  });
+  it('preserves both market pane scroll offsets during a same-page purchase/equip redraw',()=>{
+    const {app}=harness();app.refresh=()=>{};app.dialogKind='market';app.meta=new MetaScreens(()=>app.profile,()=>{},()=>{},()=>{});
+    const panes=new Map(['.ledger-body','.market-stall','.market-backpack'].map(key=>[key,new Element()]));
+    app.dialog.querySelector=(key:string)=>panes.get(key)??new Element();
+    Object.defineProperty(app.dialog,'innerHTML',{get:()=>'',set:()=>{for(const p of panes.values())p.scrollTop=0;}});
+    app.renderDialog();panes.get('.market-stall')!.scrollTop=160;panes.get('.market-backpack')!.scrollTop=280;app.renderDialog();
+    expect(panes.get('.market-stall')!.scrollTop).toBe(160);expect(panes.get('.market-backpack')!.scrollTop).toBe(280);
+  });
+  it('does not skip the hero lesson on an unrelated basic upgrade; blank stage cancels except while a dialog owns input',()=>{
+    const {app,engine,root}=harness();app.refresh=()=>{};app.tutorialStep=4;const id=engine.grant('hamster').unitId!;
+    app.apply({ok:true,key:'hint.merged',unitId:id});expect(app.tutorialStep).toBe(4);
+    const hero=engine.grant('kungfu_po').unitId!;app.apply({ok:true,key:'hint.merged',unitId:hero});expect(app.tutorialStep).toBe(5);
+    app.bindEvents();root.fire('pointerdown',{target:{closest:()=>null}});expect(app.selectedId).toBeUndefined();
+    app.selectedId=id;app.dialog.open=true;root.fire('pointerdown',{target:{closest:()=>null}});expect(app.selectedId).toBe(id);
+  });
+});
+
 describe('P3 stage integration',()=>{
   it('rejects a tutorial compatibility click created by canvas deployment but accepts a fresh button tap',()=>{
     const {app,engine,canvas,root}=harness();app.refresh=()=>{};app.tutorialStep=2;app.bindEvents();
@@ -65,10 +124,10 @@ describe('P3 stage integration',()=>{
     expect(app.tutorialStep).toBe(3);expect(app.profile.tutorialRewardClaimed).toBe(false);
     root.fire('pointerdown',{target,isPrimary:true,button:0});
     root.fire('click',{target,detail:1,preventDefault:()=>{}});
-    expect(app.tutorialStep).toBe('done');expect(app.profile.tutorialRewardClaimed).toBe(true);
+    expect(app.tutorialStep).toBe(4);expect(app.profile.tutorialRewardClaimed).toBe(false);
   });
   it('retains keyboard tutorial acknowledgement without a pointer origin',()=>{
-    const {app,root}=harness();app.refresh=()=>{};app.tutorialStep=3;app.bindEvents();
+    const {app,root}=harness();app.refresh=()=>{};app.tutorialStep=5;app.bindEvents();
     const button=new Element();button.dataset.action='tutorial-ack';
     root.fire('click',{target:{closest:()=>button},detail:0,preventDefault:()=>{}});
     expect(app.tutorialStep).toBe('done');expect(app.profile.tutorialRewardClaimed).toBe(true);
@@ -76,8 +135,8 @@ describe('P3 stage integration',()=>{
   it.each(['zh-CN','en'] as const)('keeps compact menu labels and concise actionable tutorial copy localized in %s',language=>{
     setLanguage(language);const {app,engine,element}=harness();app.renderMenu();
     for(const key of ['p3.armory','p3.rank']){expect(t(key)).not.toBe(key);expect(element('menu-screen').innerHTML).toContain(t(key));}
-    for(const step of [1,2,3] as const){
-      const key=`p3.tutorial${step}.body`,html=tutorialMarkup(step,engine.state);
+    for(const step of [1,2,3,4,5] as const){
+      const key=`p5.tutorial${step}.body`,html=tutorialMarkup(step,engine.state);
       expect(t(key)).not.toBe(key);expect(html).toContain(t(key));
       expect(html).toContain('data-action="tutorial-skip"');
       if(step===3)expect(html).toContain('data-action="tutorial-ack"');

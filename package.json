@@ -1,14 +1,25 @@
 {
-  "name": "capybara-chill-defense", "version": "1.0.0", "private": true, "type": "module",
-  "engines": { "node": "^22.12.0 || ^24.0.0 || >=26.0.0" },
+  "name": "capybara-chill-defense",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": "^22.12.0 || ^24.0.0 || >=26.0.0"
+  },
   "scripts": {
     "sync-assets": "node scripts/sync-assets.mjs",
     "dev": "vite --host 127.0.0.1 --port 4175 --strictPort",
     "build": "tsc --noEmit && vite build",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
-    "test:browser": "node scripts/p4-browser-qa.mjs && node scripts/p3-browser-qa.mjs && node scripts/p3-mobile-typography-qa.mjs",
+    "test:browser": "node scripts/p5-browser-qa.mjs && node scripts/p4-browser-qa.mjs && node scripts/p3-browser-qa.mjs && node scripts/p3-mobile-typography-qa.mjs",
     "preview": "vite preview --host 127.0.0.1 --port 4175 --strictPort"
   },
-  "devDependencies": { "typescript": "6.0.3", "vite": "8.3.1", "vitest": "5.0.3", "@types/node": "24.10.14", "playwright-core": "1.58.2" }
+  "devDependencies": {
+    "typescript": "6.0.3",
+    "vite": "8.3.1",
+    "vitest": "5.0.3",
+    "@types/node": "24.10.14",
+    "playwright-core": "1.58.2"
+  }
 }

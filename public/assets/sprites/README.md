@@ -1,4 +1,4 @@
-# Optional full-scene sticker artwork
+﻿# Optional full-scene sticker artwork
 
 The game ships with complete procedural Canvas artwork. No image download is required.
 
@@ -23,7 +23,7 @@ Keep the silhouette readable at small display scales. P3 regular enemy PNGs use 
 
 ## Synchronization and loading
 
-Run `npm run sync-assets` in the game directory. The zero-dependency script copies only regular lowercase PNG filenames matching `^[a-z][a-z0-9_]*\.png$` from the optional read-only source `../../design/assets/sprites/`. It scans the destination and writes a sorted array manifest. It never deletes existing destination art, creates the source, or fails because the source is absent/empty. Uppercase extensions, hyphens, directories and symlinks are skipped. Canvas and HTML share a loaded-only registry; malformed manifests, missing files and decode failures retain the built-in fallback. Vite's `BASE_URL` supports relative/subdirectory hosting. HTML refreshes once the initial asset batch settles.
+Run `npm run sync-assets` in the game directory. The zero-dependency script copies only regular lowercase PNG filenames matching `^[a-z][a-z0-9_]*\.png$` from the optional read-only source `../../design/assets/sprites/`. It preserves the source manifest verbatim when it exactly matches the destination PNG catalog, otherwise it writes a safe sorted array manifest. It never deletes existing destination art, creates the source, or fails because the source is absent/empty. Uppercase extensions, hyphens, directories and symlinks are skipped. Canvas and HTML share a loaded-only registry; malformed manifests, missing files and decode failures retain the built-in fallback. Vite's `BASE_URL` supports relative/subdirectory hosting. HTML refreshes once the initial asset batch settles.
 
 The lists below are the complete P3 catalog: **166 PNGs**, including four basic held weapons and eight combat VFX added to P1. Characters, objects, props, weapons and avatars should be transparent RGBA PNG at 256×256 or 512×512 with clear margins. Keep feet near the lower center so gold hero disks remain visible. Level/status badges, energy, hits, shields, weapon effects and input positions remain dynamic.
 
@@ -142,5 +142,15 @@ Regular enemies use a 98px base box; bosses use 126px. The four HUD icons are il
 
 新增 `start_splash_bg`（1280×720，全幅萌宠温泉聚会）；`title_logo_zh`、`title_logo_en`（960×320，透明无框艺术字）；`ui_btn_start_zh`、`ui_btn_start_en`（520×220，异形木牌）；`ui_trophy_rank`、`ui_map_sign`（256×256，奖杯和路标）。
 
-启动页专用背景不随地图切换；地图选择仅影响飘落粒子的气氛。PNG 未解码时使用无棋盘的程序化温泉场景与无框 SVG 艺术字。全部 173 张 PNG 与来源清单同步，战斗地图及行走帧接口保持不变。
+启动页专用背景不随地图切换；地图选择仅影响飘落粒子的气氛。PNG 未解码时使用无棋盘的程序化温泉场景与无框 SVG 艺术字。P4 阶段共 173 张 PNG；P5 已升级为 185 张，战斗地图及行走帧接口保持不变。
 
+
+
+## P5 canonical asset path and sticker additions
+
+The canonical directory is now `public/assets/sprites/` (185 PNGs). `AssetRegistry` resolves `BASE_URL + assets/sprites/`, so production and nested hosting work without absolute URLs. `npm run sync-assets` reads `../../design/assets/sprites/` only and writes inside this game. P4's original path remains recoverable from tag `v1.0-p4`.
+
+- 256×256 transparent mascot headers: `ui_header_compendium`, `ui_header_armory`, `ui_header_market`, `ui_header_rank`, `ui_header_profile`, `ui_header_settings`.
+- 192×192 transparent UI stickers: `ui_tutorial_pointer`, `ui_tutorial_capy`, `ui_coin_gold`, `ui_star_rank`, `ui_ticket_gacha`, `ui_skull_threat`.
+
+Every new HTML sticker has a distinct vector-only offline fallback. Menu wallets, ledger headings, tutorial pointers, and result rewards repaint once the asset batch settles. No PNG contains interactive labels; language, numbers, controls, and collection states remain live HTML.
