@@ -138,3 +138,9 @@ Ground enemies alternate their base and walk2 art using path progress; flyers fl
 - `ui_shop_bag`
 
 Regular enemies use a 98px base box; bosses use 126px. The four HUD icons are illustrated fish food, summon bell, compendium book and shop bag. Art does not change gameplay hitboxes.
+# P4 启动画面资源
+
+新增 `start_splash_bg`（1280×720，全幅萌宠温泉聚会）；`title_logo_zh`、`title_logo_en`（960×320，透明无框艺术字）；`ui_btn_start_zh`、`ui_btn_start_en`（520×220，异形木牌）；`ui_trophy_rank`、`ui_map_sign`（256×256，奖杯和路标）。
+
+启动页专用背景不随地图切换；地图选择仅影响飘落粒子的气氛。PNG 未解码时使用无棋盘的程序化温泉场景与无框 SVG 艺术字。全部 173 张 PNG 与来源清单同步，战斗地图及行走帧接口保持不变。
+

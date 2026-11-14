@@ -13,6 +13,7 @@ import { drawGlueTrap, drawM2Event, drawPropCursor, drawSealed, drawWasher, draw
 import {boneShield,confusionSpiral,drawM3Event} from './M3Effects';
 import {bodyPose,drawHeldWeapon} from './HeldWeaponRenderer';
 import {drawCombatEvent} from './CombatEffects';
+import {drawSplashScene} from './SplashScene';
 
 export type HitTarget = { kind: 'cell'; col: number; row: number } | { kind: 'bench'; slot: number } | { kind: 'shovel' };
 type Position = { x: number; y: number };
@@ -115,14 +116,13 @@ export class StickerRenderer {
     if(maxWidth) c.fillText(text,x,y,maxWidth); else c.fillText(text,x,y);
   }
 
-  /** Peaceful hub scene: shares map/guardian art without constructing or advancing a battle. */
+  /** Dedicated animal gathering; preview never enters the battle-map drawing path. */
   drawPreview(mapId:MapId,seconds:number,oranges=3):void {
     this.resize();this.battleId='';this.lastSeconds=seconds;this.sceneSeconds=seconds;this.unitPositions.clear();
     this.enemyMotion.clear();this.dust=[];this.previousOranges=null;this.orangeMotions=[];
     const c=this.c;c.setTransform(this.pixelRatio,0,0,this.pixelRatio,0,0);c.clearRect(0,0,STAGE.width,STAGE.height);
     c.lineCap='round';c.lineJoin='round';c.textBaseline='middle';
-    this.drawPaper(mapId);this.drawBoard({mapId,grid:getMap(mapId).grid,craterHits:{}},seconds);
-    this.drawGuardian(mapId,Math.max(0,Math.floor(oranges)),seconds);
+    drawSplashScene(c,this.assets,mapId,seconds,oranges);
   }
 
   private drawPaper(mapId:MapId):void {

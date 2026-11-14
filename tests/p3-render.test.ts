@@ -22,14 +22,7 @@ describe('P3 scenic rendering',()=>{
   expect(calls.some(c=>c.name==='roundRect'&&c.args[0]===163&&c.args[1]===63)).toBe(false);
   expect(calls.some(c=>c.name==='strokeRect'&&c.stroke==='rgba(60,48,34,0.12)'&&c.args[0]===172.5)).toBe(true);
  });
- it.each([['sunny_backyard',1056,538],['sakura_onsen',224,538],['midnight_kitchen',1056,330],['cat_tower_maze',1056,330]] as const)('previews %s peacefully at its endpoint', (mapId,x,y)=>{
-  const capy=image('capybara'),orange=image('orange'),nest=image('shovel');vi.spyOn(assets,'get').mockImplementation(id=>id==='capybara'?capy:id==='orange'?orange:id==='shovel'?nest:undefined);
-  const {renderer,calls}=surface();renderer.drawPreview(mapId,1,4);
-  expect(calls.some(c=>c.name==='translate'&&c.args[0]===x&&c.args[1]===y)).toBe(true);
-  expect(calls.filter(c=>c.name==='drawImage'&&c.args[0]===orange)).toHaveLength(4);
-  expect(calls.some(c=>c.name==='drawImage'&&c.args[0]===nest)).toBe(false);
-  expect(calls.some(c=>c.name==='roundRect'&&c.args[1]===610)).toBe(false);
- });
+ // Menu previews intentionally use the dedicated P4 splash; covered in p4-start-screen.test.ts.
  it('uses the second frame when present, falls back to base, and keeps exact enlarged HP bounds',()=>{
   const base=image('rat'),walk=image('rat_walk2');let loaded=true;vi.spyOn(assets,'get').mockImplementation(id=>id==='rat'?base:id==='rat_walk2'&&loaded?walk:undefined);
   const e=new BattleEngine({autoWaves:false}),rat=e.spawnEnemy('rat','player');rat.progress=.2;rat.id=0;

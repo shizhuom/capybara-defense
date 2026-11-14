@@ -7,9 +7,9 @@ const manifest: string[] = JSON.parse(readFileSync('public/sprites/manifest.json
 const png = (id: string) => readFileSync(`public/sprites/${id}.png`);
 
 describe('P3 shipped landscape artwork', () => {
-  it('contains 166 unique safe IDs with decodable PNG headers', () => {
-    expect(manifest).toHaveLength(166);
-    expect(new Set(manifest).size).toBe(166);
+  it('contains all shipped unique safe IDs with decodable PNG headers', () => {
+    expect(manifest).toHaveLength(173);
+    expect(new Set(manifest).size).toBe(173);
     for (const id of manifest) {
       expect(id).toMatch(/^[a-z][a-z0-9_]*$/);
       const data = png(id);
