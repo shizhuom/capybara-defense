@@ -50,6 +50,7 @@ export class GameApp {
   private modalReturn: { dialog: DialogKind | null; resume: boolean } | null = null;
   private liveStamp = '';
   private rotateDismissed = false;
+  private tutorialPointerAction?: string;
   private speed: 1 | 2 = 1;
   private selectedId?: number;
   private shovelSelected = false;
@@ -419,7 +420,7 @@ export class GameApp {
     const stamp=`${getLanguage()}:${boss.id}:${boss.count}`;
     if(stamp!==this.bossStamp){
       this.bossStamp=stamp;
-      banner.innerHTML=`<div class="boss-portrait">${unitSticker(boss.kind,40)}</div><div class="boss-detail"><div class="boss-heading"><strong>${tr(`boss.${boss.kind}`)}${boss.count>1?` ×${boss.count}`:''}</strong><small class="boss-numbers"></small></div><div class="boss-hp" role="progressbar" aria-valuemin="0"><i></i></div><div class="boss-skill"><i></i><span></span></div></div>`;
+      banner.innerHTML=`<div class="boss-portrait">${unitSticker(boss.kind,40)}</div><div class="boss-detail"><div class="boss-heading"><strong>${tr(`boss.${boss.kind}`)}${boss.count>1?` ×${boss.count}`:''}</strong><small class="boss-numbers"></small></div><div class="boss-hp" role="progressbar" aria-valuemin="0"><i></i></div><div class="boss-skill" role="progressbar" aria-valuemin="0" aria-valuemax="100"><i></i><span aria-hidden="true"></span></div></div>`;
     }
     banner.classList.toggle('skill-warning',boss.warning);
     banner.querySelector('.boss-numbers')!.textContent=`${boss.hp} / ${boss.maxHp}`;
@@ -429,6 +430,9 @@ export class GameApp {
     hp.querySelector<HTMLElement>('i')!.style.width=`${boss.fraction*100}%`;
     banner.querySelector<HTMLElement>('.boss-skill i')!.style.width=`${(1-boss.cooldownFraction)*100}%`;
     banner.querySelector('.boss-skill span')!.textContent=t(boss.warning?'p1.bossSoon':'p1.bossCooldown',{time:boss.cooldown});
+    const skill=banner.querySelector<HTMLElement>('.boss-skill')!;
+    skill.setAttribute('aria-valuenow',String(Math.round((1-boss.cooldownFraction)*100)));
+    skill.setAttribute('aria-label',t(boss.warning?'p1.bossSoon':'p1.bossCooldown',{time:boss.cooldown}));
   }
 
   private renderTutorial():void {
@@ -747,7 +751,11 @@ export class GameApp {
   }
 
   private bindEvents(): void {
-    this.root.addEventListener('pointerdown', () => { void this.sound.unlock().catch(() => undefined); }, { passive: true });
+    this.root.addEventListener('pointerdown', event => {
+      void this.sound.unlock().catch(() => undefined);
+      const action=(event.target as HTMLElement).closest<HTMLElement>('[data-action]')?.dataset.action;
+      this.tutorialPointerAction=action==='tutorial-ack'||action==='tutorial-skip'?action:undefined;
+    }, { passive: true });
     this.root.addEventListener('keydown', () => { void this.sound.unlock().catch(() => undefined); });
     this.root.addEventListener('input', event => {
       if (event.target instanceof HTMLInputElement && event.target.type === 'range') this.profileScreens.change(event.target);
@@ -805,7 +813,7 @@ export class GameApp {
       }
       this.refresh();
     });
-    this.root.addEventListener('pointercancel', () => { this.cancelPropDrag(); this.refresh(); });
+    this.root.addEventListener('pointercancel', () => { this.tutorialPointerAction=undefined; this.cancelPropDrag(); this.refresh(); });
     this.root.addEventListener('lostpointercapture', event => { if (this.propDrag?.pointerId === event.pointerId) { this.propDrag = undefined; this.refresh(); } });
     this.root.addEventListener('click', event => {
       const element = (event.target as HTMLElement).closest<HTMLElement>('[data-action], [data-target]');
@@ -816,7 +824,14 @@ export class GameApp {
         this.activate(kind === 'cell' ? { kind, col: Number(first), row: Number(second) } : kind === 'bench' ? { kind, slot: Number(first) } : { kind: 'shovel' });
         return;
       }
-      this.action(element.dataset.action!);
+      const action=element.dataset.action!;
+      if(action==='tutorial-ack'||action==='tutorial-skip'){
+        const origin=this.tutorialPointerAction;this.tutorialPointerAction=undefined;
+        // A canvas release may move a fresh bubble beneath its compatibility click.
+        // Keyboard activation has detail=0 and intentionally needs no pointer origin.
+        if(event.detail>0&&origin!==action)return;
+      }
+      this.action(action);
     });
     this.canvas.addEventListener('pointerdown', event => {
       if (!this.canInteract() || !event.isPrimary || event.button !== 0) return;

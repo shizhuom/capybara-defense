@@ -51,6 +51,42 @@ beforeEach(()=>{
 afterEach(()=>{setLanguage('zh-CN');vi.unstubAllGlobals();});
 
 describe('P3 stage integration',()=>{
+  it('rejects a tutorial compatibility click created by canvas deployment but accepts a fresh button tap',()=>{
+    const {app,engine,canvas,root}=harness();app.refresh=()=>{};app.tutorialStep=2;app.bindEvents();
+    app.selectedId=engine.grant('hamster').unitId!;
+    app.renderer.hitTest=()=>({kind:'cell',col:2,row:1});
+    const canvasTarget={closest:()=>null};
+    const touch={pointerId:1,clientX:100,clientY:100,isPrimary:true,button:0,target:canvasTarget,preventDefault:()=>{}};
+    canvas.fire('pointerdown',touch);root.fire('pointerdown',touch);canvas.fire('pointerup',touch);
+    expect(app.tutorialStep).toBe(3);
+    const button=new Element();button.dataset.action='tutorial-ack';
+    const target={closest:(selector:string)=>selector.includes('data-action')?button:null};
+    root.fire('click',{target,detail:1,preventDefault:()=>{}});
+    expect(app.tutorialStep).toBe(3);expect(app.profile.tutorialRewardClaimed).toBe(false);
+    root.fire('pointerdown',{target,isPrimary:true,button:0});
+    root.fire('click',{target,detail:1,preventDefault:()=>{}});
+    expect(app.tutorialStep).toBe('done');expect(app.profile.tutorialRewardClaimed).toBe(true);
+  });
+  it('retains keyboard tutorial acknowledgement without a pointer origin',()=>{
+    const {app,root}=harness();app.refresh=()=>{};app.tutorialStep=3;app.bindEvents();
+    const button=new Element();button.dataset.action='tutorial-ack';
+    root.fire('click',{target:{closest:()=>button},detail:0,preventDefault:()=>{}});
+    expect(app.tutorialStep).toBe('done');expect(app.profile.tutorialRewardClaimed).toBe(true);
+  });
+  it.each(['zh-CN','en'] as const)('keeps compact menu labels and concise actionable tutorial copy localized in %s',language=>{
+    setLanguage(language);const {app,engine,element}=harness();app.renderMenu();
+    for(const key of ['p3.armory','p3.rank']){expect(t(key)).not.toBe(key);expect(element('menu-screen').innerHTML).toContain(t(key));}
+    for(const step of [1,2,3] as const){
+      const key=`p3.tutorial${step}.body`,html=tutorialMarkup(step,engine.state);
+      expect(t(key)).not.toBe(key);expect(html).toContain(t(key));
+      expect(html).toContain('data-action="tutorial-skip"');
+      if(step===3)expect(html).toContain('data-action="tutorial-ack"');
+    }
+  });
+  it('exposes the compact boss skill countdown as an accessible progressbar',()=>{
+    const {app,engine,element}=harness();engine.spawnBoss('husky_wrecker');app.renderBattleHUD();
+    expect(element('boss-banner').innerHTML).toContain('class="boss-skill" role="progressbar"');
+  });
   it('resets ordinary guide tabs after a deep link and keeps close/language in a permanent toolbar',()=>{
     const {app}=harness();app.refresh=()=>{};app.compendium=new Compendium();
     app.action('inspect-book:kungfu_po');app.dialog.scrollTop=480;

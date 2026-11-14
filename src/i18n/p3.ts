@@ -1,5 +1,11 @@
 const phrases:Record<string,[string,string]>={
   'p3.guide':['图鉴','Guide'], 'p3.shop':['商店','Shop'], 'p3.auto':['自动轮换','Auto'],
+  'p3.armory':['神兵','Armory'], 'p3.rank':['段位','Rank'],
+  'p3.map.sunny_backyard':['后院','Backyard'], 'p3.map.sakura_onsen':['樱花','Sakura'],
+  'p3.map.midnight_kitchen':['厨房','Kitchen'], 'p3.map.cat_tower_maze':['猫塔','Cat tower'],
+  'p3.tutorial1.body':['摇铃抽5位伙伴。费用10→12→14粮；再抽可换整窝。','Ring for 5 companions. Cost: 10→12→14. Redraw swaps the nest.'],
+  'p3.tutorial2.body':['把伙伴拖到白垫；把铁锹拖到草地开荒。','Drag pets to white mats. Dig grass with a shovel.'],
+  'p3.tutorial3.body':['同名同级宠可合成；给英雄喂配对散件可升星。','Merge matching pets; feed heroes their ingredients.'],
   'p3.rotate':['🔄 横屏游玩，视野更大','🔄 Rotate for a wider view'], 'p3.fullscreen':['⛶ 全屏','⛶ Fullscreen'],
   'p3.prepShop':['备战中 · 配装立即生效','Preparation · loadout changes apply now'],
   'p3.nextBattle':['战斗已开始，新换装备将在下一局生效','Battle has started; loadout changes apply next battle'],
