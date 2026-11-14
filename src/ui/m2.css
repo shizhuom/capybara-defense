@@ -62,20 +62,20 @@
 .ticket-reward { color:#6b8768; }
 #battle-props { position:absolute; inset:0; pointer-events:none; }
 #battle-props button { pointer-events:auto; touch-action:none; cursor:pointer; color:#745b41; border:2px solid #65543e; box-shadow:0 2px 0 #9f8d6b; font:inherit; }
-.sprinkler-button { position:absolute; left:14.0625%; top:74.6753%; width:12.2%; aspect-ratio:1; transform:translate(-50%,-50%); border-radius:50%; background:#e9d995; display:flex; align-items:center; justify-content:center; flex-direction:column; padding:2px; }
+.sprinkler-button { position:absolute; left:13.125%; top:73.848684%; width:12.2%; aspect-ratio:1; transform:translate(-50%,-50%); border-radius:50%; background:#e9d995; display:flex; align-items:center; justify-content:center; flex-direction:column; padding:2px; }
 .sprinkler-button > span { font-size:clamp(15px,2vw,27px); }
 .sprinkler-button > small { font-size:clamp(6px,.65vw,8px); line-height:1.1; max-width:100%; overflow-wrap:anywhere; }
 .sprinkler-button > b { position:absolute; bottom:-3px; right:-2px; border-radius:10px; padding:1px 5px; background:#fff5ce; font-size:10px; }
-.battle-prop { position:absolute; top:89.5%; bottom:3%; width:16%; border-radius:12px; background:#fff2cf; display:flex; flex-direction:column; justify-content:center; align-items:center; padding:3px; }
+.battle-prop { position:absolute; top:88.815789%; bottom:2.302632%; width:16%; border-radius:12px; background:#fff2cf; display:flex; flex-direction:column; justify-content:center; align-items:center; padding:3px; }
 .battle-prop.prop-0 { left:3%; } .battle-prop.prop-1 { right:3%; }
 .battle-prop > span { font-size:clamp(19px,3vw,30px); }
 .battle-prop > small { font-size:clamp(8px,.8vw,9px); line-height:1.2; }
 .battle-prop > b { position:absolute; top:-6px; right:-3px; background:#f2d598; border-radius:7px; padding:1px 3px; font-size:11px; }
 .battle-prop.selected { outline:3px solid #94b48c; background:#dcebc9; }
-.passive-icons { position:absolute; top:87.3%; left:22%; right:22%; display:flex; justify-content:center; gap:7px; }
+.passive-icons { position:absolute; top:86.677632%; left:22%; right:22%; display:flex; justify-content:center; gap:7px; }
 .passive-icons > span { font-size:clamp(10px,1.5vw,17px); }
-.prop-target-hint { position:absolute; left:4%; right:4%; top:80.3%; padding:6px; background:#fff4ce; text-align:center; font-size:10px; border:1px solid #d6bc7e; border-radius:7px; }
-.sealed-hint { position:absolute; top:68.5%; left:6%; right:6%; background:#fff0bb; color:#9a4a32; border:2px solid #b87844; border-radius:7px; padding:6px; text-align:center; font-size:10px; font-weight:bold; pointer-events:none; }
+.prop-target-hint { position:absolute; left:25%; right:23%; top:71.875%; padding:6px; background:#fff4ce; text-align:center; font-size:10px; border:1px solid #d6bc7e; border-radius:7px; }
+.sealed-hint { position:absolute; top:71.875%; left:25%; right:23%; background:#fff0bb; color:#9a4a32; border:2px solid #b87844; border-radius:7px; padding:6px; text-align:center; font-size:10px; font-weight:bold; pointer-events:none; }
 .sealed-warning { background:#ffe4a4; color:#954b30; border:2px solid #c28c50; border-radius:7px; padding:10px; font-weight:bold; }
 .stage .battle-actions { left:21%; right:21%; gap:4px; }
 .stage .battle-actions .summon-button { flex:1; min-width:0; padding:6px; gap:4px; }

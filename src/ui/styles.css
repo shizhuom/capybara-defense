@@ -122,7 +122,7 @@ html[lang="zh-CN"] .menu-screen h1 { font-size: clamp(43px, 4.5vw, 67px); letter
 .food-pill span:last-child { font-size: 9px; color: #8c754c; }
 .time-chip { font-size: 12px; font-variant-numeric: tabular-nums; margin-left: auto; color: #8d7c60; }
 .speed-pill { border: 1.5px solid var(--ink); background: #d6e1c3; border-radius: 7px; padding: 6px 9px; font-size: 12px; font-weight: 800; }
-.battle-actions { display: flex; align-items: center; gap: 10px; position: absolute; left: 5%; right: 5%; top: 89%; bottom: 2.1%; }
+.battle-actions { display: flex; align-items: center; gap: 10px; position: absolute; left: 5%; right: 5%; top: 88.815789%; bottom: 2.302632%; }
 .recipe-shortcut { width: 45px; height: 49px; background: #fff8df; color: #a58b67; font-size: 26px; }
 .summon-button { min-width: 0; display: flex; align-items: center; justify-content: space-between; flex: 1; border: 2px solid var(--ink); box-shadow: 0 4px 0 var(--ink); border-radius: 13px; background: #f3ad94; min-height: 57px; padding: 8px 15px; }
 .summon-button .bell { display: flex; align-items: center; justify-content: center; flex-shrink: 0; background: #ffe5ac; border: 1.5px solid var(--ink); width: 31px; height: 31px; border-radius: 50%; font-size: 25px; }
@@ -191,7 +191,7 @@ html[lang="zh-CN"] .menu-screen h1 { font-size: clamp(43px, 4.5vw, 67px); letter
 .keyboard-card summary { font-size: 11px; font-weight: 700; cursor: pointer; }
 .keyboard-card .muted { font-size: 10px; margin: 12px 0; }
 .keyboard-nests { display: grid; grid-template-columns: repeat(5, 1fr); gap: 5px; margin-top: 11px; }
-.keyboard-grid { display: grid; grid-template-columns: repeat(8, 1fr); gap: 3px; }
+.keyboard-grid { display: grid; grid-template-columns: repeat(6, 1fr); gap: 3px; }
 .key-cell { min-width: 0; aspect-ratio: 1; background: #f8f2dc; border-radius: 5px; border: 1px solid #c9bfa7; padding: 0; font-size: 10px; overflow: hidden; }
 .key-cell .pet-icon { font-size: 15px; white-space: nowrap; }
 .key-cell.tile-G { background: #d8e1bc; }
@@ -213,7 +213,7 @@ html[lang="zh-CN"] .menu-screen h1 { font-size: clamp(43px, 4.5vw, 67px); letter
 .dialog-decoration { text-align: center; font-size: 42px; color: #94ae90; }
 .dialog-subtitle { font-size: 12px; line-height: 1.8; text-align: center; color: #99876d; margin: 13px 0 24px; }
 .game-dialog h3 { font-size: 13px; margin: 21px 0 13px; }
-.loot-columns { display: grid; grid-template-columns: 1fr 1fr; border: 1px solid #ded3bd; border-radius: 9px; background: #f6f1e5; }
+.loot-columns { display: grid; grid-template-columns: 1fr; border: 1px solid #ded3bd; border-radius: 9px; background: #f6f1e5; }
 .loot-columns section { padding: 13px; }
 .loot-columns section + section { border-left: 1px dashed #d7c9ae; }
 .loot-columns h4 { font-size: 11px; margin-bottom: 8px; }

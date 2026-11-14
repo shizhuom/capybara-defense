@@ -1,6 +1,6 @@
 /* A single canvas coordinate system; clean mode sizes the whole stage, never crops it. */
 html.clean-player-mode, .clean-player-mode body { height:100%; overflow:hidden; overscroll-behavior:none; }
-.clean-mode.page-shell { max-width:1100px; padding:0 12px; height:100dvh; }
+.clean-mode.page-shell { max-width:1100px; padding:0 9px; height:100dvh; }
 .clean-mode .masthead { min-height:48px; height:48px; margin:0; border:0; gap:8px; }
 .clean-mode .brand { gap:7px; }
 .clean-mode .brand-mark { width:32px; height:35px; }
@@ -12,9 +12,9 @@ html.clean-player-mode, .clean-player-mode body { height:100%; overflow:hidden; 
 .clean-mode .settings-button { width:29px; height:29px; font-size:19px; }
 .clean-mode .game-layout { display:flex; justify-content:center; gap:0; height:calc(100dvh - 56px); align-items:flex-start; }
 .clean-mode .sandbox-column,.clean-mode .journal-column,.clean-mode .stage-caption,.clean-mode .page-footer { display:none; }
-.clean-mode .center-column { width:min(calc((100dvh - 62px)*.46176),calc(100vw - 22px),440px); flex:none; }
+.clean-mode .center-column { width:min(calc((100dvh - 58px)*.526316),calc(100vw - 18px),520px); flex:none; }
 .stage { container-type:inline-size; }
-.clean-mode .stage { border:0; outline:2px solid var(--ink); aspect-ratio:640/1386; max-height:calc(100dvh - 56px); border-radius:20px; box-shadow:4px 5px 0 #dfd0b4; touch-action:none; }
+.clean-mode .stage { border:0; outline:2px solid var(--ink); aspect-ratio:640/1216; max-height:calc(100dvh - 56px); border-radius:20px; box-shadow:4px 5px 0 #dfd0b4; touch-action:none; }
 .clean-mode .stage canvas { width:100%; height:100%; }
 .clean-mode .menu-screen { min-height:0; height:100%; padding:5cqw 6cqw 4cqw; display:flex; flex-direction:column; gap:2cqw; overflow:hidden; }
 .clean-mode .menu-top { flex:none; }
@@ -53,8 +53,8 @@ html[lang="zh-CN"] .clean-mode .menu-screen h1 { font-size:11.5cqw; line-height:
 .clean-mode .ticket-badge { padding:2px 4px; font-size:2.3cqw; }
 .brand-mark img,.rank-avatar img,.avatar-card img,.hero-loadout-grid img { max-width:100%; height:auto; object-fit:contain; }
 
-/* HUD coordinates are percentages of the unchanged 640 × 1386 stage. */
-.stage .battle-hud { padding:0; height:13.5%; }
+/* Absolute overlays use the same 640 × 1216 coordinates as STAGE and canvas input. */
+.stage .battle-hud { padding:0; height:15.460526%; }
 .stage .hud-topline { position:absolute; top:4%; left:5%; right:5%; height:29%; }
 .stage .map-eyebrow { display:block; font-size:2.05cqw; line-height:1.2; }
 .stage .hud-topline strong { font-size:4.2cqw; line-height:1.2; letter-spacing:0; }
@@ -71,7 +71,7 @@ html[lang="zh-CN"] .clean-mode .menu-screen h1 { font-size:11.5cqw; line-height:
 .wave-progress[data-kind="preparation"] > i { background:#dfa451; }
 .wave-progress[data-kind="boss"] > i { background:#df8069; }
 .wave-progress > span { display:block; text-align:center; font-size:2.1cqw; padding-top:1cqw; color:#87683e; }
-.boss-banner { position:absolute; left:5%; right:5%; top:8.8%; height:4.6%; display:flex; gap:1.2cqw; padding:.5cqw 1cqw; border:1px solid #b87c64; border-radius:7px; background:#fff2d9f5; pointer-events:none; }
+.boss-banner { position:absolute; left:5%; right:5%; top:10.032895%; height:5.263158%; display:flex; gap:1.2cqw; padding:.5cqw 1cqw; border:1px solid #b87c64; border-radius:7px; background:#fff2d9f5; pointer-events:none; }
 .boss-portrait { width:7.5cqw; flex:none; display:flex; align-items:center; }
 .boss-portrait > svg,.boss-portrait > img { width:100%; height:auto; }
 .boss-detail { flex:1; min-width:0; }
@@ -85,22 +85,17 @@ html[lang="zh-CN"] .clean-mode .menu-screen h1 { font-size:11.5cqw; line-height:
 .boss-skill span { position:absolute; inset:0; font-size:1.9cqw; line-height:2.1cqw; text-align:center; }
 .skill-warning { border-color:#c45847; box-shadow:0 0 0 1px #e99f7e; }
 .skill-warning .boss-skill i { background:#eaa18c; }
-.opponent-banner { position:absolute; left:27.65625%; top:13.925%; width:44.0625%; height:2.453%; display:flex; align-items:center; justify-content:center; gap:1cqw; pointer-events:none; }
-.opponent-banner > svg,.opponent-banner > img { width:5.2cqw; height:5.2cqw; flex:none; object-fit:contain; }
-.opponent-banner > span { display:grid; gap:0; min-width:0; }
-.opponent-banner b { font-size:2.25cqw; line-height:1.15; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-.opponent-banner small { font-size:1.65cqw; line-height:1.15; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
 .stage .battle-prop > span svg,.stage .battle-prop > span img { display:block; width:6.5cqw; height:6.5cqw; }
 .stage .battle-prop > small { font-size:2cqw; }
 .stage .sprinkler-button > span svg,.stage .sprinkler-button > span img { display:block; width:5.5cqw; height:5.5cqw; }
 .stage .sprinkler-button > small { font-size:1.8cqw; }
-.stage .passive-icons { gap:1cqw; top:86.7%; }
+.stage .passive-icons { gap:1cqw; top:86.677632%; }
 .stage .passive-icons > span svg,.stage .passive-icons > span img { display:block; width:4cqw; height:4cqw; }
 .stage .battle-actions .summon-button { min-height:0; height:100%; }
 .stage .battle-actions .summon-button strong { font-size:3.2cqw; }
 .stage .battle-actions .summon-button small { font-size:2.05cqw; margin-top:1cqw; }
 .stage .battle-actions .recipe-shortcut { width:6cqw; height:8cqw; font-size:4cqw; }
-.stage .sealed-hint { top:66%; left:5%; right:5%; padding:.7cqw; font-size:2.15cqw; line-height:1.25; border-width:1px; }
+.stage .sealed-hint { top:71.875%; left:25%; right:23%; padding:.7cqw; font-size:2.15cqw; line-height:1.25; border-width:1px; }
 .pet-icon { display:inline-flex; align-items:center; justify-content:center; vertical-align:middle; }
 .pet-icon svg,.pet-icon img { max-width:100%; height:auto; }
 .shop-icon svg,.shop-icon img,.prop-slot svg,.prop-slot img { display:block; margin:auto; max-width:100%; }

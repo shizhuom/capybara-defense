@@ -72,6 +72,7 @@ export function propSticker(id:string,size=48):string {
   return override||`<svg viewBox="-48 -48 96 96" width="${n}" height="${n}" role="img" aria-label="${key}" data-sticker="prop_${key}"><g stroke-linecap="round" stroke-linejoin="round"><path d="M-39 -26 Q-42 -42 -19 -40 L19 -41 Q42 -39 40 -18 L41 22 Q38 43 17 41 L-22 42 Q-43 38 -40 18Z" fill="#fff9eb" stroke="#fffdf6" stroke-width="5"/>${props[key]}</g></svg>`;
 }
 export function unitSticker(kind:string,size=40):string {
+  if(kind==='shovel')return sceneSticker('shovel','⚒',size);
   const key=Object.hasOwn(UNIT_ICONS,kind)||Object.hasOwn(enemies,kind)?kind:'hamster',n=sizeOf(size,40),override=image(key,n);
   if(override)return override;
   if(Object.hasOwn(enemies,key))return geometry(key,enemies[key],n);

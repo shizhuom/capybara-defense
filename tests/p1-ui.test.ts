@@ -45,8 +45,8 @@ describe('P1 player presentation selectors', () => {
   });
   it('keeps preparation, wave and boss progress bounded and distinct', () => {
     const engine = new BattleEngine({seed:35, ai:false, autoWaves:false}); engine.start();
-    engine.state.wave=1; engine.state.waveTime=10;
-    expect(getWaveHUD(engine.state)).toMatchObject({kind:'preparation', fraction:.5, remaining:10});
+    engine.state.wave=1; engine.state.waveTime=9;
+    expect(getWaveHUD(engine.state)).toMatchObject({kind:'preparation', fraction:.5, remaining:9});
     const preview=engine.spawnEnemy('husky_wrecker','player');
     expect(getWaveHUD(engine.state).kind).toBe('boss'); preview.hp=0;
     engine.state.waveTime=22;
@@ -128,7 +128,7 @@ describe('P1 tutorial command integration', () => {
     app.apply(benchMove); expect(app.tutorialStep).toBe(2);
     const blocked=engine.move(third,{zone:'board',col:0,row:0});
     expect(blocked.ok).toBe(false); app.apply(blocked); expect(app.tutorialStep).toBe(2);
-    const deployed=engine.move(third,{zone:'board',col:2,row:7});
+    const deployed=engine.move(third,{zone:'board',col:1,row:1});
     expect(deployed).toMatchObject({ok:true,key:'hint.deployed'});
     app.apply(deployed); expect(app.tutorialStep).toBe(3);
   });

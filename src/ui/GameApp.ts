@@ -1,6 +1,6 @@
 import { BattleEngine } from '../core/BattleEngine';
 import type { BattleState, CommandResult, Interaction, MapId, Profile, Unit, UnitLocation } from '../core/types';
-import { UNITS, BEE_PRODUCTION, ECONOMY, SHOVEL_PRODUCTION } from '../config/units';
+import { UNITS, BEE_PRODUCTION, ECONOMY, getSummonCost, SHOVEL_PRODUCTION } from '../config/units';
 import { HEROES } from '../config/heroes';
 import { RECIPES } from '../config/recipes';
 import { BOSS_IDS } from '../config/enemies';
@@ -21,7 +21,6 @@ import { ProfileScreens, rankCard, mapOptions, type ProfileScreen } from './Prof
 import { SoundManager } from './SoundManager';
 import { capyIllustration, capyLogo, escapeHtml as esc } from './art';
 import { onAssetsReady } from '../render/AssetRegistry';
-import { avatarSticker } from '../render/M3Art';
 import { propSticker, sceneSticker, unitSticker } from './stickers';
 import { Compendium } from './Compendium';
 import { getBossHUD, getWaveHUD, getMusicMode, isDeveloperMode } from './BattleHUD';
@@ -57,7 +56,6 @@ export class GameApp {
   private compendium = new Compendium();
   private tutorialStep: TutorialStep = 'done';
   private tutorialStamp = '';
-  private opponentStamp = '';
   private bossStamp = '';
   private assetsDirty = false;
   private devMapOverride?: MapId;
@@ -128,14 +126,14 @@ export class GameApp {
         </aside>
         <section class="center-column">
           <div class="stage menu-mode" id="stage">
-            <canvas id="battle-canvas" width="640" height="1386" tabindex="0" role="img"></canvas>
+            <canvas id="battle-canvas" width="${STAGE.width}" height="${STAGE.height}" tabindex="0" role="img"></canvas>
             <section class="menu-screen" id="menu-screen"></section>
             <div class="battle-hud" id="battle-hud" hidden>
               <div class="hud-topline"><div><span class="map-eyebrow" data-i18n="hud.map"></span><strong id="hud-wave"></strong></div><button type="button" class="icon-button" data-action="pause" data-label="hud.pause" id="pause-button"><span aria-hidden="true">Ⅱ</span></button></div>
-              <div class="hud-resource-row"><div class="food-pill"><span aria-hidden="true">🥫</span><strong id="food-value">30</strong><span data-i18n="hud.food"></span></div><span class="time-chip" id="battle-clock"></span><button type="button" class="speed-pill" data-action="speed" data-label="hud.speedLabel" id="hud-speed">1×</button></div>
+              <div class="hud-resource-row"><div class="food-pill"><span aria-hidden="true">🥫</span><strong id="food-value">${ECONOMY.initialFood}</strong><span data-i18n="hud.food"></span></div><span class="time-chip" id="battle-clock"></span><button type="button" class="speed-pill" data-action="speed" data-label="hud.speedLabel" id="hud-speed">1×</button></div>
               <div id="wave-progress" class="wave-progress" role="progressbar" aria-valuemin="0" aria-valuemax="100"><i></i><span></span></div>
             </div>
-            <div id="boss-banner" class="boss-banner" hidden></div><div id="opponent-banner" class="opponent-banner" hidden></div>
+            <div id="boss-banner" class="boss-banner" hidden></div>
             <div class="battle-actions" id="battle-actions" hidden><button type="button" class="recipe-shortcut icon-button" data-action="recipes" data-label="recipe.open"><span aria-hidden="true">✦</span></button><button type="button" class="summon-button" data-action="summon" id="summon-button"><span aria-hidden="true" class="bell">♧</span><span class="summon-copy"><strong id="summon-title"></strong><small id="summon-note"></small><small id="summon-shortage" hidden></small></span><span aria-hidden="true">＋</span></button></div>
             <div id="battle-props" hidden></div><div id="sealed-hint" class="sealed-hint" hidden></div>
             <div id="tutorial-overlay" hidden></div>
@@ -161,7 +159,7 @@ export class GameApp {
     this.engine = new BattleEngine({ mapId: this.devMapOverride ?? resolveMap(this.profile), rankIndex: getRank(this.profile.stars).index, loadouts: { player: structuredClone(this.profile) } });
     this.engine.start();
     this.tutorialStep = this.profile.tutorialCompleted ? 'done' : 1;
-    this.tutorialStamp = ''; this.bossStamp = ''; this.opponentStamp = '';
+    this.tutorialStamp = ''; this.bossStamp = '';
     this.speed = 1;
     this.completedId = '';
     this.newWeapons = [];
@@ -245,7 +243,7 @@ export class GameApp {
     const active = state?.phase === 'playing';
     if(this.assetsDirty && !this.drag && !this.propDrag) {
       this.assetsDirty=false; force=true;
-      this.quickStamp=''; this.battlePropsStamp=''; this.opponentStamp=''; this.bossStamp='';
+      this.quickStamp=''; this.battlePropsStamp=''; this.bossStamp='';
       this.root.querySelector('.brand-mark')!.innerHTML=sceneSticker('logo_capy',capyLogo,54);
     }
     const developer = isDeveloperMode(location.search,this.profile.settings);
@@ -309,9 +307,10 @@ export class GameApp {
       this.root.querySelector<HTMLElement>('.map-eyebrow')!.textContent = t(`map.${state.mapId}`);
       const player = state.sides.player;
       const remaining = state.units.filter(unit => unit.side === 'player' && unit.location.zone === 'bench').length;
-      const shortage = Math.max(0, Math.ceil(ECONOMY.summonCost - player.food));
+      const cost = getSummonCost(player.summons);
+      const shortage = Math.max(0, Math.ceil(cost - player.food));
       const summonTitle = t(remaining > 0 ? 'hud.redraw' : 'hud.summon');
-      const summonNote = t(remaining > 0 ? 'hud.redrawCost' : 'hud.cost', { remaining, cost: ECONOMY.summonCost, count: ECONOMY.summonCount });
+      const summonNote = t(remaining > 0 ? 'hud.redrawCost' : 'hud.cost', { remaining, cost, count: ECONOMY.summonCount });
       this.element('hud-wave').textContent = t('hud.wave', { wave: Math.max(1, state.wave), total: WAVES.length });
       this.element('food-value').textContent = String(Math.floor(player.food));
       this.element('battle-clock').textContent = clock(state.time);
@@ -373,24 +372,14 @@ export class GameApp {
   }
 
   private renderBattleHUD(): void {
-    const state=this.engine?.state, banner=this.element('boss-banner'), opponent=this.element('opponent-banner');
-    if(!state){banner.hidden=true;opponent.hidden=true;return;}
+    const state=this.engine?.state, banner=this.element('boss-banner');
+    if(!state){banner.hidden=true;return;}
     const wave=getWaveHUD(state), progress=this.element('wave-progress');
     progress.dataset.kind=wave.kind;
     progress.setAttribute('aria-valuenow',String(Math.round(wave.fraction*100)));
     progress.setAttribute('aria-label',t(wave.kind==='preparation'?'p1.prepare':'p1.waveProgress',{time:wave.remaining}));
     progress.querySelector<HTMLElement>('i')!.style.width=`${wave.fraction*100}%`;
     progress.querySelector('span')!.textContent=wave.kind==='preparation'?t('p1.prepare',{time:wave.remaining}):'';
-    const identity=state.opponent;
-    opponent.hidden=!identity;
-    if(identity){
-      const stamp=`${getLanguage()}:${identity.id}:${identity.rankIndex}`;
-      if(stamp!==this.opponentStamp){
-        this.opponentStamp=stamp;
-        opponent.innerHTML=`${avatarSticker(identity.avatarId,32)}<span><b>${esc(identity.name[getLanguage()])}</b><small>${tr(`rank.${identity.rankIndex}`)}</small></span>`;
-        opponent.setAttribute('aria-label',`${t('p1.opponent')}: ${identity.name[getLanguage()]}, ${t(`rank.${identity.rankIndex}`)}`);
-      }
-    }
     const boss=getBossHUD(state);
     banner.hidden=!boss;
     if(!boss){this.bossStamp='';return;}
@@ -413,7 +402,7 @@ export class GameApp {
     const state=this.engine?.state, overlay=this.element('tutorial-overlay');
     overlay.hidden=!state||state.phase!=='playing'||this.tutorialStep==='done';
     if(overlay.hidden||!state)return;
-    const stamp=JSON.stringify([this.tutorialStep,getLanguage(),this.selectedId,state.units.find(unit=>unit.id===this.selectedId)?.location]);
+    const stamp=JSON.stringify([this.tutorialStep,getLanguage(),this.selectedId,state.grid,state.units.map(unit=>[unit.id,unit.kind,unit.level,unit.location])]);
     if(stamp===this.tutorialStamp)return;
     this.tutorialStamp=stamp;
     overlay.innerHTML=tutorialMarkup(this.tutorialStep,state,this.selectedId);
@@ -434,7 +423,7 @@ export class GameApp {
     const state = this.engine?.state;
     const player = state?.sides.player;
     const unit = state?.units.find(item => item.id === this.selectedId && item.side === 'player');
-    const unitStats = unit && this.engine!.getUnitStats(unit);
+    const unitStats = unit && unit.kind !== 'shovel' ? this.engine!.getUnitStats(unit) : undefined;
     const shovelRules = this.engine?.getShovelRules('player') ?? SHOVEL_PRODUCTION;
     const shovelStatus = !player || state?.phase === 'finished' ? ''
       : player.shovels >= shovelRules.maxStored ? t('inspect.shovelFull', { count: shovelRules.maxStored })
@@ -448,6 +437,10 @@ export class GameApp {
       return;
     }
     if (!unit) { target.innerHTML = `<div class="empty-inspector"><span aria-hidden="true">☁</span><p>${tr('inspect.empty')}</p></div><p class="shovel-help">${tr('guide.shovel', { time: shovelRules.interval, amount: SHOVEL_PRODUCTION.amount, max: shovelRules.maxStored })}</p>${shovelStatus ? `<p class="shovel-recharge">${esc(shovelStatus)}</p>` : ''}`; return; }
+    if (unit.kind === 'shovel') {
+      target.innerHTML = `<div class="selected-pet"><span class="selected-icon">${icon(unit.kind)}</span><div><span class="eyebrow">${tr('inspect.tool')}</span><h3>${tr('unit.shovel')}</h3></div></div><p>${tr('inspect.toolBody')}</p><strong class="shovel-count">${tr('hud.shovel', { count: player?.shovels ?? 0 })}</strong><button type="button" class="button button-light" data-target="shovel">${tr('inspect.storeShovel')}</button><button type="button" class="text-button" data-action="clear">${tr('inspect.cancel')}</button>`;
+      return;
+    }
     const hero = HEROES[unit.kind];
     const basic = UNITS[unit.kind];
     const stats = unitStats!;
@@ -478,11 +471,11 @@ export class GameApp {
     const disabled = state.phase === 'playing' ? '' : ' disabled';
     const nests = Array.from({ length: ECONOMY.benchSize }, (_, slot) => {
       const unit = this.unitAt({ kind: 'bench', slot });
-      const name = unit ? `${unitName(unit.kind)} · ${t('inspect.level', { level: unit.level })}` : t('keyboard.empty');
+      const name = unit ? `${unitName(unit.kind)}${unit.kind === 'shovel' ? '' : ` · ${t('inspect.level', { level: unit.level })}`}` : t('keyboard.empty');
       return `<button type="button" class="key-cell ${unit?.id === this.selectedId ? 'key-selected' : ''}" data-target="bench:${slot}" aria-label="${tr('keyboard.bench', { slot: slot + 1, name })}" title="${esc(name)}"${disabled}>${unit ? icon(unit.kind) : slot + 1}</button>`;
     }).join('');
     const cells: string[] = [];
-    for (let row = 5; row < 10; row++) for (let col = 0; col < 8; col++) {
+    for (let row = 0; row < STAGE.rows; row++) for (let col = 0; col < STAGE.cols; col++) {
       const unit = this.unitAt({ kind: 'cell', col, row });
       const tile = state.grid[row][col];
       const name = unit ? `${unitName(unit.kind)} · ${t('inspect.level', { level: unit.level })}` : t(`tile.${tile}`);
@@ -517,7 +510,7 @@ export class GameApp {
     } else if (kind === 'armory' || kind === 'market') {
       this.dialog.innerHTML = this.meta.markup(kind);
     } else if (kind === 'pause' && this.engine) {
-      this.dialog.innerHTML = `<div class="dialog-decoration" aria-hidden="true">♨</div><span class="eyebrow">${tr('pause.eyebrow')}</span><h2 id="dialog-title">${tr('pause.title')}</h2><p class="dialog-subtitle">${tr('pause.subtitle')}</p><h3>${tr('pause.loot')}</h3><div class="loot-columns"><section><h4>${tr('loot.you')}</h4>${this.lootMarkup(this.engine.state.sides.player.loot)}</section><section><h4>${tr('loot.ai')}</h4>${this.lootMarkup(this.engine.state.sides.ai.loot)}</section></div><p class="dialog-rule">${tr('pause.rule')}</p><button type="button" class="button button-teal" data-action="resume" autofocus>${tr('pause.keep')}</button><button type="button" class="text-button surrender-button" data-action="surrender">${tr('pause.surrender')}</button>`;
+      this.dialog.innerHTML = `<div class="dialog-decoration" aria-hidden="true">♨</div><span class="eyebrow">${tr('pause.eyebrow')}</span><h2 id="dialog-title">${tr('pause.title')}</h2><p class="dialog-subtitle">${tr('pause.subtitle')}</p><h3>${tr('pause.loot')}</h3><div class="loot-columns"><section><h4>${tr('loot.you')}</h4>${this.lootMarkup(this.engine.state.sides.player.loot)}</section></div><p class="dialog-rule">${tr('pause.rule')}</p><button type="button" class="button button-teal" data-action="resume" autofocus>${tr('pause.keep')}</button><button type="button" class="text-button surrender-button" data-action="surrender">${tr('pause.surrender')}</button>`;
     } else if (kind === 'recipes') {
       this.dialog.innerHTML = this.compendium.markup(this.profile);
     } else if (kind === 'result' && this.engine?.state.result) {
@@ -584,15 +577,18 @@ export class GameApp {
   }
 
   private apply(result: CommandResult): void {
-    if (result.ok && (result.key === 'hint.dig' || result.key === 'hint.repaired')) this.sound.play('shovel');
+    const dug = result.key === 'hint.dig' || result.key === 'hint.repaired' || result.key === 'hint.repairProgress';
+    if (result.ok && dug) this.sound.play('shovel');
     if (result.ok && result.key === 'hint.merged' && result.unitId && this.engine?.state.units.some(unit => unit.id === result.unitId && !!HEROES[unit.kind] && unit.level === 1)) this.sound.play('merge_hero');
     if (result.ok && result.unitId) {
       this.selectedId = result.unitId;
       this.shovelSelected = false;
     }
-    this.notify(result.key, !result.ok);
+    if (result.ok && this.selectedId && !this.engine?.state.units.some(unit => unit.id === this.selectedId && unit.side === 'player')) this.selectedId = undefined;
+    const cost = this.engine ? getSummonCost(this.engine.state.sides.player.summons) : ECONOMY.summonCost;
+    this.notify(result.key, !result.ok, result.key === 'hint.noFood' ? { cost, count: Math.max(0, Math.ceil(cost - (this.engine?.state.sides.player.food ?? 0))) } : {});
     if(result.ok){
-      if(result.key==='hint.dig'||result.key==='hint.repaired')this.progressTutorial('dig');
+      if(dug)this.progressTutorial('dig');
       if(result.key==='hint.deployed'&&this.engine?.state.units.some(unit=>unit.id===result.unitId&&unit.side==='player'&&unit.location.zone==='board'))this.progressTutorial('deploy');
       if(result.key==='hint.merged'||result.key==='hint.fed')this.progressTutorial('merge');
     }
@@ -618,6 +614,8 @@ export class GameApp {
       this.apply(result); this.refresh(); return;
     }
     if (hit.kind === 'shovel') {
+      const selected = this.engine.state.units.find(unit => unit.id === this.selectedId && unit.kind === 'shovel' && unit.location.zone === 'bench');
+      if (selected) { this.apply(this.engine.storeShovel(selected.id)); this.refresh(); return; }
       this.shovelSelected = !this.shovelSelected;
       this.selectedId = undefined;
       this.refresh();
@@ -638,7 +636,7 @@ export class GameApp {
     } else if (target) {
       this.selectedId = target.id;
       this.notify('hint.selected', false, { name: unitName(target.kind) });
-    } else if (hit.kind === 'cell' && hit.row < 5) this.notify('hint.enemyTerritory', true);
+    }
     this.refresh();
   }
 
@@ -760,7 +758,7 @@ export class GameApp {
       if (drag.moved) {
         this.selectedId = drag.id;
         this.shovelSelected = drag.shovel;
-        if (hit.kind !== 'shovel') this.activate(hit);
+        if (hit.kind !== 'shovel' || this.engine?.state.units.some(unit => unit.id === drag.id && unit.kind === 'shovel' && unit.location.zone === 'bench')) this.activate(hit);
       } else this.activate(hit);
       this.refresh();
     });

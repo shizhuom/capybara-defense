@@ -63,7 +63,7 @@
   .leaderboard-row { grid-template-columns:17px 36px minmax(0,1fr) auto; gap:6px; padding:8px 6px; font-size:11px; }
   .leaderboard-row svg { width:36px; height:36px; }
   .leaderboard-row small { font-size:9px; }
-  .sealed-hint { top:66%; left:5%; right:5%; padding:3px 5px; font-size:9px; line-height:1.25; border-width:1px; }
+  .sealed-hint { padding:3px 5px; font-size:9px; line-height:1.25; border-width:1px; }
   .rank-card { padding:10px; gap:8px; }
   .rank-avatar { width:55px; }
   .rank-card strong { font-size:14px; }
@@ -81,5 +81,5 @@
   .rank-card strong { font-size:12px; }
   .rank-card small { font-size:9px; }
   .hero-loadout-grid { grid-template-columns:1fr; }
-  .sealed-hint { top:65.5%; font-size:8px; }
+  .sealed-hint { font-size:8px; }
 }
