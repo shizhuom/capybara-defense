@@ -553,7 +553,8 @@ export class GameApp {
     } else if (kind === 'pause' && this.engine) {
       this.dialog.innerHTML = `<div class="dialog-decoration" aria-hidden="true">♨</div><span class="eyebrow">${tr('pause.eyebrow')}</span><h2 id="dialog-title">${tr('pause.title')}</h2><p class="dialog-subtitle">${tr('pause.subtitle')}</p><h3>${tr('pause.loot')}</h3><div class="loot-columns"><section><h4>${tr('loot.you')}</h4>${this.lootMarkup(this.engine.state.sides.player.loot)}</section></div><p class="dialog-rule">${tr('pause.rule')}</p><button type="button" class="button button-teal" data-action="resume" autofocus>${tr('pause.keep')}</button><button type="button" class="text-button surrender-button" data-action="surrender">${tr('pause.surrender')}</button>`;
     } else if (kind === 'recipes') {
-      this.dialog.innerHTML = this.compendium.markup(this.profile);
+      // The host owns the persistent modal controls; catalog content scrolls below.
+      this.dialog.innerHTML = this.compendium.markup(this.profile).replace(/<button[^>]*data-action="close-recipes"[^>]*>[\s\S]*?<\/button>/,'');
     } else if (kind === 'result' && this.engine?.state.result) {
       const result = this.engine.state.result;
       const won = result.winner === 'player';
@@ -565,8 +566,11 @@ export class GameApp {
       const rank = getRank(this.profile.stars), won = this.engine.state.result.winner === 'player';
       this.dialog.querySelector('.result-rewards')?.insertAdjacentHTML('afterend', `<section class="rank-result" role="status"><strong>${tr('m3.starChange', { change: this.resultStars > 0 ? `+${this.resultStars}` : this.resultStars, stars: this.profile.stars })}</strong>${this.savedResult && !won && this.resultStars === 0 ? `<p>${tr(this.previousRank < 10 ? 'm3.protected' : 'm3.floorProtected')}</p>` : ''}${won && this.resultStars > 1 ? `<p>${tr('m3.streakBonus')}</p>` : ''}${rank.index > this.previousRank ? `<h3>${tr('m3.promotion', { rank: t(`rank.${rank.index}`) })}</h3>` : ''}${this.newAvatars.length ? `<h3>${tr('m3.newAvatars')}</h3>${this.newAvatars.map(id => `<p>${tr(`avatar.${id}`)}</p>`).join('')}` : ''}</section>`);
     }
+    if (kind) {
+      const language=`<div class="language-switch dialog-language" role="group" aria-label="${tr('app.language')}"><button type="button" data-action="zh-CN" class="${getLanguage() === 'zh-CN' ? 'selected' : ''}" aria-pressed="${getLanguage() === 'zh-CN'}">中</button><button type="button" data-action="en" class="${getLanguage() === 'en' ? 'selected' : ''}" aria-pressed="${getLanguage() === 'en'}">EN</button></div>`;
+      this.dialog.insertAdjacentHTML('afterbegin',kind==='recipes'?`<div class="compendium-toolbar">${language}<button type="button" class="compendium-close icon-button" data-action="close-recipes" aria-label="${tr('recipe.close')}">×</button></div>`:language);
+    }
     this.focusCompendium();
-    if (kind) this.dialog.insertAdjacentHTML('afterbegin', `<div class="language-switch dialog-language" role="group" aria-label="${tr('app.language')}"><button type="button" data-action="zh-CN" class="${getLanguage() === 'zh-CN' ? 'selected' : ''}" aria-pressed="${getLanguage() === 'zh-CN'}">中</button><button type="button" data-action="en" class="${getLanguage() === 'en' ? 'selected' : ''}" aria-pressed="${getLanguage() === 'en'}">EN</button></div>`);
   }
 
   private closeDialog(resume: boolean): void {
@@ -722,7 +726,6 @@ export class GameApp {
       this.apply(this.engine.move(this.selectedId, location));
     } else if (target) {
       this.selectedId = target.id;
-      this.notify('hint.selected', false, { name: unitName(target.kind) });
     } else { this.clearSelection(); }
     this.refresh();
   }
@@ -879,7 +882,14 @@ export class GameApp {
   private action(action: string): void {
     if(!['summon','sprinkler','grant','boss','food','orange-plus','orange-minus','skip'].includes(action)&&!action.startsWith('prop:'))this.sound.play('ui_click');
     if (action === 'zh-CN' || action === 'en') { setLanguage(action); return; }
-    if(action.startsWith('book:')){if(this.compendium.select(action.slice(5)))this.renderDialog();return;}
+    if(action.startsWith('book:')){
+      const tab=action.slice(5);
+      if(this.compendium.select(tab)){
+        this.renderDialog();this.dialog.scrollTop=0;
+        this.dialog.querySelector<HTMLElement>(`#book-tab-${tab}`)?.focus({preventScroll:true});
+      }
+      return;
+    }
     if(action==='tutorial-skip'||action==='tutorial-ack'){this.progressTutorial(action==='tutorial-skip'?'skip':'acknowledge');return;}
     if(action==='tutorial-replay'){
       if(!this.persistProfile(replayTutorial(this.profile)))return;

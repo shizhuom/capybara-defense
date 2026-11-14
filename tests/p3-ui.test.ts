@@ -11,14 +11,14 @@ import { setPropSlots } from '../src/core/MetaProgression';
 
 // Minimal DOM/audio boundary: all commands, UI routing, copy and tutorial state are real.
 class Element {
-  innerHTML=''; textContent=''; hidden=false; disabled=false; open=false; value=''; dataset:Record<string,string>={};
+  innerHTML=''; textContent=''; hidden=false; disabled=false; open=false; value=''; scrollTop=0; dataset:Record<string,string>={};
   attrs:Record<string,string>={}; style:Record<string,string>={}; listeners:Record<string,((event:any)=>void)[]>={};
   classList={toggle:()=>{},contains:()=>false};
   addEventListener(name:string,fn:(event:any)=>void){(this.listeners[name]??=[]).push(fn);}
   fire(name:string,event:any){for(const fn of this.listeners[name]??[])fn(event);}
   setAttribute(name:string,value:string){this.attrs[name]=value;}
   querySelector(){return new Element();} querySelectorAll(){return [];}
-  contains(){return false;} focus(){} insertAdjacentHTML(_where:string,html:string){this.innerHTML+=html;}
+  contains(){return false;} focus(){} insertAdjacentHTML(where:string,html:string){this.innerHTML=where==='afterbegin'?html+this.innerHTML:this.innerHTML+html;}
   showModal(){this.open=true;} close(){this.open=false;} scrollIntoView(){}
   setPointerCapture(){} hasPointerCapture(){return false;} releasePointerCapture(){}
   getBoundingClientRect(){return {left:0,top:0,width:390,height:741,right:390,bottom:741};}
@@ -51,6 +51,24 @@ beforeEach(()=>{
 afterEach(()=>{setLanguage('zh-CN');vi.unstubAllGlobals();});
 
 describe('P3 stage integration',()=>{
+  it('resets ordinary guide tabs after a deep link and keeps close/language in a permanent toolbar',()=>{
+    const {app}=harness();app.refresh=()=>{};app.compendium=new Compendium();
+    app.action('inspect-book:kungfu_po');app.dialog.scrollTop=480;
+    app.action('book:matrix');expect(app.dialog.scrollTop).toBe(0);
+    const html=app.dialog.innerHTML;
+    expect(html).toContain('class="compendium-toolbar"');
+    expect(html.indexOf('data-action="close-recipes"')).toBeLessThan(html.indexOf('class="p3-compendium"'));
+    expect(html.match(/data-action="close-recipes"/g)).toHaveLength(1);
+    app.action('inspect-book:kungfu_po');expect(app.dialog.innerHTML).toContain('data-compendium-focused="true"');
+  });
+  it('selects units without redundant notices while preserving command error feedback',()=>{
+    const {app,engine}=harness();app.refresh=()=>{};
+    const id=engine.grant('panda').unitId!, unit=engine.state.units.find(u=>u.id===id)!;
+    expect(unit.location.zone).toBe('bench');
+    app.activate({kind:'bench',slot:(unit.location as {slot:number}).slot});
+    expect(app.selectedId).toBe(id);expect(app.toast).toBeUndefined();
+    engine.state.sides.player.food=0;app.action('summon');expect(app.toast.key).toBe('hint.noFood');
+  });
   it('routes persisted purchases, upgrades, active slots and weapons into preparation only',()=>{
     const {app,engine}=harness();app.refresh=()=>{};
     app.profile={...app.profile,coins:10000,unlockedWeapons:['m01_swatter'],shop:{day:'2026-11-14',offers:['washer','promo_badge']}};

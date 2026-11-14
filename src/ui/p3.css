@@ -5,12 +5,13 @@ body { background:#231d18;background-image:none; }
 .page-shell .masthead,.page-shell .page-footer,.page-shell .stage-caption,.page-shell .journal-column,.side-note { display:none; }
 .page-shell .game-layout,.clean-mode .game-layout { display:block;height:auto;width:100%; }
 .page-shell .center-column,.clean-mode .center-column { width:100%; }
-.page-shell #stage { position:relative;width:min(100vw,calc(100dvh * 16 / 9));aspect-ratio:16/9;max-width:none;max-height:none;margin:auto;border:0;outline:0;border-radius:clamp(0px,1.2vw,18px);overflow:hidden;box-shadow:none;container-type:inline-size;background:#776b4c;touch-action:none; }
+.page-shell #stage { position:relative;width:min(100vw,calc(100dvh * 16 / 9));aspect-ratio:16/9;max-width:none;max-height:none;margin:auto;border:0;outline:0;border-radius:clamp(0px,1.2vw,18px);overflow:hidden;box-shadow:none;container-type:inline-size;background:#776b4c;touch-action:auto; }
 .page-shell #battle-canvas { display:block;width:100%;height:100%; }
 .page-shell .sandbox-column { position:fixed;left:8px;bottom:8px;z-index:65;width:min(350px,92vw); }
 .clean-mode .sandbox-column { display:none; }
 .page-shell #dev-tools { padding:10px;background:#fff8e9f5;max-height:82dvh;overflow:auto;border-radius:12px; }
-.page-shell #dev-tools summary { cursor:pointer; }
+.page-shell #dev-tools summary { cursor:pointer;pointer-events:auto; }
+.page-shell #dev-tools .collapse-chevron { display:inline; }
 .page-shell #dev-tools summary>.eyebrow { display:none; }
 .page-shell .dev-heading { font-size:16px; }
 .page-shell .keyboard-card { padding:12px;margin:12px 0; }
@@ -92,7 +93,7 @@ body { background:#231d18;background-image:none; }
 .page-shell .passive-icons>span svg,.page-shell .passive-icons>span img { width:2.5cqw;height:2.5cqw;display:block; }
 .prop-target-hint { position:absolute;left:1.5%;top:79%;width:11%;font-size:1.05cqw;background:#fff5dc;border-radius:.5cqw;padding:.3cqw; }
 .page-shell .sealed-hint { top:77%;left:38%;right:24%;padding:.4cqw;font-size:1.1cqw;pointer-events:none; }
-.page-shell .live-unit-card { right:1.09375cqw;top:6.40625cqw;width:18.4375cqw;max-height:39cqw;padding:.86cqw;border-width:.23cqw;border-radius:1.33cqw;font-size:1.09375cqw; }
+.page-shell .live-unit-card { right:1.09375cqw;top:6.40625cqw;width:18.4375cqw;max-height:39cqw;padding:.86cqw;border-width:.23cqw;border-radius:1.33cqw;font-size:1.09375cqw;touch-action:pan-y;overscroll-behavior:contain; }
 .page-shell .live-unit-card.dock-left { left:12.34375cqw;right:auto; }
 .live-unit-card :is(svg,img) { max-width:100%; }
 .page-shell .live-card-header { gap:.4cqw; }
@@ -119,9 +120,14 @@ body { background:#231d18;background-image:none; }
 .game-dialog button,.game-dialog .text-button,.game-dialog p { font-size:14px; }
 .game-dialog .dialog-language { margin-bottom:8px; }
 .game-dialog.recipe-dialog:has(.p3-compendium) { padding:18px 22px; }
+.compendium-toolbar { position:sticky;top:0;z-index:8;display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:44px;padding:3px 0 6px;background:var(--paper);box-shadow:0 5px 0 var(--paper); }
+.compendium-toolbar .dialog-language { margin:0; }
+.compendium-toolbar .compendium-close { width:34px;height:34px;font-size:23px; }
 .p3-compendium>h2 { font-size:23px;line-height:1.25;margin:0; }
 .p3-compendium>.dialog-subtitle { margin:5px 0 10px;font-size:14px; }
-.p3-compendium .encyclopedia-tabs { top:-18px;margin:8px 0;padding:6px 0; }
+.p3-compendium .encyclopedia-tabs { top:44px;margin:8px 0;padding:6px 0; }
+.p3-compendium [data-compendium-focused="true"] { scroll-margin-top:128px; }
+.compendium-detail { top:116px; }
 .merge-matrix td button { min-height:92px; }
 .merge-matrix td button .book-sticker :is(img,svg) { width:52px;height:52px; }
 .battle-shop-banner { padding:10px;margin:8px 0;background:#fff0c5;border:1px solid #c39a59;border-radius:9px;font-weight:800; }
@@ -131,5 +137,22 @@ body { background:#231d18;background-image:none; }
 }
 @media(max-height:500px) and (orientation:landscape) {
   .game-dialog.recipe-dialog:has(.p3-compendium) { padding:12px 16px; }
-  .p3-compendium .encyclopedia-tabs { top:-12px; }
+  .page-shell .live-unit-card { width:228px;max-width:34cqw;max-height:39cqw;padding:8px;font-size:12px;line-height:1.35; }
+  .page-shell .live-card-header { gap:4px; }
+  .page-shell .live-card-header>span :is(svg,img) { width:32px;height:32px; }
+  .page-shell .live-card-header h3 { font-size:14px; }
+  .page-shell .live-card-header b,.page-shell .live-unit-card p,.page-shell .live-unit-card button,.page-shell .live-status,.page-shell .merge-ready { font-size:12px; }
+  .page-shell .live-card-header button { width:26px;height:28px; }
+  .page-shell .live-card-header button :is(svg,img) { width:18px;height:18px; }
+  .page-shell .live-unit-card .live-stat-pills>span { font-size:14px;padding:4px; }
+  .page-shell .live-unit-card .live-stat-pills { gap:4px;margin:7px 0; }
+  .page-shell .live-unit-card p { margin:6px 0; }
+  .page-shell .live-equation>span :is(svg,img),.page-shell .live-feed :is(svg,img) { width:24px;height:24px; }
+  .page-shell .live-weapon :is(svg,img) { width:30px;height:30px; }
+  .page-shell .live-unit-card .live-max { font-size:14px; }
+  .control-dock button { font-size:max(12px,1.4cqw); }
+  .control-dock #hud-speed,.control-dock #pause-button { font-size:max(14px,1.56cqw); }
+  .page-shell .food-pill strong,.page-shell .battle-actions #summon-cost { font-size:max(20px,1.875cqw); }
+  #hud-wave,.orange-pill strong { font-size:max(12px,1.5625cqw); }
+  .wave-progress>span,.refresh-badge,.page-shell #battle-props button>b { font-size:max(12px,1.25cqw); }
 }
