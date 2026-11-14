@@ -36,7 +36,7 @@ import { propSticker, sceneSticker, unitSticker } from './stickers';
 import { Compendium } from './Compendium';
 import { getBossHUD, getWaveHUD, getMusicMode, isDeveloperMode } from './BattleHUD';
 import { advanceTutorial, finishTutorial, replayTutorial, type TutorialAction, type TutorialStep } from '../core/Tutorial';
-import { tutorialMarkup, tutorialTargets, placeTutorialBubble, type TutorialRect } from './TutorialView';
+import { tutorialMarkup, tutorialTargets, placeTutorialBubble, tutorialCardDock, type TutorialRect } from './TutorialView';
 
 type Hit = HitTarget;
 type DialogKind = 'pause' | 'recipes' | 'result' | MetaScreen | ProfileScreen;
@@ -390,6 +390,12 @@ export class GameApp {
       // upper board, beyond HUD controls and well above the bottom action strip.
       const top = Math.max(8, Math.min(stage.top + stage.height * STAGE.boardY / STAGE.height + 6, viewportHeight - height - 8));
       Object.assign(style, { top: `${top}px`, bottom: 'auto' });
+      const card=this.root?.querySelector<HTMLElement>('#live-unit-card')?.getBoundingClientRect();
+      if(card&&card.width>0&&top<card.bottom&&top+height>card.top&&viewportWidth/2-width/2<card.right&&viewportWidth/2+width/2>card.left){
+        const zones=[{left:Math.max(16,stage.left+8),right:card.left-8},{left:card.right+8,right:Math.min(viewportWidth-16,stage.right-8)}];
+        const zone=zones.sort((a,b)=>(b.right-b.left)-(a.right-a.left))[0],space=zone.right-zone.left;
+        if(space>=160){const fitted=Math.min(width,space);Object.assign(style,{left:`${zone.left+(space-fitted)/2}px`,width:`${fitted}px`,maxWidth:`${fitted}px`,transform:'none'});}
+      }
     }
   }
 
@@ -461,6 +467,15 @@ export class GameApp {
     if(overlay.hidden||!state)return;
     const button=this.root.querySelector<HTMLElement>('#battle-hud [data-action="recipes"]')?.getBoundingClientRect(),bounds=this.canvas.getBoundingClientRect();
     const guide=button&&bounds.width&&bounds.height?{x:(button.left-bounds.left)/bounds.width*STAGE.width,y:(button.top-bounds.top)/bounds.height*STAGE.height,w:button.width/bounds.width*STAGE.width,h:button.height/bounds.height*STAGE.height}:undefined;
+    const stageRect=(rect:DOMRect):TutorialRect=>({x:(rect.left-bounds.left)/bounds.width*STAGE.width,y:(rect.top-bounds.top)/bounds.height*STAGE.height,w:rect.width/bounds.width*STAGE.width,h:rect.height/bounds.height*STAGE.height});
+    const card=this.element('live-unit-card');
+    if(card&&bounds.width&&bounds.height&&window.innerWidth>window.innerHeight){
+      const targets=tutorialTargets(this.tutorialStep,state,guide);
+      const spots=[targets.source,targets.target].filter((r):r is TutorialRect=>!!r);
+      card.classList.toggle('dock-left',false);const right=stageRect(card.getBoundingClientRect());
+      card.classList.toggle('dock-left',true);const left=stageRect(card.getBoundingClientRect());
+      card.classList.toggle('dock-left',tutorialCardDock(spots,right,left)==='left');
+    }
     const avoidRects:TutorialRect[]=[];
     if(bounds.width&&bounds.height)for(const id of ['live-unit-card','boss-banner']){
       const element=this.element(id);if(!element)continue;
@@ -670,6 +685,7 @@ export class GameApp {
     const stamp=JSON.stringify([getLanguage(),unit.id,unit.kind,unit.level,unit.location,loadout,allowBenchLock,state.sides.player.lockedBenchSlot,
       state.grid,state.units.map(u=>[u.id,u.kind,u.level,u.location,!!u.washing,!!u.statuses.SEALED,!!u.statuses.MERGE_LOCK])]);
     if(stamp!==this.liveStamp){host.innerHTML=liveUnitCardMarkup({unit,state,stats,loadout,allowBenchLock});this.liveStamp=stamp;}
+    host.querySelector('#live-unit-card')?.classList.toggle('dock-left',unit.location.zone==='board'&&unit.location.col>=6);
     const text=(selector:string,value:string)=>{const el=host.querySelector<HTMLElement>(selector);if(el&&el.textContent!==value)el.textContent=value;};
     text('[data-live-stat="damage"]',`⚔️ ${Math.round(stats.damage)}`);
     text('[data-live-stat="rate"]',`⚡ ${Number(stats.rate.toFixed(2))}/s`);
@@ -728,7 +744,12 @@ export class GameApp {
     this.notify(result.key, !result.ok, result.key === 'hint.noFood' ? { cost, count: Math.max(0, Math.ceil(cost - (this.engine?.state.sides.player.food ?? 0))) } : {});
     if(result.ok){
       if(dug)this.progressTutorial('dig');
-      if(result.key==='hint.deployed'&&this.engine?.state.units.some(unit=>unit.id===result.unitId&&unit.side==='player'&&unit.location.zone==='board'))this.progressTutorial('deploy');
+      if(result.key==='hint.deployed'&&this.engine?.state.units.some(unit=>unit.id===result.unitId&&unit.side==='player'&&unit.location.zone==='board')){
+        // The next teaching tap selects the wearable; keeping Panda selected would
+        // perform a legitimate reverse merge onto the bench instead of this pad.
+        if(this.tutorialStep===4)this.selectedId=undefined;
+        this.progressTutorial('deploy');
+      }
       if((result.key==='hint.merged'||result.key==='hint.fed')&&(this.tutorialStep!==4||this.engine?.state.units.some(unit=>unit.id===result.unitId&&!!HEROES[unit.kind])))this.progressTutorial('merge');
     }
   }

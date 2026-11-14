@@ -58,10 +58,15 @@
 .ledger-body .book-growth th,.ledger-body .book-growth td { overflow-wrap:normal;word-break:normal;hyphens:none; }
 .ledger-body .book-growth th:first-child,.ledger-body .book-growth th:nth-child(2),.ledger-body .book-growth td:first-child { white-space:nowrap; }
 .ledger-body .book-growth { width:100%;table-layout:auto; }
-@media(min-width:901px) {
+@media(min-width:700px), (orientation:landscape) {
  #game-dialog .encyclopedia-tabs.ledger-tabs { gap:4px;padding:6px 10px;display:grid;grid-template-columns:repeat(6,minmax(0,1fr)); }
  #game-dialog .encyclopedia-tabs.ledger-tabs button { min-width:0;padding:6px 5px;font-size:13px; }
  #game-dialog .encyclopedia-tabs.ledger-tabs button>span { white-space:normal;overflow:visible;text-overflow:clip; }
+}
+@media(max-height:500px) and (orientation:landscape) {
+ #game-dialog .encyclopedia-tabs.ledger-tabs { padding:3px 8px 0;gap:3px; }
+ #game-dialog .encyclopedia-tabs.ledger-tabs button { padding:4px 3px;font-size:11px;gap:3px;min-height:42px; }
+ #game-dialog .encyclopedia-tabs.ledger-tabs button [data-sticker] { width:18px;height:18px;flex:none; }
 }
 .ledger-body .settings-form { gap:13px;padding-bottom:7px; }
 .wood-slider input[type="range"].cozy-range { background:linear-gradient(90deg,#7da253 0%,#97bd69 var(--range-fill,50%),#dcc092 var(--range-fill,50%),#c8a26d 100%); }
@@ -151,6 +156,23 @@
  #early-wave-button b { font-size:12px; }
  .redraw-hero-badge { font-size:10px;padding:2px 6px;bottom:calc(100% + 3px); }
  .live-card-header { gap:3px; }
+ .result-shell .result-summary-grid { gap:9px; }
+ .result-shell .result-rewards-card h3 { margin:0 0 3px;font-size:14px; }
+ .result-rewards-card .rank-result { margin:4px 0;gap:2px; }
+ .result-rewards-card .rank-result p { margin:3px 0;font-size:11px;line-height:1.3; }
+ .result-rewards-card .promotion-banner { padding:4px 6px; }
+ .result-shell .result-rewards { padding:4px;margin:5px 0 0;gap:4px;background:none; }
+ .result-shell .result-rewards>span { padding:4px 2px; }
+ .result-shell .result-rewards small { margin-top:2px;font-size:10px; }
+ .result-shell .result-mvp-card { display:grid;grid-template-columns:54px 1fr;align-content:start;gap:2px; }
+ .result-shell .result-mvp-card h3 { grid-column:1/-1;font-size:14px;margin:0 0 5px; }
+ .result-shell .result-mvp-card>svg,.result-shell .result-mvp-card>img { grid-row:2/4;align-self:center; }
+ .result-shell .result-mvp-card>strong { text-align:left;align-self:end;font-size:15px;margin:0; }
+ .result-shell .result-mvp-card>span { text-align:left;align-self:start; }
+ .result-shell .result-mvp-card>p,.result-shell .result-mvp-card>.lineup-stickers { grid-column:1/-1; }
+ .result-shell .result-mvp-card:has(.lineup-stickers)>span { grid-column:1/-1; }
+ .result-shell .mvp-stats { grid-column:1/-1;margin-top:7px;gap:5px; }
+ .result-shell .mvp-stats>span { padding:5px;gap:1px; }
 }
 @media(max-width:760px) and (orientation:portrait) {
  .resource-dock>div.wave-strategy { position:absolute;top:calc(100% + 5px);left:0;height:26px;gap:4px; }

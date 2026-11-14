@@ -89,7 +89,7 @@ async function preparationShop(){
   await page.locator('#battle-props [data-action="battle-shop"]').first().click();
   assert.equal(await page.evaluate(()=>window.__CAPY_DEBUG__.engine.state.phase),'paused');
   await click('battle-shop:armory');
-  await page.locator('[data-weapon="m01_swatter"]').selectOption('kungfu_po');
+  await click('meta-equip:m01_swatter:kungfu_po');
   assert.equal(await page.evaluate(()=>window.__CAPY_DEBUG__.engine.state.sides.player.loadout.equippedWeapons.kungfu_po),'m01_swatter');
   await click('battle-shop:market');
   await click('meta-buy:milk_bottle');await click('meta-prop:milk_bottle');
@@ -106,7 +106,7 @@ async function preparationShop(){
   const saved=await page.evaluate(()=>({profile:structuredClone(window.__CAPY_DEBUG__.profile),loadout:structuredClone(window.__CAPY_DEBUG__.engine.state.sides.player.loadout)}));
   await page.evaluate(()=>{window.__originalStorageWrite=Storage.prototype.setItem;Storage.prototype.setItem=function(key,value){if(key==='capybara_defense_v1:profile')throw Error('QA storage unavailable');return window.__originalStorageWrite.call(this,key,value);};});
   try{
-    await page.locator('[data-weapon="m02_slipper"]').selectOption('kungfu_po');
+    await click('meta-equip:m02_slipper:kungfu_po');
     assert.deepEqual(await page.evaluate(()=>({profile:window.__CAPY_DEBUG__.profile,loadout:window.__CAPY_DEBUG__.engine.state.sides.player.loadout})),saved);
   }finally{await page.evaluate(()=>{Storage.prototype.setItem=window.__originalStorageWrite;delete window.__originalStorageWrite;});}
   await click('close-meta');
@@ -114,7 +114,7 @@ async function preparationShop(){
 
   await page.evaluate(()=>window.__CAPY_DEBUG__.engine.spawnEnemy('rat','player'));
   const frozen=await page.evaluate(()=>structuredClone(window.__CAPY_DEBUG__.engine.state.sides.player.loadout));
-  await click('battle-shop');await click('battle-shop:armory');await page.locator('[data-weapon="m02_slipper"]').selectOption('kungfu_po');
+  await click('battle-shop');await click('battle-shop:armory');await click('meta-equip:m02_slipper:kungfu_po');
   assert.deepEqual(await page.evaluate(()=>window.__CAPY_DEBUG__.engine.state.sides.player.loadout),frozen);
   assert.equal(await page.evaluate(()=>window.__CAPY_DEBUG__.profile.equippedWeapons.kungfu_po),'m02_slipper');
   await click('battle-shop:market');await click('meta-buy:catnip');await click('meta-prop:catnip');

@@ -9,6 +9,12 @@ import {escapeHtml as esc} from './art';
 import {sceneSticker,unitSticker} from './stickers';
 
 export interface TutorialRect {x:number;y:number;w:number;h:number}
+function overlapArea(rect:TutorialRect,obstacles:readonly TutorialRect[],padding=0):number {
+ return obstacles.reduce((sum,a)=>sum+Math.max(0,Math.min(rect.x+rect.w,a.x+a.w+padding)-Math.max(rect.x,a.x-padding))*Math.max(0,Math.min(rect.y+rect.h,a.y+a.h+padding)-Math.max(rect.y,a.y-padding)),0);
+}
+export function tutorialCardDock(targets:readonly TutorialRect[],right:TutorialRect,left:TutorialRect):'right'|'left' {
+ return overlapArea(left,targets,8)<overlapArea(right,targets,8)?'left':'right';
+}
 function unitRect(unit:Unit):TutorialRect {
   const p=unit.location;
   return p.zone==='bench'?{x:STAGE.benchX+p.slot*STAGE.benchStep,y:STAGE.benchY,w:STAGE.benchSize,h:STAGE.benchSize}:
@@ -60,7 +66,7 @@ export function placeTutorialBubble(obstacles:readonly TutorialRect[],size={w:42
   const xs=[450,180,660,24,830,...obstacles.flatMap(r=>[r.x+r.w+14,r.x-w-14])];
   const ys=[210,88,320,120,...obstacles.flatMap(r=>[r.y+r.h+14,r.y-h-14])];
   const candidates=xs.flatMap(x=>ys.map(y=>({x:Math.max(12,Math.min(x,STAGE.width-w-12)),y:Math.max(12,Math.min(y,STAGE.benchY-h-12)),w,h})));
-  const area=(r:TutorialRect)=>obstacles.reduce((sum,a)=>sum+Math.max(0,Math.min(r.x+r.w,a.x+a.w+12)-Math.max(r.x,a.x-12))*Math.max(0,Math.min(r.y+r.h,a.y+a.h+12)-Math.max(r.y,a.y-12)),0);
+  const area=(r:TutorialRect)=>overlapArea(r,obstacles,12);
   return candidates.map((rect,index)=>({rect,index,area:area(rect)})).sort((a,b)=>a.area-b.area||a.index-b.index)[0].rect;
 }
 export function tutorialMarkup(step:TutorialStep,state:BattleState,_selectedId?:number,guide?:TutorialRect,avoidRects:TutorialRect[]=[]):string {
