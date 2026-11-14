@@ -22,7 +22,7 @@ const equation=(parts:readonly string[],hero:string)=>`${parts.map(part=>sticker
 const tabArt=(tab:CompendiumTab)=>tab==='matrix'?sceneSticker('ui_compendium_book','',28):tab==='weapons'?weaponSticker('m10_bamboo_staff',28):tab==='props'?propSticker('washer',28):sticker(tab==='pets'?'hamster':tab==='heroes'?'kungfu_po':'husky_wrecker',28);
 function statPills(kind:string):string {
   const s=getBaseUnitStats(kind,1);
-  return `<div class="book-stat-pills"><span title="${tr('p3.damage')}">⚔ ${num(s.damage)}</span><span title="${tr('p3.rate')}">ϟ ${num(s.rate)}/s</span><span title="${tr('p3.range')}">◎ ${num(s.range)}</span>${HEROES[kind]?`<span title="${tr('p3.charge')}">▰ ${s.charge}</span>`:''}</div>`;
+  return `<div class="book-stat-pills"><span title="${tr('p3.damage')}">⚔️ ${num(s.damage)}</span><span title="${tr('p3.rate')}">⚡ ${num(s.rate)}/s</span><span title="${tr('p3.range')}">🎯 ${num(s.range)}</span>${HEROES[kind]?`<span title="${tr('p3.charge')}">🔋 ${s.charge}</span>`:''}</div>`;
 }
 function growth(kind:string):string {
   const max=HEROES[kind]?5:UNITS[kind].maxLevel;
