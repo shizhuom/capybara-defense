@@ -136,7 +136,7 @@ describe('P3 stage integration',()=>{
     setLanguage(language);const {app,engine,element}=harness();app.renderMenu();
     for(const key of ['p3.armory','p3.rank']){expect(t(key)).not.toBe(key);expect(element('menu-screen').innerHTML).toContain(t(key));}
     for(const step of [1,2,3,4,5] as const){
-      const key=`p5.tutorial${step}.body`,html=tutorialMarkup(step,engine.state);
+      const key=step===4?'p6.tutorial4Body':`p5.tutorial${step}.body`,html=tutorialMarkup(step,engine.state);
       expect(t(key)).not.toBe(key);expect(html).toContain(t(key));
       expect(html).toContain('data-action="tutorial-skip"');
       if(step===3)expect(html).toContain('data-action="tutorial-ack"');

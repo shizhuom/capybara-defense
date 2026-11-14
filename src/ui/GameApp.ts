@@ -34,7 +34,7 @@ import { propSticker, sceneSticker, unitSticker } from './stickers';
 import { Compendium } from './Compendium';
 import { getBossHUD, getWaveHUD, getMusicMode, isDeveloperMode } from './BattleHUD';
 import { advanceTutorial, finishTutorial, replayTutorial, type TutorialAction, type TutorialStep } from '../core/Tutorial';
-import { tutorialMarkup } from './TutorialView';
+import { tutorialMarkup, tutorialTargets, placeTutorialBubble, type TutorialRect } from './TutorialView';
 
 type Hit = { kind: 'cell'; col: number; row: number } | { kind: 'bench'; slot: number } | { kind: 'shovel' };
 type DialogKind = 'pause' | 'recipes' | 'result' | MetaScreen | ProfileScreen;
@@ -296,7 +296,6 @@ export class GameApp {
     this.element('fullscreen-button').hidden = typeof document.documentElement.requestFullscreen !== 'function';
     this.element('battle-props').hidden = !state;
     this.renderBattleHUD();
-    this.renderTutorial();
     this.element('profile-mode').textContent = t(isTestProfile() ? 'm2.testMode' : 'm2.normalMode');
     this.element('profile-mode').classList.toggle('test-mode', isTestProfile());
     if (!this.drag && !this.propDrag) {
@@ -346,6 +345,8 @@ export class GameApp {
       this.renderKeyboard();
     }
     this.renderLiveCard();
+    // The tutorial avoids the card after this frame has applied its new content/side.
+    this.renderTutorial();
     const toast = this.element('toast');
     toast.hidden = !this.toast || performance.now() > this.toast.until;
     if (this.toast) {
@@ -375,7 +376,7 @@ export class GameApp {
     });
     // Measure after setting width: translated or long notices may wrap to more lines.
     const height = toast.getBoundingClientRect().height;
-    if (!side && viewportHeight - 8 - height < stage.bottom + 4) {
+    if (!side) {
       // Short, narrow viewports have no exterior gutter. Keep the notice in the
       // upper board, beyond HUD controls and well above the bottom action strip.
       const top = Math.max(8, Math.min(stage.top + stage.height * STAGE.boardY / STAGE.height, viewportHeight - height - 8));
@@ -447,10 +448,28 @@ export class GameApp {
     if(overlay.hidden||!state)return;
     const button=this.root.querySelector<HTMLElement>('#battle-hud [data-action="recipes"]')?.getBoundingClientRect(),bounds=this.canvas.getBoundingClientRect();
     const guide=button&&bounds.width&&bounds.height?{x:(button.left-bounds.left)/bounds.width*STAGE.width,y:(button.top-bounds.top)/bounds.height*STAGE.height,w:button.width/bounds.width*STAGE.width,h:button.height/bounds.height*STAGE.height}:undefined;
-    const stamp=JSON.stringify([this.tutorialStep,getLanguage(),guide,this.selectedId,state.grid,state.units.map(unit=>[unit.id,unit.kind,unit.level,unit.location])]);
+    const avoidRects:TutorialRect[]=[];
+    if(bounds.width&&bounds.height)for(const id of ['live-unit-card','boss-banner']){
+      const element=this.element(id);if(!element)continue;
+      const rect=element.getBoundingClientRect();
+      if(!element.hidden&&rect.width>0&&rect.height>0)avoidRects.push({x:(rect.left-bounds.left)/bounds.width*STAGE.width,y:(rect.top-bounds.top)/bounds.height*STAGE.height,w:rect.width/bounds.width*STAGE.width,h:rect.height/bounds.height*STAGE.height});
+    }
+    const stamp=JSON.stringify([this.tutorialStep,getLanguage(),guide,avoidRects,bounds.width,bounds.height,this.selectedId,state.grid,state.units.map(unit=>[unit.id,unit.kind,unit.level,unit.location])]);
     if(stamp===this.tutorialStamp)return;
     this.tutorialStamp=stamp;
-    overlay.innerHTML=tutorialMarkup(this.tutorialStep,state,this.selectedId,guide);
+    overlay.innerHTML=tutorialMarkup(this.tutorialStep,state,this.selectedId,guide,avoidRects);
+    const bubble=overlay.querySelector<HTMLElement>('.tutorial-bubble');
+    // Portrait uses its own letterbox above the stage. Landscape measures the real
+    // translated bubble, not an estimated height that misses wrapped mobile text.
+    if(bubble&&bounds.width>0&&bounds.height>0&&!(window.innerWidth<=760&&window.innerHeight>window.innerWidth)){
+      const rect=bubble.getBoundingClientRect(),targets=tutorialTargets(this.tutorialStep,state,guide);
+      if(rect.width>0&&rect.height>0){
+        const position=placeTutorialBubble([...avoidRects,...[targets.source,targets.target].filter((r):r is TutorialRect=>!!r)],{w:rect.width/bounds.width*STAGE.width,h:rect.height/bounds.height*STAGE.height});
+        bubble.style.setProperty('--bubble-left',`${position.x/STAGE.width*100}%`);
+        bubble.style.top=`${position.y/STAGE.height*100}%`;
+        bubble.style.setProperty('--tutorial-top',bubble.style.top);
+      }
+    }
   }
 
   private progressTutorial(action:TutorialAction):void {
@@ -461,7 +480,11 @@ export class GameApp {
       if(!this.persistProfile(result.profile))return;
       this.tutorialStep='done';this.tutorialStamp='';
       this.engine?.setTutorialHold(false);
-      this.notify(action==='skip'?'p1.tutorialSkipped':result.awarded?'p1.tutorialReward':'p1.tutorialDone');
+      const completion=action==='skip'?'p1.tutorialSkipped':result.awarded?'p1.tutorialReward':'p1.tutorialDone';
+      const state=this.engine?.state;
+      const waitingHero=state?.units.some(u=>u.side==='player'&&u.location.zone==='bench'&&!!HEROES[u.kind]);
+      const openPad=state?.grid.some((row,y)=>row.some((tile,x)=>tile==='O'&&!state.units.some(u=>u.location.zone==='board'&&u.location.col===x&&u.location.row===y)));
+      this.notify(waitingHero&&openPad?'p6.tutorialDeployToast':completion,false,{completion:t(completion)});
     }else {this.tutorialStep=next;this.refresh();}
   }
 

@@ -65,9 +65,9 @@ Files: TutorialView.ts, GameApp.ts, p6.css, p6 i18n; tests/p6-tutorial.test.ts a
 
 Interfaces: `tutorialMarkup(step,state,selectedId?,guide?,avoidRects?:TutorialRect[])`; pure candidate placement helper supporting minimum-overlap fallback. GameApp measures live card/Boss stage rectangles and rerenders on geometry change.
 
-- [ ] Write failing target tests: bench panda→open pad then bench hat→board panda, deploy retainsstep4, direct bench merge stillstep5. Test avoidance including left/right card and Boss, plus completion hero-on-bench reminder.
-- [ ] Implement candidate pool and measured reflow without target collisions; compact short landscape bubble and retain portrait letterbox behavior. Move no-side-space toast to board upper safe band; pointer-events none.
-- [ ] Run all existing P5 tutorial/input tests and new focused tests; typecheck.
+- [x] Write failing target tests: bench panda→open pad then bench hat→board panda, deploy retainsstep4, direct bench merge stillstep5. Test avoidance including left/right card and Boss, plus completion hero-on-bench reminder.
+- [x] Implement candidate pool and measured reflow without target collisions; compact short landscape bubble and retain portrait letterbox behavior. Move no-side-space toast to board upper safe band; pointer-events none.
+- [x] Run all existing P5 tutorial/input tests and new focused tests; typecheck.
 
 ## Task 5: HUD, passive flash hints and lock input
 

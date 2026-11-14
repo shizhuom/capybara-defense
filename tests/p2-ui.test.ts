@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { BattleEngine } from '../src/core/BattleEngine';
+import { STAGE } from '../src/config/maps';
 import { createProfile } from '../src/core/MetaProgression';
 import { GameApp } from '../src/ui/GameApp';
 import { tutorialMarkup } from '../src/ui/TutorialView';
@@ -68,8 +69,8 @@ describe('P2 solo UI',()=>{
     app.notify('hint.dig');
     const style=element('toast').style;
     if(fixture.width===390){
-      expect(style.left).toBe('50%');expect(style.bottom).toBe('8px');
-      expect(844-8-fixture.height).toBeGreaterThan(fixture.bottom);
+      expect(style.left).toBe('50%');expect(style.bottom).toBe('auto');
+      expect(parseFloat(style.top)).toBeCloseTo(fixture.top+(fixture.bottom-fixture.top)*STAGE.boardY/STAGE.height);
     }else{
       const left=parseFloat(style.left),width=parseFloat(style.width);
       expect(left).toBeGreaterThanOrEqual(fixture.right+16);

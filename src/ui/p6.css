@@ -114,3 +114,17 @@
  .settlement-actions { padding:10px; }
  .settlement-actions button { font-size:13px; }
 }
+/* Use the actual measured card/bubble geometry. Portrait keeps its letterbox. */
+@media (orientation:landscape) {
+ .page-shell .tutorial-bubble { max-height:76%;overflow:auto;pointer-events:auto;touch-action:pan-y; }
+}
+@media (max-height:500px) and (orientation:landscape) {
+ .page-shell .tutorial-bubble { width:var(--bubble-width);max-width:34%;padding:5px 9px;border-width:2px; }
+ .page-shell .tutorial-bubble .tutorial-heading { gap:5px; }
+ .page-shell .tutorial-bubble .tutorial-heading>img,.page-shell .tutorial-bubble .tutorial-heading>svg { width:28px;height:28px; }
+ .page-shell .tutorial-bubble strong { font-size:13px; }
+ .page-shell .tutorial-bubble p { font-size:12px;line-height:1.28;margin:4px 0; }
+ .tutorial-equation { gap:4px;font-size:12px; }
+ .tutorial-dots { margin-top:4px; }
+ .tutorial-dots i { width:15px;height:15px;line-height:15px;font-size:10px; }
+}
