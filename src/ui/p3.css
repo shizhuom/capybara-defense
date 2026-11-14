@@ -132,6 +132,38 @@ body { background:#231d18;background-image:none; }
 .merge-matrix td button .book-sticker :is(img,svg) { width:52px;height:52px; }
 .battle-shop-banner { padding:10px;margin:8px 0;background:#fff0c5;border:1px solid #c39a59;border-radius:9px;font-weight:800; }
 @media(max-width:760px) and (orientation:portrait) {
+  /* Preserve the 16:9 board; use its free lower letterbox for readable details. */
+  .page-shell #stage { overflow:visible; }
+  .page-shell #battle-canvas { border-radius:inherit; }
+  .page-shell .live-unit-card,.page-shell .live-unit-card.dock-left { left:8px;right:auto;top:calc(100% + 64px);width:calc(100% - 16px);max-width:none;max-height:calc(50dvh - 28.125vw - 80px);padding:10px;border:2px solid #765b3e;border-radius:14px;font-size:14px;line-height:1.4; }
+  .page-shell .live-card-header { gap:8px;position:sticky;top:0;z-index:2;padding:6px 0;background:#fff8e7; }
+  .page-shell .live-card-header>span :is(svg,img) { width:40px;height:40px; }
+  .page-shell .live-card-header h3 { font-size:16px; }
+  .page-shell .live-card-header b,.page-shell .live-unit-card p,.page-shell .live-unit-card button,.page-shell .live-status,.page-shell .merge-ready { font-size:14px; }
+  .page-shell .live-card-header button { width:44px;height:44px;border-radius:8px; }
+  .page-shell .live-card-header button :is(svg,img) { width:25px;height:25px; }
+  .page-shell .live-unit-card .live-stat-pills>span { font-size:16px;padding:5px 7px; }
+  .page-shell .live-unit-card .live-stat-pills { gap:5px;margin:9px 0; }
+  .page-shell .live-unit-card p { margin:8px 0; }
+  .page-shell .live-equation>span :is(svg,img),.page-shell .live-feed :is(svg,img) { width:30px;height:30px; }
+  .page-shell .live-weapon :is(svg,img) { width:36px;height:36px; }
+  .page-shell .live-unit-card .live-max { font-size:16px; }
+  .page-shell .live-unit-card .live-upgrade { padding:7px;margin-top:8px; }
+  .page-shell .live-unit-card .live-energy { margin:9px 0; }
+  .page-shell .control-dock { height:18px;gap:3px; }
+  .page-shell .control-dock button { font-size:12px;line-height:1;padding:0 3px;gap:2px;border-width:1px; }
+  .page-shell .control-dock :is(svg,img) { width:12px;height:12px; }
+  .page-shell .control-dock #hud-speed,.page-shell .control-dock #pause-button { width:20px;font-size:12px; }
+  .page-shell .resource-dock { height:18px;gap:3px; }
+  .page-shell .resource-dock>div { padding:0 3px;gap:2px;border-width:1px; }
+  .page-shell .resource-dock :is(svg,img) { width:12px;height:12px; }
+  .page-shell .resource-dock #hud-wave { font-size:10px;line-height:1.5; }
+  .page-shell .food-pill strong { font-size:16px; }
+  .page-shell .orange-pill strong { font-size:12px; }
+  .page-shell .battle-actions #summon-cost { font-size:18px; }
+  .page-shell .battle-actions #summon-button { gap:2px; }
+  .page-shell .battle-actions #summon-button .bell :is(svg,img) { width:14px;height:14px; }
+  .page-shell #summon-button>span:nth-child(2)>:is(svg,img) { width:10px;height:10px; }
   .rotate-hint { position:fixed;top:calc(50dvh + 28.125vw + 14px);left:8px;right:8px;display:flex;justify-content:center;align-items:center;gap:6px;background:#fff0d7;color:#493d35;border-radius:18px;padding:7px;font-size:12px; }
   .rotate-hint button { border-radius:12px;padding:5px;background:#d9c295;font-size:12px; }
 }
