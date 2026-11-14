@@ -25,6 +25,7 @@ async function checkMenu(page,label){
    size:{width:innerWidth,height:innerHeight},scroll:[body.scrollWidth,body.scrollHeight],
    css:[title,start].map(el=>{const s=getComputedStyle(el);return{background:s.backgroundColor,border:s.borderTopWidth,shadow:s.boxShadow};}),
    medallions:[...document.querySelectorAll('.medallion')].map(el=>({rect:el.getBoundingClientRect().toJSON(),radius:getComputedStyle(el).borderRadius})),
+   badges:[...document.querySelectorAll('.hub-dock small')].map(el=>el.getBoundingClientRect().toJSON()),
    controls:controls.map(el=>{const r=el.getBoundingClientRect(),hit=document.elementFromPoint(r.x+r.width/2,r.y+r.height/2);return {action:el.dataset.action,rect:r.toJSON(),clickable:!el.disabled,hit:hit?.closest('button')===el};}),
    raw:document.querySelector('#menu-screen').textContent,
   };
@@ -40,6 +41,14 @@ async function checkMenu(page,label){
  const panorama={left:data.stage.left,right:data.stage.right,top:data.stage.top+data.stage.height*.28,bottom:data.stage.top+data.stage.height*.668};
  // Transparent title margins may extend beyond 28%; controls must never cover the animals.
  for(const r of [data.profile,data.system,data.map,data.left,data.right])assert.ok(!overlap(r,panorama),JSON.stringify({label,r,panorama}));
+ // Foreground pets extend below the central panorama. These hand-checked art
+ // bounds catch oversized phone medallions hiding the hedgehog or frog.
+ const foregroundPets=[{name:'hedgehog',x:146,y:505,w:133,h:90},{name:'frog',x:916,y:488,w:110,h:113},{name:'raccoon',x:1084,y:476,w:123,h:115}];
+ for(const pet of foregroundPets){
+  const rect={left:data.stage.left+pet.x/1280*data.stage.width,top:data.stage.top+pet.y/720*data.stage.height,
+   right:data.stage.left+(pet.x+pet.w)/1280*data.stage.width,bottom:data.stage.top+(pet.y+pet.h)/720*data.stage.height};
+  for(const dock of [data.left,data.right,...data.badges])assert.ok(!overlap(dock,rect),JSON.stringify({label,pet:pet.name,dock,rect}));
+ }
  if(portrait&&data.hint)assert.ok(!overlap(data.map,data.hint),'Map strip and rotation hint do not collide');
  for(const css of data.css){assert.equal(css.background,'rgba(0, 0, 0, 0)');assert.equal(css.border,'0px');assert.equal(css.shadow,'none');}
  for(const m of data.medallions){assert.equal(m.radius,'50%');assert.ok(Math.abs(m.rect.width-m.rect.height)<1);assert.ok(m.rect.width>=43);}
@@ -100,13 +109,15 @@ try{
   release();await readyArt(page,'en');
   await page.locator('img[data-sticker="ui_trophy_rank"]').waitFor();await page.locator('img[data-sticker="ui_map_sign"]').waitFor();
   mark('Delayed manifest: localized vector fallback becomes decoded PNG without losing language or menu actions');
-  // Read-only fixture writes only this isolated browser profile; production action routing stays real.
-  if(await page.evaluate(()=>!!window.__CAPY_DEBUG__)){
-   await page.evaluate(()=>{const p=window.__CAPY_DEBUG__.profile;p.highestStars=1000;p.stars=1000;p.coins=999999;p.freeLotteryTickets=999;localStorage.setItem('capybara_defense_v1:profile',JSON.stringify(p));});
+  // Seed only this temporary browser's public save, then exercise actual menu actions.
+  // This runs on both Vite and the built game without exposing a production debug API.
+  {
+   await page.locator('[data-action="select-map:sunny_backyard"]').click();
+   await page.evaluate(()=>{const p=JSON.parse(localStorage.getItem('capybara_defense_v1:profile'));p.highestStars=1000;p.stars=1000;p.coins=999999;p.freeLotteryTickets=999;localStorage.setItem('capybara_defense_v1:profile',JSON.stringify(p));});
    await page.reload({waitUntil:'networkidle'});await readyArt(page,'en');
    for(const map of ['sunny_backyard','sakura_onsen','midnight_kitchen','cat_tower_maze','auto']){
     await page.locator(`[data-action="select-map:${map}"]`).click();
-    assert.equal(await page.evaluate(()=>window.__CAPY_DEBUG__.profile.selectedMap),map);
+    assert.equal(await page.evaluate(()=>JSON.parse(localStorage.getItem('capybara_defense_v1:profile')).selectedMap),map);
    }
    for(const viewport of [{width:1440,height:900},{width:844,height:390},{width:390,height:844},{width:320,height:568}]){await page.setViewportSize(viewport);await checkMenu(page,`high-rank ${viewport.width}`);}
    mark('All unlocked map choices persist; long English high-rank profile and badges fit through 320px');

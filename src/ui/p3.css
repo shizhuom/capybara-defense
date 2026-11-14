@@ -54,7 +54,7 @@ body { background:#231d18;background-image:none; }
 .hub-dock button:active .medallion { transform:scale(.94); }
 .hub-dock :is(svg,img) { width:max(34px,4.4cqw);height:max(34px,4.4cqw); }
 .hub-dock b { font-weight:900;line-height:1.2;color:#4a3523;text-shadow:-1px -1px #fff7dc,1px -1px #fff7dc,-1px 1px #fff7dc,1px 1px #fff7dc,0 2px #fff7dc; }
-.hub-dock small { position:absolute;right:-.65cqw;top:-.4cqw;padding:.1cqw .4cqw;border-radius:999px;background:#fff4d9;border:1px solid #a78350;font-size:max(12px,1cqw);font-weight:800;line-height:1.2; }
+.hub-dock small { position:absolute;right:-.65cqw;top:0;padding:.1cqw .4cqw;border-radius:999px;background:#fff4d9;border:1px solid #a78350;font-size:max(12px,1cqw);font-weight:800;line-height:1.2; }
 .hub-dock .ticket-badge { background:#a84836;color:#fff;border-color:#813626; }
 @keyframes art-float { 0%,100% { transform:translateX(-50%) translateY(0); } 50% { transform:translateX(-50%) translateY(-4px); } }
 @keyframes start-breathe { 0%,100% { transform:scale(1); } 50% { transform:scale(1.028); } }
@@ -194,12 +194,12 @@ body { background:#231d18;background-image:none; }
   .page-shell #menu-screen .language-switch { padding:1px; }
   .page-shell #menu-screen .language-switch button { font-size:12px;padding:6px;min-height:36px; }
   .page-shell #menu-screen .menu-system>.icon-button { width:36px;height:36px;font-size:20px; }
-  .page-shell #menu-screen .map-chips { top:calc(100% + 10px);bottom:auto;gap:1px;max-width:calc(100% - 12px);padding:3px 5px; }
+  .page-shell #menu-screen .map-chips { top:calc(100% + 50px);bottom:auto;gap:1px;max-width:calc(100% - 12px);padding:3px 5px; }
   .page-shell #menu-screen .map-chips button { font-size:12px;line-height:16px;min-height:32px;padding:3px 4px; }
   .page-shell #menu-screen .map-chips .map-lock { display:none; }
-  .page-shell #menu-screen .hub-dock { top:67%;bottom:auto;gap:10px; }
+  .page-shell #menu-screen .hub-dock { top:88%;bottom:auto;gap:10px; }
   .page-shell #menu-screen .hub-dock small { right:-3px;top:-5px;padding:0 3px; }
-  .page-shell:has(#menu-screen:not([hidden])) .rotate-hint { top:calc(50dvh + 28.125vw + 66px); }
+  .page-shell:has(#menu-screen:not([hidden])) .rotate-hint { top:calc(50dvh + 28.125vw + 104px); }
   .page-shell .boss-banner { left:1.4%;top:-52px;width:97.2%;height:44px;padding:4px 7px;gap:6px; }
   .page-shell .boss-portrait { width:28px; }
   .page-shell .boss-heading strong,.page-shell .boss-numbers { font-size:12px;line-height:16px; }
@@ -217,6 +217,7 @@ body { background:#231d18;background-image:none; }
   .page-shell #summon-button>span:nth-child(2) { display:none; }
 }
 @media(max-height:500px) and (orientation:landscape) {
+  #menu-screen .hub-dock { bottom:1%; }
   .game-dialog.recipe-dialog:has(.p3-compendium) { padding:12px 16px; }
   .page-shell .live-unit-card { width:228px;max-width:34cqw;max-height:39cqw;padding:8px;font-size:12px;line-height:1.35; }
   .page-shell .live-card-header { gap:4px; }

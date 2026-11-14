@@ -54,7 +54,7 @@ npm run test:browser  # 在 Vite 运行时验证 P4 启动页、P3 战斗交互�
 
 ## 美术、声音与目录
 
-`public/sprites/` 包含 **166** 张 PNG 与完整 ID 清单：四张 1280×720 全景地图、所有角色和物件、17 张第二行走帧、四张 HUD 图标、20 道具、36 神兵、16 头像、主视觉，以及四把基础武器和八张战斗特效。运行同步脚本只读取 `../../design/assets/sprites/`，不会改动原画。无外图时保留 Canvas/SVG 回退。
+`public/sprites/` 包含 **173** 张 PNG 与完整 ID 清单：四张 1280×720 全景地图、所有角色和物件、17 张第二行走帧、四张 HUD 图标、20 道具、36 神兵、16 头像、主视觉、四把基础武器、八张战斗特效，以及七张 P4 启动画面贴图。运行同步脚本只读取 `../../design/assets/sprites/`，不会改动原画。无外图时保留 Canvas/SVG 回退。
 
 `public/audio/manifest.json` 可覆盖三态音乐和音效；默认使用 WebAudio 程序化多声部。首次交互后启用音频，无 AudioContext 时静默降级。音量、飘字和语言均可在设置调整。
 
@@ -69,12 +69,14 @@ scripts/          启停、同步、隔离核验及浏览器回归
 verification/     测试结果、实机截图与隔离证据
 ```
 
-`npm run test:browser` 使用本机 Chrome 和独立测试浏览器环境；可通过 `CAPY_CHROME` 指定浏览器。正式构建可运行 `node scripts/p3-production-qa.mjs`、`node scripts/p3-profile-switch-qa.mjs` 验证。M1–P2 的历史验收和对应旧坐标脚本仍留档，不作为 P3 布局标准。
+`npm run test:browser` 使用本机 Chrome 和独立测试浏览器环境；可通过 `CAPY_CHROME` 指定浏览器。正式构建可运行 `node scripts/p4-browser-qa.mjs`、`node scripts/p4-production-qa.mjs`、`node scripts/p3-profile-switch-qa.mjs --label=p4` 验证。历史验收与旧坐标脚本仍留档，不作为当前菜单布局标准。
 
 P1 回退点在本目录独立 Git 仓库：提交 `319ea6c`，标签 **`v1.0-p1`**。可以从该标签创建新分支继续另一版本，避免覆盖当前进度。浏览器存档独立于 Git；回退代码前请另存存档。
 
 P2 完整基线保存在 **`p2-solo-overhaul`** 分支、标签 **`v1.0-p2`**。最新验收为 **686 项测试通过**，详情及实机截图见 [P2 交付验证](docs/P2-verification.md)。
 
 P3 保存在 **`p3-landscape-ux`** 分支、标签 **`v1.0-p3`**：**762 项测试通过**，14 组浏览器交互及 9 组手机字号/教程检查通过；生产构建、子目录资源和测试档恢复验证均通过。详情、取舍记录及全部截图见 [P3 交付验证](docs/P3-verification.md)。
+
+P4 保存在 **`p4-start-splash`** 分支、标签 **`v1.0-p4`**：**780 项测试通过**，新增 6 组专属启动页验证，保留战斗、手机引导、生产部署及存档隔离回归。见 [P4 交付验证与截图](docs/P4-verification.md) 和 [独立复核及修复记录](docs/P4-review.md)。
 
 所有修改限定本游戏目录。原三国基线、根脚本和 `design/` 只读；端口保持 4175。生产构建使用相对资源路径，可部署在 HTTP 子目录。
