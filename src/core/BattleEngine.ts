@@ -39,12 +39,17 @@ export class BattleEngine {
   }
   tick(dt:number):void {
     if(!Number.isFinite(dt)||dt<=0||this.state.phase!=='playing')return;
+    if(this.state.sides.player.oranges<=0){this.finish('ai','oranges');return;}
     let remaining=Math.min(dt,600);
     while(remaining>1e-8&&this.state.phase==='playing'){
       const step=Math.min(.05,remaining);this.step(step);remaining-=step;
     }
   }
-  pause(value=true):void { if(this.state.phase==='playing'||this.state.phase==='paused') this.state.phase=value?'paused':'playing'; }
+  pause(value=true):void {
+    if(this.state.phase!=='playing'&&this.state.phase!=='paused')return;
+    this.state.phase=value?'paused':'playing';
+    if(!value&&this.state.sides.player.oranges<=0)this.finish('ai','oranges');
+  }
   useProp(id:string,target:PropTarget={},side:Side='player'):CommandResult{return side==='player'?this.props.use(id,target,side):{ok:false,key:'hint.invalid'};}
   useSprinkler(side:Side='player'):CommandResult{return side==='player'?this.props.sprinkler(side):{ok:false,key:'hint.invalid'};}
   getShovelRules(side:Side='player'):{interval:number;maxStored:number}{return this.props.shovelRules(side);}
@@ -180,9 +185,9 @@ export class BattleEngine {
   }
   adjustOranges(delta:number,side:Side='player'):void {
     if(side!=='player'||!this.actionAllowed()||!Number.isFinite(delta))return;
-    this.state.sides[side].oranges=Math.max(0,this.state.sides[side].oranges+Math.trunc(delta));
+    this.props.adjustOranges(Math.trunc(delta));
     this.event({type:'orange',side,...getMap(this.state.mapId).paths.player.at(-1)!,value:delta,duration:1.2,textKey:delta<0?'hint.orangeLost':'hint.orangeAdded'});
-    if(this.state.sides[side].oranges===0)this.finish(side==='player'?'ai':'player','oranges');
+    if(delta<0&&this.state.sides[side].oranges===0)this.finish('ai','oranges');
   }
   addFood(amount:number,side:Side='player'):void { if(side==='player'&&this.actionAllowed()&&Number.isFinite(amount))this.state.sides[side].food=Math.max(0,this.state.sides[side].food+Math.trunc(amount)); }
   skipWave():void {

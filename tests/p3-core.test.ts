@@ -62,6 +62,32 @@ describe('P3 preparation loadout sync',()=>{
   }
   const e=prep(),bee=pet(e,'bee');bee.location={zone:'board',col:2,row:1};e.tick(10);expect(bee.production).toBeCloseTo(10);e.syncPreparationLoadout(loadout(['bee_overtime']));e.tick(3.5);expect(e.state.sides.player.food).toBe(33);
  });
+ it.each([[['extra_oranges'],4],[['shared_oranges'],6],[['extra_oranges','shared_oranges'],8]] as const)('retains damage below zero through repeated %j passive round trips',(passive,damage)=>{
+  const original=loadout([...passive]),e=new BattleEngine({autoWaves:false,loadouts:{player:original}});e.start();e.adjustOranges(-damage);expect(e.state.sides.player.oranges).toBe(1);
+  for(let i=0;i<4;i++){
+   expect(e.syncPreparationLoadout(loadout()).ok).toBe(true);expect(e.state.sides.player.oranges).toBe(0);
+   expect(e.syncPreparationLoadout(original).ok).toBe(true);expect(e.state.sides.player.oranges).toBe(1);
+  }
+ });
+ it('applies intervening orange gains to the retained deficit without losing prep or imposing a health cap',()=>{
+  const original=loadout(['extra_oranges']),e=new BattleEngine({autoWaves:false,loadouts:{player:original}});e.start();e.adjustOranges(-4);e.syncPreparationLoadout(loadout());expect(e.state.sides.player.oranges).toBe(0);
+  e.adjustOranges(1);expect(e.state.sides.player.oranges).toBe(0);expect(e.state.phase).toBe('playing');expect(e.syncPreparationLoadout(original).ok).toBe(true);expect(e.state.sides.player.oranges).toBe(2);
+  e.syncPreparationLoadout(loadout());expect(e.state.sides.player.oranges).toBe(0);e.adjustOranges(10);expect(e.state.sides.player.oranges).toBe(10);
+  for(let i=0;i<3;i++){expect(e.syncPreparationLoadout(original).ok).toBe(true);expect(e.state.sides.player.oranges).toBe(12);expect(e.syncPreparationLoadout(loadout()).ok).toBe(true);expect(e.state.sides.player.oranges).toBe(10);}
+ });
+ it('allows paused preparation swaps to settle zero health before resuming',()=>{
+  const original=loadout(['extra_oranges']),e=new BattleEngine({autoWaves:false,loadouts:{player:original}});e.start();e.adjustOranges(-4);e.pause();
+  expect(e.syncPreparationLoadout(loadout()).ok).toBe(true);expect(e.state.sides.player.oranges).toBe(0);e.tick(1);expect(e.state.phase).toBe('paused');
+  expect(e.syncPreparationLoadout(original).ok).toBe(true);expect(e.state.sides.player.oranges).toBe(1);e.pause(false);expect(e.state.phase).toBe('playing');
+ });
+ it.each(['tick','resume'] as const)('defeats unsettled zero health on %s and cannot revive a finished battle',command=>{
+  const e=new BattleEngine({autoWaves:false,loadouts:{player:loadout(['extra_oranges'])}});e.start();e.adjustOranges(-4);if(command==='resume')e.pause();e.syncPreparationLoadout(loadout());
+  if(command==='resume')e.pause(false);else e.tick(.05);expect(e.state.phase).toBe('finished');expect(e.state.result).toMatchObject({winner:'ai',reason:'oranges'});
+  const before=JSON.stringify(e.state);expect(e.syncPreparationLoadout(loadout(['extra_oranges'])).ok).toBe(false);e.adjustOranges(100);expect(JSON.stringify(e.state)).toBe(before);
+ });
+ it('still immediately ends ordinary lethal orange damage',()=>{
+  const e=prep();e.adjustOranges(-3);expect(e.state.phase).toBe('finished');expect(e.state.result).toMatchObject({winner:'ai',reason:'oranges'});
+ });
  it('copies and validates snapshot input so subsequent profile changes cannot alter the battle',()=>{
   const e=prep(),input=loadout(['extra_oranges'],['catnip']);input.equippedWeapons={kungfu_po:'m10_bamboo_staff',meowfia:'m10_bamboo_staff',missing:'invalid'};input.ownedProps.auto_shovel=-2;input.equippedPassiveProps.push('auto_shovel','extra_oranges','invalid');
   expect(e.syncPreparationLoadout(input).ok).toBe(true);const copy=JSON.stringify(e.state.sides.player.loadout);input.ownedProps.extra_oranges=0;input.equippedPassiveProps.length=0;input.equippedWeapons.kungfu_po='m01_spoon';expect(JSON.stringify(e.state.sides.player.loadout)).toBe(copy);

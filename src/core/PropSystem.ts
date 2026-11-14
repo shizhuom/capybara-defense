@@ -25,6 +25,7 @@ export function copyLoadout(input:Partial<BattleLoadout>={}):BattleLoadout {
 export class PropSystem {
   private trapSequence=1;
   private beeFoodGranted=false;
+  private orangeDeficit=0;
   constructor(private engine:BattleEngine,private random:()=>number){}
   has(side:Side,id:string):boolean {return this.engine.state.sides[side].loadout.equippedPassiveProps.includes(id);}
   initialize():void {
@@ -39,8 +40,15 @@ export class PropSystem {
     const resources=this.engine.state.sides.player;
     const orangeBonus=(value:BattleLoadout)=>(value.equippedPassiveProps.includes('extra_oranges')?2:0)+(value.equippedPassiveProps.includes('shared_oranges')?4:0);
     const delta=orangeBonus(loadout)-orangeBonus(resources.loadout);
-    resources.loadout=loadout;resources.oranges=Math.max(0,resources.oranges+delta);
+    resources.loadout=loadout;this.adjustOranges(delta);
     this.grantBeeFood();
+  }
+  adjustOranges(delta:number):void {
+    const resources=this.engine.state.sides.player;
+    // Keep damage beyond the currently equipped budget; displaying zero must
+    // not forgive it on the next equipment swap or orange gain.
+    const balance=resources.oranges-this.orangeDeficit+delta;
+    this.orangeDeficit=Math.max(0,-balance);resources.oranges=Math.max(0,balance);
   }
   private grantBeeFood():void {
     if(this.beeFoodGranted||!this.has('player','bee_overtime'))return;
