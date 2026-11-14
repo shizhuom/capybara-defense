@@ -75,10 +75,10 @@ Files: GameApp.ts, StickerRenderer.ts, LiveUnitCard.ts, BattleHUD.ts or WaveTool
 
 Interfaces: HitTarget adds bench-lock/slot. HitTest accepts optional interaction context enabling locks only on occupied nests, outside tutorial and outside drag release. Live card input gets lock eligibility. Horn and preview actions are delegated through existing action dispatcher.
 
-- [ ] Write failing HUD/reward/lock/presentation tests; ensure drag drop on lock corner remains a bench move, selected prop cannot spend on lock toggle, tutorial and invalid state reject locks.
-- [ ] Add adjacent compact preview (24/26px one/two portraits, bilingual title/tips) and horn reward; mobile must preserve resource/control separation. Add lock corner art/frame and live-card lock action; refresh count becomes4 when locked.
-- [ ] Render passive hero gold frame/28pxsparkle and upgrade22pxsparkle outside drag/prop targeting. Show non-blocking summon hero warning only for unlocked new-hero ingredients.
-- [ ] Run suite/build and existing P3/P4/P5 interaction checks with only intentionally superseded screenshot/asset expectations updated.
+- [x] Write failing HUD/reward/lock/presentation tests; ensure drag drop on lock corner remains a bench move, selected prop cannot spend on lock toggle, tutorial and invalid state reject locks.
+- [x] Add adjacent compact preview (24/26px one/two portraits, bilingual title/tips) and horn reward; mobile must preserve resource/control separation. Add lock corner art/frame and live-card lock action; refresh count becomes4 when locked.
+- [x] Render passive hero gold frame/28pxsparkle and upgrade22pxsparkle outside drag/prop targeting. Show non-blocking summon hero warning only for unlocked new-hero ingredients.
+- [x] Run suite/build and existing P3/P4/P5 interaction checks with only intentionally superseded screenshot/asset expectations updated.
 
 ## Task 6: Verification and delivery
 

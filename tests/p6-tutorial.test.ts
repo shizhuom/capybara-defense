@@ -39,5 +39,5 @@ it('docks a portrait toast at the board upper edge even when a large bottom lett
  vi.stubGlobal('window',{innerWidth:390,innerHeight:844});
  const app:any=Object.create(GameApp.prototype);app.element=()=>({getBoundingClientRect:()=>({left:0,right:390,top:312,height:219.375,bottom:531.375})});
  const toast={hidden:false,style:{},getBoundingClientRect:()=>({height:38})};app.positionToast(toast,false);
- expect((toast.style as any).bottom).toBe('auto');expect(parseFloat((toast.style as any).top)).toBeCloseTo(333.94,1);
+ expect((toast.style as any).bottom).toBe('auto');expect(parseFloat((toast.style as any).top)).toBeCloseTo(339.94,1);
 });

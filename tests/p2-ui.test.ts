@@ -70,7 +70,7 @@ describe('P2 solo UI',()=>{
     const style=element('toast').style;
     if(fixture.width===390){
       expect(style.left).toBe('50%');expect(style.bottom).toBe('auto');
-      expect(parseFloat(style.top)).toBeCloseTo(fixture.top+(fixture.bottom-fixture.top)*STAGE.boardY/STAGE.height);
+      expect(parseFloat(style.top)).toBeCloseTo(fixture.top+(fixture.bottom-fixture.top)*STAGE.boardY/STAGE.height+6);
     }else{
       const left=parseFloat(style.left),width=parseFloat(style.width);
       expect(left).toBeGreaterThanOrEqual(fixture.right+16);

@@ -5,7 +5,7 @@ import {EnemyMotion} from './EnemyMotion';
 import {SHOVEL_PRODUCTION,UNITS} from '../config/units';
 import { HEROES } from '../config/heroes';
 import { MergeSystem } from '../core/MergeSystem';
-import {getMergeTargets} from '../core/MergeTargets';
+import {getMergeTargets,getBenchMergeHints} from '../core/MergeTargets';
 import { t } from '../i18n/i18n';
 import { assets } from './AssetRegistry';
 import { drawCapybaraArt, drawEnemyArt, drawOrange, drawShovelArt, drawUnitArt, ellipse, INK, line, PAPER, polygon, round, star } from './StickerArt';
@@ -15,7 +15,7 @@ import {bodyPose,drawHeldWeapon} from './HeldWeaponRenderer';
 import {drawCombatEvent} from './CombatEffects';
 import {drawSplashScene} from './SplashScene';
 
-export type HitTarget = { kind: 'cell'; col: number; row: number } | { kind: 'bench'; slot: number } | { kind: 'shovel' };
+export type HitTarget = { kind: 'cell'; col: number; row: number } | { kind: 'bench'; slot: number } | { kind:'bench-lock';slot:number } | { kind: 'shovel' };
 type Position = { x: number; y: number };
 type OrangeMotion = Position & { add: boolean; age: number; index: number; direction: number; targetY: number };
 
@@ -46,7 +46,7 @@ export class StickerRenderer {
     this.resize();
   }
 
-  hitTest(x:number,y:number):HitTarget|null {
+  hitTest(x:number,y:number,context?:{state:BattleState;allowBenchLock:boolean;dragging?:boolean}):HitTarget|null {
     if (!Number.isFinite(x) || !Number.isFinite(y)) return null;
     const {boardX,boardY,cell,benchX,benchY,benchStep,benchSize,shovelX,shovelY}=STAGE;
     if (x>=boardX && x<boardX+cell*STAGE.cols && y>=boardY && y<boardY+cell*STAGE.rows)
@@ -54,7 +54,10 @@ export class StickerRenderer {
     if (y>=benchY && y<benchY+benchSize) {
       for(let slot=0;slot<5;slot++) {
         const left=benchX+slot*benchStep;
-        if(x>=left && x<left+benchSize) return {kind:'bench',slot};
+        if(x>=left && x<left+benchSize){
+          if(context?.allowBenchLock&&!context.dragging&&x<left+26&&y<benchY+26&&context.state.units.some(u=>u.side==='player'&&u.location.zone==='bench'&&u.location.slot===slot))return{kind:'bench-lock',slot};
+          return {kind:'bench',slot};
+        }
       }
     }
     if(Math.hypot(x-shovelX,y-shovelY)<=41) return {kind:'shovel'};
@@ -417,6 +420,7 @@ export class StickerRenderer {
 
   private drawNests(state:BattleState,interaction:Interaction,seconds:number):void {
     const c=this.c;
+    const hints=interaction.draggingId!==undefined||interaction.propId||interaction.pointer?[]:getBenchMergeHints(state);
     for(let slot=0;slot<5;slot++){
       const x=STAGE.benchX+slot*STAGE.benchStep,y=STAGE.benchY,w=STAGE.benchSize;
       const unit=state.units.find(unit=>unit.side==='player'&&unit.location.zone==='bench'&&unit.location.slot===slot);
@@ -429,6 +433,10 @@ export class StickerRenderer {
       c.save();c.shadowColor='rgba(93,80,54,.12)';c.shadowOffsetY=5;
       round(c,x,y,w,w,19,invalid?'#efd7c6':hot?'#efe8bf':unit?'#fff9e8':'#eee4cf',invalid?CORAL:selected||hot?TEAL:'#bbaa8a',selected||hot?2.8:1.9);c.restore();
       c.save();c.setLineDash([2,5]);round(c,x+6,y+6,w-12,w-12,14,'rgba(255,255,255,0)','#d5c6a7',1.2);c.restore();
+      const locked=!!unit&&state.sides.player.lockedBenchSlot===slot;
+      const hint=hints.find(h=>h.slot===slot);
+      if(locked){round(c,x+1,y+1,w-2,w-2,18,'rgba(239,186,72,.08)','#bf8c2c',3);round(c,x+5,y+5,w-10,w-10,14,'transparent','#efc45d',1.5);}
+      if(hint?.kind==='hero'){c.save();c.globalAlpha=.65+Math.sin(seconds*3.5)*.25;round(c,x-1,y-1,w+2,w+2,20,'rgba(255,227,135,.08)','#e2b049',3.5);c.restore();}
       if(unit)this.drawMergeTargets(state,interaction,seconds,'bench',unit.id);
       if(unit)this.drawUnit(unit,this.position(unit),seconds,interaction.draggingId===unit.id ? .2 : 1,false,state.sides[unit.side].loadout);
       else {
@@ -436,12 +444,29 @@ export class StickerRenderer {
         [[-11,-4],[-4,-10],[5,-10],[13,-3]].forEach(([px,py])=>ellipse(c,px,py,4,5,'#bbaa8c','',0));c.restore();
       }
       ellipse(c,x+5,y+5,3.5,3.5,'#faf3df','#a89779',1.2);
+      if(unit&&interaction.allowBenchLock){
+        c.save();c.globalAlpha=locked?1:.62;this.drawBenchBadge(locked?'ui_lock_closed':'ui_lock_open',x+13,y+13,24);c.restore();
+      }
+      if(hint){
+        const hero=hint.kind==='hero',size=hero?28:22;
+        this.drawBenchBadge('ui_merge_sparkle',x+w-13,y+w-13+(hero?Math.sin(seconds*3.5)*2.5:0),size);
+        if(hero){round(c,x+3,y+w-17,w-30,16,6,'#f4d582','#b88b33',1);this.label(t('p6.heroBadge'),x+(w-24)/2,y+w-9,11,'#68411b','center',800);}
+      }
       if(unit&&interaction.propId&&this.propUnitValid(interaction.propId,unit)) {
         round(c,x+3,y+3,w-6,w-6,16,'rgba(217,195,237,.10)','#a083c0',2.5);
         star(c,x+w-10,y+11,5,'#e8d29b',1);
       }
     }
 
+  }
+
+  private drawBenchBadge(id:'ui_lock_open'|'ui_lock_closed'|'ui_merge_sparkle',x:number,y:number,size:number):void {
+    const c=this.c,image=this.assets.get(id);
+    if(image){c.drawImage(image,x-size/2,y-size/2,size,size);return;}
+    c.save();c.translate(x,y);c.scale(size/24,size/24);
+    if(id==='ui_merge_sparkle'){ellipse(c,0,0,10,10,'#ffe7a2','#a87c28',1.6);star(c,0,0,7,'#edbc42',1.1);}
+    else{line(c,id==='ui_lock_open'?[[-5,-1],[-5,-8],[1,-10],[6,-8]]:[[-5,-1],[-5,-8],[0,-10],[5,-8],[5,-1]],'#855d2d',3);round(c,-9,-2,18,13,4,'#edbd5d','#855d2d',1.5);ellipse(c,0,3,2,2,'#79572e','',0);line(c,[[0,4],[0,7]],'#79572e',2);}
+    c.restore();
   }
 
   private drawTools(state:BattleState,interaction:Interaction,seconds:number):void {

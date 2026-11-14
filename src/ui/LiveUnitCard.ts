@@ -19,6 +19,7 @@ export interface LiveUnitCardInput {
   stats:UnitStats;
   /** Supply the selected side's battle loadout, rather than the mutable profile. */
   loadout:BattleLoadout;
+  allowBenchLock?:boolean;
 }
 const tr=(key:string,vars?:Record<string,string|number>)=>esc(t(key,vars));
 const unitName=(kind:string)=>tr(`${HEROES[kind]?'hero':'unit'}.${kind}`);
@@ -26,7 +27,7 @@ const picture=(kind:string,size:number)=>`<span role="img" aria-label="${unitNam
 const production=(level:number,loadout:BattleLoadout)=>tr('p3.productionValue',getBeeProduction(level,loadout));
 
 /** Rendering only: all interaction is delegated to the host through data-action. */
-export function liveUnitCardMarkup({unit,state,stats,loadout}:LiveUnitCardInput):string {
+export function liveUnitCardMarkup({unit,state,stats,loadout,allowBenchLock=false}:LiveUnitCardInput):string {
   const kind=unit.kind,hero=HEROES[kind],definition=UNITS[kind],max=hero?5:definition?.maxLevel??1;
   const left=unit.location.zone==='board'&&unit.location.col>=6;
   const available=(partnerKind:string,feed=false)=>state.units.some(partner=>{
@@ -60,5 +61,7 @@ export function liveUnitCardMarkup({unit,state,stats,loadout}:LiveUnitCardInput)
     body+=`<div class="live-weapon">${weapon?`<span aria-hidden="true">${weaponSticker(weapon.id,36)}</span><span>${tr('p3.equipped')}<br/><b>${tr(`weapon.${weapon.id}`)}</b></span>`:tr('p3.noWeapon')}</div><div class="live-energy" data-live-energy><span data-live-energy-value>🔋 ${tr('p3.energy',{value,total:stats.charge})}</span><div role="progressbar" data-live-energy-bar aria-label="${tr('p3.charge')}" aria-valuemin="0" aria-valuemax="${stats.charge}" aria-valuenow="${value}"><i data-live-energy-fill style="width:${percent}%"></i></div></div><p class="live-skill"><b>${tr(`skill.${kind}`)}</b><br/>${tr(`skill.${kind}.desc`,{charge:stats.charge})}</p>`;
     body+=unit.level>=max?`<b class="live-max">${tr('p3.max')}</b>`:`<div class="live-feed"><b>${tr('p3.feed')}</b>${recipe.parts.map(part=>{const yes=available(part,true);return `<span class="${yes?'partner-ready':''}">${picture(part,30)}${ready(yes)}</span>`;}).join('<span>/</span>')}<span>→ ${tr('p3.level',{level:unit.level+1})}</span></div>`;
   }
-  return `<aside id="live-unit-card" class="live-unit-card${left?' dock-left':''}" aria-label="${unitName(kind)}"><header class="live-card-header">${picture(kind,48)}<div><h3>${unitName(kind)}</h3><b data-live-level>${tr('p3.level',{level:unit.level})}</b></div><button type="button" data-action="inspect-book:${esc(kind)}" aria-label="${tr('p3.book')}" title="${tr('p3.book')}"><span aria-hidden="true">${sceneSticker('ui_compendium_book','',22)}</span></button><button type="button" data-action="clear" aria-label="${tr('inspect.cancel')}">×</button></header>${body}</aside>`;
+  const locked=unit.location.zone==='bench'&&state.sides.player.lockedBenchSlot===unit.location.slot;
+  const lock=unit.location.zone==='bench'&&allowBenchLock?`<button type="button" class="live-lock" data-action="toggle-bench-lock" aria-pressed="${locked}" aria-label="${tr(locked?'p6.unlockPet':'p6.lockPet')}" title="${tr(locked?'p6.unlockPet':'p6.lockPet')}">${sceneSticker(locked?'ui_lock_closed':'ui_lock_open','',22)}</button>`:'';
+  return `<aside id="live-unit-card" class="live-unit-card${left?' dock-left':''}" aria-label="${unitName(kind)}"><header class="live-card-header">${picture(kind,48)}<div><h3>${unitName(kind)}</h3><b data-live-level>${tr('p3.level',{level:unit.level})}</b></div>${lock}<button type="button" data-action="inspect-book:${esc(kind)}" aria-label="${tr('p3.book')}" title="${tr('p3.book')}"><span aria-hidden="true">${sceneSticker('ui_compendium_book','',22)}</span></button><button type="button" data-action="clear" aria-label="${tr('inspect.cancel')}">×</button></header>${body}</aside>`;
 }

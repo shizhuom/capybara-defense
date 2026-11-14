@@ -7,7 +7,9 @@ import { RECIPES } from '../config/recipes';
 import { BOSS_IDS } from '../config/enemies';
 import { MAP_IDS, STAGE } from '../config/maps';
 import { FIRST_WAVE_PREPARATION, WAVES, WAVE_DURATION } from '../config/waves';
-import { StickerRenderer } from '../render/StickerRenderer';
+import { StickerRenderer, type HitTarget } from '../render/StickerRenderer';
+import { getBenchMergeHints } from '../core/MergeTargets';
+import { waveStrategyMarkup, wavePreviewTip } from './WaveStrategyView';
 import { getLanguage, onLanguageChange, setLanguage, t } from '../i18n/i18n';
 import { awardBattle, emptyProfile, loadProfile, resetOwnStorage, saveProfile, enableTestProfile, restoreNormalProfile, isTestProfile } from './storage';
 import { MetaScreens, propSlots, type MetaScreen } from './MetaScreens';
@@ -36,7 +38,7 @@ import { getBossHUD, getWaveHUD, getMusicMode, isDeveloperMode } from './BattleH
 import { advanceTutorial, finishTutorial, replayTutorial, type TutorialAction, type TutorialStep } from '../core/Tutorial';
 import { tutorialMarkup, tutorialTargets, placeTutorialBubble, type TutorialRect } from './TutorialView';
 
-type Hit = { kind: 'cell'; col: number; row: number } | { kind: 'bench'; slot: number } | { kind: 'shovel' };
+type Hit = HitTarget;
 type DialogKind = 'pause' | 'recipes' | 'result' | MetaScreen | ProfileScreen;
 type Drag = { pointerId: number; start: { x: number; y: number }; point: { x: number; y: number }; id?: number; shovel: boolean; moved: boolean };
 const tr = (key: string, vars?: Record<string, string | number>) => esc(t(key, vars));
@@ -53,6 +55,7 @@ export class GameApp {
   private dialogKind: DialogKind | null = null;
   private modalReturn: { dialog: DialogKind | null; resume: boolean } | null = null;
   private liveStamp = '';
+  private waveStrategyStamp = '';
   private rotateDismissed = false;
   private tutorialPointerAction?: string;
   private ledgerStamp='';
@@ -141,11 +144,11 @@ export class GameApp {
             <canvas id="battle-canvas" width="${STAGE.width}" height="${STAGE.height}" tabindex="0" role="img"></canvas>
             <section class="menu-screen" id="menu-screen"></section>
             <div class="battle-hud" id="battle-hud" hidden>
-              <div class="resource-dock"><div class="wave-pill"><strong id="hud-wave"></strong><div id="wave-progress" class="wave-progress" role="progressbar" aria-valuemin="0" aria-valuemax="100"><i></i><span></span></div></div><div class="food-pill"><span aria-hidden="true">${sceneSticker('ui_fish_food','',34)}</span><strong id="food-value"></strong></div><div class="orange-pill"><span aria-hidden="true">${sceneSticker('orange','',30)}</span><strong id="orange-value"></strong></div><span class="time-chip" id="battle-clock" hidden></span></div>
+              <div class="resource-dock"><div class="wave-pill"><strong id="hud-wave"></strong><div id="wave-progress" class="wave-progress" role="progressbar" aria-valuemin="0" aria-valuemax="100"><i></i><span></span></div></div><div id="wave-strategy" class="wave-strategy"></div><div class="food-pill"><span aria-hidden="true">${sceneSticker('ui_fish_food','',34)}</span><strong id="food-value"></strong></div><div class="orange-pill"><span aria-hidden="true">${sceneSticker('orange','',30)}</span><strong id="orange-value"></strong></div><span class="time-chip" id="battle-clock" hidden></span></div>
               <div class="control-dock"><button type="button" class="guide-button" data-action="recipes"><span aria-hidden="true">${sceneSticker('ui_compendium_book','',34)}</span><span data-i18n="p3.guide"></span></button><button type="button" data-action="battle-shop"><span aria-hidden="true">${sceneSticker('ui_shop_bag','',34)}</span><span data-i18n="p3.shop"></span></button><button type="button" class="speed-pill" data-action="speed" data-label="hud.speedLabel" id="hud-speed">1×</button><button type="button" data-action="pause" data-label="hud.pause" id="pause-button">Ⅱ</button></div>
             </div>
             <div id="boss-banner" class="boss-banner" hidden></div>
-            <div class="battle-actions" id="battle-actions" hidden><button type="button" class="summon-button" data-action="summon" id="summon-button"><span aria-hidden="true" class="bell">${sceneSticker('ui_bell_summon','',46)}</span><span aria-hidden="true">${sceneSticker('ui_fish_food','',28)}</span><strong id="summon-cost">10</strong><b class="refresh-badge" aria-hidden="true">↻5</b></button></div>
+            <div class="battle-actions" id="battle-actions" hidden><span class="redraw-hero-badge" id="redraw-hero-badge" hidden></span><button type="button" class="summon-button" data-action="summon" id="summon-button"><span aria-hidden="true" class="bell">${sceneSticker('ui_bell_summon','',46)}</span><span aria-hidden="true">${sceneSticker('ui_fish_food','',28)}</span><strong id="summon-cost">10</strong><b class="refresh-badge" id="summon-refresh-count" aria-hidden="true">↻5</b></button></div>
             <div id="live-card-host"></div>
             <div id="battle-props" hidden></div><div id="sealed-hint" class="sealed-hint" hidden></div>
             <div id="tutorial-overlay" hidden></div>
@@ -212,7 +215,7 @@ export class GameApp {
       }
       if (this.selectedId && !state.units.some(unit => unit.id === this.selectedId && unit.side === 'player')) this.selectedId = undefined;
       if (state.phase === 'finished' && this.completedId !== state.id) this.finish(state);
-      const interaction: Interaction = { selectedId: this.selectedId, shovel: this.shovelSelected, propId: this.selectedProp, showDamageNumbers: this.profile.settings.showDamageNumbers };
+      const interaction: Interaction = { selectedId: this.selectedId, shovel: this.shovelSelected, propId: this.selectedProp, showDamageNumbers: this.profile.settings.showDamageNumbers,allowBenchLock:this.tutorialStep==='done' };
       if (this.drag?.moved) {
         interaction.draggingId = this.drag.id;
         interaction.pointer = this.drag.point;
@@ -256,7 +259,7 @@ export class GameApp {
     const active = state?.phase === 'playing';
     if(this.assetsDirty && !this.drag && !this.propDrag) {
       this.assetsDirty=false; force=true;
-      this.quickStamp=''; this.battlePropsStamp=''; this.bossStamp='';this.tutorialStamp='';
+      this.quickStamp=''; this.battlePropsStamp=''; this.bossStamp='';this.tutorialStamp='';this.waveStrategyStamp='';this.liveStamp='';
       this.root.querySelector('.brand-mark')!.innerHTML=sceneSticker('logo_capy',capyLogo,54);
       const ids=['ui_fish_food','ui_bell_summon','ui_compendium_book','ui_shop_bag','orange','ui_trophy_rank','ui_map_sign','ui_header_compendium','ui_header_armory','ui_header_market','ui_header_rank','ui_header_profile','ui_header_settings','ui_tutorial_pointer','ui_tutorial_capy','ui_coin_gold','ui_star_rank','ui_ticket_gacha','ui_skull_threat','ui_result_victory','ui_result_defeat','ui_header_pause','ui_mvp_crown','ui_lock_closed','ui_lock_open','ui_wave_horn','ui_merge_sparkle'] as const;
       for(const id of ids)this.root.querySelectorAll<HTMLElement>(`#stage [data-sticker="${id}"]`).forEach(el=>{el.outerHTML=sceneSticker(id,'',Number(el.getAttribute('width'))||34);});
@@ -325,7 +328,8 @@ export class GameApp {
       const cost = getSummonCost(player.summons);
       const shortage = Math.max(0, Math.ceil(cost - player.food));
       const summonTitle = t(remaining > 0 ? 'hud.redraw' : 'hud.summon');
-      const summonNote = t(remaining > 0 ? 'hud.redrawCost' : 'hud.cost', { remaining, cost, count: ECONOMY.summonCount });
+      const refreshCount=player.lockedBenchSlot==null?5:4;
+      const summonNote = t(remaining > 0 ? 'hud.redrawCost' : 'hud.cost', { remaining, cost, count: refreshCount });
       this.element('hud-wave').textContent = `🌊 ${Math.max(1,state.wave)}/${WAVES.length}`;
       this.element('orange-value').textContent = `×${player.oranges}`;
       this.element('food-value').textContent = String(Math.floor(player.food));
@@ -336,6 +340,11 @@ export class GameApp {
       this.element<HTMLButtonElement>('summon-button').disabled = !active;
       this.element('summon-button').classList.toggle('unaffordable', shortage > 0);
       this.element('summon-button').setAttribute('aria-label', `${summonTitle}. ${summonNote}${shortage ? `. ${t('hud.noFood', { count: shortage })}` : ''}`);
+      this.element('summon-refresh-count').textContent=`↻${refreshCount}`;
+      this.element('summon-refresh-count').setAttribute('title',t('p6.refreshSlots',{count:refreshCount}));
+      const heroBadge=this.element('redraw-hero-badge');
+      heroBadge.hidden=!getBenchMergeHints(state).some(hint=>hint.kind==='hero'&&hint.slot!==player.lockedBenchSlot)||!!this.drag?.moved||!!this.propDrag?.moved||!!this.selectedProp;
+      heroBadge.textContent=`✦ ${t('p6.redrawHero')}`;
     }
     // Keep the canvas fixed in the viewport while a pointer is captured. Replacing
     // a tall hero inspector with the short shovel card can otherwise clamp page
@@ -379,7 +388,7 @@ export class GameApp {
     if (!side) {
       // Short, narrow viewports have no exterior gutter. Keep the notice in the
       // upper board, beyond HUD controls and well above the bottom action strip.
-      const top = Math.max(8, Math.min(stage.top + stage.height * STAGE.boardY / STAGE.height, viewportHeight - height - 8));
+      const top = Math.max(8, Math.min(stage.top + stage.height * STAGE.boardY / STAGE.height + 6, viewportHeight - height - 8));
       Object.assign(style, { top: `${top}px`, bottom: 'auto' });
     }
   }
@@ -415,6 +424,10 @@ export class GameApp {
   private renderBattleHUD(): void {
     const state=this.engine?.state, banner=this.element('boss-banner');
     if(!state){banner.hidden=true;return;}
+    const preview=this.engine!.getUpcomingWavePreview(),early=this.engine!.canCallEarlyWave();
+    if(this.tutorialStep!=='done')early.allowed=false;
+    const strategyStamp=JSON.stringify([getLanguage(),preview,early]);
+    if(strategyStamp!==this.waveStrategyStamp){this.element('wave-strategy').innerHTML=waveStrategyMarkup(preview,early);this.waveStrategyStamp=strategyStamp;}
     const wave=getWaveHUD(state), progress=this.element('wave-progress');
     progress.dataset.kind=wave.kind;
     progress.setAttribute('aria-valuenow',String(Math.round(wave.fraction*100)));
@@ -653,9 +666,10 @@ export class GameApp {
     if(!state||!unit||this.drag?.moved||this.propDrag?.moved){host.innerHTML='';this.liveStamp='';return;}
     const stats=this.engine!.getEffectiveUnitStats(unit),loadout=state.sides.player.loadout;
     // Energy and countdowns change independently of recipe and button structure.
-    const stamp=JSON.stringify([getLanguage(),unit.id,unit.kind,unit.level,unit.location,loadout,
+    const allowBenchLock=this.tutorialStep==='done';
+    const stamp=JSON.stringify([getLanguage(),unit.id,unit.kind,unit.level,unit.location,loadout,allowBenchLock,state.sides.player.lockedBenchSlot,
       state.grid,state.units.map(u=>[u.id,u.kind,u.level,u.location,!!u.washing,!!u.statuses.SEALED,!!u.statuses.MERGE_LOCK])]);
-    if(stamp!==this.liveStamp){host.innerHTML=liveUnitCardMarkup({unit,state,stats,loadout});this.liveStamp=stamp;}
+    if(stamp!==this.liveStamp){host.innerHTML=liveUnitCardMarkup({unit,state,stats,loadout,allowBenchLock});this.liveStamp=stamp;}
     const text=(selector:string,value:string)=>{const el=host.querySelector<HTMLElement>(selector);if(el&&el.textContent!==value)el.textContent=value;};
     text('[data-live-stat="damage"]',`⚔️ ${Math.round(stats.damage)}`);
     text('[data-live-stat="rate"]',`⚡ ${Number(stats.rate.toFixed(2))}/s`);
@@ -724,13 +738,19 @@ export class GameApp {
   private clearSelection(): void { this.selectedId = undefined; this.shovelSelected = false; this.selectedProp = undefined; this.cancelDrag(); this.cancelPropDrag(); }
 
   private unitAt(hit: Hit): Unit | undefined {
-    return this.engine?.state.units.find(unit => unit.side === 'player' && (hit.kind === 'bench'
+    return this.engine?.state.units.find(unit => unit.side === 'player' && (hit.kind === 'bench'||hit.kind==='bench-lock'
       ? unit.location.zone === 'bench' && unit.location.slot === hit.slot
       : hit.kind === 'cell' && unit.location.zone === 'board' && unit.location.col === hit.col && unit.location.row === hit.row));
   }
 
   private activate(hit: Hit, options:{dragged?:boolean;fromKeyboard?:boolean}={}): void {
     if (!this.canInteract() || !this.engine) return;
+    if(hit.kind==='bench-lock'){
+      if(!options.dragged&&this.tutorialStep==='done'){
+        this.selectedProp=undefined;this.shovelSelected=false;this.apply(this.engine.toggleBenchLock(hit.slot));this.refresh();
+      }
+      return;
+    }
     const tap=!options.dragged&&!options.fromKeyboard;
     if (this.selectedProp) {
       const prop = PROPS[this.selectedProp];
@@ -886,7 +906,7 @@ export class GameApp {
       if (!this.canInteract() || !event.isPrimary || event.button !== 0) return;
       event.preventDefault();
       const point = this.point(event);
-      const hit = this.renderer.hitTest(point.x, point.y);
+      const hit = this.renderer.hitTest(point.x, point.y,{state:this.engine!.state,allowBenchLock:this.tutorialStep==='done'&&!this.selectedProp});
       if (!hit) { this.clearSelection(); this.refresh(); return; }
       const unit = this.unitAt(hit);
       this.drag = { pointerId: event.pointerId, start: point, point, id: unit?.id, shovel: hit.kind === 'shovel', moved: false };
@@ -907,7 +927,7 @@ export class GameApp {
       const drag = this.drag;
       if (!drag || drag.pointerId !== event.pointerId) return;
       const point = this.point(event);
-      const hit = this.renderer.hitTest(point.x, point.y);
+      const hit = this.renderer.hitTest(point.x, point.y,{state:this.engine!.state,allowBenchLock:this.tutorialStep==='done'&&!this.selectedProp,dragging:drag.moved});
       this.cancelDrag();
       if (!this.canInteract() || !hit) { if(!drag.moved)this.clearSelection();this.refresh(); return; }
       if (drag.moved) {
@@ -947,6 +967,14 @@ export class GameApp {
   private action(action: string): void {
     if(!['summon','sprinkler','grant','boss','food','orange-plus','orange-minus','skip'].includes(action)&&!action.startsWith('prop:'))this.sound.play('ui_click');
     if (action === 'zh-CN' || action === 'en') { setLanguage(action); return; }
+    if(action==='early-wave'){
+      if(this.canInteract()&&this.tutorialStep==='done'){this.apply(this.engine!.callEarlyWave());this.refresh();}return;
+    }
+    if(action==='wave-preview'){this.notify('p6.previewDetail',false,{detail:wavePreviewTip(this.engine?.getUpcomingWavePreview()??null)});return;}
+    if(action==='toggle-bench-lock'){
+      const unit=this.engine?.state.units.find(u=>u.id===this.selectedId&&u.side==='player');
+      if(this.canInteract()&&this.tutorialStep==='done'&&unit?.location.zone==='bench'){this.apply(this.engine!.toggleBenchLock(unit.location.slot));this.refresh();}return;
+    }
     if(action.startsWith('book:')){
       const tab=action.slice(5);
       if(this.compendium.select(tab)){

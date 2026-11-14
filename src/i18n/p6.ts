@@ -8,6 +8,7 @@ export const p6Zh:Record<string,string>={
  'p6.tutorialDeployToast':'{completion} 别忘了把备战席的英雄拖到白垫上参战哦！',
  'p6.earlyUnavailable':'现在还不能提前迎战','p6.earlyCalled':'号角吹响！提前迎战的小鱼干已到账。','p6.early':'提前迎战','p6.earlyTip':'提前迎战 · 奖励 {food} 小鱼干',
  'p6.wavePreview':'第 {wave} 波预告 · {count} 只害虫','p6.nextWave':'下波','p6.firstWave':'来袭','p6.finalWave':'最后一波，守住温泉！',
+ 'p6.previewDetail':'{detail}',
  'p6.benchLocked':'锁好这一格啦，换窝也会留下它。','p6.benchUnlocked':'已解锁，可以换新伙伴啦。','p6.lockPet':'锁住这一格','p6.unlockPet':'解锁这一格',
  'p6.heroBadge':'合英雄','p6.redrawHero':'窝内可合英雄！','p6.refreshSlots':'换 {count} 格',
 };
@@ -21,6 +22,7 @@ export const p6En:Record<string,string>={
  'p6.tutorialDeployToast':'{completion} Your bench hero is ready! Move them onto a white pad to join the defense.',
  'p6.earlyUnavailable':'Not ready for an early wave yet','p6.earlyCalled':'Sound the horn! Your early-wave fish food has arrived.','p6.early':'Call early','p6.earlyTip':'Call early · Earn {food} fish food',
  'p6.wavePreview':'Wave {wave} preview · {count} pests','p6.nextWave':'Next','p6.firstWave':'Incoming','p6.finalWave':'Final wave. Protect the hot spring!',
+ 'p6.previewDetail':'{detail}',
  'p6.benchLocked':'This nest is locked. Your friend stays through a redraw.','p6.benchUnlocked':'Nest unlocked. Ready for fresh friends.','p6.lockPet':'Lock this nest','p6.unlockPet':'Unlock this nest',
  'p6.heroBadge':'HERO','p6.redrawHero':'A hero recipe is ready!','p6.refreshSlots':'Redraw {count}',
 };
