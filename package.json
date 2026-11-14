@@ -7,7 +7,7 @@
     "build": "tsc --noEmit && vite build",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
-    "test:browser": "node scripts/p3-browser-qa.mjs",
+    "test:browser": "node scripts/p3-browser-qa.mjs && node scripts/p3-mobile-typography-qa.mjs",
     "preview": "vite preview --host 127.0.0.1 --port 4175 --strictPort"
   },
   "devDependencies": { "typescript": "6.0.3", "vite": "8.3.1", "vitest": "5.0.3", "@types/node": "24.10.14", "playwright-core": "1.58.2" }

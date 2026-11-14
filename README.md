@@ -19,7 +19,7 @@ npm test
 npm run typecheck
 npm run build
 npm run sync-assets   # 只读 design 原画，复制到本作 public/sprites
-npm run test:browser  # 在 Vite 运行时验证 P3 交互及截图
+npm run test:browser  # 在 Vite 运行时验证 P3 交互、手机字号与截图
 ```
 
 没有 npm 缓存的电脑可执行 `npm ci --ignore-scripts`。开发服务与正式启动脚本不能同时占用 4175。
@@ -73,6 +73,6 @@ P1 回退点在本目录独立 Git 仓库：提交 `319ea6c`，标签 **`v1.0-p1
 
 P2 完整基线保存在 **`p2-solo-overhaul`** 分支、标签 **`v1.0-p2`**。最新验收为 **686 项测试通过**，详情及实机截图见 [P2 交付验证](docs/P2-verification.md)。
 
-P3 保存在 **`p3-landscape-ux`** 分支：**757 项测试通过**，14 组浏览器交互检查通过；生产构建、子目录资源和测试档恢复验证均通过。详情、取舍记录及全部截图见 [P3 交付验证](docs/P3-verification.md)。
+P3 保存在 **`p3-landscape-ux`** 分支：**762 项测试通过**，14 组浏览器交互及 9 组手机字号/教程检查通过；生产构建、子目录资源和测试档恢复验证均通过。详情、取舍记录及全部截图见 [P3 交付验证](docs/P3-verification.md)。
 
 所有修改限定本游戏目录。原三国基线、根脚本和 `design/` 只读；端口保持 4175。生产构建使用相对资源路径，可部署在 HTTP 子目录。

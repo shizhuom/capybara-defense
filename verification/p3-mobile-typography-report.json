@@ -1,0 +1,982 @@
+{
+  "at": "2026-11-14T10:31:06.012Z",
+  "checks": [
+    "phone-landscape-zh-CN: readable contained menu and three tutorial steps with real touch summon/deploy/acknowledge",
+    "phone-landscape-zh-CN: readable Boss status with non-overlapping resource and control docks",
+    "phone-landscape-en: readable contained menu and three tutorial steps with real touch summon/deploy/acknowledge",
+    "phone-landscape-en: readable Boss status with non-overlapping resource and control docks",
+    "portrait-zh-CN: readable contained menu and three tutorial steps with real touch summon/deploy/acknowledge",
+    "portrait-zh-CN: readable Boss status with non-overlapping resource and control docks",
+    "portrait-en: readable contained menu and three tutorial steps with real touch summon/deploy/acknowledge",
+    "portrait-en: readable Boss status with non-overlapping resource and control docks",
+    "Mobile typography console/pageerror:0"
+  ],
+  "errors": [],
+  "measurements": [
+    {
+      "label": "phone-landscape-zh-CN",
+      "screen": "menu",
+      "sizes": [
+        {
+          "selector": ".profile-pill b",
+          "size": 12,
+          "text": "见习铲屎官 I"
+        },
+        {
+          "selector": ".profile-pill strong",
+          "size": 12,
+          "text": "🪙 0　⭐ 0"
+        },
+        {
+          "selector": ".menu-system .language-switch button",
+          "size": 12,
+          "text": "中"
+        },
+        {
+          "selector": ".menu-system .language-switch button",
+          "size": 12,
+          "text": "EN"
+        },
+        {
+          "selector": ".map-chips button",
+          "size": 12,
+          "text": "🎲 自动轮换"
+        },
+        {
+          "selector": ".map-chips button",
+          "size": 12,
+          "text": "🏡 后院"
+        },
+        {
+          "selector": ".map-chips button",
+          "size": 12,
+          "text": "🌸 樱花 🔒"
+        },
+        {
+          "selector": ".map-chips button",
+          "size": 12,
+          "text": "🍳 厨房 🔒"
+        },
+        {
+          "selector": ".map-chips button",
+          "size": 12,
+          "text": "🐾 猫塔 🔒"
+        },
+        {
+          "selector": ".hub-dock b",
+          "size": 12,
+          "text": "图鉴"
+        },
+        {
+          "selector": ".hub-dock b",
+          "size": 12,
+          "text": "神兵"
+        },
+        {
+          "selector": ".hub-dock b",
+          "size": 12,
+          "text": "商店"
+        },
+        {
+          "selector": ".hub-dock b",
+          "size": 12,
+          "text": "段位"
+        },
+        {
+          "selector": ".hub-dock small",
+          "size": 12,
+          "text": "0/36"
+        }
+      ]
+    },
+    {
+      "label": "phone-landscape-zh-CN",
+      "screen": "tutorial1",
+      "sizes": [
+        {
+          "selector": ".tutorial-bubble strong",
+          "size": 14,
+          "text": "01 · 摇铃叫伙伴"
+        },
+        {
+          "selector": ".tutorial-bubble p",
+          "size": 12,
+          "text": "摇铃抽5位伙伴。费用10→12→14粮；再抽可换整窝。"
+        },
+        {
+          "selector": ".tutorial-bubble button",
+          "size": 12,
+          "text": "跳过"
+        }
+      ],
+      "bubble": {
+        "left": 220.921875,
+        "top": 222.28125,
+        "right": 623.0625,
+        "bottom": 287.28125
+      },
+      "stage": {
+        "left": 75.328125,
+        "top": 0,
+        "right": 768.65625,
+        "bottom": 389.984375
+      }
+    },
+    {
+      "label": "phone-landscape-zh-CN",
+      "screen": "tutorial2",
+      "sizes": [
+        {
+          "selector": ".tutorial-bubble strong",
+          "size": 14,
+          "text": "02 · 安排一个工位"
+        },
+        {
+          "selector": ".tutorial-bubble p",
+          "size": 12,
+          "text": "把伙伴拖到白垫；把铁锹拖到草地开荒。"
+        },
+        {
+          "selector": ".tutorial-bubble button",
+          "size": 12,
+          "text": "跳过"
+        }
+      ],
+      "bubble": {
+        "left": 220.921875,
+        "top": 233.984375,
+        "right": 623.0625,
+        "bottom": 298.984375
+      },
+      "stage": {
+        "left": 75.328125,
+        "top": 0,
+        "right": 768.65625,
+        "bottom": 389.984375
+      }
+    },
+    {
+      "label": "phone-landscape-zh-CN",
+      "screen": "tutorial3",
+      "sizes": [
+        {
+          "selector": ".tutorial-bubble strong",
+          "size": 14,
+          "text": "03 · 金圈就是好搭档"
+        },
+        {
+          "selector": ".tutorial-bubble p",
+          "size": 12,
+          "text": "同名同级宠可合成；给英雄喂配对散件可升星。"
+        },
+        {
+          "selector": ".tutorial-bubble button",
+          "size": 12,
+          "text": "跳过"
+        },
+        {
+          "selector": ".tutorial-bubble button",
+          "size": 12,
+          "text": "明白啦 · 领取奖励"
+        }
+      ],
+      "bubble": {
+        "left": 220.921875,
+        "top": 62.390625,
+        "right": 623.0625,
+        "bottom": 153.390625
+      },
+      "stage": {
+        "left": 75.328125,
+        "top": 0,
+        "right": 768.65625,
+        "bottom": 389.984375
+      }
+    },
+    {
+      "label": "phone-landscape-zh-CN",
+      "screen": "boss",
+      "sizes": [
+        {
+          "selector": ".boss-heading strong",
+          "size": 12,
+          "text": "拆家二哈王"
+        },
+        {
+          "selector": ".boss-numbers",
+          "size": 12,
+          "text": "700 / 700"
+        }
+      ],
+      "hintSizes": [
+        {
+          "selector": ".prop-target-hint",
+          "size": 12,
+          "text": "点击或拖到己方单位（棋盘或宠物窝）"
+        },
+        {
+          "selector": ".refresh-badge",
+          "size": 12,
+          "text": "↻5"
+        },
+        {
+          "selector": "#hud-wave",
+          "size": 12,
+          "text": "🌊 1/10"
+        },
+        {
+          "selector": "#battle-props button>b",
+          "size": 12,
+          "text": "1"
+        },
+        {
+          "selector": "#battle-props button>b",
+          "size": 12,
+          "text": "1"
+        }
+      ],
+      "boss": {
+        "left": 335.3125,
+        "top": 5.40625,
+        "right": 519.46875,
+        "bottom": 33.5625
+      },
+      "control": {
+        "left": 584.546875,
+        "top": 6.484375,
+        "right": 758.921875,
+        "bottom": 31.390625
+      },
+      "resource": {
+        "left": 85.0625,
+        "top": 6.484375,
+        "right": 261.6875,
+        "bottom": 32.46875
+      }
+    },
+    {
+      "label": "phone-landscape-en",
+      "screen": "menu",
+      "sizes": [
+        {
+          "selector": ".profile-pill b",
+          "size": 12,
+          "text": "Rookie Keeper I"
+        },
+        {
+          "selector": ".profile-pill strong",
+          "size": 12,
+          "text": "🪙 0　⭐ 0"
+        },
+        {
+          "selector": ".menu-system .language-switch button",
+          "size": 12,
+          "text": "中"
+        },
+        {
+          "selector": ".menu-system .language-switch button",
+          "size": 12,
+          "text": "EN"
+        },
+        {
+          "selector": ".map-chips button",
+          "size": 12,
+          "text": "🎲 Auto"
+        },
+        {
+          "selector": ".map-chips button",
+          "size": 12,
+          "text": "🏡 Backyard"
+        },
+        {
+          "selector": ".map-chips button",
+          "size": 12,
+          "text": "🌸 Sakura 🔒"
+        },
+        {
+          "selector": ".map-chips button",
+          "size": 12,
+          "text": "🍳 Kitchen 🔒"
+        },
+        {
+          "selector": ".map-chips button",
+          "size": 12,
+          "text": "🐾 Cat tower 🔒"
+        },
+        {
+          "selector": ".hub-dock b",
+          "size": 12,
+          "text": "Guide"
+        },
+        {
+          "selector": ".hub-dock b",
+          "size": 12,
+          "text": "Armory"
+        },
+        {
+          "selector": ".hub-dock b",
+          "size": 12,
+          "text": "Shop"
+        },
+        {
+          "selector": ".hub-dock b",
+          "size": 12,
+          "text": "Rank"
+        },
+        {
+          "selector": ".hub-dock small",
+          "size": 12,
+          "text": "0/36"
+        }
+      ]
+    },
+    {
+      "label": "phone-landscape-en",
+      "screen": "tutorial1",
+      "sizes": [
+        {
+          "selector": ".tutorial-bubble strong",
+          "size": 14,
+          "text": "01 · Ring for friends"
+        },
+        {
+          "selector": ".tutorial-bubble p",
+          "size": 12,
+          "text": "Ring for 5 companions. Cost: 10→12→14. Redraw swaps the"
+        },
+        {
+          "selector": ".tutorial-bubble button",
+          "size": 12,
+          "text": "Skip"
+        }
+      ],
+      "bubble": {
+        "left": 220.921875,
+        "top": 222.28125,
+        "right": 623.0625,
+        "bottom": 285.28125
+      },
+      "stage": {
+        "left": 75.328125,
+        "top": 0,
+        "right": 768.65625,
+        "bottom": 389.984375
+      }
+    },
+    {
+      "label": "phone-landscape-en",
+      "screen": "tutorial2",
+      "sizes": [
+        {
+          "selector": ".tutorial-bubble strong",
+          "size": 14,
+          "text": "02 · Make a little room"
+        },
+        {
+          "selector": ".tutorial-bubble p",
+          "size": 12,
+          "text": "Drag pets to white mats. Dig grass with a shovel."
+        },
+        {
+          "selector": ".tutorial-bubble button",
+          "size": 12,
+          "text": "Skip"
+        }
+      ],
+      "bubble": {
+        "left": 220.921875,
+        "top": 233.984375,
+        "right": 623.0625,
+        "bottom": 296.984375
+      },
+      "stage": {
+        "left": 75.328125,
+        "top": 0,
+        "right": 768.65625,
+        "bottom": 389.984375
+      }
+    },
+    {
+      "label": "phone-landscape-en",
+      "screen": "tutorial3",
+      "sizes": [
+        {
+          "selector": ".tutorial-bubble strong",
+          "size": 14,
+          "text": "03 · Follow the golden ring"
+        },
+        {
+          "selector": ".tutorial-bubble p",
+          "size": 12,
+          "text": "Merge matching pets; feed heroes their ingredients."
+        },
+        {
+          "selector": ".tutorial-bubble button",
+          "size": 12,
+          "text": "Skip"
+        },
+        {
+          "selector": ".tutorial-bubble button",
+          "size": 12,
+          "text": "Got it · Claim reward"
+        }
+      ],
+      "bubble": {
+        "left": 220.921875,
+        "top": 62.390625,
+        "right": 623.0625,
+        "bottom": 151.390625
+      },
+      "stage": {
+        "left": 75.328125,
+        "top": 0,
+        "right": 768.65625,
+        "bottom": 389.984375
+      }
+    },
+    {
+      "label": "phone-landscape-en",
+      "screen": "boss",
+      "sizes": [
+        {
+          "selector": ".boss-heading strong",
+          "size": 12,
+          "text": "Husky Wrecker"
+        },
+        {
+          "selector": ".boss-numbers",
+          "size": 12,
+          "text": "700 / 700"
+        }
+      ],
+      "hintSizes": [
+        {
+          "selector": ".prop-target-hint",
+          "size": 12,
+          "text": "Tap or drag onto an allied unit on the board or bench"
+        },
+        {
+          "selector": ".refresh-badge",
+          "size": 12,
+          "text": "↻5"
+        },
+        {
+          "selector": "#hud-wave",
+          "size": 12,
+          "text": "🌊 1/10"
+        },
+        {
+          "selector": "#battle-props button>b",
+          "size": 12,
+          "text": "1"
+        },
+        {
+          "selector": "#battle-props button>b",
+          "size": 12,
+          "text": "1"
+        }
+      ],
+      "boss": {
+        "left": 335.3125,
+        "top": 5.40625,
+        "right": 519.46875,
+        "bottom": 33.5625
+      },
+      "control": {
+        "left": 572.921875,
+        "top": 6.484375,
+        "right": 758.921875,
+        "bottom": 31.390625
+      },
+      "resource": {
+        "left": 85.0625,
+        "top": 6.484375,
+        "right": 261.6875,
+        "bottom": 32.46875
+      }
+    },
+    {
+      "label": "portrait-zh-CN",
+      "screen": "menu",
+      "sizes": [
+        {
+          "selector": ".profile-pill b",
+          "size": 12,
+          "text": "见习铲屎官 I"
+        },
+        {
+          "selector": ".profile-pill strong",
+          "size": 12,
+          "text": "🪙 0　⭐ 0"
+        },
+        {
+          "selector": ".menu-system .language-switch button",
+          "size": 12,
+          "text": "中"
+        },
+        {
+          "selector": ".menu-system .language-switch button",
+          "size": 12,
+          "text": "EN"
+        },
+        {
+          "selector": ".map-chips button",
+          "size": 12,
+          "text": "🎲 自动轮换"
+        },
+        {
+          "selector": ".map-chips button",
+          "size": 12,
+          "text": "🏡 后院"
+        },
+        {
+          "selector": ".map-chips button",
+          "size": 12,
+          "text": "🌸 樱花 🔒"
+        },
+        {
+          "selector": ".map-chips button",
+          "size": 12,
+          "text": "🍳 厨房 🔒"
+        },
+        {
+          "selector": ".map-chips button",
+          "size": 12,
+          "text": "🐾 猫塔 🔒"
+        },
+        {
+          "selector": ".hub-dock b",
+          "size": 12,
+          "text": "图鉴"
+        },
+        {
+          "selector": ".hub-dock b",
+          "size": 12,
+          "text": "神兵"
+        },
+        {
+          "selector": ".hub-dock b",
+          "size": 12,
+          "text": "商店"
+        },
+        {
+          "selector": ".hub-dock b",
+          "size": 12,
+          "text": "段位"
+        },
+        {
+          "selector": ".hub-dock small",
+          "size": 12,
+          "text": "0/36"
+        }
+      ]
+    },
+    {
+      "label": "portrait-zh-CN",
+      "screen": "tutorial1",
+      "sizes": [
+        {
+          "selector": ".tutorial-bubble strong",
+          "size": 14,
+          "text": "01 · 摇铃叫伙伴"
+        },
+        {
+          "selector": ".tutorial-bubble p",
+          "size": 12,
+          "text": "摇铃抽5位伙伴。费用10→12→14粮；再抽可换整窝。"
+        },
+        {
+          "selector": ".tutorial-bubble button",
+          "size": 12,
+          "text": "跳过"
+        }
+      ],
+      "bubble": {
+        "left": 8,
+        "top": 172.515625,
+        "right": 382,
+        "bottom": 248.3125
+      },
+      "stage": {
+        "left": 0,
+        "top": 312.3125,
+        "right": 390,
+        "bottom": 531.6875
+      }
+    },
+    {
+      "label": "portrait-zh-CN",
+      "screen": "tutorial2",
+      "sizes": [
+        {
+          "selector": ".tutorial-bubble strong",
+          "size": 14,
+          "text": "02 · 安排一个工位"
+        },
+        {
+          "selector": ".tutorial-bubble p",
+          "size": 12,
+          "text": "把伙伴拖到白垫；把铁锹拖到草地开荒。"
+        },
+        {
+          "selector": ".tutorial-bubble button",
+          "size": 12,
+          "text": "跳过"
+        }
+      ],
+      "bubble": {
+        "left": 8,
+        "top": 172.515625,
+        "right": 382,
+        "bottom": 248.3125
+      },
+      "stage": {
+        "left": 0,
+        "top": 312.3125,
+        "right": 390,
+        "bottom": 531.6875
+      }
+    },
+    {
+      "label": "portrait-zh-CN",
+      "screen": "tutorial3",
+      "sizes": [
+        {
+          "selector": ".tutorial-bubble strong",
+          "size": 14,
+          "text": "03 · 金圈就是好搭档"
+        },
+        {
+          "selector": ".tutorial-bubble p",
+          "size": 12,
+          "text": "同名同级宠可合成；给英雄喂配对散件可升星。"
+        },
+        {
+          "selector": ".tutorial-bubble button",
+          "size": 12,
+          "text": "跳过"
+        },
+        {
+          "selector": ".tutorial-bubble button",
+          "size": 12,
+          "text": "明白啦 · 领取奖励"
+        }
+      ],
+      "bubble": {
+        "left": 8,
+        "top": 141.515625,
+        "right": 382,
+        "bottom": 248.3125
+      },
+      "stage": {
+        "left": 0,
+        "top": 312.3125,
+        "right": 390,
+        "bottom": 531.6875
+      }
+    },
+    {
+      "label": "portrait-zh-CN",
+      "screen": "boss",
+      "sizes": [
+        {
+          "selector": ".boss-heading strong",
+          "size": 12,
+          "text": "拆家二哈王"
+        },
+        {
+          "selector": ".boss-numbers",
+          "size": 12,
+          "text": "700 / 700"
+        }
+      ],
+      "hintSizes": [
+        {
+          "selector": ".prop-target-hint",
+          "size": 12,
+          "text": "点击或拖到己方单位（棋盘或宠物窝）"
+        },
+        {
+          "selector": ".refresh-badge",
+          "size": 12,
+          "text": "↻5"
+        },
+        {
+          "selector": "#hud-wave",
+          "size": 12,
+          "text": "🌊 1/10"
+        },
+        {
+          "selector": "#battle-props button>b",
+          "size": 12,
+          "text": "1"
+        },
+        {
+          "selector": "#battle-props button>b",
+          "size": 12,
+          "text": "1"
+        }
+      ],
+      "boss": {
+        "left": 5.453125,
+        "top": 260.3125,
+        "right": 384.53125,
+        "bottom": 304.3125
+      },
+      "control": {
+        "left": 243.515625,
+        "top": 315.96875,
+        "right": 384.515625,
+        "bottom": 333.96875
+      },
+      "resource": {
+        "left": 5.484375,
+        "top": 315.96875,
+        "right": 142.171875,
+        "bottom": 333.96875
+      }
+    },
+    {
+      "label": "portrait-en",
+      "screen": "menu",
+      "sizes": [
+        {
+          "selector": ".profile-pill b",
+          "size": 12,
+          "text": "Rookie Keeper I"
+        },
+        {
+          "selector": ".profile-pill strong",
+          "size": 12,
+          "text": "🪙 0　⭐ 0"
+        },
+        {
+          "selector": ".menu-system .language-switch button",
+          "size": 12,
+          "text": "中"
+        },
+        {
+          "selector": ".menu-system .language-switch button",
+          "size": 12,
+          "text": "EN"
+        },
+        {
+          "selector": ".map-chips button",
+          "size": 12,
+          "text": "🎲 Auto"
+        },
+        {
+          "selector": ".map-chips button",
+          "size": 12,
+          "text": "🏡 Backyard"
+        },
+        {
+          "selector": ".map-chips button",
+          "size": 12,
+          "text": "🌸 Sakura 🔒"
+        },
+        {
+          "selector": ".map-chips button",
+          "size": 12,
+          "text": "🍳 Kitchen 🔒"
+        },
+        {
+          "selector": ".map-chips button",
+          "size": 12,
+          "text": "🐾 Cat tower 🔒"
+        },
+        {
+          "selector": ".hub-dock b",
+          "size": 12,
+          "text": "Guide"
+        },
+        {
+          "selector": ".hub-dock b",
+          "size": 12,
+          "text": "Armory"
+        },
+        {
+          "selector": ".hub-dock b",
+          "size": 12,
+          "text": "Shop"
+        },
+        {
+          "selector": ".hub-dock b",
+          "size": 12,
+          "text": "Rank"
+        },
+        {
+          "selector": ".hub-dock small",
+          "size": 12,
+          "text": "0/36"
+        }
+      ]
+    },
+    {
+      "label": "portrait-en",
+      "screen": "tutorial1",
+      "sizes": [
+        {
+          "selector": ".tutorial-bubble strong",
+          "size": 14,
+          "text": "01 · Ring for friends"
+        },
+        {
+          "selector": ".tutorial-bubble p",
+          "size": 12,
+          "text": "Ring for 5 companions. Cost: 10→12→14. Redraw swaps the"
+        },
+        {
+          "selector": ".tutorial-bubble button",
+          "size": 12,
+          "text": "Skip"
+        }
+      ],
+      "bubble": {
+        "left": 8,
+        "top": 174.515625,
+        "right": 382,
+        "bottom": 248.3125
+      },
+      "stage": {
+        "left": 0,
+        "top": 312.3125,
+        "right": 390,
+        "bottom": 531.6875
+      }
+    },
+    {
+      "label": "portrait-en",
+      "screen": "tutorial2",
+      "sizes": [
+        {
+          "selector": ".tutorial-bubble strong",
+          "size": 14,
+          "text": "02 · Make a little room"
+        },
+        {
+          "selector": ".tutorial-bubble p",
+          "size": 12,
+          "text": "Drag pets to white mats. Dig grass with a shovel."
+        },
+        {
+          "selector": ".tutorial-bubble button",
+          "size": 12,
+          "text": "Skip"
+        }
+      ],
+      "bubble": {
+        "left": 8,
+        "top": 174.515625,
+        "right": 382,
+        "bottom": 248.3125
+      },
+      "stage": {
+        "left": 0,
+        "top": 312.3125,
+        "right": 390,
+        "bottom": 531.6875
+      }
+    },
+    {
+      "label": "portrait-en",
+      "screen": "tutorial3",
+      "sizes": [
+        {
+          "selector": ".tutorial-bubble strong",
+          "size": 14,
+          "text": "03 · Follow the golden ring"
+        },
+        {
+          "selector": ".tutorial-bubble p",
+          "size": 12,
+          "text": "Merge matching pets; feed heroes their ingredients."
+        },
+        {
+          "selector": ".tutorial-bubble button",
+          "size": 12,
+          "text": "Skip"
+        },
+        {
+          "selector": ".tutorial-bubble button",
+          "size": 12,
+          "text": "Got it · Claim reward"
+        }
+      ],
+      "bubble": {
+        "left": 8,
+        "top": 143.515625,
+        "right": 382,
+        "bottom": 248.3125
+      },
+      "stage": {
+        "left": 0,
+        "top": 312.3125,
+        "right": 390,
+        "bottom": 531.6875
+      }
+    },
+    {
+      "label": "portrait-en",
+      "screen": "boss",
+      "sizes": [
+        {
+          "selector": ".boss-heading strong",
+          "size": 12,
+          "text": "Husky Wrecker"
+        },
+        {
+          "selector": ".boss-numbers",
+          "size": 12,
+          "text": "700 / 700"
+        }
+      ],
+      "hintSizes": [
+        {
+          "selector": ".prop-target-hint",
+          "size": 12,
+          "text": "Tap or drag onto an allied unit on the board or bench"
+        },
+        {
+          "selector": ".refresh-badge",
+          "size": 12,
+          "text": "↻5"
+        },
+        {
+          "selector": "#hud-wave",
+          "size": 12,
+          "text": "🌊 1/10"
+        },
+        {
+          "selector": "#battle-props button>b",
+          "size": 12,
+          "text": "1"
+        },
+        {
+          "selector": "#battle-props button>b",
+          "size": 12,
+          "text": "1"
+        }
+      ],
+      "boss": {
+        "left": 5.453125,
+        "top": 260.3125,
+        "right": 384.53125,
+        "bottom": 304.3125
+      },
+      "control": {
+        "left": 231.890625,
+        "top": 315.96875,
+        "right": 384.515625,
+        "bottom": 333.96875
+      },
+      "resource": {
+        "left": 5.484375,
+        "top": 315.96875,
+        "right": 142.171875,
+        "bottom": 333.96875
+      }
+    }
+  ],
+  "failure": null
+}

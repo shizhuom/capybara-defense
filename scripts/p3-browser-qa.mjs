@@ -30,7 +30,8 @@ async function fit(){
   assert.ok(Math.abs(g.stage.width/g.stage.height-16/9)<.005,JSON.stringify(g));
   for(const b of g.buttons)assert.ok(b.x>=g.stage.x-1&&b.y>=g.stage.y-1&&b.right<=g.stage.right+1&&b.bottom<=g.stage.bottom+1,JSON.stringify(b));
   const docks=await page.evaluate(()=>{const boss=document.querySelector('#boss-banner');return boss?.getClientRects().length?{boss:boss.getBoundingClientRect().toJSON(),control:document.querySelector('.control-dock').getBoundingClientRect().toJSON(),resource:document.querySelector('.resource-dock').getBoundingClientRect().toJSON()}:null;});
-  if(docks)assert.ok(docks.resource.right<=docks.boss.left+1&&docks.boss.right<=docks.control.left+1,JSON.stringify(docks));
+  const overlaps=(a,b)=>a.left<b.right-1&&a.right>b.left+1&&a.top<b.bottom-1&&a.bottom>b.top+1;
+  if(docks)assert.ok(!overlaps(docks.resource,docks.boss)&&!overlaps(docks.boss,docks.control),JSON.stringify(docks));
 }
 async function fixture(mapId='sunny_backyard',targetPage=page){
   return targetPage.evaluate(async map=>{
