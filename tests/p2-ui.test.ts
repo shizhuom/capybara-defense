@@ -52,6 +52,47 @@ beforeEach(()=>{
 afterEach(()=>{setLanguage('zh-CN');vi.unstubAllGlobals();});
 
 describe('P2 solo UI',()=>{
+  it.each([
+    {width:1440,left:497,right:943,top:48,bottom:892,height:35},
+    {width:1024,left:289,right:735,top:48,bottom:892,height:35},
+    {width:900,left:227,right:673,top:48,bottom:892,height:90},
+    {width:800,left:177,right:623,top:48,bottom:892,height:140},
+    {width:390,left:9,right:381,top:88,bottom:795,height:35},
+  ])('keeps measured notices outside the stage actions at viewport width $width',fixture=>{
+    const {app,element}=harness();
+    Object.assign(window,{innerWidth:fixture.width,innerHeight:900});
+    if(fixture.width===390)window.innerHeight=844;
+    for(const method of ['renderMenu','renderBattleHUD','renderTutorial','renderBattleProps','renderInspector','renderKeyboard'])app[method]=()=>{};
+    element('stage').getBoundingClientRect=()=>({...fixture,width:fixture.right-fixture.left,height:fixture.bottom-fixture.top});
+    element('toast').getBoundingClientRect=()=>({left:0,right:162,top:0,bottom:fixture.height,width:162,height:fixture.height});
+    app.notify('hint.dig');
+    const style=element('toast').style;
+    if(fixture.width===390){
+      expect(style.left).toBe('50%');expect(style.bottom).toBe('8px');
+      expect(844-8-fixture.height).toBeGreaterThan(fixture.bottom);
+    }else{
+      const left=parseFloat(style.left),width=parseFloat(style.width);
+      expect(left).toBeGreaterThanOrEqual(fixture.right+16);
+      expect(left+width).toBeLessThanOrEqual(fixture.width-16);expect(width).toBeGreaterThanOrEqual(120);
+      expect(style.transform).toBe('none');
+    }
+  });
+  it('repositions a visible notice after resizing and keeps a wrapped narrow-screen notice above actions when no gutter fits',()=>{
+    const {app,element}=harness();
+    for(const method of ['renderMenu','renderBattleHUD','renderTutorial','renderBattleProps','renderInspector','renderKeyboard'])app[method]=()=>{};
+    Object.assign(window,{innerWidth:1024,innerHeight:900});
+    let bounds={left:289,right:735,top:48,bottom:892,width:446,height:844};
+    element('stage').getBoundingClientRect=()=>bounds;
+    element('toast').getBoundingClientRect=()=>({left:0,right:162,top:0,bottom:90,width:162,height:90});
+    app.notify('hint.noFood',true,{count:10,cost:14});expect(element('toast').style.transform).toBe('none');
+    Object.assign(window,{innerWidth:390,innerHeight:600});
+    bounds={left:52,right:338,top:48,bottom:590,width:286,height:542};setLanguage('en');app.refresh();
+    const style=element('toast').style,top=parseFloat(style.top);
+    expect(style.left).toBe('50%');expect(style.transform).toBe('translateX(-50%)');
+    expect(parseFloat(style.width)).toBeGreaterThanOrEqual(280);
+    expect(top).toBeGreaterThanOrEqual(48);expect(top+90).toBeLessThan(48+542*1080/1216);
+    expect(style.bottom).toBe('auto');expect(element('toast').textContent).toContain('14');
+  });
   it('keeps the shovel identity in UI icons when optional sprites are unavailable',()=>{
     expect(unitSticker('shovel')).toContain('data-sticker="shovel"');
     expect(unitSticker('shovel')).not.toContain('hamster');

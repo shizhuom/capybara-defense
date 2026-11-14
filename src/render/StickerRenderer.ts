@@ -401,9 +401,11 @@ export class StickerRenderer {
 
   private drawNests(state:BattleState,interaction:Interaction,seconds:number):void {
     const c=this.c;
-    this.label(t('render.petNests'),48,STAGE.benchY-14,18,INK,'left',800,350);
+    // Keep the nest labels in the clear strip between the sprinkler and pouch.
+    const headingX=STAGE.benchX+STAGE.benchSize,countX=STAGE.shovelX-56;
+    this.label(t('render.petNests'),headingX,STAGE.benchY-14,18,INK,'left',800,countX-headingX-52);
     const filled=state.units.filter(unit=>unit.side==='player'&&unit.location.zone==='bench').length;
-    this.label(`${filled} / 5`,592,STAGE.benchY-14,13,'#92846b','right',700);
+    this.label(`${filled} / 5`,countX,STAGE.benchY-14,13,'#92846b','right',700);
     for(let slot=0;slot<5;slot++){
       const x=STAGE.benchX+slot*STAGE.benchStep,y=STAGE.benchY,w=STAGE.benchSize;
       const unit=state.units.find(unit=>unit.side==='player'&&unit.location.zone==='bench'&&unit.location.slot===slot);

@@ -337,6 +337,34 @@ export class GameApp {
       const message = t(this.toast.key, this.toast.vars);
       if (toast.textContent !== message) toast.textContent = message;
       toast.classList.toggle('toast-error', this.toast.error);
+      this.positionToast(toast, developer);
+    }
+  }
+
+  private positionToast(toast: HTMLElement, developer: boolean): void {
+    const style = toast.style;
+    if (developer) {
+      Object.assign(style, { left: '', right: '', top: '', bottom: '', width: '', maxWidth: '', transform: '' });
+      return;
+    }
+    if (toast.hidden || !Number.isFinite(window.innerWidth) || !Number.isFinite(window.innerHeight)) return;
+    const stage = this.element('stage').getBoundingClientRect();
+    const viewportWidth = window.innerWidth, viewportHeight = window.innerHeight;
+    const rightSpace = viewportWidth - stage.right - 32, leftSpace = stage.left - 32;
+    const side = rightSpace >= 120 ? 'right' : leftSpace >= 120 ? 'left' : undefined;
+    const width = Math.min(320, side === 'right' ? rightSpace : side === 'left' ? leftSpace : viewportWidth - 32);
+    Object.assign(style, {
+      left: side === 'right' ? `${stage.right + 16}px` : side === 'left' ? '16px' : '50%',
+      right: 'auto', top: 'auto', bottom: '8px', width: `${width}px`, maxWidth: `${width}px`,
+      transform: side ? 'none' : 'translateX(-50%)',
+    });
+    // Measure after setting width: translated or long notices may wrap to more lines.
+    const height = toast.getBoundingClientRect().height;
+    if (!side && viewportHeight - 8 - height < stage.bottom + 4) {
+      // Short, narrow viewports have no exterior gutter. Keep the notice in the
+      // upper board, beyond HUD controls and well above the bottom action strip.
+      const top = Math.max(8, Math.min(stage.top + stage.height * STAGE.boardY / STAGE.height, viewportHeight - height - 8));
+      Object.assign(style, { top: `${top}px`, bottom: 'auto' });
     }
   }
 

@@ -8,7 +8,7 @@ import {assets} from '../src/render/AssetRegistry';
 import {StickerRenderer} from '../src/render/StickerRenderer';
 import {drawHeldWeapon,heldWeapon,weaponPose,bodyPose,WEAPON_ART_AXES,weaponArtGeometry} from '../src/render/HeldWeaponRenderer';
 import {drawCombatEvent} from '../src/render/CombatEffects';
-import {setLanguage} from '../src/i18n/i18n';
+import {setLanguage,t} from '../src/i18n/i18n';
 import type {Unit,VisualEvent} from '../src/core/types';
 
 type Call={name:string;args:unknown[];fill:unknown;stroke:unknown};
@@ -21,6 +21,21 @@ function pet(kind:string,board=true):Unit{return {id:10,kind,side:'player',level
 const image=(id:string)=>({complete:true,naturalWidth:256,naturalHeight:256,id} as unknown as HTMLImageElement);
 afterEach(()=>{vi.restoreAllMocks();setLanguage('zh-CN');});
 describe('P2 single garden geometry',()=>{
+ it('keeps bilingual nest heading and occupancy between the toolbar tools without overlapping each other',()=>{
+  for(const language of ['zh-CN','en'] as const)for(const filled of [0,5]){
+   setLanguage(language);const state=new BattleEngine({autoWaves:false}).state;
+   state.units=Array.from({length:filled},(_,slot)=>({...pet('hamster',false),id:10+slot,location:{zone:'bench' as const,slot}}));
+   const {renderer,calls}=surface();renderer.draw(state,0);
+   const heading=calls.find(call=>call.name==='fillText'&&call.args[0]===t('render.petNests'))!;
+   const count=calls.find(call=>call.name==='fillText'&&call.args[0]===`${filled} / 5`)!;
+   const headingLeft=heading.args[1] as number,headingRight=headingLeft+(heading.args[3] as number);
+   const countRight=count.args[1] as number,countLeft=countRight-String(count.args[0]).length*8;
+   // Clear central strip: x140..500, outside the sprinkler and pouch plus padding.
+   expect(headingLeft).toBeGreaterThanOrEqual(140);expect(headingRight).toBeLessThanOrEqual(countLeft-8);
+   expect(countRight).toBeLessThanOrEqual(500);expect(countLeft).toBeGreaterThanOrEqual(140);
+   expect(heading.args[2]).toBe(930);expect(count.args[2]).toBe(930);
+  }
+ });
  it('excludes every outer board edge and keeps all 42 cell centers reachable',()=>{
   const {renderer}=surface();for(let row=0;row<7;row++)for(let col=0;col<6;col++)expect(renderer.hitTest(80+96*col,236+96*row)).toEqual({kind:'cell',col,row});
   for(const [x,y] of [[31,188],[608,300],[32,187],[400,860]])expect(renderer.hitTest(x,y)).toBeNull();
