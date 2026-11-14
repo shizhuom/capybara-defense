@@ -1,5 +1,5 @@
 {
-  "at": "2026-11-14T10:31:06.012Z",
+  "at": "2026-11-14T19:52:28.967Z",
   "checks": [
     "phone-landscape-zh-CN: readable contained menu and three tutorial steps with real touch summon/deploy/acknowledge",
     "phone-landscape-zh-CN: readable Boss status with non-overlapping resource and control docks",
@@ -40,27 +40,27 @@
         {
           "selector": ".map-chips button",
           "size": 12,
-          "text": "🎲 自动轮换"
+          "text": "自动轮换"
         },
         {
           "selector": ".map-chips button",
           "size": 12,
-          "text": "🏡 后院"
+          "text": "后院"
         },
         {
           "selector": ".map-chips button",
           "size": 12,
-          "text": "🌸 樱花 🔒"
+          "text": "樱花 🔒"
         },
         {
           "selector": ".map-chips button",
           "size": 12,
-          "text": "🍳 厨房 🔒"
+          "text": "厨房 🔒"
         },
         {
           "selector": ".map-chips button",
           "size": 12,
-          "text": "🐾 猫塔 🔒"
+          "text": "猫塔 🔒"
         },
         {
           "selector": ".hub-dock b",
@@ -281,27 +281,27 @@
         {
           "selector": ".map-chips button",
           "size": 12,
-          "text": "🎲 Auto"
+          "text": "Auto"
         },
         {
           "selector": ".map-chips button",
           "size": 12,
-          "text": "🏡 Backyard"
+          "text": "Backyard"
         },
         {
           "selector": ".map-chips button",
           "size": 12,
-          "text": "🌸 Sakura 🔒"
+          "text": "Sakura 🔒"
         },
         {
           "selector": ".map-chips button",
           "size": 12,
-          "text": "🍳 Kitchen 🔒"
+          "text": "Kitchen 🔒"
         },
         {
           "selector": ".map-chips button",
           "size": 12,
-          "text": "🐾 Cat tower 🔒"
+          "text": "Cat tower 🔒"
         },
         {
           "selector": ".hub-dock b",
@@ -522,27 +522,27 @@
         {
           "selector": ".map-chips button",
           "size": 12,
-          "text": "🎲 自动轮换"
+          "text": "自动轮换"
         },
         {
           "selector": ".map-chips button",
           "size": 12,
-          "text": "🏡 后院"
+          "text": "后院"
         },
         {
           "selector": ".map-chips button",
           "size": 12,
-          "text": "🌸 樱花 🔒"
+          "text": "樱花 🔒"
         },
         {
           "selector": ".map-chips button",
           "size": 12,
-          "text": "🍳 厨房 🔒"
+          "text": "厨房 🔒"
         },
         {
           "selector": ".map-chips button",
           "size": 12,
-          "text": "🐾 猫塔 🔒"
+          "text": "猫塔 🔒"
         },
         {
           "selector": ".hub-dock b",
@@ -763,27 +763,27 @@
         {
           "selector": ".map-chips button",
           "size": 12,
-          "text": "🎲 Auto"
+          "text": "Auto"
         },
         {
           "selector": ".map-chips button",
           "size": 12,
-          "text": "🏡 Backyard"
+          "text": "Backyard"
         },
         {
           "selector": ".map-chips button",
           "size": 12,
-          "text": "🌸 Sakura 🔒"
+          "text": "Sakura 🔒"
         },
         {
           "selector": ".map-chips button",
           "size": 12,
-          "text": "🍳 Kitchen 🔒"
+          "text": "Kitchen 🔒"
         },
         {
           "selector": ".map-chips button",
           "size": 12,
-          "text": "🐾 Cat tower 🔒"
+          "text": "Cat tower 🔒"
         },
         {
           "selector": ".hub-dock b",

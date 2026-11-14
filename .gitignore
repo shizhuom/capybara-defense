@@ -5,3 +5,5 @@ dist/
 verification/*.png
 verification/*.webm
 verification/browser-profile/
+.superpowers/
+verification/p4-protected-before.json

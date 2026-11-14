@@ -1,0 +1,4141 @@
+{
+  "at": "2026-11-14T19:53:16.827Z",
+  "checks": [
+    "desktop: zh/en art, clear composition, seven hub routes, map selection and battle round trip",
+    "mobile-landscape: zh/en art, clear composition, seven hub routes, map selection and battle round trip",
+    "mobile-portrait: zh/en art, clear composition, seven hub routes, map selection and battle round trip",
+    "Delayed manifest: localized vector fallback becomes decoded PNG without losing language or menu actions",
+    "All unlocked map choices persist; long English high-rank profile and badges fit through 320px",
+    "Console and pageerror: 0"
+  ],
+  "errors": [],
+  "screenshots": [
+    "p4-start-screen-zh.png",
+    "p4-start-screen-en.png",
+    "p4-start-mobile-landscape.png",
+    "p4-mobile-landscape-en.png",
+    "p4-start-mobile-portrait.png",
+    "p4-mobile-portrait-en.png",
+    "p4-fallback.png"
+  ],
+  "measurements": [
+    {
+      "label": "desktop zh",
+      "stage": {
+        "x": 0,
+        "y": 45,
+        "width": 1440,
+        "height": 810,
+        "top": 45,
+        "right": 1440,
+        "bottom": 855,
+        "left": 0
+      },
+      "title": {
+        "x": 420,
+        "y": 62.50835418701172,
+        "width": 600,
+        "height": 200,
+        "top": 62.50835418701172,
+        "right": 1020,
+        "bottom": 262.5083541870117,
+        "left": 420
+      },
+      "start": {
+        "x": 529.203125,
+        "y": 586.078125,
+        "width": 381.59375,
+        "height": 161.4375,
+        "top": 586.078125,
+        "right": 910.796875,
+        "bottom": 747.515625,
+        "left": 529.203125
+      },
+      "map": {
+        "x": 506.3046875,
+        "y": 800.125,
+        "width": 427.390625,
+        "height": 38.6875,
+        "top": 800.125,
+        "right": 933.6953125,
+        "bottom": 838.8125,
+        "left": 506.3046875
+      },
+      "profile": {
+        "x": 20.15625,
+        "y": 59.578125,
+        "width": 201.65625,
+        "height": 69.890625,
+        "top": 59.578125,
+        "right": 221.8125,
+        "bottom": 129.46875,
+        "left": 20.15625
+      },
+      "system": {
+        "x": 1262.59375,
+        "y": 59.578125,
+        "width": 157.25,
+        "height": 57.578125,
+        "top": 59.578125,
+        "right": 1419.84375,
+        "bottom": 117.15625,
+        "left": 1262.59375
+      },
+      "left": {
+        "x": 28.796875,
+        "y": 718.3125,
+        "width": 188.625,
+        "height": 114.015625,
+        "top": 718.3125,
+        "right": 217.421875,
+        "bottom": 832.328125,
+        "left": 28.796875
+      },
+      "right": {
+        "x": 1222.578125,
+        "y": 718.3125,
+        "width": 188.625,
+        "height": 114.015625,
+        "top": 718.3125,
+        "right": 1411.203125,
+        "bottom": 832.328125,
+        "left": 1222.578125
+      },
+      "hint": null,
+      "size": {
+        "width": 1440,
+        "height": 900
+      },
+      "scroll": [
+        1440,
+        900
+      ],
+      "css": [
+        {
+          "background": "rgba(0, 0, 0, 0)",
+          "border": "0px",
+          "shadow": "none"
+        },
+        {
+          "background": "rgba(0, 0, 0, 0)",
+          "border": "0px",
+          "shadow": "none"
+        }
+      ],
+      "medallions": [
+        {
+          "rect": {
+            "x": 28.796875,
+            "y": 718.3125,
+            "width": 83.515625,
+            "height": 83.515625,
+            "top": 718.3125,
+            "right": 112.3125,
+            "bottom": 801.828125,
+            "left": 28.796875
+          },
+          "radius": "50%"
+        },
+        {
+          "rect": {
+            "x": 133.90625,
+            "y": 718.3125,
+            "width": 83.515625,
+            "height": 83.515625,
+            "top": 718.3125,
+            "right": 217.421875,
+            "bottom": 801.828125,
+            "left": 133.90625
+          },
+          "radius": "50%"
+        },
+        {
+          "rect": {
+            "x": 1222.578125,
+            "y": 718.3125,
+            "width": 83.515625,
+            "height": 83.515625,
+            "top": 718.3125,
+            "right": 1306.09375,
+            "bottom": 801.828125,
+            "left": 1222.578125
+          },
+          "radius": "50%"
+        },
+        {
+          "rect": {
+            "x": 1327.6875,
+            "y": 718.3125,
+            "width": 83.515625,
+            "height": 83.515625,
+            "top": 718.3125,
+            "right": 1411.203125,
+            "bottom": 801.828125,
+            "left": 1327.6875
+          },
+          "radius": "50%"
+        }
+      ],
+      "controls": [
+        {
+          "action": "profile",
+          "rect": {
+            "x": 20.15625,
+            "y": 59.578125,
+            "width": 201.65625,
+            "height": 69.890625,
+            "top": 59.578125,
+            "right": 221.8125,
+            "bottom": 129.46875,
+            "left": 20.15625
+          },
+          "clickable": true,
+          "hit": true
+        },
+        {
+          "action": "zh-CN",
+          "rect": {
+            "x": 1270.0625,
+            "y": 70.390625,
+            "width": 37.4375,
+            "height": 35.9375,
+            "top": 70.390625,
+            "right": 1307.5,
+            "bottom": 106.328125,
+            "left": 1270.0625
+          },
+          "clickable": true,
+          "hit": true
+        },
+        {
+          "action": "en",
+          "rect": {
+            "x": 1307.5,
+            "y": 70.390625,
+            "width": 41.53125,
+            "height": 35.9375,
+            "top": 70.390625,
+            "right": 1349.03125,
+            "bottom": 106.328125,
+            "left": 1307.5
+          },
+          "clickable": true,
+          "hit": true
+        },
+        {
+          "action": "settings",
+          "rect": {
+            "x": 1365.140625,
+            "y": 62.453125,
+            "width": 51.828125,
+            "height": 51.828125,
+            "top": 62.453125,
+            "right": 1416.96875,
+            "bottom": 114.28125,
+            "left": 1365.140625
+          },
+          "clickable": true,
+          "hit": true
+        },
+        {
+          "action": "select-map:auto",
+          "rect": {
+            "x": 545.0859375,
+            "y": 804.28125,
+            "width": 83.5,
+            "height": 30.375,
+            "top": 804.28125,
+            "right": 628.5859375,
+            "bottom": 834.65625,
+            "left": 545.0859375
+          },
+          "clickable": true,
+          "hit": true
+        },
+        {
+          "action": "select-map:sunny_backyard",
+          "rect": {
+            "x": 631.4609375,
+            "y": 804.28125,
+            "width": 50.375,
+            "height": 30.375,
+            "top": 804.28125,
+            "right": 681.8359375,
+            "bottom": 834.65625,
+            "left": 631.4609375
+          },
+          "clickable": true,
+          "hit": true
+        },
+        {
+          "action": "select-map:sakura_onsen",
+          "rect": {
+            "x": 684.7109375,
+            "y": 804.28125,
+            "width": 78.109375,
+            "height": 30.375,
+            "top": 804.28125,
+            "right": 762.8203125,
+            "bottom": 834.65625,
+            "left": 684.7109375
+          },
+          "clickable": false,
+          "hit": true
+        },
+        {
+          "action": "select-map:midnight_kitchen",
+          "rect": {
+            "x": 765.6953125,
+            "y": 804.28125,
+            "width": 78.109375,
+            "height": 30.375,
+            "top": 804.28125,
+            "right": 843.8046875,
+            "bottom": 834.65625,
+            "left": 765.6953125
+          },
+          "clickable": false,
+          "hit": true
+        },
+        {
+          "action": "select-map:cat_tower_maze",
+          "rect": {
+            "x": 846.6796875,
+            "y": 804.28125,
+            "width": 78.109375,
+            "height": 30.375,
+            "top": 804.28125,
+            "right": 924.7890625,
+            "bottom": 834.65625,
+            "left": 846.6796875
+          },
+          "clickable": false,
+          "hit": true
+        },
+        {
+          "action": "start",
+          "rect": {
+            "x": 529.203125,
+            "y": 586.078125,
+            "width": 381.59375,
+            "height": 161.4375,
+            "top": 586.078125,
+            "right": 910.796875,
+            "bottom": 747.515625,
+            "left": 529.203125
+          },
+          "clickable": true,
+          "hit": true
+        },
+        {
+          "action": "recipes",
+          "rect": {
+            "x": 28.796875,
+            "y": 718.3125,
+            "width": 83.515625,
+            "height": 114.015625,
+            "top": 718.3125,
+            "right": 112.3125,
+            "bottom": 832.328125,
+            "left": 28.796875
+          },
+          "clickable": true,
+          "hit": true
+        },
+        {
+          "action": "armory",
+          "rect": {
+            "x": 133.90625,
+            "y": 718.3125,
+            "width": 83.515625,
+            "height": 114.015625,
+            "top": 718.3125,
+            "right": 217.421875,
+            "bottom": 832.328125,
+            "left": 133.90625
+          },
+          "clickable": true,
+          "hit": true
+        },
+        {
+          "action": "market",
+          "rect": {
+            "x": 1222.578125,
+            "y": 718.3125,
+            "width": 83.515625,
+            "height": 114.015625,
+            "top": 718.3125,
+            "right": 1306.09375,
+            "bottom": 832.328125,
+            "left": 1222.578125
+          },
+          "clickable": true,
+          "hit": true
+        },
+        {
+          "action": "leaderboard",
+          "rect": {
+            "x": 1327.6875,
+            "y": 718.3125,
+            "width": 83.515625,
+            "height": 114.015625,
+            "top": 718.3125,
+            "right": 1411.203125,
+            "bottom": 832.328125,
+            "left": 1327.6875
+          },
+          "clickable": true,
+          "hit": true
+        }
+      ],
+      "raw": "见习铲屎官 I🪙 0　⭐ 0\n    中EN⚙\n    \n    自动轮换后院樱花 🔒厨房 🔒猫塔 🔒\n    \n    图鉴神兵0/36\n    商店段位"
+    },
+    {
+      "label": "desktop en",
+      "stage": {
+        "x": 0,
+        "y": 45,
+        "width": 1440,
+        "height": 810,
+        "top": 45,
+        "right": 1440,
+        "bottom": 855,
+        "left": 0
+      },
+      "title": {
+        "x": 420,
+        "y": 62.8125,
+        "width": 600,
+        "height": 200,
+        "top": 62.8125,
+        "right": 1020,
+        "bottom": 262.8125,
+        "left": 420
+      },
+      "start": {
+        "x": 529.203125,
+        "y": 586.078125,
+        "width": 381.59375,
+        "height": 161.4375,
+        "top": 586.078125,
+        "right": 910.796875,
+        "bottom": 747.515625,
+        "left": 529.203125
+      },
+      "map": {
+        "x": 458.8359375,
+        "y": 800.125,
+        "width": 522.328125,
+        "height": 38.6875,
+        "top": 800.125,
+        "right": 981.1640625,
+        "bottom": 838.8125,
+        "left": 458.8359375
+      },
+      "profile": {
+        "x": 20.15625,
+        "y": 59.578125,
+        "width": 223.484375,
+        "height": 69.890625,
+        "top": 59.578125,
+        "right": 243.640625,
+        "bottom": 129.46875,
+        "left": 20.15625
+      },
+      "system": {
+        "x": 1262.59375,
+        "y": 59.578125,
+        "width": 157.25,
+        "height": 57.578125,
+        "top": 59.578125,
+        "right": 1419.84375,
+        "bottom": 117.15625,
+        "left": 1262.59375
+      },
+      "left": {
+        "x": 28.796875,
+        "y": 718.3125,
+        "width": 188.625,
+        "height": 114.015625,
+        "top": 718.3125,
+        "right": 217.421875,
+        "bottom": 832.328125,
+        "left": 28.796875
+      },
+      "right": {
+        "x": 1222.578125,
+        "y": 718.3125,
+        "width": 188.625,
+        "height": 114.015625,
+        "top": 718.3125,
+        "right": 1411.203125,
+        "bottom": 832.328125,
+        "left": 1222.578125
+      },
+      "hint": null,
+      "size": {
+        "width": 1440,
+        "height": 900
+      },
+      "scroll": [
+        1440,
+        900
+      ],
+      "css": [
+        {
+          "background": "rgba(0, 0, 0, 0)",
+          "border": "0px",
+          "shadow": "none"
+        },
+        {
+          "background": "rgba(0, 0, 0, 0)",
+          "border": "0px",
+          "shadow": "none"
+        }
+      ],
+      "medallions": [
+        {
+          "rect": {
+            "x": 28.796875,
+            "y": 718.3125,
+            "width": 83.515625,
+            "height": 83.515625,
+            "top": 718.3125,
+            "right": 112.3125,
+            "bottom": 801.828125,
+            "left": 28.796875
+          },
+          "radius": "50%"
+        },
+        {
+          "rect": {
+            "x": 133.90625,
+            "y": 718.3125,
+            "width": 83.515625,
+            "height": 83.515625,
+            "top": 718.3125,
+            "right": 217.421875,
+            "bottom": 801.828125,
+            "left": 133.90625
+          },
+          "radius": "50%"
+        },
+        {
+          "rect": {
+            "x": 1222.578125,
+            "y": 718.3125,
+            "width": 83.515625,
+            "height": 83.515625,
+            "top": 718.3125,
+            "right": 1306.09375,
+            "bottom": 801.828125,
+            "left": 1222.578125
+          },
+          "radius": "50%"
+        },
+        {
+          "rect": {
+            "x": 1327.6875,
+            "y": 718.3125,
+            "width": 83.515625,
+            "height": 83.515625,
+            "top": 718.3125,
+            "right": 1411.203125,
+            "bottom": 801.828125,
+            "left": 1327.6875
+          },
+          "radius": "50%"
+        }
+      ],
+      "controls": [
+        {
+          "action": "profile",
+          "rect": {
+            "x": 20.15625,
+            "y": 59.578125,
+            "width": 223.484375,
+            "height": 69.890625,
+            "top": 59.578125,
+            "right": 243.640625,
+            "bottom": 129.46875,
+            "left": 20.15625
+          },
+          "clickable": true,
+          "hit": true
+        },
+        {
+          "action": "zh-CN",
+          "rect": {
+            "x": 1270.0625,
+            "y": 70.390625,
+            "width": 37.4375,
+            "height": 35.9375,
+            "top": 70.390625,
+            "right": 1307.5,
+            "bottom": 106.328125,
+            "left": 1270.0625
+          },
+          "clickable": true,
+          "hit": true
+        },
+        {
+          "action": "en",
+          "rect": {
+            "x": 1307.5,
+            "y": 70.390625,
+            "width": 41.53125,
+            "height": 35.9375,
+            "top": 70.390625,
+            "right": 1349.03125,
+            "bottom": 106.328125,
+            "left": 1307.5
+          },
+          "clickable": true,
+          "hit": true
+        },
+        {
+          "action": "settings",
+          "rect": {
+            "x": 1365.140625,
+            "y": 62.453125,
+            "width": 51.828125,
+            "height": 51.828125,
+            "top": 62.453125,
+            "right": 1416.96875,
+            "bottom": 114.28125,
+            "left": 1365.140625
+          },
+          "clickable": true,
+          "hit": true
+        },
+        {
+          "action": "select-map:auto",
+          "rect": {
+            "x": 497.6171875,
+            "y": 804.28125,
+            "width": 53.46875,
+            "height": 30.375,
+            "top": 804.28125,
+            "right": 551.0859375,
+            "bottom": 834.65625,
+            "left": 497.6171875
+          },
+          "clickable": true,
+          "hit": true
+        },
+        {
+          "action": "select-map:sunny_backyard",
+          "rect": {
+            "x": 553.9609375,
+            "y": 804.28125,
+            "width": 87.828125,
+            "height": 30.375,
+            "top": 804.28125,
+            "right": 641.7890625,
+            "bottom": 834.65625,
+            "left": 553.9609375
+          },
+          "clickable": true,
+          "hit": true
+        },
+        {
+          "action": "select-map:sakura_onsen",
+          "rect": {
+            "x": 644.6640625,
+            "y": 804.28125,
+            "width": 96.515625,
+            "height": 30.375,
+            "top": 804.28125,
+            "right": 741.1796875,
+            "bottom": 834.65625,
+            "left": 644.6640625
+          },
+          "clickable": false,
+          "hit": true
+        },
+        {
+          "action": "select-map:midnight_kitchen",
+          "rect": {
+            "x": 744.0546875,
+            "y": 804.28125,
+            "width": 104.3125,
+            "height": 30.375,
+            "top": 804.28125,
+            "right": 848.3671875,
+            "bottom": 834.65625,
+            "left": 744.0546875
+          },
+          "clickable": false,
+          "hit": true
+        },
+        {
+          "action": "select-map:cat_tower_maze",
+          "rect": {
+            "x": 851.2421875,
+            "y": 804.28125,
+            "width": 121.015625,
+            "height": 30.375,
+            "top": 804.28125,
+            "right": 972.2578125,
+            "bottom": 834.65625,
+            "left": 851.2421875
+          },
+          "clickable": false,
+          "hit": true
+        },
+        {
+          "action": "start",
+          "rect": {
+            "x": 529.203125,
+            "y": 586.078125,
+            "width": 381.59375,
+            "height": 161.4375,
+            "top": 586.078125,
+            "right": 910.796875,
+            "bottom": 747.515625,
+            "left": 529.203125
+          },
+          "clickable": true,
+          "hit": true
+        },
+        {
+          "action": "recipes",
+          "rect": {
+            "x": 28.796875,
+            "y": 718.3125,
+            "width": 83.515625,
+            "height": 114.015625,
+            "top": 718.3125,
+            "right": 112.3125,
+            "bottom": 832.328125,
+            "left": 28.796875
+          },
+          "clickable": true,
+          "hit": true
+        },
+        {
+          "action": "armory",
+          "rect": {
+            "x": 133.90625,
+            "y": 718.3125,
+            "width": 83.515625,
+            "height": 114.015625,
+            "top": 718.3125,
+            "right": 217.421875,
+            "bottom": 832.328125,
+            "left": 133.90625
+          },
+          "clickable": true,
+          "hit": true
+        },
+        {
+          "action": "market",
+          "rect": {
+            "x": 1222.578125,
+            "y": 718.3125,
+            "width": 83.515625,
+            "height": 114.015625,
+            "top": 718.3125,
+            "right": 1306.09375,
+            "bottom": 832.328125,
+            "left": 1222.578125
+          },
+          "clickable": true,
+          "hit": true
+        },
+        {
+          "action": "leaderboard",
+          "rect": {
+            "x": 1327.6875,
+            "y": 718.3125,
+            "width": 83.515625,
+            "height": 114.015625,
+            "top": 718.3125,
+            "right": 1411.203125,
+            "bottom": 832.328125,
+            "left": 1327.6875
+          },
+          "clickable": true,
+          "hit": true
+        }
+      ],
+      "raw": "Rookie Keeper I🪙 0　⭐ 0\n    中EN⚙\n    \n    AutoBackyardSakura 🔒Kitchen 🔒Cat tower 🔒\n    \n    GuideArmory0/36\n    ShopRank"
+    },
+    {
+      "label": "mobile-landscape zh",
+      "stage": {
+        "x": 75.328125,
+        "y": 0,
+        "width": 693.328125,
+        "height": 389.984375,
+        "top": 0,
+        "right": 768.65625,
+        "bottom": 389.984375,
+        "left": 75.328125
+      },
+      "title": {
+        "x": 259.0546875,
+        "y": 8.001763343811035,
+        "width": 325.859375,
+        "height": 108.609375,
+        "top": 8.001763343811035,
+        "right": 584.9140625,
+        "bottom": 116.61113834381104,
+        "left": 259.0546875
+      },
+      "start": {
+        "x": 330.125,
+        "y": 260.5,
+        "width": 183.71875,
+        "height": 77.71875,
+        "top": 260.5,
+        "right": 513.84375,
+        "bottom": 338.21875,
+        "left": 330.125
+      },
+      "map": {
+        "x": 280.7890625,
+        "y": 353.15625,
+        "width": 282.390625,
+        "height": 29.03125,
+        "top": 353.15625,
+        "right": 563.1796875,
+        "bottom": 382.1875,
+        "left": 280.7890625
+      },
+      "profile": {
+        "x": 85.03125,
+        "y": 7.015625,
+        "width": 112.546875,
+        "height": 42.5625,
+        "top": 7.015625,
+        "right": 197.578125,
+        "bottom": 49.578125,
+        "left": 85.03125
+      },
+      "system": {
+        "x": 674.0625,
+        "y": 7.015625,
+        "width": 84.890625,
+        "height": 30.40625,
+        "top": 7.015625,
+        "right": 758.953125,
+        "bottom": 37.421875,
+        "left": 674.0625
+      },
+      "left": {
+        "x": 89.1875,
+        "y": 317.234375,
+        "width": 98.390625,
+        "height": 61.84375,
+        "top": 317.234375,
+        "right": 187.578125,
+        "bottom": 379.078125,
+        "left": 89.1875
+      },
+      "right": {
+        "x": 656.40625,
+        "y": 317.234375,
+        "width": 98.390625,
+        "height": 61.84375,
+        "top": 317.234375,
+        "right": 754.796875,
+        "bottom": 379.078125,
+        "left": 656.40625
+      },
+      "hint": null,
+      "size": {
+        "width": 844,
+        "height": 390
+      },
+      "scroll": [
+        844,
+        390
+      ],
+      "css": [
+        {
+          "background": "rgba(0, 0, 0, 0)",
+          "border": "0px",
+          "shadow": "none"
+        },
+        {
+          "background": "rgba(0, 0, 0, 0)",
+          "border": "0px",
+          "shadow": "none"
+        }
+      ],
+      "medallions": [
+        {
+          "rect": {
+            "x": 89.1875,
+            "y": 317.234375,
+            "width": 44,
+            "height": 44,
+            "top": 317.234375,
+            "right": 133.1875,
+            "bottom": 361.234375,
+            "left": 89.1875
+          },
+          "radius": "50%"
+        },
+        {
+          "rect": {
+            "x": 143.578125,
+            "y": 317.234375,
+            "width": 44,
+            "height": 44,
+            "top": 317.234375,
+            "right": 187.578125,
+            "bottom": 361.234375,
+            "left": 143.578125
+          },
+          "radius": "50%"
+        },
+        {
+          "rect": {
+            "x": 656.40625,
+            "y": 317.234375,
+            "width": 44,
+            "height": 44,
+            "top": 317.234375,
+            "right": 700.40625,
+            "bottom": 361.234375,
+            "left": 656.40625
+          },
+          "radius": "50%"
+        },
+        {
+          "rect": {
+            "x": 710.796875,
+            "y": 317.234375,
+            "width": 44,
+            "height": 44,
+            "top": 317.234375,
+            "right": 754.796875,
+            "bottom": 361.234375,
+            "left": 710.796875
+          },
+          "radius": "50%"
+        }
+      ],
+      "controls": [
+        {
+          "action": "profile",
+          "rect": {
+            "x": 85.03125,
+            "y": 7.015625,
+            "width": 112.546875,
+            "height": 42.5625,
+            "top": 7.015625,
+            "right": 197.578125,
+            "bottom": 49.578125,
+            "left": 85.03125
+          },
+          "clickable": true,
+          "hit": true
+        },
+        {
+          "action": "zh-CN",
+          "rect": {
+            "x": 678.15625,
+            "y": 11.109375,
+            "width": 21.6875,
+            "height": 22.21875,
+            "top": 11.109375,
+            "right": 699.84375,
+            "bottom": 33.328125,
+            "left": 678.15625
+          },
+          "clickable": true,
+          "hit": true
+        },
+        {
+          "action": "en",
+          "rect": {
+            "x": 699.84375,
+            "y": 11.109375,
+            "width": 24.53125,
+            "height": 22.21875,
+            "top": 11.109375,
+            "right": 724.375,
+            "bottom": 33.328125,
+            "left": 699.84375
+          },
+          "clickable": true,
+          "hit": true
+        },
+        {
+          "action": "settings",
+          "rect": {
+            "x": 732.625,
+            "y": 9.734375,
+            "width": 24.953125,
+            "height": 24.953125,
+            "top": 9.734375,
+            "right": 757.578125,
+            "bottom": 34.6875,
+            "left": 732.625
+          },
+          "clickable": true,
+          "hit": true
+        },
+        {
+          "action": "select-map:auto",
+          "rect": {
+            "x": 306.9765625,
+            "y": 355.671875,
+            "width": 56.3125,
+            "height": 24,
+            "top": 355.671875,
+            "right": 363.2890625,
+            "bottom": 379.671875,
+            "left": 306.9765625
+          },
+          "clickable": true,
+          "hit": true
+        },
+        {
+          "action": "select-map:sunny_backyard",
+          "rect": {
+            "x": 364.6640625,
+            "y": 355.671875,
+            "width": 32.3125,
+            "height": 24,
+            "top": 355.671875,
+            "right": 396.9765625,
+            "bottom": 379.671875,
+            "left": 364.6640625
+          },
+          "clickable": true,
+          "hit": true
+        },
+        {
+          "action": "select-map:sakura_onsen",
+          "rect": {
+            "x": 398.3515625,
+            "y": 355.671875,
+            "width": 52.421875,
+            "height": 24,
+            "top": 355.671875,
+            "right": 450.7734375,
+            "bottom": 379.671875,
+            "left": 398.3515625
+          },
+          "clickable": false,
+          "hit": true
+        },
+        {
+          "action": "select-map:midnight_kitchen",
+          "rect": {
+            "x": 452.1484375,
+            "y": 355.671875,
+            "width": 52.421875,
+            "height": 24,
+            "top": 355.671875,
+            "right": 504.5703125,
+            "bottom": 379.671875,
+            "left": 452.1484375
+          },
+          "clickable": false,
+          "hit": true
+        },
+        {
+          "action": "select-map:cat_tower_maze",
+          "rect": {
+            "x": 505.9453125,
+            "y": 355.671875,
+            "width": 52.421875,
+            "height": 24,
+            "top": 355.671875,
+            "right": 558.3671875,
+            "bottom": 379.671875,
+            "left": 505.9453125
+          },
+          "clickable": false,
+          "hit": true
+        },
+        {
+          "action": "start",
+          "rect": {
+            "x": 330.125,
+            "y": 260.5,
+            "width": 183.71875,
+            "height": 77.71875,
+            "top": 260.5,
+            "right": 513.84375,
+            "bottom": 338.21875,
+            "left": 330.125
+          },
+          "clickable": true,
+          "hit": true
+        },
+        {
+          "action": "recipes",
+          "rect": {
+            "x": 89.1875,
+            "y": 317.234375,
+            "width": 44,
+            "height": 61.84375,
+            "top": 317.234375,
+            "right": 133.1875,
+            "bottom": 379.078125,
+            "left": 89.1875
+          },
+          "clickable": true,
+          "hit": true
+        },
+        {
+          "action": "armory",
+          "rect": {
+            "x": 143.578125,
+            "y": 317.234375,
+            "width": 44,
+            "height": 61.84375,
+            "top": 317.234375,
+            "right": 187.578125,
+            "bottom": 379.078125,
+            "left": 143.578125
+          },
+          "clickable": true,
+          "hit": true
+        },
+        {
+          "action": "market",
+          "rect": {
+            "x": 656.40625,
+            "y": 317.234375,
+            "width": 44,
+            "height": 61.84375,
+            "top": 317.234375,
+            "right": 700.40625,
+            "bottom": 379.078125,
+            "left": 656.40625
+          },
+          "clickable": true,
+          "hit": true
+        },
+        {
+          "action": "leaderboard",
+          "rect": {
+            "x": 710.796875,
+            "y": 317.234375,
+            "width": 44,
+            "height": 61.84375,
+            "top": 317.234375,
+            "right": 754.796875,
+            "bottom": 379.078125,
+            "left": 710.796875
+          },
+          "clickable": true,
+          "hit": true
+        }
+      ],
+      "raw": "见习铲屎官 I🪙 0　⭐ 0\n    中EN⚙\n    \n    自动轮换后院樱花 🔒厨房 🔒猫塔 🔒\n    \n    图鉴神兵0/36\n    商店段位"
+    },
+    {
+      "label": "mobile-landscape en",
+      "stage": {
+        "x": 75.328125,
+        "y": 0,
+        "width": 693.328125,
+        "height": 389.984375,
+        "top": 0,
+        "right": 768.65625,
+        "bottom": 389.984375,
+        "left": 75.328125
+      },
+      "title": {
+        "x": 259.0546875,
+        "y": 8.578125,
+        "width": 325.859375,
+        "height": 108.609375,
+        "top": 8.578125,
+        "right": 584.9140625,
+        "bottom": 117.1875,
+        "left": 259.0546875
+      },
+      "start": {
+        "x": 330.125,
+        "y": 260.5,
+        "width": 183.71875,
+        "height": 77.71875,
+        "top": 260.5,
+        "right": 513.84375,
+        "bottom": 338.21875,
+        "left": 330.125
+      },
+      "map": {
+        "x": 246.40625,
+        "y": 353.15625,
+        "width": 351.15625,
+        "height": 29.03125,
+        "top": 353.15625,
+        "right": 597.5625,
+        "bottom": 382.1875,
+        "left": 246.40625
+      },
+      "profile": {
+        "x": 85.03125,
+        "y": 7.015625,
+        "width": 134.328125,
+        "height": 40.5625,
+        "top": 7.015625,
+        "right": 219.359375,
+        "bottom": 47.578125,
+        "left": 85.03125
+      },
+      "system": {
+        "x": 674.0625,
+        "y": 7.015625,
+        "width": 84.890625,
+        "height": 30.40625,
+        "top": 7.015625,
+        "right": 758.953125,
+        "bottom": 37.421875,
+        "left": 674.0625
+      },
+      "left": {
+        "x": 89.1875,
+        "y": 317.234375,
+        "width": 98.390625,
+        "height": 61.84375,
+        "top": 317.234375,
+        "right": 187.578125,
+        "bottom": 379.078125,
+        "left": 89.1875
+      },
+      "right": {
+        "x": 656.40625,
+        "y": 317.234375,
+        "width": 98.390625,
+        "height": 61.84375,
+        "top": 317.234375,
+        "right": 754.796875,
+        "bottom": 379.078125,
+        "left": 656.40625
+      },
+      "hint": null,
+      "size": {
+        "width": 844,
+        "height": 390
+      },
+      "scroll": [
+        844,
+        390
+      ],
+      "css": [
+        {
+          "background": "rgba(0, 0, 0, 0)",
+          "border": "0px",
+          "shadow": "none"
+        },
+        {
+          "background": "rgba(0, 0, 0, 0)",
+          "border": "0px",
+          "shadow": "none"
+        }
+      ],
+      "medallions": [
+        {
+          "rect": {
+            "x": 89.1875,
+            "y": 317.234375,
+            "width": 44,
+            "height": 44,
+            "top": 317.234375,
+            "right": 133.1875,
+            "bottom": 361.234375,
+            "left": 89.1875
+          },
+          "radius": "50%"
+        },
+        {
+          "rect": {
+            "x": 143.578125,
+            "y": 317.234375,
+            "width": 44,
+            "height": 44,
+            "top": 317.234375,
+            "right": 187.578125,
+            "bottom": 361.234375,
+            "left": 143.578125
+          },
+          "radius": "50%"
+        },
+        {
+          "rect": {
+            "x": 656.40625,
+            "y": 317.234375,
+            "width": 44,
+            "height": 44,
+            "top": 317.234375,
+            "right": 700.40625,
+            "bottom": 361.234375,
+            "left": 656.40625
+          },
+          "radius": "50%"
+        },
+        {
+          "rect": {
+            "x": 710.796875,
+            "y": 317.234375,
+            "width": 44,
+            "height": 44,
+            "top": 317.234375,
+            "right": 754.796875,
+            "bottom": 361.234375,
+            "left": 710.796875
+          },
+          "radius": "50%"
+        }
+      ],
+      "controls": [
+        {
+          "action": "profile",
+          "rect": {
+            "x": 85.03125,
+            "y": 7.015625,
+            "width": 134.328125,
+            "height": 40.5625,
+            "top": 7.015625,
+            "right": 219.359375,
+            "bottom": 47.578125,
+            "left": 85.03125
+          },
+          "clickable": true,
+          "hit": true
+        },
+        {
+          "action": "zh-CN",
+          "rect": {
+            "x": 678.15625,
+            "y": 11.109375,
+            "width": 21.6875,
+            "height": 22.21875,
+            "top": 11.109375,
+            "right": 699.84375,
+            "bottom": 33.328125,
+            "left": 678.15625
+          },
+          "clickable": true,
+          "hit": true
+        },
+        {
+          "action": "en",
+          "rect": {
+            "x": 699.84375,
+            "y": 11.109375,
+            "width": 24.53125,
+            "height": 22.21875,
+            "top": 11.109375,
+            "right": 724.375,
+            "bottom": 33.328125,
+            "left": 699.84375
+          },
+          "clickable": true,
+          "hit": true
+        },
+        {
+          "action": "settings",
+          "rect": {
+            "x": 732.625,
+            "y": 9.734375,
+            "width": 24.953125,
+            "height": 24.953125,
+            "top": 9.734375,
+            "right": 757.578125,
+            "bottom": 34.6875,
+            "left": 732.625
+          },
+          "clickable": true,
+          "hit": true
+        },
+        {
+          "action": "select-map:auto",
+          "rect": {
+            "x": 272.59375,
+            "y": 355.671875,
+            "width": 34.5625,
+            "height": 24,
+            "top": 355.671875,
+            "right": 307.15625,
+            "bottom": 379.671875,
+            "left": 272.59375
+          },
+          "clickable": true,
+          "hit": true
+        },
+        {
+          "action": "select-map:sunny_backyard",
+          "rect": {
+            "x": 308.53125,
+            "y": 355.671875,
+            "width": 59.453125,
+            "height": 24,
+            "top": 355.671875,
+            "right": 367.984375,
+            "bottom": 379.671875,
+            "left": 308.53125
+          },
+          "clickable": true,
+          "hit": true
+        },
+        {
+          "action": "select-map:sakura_onsen",
+          "rect": {
+            "x": 369.359375,
+            "y": 355.671875,
+            "width": 65.75,
+            "height": 24,
+            "top": 355.671875,
+            "right": 435.109375,
+            "bottom": 379.671875,
+            "left": 369.359375
+          },
+          "clickable": false,
+          "hit": true
+        },
+        {
+          "action": "select-map:midnight_kitchen",
+          "rect": {
+            "x": 436.484375,
+            "y": 355.671875,
+            "width": 71.390625,
+            "height": 24,
+            "top": 355.671875,
+            "right": 507.875,
+            "bottom": 379.671875,
+            "left": 436.484375
+          },
+          "clickable": false,
+          "hit": true
+        },
+        {
+          "action": "select-map:cat_tower_maze",
+          "rect": {
+            "x": 509.25,
+            "y": 355.671875,
+            "width": 83.5,
+            "height": 24,
+            "top": 355.671875,
+            "right": 592.75,
+            "bottom": 379.671875,
+            "left": 509.25
+          },
+          "clickable": false,
+          "hit": true
+        },
+        {
+          "action": "start",
+          "rect": {
+            "x": 330.125,
+            "y": 260.5,
+            "width": 183.71875,
+            "height": 77.71875,
+            "top": 260.5,
+            "right": 513.84375,
+            "bottom": 338.21875,
+            "left": 330.125
+          },
+          "clickable": true,
+          "hit": true
+        },
+        {
+          "action": "recipes",
+          "rect": {
+            "x": 89.1875,
+            "y": 317.234375,
+            "width": 44,
+            "height": 61.84375,
+            "top": 317.234375,
+            "right": 133.1875,
+            "bottom": 379.078125,
+            "left": 89.1875
+          },
+          "clickable": true,
+          "hit": true
+        },
+        {
+          "action": "armory",
+          "rect": {
+            "x": 143.578125,
+            "y": 317.234375,
+            "width": 44,
+            "height": 61.84375,
+            "top": 317.234375,
+            "right": 187.578125,
+            "bottom": 379.078125,
+            "left": 143.578125
+          },
+          "clickable": true,
+          "hit": true
+        },
+        {
+          "action": "market",
+          "rect": {
+            "x": 656.40625,
+            "y": 317.234375,
+            "width": 44,
+            "height": 61.84375,
+            "top": 317.234375,
+            "right": 700.40625,
+            "bottom": 379.078125,
+            "left": 656.40625
+          },
+          "clickable": true,
+          "hit": true
+        },
+        {
+          "action": "leaderboard",
+          "rect": {
+            "x": 710.796875,
+            "y": 317.234375,
+            "width": 44,
+            "height": 61.84375,
+            "top": 317.234375,
+            "right": 754.796875,
+            "bottom": 379.078125,
+            "left": 710.796875
+          },
+          "clickable": true,
+          "hit": true
+        }
+      ],
+      "raw": "Rookie Keeper I🪙 0　⭐ 0\n    中EN⚙\n    \n    AutoBackyardSakura 🔒Kitchen 🔒Cat tower 🔒\n    \n    GuideArmory0/36\n    ShopRank"
+    },
+    {
+      "label": "mobile-portrait zh",
+      "stage": {
+        "x": 0,
+        "y": 312.3125,
+        "width": 390,
+        "height": 219.375,
+        "top": 312.3125,
+        "right": 390,
+        "bottom": 531.6875,
+        "left": 0
+      },
+      "title": {
+        "x": 103.3515625,
+        "y": 316.7923278808594,
+        "width": 183.296875,
+        "height": 61.09375,
+        "top": 316.7923278808594,
+        "right": 286.6484375,
+        "bottom": 377.8860778808594,
+        "left": 103.3515625
+      },
+      "start": {
+        "x": 143.328125,
+        "y": 458.84375,
+        "width": 103.34375,
+        "height": 43.71875,
+        "top": 458.84375,
+        "right": 246.671875,
+        "bottom": 502.5625,
+        "left": 143.328125
+      },
+      "map": {
+        "x": 84.5,
+        "y": 541.6875,
+        "width": 221,
+        "height": 40,
+        "top": 541.6875,
+        "right": 305.5,
+        "bottom": 581.6875,
+        "left": 84.5
+      },
+      "profile": {
+        "x": 5.453125,
+        "y": 260.3125,
+        "width": 111.96875,
+        "height": 44,
+        "top": 260.3125,
+        "right": 117.421875,
+        "bottom": 304.3125,
+        "left": 5.453125
+      },
+      "system": {
+        "x": 283.703125,
+        "y": 260.3125,
+        "width": 100.84375,
+        "height": 44,
+        "top": 260.3125,
+        "right": 384.546875,
+        "bottom": 304.3125,
+        "left": 283.703125
+      },
+      "left": {
+        "x": 7.796875,
+        "y": 459.28125,
+        "width": 98,
+        "height": 60.328125,
+        "top": 459.28125,
+        "right": 105.796875,
+        "bottom": 519.609375,
+        "left": 7.796875
+      },
+      "right": {
+        "x": 284.203125,
+        "y": 459.28125,
+        "width": 98,
+        "height": 60.328125,
+        "top": 459.28125,
+        "right": 382.203125,
+        "bottom": 519.609375,
+        "left": 284.203125
+      },
+      "hint": {
+        "x": 8,
+        "y": 597.6875,
+        "width": 374,
+        "height": 40,
+        "top": 597.6875,
+        "right": 382,
+        "bottom": 637.6875,
+        "left": 8
+      },
+      "size": {
+        "width": 390,
+        "height": 844
+      },
+      "scroll": [
+        390,
+        844
+      ],
+      "css": [
+        {
+          "background": "rgba(0, 0, 0, 0)",
+          "border": "0px",
+          "shadow": "none"
+        },
+        {
+          "background": "rgba(0, 0, 0, 0)",
+          "border": "0px",
+          "shadow": "none"
+        }
+      ],
+      "medallions": [
+        {
+          "rect": {
+            "x": 7.796875,
+            "y": 459.28125,
+            "width": 44,
+            "height": 44,
+            "top": 459.28125,
+            "right": 51.796875,
+            "bottom": 503.28125,
+            "left": 7.796875
+          },
+          "radius": "50%"
+        },
+        {
+          "rect": {
+            "x": 61.796875,
+            "y": 459.28125,
+            "width": 44,
+            "height": 44,
+            "top": 459.28125,
+            "right": 105.796875,
+            "bottom": 503.28125,
+            "left": 61.796875
+          },
+          "radius": "50%"
+        },
+        {
+          "rect": {
+            "x": 284.203125,
+            "y": 459.28125,
+            "width": 44,
+            "height": 44,
+            "top": 459.28125,
+            "right": 328.203125,
+            "bottom": 503.28125,
+            "left": 284.203125
+          },
+          "radius": "50%"
+        },
+        {
+          "rect": {
+            "x": 338.203125,
+            "y": 459.28125,
+            "width": 44,
+            "height": 44,
+            "top": 459.28125,
+            "right": 382.203125,
+            "bottom": 503.28125,
+            "left": 338.203125
+          },
+          "radius": "50%"
+        }
+      ],
+      "controls": [
+        {
+          "action": "profile",
+          "rect": {
+            "x": 5.453125,
+            "y": 260.3125,
+            "width": 111.96875,
+            "height": 44,
+            "top": 260.3125,
+            "right": 117.421875,
+            "bottom": 304.3125,
+            "left": 5.453125
+          },
+          "clickable": true,
+          "hit": true
+        },
+        {
+          "action": "zh-CN",
+          "rect": {
+            "x": 288.703125,
+            "y": 264.3125,
+            "width": 24,
+            "height": 36,
+            "top": 264.3125,
+            "right": 312.703125,
+            "bottom": 300.3125,
+            "left": 288.703125
+          },
+          "clickable": true,
+          "hit": true
+        },
+        {
+          "action": "en",
+          "rect": {
+            "x": 312.703125,
+            "y": 264.3125,
+            "width": 26.84375,
+            "height": 36,
+            "top": 264.3125,
+            "right": 339.546875,
+            "bottom": 300.3125,
+            "left": 312.703125
+          },
+          "clickable": true,
+          "hit": true
+        },
+        {
+          "action": "settings",
+          "rect": {
+            "x": 345.546875,
+            "y": 264.3125,
+            "width": 36,
+            "height": 36,
+            "top": 264.3125,
+            "right": 381.546875,
+            "bottom": 300.3125,
+            "left": 345.546875
+          },
+          "clickable": true,
+          "hit": true
+        },
+        {
+          "action": "select-map:auto",
+          "rect": {
+            "x": 111.5,
+            "y": 545.6875,
+            "width": 56,
+            "height": 32,
+            "top": 545.6875,
+            "right": 167.5,
+            "bottom": 577.6875,
+            "left": 111.5
+          },
+          "clickable": true,
+          "hit": true
+        },
+        {
+          "action": "select-map:sunny_backyard",
+          "rect": {
+            "x": 168.5,
+            "y": 545.6875,
+            "width": 32,
+            "height": 32,
+            "top": 545.6875,
+            "right": 200.5,
+            "bottom": 577.6875,
+            "left": 168.5
+          },
+          "clickable": true,
+          "hit": true
+        },
+        {
+          "action": "select-map:sakura_onsen",
+          "rect": {
+            "x": 201.5,
+            "y": 545.6875,
+            "width": 32,
+            "height": 32,
+            "top": 545.6875,
+            "right": 233.5,
+            "bottom": 577.6875,
+            "left": 201.5
+          },
+          "clickable": false,
+          "hit": true
+        },
+        {
+          "action": "select-map:midnight_kitchen",
+          "rect": {
+            "x": 234.5,
+            "y": 545.6875,
+            "width": 32,
+            "height": 32,
+            "top": 545.6875,
+            "right": 266.5,
+            "bottom": 577.6875,
+            "left": 234.5
+          },
+          "clickable": false,
+          "hit": true
+        },
+        {
+          "action": "select-map:cat_tower_maze",
+          "rect": {
+            "x": 267.5,
+            "y": 545.6875,
+            "width": 32,
+            "height": 32,
+            "top": 545.6875,
+            "right": 299.5,
+            "bottom": 577.6875,
+            "left": 267.5
+          },
+          "clickable": false,
+          "hit": true
+        },
+        {
+          "action": "start",
+          "rect": {
+            "x": 143.328125,
+            "y": 458.84375,
+            "width": 103.34375,
+            "height": 43.71875,
+            "top": 458.84375,
+            "right": 246.671875,
+            "bottom": 502.5625,
+            "left": 143.328125
+          },
+          "clickable": true,
+          "hit": true
+        },
+        {
+          "action": "recipes",
+          "rect": {
+            "x": 7.796875,
+            "y": 459.28125,
+            "width": 44,
+            "height": 60.328125,
+            "top": 459.28125,
+            "right": 51.796875,
+            "bottom": 519.609375,
+            "left": 7.796875
+          },
+          "clickable": true,
+          "hit": true
+        },
+        {
+          "action": "armory",
+          "rect": {
+            "x": 61.796875,
+            "y": 459.28125,
+            "width": 44,
+            "height": 60.328125,
+            "top": 459.28125,
+            "right": 105.796875,
+            "bottom": 519.609375,
+            "left": 61.796875
+          },
+          "clickable": true,
+          "hit": true
+        },
+        {
+          "action": "market",
+          "rect": {
+            "x": 284.203125,
+            "y": 459.28125,
+            "width": 44,
+            "height": 60.328125,
+            "top": 459.28125,
+            "right": 328.203125,
+            "bottom": 519.609375,
+            "left": 284.203125
+          },
+          "clickable": true,
+          "hit": true
+        },
+        {
+          "action": "leaderboard",
+          "rect": {
+            "x": 338.203125,
+            "y": 459.28125,
+            "width": 44,
+            "height": 60.328125,
+            "top": 459.28125,
+            "right": 382.203125,
+            "bottom": 519.609375,
+            "left": 338.203125
+          },
+          "clickable": true,
+          "hit": true
+        }
+      ],
+      "raw": "见习铲屎官 I🪙 0　⭐ 0\n    中EN⚙\n    \n    自动轮换后院樱花 🔒厨房 🔒猫塔 🔒\n    \n    图鉴神兵0/36\n    商店段位"
+    },
+    {
+      "label": "mobile-portrait en",
+      "stage": {
+        "x": 0,
+        "y": 312.3125,
+        "width": 390,
+        "height": 219.375,
+        "top": 312.3125,
+        "right": 390,
+        "bottom": 531.6875,
+        "left": 0
+      },
+      "title": {
+        "x": 103.3515625,
+        "y": 317.125,
+        "width": 183.296875,
+        "height": 61.09375,
+        "top": 317.125,
+        "right": 286.6484375,
+        "bottom": 378.21875,
+        "left": 103.3515625
+      },
+      "start": {
+        "x": 143.328125,
+        "y": 458.84375,
+        "width": 103.34375,
+        "height": 43.71875,
+        "top": 458.84375,
+        "right": 246.671875,
+        "bottom": 502.5625,
+        "left": 143.328125
+      },
+      "map": {
+        "x": 50.09375,
+        "y": 541.6875,
+        "width": 289.8125,
+        "height": 40,
+        "top": 541.6875,
+        "right": 339.90625,
+        "bottom": 581.6875,
+        "left": 50.09375
+      },
+      "profile": {
+        "x": 5.453125,
+        "y": 260.3125,
+        "width": 133.75,
+        "height": 44,
+        "top": 260.3125,
+        "right": 139.203125,
+        "bottom": 304.3125,
+        "left": 5.453125
+      },
+      "system": {
+        "x": 283.703125,
+        "y": 260.3125,
+        "width": 100.84375,
+        "height": 44,
+        "top": 260.3125,
+        "right": 384.546875,
+        "bottom": 304.3125,
+        "left": 283.703125
+      },
+      "left": {
+        "x": 7.796875,
+        "y": 459.28125,
+        "width": 98,
+        "height": 60.328125,
+        "top": 459.28125,
+        "right": 105.796875,
+        "bottom": 519.609375,
+        "left": 7.796875
+      },
+      "right": {
+        "x": 284.203125,
+        "y": 459.28125,
+        "width": 98,
+        "height": 60.328125,
+        "top": 459.28125,
+        "right": 382.203125,
+        "bottom": 519.609375,
+        "left": 284.203125
+      },
+      "hint": {
+        "x": 8,
+        "y": 597.6875,
+        "width": 374,
+        "height": 40,
+        "top": 597.6875,
+        "right": 382,
+        "bottom": 637.6875,
+        "left": 8
+      },
+      "size": {
+        "width": 390,
+        "height": 844
+      },
+      "scroll": [
+        390,
+        844
+      ],
+      "css": [
+        {
+          "background": "rgba(0, 0, 0, 0)",
+          "border": "0px",
+          "shadow": "none"
+        },
+        {
+          "background": "rgba(0, 0, 0, 0)",
+          "border": "0px",
+          "shadow": "none"
+        }
+      ],
+      "medallions": [
+        {
+          "rect": {
+            "x": 7.796875,
+            "y": 459.28125,
+            "width": 44,
+            "height": 44,
+            "top": 459.28125,
+            "right": 51.796875,
+            "bottom": 503.28125,
+            "left": 7.796875
+          },
+          "radius": "50%"
+        },
+        {
+          "rect": {
+            "x": 61.796875,
+            "y": 459.28125,
+            "width": 44,
+            "height": 44,
+            "top": 459.28125,
+            "right": 105.796875,
+            "bottom": 503.28125,
+            "left": 61.796875
+          },
+          "radius": "50%"
+        },
+        {
+          "rect": {
+            "x": 284.203125,
+            "y": 459.28125,
+            "width": 44,
+            "height": 44,
+            "top": 459.28125,
+            "right": 328.203125,
+            "bottom": 503.28125,
+            "left": 284.203125
+          },
+          "radius": "50%"
+        },
+        {
+          "rect": {
+            "x": 338.203125,
+            "y": 459.28125,
+            "width": 44,
+            "height": 44,
+            "top": 459.28125,
+            "right": 382.203125,
+            "bottom": 503.28125,
+            "left": 338.203125
+          },
+          "radius": "50%"
+        }
+      ],
+      "controls": [
+        {
+          "action": "profile",
+          "rect": {
+            "x": 5.453125,
+            "y": 260.3125,
+            "width": 133.75,
+            "height": 44,
+            "top": 260.3125,
+            "right": 139.203125,
+            "bottom": 304.3125,
+            "left": 5.453125
+          },
+          "clickable": true,
+          "hit": true
+        },
+        {
+          "action": "zh-CN",
+          "rect": {
+            "x": 288.703125,
+            "y": 264.3125,
+            "width": 24,
+            "height": 36,
+            "top": 264.3125,
+            "right": 312.703125,
+            "bottom": 300.3125,
+            "left": 288.703125
+          },
+          "clickable": true,
+          "hit": true
+        },
+        {
+          "action": "en",
+          "rect": {
+            "x": 312.703125,
+            "y": 264.3125,
+            "width": 26.84375,
+            "height": 36,
+            "top": 264.3125,
+            "right": 339.546875,
+            "bottom": 300.3125,
+            "left": 312.703125
+          },
+          "clickable": true,
+          "hit": true
+        },
+        {
+          "action": "settings",
+          "rect": {
+            "x": 345.546875,
+            "y": 264.3125,
+            "width": 36,
+            "height": 36,
+            "top": 264.3125,
+            "right": 381.546875,
+            "bottom": 300.3125,
+            "left": 345.546875
+          },
+          "clickable": true,
+          "hit": true
+        },
+        {
+          "action": "select-map:auto",
+          "rect": {
+            "x": 77.09375,
+            "y": 545.6875,
+            "width": 34.25,
+            "height": 32,
+            "top": 545.6875,
+            "right": 111.34375,
+            "bottom": 577.6875,
+            "left": 77.09375
+          },
+          "clickable": true,
+          "hit": true
+        },
+        {
+          "action": "select-map:sunny_backyard",
+          "rect": {
+            "x": 112.34375,
+            "y": 545.6875,
+            "width": 59.140625,
+            "height": 32,
+            "top": 545.6875,
+            "right": 171.484375,
+            "bottom": 577.6875,
+            "left": 112.34375
+          },
+          "clickable": true,
+          "hit": true
+        },
+        {
+          "action": "select-map:sakura_onsen",
+          "rect": {
+            "x": 172.484375,
+            "y": 545.6875,
+            "width": 45.34375,
+            "height": 32,
+            "top": 545.6875,
+            "right": 217.828125,
+            "bottom": 577.6875,
+            "left": 172.484375
+          },
+          "clickable": false,
+          "hit": true
+        },
+        {
+          "action": "select-map:midnight_kitchen",
+          "rect": {
+            "x": 218.828125,
+            "y": 545.6875,
+            "width": 50.984375,
+            "height": 32,
+            "top": 545.6875,
+            "right": 269.8125,
+            "bottom": 577.6875,
+            "left": 218.828125
+          },
+          "clickable": false,
+          "hit": true
+        },
+        {
+          "action": "select-map:cat_tower_maze",
+          "rect": {
+            "x": 270.8125,
+            "y": 545.6875,
+            "width": 63.09375,
+            "height": 32,
+            "top": 545.6875,
+            "right": 333.90625,
+            "bottom": 577.6875,
+            "left": 270.8125
+          },
+          "clickable": false,
+          "hit": true
+        },
+        {
+          "action": "start",
+          "rect": {
+            "x": 143.328125,
+            "y": 458.84375,
+            "width": 103.34375,
+            "height": 43.71875,
+            "top": 458.84375,
+            "right": 246.671875,
+            "bottom": 502.5625,
+            "left": 143.328125
+          },
+          "clickable": true,
+          "hit": true
+        },
+        {
+          "action": "recipes",
+          "rect": {
+            "x": 7.796875,
+            "y": 459.28125,
+            "width": 44,
+            "height": 60.328125,
+            "top": 459.28125,
+            "right": 51.796875,
+            "bottom": 519.609375,
+            "left": 7.796875
+          },
+          "clickable": true,
+          "hit": true
+        },
+        {
+          "action": "armory",
+          "rect": {
+            "x": 61.796875,
+            "y": 459.28125,
+            "width": 44,
+            "height": 60.328125,
+            "top": 459.28125,
+            "right": 105.796875,
+            "bottom": 519.609375,
+            "left": 61.796875
+          },
+          "clickable": true,
+          "hit": true
+        },
+        {
+          "action": "market",
+          "rect": {
+            "x": 284.203125,
+            "y": 459.28125,
+            "width": 44,
+            "height": 60.328125,
+            "top": 459.28125,
+            "right": 328.203125,
+            "bottom": 519.609375,
+            "left": 284.203125
+          },
+          "clickable": true,
+          "hit": true
+        },
+        {
+          "action": "leaderboard",
+          "rect": {
+            "x": 338.203125,
+            "y": 459.28125,
+            "width": 44,
+            "height": 60.328125,
+            "top": 459.28125,
+            "right": 382.203125,
+            "bottom": 519.609375,
+            "left": 338.203125
+          },
+          "clickable": true,
+          "hit": true
+        }
+      ],
+      "raw": "Rookie Keeper I🪙 0　⭐ 0\n    中EN⚙\n    \n    AutoBackyardSakura 🔒Kitchen 🔒Cat tower 🔒\n    \n    GuideArmory0/36\n    ShopRank"
+    },
+    {
+      "label": "delayed assets",
+      "stage": {
+        "x": 0,
+        "y": 45,
+        "width": 1440,
+        "height": 810,
+        "top": 45,
+        "right": 1440,
+        "bottom": 855,
+        "left": 0
+      },
+      "title": {
+        "x": 420,
+        "y": 62.8125,
+        "width": 600,
+        "height": 200,
+        "top": 62.8125,
+        "right": 1020,
+        "bottom": 262.8125,
+        "left": 420
+      },
+      "start": {
+        "x": 529.203125,
+        "y": 586.078125,
+        "width": 381.59375,
+        "height": 161.4375,
+        "top": 586.078125,
+        "right": 910.796875,
+        "bottom": 747.515625,
+        "left": 529.203125
+      },
+      "map": {
+        "x": 458.8359375,
+        "y": 800.125,
+        "width": 522.328125,
+        "height": 38.6875,
+        "top": 800.125,
+        "right": 981.1640625,
+        "bottom": 838.8125,
+        "left": 458.8359375
+      },
+      "profile": {
+        "x": 20.15625,
+        "y": 59.578125,
+        "width": 223.484375,
+        "height": 69.890625,
+        "top": 59.578125,
+        "right": 243.640625,
+        "bottom": 129.46875,
+        "left": 20.15625
+      },
+      "system": {
+        "x": 1262.59375,
+        "y": 59.578125,
+        "width": 157.25,
+        "height": 57.578125,
+        "top": 59.578125,
+        "right": 1419.84375,
+        "bottom": 117.15625,
+        "left": 1262.59375
+      },
+      "left": {
+        "x": 28.796875,
+        "y": 718.3125,
+        "width": 188.625,
+        "height": 114.015625,
+        "top": 718.3125,
+        "right": 217.421875,
+        "bottom": 832.328125,
+        "left": 28.796875
+      },
+      "right": {
+        "x": 1222.578125,
+        "y": 718.3125,
+        "width": 188.625,
+        "height": 114.015625,
+        "top": 718.3125,
+        "right": 1411.203125,
+        "bottom": 832.328125,
+        "left": 1222.578125
+      },
+      "hint": null,
+      "size": {
+        "width": 1440,
+        "height": 900
+      },
+      "scroll": [
+        1440,
+        900
+      ],
+      "css": [
+        {
+          "background": "rgba(0, 0, 0, 0)",
+          "border": "0px",
+          "shadow": "none"
+        },
+        {
+          "background": "rgba(0, 0, 0, 0)",
+          "border": "0px",
+          "shadow": "none"
+        }
+      ],
+      "medallions": [
+        {
+          "rect": {
+            "x": 28.796875,
+            "y": 718.3125,
+            "width": 83.515625,
+            "height": 83.515625,
+            "top": 718.3125,
+            "right": 112.3125,
+            "bottom": 801.828125,
+            "left": 28.796875
+          },
+          "radius": "50%"
+        },
+        {
+          "rect": {
+            "x": 133.90625,
+            "y": 718.3125,
+            "width": 83.515625,
+            "height": 83.515625,
+            "top": 718.3125,
+            "right": 217.421875,
+            "bottom": 801.828125,
+            "left": 133.90625
+          },
+          "radius": "50%"
+        },
+        {
+          "rect": {
+            "x": 1222.578125,
+            "y": 718.3125,
+            "width": 83.515625,
+            "height": 83.515625,
+            "top": 718.3125,
+            "right": 1306.09375,
+            "bottom": 801.828125,
+            "left": 1222.578125
+          },
+          "radius": "50%"
+        },
+        {
+          "rect": {
+            "x": 1327.6875,
+            "y": 718.3125,
+            "width": 83.515625,
+            "height": 83.515625,
+            "top": 718.3125,
+            "right": 1411.203125,
+            "bottom": 801.828125,
+            "left": 1327.6875
+          },
+          "radius": "50%"
+        }
+      ],
+      "controls": [
+        {
+          "action": "profile",
+          "rect": {
+            "x": 20.15625,
+            "y": 59.578125,
+            "width": 223.484375,
+            "height": 69.890625,
+            "top": 59.578125,
+            "right": 243.640625,
+            "bottom": 129.46875,
+            "left": 20.15625
+          },
+          "clickable": true,
+          "hit": true
+        },
+        {
+          "action": "zh-CN",
+          "rect": {
+            "x": 1270.0625,
+            "y": 70.390625,
+            "width": 37.4375,
+            "height": 35.9375,
+            "top": 70.390625,
+            "right": 1307.5,
+            "bottom": 106.328125,
+            "left": 1270.0625
+          },
+          "clickable": true,
+          "hit": true
+        },
+        {
+          "action": "en",
+          "rect": {
+            "x": 1307.5,
+            "y": 70.390625,
+            "width": 41.53125,
+            "height": 35.9375,
+            "top": 70.390625,
+            "right": 1349.03125,
+            "bottom": 106.328125,
+            "left": 1307.5
+          },
+          "clickable": true,
+          "hit": true
+        },
+        {
+          "action": "settings",
+          "rect": {
+            "x": 1365.140625,
+            "y": 62.453125,
+            "width": 51.828125,
+            "height": 51.828125,
+            "top": 62.453125,
+            "right": 1416.96875,
+            "bottom": 114.28125,
+            "left": 1365.140625
+          },
+          "clickable": true,
+          "hit": true
+        },
+        {
+          "action": "select-map:auto",
+          "rect": {
+            "x": 497.6171875,
+            "y": 804.28125,
+            "width": 53.46875,
+            "height": 30.375,
+            "top": 804.28125,
+            "right": 551.0859375,
+            "bottom": 834.65625,
+            "left": 497.6171875
+          },
+          "clickable": true,
+          "hit": true
+        },
+        {
+          "action": "select-map:sunny_backyard",
+          "rect": {
+            "x": 553.9609375,
+            "y": 804.28125,
+            "width": 87.828125,
+            "height": 30.375,
+            "top": 804.28125,
+            "right": 641.7890625,
+            "bottom": 834.65625,
+            "left": 553.9609375
+          },
+          "clickable": true,
+          "hit": true
+        },
+        {
+          "action": "select-map:sakura_onsen",
+          "rect": {
+            "x": 644.6640625,
+            "y": 804.28125,
+            "width": 96.515625,
+            "height": 30.375,
+            "top": 804.28125,
+            "right": 741.1796875,
+            "bottom": 834.65625,
+            "left": 644.6640625
+          },
+          "clickable": false,
+          "hit": true
+        },
+        {
+          "action": "select-map:midnight_kitchen",
+          "rect": {
+            "x": 744.0546875,
+            "y": 804.28125,
+            "width": 104.3125,
+            "height": 30.375,
+            "top": 804.28125,
+            "right": 848.3671875,
+            "bottom": 834.65625,
+            "left": 744.0546875
+          },
+          "clickable": false,
+          "hit": true
+        },
+        {
+          "action": "select-map:cat_tower_maze",
+          "rect": {
+            "x": 851.2421875,
+            "y": 804.28125,
+            "width": 121.015625,
+            "height": 30.375,
+            "top": 804.28125,
+            "right": 972.2578125,
+            "bottom": 834.65625,
+            "left": 851.2421875
+          },
+          "clickable": false,
+          "hit": true
+        },
+        {
+          "action": "start",
+          "rect": {
+            "x": 529.203125,
+            "y": 586.078125,
+            "width": 381.59375,
+            "height": 161.4375,
+            "top": 586.078125,
+            "right": 910.796875,
+            "bottom": 747.515625,
+            "left": 529.203125
+          },
+          "clickable": true,
+          "hit": true
+        },
+        {
+          "action": "recipes",
+          "rect": {
+            "x": 28.796875,
+            "y": 718.3125,
+            "width": 83.515625,
+            "height": 114.015625,
+            "top": 718.3125,
+            "right": 112.3125,
+            "bottom": 832.328125,
+            "left": 28.796875
+          },
+          "clickable": true,
+          "hit": true
+        },
+        {
+          "action": "armory",
+          "rect": {
+            "x": 133.90625,
+            "y": 718.3125,
+            "width": 83.515625,
+            "height": 114.015625,
+            "top": 718.3125,
+            "right": 217.421875,
+            "bottom": 832.328125,
+            "left": 133.90625
+          },
+          "clickable": true,
+          "hit": true
+        },
+        {
+          "action": "market",
+          "rect": {
+            "x": 1222.578125,
+            "y": 718.3125,
+            "width": 83.515625,
+            "height": 114.015625,
+            "top": 718.3125,
+            "right": 1306.09375,
+            "bottom": 832.328125,
+            "left": 1222.578125
+          },
+          "clickable": true,
+          "hit": true
+        },
+        {
+          "action": "leaderboard",
+          "rect": {
+            "x": 1327.6875,
+            "y": 718.3125,
+            "width": 83.515625,
+            "height": 114.015625,
+            "top": 718.3125,
+            "right": 1411.203125,
+            "bottom": 832.328125,
+            "left": 1327.6875
+          },
+          "clickable": true,
+          "hit": true
+        }
+      ],
+      "raw": "Rookie Keeper I🪙 0　⭐ 0\n    中EN⚙\n    CAPYBARA!CHILL DEFENSE\n    AutoBackyardSakura 🔒Kitchen 🔒Cat tower 🔒\n    Let’s get chilling\n    GuideArmory0/36\n    ShopRank"
+    },
+    {
+      "label": "high-rank 1440",
+      "stage": {
+        "x": 0,
+        "y": 45,
+        "width": 1440,
+        "height": 810,
+        "top": 45,
+        "right": 1440,
+        "bottom": 855,
+        "left": 0
+      },
+      "title": {
+        "x": 420,
+        "y": 62.8125,
+        "width": 600,
+        "height": 200,
+        "top": 62.8125,
+        "right": 1020,
+        "bottom": 262.8125,
+        "left": 420
+      },
+      "start": {
+        "x": 529.203125,
+        "y": 586.078125,
+        "width": 381.59375,
+        "height": 161.4375,
+        "top": 586.078125,
+        "right": 910.796875,
+        "bottom": 747.515625,
+        "left": 529.203125
+      },
+      "map": {
+        "x": 500.4453125,
+        "y": 800.125,
+        "width": 439.109375,
+        "height": 38.6875,
+        "top": 800.125,
+        "right": 939.5546875,
+        "bottom": 838.8125,
+        "left": 500.4453125
+      },
+      "profile": {
+        "x": 20.15625,
+        "y": 59.578125,
+        "width": 296.15625,
+        "height": 69.890625,
+        "top": 59.578125,
+        "right": 316.3125,
+        "bottom": 129.46875,
+        "left": 20.15625
+      },
+      "system": {
+        "x": 1262.59375,
+        "y": 59.578125,
+        "width": 157.25,
+        "height": 57.578125,
+        "top": 59.578125,
+        "right": 1419.84375,
+        "bottom": 117.15625,
+        "left": 1262.59375
+      },
+      "left": {
+        "x": 28.796875,
+        "y": 718.3125,
+        "width": 188.625,
+        "height": 114.015625,
+        "top": 718.3125,
+        "right": 217.421875,
+        "bottom": 832.328125,
+        "left": 28.796875
+      },
+      "right": {
+        "x": 1222.578125,
+        "y": 718.3125,
+        "width": 188.625,
+        "height": 114.015625,
+        "top": 718.3125,
+        "right": 1411.203125,
+        "bottom": 832.328125,
+        "left": 1222.578125
+      },
+      "hint": null,
+      "size": {
+        "width": 1440,
+        "height": 900
+      },
+      "scroll": [
+        1440,
+        900
+      ],
+      "css": [
+        {
+          "background": "rgba(0, 0, 0, 0)",
+          "border": "0px",
+          "shadow": "none"
+        },
+        {
+          "background": "rgba(0, 0, 0, 0)",
+          "border": "0px",
+          "shadow": "none"
+        }
+      ],
+      "medallions": [
+        {
+          "rect": {
+            "x": 28.796875,
+            "y": 718.3125,
+            "width": 83.515625,
+            "height": 83.515625,
+            "top": 718.3125,
+            "right": 112.3125,
+            "bottom": 801.828125,
+            "left": 28.796875
+          },
+          "radius": "50%"
+        },
+        {
+          "rect": {
+            "x": 133.90625,
+            "y": 718.3125,
+            "width": 83.515625,
+            "height": 83.515625,
+            "top": 718.3125,
+            "right": 217.421875,
+            "bottom": 801.828125,
+            "left": 133.90625
+          },
+          "radius": "50%"
+        },
+        {
+          "rect": {
+            "x": 1222.578125,
+            "y": 718.3125,
+            "width": 83.515625,
+            "height": 83.515625,
+            "top": 718.3125,
+            "right": 1306.09375,
+            "bottom": 801.828125,
+            "left": 1222.578125
+          },
+          "radius": "50%"
+        },
+        {
+          "rect": {
+            "x": 1327.6875,
+            "y": 718.3125,
+            "width": 83.515625,
+            "height": 83.515625,
+            "top": 718.3125,
+            "right": 1411.203125,
+            "bottom": 801.828125,
+            "left": 1327.6875
+          },
+          "radius": "50%"
+        }
+      ],
+      "controls": [
+        {
+          "action": "profile",
+          "rect": {
+            "x": 20.15625,
+            "y": 59.578125,
+            "width": 296.15625,
+            "height": 69.890625,
+            "top": 59.578125,
+            "right": 316.3125,
+            "bottom": 129.46875,
+            "left": 20.15625
+          },
+          "clickable": true,
+          "hit": true
+        },
+        {
+          "action": "zh-CN",
+          "rect": {
+            "x": 1270.0625,
+            "y": 70.390625,
+            "width": 37.4375,
+            "height": 35.9375,
+            "top": 70.390625,
+            "right": 1307.5,
+            "bottom": 106.328125,
+            "left": 1270.0625
+          },
+          "clickable": true,
+          "hit": true
+        },
+        {
+          "action": "en",
+          "rect": {
+            "x": 1307.5,
+            "y": 70.390625,
+            "width": 41.53125,
+            "height": 35.9375,
+            "top": 70.390625,
+            "right": 1349.03125,
+            "bottom": 106.328125,
+            "left": 1307.5
+          },
+          "clickable": true,
+          "hit": true
+        },
+        {
+          "action": "settings",
+          "rect": {
+            "x": 1365.140625,
+            "y": 62.453125,
+            "width": 51.828125,
+            "height": 51.828125,
+            "top": 62.453125,
+            "right": 1416.96875,
+            "bottom": 114.28125,
+            "left": 1365.140625
+          },
+          "clickable": true,
+          "hit": true
+        },
+        {
+          "action": "select-map:auto",
+          "rect": {
+            "x": 539.2265625,
+            "y": 804.28125,
+            "width": 53.46875,
+            "height": 30.375,
+            "top": 804.28125,
+            "right": 592.6953125,
+            "bottom": 834.65625,
+            "left": 539.2265625
+          },
+          "clickable": true,
+          "hit": true
+        },
+        {
+          "action": "select-map:sunny_backyard",
+          "rect": {
+            "x": 595.5703125,
+            "y": 804.28125,
+            "width": 87.828125,
+            "height": 30.375,
+            "top": 804.28125,
+            "right": 683.3984375,
+            "bottom": 834.65625,
+            "left": 595.5703125
+          },
+          "clickable": true,
+          "hit": true
+        },
+        {
+          "action": "select-map:sakura_onsen",
+          "rect": {
+            "x": 686.2734375,
+            "y": 804.28125,
+            "width": 68.78125,
+            "height": 30.375,
+            "top": 804.28125,
+            "right": 755.0546875,
+            "bottom": 834.65625,
+            "left": 686.2734375
+          },
+          "clickable": true,
+          "hit": true
+        },
+        {
+          "action": "select-map:midnight_kitchen",
+          "rect": {
+            "x": 757.9296875,
+            "y": 804.28125,
+            "width": 76.5625,
+            "height": 30.375,
+            "top": 804.28125,
+            "right": 834.4921875,
+            "bottom": 834.65625,
+            "left": 757.9296875
+          },
+          "clickable": true,
+          "hit": true
+        },
+        {
+          "action": "select-map:cat_tower_maze",
+          "rect": {
+            "x": 837.3671875,
+            "y": 804.28125,
+            "width": 93.28125,
+            "height": 30.375,
+            "top": 804.28125,
+            "right": 930.6484375,
+            "bottom": 834.65625,
+            "left": 837.3671875
+          },
+          "clickable": true,
+          "hit": true
+        },
+        {
+          "action": "start",
+          "rect": {
+            "x": 529.203125,
+            "y": 586.078125,
+            "width": 381.59375,
+            "height": 161.4375,
+            "top": 586.078125,
+            "right": 910.796875,
+            "bottom": 747.515625,
+            "left": 529.203125
+          },
+          "clickable": true,
+          "hit": true
+        },
+        {
+          "action": "recipes",
+          "rect": {
+            "x": 28.796875,
+            "y": 718.3125,
+            "width": 83.515625,
+            "height": 114.015625,
+            "top": 718.3125,
+            "right": 112.3125,
+            "bottom": 832.328125,
+            "left": 28.796875
+          },
+          "clickable": true,
+          "hit": true
+        },
+        {
+          "action": "armory",
+          "rect": {
+            "x": 133.90625,
+            "y": 718.3125,
+            "width": 83.515625,
+            "height": 114.015625,
+            "top": 718.3125,
+            "right": 217.421875,
+            "bottom": 832.328125,
+            "left": 133.90625
+          },
+          "clickable": true,
+          "hit": true
+        },
+        {
+          "action": "market",
+          "rect": {
+            "x": 1222.578125,
+            "y": 718.3125,
+            "width": 83.515625,
+            "height": 114.015625,
+            "top": 718.3125,
+            "right": 1306.09375,
+            "bottom": 832.328125,
+            "left": 1222.578125
+          },
+          "clickable": true,
+          "hit": true
+        },
+        {
+          "action": "leaderboard",
+          "rect": {
+            "x": 1327.6875,
+            "y": 718.3125,
+            "width": 83.515625,
+            "height": 114.015625,
+            "top": 718.3125,
+            "right": 1411.203125,
+            "bottom": 832.328125,
+            "left": 1327.6875
+          },
+          "clickable": true,
+          "hit": true
+        }
+      ],
+      "raw": "Capybara God🪙 999999　⭐ 1000\n    中EN⚙\n    \n    AutoBackyardSakuraKitchenCat tower\n    \n    GuideArmory0/36\n    Shop🎟 999Rank"
+    },
+    {
+      "label": "high-rank 844",
+      "stage": {
+        "x": 75.328125,
+        "y": 0,
+        "width": 693.328125,
+        "height": 389.984375,
+        "top": 0,
+        "right": 768.65625,
+        "bottom": 389.984375,
+        "left": 75.328125
+      },
+      "title": {
+        "x": 259.0546875,
+        "y": 8.578125,
+        "width": 325.859375,
+        "height": 108.609375,
+        "top": 8.578125,
+        "right": 584.9140625,
+        "bottom": 117.1875,
+        "left": 259.0546875
+      },
+      "start": {
+        "x": 330.125,
+        "y": 260.5,
+        "width": 183.71875,
+        "height": 77.71875,
+        "top": 260.5,
+        "right": 513.84375,
+        "bottom": 338.21875,
+        "left": 330.125
+      },
+      "map": {
+        "x": 276.546875,
+        "y": 353.15625,
+        "width": 290.875,
+        "height": 29.03125,
+        "top": 353.15625,
+        "right": 567.421875,
+        "bottom": 382.1875,
+        "left": 276.546875
+      },
+      "profile": {
+        "x": 85.03125,
+        "y": 7.015625,
+        "width": 168.078125,
+        "height": 40.5625,
+        "top": 7.015625,
+        "right": 253.109375,
+        "bottom": 47.578125,
+        "left": 85.03125
+      },
+      "system": {
+        "x": 674.0625,
+        "y": 7.015625,
+        "width": 84.890625,
+        "height": 30.40625,
+        "top": 7.015625,
+        "right": 758.953125,
+        "bottom": 37.421875,
+        "left": 674.0625
+      },
+      "left": {
+        "x": 89.1875,
+        "y": 317.234375,
+        "width": 98.390625,
+        "height": 61.84375,
+        "top": 317.234375,
+        "right": 187.578125,
+        "bottom": 379.078125,
+        "left": 89.1875
+      },
+      "right": {
+        "x": 656.40625,
+        "y": 317.234375,
+        "width": 98.390625,
+        "height": 61.84375,
+        "top": 317.234375,
+        "right": 754.796875,
+        "bottom": 379.078125,
+        "left": 656.40625
+      },
+      "hint": null,
+      "size": {
+        "width": 844,
+        "height": 390
+      },
+      "scroll": [
+        844,
+        390
+      ],
+      "css": [
+        {
+          "background": "rgba(0, 0, 0, 0)",
+          "border": "0px",
+          "shadow": "none"
+        },
+        {
+          "background": "rgba(0, 0, 0, 0)",
+          "border": "0px",
+          "shadow": "none"
+        }
+      ],
+      "medallions": [
+        {
+          "rect": {
+            "x": 89.1875,
+            "y": 317.234375,
+            "width": 44,
+            "height": 44,
+            "top": 317.234375,
+            "right": 133.1875,
+            "bottom": 361.234375,
+            "left": 89.1875
+          },
+          "radius": "50%"
+        },
+        {
+          "rect": {
+            "x": 143.578125,
+            "y": 317.234375,
+            "width": 44,
+            "height": 44,
+            "top": 317.234375,
+            "right": 187.578125,
+            "bottom": 361.234375,
+            "left": 143.578125
+          },
+          "radius": "50%"
+        },
+        {
+          "rect": {
+            "x": 656.40625,
+            "y": 317.234375,
+            "width": 44,
+            "height": 44,
+            "top": 317.234375,
+            "right": 700.40625,
+            "bottom": 361.234375,
+            "left": 656.40625
+          },
+          "radius": "50%"
+        },
+        {
+          "rect": {
+            "x": 710.796875,
+            "y": 317.234375,
+            "width": 44,
+            "height": 44,
+            "top": 317.234375,
+            "right": 754.796875,
+            "bottom": 361.234375,
+            "left": 710.796875
+          },
+          "radius": "50%"
+        }
+      ],
+      "controls": [
+        {
+          "action": "profile",
+          "rect": {
+            "x": 85.03125,
+            "y": 7.015625,
+            "width": 168.078125,
+            "height": 40.5625,
+            "top": 7.015625,
+            "right": 253.109375,
+            "bottom": 47.578125,
+            "left": 85.03125
+          },
+          "clickable": true,
+          "hit": true
+        },
+        {
+          "action": "zh-CN",
+          "rect": {
+            "x": 678.15625,
+            "y": 11.109375,
+            "width": 21.6875,
+            "height": 22.21875,
+            "top": 11.109375,
+            "right": 699.84375,
+            "bottom": 33.328125,
+            "left": 678.15625
+          },
+          "clickable": true,
+          "hit": true
+        },
+        {
+          "action": "en",
+          "rect": {
+            "x": 699.84375,
+            "y": 11.109375,
+            "width": 24.53125,
+            "height": 22.21875,
+            "top": 11.109375,
+            "right": 724.375,
+            "bottom": 33.328125,
+            "left": 699.84375
+          },
+          "clickable": true,
+          "hit": true
+        },
+        {
+          "action": "settings",
+          "rect": {
+            "x": 732.625,
+            "y": 9.734375,
+            "width": 24.953125,
+            "height": 24.953125,
+            "top": 9.734375,
+            "right": 757.578125,
+            "bottom": 34.6875,
+            "left": 732.625
+          },
+          "clickable": true,
+          "hit": true
+        },
+        {
+          "action": "select-map:auto",
+          "rect": {
+            "x": 302.734375,
+            "y": 355.671875,
+            "width": 34.5625,
+            "height": 24,
+            "top": 355.671875,
+            "right": 337.296875,
+            "bottom": 379.671875,
+            "left": 302.734375
+          },
+          "clickable": true,
+          "hit": true
+        },
+        {
+          "action": "select-map:sunny_backyard",
+          "rect": {
+            "x": 338.671875,
+            "y": 355.671875,
+            "width": 59.453125,
+            "height": 24,
+            "top": 355.671875,
+            "right": 398.125,
+            "bottom": 379.671875,
+            "left": 338.671875
+          },
+          "clickable": true,
+          "hit": true
+        },
+        {
+          "action": "select-map:sakura_onsen",
+          "rect": {
+            "x": 399.5,
+            "y": 355.671875,
+            "width": 45.65625,
+            "height": 24,
+            "top": 355.671875,
+            "right": 445.15625,
+            "bottom": 379.671875,
+            "left": 399.5
+          },
+          "clickable": true,
+          "hit": true
+        },
+        {
+          "action": "select-map:midnight_kitchen",
+          "rect": {
+            "x": 446.53125,
+            "y": 355.671875,
+            "width": 51.296875,
+            "height": 24,
+            "top": 355.671875,
+            "right": 497.828125,
+            "bottom": 379.671875,
+            "left": 446.53125
+          },
+          "clickable": true,
+          "hit": true
+        },
+        {
+          "action": "select-map:cat_tower_maze",
+          "rect": {
+            "x": 499.203125,
+            "y": 355.671875,
+            "width": 63.40625,
+            "height": 24,
+            "top": 355.671875,
+            "right": 562.609375,
+            "bottom": 379.671875,
+            "left": 499.203125
+          },
+          "clickable": true,
+          "hit": true
+        },
+        {
+          "action": "start",
+          "rect": {
+            "x": 330.125,
+            "y": 260.5,
+            "width": 183.71875,
+            "height": 77.71875,
+            "top": 260.5,
+            "right": 513.84375,
+            "bottom": 338.21875,
+            "left": 330.125
+          },
+          "clickable": true,
+          "hit": true
+        },
+        {
+          "action": "recipes",
+          "rect": {
+            "x": 89.1875,
+            "y": 317.234375,
+            "width": 44,
+            "height": 61.84375,
+            "top": 317.234375,
+            "right": 133.1875,
+            "bottom": 379.078125,
+            "left": 89.1875
+          },
+          "clickable": true,
+          "hit": true
+        },
+        {
+          "action": "armory",
+          "rect": {
+            "x": 143.578125,
+            "y": 317.234375,
+            "width": 44,
+            "height": 61.84375,
+            "top": 317.234375,
+            "right": 187.578125,
+            "bottom": 379.078125,
+            "left": 143.578125
+          },
+          "clickable": true,
+          "hit": true
+        },
+        {
+          "action": "market",
+          "rect": {
+            "x": 656.40625,
+            "y": 317.234375,
+            "width": 44,
+            "height": 61.84375,
+            "top": 317.234375,
+            "right": 700.40625,
+            "bottom": 379.078125,
+            "left": 656.40625
+          },
+          "clickable": true,
+          "hit": true
+        },
+        {
+          "action": "leaderboard",
+          "rect": {
+            "x": 710.796875,
+            "y": 317.234375,
+            "width": 44,
+            "height": 61.84375,
+            "top": 317.234375,
+            "right": 754.796875,
+            "bottom": 379.078125,
+            "left": 710.796875
+          },
+          "clickable": true,
+          "hit": true
+        }
+      ],
+      "raw": "Capybara God🪙 999999　⭐ 1000\n    中EN⚙\n    \n    AutoBackyardSakuraKitchenCat tower\n    \n    GuideArmory0/36\n    Shop🎟 999Rank"
+    },
+    {
+      "label": "high-rank 390",
+      "stage": {
+        "x": 0,
+        "y": 312.3125,
+        "width": 390,
+        "height": 219.375,
+        "top": 312.3125,
+        "right": 390,
+        "bottom": 531.6875,
+        "left": 0
+      },
+      "title": {
+        "x": 103.3515625,
+        "y": 317.12445068359375,
+        "width": 183.296875,
+        "height": 61.09375,
+        "top": 317.12445068359375,
+        "right": 286.6484375,
+        "bottom": 378.21820068359375,
+        "left": 103.3515625
+      },
+      "start": {
+        "x": 143.328125,
+        "y": 458.84375,
+        "width": 103.34375,
+        "height": 43.71875,
+        "top": 458.84375,
+        "right": 246.671875,
+        "bottom": 502.5625,
+        "left": 143.328125
+      },
+      "map": {
+        "x": 50.09375,
+        "y": 541.6875,
+        "width": 289.8125,
+        "height": 40,
+        "top": 541.6875,
+        "right": 339.90625,
+        "bottom": 581.6875,
+        "left": 50.09375
+      },
+      "profile": {
+        "x": 5.453125,
+        "y": 260.3125,
+        "width": 167.5,
+        "height": 44,
+        "top": 260.3125,
+        "right": 172.953125,
+        "bottom": 304.3125,
+        "left": 5.453125
+      },
+      "system": {
+        "x": 283.703125,
+        "y": 260.3125,
+        "width": 100.84375,
+        "height": 44,
+        "top": 260.3125,
+        "right": 384.546875,
+        "bottom": 304.3125,
+        "left": 283.703125
+      },
+      "left": {
+        "x": 7.796875,
+        "y": 459.28125,
+        "width": 98,
+        "height": 60.328125,
+        "top": 459.28125,
+        "right": 105.796875,
+        "bottom": 519.609375,
+        "left": 7.796875
+      },
+      "right": {
+        "x": 284.203125,
+        "y": 459.28125,
+        "width": 98,
+        "height": 60.328125,
+        "top": 459.28125,
+        "right": 382.203125,
+        "bottom": 519.609375,
+        "left": 284.203125
+      },
+      "hint": {
+        "x": 8,
+        "y": 597.6875,
+        "width": 374,
+        "height": 40,
+        "top": 597.6875,
+        "right": 382,
+        "bottom": 637.6875,
+        "left": 8
+      },
+      "size": {
+        "width": 390,
+        "height": 844
+      },
+      "scroll": [
+        390,
+        844
+      ],
+      "css": [
+        {
+          "background": "rgba(0, 0, 0, 0)",
+          "border": "0px",
+          "shadow": "none"
+        },
+        {
+          "background": "rgba(0, 0, 0, 0)",
+          "border": "0px",
+          "shadow": "none"
+        }
+      ],
+      "medallions": [
+        {
+          "rect": {
+            "x": 7.796875,
+            "y": 459.28125,
+            "width": 44,
+            "height": 44,
+            "top": 459.28125,
+            "right": 51.796875,
+            "bottom": 503.28125,
+            "left": 7.796875
+          },
+          "radius": "50%"
+        },
+        {
+          "rect": {
+            "x": 61.796875,
+            "y": 459.28125,
+            "width": 44,
+            "height": 44,
+            "top": 459.28125,
+            "right": 105.796875,
+            "bottom": 503.28125,
+            "left": 61.796875
+          },
+          "radius": "50%"
+        },
+        {
+          "rect": {
+            "x": 284.203125,
+            "y": 459.28125,
+            "width": 44,
+            "height": 44,
+            "top": 459.28125,
+            "right": 328.203125,
+            "bottom": 503.28125,
+            "left": 284.203125
+          },
+          "radius": "50%"
+        },
+        {
+          "rect": {
+            "x": 338.203125,
+            "y": 459.28125,
+            "width": 44,
+            "height": 44,
+            "top": 459.28125,
+            "right": 382.203125,
+            "bottom": 503.28125,
+            "left": 338.203125
+          },
+          "radius": "50%"
+        }
+      ],
+      "controls": [
+        {
+          "action": "profile",
+          "rect": {
+            "x": 5.453125,
+            "y": 260.3125,
+            "width": 167.5,
+            "height": 44,
+            "top": 260.3125,
+            "right": 172.953125,
+            "bottom": 304.3125,
+            "left": 5.453125
+          },
+          "clickable": true,
+          "hit": true
+        },
+        {
+          "action": "zh-CN",
+          "rect": {
+            "x": 288.703125,
+            "y": 264.3125,
+            "width": 24,
+            "height": 36,
+            "top": 264.3125,
+            "right": 312.703125,
+            "bottom": 300.3125,
+            "left": 288.703125
+          },
+          "clickable": true,
+          "hit": true
+        },
+        {
+          "action": "en",
+          "rect": {
+            "x": 312.703125,
+            "y": 264.3125,
+            "width": 26.84375,
+            "height": 36,
+            "top": 264.3125,
+            "right": 339.546875,
+            "bottom": 300.3125,
+            "left": 312.703125
+          },
+          "clickable": true,
+          "hit": true
+        },
+        {
+          "action": "settings",
+          "rect": {
+            "x": 345.546875,
+            "y": 264.3125,
+            "width": 36,
+            "height": 36,
+            "top": 264.3125,
+            "right": 381.546875,
+            "bottom": 300.3125,
+            "left": 345.546875
+          },
+          "clickable": true,
+          "hit": true
+        },
+        {
+          "action": "select-map:auto",
+          "rect": {
+            "x": 77.09375,
+            "y": 545.6875,
+            "width": 34.25,
+            "height": 32,
+            "top": 545.6875,
+            "right": 111.34375,
+            "bottom": 577.6875,
+            "left": 77.09375
+          },
+          "clickable": true,
+          "hit": true
+        },
+        {
+          "action": "select-map:sunny_backyard",
+          "rect": {
+            "x": 112.34375,
+            "y": 545.6875,
+            "width": 59.140625,
+            "height": 32,
+            "top": 545.6875,
+            "right": 171.484375,
+            "bottom": 577.6875,
+            "left": 112.34375
+          },
+          "clickable": true,
+          "hit": true
+        },
+        {
+          "action": "select-map:sakura_onsen",
+          "rect": {
+            "x": 172.484375,
+            "y": 545.6875,
+            "width": 45.34375,
+            "height": 32,
+            "top": 545.6875,
+            "right": 217.828125,
+            "bottom": 577.6875,
+            "left": 172.484375
+          },
+          "clickable": true,
+          "hit": true
+        },
+        {
+          "action": "select-map:midnight_kitchen",
+          "rect": {
+            "x": 218.828125,
+            "y": 545.6875,
+            "width": 50.984375,
+            "height": 32,
+            "top": 545.6875,
+            "right": 269.8125,
+            "bottom": 577.6875,
+            "left": 218.828125
+          },
+          "clickable": true,
+          "hit": true
+        },
+        {
+          "action": "select-map:cat_tower_maze",
+          "rect": {
+            "x": 270.8125,
+            "y": 545.6875,
+            "width": 63.09375,
+            "height": 32,
+            "top": 545.6875,
+            "right": 333.90625,
+            "bottom": 577.6875,
+            "left": 270.8125
+          },
+          "clickable": true,
+          "hit": true
+        },
+        {
+          "action": "start",
+          "rect": {
+            "x": 143.328125,
+            "y": 458.84375,
+            "width": 103.34375,
+            "height": 43.71875,
+            "top": 458.84375,
+            "right": 246.671875,
+            "bottom": 502.5625,
+            "left": 143.328125
+          },
+          "clickable": true,
+          "hit": true
+        },
+        {
+          "action": "recipes",
+          "rect": {
+            "x": 7.796875,
+            "y": 459.28125,
+            "width": 44,
+            "height": 60.328125,
+            "top": 459.28125,
+            "right": 51.796875,
+            "bottom": 519.609375,
+            "left": 7.796875
+          },
+          "clickable": true,
+          "hit": true
+        },
+        {
+          "action": "armory",
+          "rect": {
+            "x": 61.796875,
+            "y": 459.28125,
+            "width": 44,
+            "height": 60.328125,
+            "top": 459.28125,
+            "right": 105.796875,
+            "bottom": 519.609375,
+            "left": 61.796875
+          },
+          "clickable": true,
+          "hit": true
+        },
+        {
+          "action": "market",
+          "rect": {
+            "x": 284.203125,
+            "y": 459.28125,
+            "width": 44,
+            "height": 60.328125,
+            "top": 459.28125,
+            "right": 328.203125,
+            "bottom": 519.609375,
+            "left": 284.203125
+          },
+          "clickable": true,
+          "hit": true
+        },
+        {
+          "action": "leaderboard",
+          "rect": {
+            "x": 338.203125,
+            "y": 459.28125,
+            "width": 44,
+            "height": 60.328125,
+            "top": 459.28125,
+            "right": 382.203125,
+            "bottom": 519.609375,
+            "left": 338.203125
+          },
+          "clickable": true,
+          "hit": true
+        }
+      ],
+      "raw": "Capybara God🪙 999999　⭐ 1000\n    中EN⚙\n    \n    AutoBackyardSakuraKitchenCat tower\n    \n    GuideArmory0/36\n    Shop🎟 999Rank"
+    },
+    {
+      "label": "high-rank 320",
+      "stage": {
+        "x": 0,
+        "y": 194,
+        "width": 320,
+        "height": 180,
+        "top": 194,
+        "right": 320,
+        "bottom": 374,
+        "left": 0
+      },
+      "title": {
+        "x": 84.8046875,
+        "y": 197.95071411132812,
+        "width": 150.390625,
+        "height": 50.125,
+        "top": 197.95071411132812,
+        "right": 235.1953125,
+        "bottom": 248.07571411132812,
+        "left": 84.8046875
+      },
+      "start": {
+        "x": 117.6015625,
+        "y": 314.234375,
+        "width": 84.796875,
+        "height": 35.875,
+        "top": 314.234375,
+        "right": 202.3984375,
+        "bottom": 350.109375,
+        "left": 117.6015625
+      },
+      "map": {
+        "x": 15.09375,
+        "y": 384,
+        "width": 289.8125,
+        "height": 40,
+        "top": 384,
+        "right": 304.90625,
+        "bottom": 424,
+        "left": 15.09375
+      },
+      "profile": {
+        "x": 4.46875,
+        "y": 142,
+        "width": 167.5,
+        "height": 44,
+        "top": 142,
+        "right": 171.96875,
+        "bottom": 186,
+        "left": 4.46875
+      },
+      "system": {
+        "x": 214.6875,
+        "y": 142,
+        "width": 100.84375,
+        "height": 44,
+        "top": 142,
+        "right": 315.53125,
+        "bottom": 186,
+        "left": 214.6875
+      },
+      "left": {
+        "x": 6.390625,
+        "y": 314.59375,
+        "width": 98,
+        "height": 59.984375,
+        "top": 314.59375,
+        "right": 104.390625,
+        "bottom": 374.578125,
+        "left": 6.390625
+      },
+      "right": {
+        "x": 215.609375,
+        "y": 314.59375,
+        "width": 98,
+        "height": 59.984375,
+        "top": 314.59375,
+        "right": 313.609375,
+        "bottom": 374.578125,
+        "left": 215.609375
+      },
+      "hint": {
+        "x": 8,
+        "y": 440,
+        "width": 304,
+        "height": 40,
+        "top": 440,
+        "right": 312,
+        "bottom": 480,
+        "left": 8
+      },
+      "size": {
+        "width": 320,
+        "height": 568
+      },
+      "scroll": [
+        320,
+        568
+      ],
+      "css": [
+        {
+          "background": "rgba(0, 0, 0, 0)",
+          "border": "0px",
+          "shadow": "none"
+        },
+        {
+          "background": "rgba(0, 0, 0, 0)",
+          "border": "0px",
+          "shadow": "none"
+        }
+      ],
+      "medallions": [
+        {
+          "rect": {
+            "x": 6.390625,
+            "y": 314.59375,
+            "width": 44,
+            "height": 44,
+            "top": 314.59375,
+            "right": 50.390625,
+            "bottom": 358.59375,
+            "left": 6.390625
+          },
+          "radius": "50%"
+        },
+        {
+          "rect": {
+            "x": 60.390625,
+            "y": 314.59375,
+            "width": 44,
+            "height": 44,
+            "top": 314.59375,
+            "right": 104.390625,
+            "bottom": 358.59375,
+            "left": 60.390625
+          },
+          "radius": "50%"
+        },
+        {
+          "rect": {
+            "x": 215.609375,
+            "y": 314.59375,
+            "width": 44,
+            "height": 44,
+            "top": 314.59375,
+            "right": 259.609375,
+            "bottom": 358.59375,
+            "left": 215.609375
+          },
+          "radius": "50%"
+        },
+        {
+          "rect": {
+            "x": 269.609375,
+            "y": 314.59375,
+            "width": 44,
+            "height": 44,
+            "top": 314.59375,
+            "right": 313.609375,
+            "bottom": 358.59375,
+            "left": 269.609375
+          },
+          "radius": "50%"
+        }
+      ],
+      "controls": [
+        {
+          "action": "profile",
+          "rect": {
+            "x": 4.46875,
+            "y": 142,
+            "width": 167.5,
+            "height": 44,
+            "top": 142,
+            "right": 171.96875,
+            "bottom": 186,
+            "left": 4.46875
+          },
+          "clickable": true,
+          "hit": true
+        },
+        {
+          "action": "zh-CN",
+          "rect": {
+            "x": 219.6875,
+            "y": 146,
+            "width": 24,
+            "height": 36,
+            "top": 146,
+            "right": 243.6875,
+            "bottom": 182,
+            "left": 219.6875
+          },
+          "clickable": true,
+          "hit": true
+        },
+        {
+          "action": "en",
+          "rect": {
+            "x": 243.6875,
+            "y": 146,
+            "width": 26.84375,
+            "height": 36,
+            "top": 146,
+            "right": 270.53125,
+            "bottom": 182,
+            "left": 243.6875
+          },
+          "clickable": true,
+          "hit": true
+        },
+        {
+          "action": "settings",
+          "rect": {
+            "x": 276.53125,
+            "y": 146,
+            "width": 36,
+            "height": 36,
+            "top": 146,
+            "right": 312.53125,
+            "bottom": 182,
+            "left": 276.53125
+          },
+          "clickable": true,
+          "hit": true
+        },
+        {
+          "action": "select-map:auto",
+          "rect": {
+            "x": 42.09375,
+            "y": 388,
+            "width": 34.25,
+            "height": 32,
+            "top": 388,
+            "right": 76.34375,
+            "bottom": 420,
+            "left": 42.09375
+          },
+          "clickable": true,
+          "hit": true
+        },
+        {
+          "action": "select-map:sunny_backyard",
+          "rect": {
+            "x": 77.34375,
+            "y": 388,
+            "width": 59.140625,
+            "height": 32,
+            "top": 388,
+            "right": 136.484375,
+            "bottom": 420,
+            "left": 77.34375
+          },
+          "clickable": true,
+          "hit": true
+        },
+        {
+          "action": "select-map:sakura_onsen",
+          "rect": {
+            "x": 137.484375,
+            "y": 388,
+            "width": 45.34375,
+            "height": 32,
+            "top": 388,
+            "right": 182.828125,
+            "bottom": 420,
+            "left": 137.484375
+          },
+          "clickable": true,
+          "hit": true
+        },
+        {
+          "action": "select-map:midnight_kitchen",
+          "rect": {
+            "x": 183.828125,
+            "y": 388,
+            "width": 50.984375,
+            "height": 32,
+            "top": 388,
+            "right": 234.8125,
+            "bottom": 420,
+            "left": 183.828125
+          },
+          "clickable": true,
+          "hit": true
+        },
+        {
+          "action": "select-map:cat_tower_maze",
+          "rect": {
+            "x": 235.8125,
+            "y": 388,
+            "width": 63.09375,
+            "height": 32,
+            "top": 388,
+            "right": 298.90625,
+            "bottom": 420,
+            "left": 235.8125
+          },
+          "clickable": true,
+          "hit": true
+        },
+        {
+          "action": "start",
+          "rect": {
+            "x": 117.6015625,
+            "y": 314.234375,
+            "width": 84.796875,
+            "height": 35.875,
+            "top": 314.234375,
+            "right": 202.3984375,
+            "bottom": 350.109375,
+            "left": 117.6015625
+          },
+          "clickable": true,
+          "hit": true
+        },
+        {
+          "action": "recipes",
+          "rect": {
+            "x": 6.390625,
+            "y": 314.59375,
+            "width": 44,
+            "height": 59.984375,
+            "top": 314.59375,
+            "right": 50.390625,
+            "bottom": 374.578125,
+            "left": 6.390625
+          },
+          "clickable": true,
+          "hit": true
+        },
+        {
+          "action": "armory",
+          "rect": {
+            "x": 60.390625,
+            "y": 314.59375,
+            "width": 44,
+            "height": 59.984375,
+            "top": 314.59375,
+            "right": 104.390625,
+            "bottom": 374.578125,
+            "left": 60.390625
+          },
+          "clickable": true,
+          "hit": true
+        },
+        {
+          "action": "market",
+          "rect": {
+            "x": 215.609375,
+            "y": 314.59375,
+            "width": 44,
+            "height": 59.984375,
+            "top": 314.59375,
+            "right": 259.609375,
+            "bottom": 374.578125,
+            "left": 215.609375
+          },
+          "clickable": true,
+          "hit": true
+        },
+        {
+          "action": "leaderboard",
+          "rect": {
+            "x": 269.609375,
+            "y": 314.59375,
+            "width": 44,
+            "height": 59.984375,
+            "top": 314.59375,
+            "right": 313.609375,
+            "bottom": 374.578125,
+            "left": 269.609375
+          },
+          "clickable": true,
+          "hit": true
+        }
+      ],
+      "raw": "Capybara God🪙 999999　⭐ 1000\n    中EN⚙\n    \n    AutoBackyardSakuraKitchenCat tower\n    \n    GuideArmory0/36\n    Shop🎟 999Rank"
+    }
+  ],
+  "passed": true
+}
