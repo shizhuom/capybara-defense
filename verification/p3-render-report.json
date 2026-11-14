@@ -1,0 +1,109 @@
+{
+  "evidence": [
+    {
+      "mapId": "sunny_backyard",
+      "loaded": true,
+      "enemies": 9,
+      "events": [
+        "bubble",
+        "slash",
+        "hit",
+        "damage",
+        "slash",
+        "hit",
+        "damage",
+        "projectile",
+        "hit",
+        "damage",
+        "projectile",
+        "hit",
+        "damage",
+        "slash",
+        "hit",
+        "damage",
+        "projectile",
+        "hit",
+        "damage"
+      ]
+    },
+    {
+      "mapId": "sakura_onsen",
+      "loaded": true,
+      "enemies": 11,
+      "events": [
+        "bubble",
+        "slash",
+        "hit",
+        "damage",
+        "slash",
+        "hit",
+        "damage",
+        "projectile",
+        "hit",
+        "damage",
+        "projectile",
+        "hit",
+        "damage",
+        "slash",
+        "hit",
+        "damage",
+        "projectile",
+        "hit",
+        "damage"
+      ]
+    },
+    {
+      "mapId": "midnight_kitchen",
+      "loaded": true,
+      "enemies": 11,
+      "events": [
+        "bubble",
+        "slash",
+        "hit",
+        "damage",
+        "slash",
+        "hit",
+        "damage",
+        "projectile",
+        "hit",
+        "damage",
+        "projectile",
+        "hit",
+        "damage",
+        "slash",
+        "hit",
+        "damage",
+        "projectile",
+        "hit",
+        "damage"
+      ]
+    },
+    {
+      "mapId": "cat_tower_maze",
+      "loaded": true,
+      "enemies": 9,
+      "events": [
+        "bubble",
+        "slash",
+        "hit",
+        "damage",
+        "slash",
+        "hit",
+        "damage",
+        "projectile",
+        "hit",
+        "damage",
+        "projectile",
+        "hit",
+        "damage",
+        "slash",
+        "hit",
+        "damage",
+        "projectile",
+        "hit",
+        "damage"
+      ]
+    }
+  ],
+  "errors": []
+}
