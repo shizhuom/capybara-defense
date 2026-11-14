@@ -99,7 +99,7 @@ describe('P2 solo UI',()=>{
   });
   it('renders a solo canvas and a single player loot collection',()=>{
     const {app,engine}=harness();
-    expect(app.shell()).toContain('width="640" height="1216"');
+    expect(app.shell()).toContain('width="1280" height="720"');
     expect(app.shell()).not.toContain('opponent-banner');
     engine.state.sides.player.loot=['m01_swatter'];engine.state.sides.ai.loot=['m02_pan'];
     app.dialogKind='pause';app.renderDialog();
@@ -110,10 +110,10 @@ describe('P2 solo UI',()=>{
   it('shows live prices and shortages after successful and failed redraws',()=>{
     const {app,engine,element}=harness();
     for(const method of ['renderMenu','renderBattleHUD','renderTutorial','renderBattleProps','renderInspector','renderKeyboard'])app[method]=()=>{};
-    app.refresh();expect(element('summon-note').textContent).toContain('10');
-    app.action('summon');expect(element('summon-note').textContent).toContain('12');
-    app.action('summon');expect(element('summon-note').textContent).toContain('14');
-    expect(element('summon-shortage').textContent).toContain('14');
+    app.refresh();expect(element('summon-cost').textContent).toContain('10');
+    app.action('summon');expect(element('summon-cost').textContent).toContain('12');
+    app.action('summon');expect(element('summon-cost').textContent).toContain('14');
+    expect(element('summon-button').attrs['aria-label']).toContain('14');
     const ids=engine.state.units.map(unit=>unit.id);
     app.action('summon');
     expect(engine.state.sides.player.summons).toBe(2);expect(engine.state.units.map(unit=>unit.id)).toEqual(ids);
@@ -122,7 +122,7 @@ describe('P2 solo UI',()=>{
     expect(t(app.toast.key,app.toast.vars)).not.toMatch(/\{\w+\}/);
     engine.state.sides.player.food=4;app.action('summon');
     expect(app.toast.vars).toMatchObject({count:10,cost:14});
-    setLanguage('en');app.refresh(true);expect(element('summon-note').textContent).toContain('14');
+    setLanguage('en');app.refresh(true);expect(element('summon-cost').textContent).toContain('14');
   });
   it('stores a selected shovel, clears consumed selection, and keeps a full-pouch tool',()=>{
     const {app,engine}=harness();app.refresh=()=>{};
@@ -172,21 +172,21 @@ describe('P2 solo UI',()=>{
     expect(app.tutorialStep).toBe(3);expect(app.sound.play).toHaveBeenCalledWith('shovel');
     expect(app.toast.key).toBe('hint.repairProgress');
   });
-  it('renders tool help without calling combat stat access and keyboard access to all 42 cells',()=>{
+  it('renders tool help without calling combat stat access and keyboard access to all 45 cells',()=>{
     const {app,engine,element}=harness();const id=engine.grant('shovel').unitId!;app.selectedId=id;
     engine.getUnitStats=()=>{throw new Error('tools have no combat stats');};
     app.renderInspector();expect(element('inspector').innerHTML).toContain(t('inspect.toolBody'));
     app.renderKeyboard();const markup=element('keyboard-controls').innerHTML;
-    expect((markup.match(/data-target="cell:/g)??[])).toHaveLength(42);
-    expect(markup).toContain('cell:0:0');expect(markup).toContain('cell:5:6');
+    expect((markup.match(/data-target="cell:/g)??[])).toHaveLength(45);
+    expect(markup).toContain('cell:0:0');expect(markup).toContain('cell:8:4');
     expect(markup).not.toContain('unit.shovel');
   });
   it('anchors tutorial spots to the solo board and safely finds an open mat',()=>{
     const {engine}=harness();
     const html=tutorialMarkup(2,engine.state);
-    expect(html).toContain('left:20%');expect(html).toContain('top:23.355263157894736%');
-    expect(html).toContain('width:15%');
-    const first=tutorialMarkup(1,engine.state);expect(first).toContain('top:88.81578947368422%');
+    expect(html).toContain('left:29.6875%');expect(html).toContain('top:24.444444444444443%');
+    expect(html).toContain('width:8.125%');
+    const first=tutorialMarkup(1,engine.state);expect(first).toContain('top:84.72222222222221%');
   });
   it('keeps tutorial pending after failed saving and awards once after save, replay and reload',()=>{
     const {app}=harness();app.refresh=()=>{};app.renderMenu=()=>{};app.tutorialStep=3;

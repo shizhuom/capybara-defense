@@ -128,17 +128,17 @@ describe('P1 tutorial command integration', () => {
     app.apply(benchMove); expect(app.tutorialStep).toBe(2);
     const blocked=engine.move(third,{zone:'board',col:0,row:0});
     expect(blocked.ok).toBe(false); app.apply(blocked); expect(app.tutorialStep).toBe(2);
-    const deployed=engine.move(third,{zone:'board',col:1,row:1});
+    const deployed=engine.move(third,{zone:'board',col:2,row:1});
     expect(deployed).toMatchObject({ok:true,key:'hint.deployed'});
     app.apply(deployed); expect(app.tutorialStep).toBe(3);
   });
   it('advances step 2 only after digging succeeds', () => {
     const engine=new BattleEngine({seed:75,ai:false,autoWaves:false}); engine.start();
     const app=appFor(engine); engine.state.sides.player.shovels=0;
-    const failed=engine.dig(0,5); expect(failed.ok).toBe(false);
+    const failed=engine.dig(0,1); expect(failed.ok).toBe(false);
     app.apply(failed); expect(app.tutorialStep).toBe(2);
     engine.state.sides.player.shovels=1;
-    const dug=engine.dig(0,5); expect(dug).toMatchObject({ok:true,key:'hint.dig'});
-    app.apply(dug); expect(engine.state.grid[5][0]).toBe('O'); expect(app.tutorialStep).toBe(3);
+    const dug=engine.dig(0,1); expect(dug).toMatchObject({ok:true,key:'hint.dig'});
+    app.apply(dug); expect(engine.state.grid[1][0]).toBe('O'); expect(app.tutorialStep).toBe(3);
   });
 });

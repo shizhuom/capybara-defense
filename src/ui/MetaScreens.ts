@@ -109,11 +109,12 @@ export class MetaScreens {
     if (prize.type === 'coins') return tr('m2.prizeCoins', { amount: prize.amount });
     return tr(prize.type === 'prop' ? 'm2.prizeProp' : 'm2.prizeFragment', { name: t(`${prize.type === 'prop' ? 'prop' : 'weapon'}.${prize.id}`), amount: prize.amount });
   }
-  markup(screen: MetaScreen): string {
+  markup(screen: MetaScreen, inBattle = false): string {
     const profile = this.profile();
     const heading = `<button type="button" class="dialog-close icon-button" data-action="close-meta" aria-label="${tr('m2.close')}">×</button><h2 id="dialog-title">${tr(screen === 'armory' ? 'm2.armory' : 'm2.market')}</h2><div class="meta-wallet"><b>${tr('m2.coins', { count: profile.coins })}</b><span>${tr('m2.tickets', { count: profile.freeLotteryTickets })}</span></div>`;
-    if (screen === 'armory') return heading + this.armory(profile);
-    return heading + `<div class="meta-tabs">${['shop', 'lottery'].map(tab => `<button type="button" data-action="meta-tab:${tab}" aria-pressed="${this.tab === tab}" class="${this.tab === tab ? 'selected' : ''}">${tr(`m2.${tab}`)}</button>`).join('')}</div>${this.tab === 'shop' ? this.shop(profile) : this.lottery()}<section class="loadout-panel"><h3>${tr('m2.loadout')}</h3>${propSlots(profile)}<p>${tr('m2.nextBattle')}</p></section><h3>${tr('m2.inventory')}</h3><div class="inventory-grid">${Object.values(PROPS).filter(prop => profile.ownedProps[prop.id]).map(prop => {
+    const navigation=`<nav class="meta-tabs shop-navigation">${(['armory','market'] as const).map(tab=>`<button type="button" data-action="battle-shop:${tab}" aria-pressed="${screen===tab}" class="${screen===tab?'selected':''}">${tr(tab==='armory'?'m2.armory':'m2.market')}</button>`).join('')}</nav>`;
+    if (screen === 'armory') return heading + navigation + this.armory(profile);
+    return heading + navigation + `<div class="meta-tabs">${['shop', 'lottery'].map(tab => `<button type="button" data-action="meta-tab:${tab}" aria-pressed="${this.tab === tab}" class="${this.tab === tab ? 'selected' : ''}">${tr(`m2.${tab}`)}</button>`).join('')}</div>${this.tab === 'shop' ? this.shop(profile) : this.lottery()}<section class="loadout-panel"><h3>${tr('m2.loadout')}</h3>${propSlots(profile)}${inBattle?'':`<p>${tr('m2.nextBattle')}</p>`}</section><h3>${tr('m2.inventory')}</h3><div class="inventory-grid">${Object.values(PROPS).filter(prop => profile.ownedProps[prop.id]).map(prop => {
       const equipped = [...profile.equippedActiveProps, ...profile.equippedPassiveProps].includes(prop.id);
       return `<button type="button" data-action="meta-prop:${prop.id}" class="inventory-prop ${equipped ? 'equipped' : ''}" aria-pressed="${equipped}"><b>${propSticker(prop.id,42)} ${tr(`prop.${prop.id}`)}</b><small>${tr(`m2.${prop.type}`)} · ${tr('m2.level', { level: profile.ownedProps[prop.id], max: prop.maxLevel })}</small><p>${tr(`prop.${prop.id}.desc`)}</p><strong>${tr(equipped ? 'm2.unequip' : 'm2.equip')}</strong></button>`;
     }).join('') || `<p>${tr('m2.noProps')}</p>`}</div>`;

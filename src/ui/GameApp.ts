@@ -15,11 +15,16 @@ import { setPropSlots } from '../core/MetaProgression';
 import './m2.css';
 import './m3.css';
 import './p1.css';
+import './p3-components.css';
+import './p3.css';
+import { liveUnitCardMarkup } from './LiveUnitCard';
+import { getBeeProduction } from '../core/UnitStats';
+import { courtyardMarkup } from './CourtyardView';
 import { RANKS, getRank } from '../config/ranks';
-import { recordMergedHeroes, resolveMap, updateSettings } from '../core/PlayerProgression';
-import { ProfileScreens, rankCard, mapOptions, type ProfileScreen } from './ProfileScreens';
+import { recordMergedHeroes, resolveMap, updateSettings, selectMap } from '../core/PlayerProgression';
+import { ProfileScreens, type ProfileScreen } from './ProfileScreens';
 import { SoundManager } from './SoundManager';
-import { capyIllustration, capyLogo, escapeHtml as esc } from './art';
+import { capyLogo, escapeHtml as esc } from './art';
 import { onAssetsReady } from '../render/AssetRegistry';
 import { propSticker, sceneSticker, unitSticker } from './stickers';
 import { Compendium } from './Compendium';
@@ -42,7 +47,9 @@ export class GameApp {
   private renderer: StickerRenderer;
   private dialog: HTMLDialogElement;
   private dialogKind: DialogKind | null = null;
-  private resumeAfterRecipe = false;
+  private modalReturn: { dialog: DialogKind | null; resume: boolean } | null = null;
+  private liveStamp = '';
+  private rotateDismissed = false;
   private speed: 1 | 2 = 1;
   private selectedId?: number;
   private shovelSelected = false;
@@ -78,7 +85,7 @@ export class GameApp {
 
   constructor(private root: HTMLElement) {
     this.meta = new MetaScreens(() => this.profile, profile => {
-      this.profile = profile; this.sound.setSettings(profile.settings); this.quickStamp = ''; this.renderMenu();
+      this.acceptPersistedProfile(profile);
     }, () => { if (this.dialogKind === 'armory' || this.dialogKind === 'market') this.renderDialog(); }, (key, error, vars) => this.notify(key, error, vars), cue => this.sound.play(cue));
     this.profileScreens = new ProfileScreens(() => this.profile, profile => this.persistProfile(profile), () => this.refresh(true), key => this.notify(key));
     this.root.innerHTML = this.shell();
@@ -88,9 +95,8 @@ export class GameApp {
     this.bindEvents();
     onLanguageChange(() => this.refresh(true));
     onAssetsReady(() => { this.assetsDirty = true; });
-    const narrow = matchMedia('(max-width: 1050px)');
-    this.element<HTMLDetailsElement>('dev-tools').open = !narrow.matches;
-    narrow.addEventListener('change', () => { this.element<HTMLDetailsElement>('dev-tools').open = !narrow.matches; });
+    this.element<HTMLDetailsElement>('dev-tools').open = false;
+
     this.refresh(true);
     requestAnimationFrame(this.frame);
   }
@@ -119,7 +125,7 @@ export class GameApp {
               <div class="speed-control"><span data-i18n="dev.speed"></span><div class="segmented"><button type="button" data-action="speed-1" data-battle>1×</button><button type="button" data-action="speed-2" data-battle>2×</button></div></div>
               <div class="dev-live" id="dev-live"></div><p class="control-caption" id="dev-tip"></p>
               <section class="m2-dev"><strong id="profile-mode"></strong><button type="button" class="button button-peach" data-action="test-enable" data-i18n="m2.testEnable"></button><button type="button" class="button button-light" data-action="test-restore" data-i18n="m2.testRestore"></button><label for="dev-rank" data-i18n="m3.devRank"></label><select id="dev-rank"></select><label for="dev-map" data-i18n="m3.devMap"></label><select id="dev-map"></select><p data-i18n="m2.nextBattle"></p><div id="quick-loadout"></div></section>
-              <div class="reset-control"><button type="button" class="text-button" data-action="reset" data-i18n="dev.reset"></button><p class="control-caption" data-i18n="dev.resetNote"></p></div>
+              <details class="paper-card keyboard-card"><summary data-i18n="keyboard.title"></summary><p class="muted" data-i18n="keyboard.help"></p><div id="keyboard-controls"></div></details><div class="reset-control"><button type="button" class="text-button" data-action="reset" data-i18n="dev.reset"></button><p class="control-caption" data-i18n="dev.resetNote"></p></div>
             </div>
           </details>
           <div class="side-note"><span aria-hidden="true">✿</span><p data-i18n="guide.survival"></p></div>
@@ -129,22 +135,22 @@ export class GameApp {
             <canvas id="battle-canvas" width="${STAGE.width}" height="${STAGE.height}" tabindex="0" role="img"></canvas>
             <section class="menu-screen" id="menu-screen"></section>
             <div class="battle-hud" id="battle-hud" hidden>
-              <div class="hud-topline"><div><span class="map-eyebrow" data-i18n="hud.map"></span><strong id="hud-wave"></strong></div><button type="button" class="icon-button" data-action="pause" data-label="hud.pause" id="pause-button"><span aria-hidden="true">Ⅱ</span></button></div>
-              <div class="hud-resource-row"><div class="food-pill"><span aria-hidden="true">🥫</span><strong id="food-value">${ECONOMY.initialFood}</strong><span data-i18n="hud.food"></span></div><span class="time-chip" id="battle-clock"></span><button type="button" class="speed-pill" data-action="speed" data-label="hud.speedLabel" id="hud-speed">1×</button></div>
-              <div id="wave-progress" class="wave-progress" role="progressbar" aria-valuemin="0" aria-valuemax="100"><i></i><span></span></div>
+              <div class="resource-dock"><div class="wave-pill"><strong id="hud-wave"></strong><div id="wave-progress" class="wave-progress" role="progressbar" aria-valuemin="0" aria-valuemax="100"><i></i><span></span></div></div><div class="food-pill"><span aria-hidden="true">${sceneSticker('ui_fish_food','',34)}</span><strong id="food-value"></strong></div><div class="orange-pill"><span aria-hidden="true">${sceneSticker('orange','',30)}</span><strong id="orange-value"></strong></div><span class="time-chip" id="battle-clock" hidden></span></div>
+              <div class="control-dock"><button type="button" class="guide-button" data-action="recipes"><span aria-hidden="true">${sceneSticker('ui_compendium_book','',34)}</span><span data-i18n="p3.guide"></span></button><button type="button" data-action="battle-shop"><span aria-hidden="true">${sceneSticker('ui_shop_bag','',34)}</span><span data-i18n="p3.shop"></span></button><button type="button" class="speed-pill" data-action="speed" data-label="hud.speedLabel" id="hud-speed">1×</button><button type="button" data-action="pause" data-label="hud.pause" id="pause-button">Ⅱ</button></div>
             </div>
             <div id="boss-banner" class="boss-banner" hidden></div>
-            <div class="battle-actions" id="battle-actions" hidden><button type="button" class="recipe-shortcut icon-button" data-action="recipes" data-label="recipe.open"><span aria-hidden="true">✦</span></button><button type="button" class="summon-button" data-action="summon" id="summon-button"><span aria-hidden="true" class="bell">♧</span><span class="summon-copy"><strong id="summon-title"></strong><small id="summon-note"></small><small id="summon-shortage" hidden></small></span><span aria-hidden="true">＋</span></button></div>
+            <div class="battle-actions" id="battle-actions" hidden><button type="button" class="summon-button" data-action="summon" id="summon-button"><span aria-hidden="true" class="bell">${sceneSticker('ui_bell_summon','',46)}</span><span aria-hidden="true">${sceneSticker('ui_fish_food','',28)}</span><strong id="summon-cost">10</strong><b class="refresh-badge" aria-hidden="true">↻5</b></button></div>
+            <div id="live-card-host"></div>
             <div id="battle-props" hidden></div><div id="sealed-hint" class="sealed-hint" hidden></div>
             <div id="tutorial-overlay" hidden></div>
           </div>
-          <p class="stage-caption" data-i18n="guide.controls"></p>
+          <div id="rotate-hint" class="rotate-hint"><span data-i18n="p3.rotate"></span><button type="button" data-action="fullscreen" id="fullscreen-button" data-i18n="p3.fullscreen"></button><button type="button" data-action="dismiss-rotate" data-label="m2.close">×</button></div><p class="stage-caption" data-i18n="guide.controls"></p>
         </section>
         <aside class="journal-column">
           <section class="paper-card guide-card"><span class="eyebrow" data-i18n="menu.new"></span><h2 data-i18n="guide.title"></h2><ol class="how-to"><li><b>01</b><div><h3 data-i18n="guide.step1"></h3><p data-i18n="guide.step1Body"></p></div></li><li><b>02</b><div><h3 data-i18n="guide.step2"></h3><p data-i18n="guide.step2Body"></p></div></li><li><b>03</b><div><h3 data-i18n="guide.step3"></h3><p data-i18n="guide.step3Body"></p></div></li></ol><div class="tiny-recipe"><span>🐼</span><b>+</b><span>🎋</span><b>=</b><span class="legend-sticker">🐼<i>✦</i></span></div><button type="button" class="text-button recipe-link" data-action="recipes" data-i18n="recipe.open"></button></section>
           <section class="paper-card inspect-card"><h2 data-i18n="inspect.title"></h2><div id="inspector"></div></section>
           <div class="tip-note"><span aria-hidden="true">☂</span><p data-i18n="guide.tip"></p></div>
-          <details class="paper-card keyboard-card"><summary data-i18n="keyboard.title"></summary><p class="muted" data-i18n="keyboard.help"></p><div id="keyboard-controls"></div></details>
+
         </aside>
       </main>
       <footer class="page-footer"><span aria-hidden="true">✿</span> <span data-i18n="app.footer"></span></footer>
@@ -155,7 +161,7 @@ export class GameApp {
 
   start(): void {
     this.closeDialog(false);
-    this.overlayReturn = null;
+    this.overlayReturn = null; this.modalReturn = null;
     this.engine = new BattleEngine({ mapId: this.devMapOverride ?? resolveMap(this.profile), rankIndex: getRank(this.profile.stars).index, loadouts: { player: structuredClone(this.profile) } });
     this.engine.start();
     this.tutorialStep = this.profile.tutorialCompleted ? 'done' : 1;
@@ -213,7 +219,7 @@ export class GameApp {
         if (hit?.kind === 'cell') interaction.hover = { col: hit.col, row: hit.row };
       }
       this.renderer.draw(state, state.time, interaction);
-    } else { this.sound.setMode('menu'); this.sound.setDucked(this.retainedPage || document.hidden); }
+    } else { this.renderer.drawPreview(this.devMapOverride ?? resolveMap(this.profile), now / 1000, ECONOMY.initialOranges + (this.profile.equippedPassiveProps.includes('extra_oranges') ? 2 : 0) + (this.profile.equippedPassiveProps.includes('shared_oranges') ? 4 : 0)); this.sound.setMode('menu'); this.sound.setDucked(this.retainedPage || document.hidden); }
     if (now - this.lastRefresh > 120) { this.refresh(); this.lastRefresh = now; }
     requestAnimationFrame(this.frame);
   };
@@ -245,6 +251,8 @@ export class GameApp {
       this.assetsDirty=false; force=true;
       this.quickStamp=''; this.battlePropsStamp=''; this.bossStamp='';
       this.root.querySelector('.brand-mark')!.innerHTML=sceneSticker('logo_capy',capyLogo,54);
+      const ids=['ui_fish_food','ui_bell_summon','ui_compendium_book','ui_shop_bag','orange'] as const;
+      for(const id of ids)this.root.querySelectorAll<HTMLElement>(`#stage [data-sticker="${id}"]`).forEach(el=>{el.outerHTML=sceneSticker(id,'',Number(el.getAttribute('width'))||34);});
     }
     const developer = isDeveloperMode(location.search,this.profile.settings);
     this.root.querySelector('.page-shell')!.classList.toggle('clean-mode',!developer);
@@ -276,7 +284,9 @@ export class GameApp {
     this.element('menu-screen').hidden = !!state;
     this.element('battle-hud').hidden = !state;
     this.element('battle-actions').hidden = !state;
-    this.canvas.hidden = !state;
+    this.canvas.hidden = false;
+    this.element('rotate-hint').hidden = this.rotateDismissed;
+    this.element('fullscreen-button').hidden = typeof document.documentElement.requestFullscreen !== 'function';
     this.element('battle-props').hidden = !state;
     this.renderBattleHUD();
     this.renderTutorial();
@@ -304,21 +314,18 @@ export class GameApp {
     this.element<HTMLButtonElement>('hud-speed').disabled = !active;
     this.element<HTMLButtonElement>('pause-button').disabled = state?.phase !== 'playing';
     if (state) {
-      this.root.querySelector<HTMLElement>('.map-eyebrow')!.textContent = t(`map.${state.mapId}`);
       const player = state.sides.player;
       const remaining = state.units.filter(unit => unit.side === 'player' && unit.location.zone === 'bench').length;
       const cost = getSummonCost(player.summons);
       const shortage = Math.max(0, Math.ceil(cost - player.food));
       const summonTitle = t(remaining > 0 ? 'hud.redraw' : 'hud.summon');
       const summonNote = t(remaining > 0 ? 'hud.redrawCost' : 'hud.cost', { remaining, cost, count: ECONOMY.summonCount });
-      this.element('hud-wave').textContent = t('hud.wave', { wave: Math.max(1, state.wave), total: WAVES.length });
+      this.element('hud-wave').textContent = `🌊 ${Math.max(1,state.wave)}/${WAVES.length}`;
+      this.element('orange-value').textContent = `×${player.oranges}`;
       this.element('food-value').textContent = String(Math.floor(player.food));
       this.element('battle-clock').textContent = clock(state.time);
       this.element('battle-clock').setAttribute('aria-label', `${t('hud.time')} ${clock(state.time)}`);
-      this.element('summon-title').textContent = summonTitle;
-      this.element('summon-note').textContent = summonNote;
-      this.element('summon-shortage').hidden = shortage === 0;
-      this.element('summon-shortage').textContent = t('hud.noFood', { count: shortage });
+      this.element('summon-cost').textContent = String(cost);
       // An occupied bench can be replaced. Low-food clicks explain that the current pack is retained.
       this.element<HTMLButtonElement>('summon-button').disabled = !active;
       this.element('summon-button').classList.toggle('unaffordable', shortage > 0);
@@ -331,6 +338,7 @@ export class GameApp {
       this.renderInspector();
       this.renderKeyboard();
     }
+    this.renderLiveCard();
     const toast = this.element('toast');
     toast.hidden = !this.toast || performance.now() > this.toast.until;
     if (this.toast) {
@@ -376,10 +384,7 @@ export class GameApp {
   }
 
   private renderMenu(): void {
-    this.element('menu-screen').innerHTML = `<div class="menu-top"><span class="menu-chip"><i></i>${tr('menu.eyebrow')}</span><span class="doodle-star" aria-hidden="true">✳</span></div><h1>${tr('menu.title').replace(/\n/g, '<br>')}</h1><p class="menu-subtitle">${tr('menu.subtitle').replace(/\n/g, '<br>')}</p><div class="hero-illustration">${sceneSticker('menu_banner',capyIllustration)}<span class="illustration-caption">${tr('render.keepCalm')} ✦</span></div><button type="button" class="button start-button" data-action="start"><span>${tr('menu.start')}</span><span aria-hidden="true">↗</span></button><p class="duration">${tr('menu.duration', { waves: WAVES.length, preparation: FIRST_WAVE_PREPARATION })}</p><div class="menu-stats"><span><strong>${this.profile.coins}</strong><small>${tr('profile.coins')}</small></span><span><strong>${this.profile.wins}</strong><small>${tr('profile.wins')}</small></span><span><strong>${Object.values(this.profile.weaponFragments).reduce((sum, amount) => sum + amount, 0)}</strong><small>${tr('profile.fragments')}</small></span></div><p class="profile-history">${tr('menu.record', { count: this.profile.matches })}</p><button type="button" class="text-button menu-recipe-link" data-action="recipes">${tr('menu.recipes')} <span aria-hidden="true">→</span></button>`;
-    this.element('menu-screen').querySelector('.menu-stats')!.insertAdjacentHTML('beforebegin', `<div class="meta-menu"><button type="button" class="button button-light" data-action="armory">⚔ ${tr('m2.armory')} <small>${this.profile.unlockedWeapons.length}/36</small></button><button type="button" class="button button-peach" data-action="market">🦝 ${tr('m2.market')} ${this.profile.freeLotteryTickets ? `<b class="ticket-badge">🎟 ${this.profile.freeLotteryTickets}</b>` : ''}</button></div>`);
-    this.element('menu-screen').querySelector('.start-button')!.insertAdjacentHTML('beforebegin', `${rankCard(this.profile)}<label class="map-select" for="menu-map"><span>${tr('m3.map')}</span><select id="menu-map" data-map>${mapOptions(this.profile)}</select><small>${tr('m3.mapRule')}</small></label>`);
-    this.element('menu-screen').querySelector('.meta-menu')!.insertAdjacentHTML('beforeend', `<button type="button" class="button button-light" data-action="leaderboard">♛ ${tr('m3.leaderboard')}</button>`);
+    this.element('menu-screen').innerHTML = courtyardMarkup(this.profile);
   }
 
   private renderBattleProps(): void {
@@ -394,9 +399,9 @@ export class GameApp {
       const cooldown = Math.ceil(player.propCooldowns[id] ?? 0);
       const name = prop ? t(`prop.${id}`) : t('m2.emptySlot');
       const status = cooldown ? t('m2.cooldown', { time: cooldown }) : t('m2.ready');
-      return `<button type="button" class="battle-prop prop-${slot} ${id === this.selectedProp ? 'selected' : ''}" data-action="prop:${id ?? ''}" ${prop ? `data-prop-drag="${id}"` : ''} aria-label="${esc(name)}${prop ? `. ${esc(status)}. ${tr(`prop.${id}.desc`)}` : ''}" title="${prop ? tr(`prop.${id}.desc`) : esc(name)}"${!prop || !active || cooldown ? ' disabled' : ''}><span>${prop ? propSticker(id,36) : '+'}</span><small>${esc(name)}</small>${cooldown ? `<b>${cooldown}s</b>` : ''}</button>`;
+      return `<button type="button" class="battle-prop prop-${slot} ${id === this.selectedProp ? 'selected' : ''}" data-action="${prop ? `prop:${id}` : 'battle-shop'}" ${prop ? `data-prop-drag="${id}"` : ''} aria-label="${esc(name)}${prop ? `. ${esc(status)}. ${tr(`prop.${id}.desc`)}` : ''}" title="${prop ? tr(`prop.${id}.desc`) : esc(name)}"${(prop ? !active || cooldown : !this.engine?.canSyncPreparationLoadout()) ? ' disabled' : ''}><span>${prop ? propSticker(id,46) : '+'}</span>${prop ? `<b>${cooldown ? `${cooldown}s` : '1'}</b>` : ''}</button>`;
     }).join('');
-    this.element('battle-props').innerHTML = `<button type="button" class="sprinkler-button" data-action="sprinkler" title="${tr('m2.sprinklerDesc')}" aria-label="${tr('m2.sprinkler')}. ${tr(player.sprinklerUsed ? 'm2.sprinklerUsed' : 'm2.sprinklerReady')}"${!active || player.sprinklerUsed ? ' disabled' : ''}><span>${sceneSticker('sprinkler',propSticker('washer',32),32)}</span><small>${tr('p1.sprinklerShort')}</small><b>${player.sprinklerUsed ? '0' : '1'}</b></button>${slots}<div class="passive-icons">${player.loadout.equippedPassiveProps.map(id => `<span title="${tr(`prop.${id}`)}: ${tr(`prop.${id}.desc`)}" aria-label="${tr(`prop.${id}`)}">${propSticker(id,24)}</span>`).join('')}</div>${this.selectedProp ? `<p class="prop-target-hint" role="status">${tr(PROPS[this.selectedProp].target === 'road' ? 'm2.targetRoad' : 'm2.targetUnit')}</p>` : ''}`;
+    this.element('battle-props').innerHTML = `<button type="button" class="sprinkler-button" data-action="sprinkler" title="${tr('m2.sprinklerDesc')}" aria-label="${tr('m2.sprinkler')}. ${tr(player.sprinklerUsed ? 'm2.sprinklerUsed' : 'm2.sprinklerReady')}"${!active || player.sprinklerUsed ? ' disabled' : ''}><span>${sceneSticker('sprinkler',propSticker('washer',46),46)}</span><b>${player.sprinklerUsed ? '0' : '1'}</b></button>${slots}<div class="passive-icons">${player.loadout.equippedPassiveProps.map(id => `<span title="${tr(`prop.${id}`)}: ${tr(`prop.${id}.desc`)}" aria-label="${tr(`prop.${id}`)}">${propSticker(id,32)}</span>`).join('')}</div>${this.selectedProp ? `<p class="prop-target-hint" role="status">${tr(PROPS[this.selectedProp].target === 'road' ? 'm2.targetRoad' : 'm2.targetUnit')}</p>` : ''}`;
   }
 
   private renderBattleHUD(): void {
@@ -407,7 +412,7 @@ export class GameApp {
     progress.setAttribute('aria-valuenow',String(Math.round(wave.fraction*100)));
     progress.setAttribute('aria-label',t(wave.kind==='preparation'?'p1.prepare':'p1.waveProgress',{time:wave.remaining}));
     progress.querySelector<HTMLElement>('i')!.style.width=`${wave.fraction*100}%`;
-    progress.querySelector('span')!.textContent=wave.kind==='preparation'?t('p1.prepare',{time:wave.remaining}):'';
+    progress.querySelector('span')!.textContent=wave.kind==='preparation'?`⏱ ${wave.remaining}s`:'';
     const boss=getBossHUD(state);
     banner.hidden=!boss;
     if(!boss){this.bossStamp='';return;}
@@ -524,6 +529,13 @@ export class GameApp {
     this.dialogKind = kind;
     this.renderDialog();
     if (!this.dialog.open) this.dialog.showModal();
+    this.focusCompendium();
+  }
+
+  private focusCompendium(): void {
+    if(this.dialogKind!=='recipes')return;
+    const target=this.dialog.querySelector<HTMLElement>('[data-compendium-focused="true"]');
+    target?.focus({preventScroll:true});target?.scrollIntoView?.({block:'nearest'});
   }
 
   private renderDialog(): void {
@@ -536,7 +548,8 @@ export class GameApp {
       this.dialog.innerHTML = this.profileScreens.markup(kind);
       if(kind==='settings')this.dialog.querySelector<HTMLInputElement>('[data-setting="developerMode"]')!.checked=isDeveloperMode(location.search,this.profile.settings);
     } else if (kind === 'armory' || kind === 'market') {
-      this.dialog.innerHTML = this.meta.markup(kind);
+      this.dialog.innerHTML = this.meta.markup(kind,!!this.engine);
+      if(this.engine)this.dialog.querySelector('.shop-navigation')?.insertAdjacentHTML('afterend',`<p class="battle-shop-banner" role="status">${tr(this.engine.canSyncPreparationLoadout() ? 'p3.prepShop' : 'p3.nextBattle')}</p>`);
     } else if (kind === 'pause' && this.engine) {
       this.dialog.innerHTML = `<div class="dialog-decoration" aria-hidden="true">♨</div><span class="eyebrow">${tr('pause.eyebrow')}</span><h2 id="dialog-title">${tr('pause.title')}</h2><p class="dialog-subtitle">${tr('pause.subtitle')}</p><h3>${tr('pause.loot')}</h3><div class="loot-columns"><section><h4>${tr('loot.you')}</h4>${this.lootMarkup(this.engine.state.sides.player.loot)}</section></div><p class="dialog-rule">${tr('pause.rule')}</p><button type="button" class="button button-teal" data-action="resume" autofocus>${tr('pause.keep')}</button><button type="button" class="text-button surrender-button" data-action="surrender">${tr('pause.surrender')}</button>`;
     } else if (kind === 'recipes') {
@@ -552,6 +565,7 @@ export class GameApp {
       const rank = getRank(this.profile.stars), won = this.engine.state.result.winner === 'player';
       this.dialog.querySelector('.result-rewards')?.insertAdjacentHTML('afterend', `<section class="rank-result" role="status"><strong>${tr('m3.starChange', { change: this.resultStars > 0 ? `+${this.resultStars}` : this.resultStars, stars: this.profile.stars })}</strong>${this.savedResult && !won && this.resultStars === 0 ? `<p>${tr(this.previousRank < 10 ? 'm3.protected' : 'm3.floorProtected')}</p>` : ''}${won && this.resultStars > 1 ? `<p>${tr('m3.streakBonus')}</p>` : ''}${rank.index > this.previousRank ? `<h3>${tr('m3.promotion', { rank: t(`rank.${rank.index}`) })}</h3>` : ''}${this.newAvatars.length ? `<h3>${tr('m3.newAvatars')}</h3>${this.newAvatars.map(id => `<p>${tr(`avatar.${id}`)}</p>`).join('')}` : ''}</section>`);
     }
+    this.focusCompendium();
     if (kind) this.dialog.insertAdjacentHTML('afterbegin', `<div class="language-switch dialog-language" role="group" aria-label="${tr('app.language')}"><button type="button" data-action="zh-CN" class="${getLanguage() === 'zh-CN' ? 'selected' : ''}" aria-pressed="${getLanguage() === 'zh-CN'}">中</button><button type="button" data-action="en" class="${getLanguage() === 'en' ? 'selected' : ''}" aria-pressed="${getLanguage() === 'en'}">EN</button></div>`);
   }
 
@@ -565,12 +579,57 @@ export class GameApp {
   private persistProfile(profile: Profile): boolean {
     if (!saveProfile(profile)) { this.notify('hint.storage', true); return false; }
     const unlocked = profile.unlockedAvatars.some(id => !this.profile.unlockedAvatars.includes(id));
-    this.profile = profile;
-    this.sound.setSettings(profile.settings);
-    this.quickStamp = '';
-    this.renderMenu();
+    this.acceptPersistedProfile(profile);
     if (unlocked) this.notify('m3.newAvatars');
     return true;
+  }
+
+  /** Caller must have persisted successfully before entering this method. */
+  private acceptPersistedProfile(profile: Profile): void {
+    this.profile = profile;
+    this.sound.setSettings(profile.settings);
+    if (this.engine?.canSyncPreparationLoadout()) this.engine.syncPreparationLoadout(profile);
+    this.quickStamp = ''; this.battlePropsStamp = ''; this.liveStamp = '';
+    this.renderMenu();
+  }
+
+  private openModal(kind: 'recipes' | MetaScreen): void {
+    if (!this.modalReturn) {
+      this.modalReturn = { dialog: this.dialogKind, resume: this.canInteract() };
+      if (this.canInteract()) this.engine!.pause(true);
+    }
+    this.cancelDrag(); this.cancelPropDrag();
+    this.showDialog(kind); this.refresh();
+  }
+
+  private closeModal(): void {
+    const previous=this.modalReturn; this.modalReturn=null;
+    if(previous?.dialog) this.showDialog(previous.dialog);
+    else this.closeDialog(previous?.resume ?? false);
+    this.refresh(true);
+  }
+
+  private renderLiveCard(): void {
+    const host=this.element('live-card-host'), state=this.engine?.state;
+    const unit=state?.units.find(item=>item.side==='player'&&item.id===this.selectedId);
+    if(!state||!unit||this.drag?.moved||this.propDrag?.moved){host.innerHTML='';this.liveStamp='';return;}
+    const stats=this.engine!.getEffectiveUnitStats(unit),loadout=state.sides.player.loadout;
+    // Energy and countdowns change independently of recipe and button structure.
+    const stamp=JSON.stringify([getLanguage(),unit.id,unit.kind,unit.level,unit.location,loadout,
+      state.grid,state.units.map(u=>[u.id,u.kind,u.level,u.location,!!u.washing,!!u.statuses.SEALED,!!u.statuses.MERGE_LOCK])]);
+    if(stamp!==this.liveStamp){host.innerHTML=liveUnitCardMarkup({unit,state,stats,loadout});this.liveStamp=stamp;}
+    const text=(selector:string,value:string)=>{const el=host.querySelector<HTMLElement>(selector);if(el&&el.textContent!==value)el.textContent=value;};
+    text('[data-live-stat="damage"]',`⚔️ ${Math.round(stats.damage)}`);
+    text('[data-live-stat="rate"]',`⚡ ${Number(stats.rate.toFixed(2))}/s`);
+    text('[data-live-stat="range"]',`🎯 ${Number(stats.range.toFixed(1))}`);
+    text('[data-live-stat="production"]',t('p3.productionValue',getBeeProduction(unit.level,loadout)));
+    const energy=Math.max(0,Math.min(stats.charge,unit.energy));
+    text('[data-live-energy-value]',`🔋 ${t('p3.energy',{value:energy,total:stats.charge})}`);
+    const bar=host.querySelector<HTMLElement>('[data-live-energy-bar]');
+    bar?.setAttribute('aria-valuenow',String(energy));bar?.setAttribute('aria-valuemax',String(stats.charge));
+    const fill=host.querySelector<HTMLElement>('[data-live-energy-fill]');if(fill)fill.style.width=`${stats.charge>0?energy/stats.charge*100:0}%`;
+    const statuses=host.querySelector<HTMLElement>('[data-live-statuses]');
+    if(statuses){const html=Object.entries(unit.statuses).filter(([,time])=>(time??0)>0).map(([id,time])=>`<span class="live-status">${tr(`status.${id}`)} ${Math.ceil(time!)}s</span>`).join('')+(unit.washing?`<span class="live-status">${tr('m2.washing')}</span>`:'');if(statuses.innerHTML!==html)statuses.innerHTML=html;}
   }
 
   private openProfileScreen(screen: ProfileScreen): void {
@@ -664,7 +723,7 @@ export class GameApp {
     } else if (target) {
       this.selectedId = target.id;
       this.notify('hint.selected', false, { name: unitName(target.kind) });
-    }
+    } else { this.clearSelection(); }
     this.refresh();
   }
 
@@ -711,7 +770,7 @@ export class GameApp {
       if (element.dataset.propSlot) {
         const collect = (type: string) => [...this.root.querySelectorAll<HTMLSelectElement>(`[data-prop-slot^="${type}:"]`)].map(select => select.value).filter(Boolean);
         const result = setPropSlots(this.profile, collect('active'), collect('passive'));
-        if (result.ok && saveProfile(result.profile)) this.profile = result.profile;
+        if (result.ok && saveProfile(result.profile)) this.acceptPersistedProfile(result.profile);
         else this.notify(result.ok ? 'hint.storage' : result.key, true);
         this.quickStamp = ''; this.refresh();
       }
@@ -761,7 +820,7 @@ export class GameApp {
       event.preventDefault();
       const point = this.point(event);
       const hit = this.renderer.hitTest(point.x, point.y);
-      if (!hit) return;
+      if (!hit) { this.clearSelection(); this.refresh(); return; }
       const unit = this.unitAt(hit);
       this.drag = { pointerId: event.pointerId, start: point, point, id: unit?.id, shovel: hit.kind === 'shovel', moved: false };
       this.canvas.setPointerCapture(event.pointerId);
@@ -832,9 +891,19 @@ export class GameApp {
     if (this.profileScreens.action(action)) return;
     if (action === 'profile' || action === 'leaderboard' || action === 'settings' || action === 'brand') { this.openProfileScreen(action === 'brand' ? 'profile' : action); return; }
     if (action === 'close-profile') { this.closeProfileScreen(); return; }
+    if (action === 'dismiss-rotate') { this.rotateDismissed = true; this.refresh(); return; }
+    if (action === 'fullscreen') { void document.documentElement.requestFullscreen?.().catch(() => undefined); return; }
+    if (action.startsWith('select-map:')) {
+      const id=action.slice(11); if(id !== 'auto' && !MAP_IDS.includes(id as MapId))return;
+      const next=selectMap(this.profile,id as MapId|'auto'); if(next!==this.profile)this.persistProfile(next); return;
+    }
+    if (action.startsWith('inspect-book:')) { this.compendium.openTo(action.slice(13)); this.openModal('recipes'); return; }
+    if (action.startsWith('compendium-hero:')) { this.compendium.selectHero(action.slice(16)); this.renderDialog(); return; }
+    if (action === 'store-shovel') { if(this.canInteract() && this.selectedId) this.apply(this.engine!.storeShovel(this.selectedId)); this.refresh(); return; }
+    if (action === 'battle-shop' || action.startsWith('battle-shop:')) { const screen=action === 'battle-shop:armory'?'armory':'market'; this.meta.open(screen); this.openModal(screen); return; }
     if (this.meta.action(action)) return;
-    if (action === 'armory' || action === 'market') { this.meta.open(action); this.showDialog(action); return; }
-    if (action === 'close-meta') { this.closeDialog(false); this.refresh(true); return; }
+    if (action === 'armory' || action === 'market') { this.meta.open(action); this.openModal(action); return; }
+    if (action === 'close-meta') { this.closeModal(); return; }
     if (action === 'test-enable' || action === 'test-restore') {
       const wasTestProfile = isTestProfile();
       const profile = action === 'test-enable' ? enableTestProfile() : restoreNormalProfile();
@@ -866,15 +935,8 @@ export class GameApp {
     if (action === 'clear') { this.clearSelection(); this.refresh(); return; }
     if (action === 'pause') { this.pause(); return; }
     if (action === 'resume') { this.closeDialog(true); this.refresh(); this.canvas.focus({ preventScroll: true }); return; }
-    if (action === 'recipes') {
-      this.resumeAfterRecipe = this.canInteract();
-      if (this.resumeAfterRecipe) this.engine!.pause(true);
-      this.cancelDrag();
-      this.showDialog('recipes');
-      this.refresh();
-      return;
-    }
-    if (action === 'close-recipes') { this.closeDialog(this.resumeAfterRecipe); this.resumeAfterRecipe = false; this.refresh(); return; }
+    if (action === 'recipes') { this.openModal('recipes'); return; }
+    if (action === 'close-recipes') { this.closeModal(); return; }
     if (action === 'surrender') {
       if (this.engine?.state.phase === 'paused') { this.closeDialog(false); this.engine.surrender(); if (this.engine.state.result) this.finish(this.engine.state); }
       return;

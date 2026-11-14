@@ -1,4 +1,8 @@
 const phrases:Record<string,[string,string]>={
+  'p3.guide':['图鉴','Guide'], 'p3.shop':['商店','Shop'], 'p3.auto':['自动轮换','Auto'],
+  'p3.rotate':['🔄 横屏游玩，视野更大','🔄 Rotate for a wider view'], 'p3.fullscreen':['⛶ 全屏','⛶ Fullscreen'],
+  'p3.prepShop':['备战中 · 配装立即生效','Preparation · loadout changes apply now'],
+  'p3.nextBattle':['战斗已开始，新换装备将在下一局生效','Battle has started; loadout changes apply next battle'],
   'p3.matrix':['合成总览','Merge matrix'], 'p3.pets':['基础萌宠','Pets & ingredients'],
   'p3.heroes':['传说英雄','Legendary heroes'], 'p3.bosses':['捣蛋怪物','Garden troublemakers'],
   'p3.weapons':['奇葩神兵','Oddball weapons'], 'p3.props':['黑市道具','Market props'],
