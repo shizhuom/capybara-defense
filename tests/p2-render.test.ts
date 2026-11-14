@@ -11,44 +11,37 @@ import {drawCombatEvent} from '../src/render/CombatEffects';
 import {setLanguage,t} from '../src/i18n/i18n';
 import type {Unit,VisualEvent} from '../src/core/types';
 
-type Call={name:string;args:unknown[];fill:unknown;stroke:unknown};
+type Call={name:string;args:unknown[];fill:unknown;stroke:unknown;filter:unknown};
 function surface(){
  const calls:Call[]=[],values:Record<string,unknown>={globalAlpha:1};
- const c=new Proxy(values,{get(v,k:string){if(k in v)return v[k];if(k==='measureText')return (s:string)=>({width:s.length*8});if(k.includes('Gradient'))return ()=>({addColorStop(){}});return (...args:unknown[])=>calls.push({name:k,args,fill:v.fillStyle,stroke:v.strokeStyle});},set(v,k:string,a){v[k]=a;return true;}}) as unknown as CanvasRenderingContext2D;
+ const c=new Proxy(values,{get(v,k:string){if(k in v)return v[k];if(k==='measureText')return (s:string)=>({width:s.length*8});if(k.includes('Gradient'))return ()=>({addColorStop(){}});return (...args:unknown[])=>calls.push({name:k,args,fill:v.fillStyle,stroke:v.strokeStyle,filter:v.filter});},set(v,k:string,a){v[k]=a;return true;}}) as unknown as CanvasRenderingContext2D;
  return {c,calls,renderer:new StickerRenderer({getContext:()=>c,width:0,height:0} as unknown as HTMLCanvasElement)};
 }
 function pet(kind:string,board=true):Unit{return {id:10,kind,side:'player',level:1,location:board?{zone:'board',col:2,row:3}:{zone:'bench',slot:0},statuses:{},energy:0,cooldown:0,production:0,buffTime:0,empowered:0,animation:0};}
 const image=(id:string)=>({complete:true,naturalWidth:256,naturalHeight:256,id} as unknown as HTMLImageElement);
 afterEach(()=>{vi.restoreAllMocks();setLanguage('zh-CN');});
 describe('P2 single garden geometry',()=>{
- it('keeps bilingual nest heading and occupancy between the toolbar tools without overlapping each other',()=>{
+ it('keeps nests free of headings, counts and helper microcopy in both languages',()=>{
   for(const language of ['zh-CN','en'] as const)for(const filled of [0,5]){
    setLanguage(language);const state=new BattleEngine({autoWaves:false}).state;
    state.units=Array.from({length:filled},(_,slot)=>({...pet('hamster',false),id:10+slot,location:{zone:'bench' as const,slot}}));
    const {renderer,calls}=surface();renderer.draw(state,0);
-   const heading=calls.find(call=>call.name==='fillText'&&call.args[0]===t('render.petNests'))!;
-   const count=calls.find(call=>call.name==='fillText'&&call.args[0]===`${filled} / 5`)!;
-   const headingLeft=heading.args[1] as number,headingRight=headingLeft+(heading.args[3] as number);
-   const countRight=count.args[1] as number,countLeft=countRight-String(count.args[0]).length*8;
-   // Clear central strip: x140..500, outside the sprinkler and pouch plus padding.
-   expect(headingLeft).toBeGreaterThanOrEqual(140);expect(headingRight).toBeLessThanOrEqual(countLeft-8);
-   expect(countRight).toBeLessThanOrEqual(500);expect(countLeft).toBeGreaterThanOrEqual(140);
-   expect(heading.args[2]).toBe(930);expect(count.args[2]).toBe(930);
+   for(const text of [t('render.petNests'),String(filled)+' / 5',t('render.mergeHint'),t('render.dragHint'),t('render.keepCalm')])expect(calls.some(c=>c.name==='fillText'&&c.args[0]===text)).toBe(false);
   }
  });
- it('excludes every outer board edge and keeps all 42 cell centers reachable',()=>{
-  const {renderer}=surface();for(let row=0;row<7;row++)for(let col=0;col<6;col++)expect(renderer.hitTest(80+96*col,236+96*row)).toEqual({kind:'cell',col,row});
-  for(const [x,y] of [[31,188],[608,300],[32,187],[400,860]])expect(renderer.hitTest(x,y)).toBeNull();
-  expect(renderer.hitTest(607.99,859.99)).toEqual({kind:'cell',col:5,row:6});
-  for(let slot=0;slot<5;slot++)expect(renderer.hitTest(96+112*slot,992)).toEqual({kind:'bench',slot});
-  expect(renderer.hitTest(150,992)).toBeNull();expect(renderer.hitTest(556,898)).toEqual({kind:'shovel'});
+ it('excludes every outer board edge and keeps all 45 cell centers reachable',()=>{
+  const {renderer}=surface();for(let row=0;row<5;row++)for(let col=0;col<9;col++)expect(renderer.hitTest(224+104*col,124+104*row)).toEqual({kind:'cell',col,row});
+  for(const [x,y] of [[171,72],[1108,300],[172,71],[400,592]])expect(renderer.hitTest(x,y)).toBeNull();
+  expect(renderer.hitTest(1107.99,591.99)).toEqual({kind:'cell',col:8,row:4});
+  for(let slot=0;slot<5;slot++)expect(renderer.hitTest(298+104*slot,656)).toEqual({kind:'bench',slot});
+  expect(renderer.hitTest(350,656)).toBeNull();expect(renderer.hitTest(86,162)).toEqual({kind:'shovel'});
  });
  it.each(Object.keys(MAPS) as Array<keyof typeof MAPS>)('draws only the %s endpoint guardian and full board',mapId=>{
   const guardian=image('capybara'),map=image(`map_${mapId}`);vi.spyOn(assets,'get').mockImplementation(id=>id==='capybara'?guardian:id===`map_${mapId}`?map:undefined);
   const state=new BattleEngine({ai:false,autoWaves:false,mapId}).state,{renderer,calls}=surface();renderer.draw(state,0);
   expect(calls.filter(c=>c.name==='drawImage'&&c.args[0]===guardian)).toHaveLength(1);
-  expect(calls.find(c=>c.name==='drawImage'&&c.args[0]===map)?.args.slice(1)).toEqual([32,188,576,672]);
-  const end=MAPS[mapId].paths.player.at(-1)!;expect(calls.some(c=>c.name==='translate'&&c.args[0]===80+96*end.col&&c.args[1]===234+96*end.row)).toBe(true);
+  expect(calls.find(c=>c.name==='drawImage'&&c.args[0]===map)?.args.slice(1)).toEqual([0,0,1280,720]);
+  const end=MAPS[mapId].paths.player.at(-1)!;expect(calls.some(c=>c.name==='translate'&&c.args[0]===224+104*end.col&&c.args[1]===122+104*end.row)).toBe(true);
   expect(calls.some(c=>c.name==='fillText'&&c.args[0]==='AI')).toBe(false);
   expect(calls.some(c=>c.name==='stroke'&&c.stroke==='#9b9c83')).toBe(false);
  });
@@ -110,8 +103,8 @@ describe('P2 held weapons and exact motion',()=>{
 });
 describe('P2 captured combat effects and bench tools',()=>{
  function occupiedNestPreview(engine:BattleEngine,source:Unit){
-  const {renderer,calls}=surface();renderer.draw(engine.state,0,{draggingId:source.id,pointer:{x:208,y:992}});
-  const nest=calls.findIndex(call=>call.name==='roundRect'&&call.args[0]===160&&call.args[1]===944&&call.args[2]===96&&call.args[3]===96&&call.args[4]===19);
+  const {renderer,calls}=surface();renderer.draw(engine.state,0,{draggingId:source.id,pointer:{x:402,y:656}});
+  const nest=calls.findIndex(call=>call.name==='roundRect'&&call.args[0]===356&&call.args[1]===610&&call.args[2]===92&&call.args[3]===92&&call.args[4]===19);
   expect(nest).toBeGreaterThanOrEqual(0);
   return {fill:calls[nest+1].fill,stroke:calls[nest+2].stroke};
  }
@@ -184,7 +177,7 @@ describe('P2 captured combat effects and bench tools',()=>{
   for(const bench of [false,true]){
    const state=new BattleEngine({ai:false,autoWaves:false}).state;state.grid[0][5]='B';state.sides.player.shovels=bench?0:1;if(bench)state.units=[pet('shovel',false)];
    const {renderer,calls}=surface();renderer.draw(state,0,bench?{selectedId:10,hover:{col:5,row:0}}:{shovel:true,hover:{col:5,row:0}});
-   expect(calls.some(c=>c.name==='roundRect'&&c.args[0]===526&&c.args[1]===202)).toBe(true);
+   expect(calls.some(c=>c.name==='roundRect'&&c.args[0]===710&&c.args[1]===90)).toBe(true);
    expect(calls.some(c=>c.name==='stroke'&&c.stroke==='#5f9b8c')).toBe(true);
   }
  });
@@ -193,11 +186,12 @@ describe('P2 captured combat effects and bench tools',()=>{
   expect(calls.some(c=>c.name==='stroke'&&c.stroke==='#a083c0')).toBe(false);
  });
  it('uses the exact core knock displacement, enemy scales and white flash',()=>{
-  const engine=new BattleEngine({ai:false,autoWaves:false});engine.spawnEnemy('rat','player');const enemy=engine.state.enemies[0];Object.assign(enemy,{col:2,row:3,hitFlash:.14,knockX:5,knockY:0,size:1});
+  const engine=new BattleEngine({ai:false,autoWaves:false});engine.spawnEnemy('rat','player');const enemy=engine.state.enemies[0];Object.assign(enemy,{id:0,progress:0,col:2,row:3,hitFlash:.14,knockX:5,knockY:0,size:1});
   const art=image('rat');vi.spyOn(assets,'get').mockImplementation(id=>id==='rat'?art:undefined);const {renderer,calls}=surface();renderer.draw(engine.state,0);
-  expect(calls.some(c=>c.name==='translate'&&c.args[0]===277&&c.args[1]===524)).toBe(true);
-  expect(calls.some(c=>c.name==='scale'&&c.args[0]===.76*1.14&&c.args[1]===.76*.88)).toBe(true);
+  expect(calls.some(c=>c.name==='translate'&&c.args[0]===437&&c.args[1]===436)).toBe(true);
+  expect(calls.some(c=>c.name==='scale'&&c.args[0]===-.96*1.04*1.14&&c.args[1]===.96*.96*.88)).toBe(true);
+  expect(calls.find(c=>c.name==='drawImage'&&c.args[0]===art)?.filter).toBe('brightness(0) invert(1)');
  });
  it('draws no projectile geometry for a captured melee kind',()=>{const {c,calls}=surface();expect(drawCombatEvent(c,{id:1,type:'projectile',side:'player',col:1,row:1,targetCol:2,targetRow:1,effect:'corgi',age:.1,duration:.25},[])).toBe(true);expect(calls.filter(c=>!['save','restore'].includes(c.name))).toHaveLength(0);});
- it('ships exactly the 145 safe optional sprite IDs',()=>{const ids=JSON.parse(readFileSync('public/sprites/manifest.json','utf8'));expect(ids).toHaveLength(145);for(const id of [...Object.values(DEFAULT_HELD_WEAPONS),'vfx_slash_spin','vfx_muzzle_flash'])expect(ids).toContain(id);});
+ it('ships exactly the 166 safe optional sprite IDs',()=>{const ids=JSON.parse(readFileSync('public/sprites/manifest.json','utf8'));expect(ids).toHaveLength(166);for(const id of [...Object.values(DEFAULT_HELD_WEAPONS),'vfx_slash_spin','vfx_muzzle_flash'])expect(ids).toContain(id);});
 });

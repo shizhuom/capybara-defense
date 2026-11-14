@@ -40,14 +40,14 @@ describe('M3 canvas integration',()=>{
     const {renderer,calls}=surface();renderer.draw(state,.2);
     expect(calls.some(c=>c.name==='fillRect'&&c.fill===MAPS[id].theme.road)).toBe(true);
     const a=MAPS[id].paths.player[1],b=MAPS[id].paths.player[2],rotation=Math.atan2(b.row-a.row,b.col-a.col);
-    expect(calls.some((c,i)=>c.name==='translate'&&c.args[0]===80+a.col*96&&c.args[1]===236+a.row*96&&calls[i+1]?.name==='rotate'&&calls[i+1].args[0]===rotation)).toBe(true);
+    expect(calls.some((c,i)=>c.name==='translate'&&c.args[0]===224+a.col*104&&c.args[1]===124+a.row*104&&calls[i+1]?.name==='rotate'&&calls[i+1].args[0]===rotation)).toBe(true);
   });
   it('hides only damage text, retaining projectile and skill geometry',()=>{
     const state=new BattleEngine({ai:false,autoWaves:false}).state;
-    state.events=[{id:1,type:'damage',side:'player',col:2,row:4,value:987,age:.2,duration:1},{id:2,type:'projectile',side:'player',col:2,row:4,targetCol:3,targetRow:7,age:.2,duration:1}];
+    state.events=[{id:1,type:'damage',side:'player',col:2,row:4,value:987,age:.2,duration:1},{id:2,type:'projectile',side:'player',col:2,row:4,targetCol:3,targetRow:3,age:.2,duration:1}];
     const hidden=surface();hidden.renderer.draw(state,.2,{showDamageNumbers:false});
     expect(hidden.calls.some(c=>c.name==='fillText'&&c.args[0]==='−987')).toBe(false);
-    expect(hidden.calls.some(c=>c.name==='translate'&&c.args[0]===291.2)).toBe(true);
+    expect(hidden.calls.some(c=>c.name==='translate'&&c.args[0]===452.8)).toBe(true);
     const shown=surface();shown.renderer.draw(state,.2);
     expect(shown.calls.some(c=>c.name==='fillText'&&c.args[0]==='−987')).toBe(true);
   });
@@ -60,9 +60,9 @@ describe('M3 canvas integration',()=>{
     const own=surface(),fallback=surface();drawEnemyArt(own.context,kind,.3);drawEnemyArt(fallback.context,'unknown',.3);
     expect(own.calls).not.toEqual(fallback.calls);
     const state=new BattleEngine({ai:false,autoWaves:false}).state;
-    state.events=[{id:4,type:'boss_skill',side:'player',col:2,row:4,points:[{col:4,row:5}],effect:kind,age:.4,duration:1} as VisualEvent];
+    state.events=[{id:4,type:'boss_skill',side:'player',col:2,row:4,points:[{col:4,row:3}],effect:kind,age:.4,duration:1} as VisualEvent];
     const {renderer,calls}=surface();renderer.draw(state,.4);
-    expect(calls.some(c=>c.name==='translate'&&c.args[0]===464&&c.args[1]===716)).toBe(true);
+    expect(calls.some(c=>c.name==='translate'&&c.args[0]===640&&c.args[1]===436)).toBe(true);
   });
   it('gives killer bees, charmed rats and bone shields visible identifying marks',()=>{
     const bee=surface(),rat=surface(),normal=surface();drawEnemyArt(bee.context,'killer_bee',0);drawEnemyArt(rat.context,'charmed_rat',0);drawEnemyArt(normal.context,'rat',0);

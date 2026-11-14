@@ -31,37 +31,37 @@ const translated=(calls:Call[],x:number,y:number)=>calls.some(call=>call.name===
 const filled=(calls:Call[],color:string)=>calls.some(call=>call.name==='fill'&&call.fill===color);
 
 describe('M2 stored path rendering',()=>{
-  const points=[{col:1,row:5},{col:3,row:5},{col:3,row:3}];
+  const points=[{col:1,row:4},{col:3,row:4},{col:3,row:2}];
   it('moves dash through each recorded segment after source and targets disappear',()=>{
-    // Halfway through the second of two segments: (3,4), independently mapped to stage pixels.
-    expect(translated(rendered('dash',.825,{points}),368,620)).toBe(true);
+    // Halfway through the second of two segments: (3,3), independently mapped to stage pixels.
+    expect(translated(rendered('dash',.825,{points}),536,436)).toBe(true);
   });
   it.each([7,10])('reaches all %i dash endpoints in order',count=>{
     const route=Array.from({length:count+1},(_,i)=>({col:1+i*.31,row:4+i%2*.2}));
     for(let i=1;i<=count;i++) {
       const calls=rendered('dash',i/count*1.1,{points:route});
-      expect(translated(calls,80+route[i].col*96,236+route[i].row*96)).toBe(true);
+      expect(translated(calls,224+route[i].col*104,124+route[i].row*104)).toBe(true);
     }
   });
   it('does not jump to the final basketball target at the first bounce',()=>{
     const calls=rendered('bounce',.275,{points,effect:'basketball'});
-    expect(translated(calls,272,688)).toBe(true); // (2,5), 28px arc above the route.
-    expect(translated(calls,368,524)).toBe(false);
+    expect(translated(calls,432,512)).toBe(true); // (2,4), 28px arc above the route.
+    expect(translated(calls,536,332)).toBe(false);
     expect(filled(calls,'#ed9856')).toBe(true);
   });
   it('renders yarn on the second segment and clamps expired events to the last point',()=>{
-    expect(translated(rendered('bounce',.825,{points,effect:'yarn'}),368,592)).toBe(true);
-    expect(translated(rendered('bounce',5,{points,effect:'yarn'}),368,524)).toBe(true);
+    expect(translated(rendered('bounce',.825,{points,effect:'yarn'}),536,408)).toBe(true);
+    expect(translated(rendered('bounce',5,{points,effect:'yarn'}),536,332)).toBe(true);
   });
   it('drives the sprinkler from the tub backwards around road corners',()=>{
-    const route=[{col:5,row:6},{col:5,row:5},{col:5,row:4}];
+    const route=[{col:8,row:4},{col:7,row:4},{col:7,row:3}];
     const calls=rendered('sprinkler',.825,{points:route});
-    expect(translated(calls,560,668)).toBe(true);
+    expect(translated(calls,952,488)).toBe(true);
     expect(filled(calls,'#f2ca62')).toBe(true);
   });
   it('lands the giant orange cat at the event destination with no live enemy',()=>{
-    const calls=rendered('giant_cat',.8,{col:5,row:5});
-    expect(translated(calls,560,716)).toBe(true);
+    const calls=rendered('giant_cat',.8,{col:5,row:3});
+    expect(translated(calls,744,436)).toBe(true);
     expect(filled(calls,'#e9a34f')).toBe(true);
   });
   it.each(['bamboo','fish','claw','fire','vacuum','unknown_future_effect'])('renders a visible weapon theme for %s',effect=>{
@@ -79,7 +79,7 @@ describe('M2 status, props and tools',()=>{
     const engine=new BattleEngine({ai:false,autoWaves:false,loadouts:{player:{equippedWeapons:{doge_wick:'r11_sniper_laser'}}}});
     const id=engine.grant('doge_wick').unitId!,unit=engine.state.units[0];unit.location={zone:'board',col:2,row:4};
     const {renderer,calls}=surface();renderer.draw(engine.state,0,{selectedId:id});
-    expect(calls.some(call=>call.name==='arc'&&Math.abs(Number(call.args[2])-414.72)<.001)).toBe(true);
+    expect(calls.some(call=>call.name==='arc'&&Math.abs(Number(call.args[2])-449.28)<.001)).toBe(true);
   });
   it('uses yarn orb seven-hit charge for the visible energy bar',()=>{
     const engine=new BattleEngine({ai:false,autoWaves:false,loadouts:{player:{equippedWeapons:{zen_master:'w04_yarn_orb'}}}});
@@ -122,17 +122,17 @@ describe('M2 status, props and tools',()=>{
     const board=state(),{renderer,calls}=surface();
     renderer.draw(board,0,{propId:'glue_trap',pointer:{x:140,y:708},hover:{col:1,row:3}} as Interaction);
     expect(calls.some(call=>call.name==='stroke'&&call.stroke==='#a083c0')).toBe(true);
-    expect(renderer.hitTest(556,898)).toEqual({kind:'shovel'});
+    expect(renderer.hitTest(86,162)).toEqual({kind:'shovel'});
   });
   it('does not mark an already trapped road cell as a valid placement',()=>{
     const board=state();board.traps=[{id:1,side:'player',col:1,row:3,charges:2,hitIds:[]}];
     const {renderer,calls}=surface();renderer.draw(board,0,{propId:'glue_trap'});
-    expect(calls.some(call=>call.name==='roundRect'&&call.args[0]===145&&call.args[1]===493&&call.args[2]===62)).toBe(false);
+    expect(calls.some(call=>call.name==='roundRect'&&call.args[0]===297&&call.args[1]===405&&call.args[2]===62)).toBe(false);
   });
   it('draws valid bench prop targets above the opaque nest backgrounds',()=>{
     const board=unitBoard(),{renderer,calls}=surface();renderer.draw(board,0,{propId:'washer'});
-    const background=calls.findIndex(call=>call.name==='roundRect'&&call.args[0]===48&&call.args[1]===944&&call.args[2]===96);
-    const outline=calls.findIndex(call=>call.name==='roundRect'&&call.args[0]===51&&call.args[1]===947&&call.args[2]===90);
+    const background=calls.findIndex(call=>call.name==='roundRect'&&call.args[0]===252&&call.args[1]===610&&call.args[2]===92);
+    const outline=calls.findIndex(call=>call.name==='roundRect'&&call.args[0]===255&&call.args[1]===613&&call.args[2]===86);
     expect(background).toBeGreaterThan(-1);expect(outline).toBeGreaterThan(background);
   });
 });
