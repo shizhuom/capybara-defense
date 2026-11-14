@@ -19,6 +19,8 @@ import './p1.css';
 import './p3-components.css';
 import './p3.css';
 import './p5.css';
+import './p6.css';
+import {lootMarkup as illustratedLoot, pauseMarkup, resultMarkup} from './SettlementView';
 import { liveUnitCardMarkup } from './LiveUnitCard';
 import { getBeeProduction } from '../core/UnitStats';
 import { courtyardMarkup } from './CourtyardView';
@@ -256,7 +258,7 @@ export class GameApp {
       this.assetsDirty=false; force=true;
       this.quickStamp=''; this.battlePropsStamp=''; this.bossStamp='';this.tutorialStamp='';
       this.root.querySelector('.brand-mark')!.innerHTML=sceneSticker('logo_capy',capyLogo,54);
-      const ids=['ui_fish_food','ui_bell_summon','ui_compendium_book','ui_shop_bag','orange','ui_trophy_rank','ui_map_sign','ui_header_compendium','ui_header_armory','ui_header_market','ui_header_rank','ui_header_profile','ui_header_settings','ui_tutorial_pointer','ui_tutorial_capy','ui_coin_gold','ui_star_rank','ui_ticket_gacha','ui_skull_threat'] as const;
+      const ids=['ui_fish_food','ui_bell_summon','ui_compendium_book','ui_shop_bag','orange','ui_trophy_rank','ui_map_sign','ui_header_compendium','ui_header_armory','ui_header_market','ui_header_rank','ui_header_profile','ui_header_settings','ui_tutorial_pointer','ui_tutorial_capy','ui_coin_gold','ui_star_rank','ui_ticket_gacha','ui_skull_threat','ui_result_victory','ui_result_defeat','ui_header_pause','ui_mvp_crown','ui_lock_closed','ui_lock_open','ui_wave_horn','ui_merge_sparkle'] as const;
       for(const id of ids)this.root.querySelectorAll<HTMLElement>(`#stage [data-sticker="${id}"]`).forEach(el=>{el.outerHTML=sceneSticker(id,'',Number(el.getAttribute('width'))||34);});
     }
     const developer = isDeveloperMode(location.search,this.profile.settings);
@@ -529,12 +531,7 @@ export class GameApp {
     if (oldFocus) container.querySelector<HTMLButtonElement>(`[data-target="${oldFocus}"]`)?.focus({ preventScroll: true });
   }
 
-  private lootMarkup(loot: string[]): string {
-    if (!loot.length) return `<p class="loot-empty">${tr('loot.none')}</p>`;
-    const counts = new Map<string, number>();
-    loot.forEach(id => counts.set(id, (counts.get(id) ?? 0) + 1));
-    return `<ul class="loot-list">${[...counts].map(([id, count]) => `<li><span aria-hidden="true">✦</span><span>${tr(`fragment.${id}`)}</span><b>×${count}</b></li>`).join('')}</ul>`;
-  }
+  private lootMarkup(loot: string[]): string { return illustratedLoot(loot); }
 
   private showDialog(kind: DialogKind): void {
     this.dialogKind = kind;
@@ -551,11 +548,13 @@ export class GameApp {
 
   private renderDialog(): void {
     const kind = this.dialogKind;
-    const ledgerPage=!!kind&&['recipes','armory','market','profile','leaderboard','settings'].includes(kind);
+    const ledgerPage=!!kind&&['recipes','armory','market','profile','leaderboard','settings','pause','result'].includes(kind);
     const stamp=JSON.stringify([kind,kind==='recipes'?this.compendium.tab:kind==='market'?this.meta.tab:kind==='armory'?[this.meta.family,this.meta.orangeFirst]:null]);
     const scrolls=['.ledger-body','.market-stall','.market-backpack'].map(selector=>({selector,top:stamp===this.ledgerStamp?this.dialog.querySelector<HTMLElement>(selector)?.scrollTop??0:0}));
     this.ledgerStamp=stamp;
     this.dialog.classList.toggle('ledger-dialog',ledgerPage);
+    this.dialog.classList.toggle('pause-ledger',kind==='pause');
+    this.dialog.classList.toggle('result-ledger',kind==='result');
     this.dialog.classList.toggle('settings-dialog',kind==='settings');
     this.dialog.classList.toggle('recipe-dialog', kind === 'recipes');
     this.dialog.classList.toggle('meta-dialog', kind === 'armory' || kind === 'market');
@@ -568,23 +567,11 @@ export class GameApp {
       this.dialog.innerHTML = this.meta.markup(kind,!!this.engine);
       if(this.engine)this.dialog.querySelector('.shop-navigation')?.insertAdjacentHTML('afterend',`<p class="battle-shop-banner" role="status">${tr(this.engine.canSyncPreparationLoadout() ? 'p3.prepShop' : 'p3.nextBattle')}</p>`);
     } else if (kind === 'pause' && this.engine) {
-      this.dialog.innerHTML = `<div class="dialog-decoration" aria-hidden="true">♨</div><span class="eyebrow">${tr('pause.eyebrow')}</span><h2 id="dialog-title">${tr('pause.title')}</h2><p class="dialog-subtitle">${tr('pause.subtitle')}</p><h3>${tr('pause.loot')}</h3><div class="loot-columns"><section><h4>${tr('loot.you')}</h4>${this.lootMarkup(this.engine.state.sides.player.loot)}</section></div><p class="dialog-rule">${tr('pause.rule')}</p><button type="button" class="button button-teal" data-action="resume" autofocus>${tr('pause.keep')}</button><button type="button" class="text-button surrender-button" data-action="surrender">${tr('pause.surrender')}</button>`;
+      this.dialog.innerHTML=pauseMarkup(this.engine.state);
     } else if (kind === 'recipes') {
-      this.dialog.innerHTML = this.compendium.markup(this.profile);
+      this.dialog.innerHTML=this.compendium.markup(this.profile);
     } else if (kind === 'result' && this.engine?.state.result) {
-      const result = this.engine.state.result;
-      const won = result.winner === 'player';
-      this.dialog.innerHTML = `<div class="result-sticker" aria-hidden="true">${won ? '🍊' : '☁'}</div><span class="eyebrow">${tr('result.time', { time: clock(result.elapsed) })}</span><h2 id="dialog-title">${tr(won ? 'result.win' : 'result.loss')}</h2><p class="dialog-subtitle">${tr(won ? 'result.winSub' : 'result.lossSub')}</p><p class="result-reason">${tr(`result.reason.${result.reason}`)}</p><div class="result-rewards"><span>${sceneSticker('ui_coin_gold','',38)}<b>+${won ? result.coins : 0}</b><small>${tr('profile.coins')}</small></span><span><b>+${won ? result.loot.length : 0}</b><small>${tr('profile.fragments')}</small></span></div><h3>${tr('result.pool')}</h3>${this.lootMarkup(result.loot)}<p class="save-note">${tr(this.savedResult ? 'result.awarded' : 'result.memory')}</p><button type="button" class="button button-teal" data-action="start" autofocus>${tr('result.again')}</button><button type="button" class="text-button back-menu" data-action="menu">${tr('result.menu')}</button>`;
-    }
-    if (kind === 'pause') this.dialog.insertAdjacentHTML('beforeend', `<div class="meta-tabs"><button type="button" data-action="profile">${tr('m3.profile')}</button><button type="button" data-action="settings">${tr('m3.settings')}</button></div>`);
-    if (kind === 'result' && this.engine?.state.result?.winner === 'player') this.dialog.insertAdjacentHTML('beforeend', `<p class="ticket-reward">${sceneSticker('ui_ticket_gacha','',32)} ${tr('m2.freeTicket')}</p>${this.newWeapons.length ? `<section class="unlock-reward"><h3>✦ ${tr('m2.newWeapons')}</h3>${this.newWeapons.map(id => `<p>${tr(`weapon.${id}`)}</p>`).join('')}</section>` : ''}`);
-    if (kind === 'result' && this.engine?.state.result) {
-      const rank = getRank(this.profile.stars), won = this.engine.state.result.winner === 'player';
-      this.dialog.querySelector('.result-rewards')?.insertAdjacentHTML('afterend', `<section class="rank-result" role="status">${sceneSticker('ui_star_rank','',32)}<strong>${tr('m3.starChange', { change: this.resultStars > 0 ? `+${this.resultStars}` : this.resultStars, stars: this.profile.stars })}</strong>${this.savedResult && !won && this.resultStars === 0 ? `<p>${tr(this.previousRank < 10 ? 'm3.protected' : 'm3.floorProtected')}</p>` : ''}${won && this.resultStars > 1 ? `<p>${tr('m3.streakBonus')}</p>` : ''}${rank.index > this.previousRank ? `<h3>${tr('m3.promotion', { rank: t(`rank.${rank.index}`) })}</h3>` : ''}${this.newAvatars.length ? `<h3>${tr('m3.newAvatars')}</h3>${this.newAvatars.map(id => `<p>${tr(`avatar.${id}`)}</p>`).join('')}` : ''}</section>`);
-    }
-    if (kind&&!ledgerPage) {
-      const language=`<div class="language-switch dialog-language" role="group" aria-label="${tr('app.language')}"><button type="button" data-action="zh-CN" class="${getLanguage() === 'zh-CN' ? 'selected' : ''}" aria-pressed="${getLanguage() === 'zh-CN'}">中</button><button type="button" data-action="en" class="${getLanguage() === 'en' ? 'selected' : ''}" aria-pressed="${getLanguage() === 'en'}">EN</button></div>`;
-      this.dialog.insertAdjacentHTML('afterbegin',kind==='recipes'?`<div class="compendium-toolbar">${language}<button type="button" class="compendium-close icon-button" data-action="close-recipes" aria-label="${tr('recipe.close')}">×</button></div>`:language);
+      this.dialog.innerHTML=resultMarkup({state:this.engine.state,profile:this.profile,savedResult:this.savedResult,resultStars:this.resultStars,previousRank:this.previousRank,newWeapons:this.newWeapons,newAvatars:this.newAvatars});
     }
     for(const {selector,top} of scrolls){
       const body=this.dialog.querySelector<HTMLElement>(selector);

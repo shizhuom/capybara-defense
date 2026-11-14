@@ -54,10 +54,10 @@ Files: public/assets/sprites, stickers.ts, GameApp.ts, SettlementView.ts (new), 
 
 Interfaces: `lootMarkup(loot)` shared illustrated counts; `pauseMarkup(state)` and `resultMarkup({state,profile,savedResult,resultStars,previousRank,newWeapons,newAvatars})`. Preserve existing dialog action ownership and data attributes.
 
-- [ ] Write failing193asset/fallback and bilingual pause/result/MVP/promotion/unlock/empty tests; preserve one bare section and hidden equipment select assertions.
-- [ ] Sync assets, add8 SVG geometries and async refresh IDs. Extract pause/result into themed fixed header/body/footer shells, with weapon/portrait unlock art and current-battle facts.
-- [ ] Visually hide redundant equip select, retain keyboard access, replace redundant unequip text button with one status badge. Move shop refresh into awning; remove duplicate settings language, consume range-fill gradient; use star stickers.
-- [ ] Tighten English tabs and unbroken growth headings; desktop and short-landscape settings fit all controls. Run suite/build.
+- [x] Write failing193asset/fallback and bilingual pause/result/MVP/promotion/unlock/empty tests; preserve one bare section and hidden equipment select assertions.
+- [x] Sync assets, add8 SVG geometries and async refresh IDs. Extract pause/result into themed fixed header/body/footer shells, with weapon/portrait unlock art and current-battle facts.
+- [x] Visually hide redundant equip select, retain keyboard access, replace redundant unequip text button with one status badge. Move shop refresh into awning; remove duplicate settings language, consume range-fill gradient; use star stickers.
+- [x] Tighten English tabs and unbroken growth headings; desktop and short-landscape settings fit all controls. Run suite/build.
 
 ## Task 4: Tutorial on-board merge and overlay avoidance
 

@@ -35,6 +35,14 @@ const enemies:Record<string,string>={
   dj_rat_king:rat+crown+r(-38,10,18,27,'#9d91aa')+r(20,10,18,27,'#9d91aa')+e(-29,25,6,6,'#d3c0d4')+e(29,25,6,6,'#d3c0d4')+p('M-29 8 V-12 Q0 -39 29 -12 V8','none','#91859b',5),
 };
 const tools:Record<string,string>={
+  ui_result_victory:head('#c7a57e')+r(-29,20,58,19,'#b88e57')+p('M-25 25 H25 M-16 21 V38 M16 21 V38')+p('M19 -14 H35 V-2 Q35 10 27 10 Q19 10 19 -2Z','#edc85b')+p('M27 10 V19 M20 20 H34')+orange(-10,-27),
+  ui_result_defeat:head('#c8ad8e')+p('M-24 -12 Q0 -27 24 -12 L22 -24 H-22Z','#f3ead8')+r(-23,7,15,8,'#e5c09c')+p('M-18 8 L-13 14 M-13 8 L-18 14','none','#a77d60',1.4)+orange(6,27)+p('M28 26 L38 10 43 33 31 38Z','#b28b5d'),
+  ui_header_pause:head('#c5a481')+p('M-21 -13 H20 V-23 H-21Z','#fff5de')+p('M-15 0 H-5 M5 0 H15')+r(-30,22,60,17,'#bd955f')+r(9,7,20,16,'#cbd5b0')+p('M29 10 Q42 8 34 20 H29 M17 4 Q11 -2 18 -9','none','#a4b8ab',3),
+  ui_mvp_crown:crown+p('M-25 28 Q-48 5 -30 -15 M25 28 Q48 5 30 -15','none','#9baa61',4)+p('M-30 12 L-40 2 -30 -2 M30 12 L40 2 30 -2','none','#afbd75',4)+e(0,10,23,24,'#f0d289')+p('M0 -4 L5 6 16 8 8 16 10 28 0 22 -10 28 -8 16 -16 8 -5 6Z','#d6a24e'),
+  ui_lock_closed:p('M-17 -4 V-18 Q-17 -38 0 -38 Q17 -38 17 -18 V-4','none','#d3ad64',8)+r(-25,-7,50,40,'#e5ba69',10)+e(0,12,8,7,'#9a6d3a')+e(-10,1,4,5,'#9a6d3a')+e(0,-2,4,5,'#9a6d3a')+e(10,1,4,5,'#9a6d3a'),
+  ui_lock_open:p('M-16 -5 V-22 Q-16 -40 2 -39 Q20 -39 21 -20','none','#c3a578',8)+r(-25,-7,50,40,'#cfb087',10)+e(0,12,7,7,'#9b7d59')+p('M0 18 V25','none','#9b7d59',5),
+  ui_wave_horn:p('M-30 10 L-5 3 22 -23 30 -17 34 23 26 27 -3 15 -30 21Z','#dfb75e')+e(29,1,8,26,'#f3cf81')+p('M-16 14 Q-14 34 -1 31 Q10 27 4 17','none','#ac793e',5)+p('M-5 17 L-11 38 1 32 8 39 8 20Z','#c87955')+p('M38 -13 L44 -20 M40 1 H47 M39 15 L45 22','none','#e7b354',3),
+  ui_merge_sparkle:e(0,4,30,30,'#e8bc5e')+e(0,4,23,23,'#f7dfa1')+p('M-15 18 L-15 6 -6 6 -6 -3 -13 -3 0 -17 13 -3 6 -3 6 6 15 6 15 18Z','#b88d43')+p('M30 -32 L33 -24 41 -21 33 -18 30 -10 27 -18 19 -21 27 -24Z','#f3d77d'),
   ui_trophy_rank:p('M-20 -18 H20 V0 Q20 18 0 23 Q-20 18 -20 0Z','#e8bb57')+p('M-20 -13 H-31 Q-37 11 -16 11 M20 -13 H31 Q37 11 16 11 M0 23 V32','none','#b58a43',5)+r(-17,31,34,8,'#e4bd6e')+e(0,4,6,5,'#fff2bf')+e(-8,-4,3,4,'#fff2bf')+e(0,-7,3,4,'#fff2bf')+e(8,-4,3,4,'#fff2bf')+orange(0,-28),
   ui_map_sign:p('M-3 -33 V39','none','#b08959',7)+p('M-29 -26 H22 L34 -15 22 -4 H-29Z','#e7c187')+p('M30 1 H-22 L-34 12 -22 23 H30Z','#cba675')+p('M-21 -16 H16 M22 12 H-15','none','#957249',2)+p('M0 -32 Q-17 -47 -20 -32 Q-15 -22 0 -27Z','#91b477'),
   orange:orange(0,4),
@@ -100,7 +108,7 @@ export function unitSticker(kind:string,size=40):string {
   if(['hamster','squirrel','bee'].includes(key))return avatarSticker(key,n);
   return `<span role="img" aria-label="${key}" data-sticker="${key}" style="display:inline-grid;place-items:center;width:${n}px;height:${n}px;font-size:${Math.round(n*.63)}px">${escapeHtml(UNIT_ICONS[key])}</span>`;
 }
-export function sceneSticker(id:'menu_banner'|'logo_capy'|'sprinkler'|'shovel'|'ui_compendium_book'|'ui_fish_food'|'ui_bell_summon'|'ui_shop_bag'|'orange'|'ui_trophy_rank'|'ui_map_sign'|'ui_header_compendium'|'ui_header_armory'|'ui_header_market'|'ui_header_rank'|'ui_header_profile'|'ui_header_settings'|'ui_tutorial_pointer'|'ui_tutorial_capy'|'ui_coin_gold'|'ui_star_rank'|'ui_ticket_gacha'|'ui_skull_threat',fallback:string,size?:number):string {
+export function sceneSticker(id:'menu_banner'|'logo_capy'|'sprinkler'|'shovel'|'ui_compendium_book'|'ui_fish_food'|'ui_bell_summon'|'ui_shop_bag'|'orange'|'ui_trophy_rank'|'ui_map_sign'|'ui_header_compendium'|'ui_header_armory'|'ui_header_market'|'ui_header_rank'|'ui_header_profile'|'ui_header_settings'|'ui_tutorial_pointer'|'ui_tutorial_capy'|'ui_coin_gold'|'ui_star_rank'|'ui_ticket_gacha'|'ui_skull_threat'|'ui_result_victory'|'ui_result_defeat'|'ui_header_pause'|'ui_mvp_crown'|'ui_lock_closed'|'ui_lock_open'|'ui_wave_horn'|'ui_merge_sparkle',fallback:string,size?:number):string {
   const n=sizeOf(size??(id==='menu_banner'?400:64),64);
   return image(id,n)||(Object.hasOwn(tools,id)?geometry(id,tools[id],n):fallback);
 }

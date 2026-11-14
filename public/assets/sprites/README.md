@@ -154,3 +154,9 @@ The canonical directory is now `public/assets/sprites/` (185 PNGs). `AssetRegist
 - 192×192 transparent UI stickers: `ui_tutorial_pointer`, `ui_tutorial_capy`, `ui_coin_gold`, `ui_star_rank`, `ui_ticket_gacha`, `ui_skull_threat`.
 
 Every new HTML sticker has a distinct vector-only offline fallback. Menu wallets, ledger headings, tutorial pointers, and result rewards repaint once the asset batch settles. No PNG contains interactive labels; language, numbers, controls, and collection states remain live HTML.
+
+## P6 settlement and strategy stickers
+
+P6 ships 193 PNGs with the source manifest. Four 256×256 stickers: `ui_result_victory`, `ui_result_defeat`, `ui_header_pause`, `ui_mvp_crown`. Four 192×192 stickers: `ui_lock_closed`, `ui_lock_open`, `ui_wave_horn`, `ui_merge_sparkle`.
+
+These eight IDs have independent SVG fallbacks in `sceneSticker`; Canvas lock and merge badges also remain legible before image decoding. Settlement artwork refreshes with the rest of the asynchronous asset batch.

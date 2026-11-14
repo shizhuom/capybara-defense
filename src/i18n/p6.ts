@@ -1,0 +1,24 @@
+export const p6Zh:Record<string,string>={
+ 'p6.resume':'继续守护','p6.surrender':'弃桶跑路','p6.again':'再泡一局','p6.menu':'回到主菜单',
+ 'p6.time':'守护用时','p6.mvp':'本局守护 MVP','p6.damage':'累计输出','p6.kills':'击败害虫','p6.noMvp':'还没开打，先来个合影！','p6.lineup':'上阵 {count} 位伙伴',
+ 'p6.unlock':'全新解锁！','p6.rewards':'这一桶的收获','p6.refresh':'刷新','p6.equipIdle':'点同系英雄头像即可穿戴','p6.equipWorn':'{hero} 已佩戴 · 再点头像卸下',
+ 'p6.tableRate':'攻速/秒','p6.tableRange':'射程','p6.tableCharge':'充能',
+ 'p6.tutorial4Body':'先把熊猫抱上白色空垫，再把斗笠叠上去，让功夫阿宝站在场上迎战！',
+ 'p6.deployHeroHint':'别忘了把备战席的英雄拖到白垫上参战哦！',
+ 'p6.earlyUnavailable':'现在还不能提前迎战','p6.earlyCalled':'号角吹响！提前迎战的小鱼干已到账。','p6.early':'提前迎战','p6.earlyTip':'提前迎战 · 奖励 {food} 小鱼干',
+ 'p6.wavePreview':'第 {wave} 波预告 · {count} 只害虫','p6.nextWave':'下波','p6.firstWave':'来袭','p6.finalWave':'最后一波，守住温泉！',
+ 'p6.benchLocked':'锁好这一格啦，换窝也会留下它。','p6.benchUnlocked':'已解锁，可以换新伙伴啦。','p6.lockPet':'锁住这一格','p6.unlockPet':'解锁这一格',
+ 'p6.heroBadge':'合英雄','p6.redrawHero':'窝内可合英雄！','p6.refreshSlots':'换 {count} 格',
+};
+export const p6En:Record<string,string>={
+ 'p6.resume':'Keep defending','p6.surrender':'Leave the tub','p6.again':'One more soak','p6.menu':'Back to courtyard',
+ 'p6.time':'Guard time','p6.mvp':'Guardian MVP','p6.damage':'Damage dealt','p6.kills':'Pests defeated','p6.noMvp':'No hits yet. Time for a team photo!','p6.lineup':'{count} friends deployed',
+ 'p6.unlock':'Newly unlocked!','p6.rewards':'Rewards from this soak','p6.refresh':'Refresh','p6.equipIdle':'Tap a matching hero to equip','p6.equipWorn':'Worn by {hero} · Tap again to remove',
+ 'p6.tableRate':'Attacks/s','p6.tableRange':'Range','p6.tableCharge':'Charge',
+ 'p6.tutorial4Body':'Put Panda on a white pad first, then stack the Bamboo Hat on Panda. Kung-Fu Po will join the defense on the board!',
+ 'p6.deployHeroHint':'Your bench hero is ready! Move them onto a white pad to join the defense.',
+ 'p6.earlyUnavailable':'Not ready for an early wave yet','p6.earlyCalled':'Sound the horn! Your early-wave fish food has arrived.','p6.early':'Call early','p6.earlyTip':'Call early · Earn {food} fish food',
+ 'p6.wavePreview':'Wave {wave} preview · {count} pests','p6.nextWave':'Next','p6.firstWave':'Incoming','p6.finalWave':'Final wave. Protect the hot spring!',
+ 'p6.benchLocked':'This nest is locked. Your friend stays through a redraw.','p6.benchUnlocked':'Nest unlocked. Ready for fresh friends.','p6.lockPet':'Lock this nest','p6.unlockPet':'Unlock this nest',
+ 'p6.heroBadge':'HERO','p6.redrawHero':'A hero recipe is ready!','p6.refreshSlots':'Redraw {count}',
+};

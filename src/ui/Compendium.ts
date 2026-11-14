@@ -26,7 +26,7 @@ function statPills(kind:string):string {
 }
 function growth(kind:string):string {
   const max=HEROES[kind]?5:UNITS[kind].maxLevel;
-  return `<table class="book-growth"><caption>${tr('p3.growth')}</caption><thead><tr><th scope="col">${tr('p3.levelHeading')}</th><th scope="col">${tr(kind==='bee'?'p3.production':'p3.damage')}</th>${kind==='bee'?'':`<th scope="col">${tr('p3.rate')}</th><th scope="col">${tr('p3.range')}</th>${HEROES[kind]?`<th scope="col">${tr('p3.charge')}</th>`:''}`}</tr></thead><tbody>${[1,2,3,4,5].map(l=>{
+  return `<table class="book-growth"><caption>${tr('p3.growth')}</caption><thead><tr><th scope="col">${tr('p3.levelHeading')}</th><th scope="col">${tr(kind==='bee'?'p3.production':'p3.damage')}</th>${kind==='bee'?'':`<th scope="col">${tr('p6.tableRate')}</th><th scope="col">${tr('p6.tableRange')}</th>${HEROES[kind]?`<th scope="col">${tr('p6.tableCharge')}</th>`:''}`}</tr></thead><tbody>${[1,2,3,4,5].map(l=>{
     const heading=`<th scope="row">${tr('p3.level',{level:l})}</th>`;
     if(l>max)return `<tr data-growth-unavailable="${l}">${heading}<td colspan="${kind==='bee'?1:3}">${tr('p3.unavailable')}</td></tr>`;
     const s=getBaseUnitStats(kind,l),bee=getBeeProduction(l);
