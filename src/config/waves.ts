@@ -1,19 +1,19 @@
 import type {MapId} from '../core/types';
 import {BOSS_IDS} from './enemies';
 export const WAVES = [
-  { count:5, interval:3, hpScale:1, boss:null },
-  { count:6, interval:2.8, hpScale:1.25, boss:null },
-  { count:7, interval:2.6, hpScale:1.6, boss:null },
-  { count:8, interval:2.4, hpScale:2, boss:'husky_wrecker' },
-  { count:10, interval:2.2, hpScale:2.5, boss:null },
-  { count:11, interval:2, hpScale:3.1, boss:'dr_clippers' },
-  { count:12, interval:1.9, hpScale:3.8, boss:null },
-  { count:13, interval:1.8, hpScale:4.6, boss:'box_kraken' },
-  { count:14, interval:1.7, hpScale:5.5, boss:'sad_rain_frog' },
-  { count:16, interval:1.6, hpScale:6.5, boss:'king_skunk' },
+  { count:7, interval:2.5, hpScale:1, boss:null },
+  { count:9, interval:2.3, hpScale:1.35, boss:null },
+  { count:11, interval:2.1, hpScale:1.8, boss:null },
+  { count:13, interval:1.95, hpScale:2.35, boss:'husky_wrecker' },
+  { count:15, interval:1.8, hpScale:3, boss:null },
+  { count:17, interval:1.65, hpScale:3.85, boss:'dr_clippers' },
+  { count:19, interval:1.5, hpScale:4.8, boss:null },
+  { count:21, interval:1.4, hpScale:6, boss:'box_kraken' },
+  { count:23, interval:1.3, hpScale:7.4, boss:'sad_rain_frog' },
+  { count:26, interval:1.2, hpScale:9, boss:'king_skunk' },
 ] as const;
 export const WAVE_DURATION = 36;
-export const FIRST_WAVE_PREPARATION = 20;
+export const FIRST_WAVE_PREPARATION = 18;
 const BOSS_WAVES=[4,6,8,9,10];
 export const THEME_BOSSES:Record<MapId,string[]>={
   sunny_backyard:['husky_wrecker','diva_kitty','mega_roomba','sad_rain_frog','king_skunk'],

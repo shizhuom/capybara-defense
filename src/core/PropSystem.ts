@@ -26,20 +26,21 @@ export class PropSystem {
   has(side:Side,id:string):boolean {return this.engine.state.sides[side].loadout.equippedPassiveProps.includes(id);}
   initialize():void {
     const sides=this.engine.state.sides;
-    for(const side of ['player','ai'] as Side[]){
+    for(const side of ['player'] as Side[]){
       if(this.has(side,'extra_oranges'))sides[side].oranges+=2;
-      if(this.has(side,'shared_oranges')){sides[side].oranges+=4;sides[side==='player'?'ai':'player'].oranges+=2;}
+      if(this.has(side,'shared_oranges'))sides[side].oranges+=4;
       if(this.has(side,'bee_overtime'))sides[side].food+=10;
     }
   }
-  shovelRules(side:Side):{interval:number;maxStored:number}{return this.has(side,'auto_shovel')?{interval:7.5,maxStored:8}:{interval:SHOVEL_PRODUCTION.interval,maxStored:SHOVEL_PRODUCTION.maxStored};}
+  shovelRules(side:Side):{interval:number;maxStored:number}{return this.has(side,'auto_shovel')?{interval:30,maxStored:6}:{interval:SHOVEL_PRODUCTION.interval,maxStored:SHOVEL_PRODUCTION.maxStored};}
   haste(side:Side):number {
-    return(this.has(side,'hyper_party')?.35:0)+(this.has(side==='player'?'ai':'player','hyper_party')?.2:0)+(this.engine.state.sides[side].catnipTime>0?.45:0);
+    return(this.has(side,'hyper_party')?.38:0)+(this.engine.state.sides[side].catnipTime>0?.45:0);
   }
-  draw(side:Side):string {
-    const weights=DRAW_POOL.map(item=>item.weight*(item.category==='component'&&this.has(side,'vip_poster')?1.8:1));
+  draw(side:Side,allowShovel=true):string {
+    const pool=DRAW_POOL.filter(item=>allowShovel||item.id!=='shovel');
+    const weights=pool.map(item=>item.weight*(item.category==='component'&&this.has(side,'vip_poster')?1.8:1));
     let value=this.random()*weights.reduce((a,b)=>a+b,0);
-    return DRAW_POOL.find((_,i)=>(value-=weights[i])<0)?.id??DRAW_POOL.at(-1)!.id;
+    return pool.find((_,i)=>(value-=weights[i])<0)?.id??pool.at(-1)!.id;
   }
   promoteDraw(unit:Unit):void {
     if(!this.has(unit.side,'promo_badge')||UNITS[unit.kind]?.category!=='basic')return;
@@ -54,6 +55,7 @@ export class PropSystem {
     const unit=state.units.find(u=>u.id===target.unitId&&u.side===side),basic=unit&&UNITS[unit.kind],max=unit?(HEROES[unit.kind]?5:basic?.maxLevel??1):1;
     if(prop.target==='unit'){
       if(!unit)return{ok:false,key:'m2.invalidTarget'};
+      if(unit.kind==='shovel'&&(id!=='recycle_bin'||unit.location.zone!=='bench'))return{ok:false,key:'hint.toolOnly'};
       if((unit.washing??0)>0)return{ok:false,key:'m2.washing'};
       if(id==='washer'&&!(basic?.category==='component'||basic?.category==='basic'&&unit.level===1))return{ok:false,key:'m2.invalidTarget'};
       if(id==='clay'&&basic?.category!=='component')return{ok:false,key:'m2.invalidTarget'};
@@ -77,7 +79,7 @@ export class PropSystem {
       }
       case 'catnip':resources.catnipTime=8;key='m2.catnip';break;
       case 'glue_trap':state.traps.push({id:this.trapSequence++,side,col:target.col!,row:target.row!,charges:3,hitIds:[]});key='m2.trapPlaced';break;
-      case 'recycle_bin':state.units=state.units.filter(u=>u.id!==unit!.id);resources.food+=5;key='m2.recycled';break;
+      case 'recycle_bin':state.units=state.units.filter(u=>u.id!==unit!.id);resources.food+=unit!.kind==='shovel'?4:5;key='m2.recycled';break;
     }
     return{ok:true,key,unitId:unit&&id!=='recycle_bin'?unit.id:undefined};
   }
@@ -98,11 +100,11 @@ export class PropSystem {
     return{ok:true,key:'m2.sprinklerReady'};
   }
   tick(dt:number):void {
-    for(const side of ['player','ai'] as Side[]){
+    for(const side of ['player'] as Side[]){
       const resources=this.engine.state.sides[side];resources.catnipTime=Math.max(0,resources.catnipTime-dt);
       for(const id of Object.keys(resources.propCooldowns)){const next=resources.propCooldowns[id]-dt;resources.propCooldowns[id]=next<1e-8?0:next;}
     }
-    for(const unit of this.engine.state.units)if((unit.washing??0)>0){unit.washing=Math.max(0,unit.washing!-dt);if(unit.washing<1e-8){unit.washing=0;this.transform(unit,this.randomComponent(unit.kind));}}
+    for(const unit of this.engine.state.units)if(unit.side==='player'&&(unit.washing??0)>0){unit.washing=Math.max(0,unit.washing!-dt);if(unit.washing<1e-8){unit.washing=0;this.transform(unit,this.randomComponent(unit.kind));}}
   }
   onEnemy(enemy:Enemy):void {
     if(enemy.hp<=0)return;
@@ -113,10 +115,10 @@ export class PropSystem {
     }
     state.traps=state.traps.filter(trap=>trap.charges>0);
     const owner=state.sides[enemy.side];
-    if(this.has(enemy.side,'giant_orange_cat')&&owner.giantCatUses<2&&enemy.progress>=13){
-      owner.giantCatUses++;const center=GridSystem.pathPosition(enemy.side,14,this.engine.state.mapId);
+    if(this.has(enemy.side,'giant_orange_cat')&&owner.giantCatUses<2&&enemy.progress>=getMap(state.mapId).paths.player.length-3){
+      owner.giantCatUses++;const center=GridSystem.pathPosition(enemy.side,getMap(state.mapId).paths.player.length-2,this.engine.state.mapId);
       this.engine.event({type:'giant_cat',side:enemy.side,...center,duration:1.1});
-      for(const target of this.engine.lane(enemy.side).filter(e=>e.progress>=13)){
+      for(const target of this.engine.lane(enemy.side).filter(e=>e.progress>=getMap(state.mapId).paths.player.length-3.2)){
         this.engine.hurt(target,target.boss?target.maxHp*.35:target.hp,undefined,true,false,true);
         if(target.boss)this.engine.knockback(target,3);
       }

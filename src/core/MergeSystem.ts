@@ -8,6 +8,7 @@ export class MergeSystem {
     const reject=(key:string):MergeOutcome=>({ok:false,key});
     if(source.id===target.id)return reject('hint.invalid');
     if(source.side!==target.side)return reject('hint.enemyTerritory');
+    if(source.kind==='shovel'||target.kind==='shovel')return source.location.zone==='bench'&&target.location.zone==='bench'?{ok:true,key:'hint.swapped',swap:true}:reject('hint.toolOnly');
     const pair=[source.kind,target.kind];
     if(pair.includes('shiba')&&pair.includes('hat_wizard'))return reject('hint.dogeMagic');
     const recipe=RECIPES.find(r=>r.parts.every(p=>pair.includes(p)));

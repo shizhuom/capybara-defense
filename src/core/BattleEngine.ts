@@ -1,14 +1,14 @@
 import { GridSystem } from './GridSystem';
-import { BEE_PRODUCTION, ECONOMY, SHOVEL_PRODUCTION, UNITS } from '../config/units';
+import { BEE_PRODUCTION, ECONOMY, getSummonCost, SHOVEL_PRODUCTION, UNITS } from '../config/units';
 import { HEROES } from '../config/heroes';
 import { ENEMIES } from '../config/enemies';
-import {getMap} from '../config/maps';
+import {getMap,GRID_ROWS,GRID_COLS,STAGE} from '../config/maps';
+import {COMBAT_STYLES} from '../config/combat';
 import {RANKS} from '../config/ranks';
 import {applyNewBossMechanic} from './BossMechanics';
 import {rollWeapon} from '../config/weapons';
 import { FIRST_WAVE_PREPARATION, WAVES, WAVE_DURATION,bossForWave } from '../config/waves';
 import { MergeSystem } from './MergeSystem';
-import { OpponentAI,createOpponentSetup } from './OpponentAI';
 import type {OpponentTuning} from '../config/opponents';
 import { Random } from './Random';
 import {copyLoadout,PropSystem,type PropTarget} from './PropSystem';
@@ -20,7 +20,6 @@ export class BattleEngine {
   state:BattleState;
   private sequence=1;
   private random:Random;
-  private opponent:OpponentAI;
   private props:PropSystem;
   private weapons:WeaponSystem;
   private effectOwners=new WeakMap<Enemy,Partial<Record<'burn'|'poison'|'bleed',Unit>>>();
@@ -28,10 +27,8 @@ export class BattleEngine {
     const seed=options.seed??Math.floor(Math.random()*0xffffffff);
     this.random=new Random(seed);
     const mapId=getMap(options.mapId).id,rankIndex=Number.isFinite(options.rankIndex)?Math.max(0,Math.min(53,Math.trunc(options.rankIndex!))):0;
-    const setupRandom=new Random(seed^0x70657473),setup=createOpponentSetup(rankIndex,()=>setupRandom.next());
-    this.opponent=new OpponentAI({...setup.tuning,...options.aiOverrides});
-    const side=(side:Side):SideState=>({food:ECONOMY.initialFood,oranges:ECONOMY.initialOranges,shovels:ECONOMY.initialShovels,shovelTimer:0,kills:0,damage:0,loot:[],fog:0,loadout:copyLoadout(options.loadouts?.[side]??(side==='ai'&&options.ai!==false?setup.loadout:undefined)),propCooldowns:{},sprinklerUsed:false,giantCatUses:0,catnipTime:0});
-    this.state={id:`${Date.now()}-${++battleSequence}`,phase:'ready',time:0,wave:0,waveTime:0,nextSpawn:0,spawned:0,mapId,rankIndex,opponent:setup.identity,mergedHeroes:{player:[],ai:[]},grid:GridSystem.create(mapId),sides:{player:side('player'),ai:side('ai')},units:[],enemies:[],events:[],traps:[],result:null};
+    const side=(side:Side):SideState=>({food:ECONOMY.initialFood,summons:0,oranges:ECONOMY.initialOranges,shovels:ECONOMY.initialShovels,shovelTimer:0,kills:0,damage:0,loot:[],fog:0,loadout:copyLoadout(side==='player'?options.loadouts?.player:undefined),propCooldowns:{},sprinklerUsed:false,giantCatUses:0,catnipTime:0});
+    this.state={id:`${Date.now()}-${++battleSequence}`,phase:'ready',time:0,wave:0,waveTime:0,nextSpawn:0,spawned:0,mapId,rankIndex,mergedHeroes:{player:[],ai:[]},grid:GridSystem.create(mapId),craterHits:{},sides:{player:side('player'),ai:side('ai')},units:[],enemies:[],events:[],traps:[],result:null};
     this.props=new PropSystem(this,()=>this.random.next());this.props.initialize();this.weapons=new WeaponSystem(this,()=>this.random.next());
   }
   start():void {
@@ -46,11 +43,12 @@ export class BattleEngine {
     }
   }
   pause(value=true):void { if(this.state.phase==='playing'||this.state.phase==='paused') this.state.phase=value?'paused':'playing'; }
-  useProp(id:string,target:PropTarget={},side:Side='player'):CommandResult{return this.props.use(id,target,side);}
-  useSprinkler(side:Side='player'):CommandResult{return this.props.sprinkler(side);}
+  useProp(id:string,target:PropTarget={},side:Side='player'):CommandResult{return side==='player'?this.props.use(id,target,side):{ok:false,key:'hint.invalid'};}
+  useSprinkler(side:Side='player'):CommandResult{return side==='player'?this.props.sprinkler(side):{ok:false,key:'hint.invalid'};}
   getShovelRules(side:Side='player'):{interval:number;maxStored:number}{return this.props.shovelRules(side);}
   rollWeaponFragment():string{return rollWeapon(()=>this.random.next(),undefined,RANKS[this.state.rankIndex].fragmentMultiplier);}
   applyDot(enemy:Enemy,effect:'burn'|'poison'|'bleed',duration:number,dps:number,unit:Unit):void {
+    if(enemy.side!=='player'||unit.side!=='player')return;
     const field=effect==='burn'?'burnDps':effect==='poison'?'poisonDps':'bleedDps';
     // Keep the cast's unit reference even if a later merge removes it from the board.
     // A weaker refresh extends the effect without stealing its damage/kill ownership.
@@ -60,6 +58,7 @@ export class BattleEngine {
     enemy[effect]=Math.max(enemy[effect]??0,duration);
   }
   grant(kind:string,side:Side='player'):CommandResult {
+    if(side!=='player')return{ok:false,key:'hint.invalid'};
     if(!this.actionAllowed())return {ok:false,key:'hint.paused'};
     if(!UNITS[kind]&&!HEROES[kind]) return {ok:false,key:'hint.invalid'};
     const slot=Array.from({length:5},(_,i)=>i).find(i=>!this.state.units.some(u=>u.side===side&&u.location.zone==='bench'&&u.location.slot===i));
@@ -69,26 +68,35 @@ export class BattleEngine {
     return {ok:true,key:'hint.granted',unitId:id};
   }
   summon(side:Side='player'):CommandResult {
+    if(side!=='player')return{ok:false,key:'hint.invalid'};
     if(!this.actionAllowed())return{ok:false,key:'hint.paused'};
-    if(this.state.sides[side].food<ECONOMY.summonCost)return{ok:false,key:'hint.noFood'};
+    const cost=getSummonCost(this.state.sides[side].summons);
+    if(this.state.sides[side].food<cost)return{ok:false,key:'hint.noFood'};
     const discarded=this.state.units.some(u=>u.side===side&&u.location.zone==='bench');
     // Validate the price before discarding. A pack replaces this bench atomically.
     this.state.units=this.state.units.filter(u=>u.side!==side||u.location.zone!=='bench');
-    this.state.sides[side].food-=ECONOMY.summonCost;
-    let firstId:number|undefined;
+    this.state.sides[side].food-=cost;this.state.sides[side].summons++;
+    let firstId:number|undefined,shovels=0;
     for(let i=0;i<ECONOMY.summonCount;i++){
-      const result=this.grant(this.props.draw(side),side);firstId??=result.unitId;
-      const unit=this.state.units.find(u=>u.id===result.unitId);if(unit)this.props.promoteDraw(unit);
+      const result=this.grant(this.props.draw(side,shovels<2),side);firstId??=result.unitId;
+      const unit=this.state.units.find(u=>u.id===result.unitId);if(unit){if(unit.kind==='shovel')shovels++;this.props.promoteDraw(unit);}
     }
     return{ok:true,key:discarded?'hint.redrawn':'hint.summoned',unitId:firstId};
   }
   move(id:number,target:UnitLocation):CommandResult {
     if(!this.actionAllowed())return{ok:false,key:'hint.paused'};
     const source=this.state.units.find(u=>u.id===id);
-    if(!source)return{ok:false,key:'hint.invalid'};
+    if(!source||source.side!=='player')return{ok:false,key:'hint.invalid'};
+    if(source.kind==='shovel'&&target.zone==='board'){
+      if(source.location.zone!=='bench')return{ok:false,key:'hint.toolOnly'};
+      const result=this.useShovel(target.col,target.row,source.side,1);
+      if(result.ok)this.state.units=this.state.units.filter(u=>u.id!==id);
+      return result;
+    }
     if(target.zone==='board'&&!GridSystem.owns(source.side,target.col,target.row))return{ok:false,key:'hint.enemyTerritory'};
     if(!GridSystem.canPlace(this.state,source.side,target))return{ok:false,key:'hint.invalidTile'};
     const occupant=this.state.units.find(u=>u.side===source.side&&this.sameLocation(u.location,target));
+    if(occupant?.kind==='shovel'&&source.location.zone==='board')return{ok:false,key:'hint.toolOnly'};
     if(source.washing||occupant?.washing)return{ok:false,key:'m2.washing'};
     if(occupant?.id===source.id)return{ok:true,key:'hint.selected',unitId:id};
     if(occupant){
@@ -108,13 +116,33 @@ export class BattleEngine {
     }
     source.location={...target};source.animation=1;return{ok:true,key:'hint.deployed',unitId:id};
   }
+  storeShovel(id:number):CommandResult {
+    if(!this.actionAllowed())return{ok:false,key:'hint.paused'};
+    const unit=this.state.units.find(u=>u.id===id&&u.side==='player'&&u.kind==='shovel'&&u.location.zone==='bench');
+    if(!unit)return{ok:false,key:'hint.toolOnly'};
+    if(this.state.sides.player.shovels>=this.getShovelRules().maxStored)return{ok:false,key:'hint.shovelFull'};
+    this.state.sides.player.shovels++;this.state.units=this.state.units.filter(u=>u.id!==id);
+    return{ok:true,key:'hint.shovelStored'};
+  }
   dig(col:number,row:number,side:Side='player'):CommandResult {
     if(!this.actionAllowed())return{ok:false,key:'hint.paused'};
-    if(!GridSystem.owns(side,col,row))return{ok:false,key:'hint.enemyTerritory'};
-    const tile=this.state.grid[row][col],cost=tile==='B'?2:1;
+    if(side!=='player')return{ok:false,key:'hint.invalid'};
+    const resources=this.state.sides[side],tile=this.state.grid[row]?.[col],remaining=2-(this.state.craterHits[col+','+row]??0);
+    const amount=tile==='B'?Math.min(remaining,resources.shovels):Math.min(1,resources.shovels);
+    if(!GridSystem.owns(side,col,row)||!['G','B'].includes(tile))return{ok:false,key:'hint.invalidTile'};
+    if(amount<=0)return{ok:false,key:'hint.noShovels'};
+    const result=this.useShovel(col,row,side,amount);if(result.ok)resources.shovels-=amount;return result;
+  }
+  private useShovel(col:number,row:number,side:Side,amount:number):CommandResult {
+    if(!GridSystem.owns(side,col,row))return{ok:false,key:'hint.invalidTile'};
+    const tile=this.state.grid[row][col],key=col+','+row;
     if(tile!=='G'&&tile!=='B')return{ok:false,key:'hint.invalidTile'};
-    if(this.state.sides[side].shovels<cost)return{ok:false,key:'hint.noShovels'};
-    this.state.sides[side].shovels-=cost;this.state.grid[row][col]='O';
+    if(tile==='B'&&(this.state.craterHits[key]??0)+amount<2){
+      this.state.craterHits[key]=1;
+      this.event({type:'bubble',side,col,row,textKey:'hint.repairProgress',duration:1.2});
+      return{ok:true,key:'hint.repairProgress'};
+    }
+    this.state.grid[row][col]='O';delete this.state.craterHits[key];
     if(tile==='G')this.props.treasure(side,col,row);
     this.event({type:'burst',side,col,row,duration:.6,color:'#8fbd75'});
     return{ok:true,key:tile==='B'?'hint.repaired':'hint.dig'};
@@ -122,14 +150,16 @@ export class BattleEngine {
   spawnBoss(kind:string,side?:Side):CommandResult {
     if(!this.actionAllowed())return{ok:false,key:'hint.paused'};
     if(!ENEMIES[kind]?.boss)return{ok:false,key:'hint.invalid'};
-    for(const defender of side?[side]:['player','ai'] as Side[]){this.spawnEnemy(kind,defender);}
+    if(side==='ai')return{ok:false,key:'hint.invalid'};
+    this.spawnEnemy(kind,'player');
     return{ok:true,key:'hint.boss'};
   }
   spawnEnemy(kind:string,side:Side,scale=1):Enemy {
     const config=ENEMIES[kind];if(!config)throw new Error('Unknown enemy');
-    scale*=RANKS[this.state.rankIndex].hpMultiplier;
+    scale*=RANKS[this.state.rankIndex].hpMultiplier*(this.props.has('player','shared_oranges')?1.15:1);
     const p=GridSystem.pathPosition(side,0,this.state.mapId);
-    const enemy:Enemy={id:this.sequence++,kind,side,boss:config.boss,hp:config.hp*scale,maxHp:config.hp*scale,progress:0,col:p.col,row:p.row,speed:config.speed,armor:config.armor,size:1,abilityCooldown:config.interval,stun:0,slow:0,slowFactor:1,burn:0,burnDps:0,poison:0,poisonDps:0,stolenBy:[],hitFlash:0};
+    const enemy:Enemy={id:side==='player'?this.sequence++:0,kind,side,boss:config.boss,hp:config.hp*scale,maxHp:config.hp*scale,progress:0,col:p.col,row:p.row,speed:config.speed*(this.props.has('player','hyper_party')?1.12:1),armor:config.armor,size:1,abilityCooldown:config.interval,stun:0,slow:0,slowFactor:1,burn:0,burnDps:0,poison:0,poisonDps:0,stolenBy:[],hitFlash:0};
+    if(side!=='player')return enemy;
     this.state.enemies.push(enemy);
     if(enemy.boss){
       this.event({type:'bubble',side,col:p.col,row:p.row,textKey:`boss.${kind}.bubble`,effect:'boss_spawn',duration:2.2});
@@ -138,12 +168,12 @@ export class BattleEngine {
     return enemy;
   }
   adjustOranges(delta:number,side:Side='player'):void {
-    if(!this.actionAllowed()||!Number.isFinite(delta))return;
+    if(side!=='player'||!this.actionAllowed()||!Number.isFinite(delta))return;
     this.state.sides[side].oranges=Math.max(0,this.state.sides[side].oranges+Math.trunc(delta));
-    this.event({type:'orange',side,col:side==='player'?7:0,row:side==='player'?9:0,value:delta,duration:1.2,textKey:delta<0?'hint.orangeLost':'hint.orangeAdded'});
+    this.event({type:'orange',side,...getMap(this.state.mapId).paths.player.at(-1)!,value:delta,duration:1.2,textKey:delta<0?'hint.orangeLost':'hint.orangeAdded'});
     if(this.state.sides[side].oranges===0)this.finish(side==='player'?'ai':'player','oranges');
   }
-  addFood(amount:number,side:Side='player'):void { if(this.actionAllowed()&&Number.isFinite(amount))this.state.sides[side].food=Math.max(0,this.state.sides[side].food+Math.trunc(amount)); }
+  addFood(amount:number,side:Side='player'):void { if(side==='player'&&this.actionAllowed()&&Number.isFinite(amount))this.state.sides[side].food=Math.max(0,this.state.sides[side].food+Math.trunc(amount)); }
   skipWave():void {
     if(!this.actionAllowed())return;
     // Skipping drops pending enemies without kill income or loot.
@@ -156,13 +186,13 @@ export class BattleEngine {
   private sameLocation(a:UnitLocation,b:UnitLocation):boolean {
     return a.zone==='bench'&&b.zone==='bench'?a.slot===b.slot:a.zone==='board'&&b.zone==='board'&&a.col===b.col&&a.row===b.row;
   }
-  unitPosition(unit:Unit):Point { return unit.location.zone==='board'?unit.location:{col:unit.location.slot+1.2,row:11.8}; }
+  unitPosition(unit:Unit):Point { return unit.location.zone==='board'?unit.location:{col:(STAGE.benchX+unit.location.slot*STAGE.benchStep+STAGE.benchSize/2-STAGE.boardX)/STAGE.cell-.5,row:(STAGE.benchY+STAGE.benchSize/2-STAGE.boardY)/STAGE.cell-.5}; }
   event(event:Omit<VisualEvent,'id'|'age'>):void { this.state.events.push({...event,id:this.sequence++,age:0}); }
   private step(dt:number):void {
     this.state.time+=dt;
     this.state.events=this.state.events.filter(e=>(e.age+=dt)<e.duration);
     this.props.tick(dt);
-    for(const side of ['player','ai'] as Side[]){
+    for(const side of ['player'] as Side[]){
       const resources=this.state.sides[side];resources.fog=Math.max(0,resources.fog-dt);
       const rules=this.getShovelRules(side);
       if(resources.shovels>=rules.maxStored){resources.shovelTimer=0;continue;}
@@ -173,13 +203,13 @@ export class BattleEngine {
       }
     }
     if(this.options.autoWaves!==false)this.updateWaves(dt);
-    if(this.options.ai!==false)this.opponent.tick(this,dt);
     for(const unit of [...this.state.units]){
+      if(unit.side!=='player')continue;
       for(const status of Object.keys(unit.statuses) as (keyof Unit['statuses'])[]){
         const left=(unit.statuses[status]??0)-dt;if(left<=0)delete unit.statuses[status];else unit.statuses[status]=left;
       }
-      unit.animation=Math.max(0,unit.animation-dt*3);unit.buffTime=Math.max(0,unit.buffTime-dt);unit.powerTime=Math.max(0,(unit.powerTime??0)-dt);
-      if(unit.location.zone!=='board')continue;
+      unit.attackAnim=Math.max(0,(unit.attackAnim??0)-dt*3.1);unit.animation=Math.max(0,unit.animation-dt*3);unit.buffTime=Math.max(0,unit.buffTime-dt);unit.powerTime=Math.max(0,(unit.powerTime??0)-dt);
+      if(unit.location.zone!=='board'||unit.kind==='shovel')continue;
       if(unit.statuses.SEALED||unit.statuses.KNOCKDOWN||unit.statuses.CONFUSED||unit.washing)continue;
       if(unit.kind==='bee'){
         const production=BEE_PRODUCTION[Math.min(2,unit.level-1)],interval=production.interval*(this.props.has(unit.side,'bee_overtime')?.75:1);unit.production+=dt;
@@ -202,8 +232,9 @@ export class BattleEngine {
       }
     }
     for(const enemy of [...this.state.enemies]){
+      if(enemy.side!=='player')continue;
       if(enemy.hp<=0)continue;
-      enemy.hitFlash=Math.max(0,enemy.hitFlash-dt);
+      enemy.hitFlash=Math.max(0,enemy.hitFlash-dt);if(enemy.hitFlash===0){enemy.knockX=0;enemy.knockY=0;}
       for(const effect of ['burn','poison','bleed'] as const){
         const remaining=enemy[effect]??0;if(remaining<=0)continue;
         const dps=effect==='burn'?enemy.burnDps:effect==='poison'?enemy.poisonDps:enemy.bleedDps??0;
@@ -219,7 +250,7 @@ export class BattleEngine {
       if(enemy.stun<=0)enemy.progress+=enemy.speed*(dt+.3*hasteDuration)*(enemy.slow>0?enemy.slowFactor:1)*(this.props.has(enemy.side,'banana_peel')?.88:1);
       Object.assign(enemy,GridSystem.pathPosition(enemy.side,enemy.progress,this.state.mapId));
       this.props.onEnemy(enemy);if(enemy.hp<=0)continue;
-      if(enemy.progress>=15){
+      if(enemy.progress>=getMap(this.state.mapId).paths.player.length-1){
         this.state.enemies=this.state.enemies.filter(e=>e.id!==enemy.id);
         this.adjustOranges(enemy.boss?-2:-1,enemy.side);
         if(this.state.phase==='finished')break;
@@ -230,9 +261,8 @@ export class BattleEngine {
   }
   private beginWave(wave:number):void {
     this.state.wave=wave;this.state.waveTime=0;this.state.nextSpawn=wave===1?FIRST_WAVE_PREPARATION:1;this.state.spawned=0;
-    for(const side of ['player','ai'] as Side[]){
-      this.state.sides[side].food+=ECONOMY.waveIncome;
-      if(wave%3===0)this.state.sides[side].shovels=Math.min(this.getShovelRules(side).maxStored,this.state.sides[side].shovels+1);
+    for(const side of ['player'] as Side[]){
+      if(wave>1)this.state.sides[side].food+=ECONOMY.waveIncome;
     }
     this.event({type:'bubble',side:'player',col:3.5,row:4.5,textKey:'hint.wave',value:wave,duration:1.8});
     const boss=bossForWave(this.state.mapId,this.state.rankIndex,wave,()=>this.random.next());if(boss)this.spawnBoss(boss);
@@ -243,32 +273,40 @@ export class BattleEngine {
     const config=WAVES[this.state.wave-1];
     if(this.state.spawned<config.count&&this.state.nextSpawn<=0){
       const index=this.state.spawned,kind=this.state.wave<3?'rat':index%5===4?'crab':index%3===1?'roach':'rat';
-      for(const side of ['player','ai'] as Side[])this.spawnEnemy(kind,side,config.hpScale);
+      for(const side of ['player'] as Side[])this.spawnEnemy(kind,side,config.hpScale);
       this.state.spawned++;this.state.nextSpawn=config.interval;
     }
     if(this.state.wave<10&&this.state.waveTime+1e-8>=WAVE_DURATION)this.beginWave(this.state.wave+1);
   }
   getUnitStats(unit:Unit):{damage:number;rate:number;range:number;charge:number} {
     const hero=HEROES[unit.kind],base=hero??UNITS[unit.kind];
+    if(!base||unit.kind==='shovel')return{damage:0,rate:0,range:0,charge:0};
     return this.weapons.stats(unit,{damage:base.damage*(hero?1.6:1.65)**(unit.level-1),rate:base.rate*(hero?1:1+.12*(unit.level-1))*(1+this.props.haste(unit.side)),range:base.range,charge:hero?Math.ceil(hero.charge*.9**(unit.level-1)):0});
   }
   private stats(unit:Unit){return this.getUnitStats(unit);}
   lane(side:Side):Enemy[] { return this.state.enemies.filter(e=>e.side===side&&e.hp>0); }
   private shot(unit:Unit,enemy:Enemy,color?:string):void {
-    this.event({type:'projectile',side:unit.side,...this.unitPosition(unit),targetCol:enemy.col,targetRow:enemy.row,color:color??HEROES[unit.kind]?.color??UNITS[unit.kind]?.color,duration:.25,unitId:unit.id});
+    this.event({type:'projectile',side:unit.side,...this.unitPosition(unit),targetCol:enemy.col,targetRow:enemy.row,color:color??HEROES[unit.kind]?.color??UNITS[unit.kind]?.color,duration:.25,unitId:unit.id,effect:unit.kind});
   }
   hurt(enemy:Enemy,amount:number,unit?:Unit,critical=false,weaponHooks=true,trueDamage=false,periodic=false):void {
-    if(enemy.hp<=0||amount<=0)return;
+    if(enemy.side!=='player'||unit?.side==='ai'||enemy.hp<=0||amount<=0)return;
     const damage=amount*(unit?this.weapons.damageMultiplier(unit,enemy):1)*(trueDamage||(enemy.armorBreak??0)>0?1:1-enemy.armor),actual=Math.min(enemy.hp,damage);enemy.hp-=damage;
-    if(amount>=3)enemy.hitFlash=.14;
+    if(amount>=3){
+      enemy.hitFlash=.14;const source=unit?this.unitPosition(unit):{col:enemy.col,row:enemy.row+1},dx=enemy.col-source.col,dy=enemy.row-source.row,len=Math.hypot(dx,dy)||1;
+      enemy.knockX=dx/len*5;enemy.knockY=dy/len*5;
+      this.event({type:'hit',side:enemy.side,col:enemy.col,row:enemy.row,effect:'vfx_hit_burst',duration:.18});
+    }
     this.state.sides[enemy.side].damage+=actual;
     if(amount>=3)this.event({type:'damage',side:enemy.side,col:enemy.col,row:enemy.row,value:Math.round(damage),color:critical?'#f16941':'#fff7da',duration:.65});
     if(enemy.hp<=0){
       const owner=this.state.sides[enemy.side];owner.kills++;
       if(enemy.boss){
-        owner.food+=15;const count=1+Math.floor(this.random.next()*2);
+        const count=1+Math.floor(this.random.next()*2);
         for(let i=0;i<count;i++)owner.loot.push(this.rollWeaponFragment());
-      }else if(this.random.next()<.25)owner.food+=2;
+      }
+      const food=enemy.boss?ECONOMY.bossKillFood:ECONOMY.killFood;owner.food+=food;
+      this.event({type:'food',side:enemy.side,col:enemy.col,row:enemy.row,value:food,textKey:'hint.food',duration:1.1});
+      this.event({type:'death',side:enemy.side,col:enemy.col,row:enemy.row,effect:'vfx_dust_puff',duration:.55});
       if(unit?.kind==='doge_wick'&&this.random.next()<(this.weapons.awakened(unit)?.85:.5))owner.food+=2;
       this.event({type:'burst',side:enemy.side,col:enemy.col,row:enemy.row,duration:.5,color:enemy.boss?'#f9bd56':'#c4dec7'});
       if(unit&&weaponHooks)this.weapons.onKill(unit);
@@ -287,7 +325,10 @@ export class BattleEngine {
     for(const e of hits)this.hurt(e,damage,unit);
   }
   private attack(unit:Unit,target:Enemy,damage:number):void {
-    this.shot(unit,target);
+    const position=this.unitPosition(unit),dx=target.col-position.col,dy=target.row-position.row,style=COMBAT_STYLES[unit.kind];
+    unit.attackAngle=Math.atan2(dy,dx);unit.facing=dx<0?-1:1;unit.attackAnim=1;
+    if(style&&['spin360','cleave180','cross_slash','thrust'].includes(style))this.event({type:'slash',side:unit.side,...position,targetCol:target.col,targetRow:target.row,unitId:unit.id,effect:unit.kind==='samurai_doge'?'heavy_cleave':style,duration:.33});
+    else this.shot(unit,target);
     switch(unit.kind){
       case 'hedgehog':this.pierce(unit,target,damage);break;
       case 'corgi':this.hurt(target,damage,unit);for(const other of this.lane(unit.side))if(other.id!==target.id&&GridSystem.distance(target,other)<=.8)this.hurt(other,damage*.5,unit);break;
@@ -351,9 +392,9 @@ export class BattleEngine {
         const broken=this.state.grid.flatMap((tiles,row)=>tiles.map((tile,col)=>({tile,col,row}))).filter(cell=>cell.tile==='B'&&GridSystem.owns(enemy.side,cell.col,cell.row)).length;
         if(broken>=(ENEMIES.husky_wrecker.maxBrokenTiles??2))break;
         const cells:Point[]=[];
-        for(let row=0;row<10;row++)for(let col=0;col<8;col++)if(GridSystem.owns(enemy.side,col,row)&&this.state.grid[row][col]==='O'&&!units.some(u=>u.location.zone==='board'&&u.location.col===col&&u.location.row===row))cells.push({col,row});
+        for(let row=0;row<GRID_ROWS;row++)for(let col=0;col<GRID_COLS;col++)if(GridSystem.owns(enemy.side,col,row)&&this.state.grid[row][col]==='O'&&!units.some(u=>u.location.zone==='board'&&u.location.col===col&&u.location.row===row))cells.push({col,row});
         const cell=cells.sort((a,b)=>GridSystem.distance(enemy,a)-GridSystem.distance(enemy,b))[0];
-        if(cell){this.state.grid[cell.row][cell.col]='B';this.event({type:'burst',side:enemy.side,...cell,color:'#bd9478',duration:1});}break;
+        if(cell){this.state.grid[cell.row][cell.col]='B';delete this.state.craterHits[cell.col+','+cell.row];this.event({type:'burst',side:enemy.side,...cell,color:'#bd9478',duration:1});}break;
       }
       case 'mega_roomba':{
         const victim=units.filter(u=>UNITS[u.kind]?.category==='basic'&&GridSystem.distance(this.unitPosition(u),enemy)<=1.2).sort((a,b)=>a.level-b.level||a.id-b.id)[0];
@@ -371,13 +412,11 @@ export class BattleEngine {
     this.event({type:'bubble',side:enemy.side,col:enemy.col,row:enemy.row,textKey:`boss.${enemy.kind}.bubble`,duration:1.5});
   }
   private finishByScore():void {
-    const p=this.state.sides.player,a=this.state.sides.ai;
-    const difference=p.oranges-a.oranges||p.kills-a.kills||p.damage-a.damage;
-    this.finish(difference>=0?'player':'ai','waves');
+    this.finish(this.state.sides.player.oranges>0?'player':'ai','waves');
   }
   private finish(winner:Side,reason:'oranges'|'waves'|'surrender'):void {
     if(this.state.result)return;
-    const playerLoot=[...this.state.sides.player.loot],aiLoot=[...this.state.sides.ai.loot];
-    this.state.result={winner,reason,loot:[...playerLoot,...aiLoot],playerLoot,aiLoot,coins:winner==='player'?RANKS[this.state.rankIndex].winCoins+this.state.sides.player.food:0,elapsed:this.state.time,rankIndex:this.state.rankIndex,mergedHeroes:[...this.state.mergedHeroes.player]};this.state.phase='finished';
+    const playerLoot=[...this.state.sides.player.loot],aiLoot:string[]=[];
+    this.state.result={winner,reason,loot:winner==='player'?[...playerLoot]:[],playerLoot,aiLoot,coins:winner==='player'?RANKS[this.state.rankIndex].winCoins+Math.min(45,Math.floor(this.state.sides.player.food*.5)):0,elapsed:this.state.time,rankIndex:this.state.rankIndex,mergedHeroes:[...this.state.mergedHeroes.player]};this.state.phase='finished';
   }
 }

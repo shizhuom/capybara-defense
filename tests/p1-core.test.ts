@@ -53,76 +53,16 @@ describe('P1 opponent tier contracts',()=>{
     }
     for(const value of [0,1,NaN,Infinity,-1])expect(Object.keys(setup(35,()=>value).loadout.equippedWeapons)).toHaveLength(6);
   });
-  it('uses each configured decision interval and independent engine clocks',async()=>{
-    for(const rank of [0,6,15,35,50]){
-      const t=await tuning(rank),a=arena(rank,true),b=arena(rank,true),u=pet(a,'hamster','ai');
-      const calls=vi.spyOn(a,'move');a.tick(t.openingDelay+.001);expect(calls).toHaveBeenCalledTimes(1);expect(u.location.zone).toBe('board');expect(b.state.units).toHaveLength(0);
-      pet(a,'squirrel','ai');a.tick(t.interval-.1);expect(calls).toHaveBeenCalledTimes(1);a.tick(.15);expect(calls).toHaveBeenCalledTimes(2);
-    }
-  });
-  it.each([0,6,15,35,50])('waits for rank %i opening before ordinary actions',async rank=>{
-    const e=arena(rank,true),delay=(await tuning(rank)).openingDelay;
-    e.tick(delay-.05);expect(e.state.units).toHaveLength(0);expect(e.state.sides.ai.food).toBeGreaterThanOrEqual(30);
-    e.tick(.1);expect(e.state.units.filter(u=>u.side==='ai')).toHaveLength(5);
-  });
-  it('keeps setup away from disabled AI and combat RNG; honors explicit loadout and tuning overrides',()=>{
-    const off=arena(50),on=arena(50,true);expect(off.state.sides.ai.loadout.equippedWeapons).toEqual({});
-    off.summon();on.summon();expect(off.state.units.map(u=>u.kind)).toEqual(on.state.units.map(u=>u.kind));expect(on.state.opponent).toBeDefined();
-    const custom=new BattleEngine({seed:49,rankIndex:50,autoWaves:false,loadouts:{ai:{}},aiOverrides:{openingDelay:4,interval:3}});custom.start();custom.tick(3.9);
-    expect(custom.state.sides.ai.loadout.equippedWeapons).toEqual({});expect(custom.state.units).toHaveLength(0);custom.tick(.2);expect(custom.state.units).toHaveLength(5);
-  });
 });
-
-describe('P1 actual legal AI tactics',()=>{
-  it('moderate rank holds its single bottle until a crisis and pays its normal cooldown',()=>{
-    const e=new BattleEngine({rankIndex:20,seed:5,autoWaves:false,loadouts:{ai:{ownedProps:{milk_bottle:1},equippedActiveProps:['milk_bottle']}}});e.start();
-    const hero=pet(e,'kungfu_po','ai');hero.statuses={WET:18};e.tick(1.1);expect(hero.level).toBe(1);expect(hero.statuses.WET).toBeGreaterThan(0);
-    e.state.sides.ai.oranges=2;e.tick(.1);expect(hero.level).toBe(2);expect(e.state.sides.ai.propCooldowns.milk_bottle).toBeGreaterThan(49);
+describe('P2 retires actual opponent execution',()=>{
+  it.each([0,6,15,35,50])('rank %i never constructs units or runs opponent commands',rank=>{
+    const e=arena(rank,true),before=JSON.stringify(e.state.sides.ai);const calls=vi.spyOn(AI.OpponentAI.prototype,'tick');
+    e.tick(60);expect(calls).not.toHaveBeenCalled();expect(e.state.units).toHaveLength(0);expect(JSON.stringify(e.state.sides.ai)).toBe(before);
+    expect(e.grant('hamster','ai').ok).toBe(false);expect(e.summon('ai').ok).toBe(false);expect(e.useSprinkler('ai').ok).toBe(false);expect(e.useProp('catnip',{},'ai').ok).toBe(false);calls.mockRestore();
   });
-  it('does not spend unavailable food or shovels and can legally redraw a blocked pack',()=>{
-    const e=arena(0,true);e.state.sides.ai.food=0;e.state.sides.ai.shovels=0;e.tick(8);expect(e.state.units).toHaveLength(0);expect(e.state.sides.ai.food).toBe(0);
-    // Five incompatible loose parts on a board with no open or grass tile force a paid redraw.
-    for(let row=0;row<5;row++)for(let col=0;col<8;col++)if(['O','G'].includes(e.state.grid[row][col]))e.state.grid[row][col]='B';
-    for(const kind of ['hat_bamboo','hat_shades','hat_wizard','cleaver','basketball'])pet(e,kind,'ai');
-    const ids=e.state.units.map(u=>u.id);e.state.sides.ai.food=10;e.tick(1.7);expect(e.state.sides.ai.food).toBe(0);expect(e.state.units).toHaveLength(5);expect(e.state.units.every(u=>!ids.includes(u.id))).toBe(true);
-  });
-  it('uses the bottle on the strongest eligible controlled hero after reaction delay and respects cooldown',()=>{
-    const e=arena(35,true),weak=pet(e,'hamster','ai'),hero=pet(e,'kungfu_po','ai');hero.level=3;hero.statuses={SEALED:18,WET:18};weak.statuses={SEALED:18};
-    e.tick(1.1);expect(hero.level).toBe(3);expect(hero.statuses.SEALED).toBeGreaterThan(0);
-    e.tick(1.4);expect(hero.level).toBe(4);expect(hero.statuses).toEqual({});expect(e.state.sides.ai.propCooldowns.milk_bottle).toBeGreaterThan(47);
-    hero.statuses={SEALED:18};e.tick(1);expect(hero.level).toBe(4);
-  });
-  it('does not bypass the sealed reaction delay by immediately feeding a matching part',()=>{
-    const e=arena(35,true),hero=pet(e,'kungfu_po','ai');hero.level=2;hero.statuses={SEALED:18};pet(e,'panda','ai');
-    e.tick(1.1);expect(e.state.units.find(u=>u.kind==='kungfu_po')?.statuses.SEALED).toBeGreaterThan(0);
-    e.tick(1.4);expect(e.state.units.find(u=>u.kind==='kungfu_po')?.statuses.SEALED).toBeUndefined();
-  });
-  it('uses a finite one-use sprinkler to clear seals when bottle is unavailable, retaining other statuses and sides',()=>{
-    const e=arena(35,true),hero=pet(e,'kungfu_po','ai'),other=pet(e,'hamster');hero.level=5;hero.statuses={SEALED:18,WET:18};other.statuses={SEALED:18};
-    e.tick(1.1);expect(e.state.sides.ai.sprinklerUsed).toBe(false);e.tick(1.4);
-    expect(e.state.sides.ai.sprinklerUsed).toBe(true);expect(hero.statuses.SEALED).toBeUndefined();expect(hero.statuses.WET).toBeGreaterThan(0);expect(other.statuses.SEALED).toBeGreaterThan(0);
-    expect(e.state.events.some(v=>v.type==='purge'&&v.effect==='sprinkler')).toBe(true);expect(e.useSprinkler('ai').ok).toBe(false);
-  });
-  it('uses legal catnip only in crisis and cannot bypass cooldowns',()=>{
-    const e=arena(35,true);e.tick(1);expect(e.state.sides.ai.catnipTime).toBe(0);
-    e.state.sides.ai.oranges=2;e.tick(.1);expect(e.state.sides.ai.catnipTime).toBeGreaterThan(7);expect(e.state.sides.ai.propCooldowns.catnip).toBeGreaterThan(54);
-    e.tick(9);expect(e.state.sides.ai.catnipTime).toBe(0);expect(e.state.sides.ai.propCooldowns.catnip).toBeGreaterThan(40);
-  });
-  it('prioritizes recipes over an earlier basic upgrade',()=>{
-    const e=arena(0,true);pet(e,'hamster','ai');pet(e,'hamster','ai');pet(e,'panda','ai');pet(e,'hat_bamboo','ai');e.tick(3.6);
-    expect(e.state.units.some(u=>u.kind==='kungfu_po')).toBe(true);expect(e.state.units.filter(u=>u.kind==='hamster')).toHaveLength(2);
-  });
-  it('high rank prioritizes a ranged counter against the swallowing boss',()=>{
-    const e=arena(50,true);for(const k of ['panda','hat_bamboo','cat','hat_shades'])pet(e,k,'ai');e.spawnEnemy('mega_roomba','ai');e.tick(.4);
-    expect(e.state.units.some(u=>u.kind==='meowfia'||u.kind==='bamboo_mafia')).toBe(true);
-  });
-  it.each(MAP_IDS)('uses map-aware melee inner coverage, ranged safety and bee distance on %s',mapId=>{
-    function placed(kind:string){const e=new BattleEngine({mapId,rankIndex:0,seed:2,autoWaves:false});e.start();const u=pet(e,kind,'ai');e.tick(3.6);return u.location;}
-    const melee=placed('kungfu_po'),ranged=placed('meowfia'),bee=placed('bee');for(const p of [melee,ranged,bee])expect(p.zone).toBe('board');
-    if(melee.zone!=='board'||ranged.zone!=='board'||bee.zone!=='board')return;
-    const path=getMap(mapId).paths.ai,dist=(p:{col:number;row:number})=>Math.min(...path.map(q=>GridSystem.distance(p,q)));
-    expect(dist(bee)).toBeGreaterThanOrEqual(dist(melee));expect(dist(ranged)).toBeGreaterThanOrEqual(dist(melee));
-    const nearby=path.filter(q=>GridSystem.distance(melee,q)<=1.5);expect(nearby.length).toBeGreaterThanOrEqual(3);
+  it('legacy tuning overrides and AI loadouts do not create an opponent or alter draw RNG',()=>{
+    const off=arena(50),on=new BattleEngine({seed:49,rankIndex:50,autoWaves:false,ai:true,aiOverrides:{openingDelay:0},loadouts:{ai:{ownedProps:{shared_oranges:1},equippedPassiveProps:['shared_oranges']}}});
+    on.start();off.summon();on.summon();expect(off.state.units.map(u=>u.kind)).toEqual(on.state.units.map(u=>u.kind));expect(on.state.opponent).toBeUndefined();expect(on.state.sides.ai.loadout.equippedPassiveProps).toEqual([]);
   });
   it('sprinkler purge preserves damage, knockback and slow; treasure and boss events have audio effects',()=>{
     const e=arena(),u=pet(e,'hamster');u.statuses={SEALED:10,CONFUSED:5};const m=e.spawnEnemy('rat','player');m.hp=m.maxHp=500;m.progress=10;
@@ -134,7 +74,7 @@ describe('P1 actual legal AI tactics',()=>{
 describe('P1 merge target queries',()=>{
   it('finds upgrades and excludes swaps, mismatched levels, maxed, locked, washing, self and opponent without mutation',async()=>{
     const e=arena(),source=pet(e,'hamster'),match=pet(e,'hamster'),swap=pet(e,'squirrel'),locked=pet(e,'hamster'),washed=pet(e,'hamster');
-    locked.statuses.MERGE_LOCK=3;washed.washing=3;pet(e,'hamster','ai');const before=JSON.stringify(e.state);
+    locked.statuses.MERGE_LOCK=3;washed.washing=3;expect(e.grant('hamster','ai').ok).toBe(false);const before=JSON.stringify(e.state);
     expect(await targets(e,source.id)).toEqual([{unitId:match.id,kind:'upgrade'}]);expect(JSON.stringify(e.state)).toBe(before);
     match.level=2;expect(await targets(e,source.id)).toEqual([]);match.level=source.level=5;expect(await targets(e,source.id)).toEqual([]);
     source.washing=1;expect(await targets(e,source.id)).toEqual([]);expect(await targets(e,999)).toEqual([]);expect(swap.kind).toBe('squirrel');

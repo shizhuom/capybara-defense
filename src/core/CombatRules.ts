@@ -9,7 +9,7 @@ function equipped(unit:Unit,loadout:Partial<BattleLoadout>){
 }
 /** Shared by the headless engine and Canvas targeting/energy indicators. */
 export function combatRange(unit:Unit,loadout:Partial<BattleLoadout>={}):number {
-  let range=(HEROES[unit.kind]??UNITS[unit.kind]).range;
+  let range=(HEROES[unit.kind]??UNITS[unit.kind])?.range??0;
   if(range>=2&&loadout.equippedPassiveProps?.includes('tall_perch'))range*=1.25;
   switch(equipped(unit,loadout)?.id){
     case 'm02_slipper':return range+.3;

@@ -1,73 +1,45 @@
-import {describe,it,expect} from 'vitest';
+﻿import {describe,it,expect} from 'vitest';
 import * as maps from '../src/config/maps';
 import {GridSystem} from '../src/core/GridSystem';
 import {BattleEngine} from '../src/core/BattleEngine';
-import type {MapId} from '../src/core/types';
-
 const fixtures = [
-  {id:'sunny_backyard',rows:['CGGGGGGS','RGGOOOGR','RGGOOOGR','RGGRRRRR','RRRRGGGG'],route:[[7,0],[7,1],[7,2],[7,3],[6,3],[5,3],[4,3],[3,3],[3,4],[2,4],[1,4],[0,4],[0,3],[0,2],[0,1],[0,0]]},
-  {id:'sakura_onsen',rows:['CGGGGGGS','RRGOOORR','GRGOOORG','GRRGGGRG','GGRRRRRG'],route:[[7,0],[7,1],[6,1],[6,2],[6,3],[6,4],[5,4],[4,4],[3,4],[2,4],[2,3],[1,3],[1,2],[1,1],[0,1],[0,0]]},
-  {id:'midnight_kitchen',rows:['CGGGGGGS','RGOOOOGR','RRRRORRR','GGGRORGG','GGGRRRGG'],route:[[7,0],[7,1],[7,2],[6,2],[5,2],[5,3],[5,4],[4,4],[3,4],[3,3],[3,2],[2,2],[1,2],[0,2],[0,1],[0,0]]},
-  {id:'cat_tower_maze',rows:['CGGGGGGS','RRRRRRGR','GGOOORGR','GGOOORGR','GGGGGRRR'],route:[[7,0],[7,1],[7,2],[7,3],[7,4],[6,4],[5,4],[5,3],[5,2],[5,1],[4,1],[3,1],[2,1],[1,1],[0,1],[0,0]]},
+ {id:'sunny_backyard',rows:['SRRRRG','GOOORG','GRRRRG','GROOGG','GRRRRG','GGOGRG','GGGGRC'],route:[[0,0],[1,0],[2,0],[3,0],[4,0],[4,1],[4,2],[3,2],[2,2],[1,2],[1,3],[1,4],[2,4],[3,4],[4,4],[4,5],[4,6],[5,6]]},
+ {id:'sakura_onsen',rows:['RRRRRS','ROOGOG','RGRRRG','RORORG','RRRGRG','GGOGRG','GGGGRC'],route:[[5,0],[4,0],[3,0],[2,0],[1,0],[0,0],[0,1],[0,2],[0,3],[0,4],[1,4],[2,4],[2,3],[2,2],[3,2],[4,2],[4,3],[4,4],[4,5],[4,6],[5,6]]},
+ {id:'midnight_kitchen',rows:['SRGRRR','GROROR','GRORGR','GRRROR','GGGGOR','GORRRR','CRRGGG'],route:[[0,0],[1,0],[1,1],[1,2],[1,3],[2,3],[3,3],[3,2],[3,1],[3,0],[4,0],[5,0],[5,1],[5,2],[5,3],[5,4],[5,5],[4,5],[3,5],[2,5],[2,6],[1,6],[0,6]]},
+ {id:'cat_tower_maze',rows:['GGSRRR','GOGOOR','RRRRRR','ROOGGG','RRRRRG','GGOGRG','GCRRRG'],route:[[2,0],[3,0],[4,0],[5,0],[5,1],[5,2],[4,2],[3,2],[2,2],[1,2],[0,2],[0,3],[0,4],[1,4],[2,4],[3,4],[4,4],[4,5],[4,6],[3,6],[2,6],[1,6]]},
 ] as const;
-
-describe('M3 four precise arenas',()=>{
-  for(const fixture of fixtures){
-    it(`${fixture.id}: exact matrix, six pads each and rotational symmetry`,()=>{
-      expect(maps.MAPS,'four arena definitions').toBeDefined();
-      const grid=maps.MAPS[fixture.id].grid;
-      expect(grid.slice(0,5).map(row=>row.join(''))).toEqual(fixture.rows);
-      expect(grid).toHaveLength(10);
-      for(let row=0;row<10;row++)for(let col=0;col<8;col++){
-        expect(grid[row]).toHaveLength(8);expect(grid[row][col]).toBe(grid[9-row][7-col]);
-      }
-      expect(grid.slice(0,5).flat().filter(tile=>tile==='O')).toHaveLength(6);
-      expect(grid.slice(5).flat().filter(tile=>tile==='O')).toHaveLength(6);
-    });
-    it(`${fixture.id}: sixteen distinct orthogonal waypoints cover every road`,()=>{
-      expect(maps.MAPS).toBeDefined();
-      const map=maps.MAPS[fixture.id];
-      expect(map.paths.ai.map(p=>[p.col,p.row])).toEqual(fixture.route);
-      expect(map.paths.player.map(p=>[p.col,p.row])).toEqual(fixture.route.map(([c,r])=>[7-c,9-r]));
-      for(const side of ['ai','player'] as const){
-        const route=map.paths[side];expect(route).toHaveLength(16);expect(new Set(route.map(p=>`${p.col},${p.row}`)).size).toBe(16);
-        expect(map.grid[route[0].row][route[0].col]).toBe('S');expect(map.grid[route[15].row][route[15].col]).toBe('C');
-        route.slice(1,15).forEach(p=>expect(map.grid[p.row][p.col]).toBe('R'));
-        for(let i=1;i<16;i++)expect(Math.abs(route[i].col-route[i-1].col)+Math.abs(route[i].row-route[i-1].row)).toBe(1);
-        expect(map.grid.slice(side==='ai'?0:5,side==='ai'?5:10).flat().filter(tile=>tile==='R')).toHaveLength(14);
-      }
-    });
-    it(`${fixture.id}: real movement and sprinkler follow its route and end at 15`,()=>{
-      const e=new BattleEngine({mapId:fixture.id,autoWaves:false,ai:false});e.start();
-      expect(e.state.mapId).toBe(fixture.id);
-      const m=e.spawnEnemy('rat','player');m.speed=0;m.hp=m.maxHp=1000;
-      for(let progress=0;progress<15;progress++){
-        m.progress=progress;e.tick(.05);
-        expect([m.col,m.row]).toEqual([7-fixture.route[progress][0],9-fixture.route[progress][1]]);
-      }
-      expect(e.useSprinkler().ok).toBe(true);expect(m.progress).toBeCloseTo(9.5);expect(m.hp).toBe(880);
-      const a=fixture.route[9],b=fixture.route[10];expect(m.col).toBe(7-(a[0]+b[0])/2);expect(m.row).toBe(9-(a[1]+b[1])/2);
-      const water=e.state.events.find(event=>event.type==='sprinkler');expect(water?.points?.[0]).toEqual({col:7,row:9});expect(water?.points?.at(-1)).toEqual({col:0,row:9});
-      m.progress=15;const lives=e.state.sides.player.oranges;e.tick(.05);expect(e.state.sides.player.oranges).toBe(lives-1);expect(e.state.enemies).not.toContain(m);
-    });
-  }
-  it('keeps two arenas and configuration independent when digging and knocking back',()=>{
-    const kitchen=new BattleEngine({mapId:'midnight_kitchen',ai:false,autoWaves:false});
-    const maze=new BattleEngine({mapId:'cat_tower_maze',ai:false,autoWaves:false});
-    expect(kitchen.state.grid[6][3]).toBe('O');expect(maze.state.grid[6][3]).toBe('O');
-    expect(kitchen.dig(1,9).ok).toBe(true);expect(maze.state.grid[9][1]).toBe('G');
-    expect(maps.MAPS.midnight_kitchen.grid[9][1]).toBe('G');
-    const a=kitchen.spawnEnemy('rat','player'),b=maze.spawnEnemy('rat','player');a.progress=b.progress=10;
-    kitchen.knockback(a,4.5);maze.knockback(b,4.5);
-    expect([a.col,a.row]).toEqual([2,5.5]);expect([b.col,b.row]).toEqual([1.5,5]);
-    expect(GridSystem.create('sunny_backyard')).toEqual(maps.MAP);
+describe('M3 four precise solo arenas',()=>{
+ for(const fixture of fixtures){
+  it(`${fixture.id}: exact matrix, six pads and single entry/guardian`,()=>{
+   const grid=maps.MAPS[fixture.id].grid;expect(grid.map(row=>row.join(''))).toEqual(fixture.rows);expect(grid).toHaveLength(7);grid.forEach(row=>expect(row).toHaveLength(6));
+   for(const [tile,count] of [['O',6],['S',1],['C',1]] as const)expect(grid.flat().filter(t=>t===tile)).toHaveLength(count);
   });
-  it('AI deploys legally on every arena without modifying another half',()=>{
-    for(const fixture of fixtures){
-      const e=new BattleEngine({mapId:fixture.id as MapId,autoWaves:false});e.start();e.tick(15);
-      const board=e.state.units.filter(u=>u.side==='ai'&&u.location.zone==='board');expect(board.length).toBeGreaterThan(0);
-      for(const u of board)if(u.location.zone==='board')expect(e.state.grid[u.location.row][u.location.col]).toBe('O');
-      expect(e.state.grid.slice(5).map(row=>row.join(''))).toEqual(maps.MAPS[fixture.id].grid.slice(5).map(row=>row.join('')));
-    }
+  it(`${fixture.id}: exact distinct orthogonal waypoints cover every road without nonconsecutive contacts`,()=>{
+   const map=maps.MAPS[fixture.id],route=map.paths.player;expect(route.map(p=>[p.col,p.row])).toEqual(fixture.route);expect(map.paths.ai).toBe(route);
+   expect(new Set(route.map(p=>`${p.col},${p.row}`)).size).toBe(route.length);expect(map.grid[route[0].row][route[0].col]).toBe('S');expect(map.grid[route.at(-1)!.row][route.at(-1)!.col]).toBe('C');
+   route.slice(1,-1).forEach(p=>expect(map.grid[p.row][p.col]).toBe('R'));expect(map.grid.flat().filter(t=>t==='R')).toHaveLength(route.length-2);
+   for(let i=0;i<route.length;i++)for(let j=i+1;j<route.length;j++){const distance=Math.abs(route[i].col-route[j].col)+Math.abs(route[i].row-route[j].row);if(j===i+1)expect(distance).toBe(1);else expect(distance).toBeGreaterThan(1);}
   });
+  it(`${fixture.id}: real movement and sprinkler traverse its complete route and endpoint`,()=>{
+   const e=new BattleEngine({mapId:fixture.id,autoWaves:false});e.start();const m=e.spawnEnemy('rat','player');m.speed=0;m.hp=m.maxHp=1000;const end=fixture.route.length-1;
+   for(let progress=0;progress<end;progress++){m.progress=progress;e.tick(.05);expect([m.col,m.row]).toEqual(fixture.route[progress]);}
+   expect(e.useSprinkler().ok).toBe(true);expect(m.progress).toBeCloseTo(end-5.5);expect(m.hp).toBe(880);
+   expect({col:m.col,row:m.row}).toEqual(GridSystem.pathPosition('player',end-5.5,fixture.id));const water=e.state.events.find(v=>v.type==='sprinkler')!;
+   expect(water.points?.[0]).toEqual(maps.getMap(fixture.id).paths.player.at(-1));expect(water.points?.at(-1)).toEqual(maps.getMap(fixture.id).paths.player[0]);
+   m.progress=end;e.tick(.05);expect(e.state.sides.player.oranges).toBe(2);expect(e.state.enemies).not.toContain(m);
+  });
+  it(`${fixture.id}: guardian rescue and boss summons use the dynamic endpoint`,()=>{
+   const e=new BattleEngine({mapId:fixture.id,autoWaves:false,loadouts:{player:{ownedProps:{giant_orange_cat:1},equippedPassiveProps:['giant_orange_cat']}}});e.start();const end=fixture.route.length-1;
+   const normal=e.spawnEnemy('rat','player');normal.progress=end-2;normal.speed=0;const near=e.spawnEnemy('rat','player');near.progress=end-2.1;near.speed=0;const far=e.spawnEnemy('rat','player');far.progress=end-2.3;far.speed=0;e.tick(.05);
+   expect(normal.hp).toBeLessThanOrEqual(0);expect(near.hp).toBeLessThanOrEqual(0);expect(far.hp).toBeGreaterThan(0);expect(e.state.events.find(v=>v.type==='giant_cat')).toMatchObject(GridSystem.pathPosition('player',end-1,fixture.id));
+   e.state.sides.player.giantCatUses=2;const boss=e.spawnEnemy('hornet_queen','player');boss.progress=end-.1;boss.speed=0;boss.abilityCooldown=0;e.tick(.05);const summons=e.state.enemies.filter(m=>m.kind==='killer_bee');expect(summons).toHaveLength(3);expect(summons.every(m=>m.progress===end)).toBe(true);
+   e.state.sides.player.oranges=10;e.tick(.05);expect(e.state.enemies.filter(m=>m.kind==='killer_bee')).toHaveLength(0);expect(e.state.sides.player.oranges).toBe(7);
+  });
+ }
+ it('keeps battle grids and configuration independent while digging and knocking back',()=>{
+  const kitchen=new BattleEngine({mapId:'midnight_kitchen',autoWaves:false}),maze=new BattleEngine({mapId:'cat_tower_maze',autoWaves:false});expect(kitchen.dig(0,1).ok).toBe(true);expect(maze.state.grid[1][0]).toBe('G');expect(maps.getMap('midnight_kitchen').grid[1][0]).toBe('G');
+  const a=kitchen.spawnEnemy('rat','player'),b=maze.spawnEnemy('rat','player');a.progress=b.progress=10;kitchen.knockback(a,4.5);maze.knockback(b,4.5);
+  expect({col:a.col,row:a.row}).toEqual({col:2.5,row:3});expect({col:b.col,row:b.row}).toEqual({col:4.5,row:2});expect(GridSystem.create()).toEqual(maps.MAP);
+ });
+ it.each(fixtures)('$id never creates an AI half or units',fixture=>{const e=new BattleEngine({mapId:fixture.id,autoWaves:false,ai:true});e.start();e.tick(60);expect(e.state.units).toHaveLength(0);expect(e.state.grid).toEqual(maps.getMap(fixture.id).grid);});
 });

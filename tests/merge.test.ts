@@ -12,10 +12,10 @@ describe('混合英雄配方与喂养',()=>{
   it.each(recipes)('%s + %s 双向产生 %s，保留目标位置', (a,b,hero)=>{
     for(const [first,second] of [[a,b],[b,a]]){
       const source=pet(first),target=pet(second,1,2);
-      target.location={zone:'board',col:2,row:7};
+      target.location={zone:'board',col:2,row:1};
       const result=MergeSystem.combine(source,target);
       expect(result.ok).toBe(true); expect(result.unit?.kind).toBe(hero);
-      expect(result.unit?.level).toBe(1); expect(result.unit?.location).toEqual({zone:'board',col:2,row:7});
+      expect(result.unit?.level).toBe(1); expect(result.unit?.location).toEqual({zone:'board',col:2,row:1});
       expect(source.kind).toBe(first); // pure resolution cannot mutate existing cards
     }
   });

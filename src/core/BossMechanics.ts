@@ -1,6 +1,7 @@
 import type {BattleEngine} from './BattleEngine';
 import type {Enemy,Point,Unit} from './types';
 import {UNITS} from '../config/units';
+import {getMap} from '../config/maps';
 import {WAVES} from '../config/waves';
 import {GridSystem} from './GridSystem';
 
@@ -9,7 +10,7 @@ export function applyNewBossMechanic(engine:BattleEngine,boss:Enemy,units:Unit[]
   const targets:Point[]=[];
   const summon=(kind:string,offset:number,scale=1,boneShield=false)=>{
     const enemy=engine.spawnEnemy(kind,boss.side,scale);
-    enemy.progress=Math.max(0,Math.min(15,boss.progress+offset));
+    enemy.progress=Math.max(0,Math.min(getMap(engine.state.mapId).paths.player.length-1,boss.progress+offset));
     Object.assign(enemy,GridSystem.pathPosition(boss.side,enemy.progress,engine.state.mapId));
     if(boneShield)enemy.boneShield=true;
     targets.push({col:enemy.col,row:enemy.row});
