@@ -3,15 +3,15 @@ import * as maps from '../src/config/maps';
 import {GridSystem} from '../src/core/GridSystem';
 import {BattleEngine} from '../src/core/BattleEngine';
 const fixtures = [
- {id:'sunny_backyard',rows:['SRRRRG','GOOORG','GRRRRG','GROOGG','GRRRRG','GGOGRG','GGGGRC'],route:[[0,0],[1,0],[2,0],[3,0],[4,0],[4,1],[4,2],[3,2],[2,2],[1,2],[1,3],[1,4],[2,4],[3,4],[4,4],[4,5],[4,6],[5,6]]},
- {id:'sakura_onsen',rows:['RRRRRS','ROOGOG','RGRRRG','RORORG','RRRGRG','GGOGRG','GGGGRC'],route:[[5,0],[4,0],[3,0],[2,0],[1,0],[0,0],[0,1],[0,2],[0,3],[0,4],[1,4],[2,4],[2,3],[2,2],[3,2],[4,2],[4,3],[4,4],[4,5],[4,6],[5,6]]},
- {id:'midnight_kitchen',rows:['SRGRRR','GROROR','GRORGR','GRRROR','GGGGOR','GORRRR','CRRGGG'],route:[[0,0],[1,0],[1,1],[1,2],[1,3],[2,3],[3,3],[3,2],[3,1],[3,0],[4,0],[5,0],[5,1],[5,2],[5,3],[5,4],[5,5],[4,5],[3,5],[2,5],[2,6],[1,6],[0,6]]},
- {id:'cat_tower_maze',rows:['GGSRRR','GOGOOR','RRRRRR','ROOGGG','RRRRRG','GGOGRG','GCRRRG'],route:[[2,0],[3,0],[4,0],[5,0],[5,1],[5,2],[4,2],[3,2],[2,2],[1,2],[0,2],[0,3],[0,4],[1,4],[2,4],[3,4],[4,4],[4,5],[4,6],[3,6],[2,6],[1,6]]},
+ {id:'sunny_backyard',rows:["SRGGRRRRG","GROGRGORG","GRGOROGRG","GROGRGORG","GRRRRGGRC"],route:[[0,0],[1,0],[1,1],[1,2],[1,3],[1,4],[2,4],[3,4],[4,4],[4,3],[4,2],[4,1],[4,0],[5,0],[6,0],[7,0],[7,1],[7,2],[7,3],[7,4],[8,4]]},
+ {id:'sakura_onsen',rows:["GRRRRRRRS","GROGOGOGG","GRRRRRRRG","GGOGOGORG","CRRRRRRRG"],route:[[8,0],[7,0],[6,0],[5,0],[4,0],[3,0],[2,0],[1,0],[1,1],[1,2],[2,2],[3,2],[4,2],[5,2],[6,2],[7,2],[7,3],[7,4],[6,4],[5,4],[4,4],[3,4],[2,4],[1,4],[0,4]]},
+ {id:'midnight_kitchen',rows:["RRRRRRGGG","ROGOGRGOG","RGRRRRGRC","RGROGOORG","SGRRRRRRG"],route:[[0,4],[0,3],[0,2],[0,1],[0,0],[1,0],[2,0],[3,0],[4,0],[5,0],[5,1],[5,2],[4,2],[3,2],[2,2],[2,3],[2,4],[3,4],[4,4],[5,4],[6,4],[7,4],[7,3],[7,2],[8,2]]},
+ {id:'cat_tower_maze',rows:["GGRRRRRGG","GORGOORGG","SRRGRRRGC","GOGORGOGR","GGGGRRRRR"],route:[[0,2],[1,2],[2,2],[2,1],[2,0],[3,0],[4,0],[5,0],[6,0],[6,1],[6,2],[5,2],[4,2],[4,3],[4,4],[5,4],[6,4],[7,4],[8,4],[8,3],[8,2]]},
 ] as const;
 describe('M3 four precise solo arenas',()=>{
  for(const fixture of fixtures){
   it(`${fixture.id}: exact matrix, six pads and single entry/guardian`,()=>{
-   const grid=maps.MAPS[fixture.id].grid;expect(grid.map(row=>row.join(''))).toEqual(fixture.rows);expect(grid).toHaveLength(7);grid.forEach(row=>expect(row).toHaveLength(6));
+   const grid=maps.MAPS[fixture.id].grid;expect(grid.map(row=>row.join(''))).toEqual(fixture.rows);expect(grid).toHaveLength(5);grid.forEach(row=>expect(row).toHaveLength(9));
    for(const [tile,count] of [['O',6],['S',1],['C',1]] as const)expect(grid.flat().filter(t=>t===tile)).toHaveLength(count);
   });
   it(`${fixture.id}: exact distinct orthogonal waypoints cover every road without nonconsecutive contacts`,()=>{
@@ -37,9 +37,9 @@ describe('M3 four precise solo arenas',()=>{
   });
  }
  it('keeps battle grids and configuration independent while digging and knocking back',()=>{
-  const kitchen=new BattleEngine({mapId:'midnight_kitchen',autoWaves:false}),maze=new BattleEngine({mapId:'cat_tower_maze',autoWaves:false});expect(kitchen.dig(0,1).ok).toBe(true);expect(maze.state.grid[1][0]).toBe('G');expect(maps.getMap('midnight_kitchen').grid[1][0]).toBe('G');
+  const kitchen=new BattleEngine({mapId:'midnight_kitchen',autoWaves:false}),maze=new BattleEngine({mapId:'cat_tower_maze',autoWaves:false});expect(kitchen.dig(8,1).ok).toBe(true);expect(maze.state.grid[1][8]).toBe('G');expect(maps.getMap('midnight_kitchen').grid[1][8]).toBe('G');
   const a=kitchen.spawnEnemy('rat','player'),b=maze.spawnEnemy('rat','player');a.progress=b.progress=10;kitchen.knockback(a,4.5);maze.knockback(b,4.5);
-  expect({col:a.col,row:a.row}).toEqual({col:2.5,row:3});expect({col:b.col,row:b.row}).toEqual({col:4.5,row:2});expect(GridSystem.create()).toEqual(maps.MAP);
+  expect({col:a.col,row:a.row}).toEqual({col:1.5,row:0});expect({col:b.col,row:b.row}).toEqual({col:3.5,row:0});expect(GridSystem.create()).toEqual(maps.MAP);
  });
  it.each(fixtures)('$id never creates an AI half or units',fixture=>{const e=new BattleEngine({mapId:fixture.id,autoWaves:false,ai:true});e.start();e.tick(60);expect(e.state.units).toHaveLength(0);expect(e.state.grid).toEqual(maps.getMap(fixture.id).grid);});
 });

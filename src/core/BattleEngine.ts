@@ -1,5 +1,5 @@
 import { GridSystem } from './GridSystem';
-import { BEE_PRODUCTION, ECONOMY, getSummonCost, SHOVEL_PRODUCTION, UNITS } from '../config/units';
+import { ECONOMY, getSummonCost, SHOVEL_PRODUCTION, UNITS } from '../config/units';
 import { HEROES } from '../config/heroes';
 import { ENEMIES } from '../config/enemies';
 import {getMap,GRID_ROWS,GRID_COLS,STAGE} from '../config/maps';
@@ -13,6 +13,7 @@ import type {OpponentTuning} from '../config/opponents';
 import { Random } from './Random';
 import {copyLoadout,PropSystem,type PropTarget} from './PropSystem';
 import {WeaponSystem} from './WeaponSystem';
+import {getBaseUnitStats,getBeeProduction,type UnitStats} from './UnitStats';
 import type { BattleLoadout,BattleState, CommandResult, Enemy, Point, Side, Unit, UnitLocation, VisualEvent,SideState,MapId } from './types';
 export interface EngineOptions { seed?:number; autoWaves?:boolean; ai?:boolean; loadouts?:Partial<Record<Side,Partial<BattleLoadout>>>; mapId?:MapId; rankIndex?:number; aiOverrides?:Partial<OpponentTuning> }
 let battleSequence=0;
@@ -22,6 +23,7 @@ export class BattleEngine {
   private random:Random;
   private props:PropSystem;
   private weapons:WeaponSystem;
+  private enemyEverSpawned=false;
   private effectOwners=new WeakMap<Enemy,Partial<Record<'burn'|'poison'|'bleed',Unit>>>();
   constructor(public options:EngineOptions={}) {
     const seed=options.seed??Math.floor(Math.random()*0xffffffff);
@@ -46,6 +48,14 @@ export class BattleEngine {
   useProp(id:string,target:PropTarget={},side:Side='player'):CommandResult{return side==='player'?this.props.use(id,target,side):{ok:false,key:'hint.invalid'};}
   useSprinkler(side:Side='player'):CommandResult{return side==='player'?this.props.sprinkler(side):{ok:false,key:'hint.invalid'};}
   getShovelRules(side:Side='player'):{interval:number;maxStored:number}{return this.props.shovelRules(side);}
+  canSyncPreparationLoadout():boolean {
+    return(this.state.phase==='playing'||this.state.phase==='paused')&&this.state.wave<=1&&this.state.spawned===0&&!this.enemyEverSpawned;
+  }
+  syncPreparationLoadout(input:Partial<BattleLoadout>):CommandResult {
+    if(!this.canSyncPreparationLoadout())return{ok:false,key:'hint.invalid'};
+    this.props.syncPreparationLoadout(copyLoadout(input));
+    return{ok:true,key:'hint.selected'};
+  }
   rollWeaponFragment():string{return rollWeapon(()=>this.random.next(),undefined,RANKS[this.state.rankIndex].fragmentMultiplier);}
   applyDot(enemy:Enemy,effect:'burn'|'poison'|'bleed',duration:number,dps:number,unit:Unit):void {
     if(enemy.side!=='player'||unit.side!=='player')return;
@@ -160,6 +170,7 @@ export class BattleEngine {
     const p=GridSystem.pathPosition(side,0,this.state.mapId);
     const enemy:Enemy={id:side==='player'?this.sequence++:0,kind,side,boss:config.boss,hp:config.hp*scale,maxHp:config.hp*scale,progress:0,col:p.col,row:p.row,speed:config.speed*(this.props.has('player','hyper_party')?1.12:1),armor:config.armor,size:1,abilityCooldown:config.interval,stun:0,slow:0,slowFactor:1,burn:0,burnDps:0,poison:0,poisonDps:0,stolenBy:[],hitFlash:0};
     if(side!=='player')return enemy;
+    this.enemyEverSpawned=true;
     this.state.enemies.push(enemy);
     if(enemy.boss){
       this.event({type:'bubble',side,col:p.col,row:p.row,textKey:`boss.${kind}.bubble`,effect:'boss_spawn',duration:2.2});
@@ -212,7 +223,7 @@ export class BattleEngine {
       if(unit.location.zone!=='board'||unit.kind==='shovel')continue;
       if(unit.statuses.SEALED||unit.statuses.KNOCKDOWN||unit.statuses.CONFUSED||unit.washing)continue;
       if(unit.kind==='bee'){
-        const production=BEE_PRODUCTION[Math.min(2,unit.level-1)],interval=production.interval*(this.props.has(unit.side,'bee_overtime')?.75:1);unit.production+=dt;
+        const production=getBeeProduction(unit.level,this.state.sides[unit.side].loadout),interval=production.interval;unit.production+=dt;
         while(unit.production+1e-8>=interval){unit.production-=interval;this.state.sides[unit.side].food+=production.amount;this.event({type:'bubble',side:unit.side,...unit.location,textKey:'hint.food',value:production.amount,duration:1});}
         continue;
       }
@@ -223,7 +234,7 @@ export class BattleEngine {
       if(!candidates.length){unit.cooldown=0;continue;}
       this.attack(unit,candidates[0],stats.damage);
       // Preserve the fractional overshoot so fixed steps never reduce the configured attack rate.
-      unit.cooldown+=1/(this.stats(unit).rate*(unit.statuses.WET ? .55 : 1)*(unit.buffTime>0?4:1));
+      unit.cooldown+=1/this.getEffectiveUnitStats(unit).rate;
       unit.animation=1;
       if(HEROES[unit.kind]){
         unit.energy++;
@@ -278,10 +289,14 @@ export class BattleEngine {
     }
     if(this.state.wave<10&&this.state.waveTime+1e-8>=WAVE_DURATION)this.beginWave(this.state.wave+1);
   }
-  getUnitStats(unit:Unit):{damage:number;rate:number;range:number;charge:number} {
-    const hero=HEROES[unit.kind],base=hero??UNITS[unit.kind];
-    if(!base||unit.kind==='shovel')return{damage:0,rate:0,range:0,charge:0};
-    return this.weapons.stats(unit,{damage:base.damage*(hero?1.6:1.65)**(unit.level-1),rate:base.rate*(hero?1:1+.12*(unit.level-1))*(1+this.props.haste(unit.side)),range:base.range,charge:hero?Math.ceil(hero.charge*.9**(unit.level-1)):0});
+  getUnitStats(unit:Unit):UnitStats {
+    const base=getBaseUnitStats(unit.kind,unit.level);
+    if(!UNITS[unit.kind]&&!HEROES[unit.kind]||unit.kind==='shovel')return base;
+    return this.weapons.stats(unit,{...base,rate:base.rate*(1+this.props.haste(unit.side))});
+  }
+  getEffectiveUnitStats(unit:Unit):UnitStats {
+    const stats=this.getUnitStats(unit);
+    return{...stats,rate:stats.rate*((unit.statuses.WET??0)>0?.55:1)*(unit.buffTime>0?4:1)};
   }
   private stats(unit:Unit){return this.getUnitStats(unit);}
   lane(side:Side):Enemy[] { return this.state.enemies.filter(e=>e.side===side&&e.hp>0); }

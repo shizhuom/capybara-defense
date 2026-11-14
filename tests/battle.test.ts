@@ -27,9 +27,9 @@ describe('命令与经济',()=>{
     expect(e.move(a,{zone:'board',col:2,row:1}).ok).toBe(true);
     expect(e.move(b,{zone:'board',col:2,row:1}).ok).toBe(true);
     expect(e.state.units).toHaveLength(1);expect(e.state.units[0].kind).toBe('kungfu_po');
-    const c=e.grant('squirrel').unitId!; e.move(c,{zone:'board',col:3,row:1});
+    const c=e.grant('squirrel').unitId!; e.move(c,{zone:'board',col:6,row:1});
     e.move(c,{zone:'board',col:2,row:1});expect(e.state.units.find(u=>u.id===c)?.location).toEqual({zone:'board',col:2,row:1});
-    expect(e.move(c,{zone:'board',col:6,row:1}).ok).toBe(false);expect(e.state.units).toHaveLength(2);
+    expect(e.move(c,{zone:'board',col:9,row:1}).ok).toBe(false);expect(e.state.units).toHaveLength(2);
   });
   it('铁锹开草地花1，修复毁格花2；不足时不改变网格',()=>{
     const e=game();expect(e.dig(0,1).ok).toBe(true);expect(e.state.grid[1][0]).toBe('O');
@@ -43,9 +43,9 @@ describe('命令与经济',()=>{
 });
 describe('路径、暂停与通吃',()=>{
   it('普通敌越线扣1橘子，Boss扣2并只结算一次',()=>{
-    const e=game();const normal=e.spawnEnemy('rat','player');normal.progress=16.99;e.tick(.1);expect(e.state.sides.player.oranges).toBe(2);
+    const e=game();const normal=e.spawnEnemy('rat','player');normal.progress=19.99;e.tick(.1);expect(e.state.sides.player.oranges).toBe(2);
     e.state.sides.player.loot=['a'];e.state.sides.ai.loot=['b','c'];
-    const boss=e.spawnEnemy('husky_wrecker','player');boss.progress=16.99;e.tick(.1);
+    const boss=e.spawnEnemy('husky_wrecker','player');boss.progress=19.99;e.tick(.1);
     expect(e.state.phase).toBe('finished');expect(e.state.result?.winner).toBe('ai');expect(e.state.result?.loot).toEqual([]);
     const result=e.state.result;e.tick(100);expect(e.state.result).toBe(result);
   });

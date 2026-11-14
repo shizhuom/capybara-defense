@@ -22,7 +22,7 @@ describe('洒水车与主动道具',()=>{
     const e=arena(),m=enemy(e,'rat',10),other=enemy(e,'rat',10,'ai');m.hp=m.maxHp=500;
     expect(e.useSprinkler().ok).toBe(true);expect(m.hp).toBe(380);expect(m.progress).toBe(5.5);expect(m.slow).toBe(2);expect(other.progress).toBe(10);
     expect(e.useSprinkler().ok).toBe(false);expect(m.hp).toBe(380);expect(e.useSprinkler('ai').ok).toBe(false);
-    const event=e.state.events.find(v=>v.type==='sprinkler')!;expect(event.points?.[0]).toEqual({col:5,row:6});expect(event.points?.at(-1)).toEqual({col:0,row:0});
+    const event=e.state.events.find(v=>v.type==='sprinkler')!;expect(event.points?.[0]).toEqual({col:8,row:4});expect(event.points?.at(-1)).toEqual({col:0,row:0});
   });
   it('非法目标、未装备、暂停、结束不扣冷却或改变单位',()=>{
     const e=arena(['milk_bottle']),u=pet(e,'panda');
@@ -87,10 +87,10 @@ describe('12被动道具',()=>{
     e.tick(180);expect(e.state.sides.player.shovels).toBe(6);expect(e.state.sides.ai.shovels).toBe(0);
   });
   it('肥橘守最后2格，每局最多两次，普通秒杀/Boss35%最大血并击退3格',()=>{
-    const e=arena([],['giant_orange_cat']),boss=enemy(e,'husky_wrecker',15),normal=enemy(e,'rat',16);boss.armor=0;
-    e.tick(.05);expect(normal.hp).toBeLessThanOrEqual(0);expect(boss.hp).toBeCloseTo(boss.maxHp*.65);expect(boss.progress).toBe(12);expect(e.state.sides.player.giantCatUses).toBe(1);
-    boss.progress=15;Object.assign(boss,GridSystem.pathPosition('player',15));e.tick(.05);expect(e.state.sides.player.giantCatUses).toBe(2);
-    boss.progress=15;e.tick(.05);expect(e.state.sides.player.giantCatUses).toBe(2);expect(boss.progress).toBe(15);
+    const e=arena([],['giant_orange_cat']),boss=enemy(e,'husky_wrecker',18),normal=enemy(e,'rat',19);boss.armor=0;
+    e.tick(.05);expect(normal.hp).toBeLessThanOrEqual(0);expect(boss.hp).toBeCloseTo(boss.maxHp*.65);expect(boss.progress).toBe(15);expect(e.state.sides.player.giantCatUses).toBe(1);
+    boss.progress=18;Object.assign(boss,GridSystem.pathPosition('player',18));e.tick(.05);expect(e.state.sides.player.giantCatUses).toBe(2);
+    boss.progress=18;e.tick(.05);expect(e.state.sides.player.giantCatUses).toBe(2);expect(boss.progress).toBe(18);
   });
   it('VIP只增组件权重，五连抽递增费用与整窝替换保留',()=>{
     const e=arena([],['vip_poster']),plain=arena();vi.spyOn(Random.prototype,'next').mockReturnValue(.625);

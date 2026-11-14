@@ -30,10 +30,10 @@ describe('M3 complete boss roster and real mechanisms',()=>{
   });
   it('charms only the lowest-level eligible basic pet; heroes, components and level 2 bees survive',()=>{
     const e=game();const strong=put(e,'hamster');strong.level=3;
-    const hero=put(e,'kungfu_po',3,1),component=put(e,'panda',3,3),bee=put(e,'bee',1,1);bee.level=2;
+    const hero=put(e,'kungfu_po',6,1),component=put(e,'panda',3,2),bee=put(e,'bee',5,2);bee.level=2;
     const victim=put(e,'squirrel',2,3),m=boss(e,'diva_kitty');activate(e,m);
     expect(e.state.units).not.toContain(victim);for(const u of [strong,hero,component,bee])expect(e.state.units).toContain(u);
-    const rat=e.state.enemies.find(enemy=>enemy.kind==='charmed_rat')!;expect(rat).toMatchObject({hp:45,maxHp:45,speed:.58,progress:2,col:2,row:0});
+    const rat=e.state.enemies.find(enemy=>enemy.kind==='charmed_rat')!;expect(rat).toMatchObject({hp:45,maxHp:45,speed:.58,progress:2,col:1,row:1});
     expect(e.state.events.some(event=>event.type==='boss_skill'&&event.effect==='diva_kitty')).toBe(true);
   });
   it('can charm a level-one bee, and no eligible unit means no free charmed rat',()=>{
@@ -42,8 +42,8 @@ describe('M3 complete boss roster and real mechanisms',()=>{
   });
   for(const [kind,status,duration] of [['buff_roo','KNOCKDOWN',9],['screaming_marmot','CONFUSED',6.5]] as const){
     it(`${kind}: affects at most two nearby units, stops fire and feeding immediately purges`,()=>{
-      const e=game(),hero=put(e,'kungfu_po'),a=put(e,'hamster',3,1),b=put(e,'squirrel',1,1),far=put(e,'corgi',3,3),m=boss(e,kind);
-      activate(e,m);const afflicted=[hero,a,b].filter(u=>u.statuses[status]);expect(afflicted).toHaveLength(2);expect(hero.statuses[status]).toBe(duration);expect(far.statuses).toEqual({});
+      const e=game(),hero=put(e,'kungfu_po'),a=put(e,'hamster',2,3),b=put(e,'squirrel',3,2),far=put(e,'corgi',6,3),m=boss(e,kind);
+      m.progress=3;Object.assign(m,GridSystem.pathPosition('player',3));activate(e,m);const afflicted=[hero,a,b].filter(u=>u.statuses[status]);expect(afflicted).toHaveLength(2);expect(hero.statuses[status]).toBe(duration);expect(far.statuses).toEqual({});
       const hp=m.hp;hero.cooldown=0;e.tick(.2);expect(m.hp).toBe(hp);
       const feed=e.grant('panda').unitId!;expect(e.move(feed,hero.location).ok).toBe(true);
       const upgraded=e.state.units.find(u=>u.kind==='kungfu_po')!;expect(upgraded.level).toBe(2);expect(upgraded.statuses).toEqual({});
@@ -54,7 +54,7 @@ describe('M3 complete boss roster and real mechanisms',()=>{
     const e=game(),m=boss(e,'hornet_queen');activate(e,m);
     const bees=e.state.enemies.filter(enemy=>enemy.kind==='killer_bee');expect(bees).toHaveLength(3);
     expect(bees.map(bee=>bee.progress)).toEqual([2.3,2.6,2.9]);for(const bee of bees)expect(bee).toMatchObject({hp:36,speed:.62,armor:0,boss:false});
-    const lives=e.state.sides.player.oranges;bees[0].progress=16.99;e.tick(.05);expect(e.state.sides.player.oranges).toBe(lives-1);
+    const lives=e.state.sides.player.oranges;bees[0].progress=19.99;e.tick(.05);expect(e.state.sides.player.oranges).toBe(lives-1);
   });
   it('trash necromancer summons three bone-marked rats scaled by the current wave, without reusing deaths as bosses',()=>{
     const e=game();e.state.wave=4;const m=boss(e,'trash_coon');activate(e,m);
@@ -76,8 +76,8 @@ describe('M3 complete boss roster and real mechanisms',()=>{
     expect(lethal.state.enemies).toHaveLength(0);expect(lethal.state.sides.player.loot.length).toBeGreaterThan(0);
   });
   it('spawned mobs near the end clamp to the final waypoint and still resolve at most once',()=>{
-    const e=game(),m=boss(e,'hornet_queen');m.progress=16.9;Object.assign(m,GridSystem.pathPosition('player',16.9));activate(e,m);
-    const bees=e.state.enemies.filter(enemy=>enemy.kind==='killer_bee');expect(bees.map(bee=>bee.progress)).toEqual([17,17,17]);
+    const e=game(),m=boss(e,'hornet_queen');m.progress=19.9;Object.assign(m,GridSystem.pathPosition('player',19.9));activate(e,m);
+    const bees=e.state.enemies.filter(enemy=>enemy.kind==='killer_bee');expect(bees.map(bee=>bee.progress)).toEqual([20,20,20]);
     e.state.sides.player.oranges=10;e.tick(.05);expect(e.state.sides.player.oranges).toBe(7);expect(e.state.enemies.filter(enemy=>enemy.kind==='killer_bee')).toHaveLength(0);
   });
   it('theme waves spawn bosses only at 4/6/8/9/10 and together expose all twelve',()=>{

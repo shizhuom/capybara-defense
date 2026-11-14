@@ -107,7 +107,7 @@ describe('36把神兵的基础加成与实际词条',()=>{
 
 describe('12位英雄一一对应本命觉醒',()=>{
   it('阿宝震地半径+30%并竹笋环，剑客6次强化附带流血',()=>{
-    vi.spyOn(Random.prototype,'next').mockReturnValue(.99);const a=arena('m10_bamboo_staff');enemy(a.e);const far=enemy(a.e,4.8);ultimate(a.e,a.u);expect(far.hp).toBeLessThan(100000);expect(a.e.state.events.some(v=>v.effect==='bamboo_ring')).toBe(true);
+    vi.spyOn(Random.prototype,'next').mockReturnValue(.99);const a=arena('m10_bamboo_staff');enemy(a.e);const far=enemy(a.e,4.5);ultimate(a.e,a.u);expect(far.hp).toBeLessThan(100000);expect(a.e.state.events.some(v=>v.effect==='bamboo_ring')).toBe(true);
     const b=arena('m09_cat_blade','puss_in_hat');const m=enemy(b.e);ultimate(b.e,b.u);expect(b.u.empowered).toBe(6);hits(b.e,b.u);expect(m.bleed).toBeGreaterThan(2.9);
   });
   it('修勾斩杀线35%且必出剑气，非本命英雄不获得斩杀觉醒',()=>{

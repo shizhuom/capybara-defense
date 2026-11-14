@@ -12,16 +12,19 @@ export interface PropTarget {unitId?:number;col?:number;row?:number}
 
 /** Snapshot validation keeps outside profile edits from changing a running match. */
 export function copyLoadout(input:Partial<BattleLoadout>={}):BattleLoadout {
+  if(!input||typeof input!=='object')input={};
+  const entries=(value:unknown)=>value&&typeof value==='object'&&!Array.isArray(value)?Object.entries(value):[];
   const ownedProps:Record<string,number>={};
-  for(const [id,value] of Object.entries(input.ownedProps??{}))if(PROPS[id]&&Number.isInteger(value)&&value>0)ownedProps[id]=Math.min(value,PROPS[id].maxLevel);
-  const slots=(ids:string[]|undefined,type:'active'|'passive',limit:number)=>[...new Set(ids??[])].filter(id=>ownedProps[id]&&PROPS[id]?.type===type).slice(0,limit);
+  for(const [id,value] of entries(input.ownedProps))if(Object.hasOwn(PROPS,id)&&Number.isInteger(value)&&value>0)ownedProps[id]=Math.min(value,PROPS[id].maxLevel);
+  const slots=(ids:string[]|undefined,type:'active'|'passive',limit:number)=>[...new Set(Array.isArray(ids)?ids:[])].filter(id=>typeof id==='string'&&Object.hasOwn(ownedProps,id)&&PROPS[id]?.type===type).slice(0,limit);
   const equippedWeapons:Record<string,string>={},used=new Set<string>();
-  for(const [hero,id] of Object.entries(input.equippedWeapons??{}))if(WEAPONS[id]&&HERO_FAMILIES[hero]===WEAPONS[id].family&&!used.has(id)){equippedWeapons[hero]=id;used.add(id);}
+  for(const [hero,id] of entries(input.equippedWeapons))if(typeof id==='string'&&Object.hasOwn(WEAPONS,id)&&Object.hasOwn(HERO_FAMILIES,hero)&&HERO_FAMILIES[hero]===WEAPONS[id].family&&!used.has(id)){equippedWeapons[hero]=id;used.add(id);}
   return{ownedProps,equippedWeapons,equippedActiveProps:slots(input.equippedActiveProps,'active',2),equippedPassiveProps:slots(input.equippedPassiveProps,'passive',6)};
 }
 
 export class PropSystem {
   private trapSequence=1;
+  private beeFoodGranted=false;
   constructor(private engine:BattleEngine,private random:()=>number){}
   has(side:Side,id:string):boolean {return this.engine.state.sides[side].loadout.equippedPassiveProps.includes(id);}
   initialize():void {
@@ -29,8 +32,19 @@ export class PropSystem {
     for(const side of ['player'] as Side[]){
       if(this.has(side,'extra_oranges'))sides[side].oranges+=2;
       if(this.has(side,'shared_oranges'))sides[side].oranges+=4;
-      if(this.has(side,'bee_overtime'))sides[side].food+=10;
+      this.grantBeeFood();
     }
+  }
+  syncPreparationLoadout(loadout:BattleLoadout):void {
+    const resources=this.engine.state.sides.player;
+    const orangeBonus=(value:BattleLoadout)=>(value.equippedPassiveProps.includes('extra_oranges')?2:0)+(value.equippedPassiveProps.includes('shared_oranges')?4:0);
+    const delta=orangeBonus(loadout)-orangeBonus(resources.loadout);
+    resources.loadout=loadout;resources.oranges=Math.max(0,resources.oranges+delta);
+    this.grantBeeFood();
+  }
+  private grantBeeFood():void {
+    if(this.beeFoodGranted||!this.has('player','bee_overtime'))return;
+    this.engine.state.sides.player.food+=10;this.beeFoodGranted=true;
   }
   shovelRules(side:Side):{interval:number;maxStored:number}{return this.has(side,'auto_shovel')?{interval:30,maxStored:6}:{interval:SHOVEL_PRODUCTION.interval,maxStored:SHOVEL_PRODUCTION.maxStored};}
   haste(side:Side):number {
