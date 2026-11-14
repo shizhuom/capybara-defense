@@ -19,7 +19,7 @@ Use a square 256 × 256 or larger canvas, transparent background, generous clear
 - Bosses: `husky_wrecker`, `mega_roomba`, `dr_clippers`, `box_kraken`, `sad_rain_frog`, `king_skunk`.
 - Guardian: `capybara`. Include the capybara **and its wooden bath tub**, but no oranges. The live orange stack is always drawn separately so life remains readable. Keep the top of the head near 23% of image height; the tub should reach 85%.
 
-Keep the silhouette readable at 56 logical pixels. Large boss PNGs are drawn around 66–90 logical pixels. Art is cosmetic only: changing it does not alter range, movement, input targets, or game rules.
+Keep the silhouette readable at small display scales. P3 regular enemy PNGs use a 98px base draw box and bosses use 126px, before gait and size scaling. Art is cosmetic only: changing it does not alter range, movement, input targets, or game rules.
 
 ## Synchronization and loading
 
