@@ -1,5 +1,5 @@
 {
-  "label": "latest",
+  "label": "p2",
   "production": true,
   "success": true,
   "cases": [
@@ -89,7 +89,7 @@
           "matches": 1,
           "fragments": [],
           "awardedBattles": [
-            "1794617672203-2"
+            "1794641205993-2"
           ],
           "schemaVersion": 2,
           "tutorialCompleted": false,
@@ -179,7 +179,7 @@
           "matches": 1,
           "fragments": [],
           "awardedBattles": [
-            "1794617676657-1"
+            "1794641210781-1"
           ],
           "schemaVersion": 2,
           "tutorialCompleted": false,

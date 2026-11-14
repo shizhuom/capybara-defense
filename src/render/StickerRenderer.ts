@@ -412,7 +412,7 @@ export class StickerRenderer {
       const hovered=interaction.pointer?this.hitTest(interaction.pointer.x,interaction.pointer.y):null;
       const hot=hovered?.kind==='bench'&&hovered.slot===slot&&interaction.draggingId!==undefined;
       const source=state.units.find(candidate=>candidate.id===interaction.draggingId);
-      const invalid=hot&&source&&unit&&source.id!==unit.id&&(source.kind==='shovel'||unit.kind==='shovel'||!MergeSystem.combine(source,unit).ok);
+      const invalid=hot&&source&&unit&&(source.washing||unit.washing||(source.id!==unit.id&&!MergeSystem.combine(source,unit).ok));
       const selected=unit&&unit.id===interaction.selectedId;
       c.save();c.shadowColor='rgba(93,80,54,.12)';c.shadowOffsetY=5;
       round(c,x,y,w,w,19,invalid?'#efd7c6':hot?'#efe8bf':unit?'#fff9e8':'#eee4cf',invalid?CORAL:selected||hot?TEAL:'#bbaa8a',selected||hot?2.8:1.9);c.restore();

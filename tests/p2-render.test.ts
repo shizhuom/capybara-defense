@@ -109,6 +109,46 @@ describe('P2 held weapons and exact motion',()=>{
  });
 });
 describe('P2 captured combat effects and bench tools',()=>{
+ function occupiedNestPreview(engine:BattleEngine,source:Unit){
+  const {renderer,calls}=surface();renderer.draw(engine.state,0,{draggingId:source.id,pointer:{x:208,y:992}});
+  const nest=calls.findIndex(call=>call.name==='roundRect'&&call.args[0]===160&&call.args[1]===944&&call.args[2]===96&&call.args[3]===96&&call.args[4]===19);
+  expect(nest).toBeGreaterThanOrEqual(0);
+  return {fill:calls[nest+1].fill,stroke:calls[nest+2].stroke};
+ }
+ it.each([['shovel','hamster'],['hamster','shovel'],['shovel','shovel']])('previews the legal bench %s to %s swap as valid',(sourceKind,targetKind)=>{
+  const engine=new BattleEngine({autoWaves:false}),source=pet(sourceKind,false),target={...pet(targetKind,false),id:11,location:{zone:'bench' as const,slot:1}};
+  engine.state.units=[source,target];const preview=occupiedNestPreview(engine,source);
+  expect(engine.move(source.id,{zone:'bench',slot:1})).toMatchObject({ok:true,key:'hint.swapped'});
+  expect(source.location).toEqual({zone:'bench',slot:1});expect(target.location).toEqual({zone:'bench',slot:0});
+  expect(preview).toEqual({fill:'#efe8bf',stroke:'#5f9b8c'});
+ });
+ it('previews a legal pet merge into an occupied nest as valid',()=>{
+  const engine=new BattleEngine({autoWaves:false}),source=pet('hamster',false),target={...pet('hamster',false),id:11,location:{zone:'bench' as const,slot:1}};
+  engine.state.units=[source,target];const preview=occupiedNestPreview(engine,source);
+  expect(engine.move(source.id,{zone:'bench',slot:1})).toMatchObject({ok:true,key:'hint.merged'});
+  expect(engine.state.units).toHaveLength(1);expect(engine.state.units[0]).toMatchObject({level:2,location:{zone:'bench',slot:1}});
+  expect(preview).toEqual({fill:'#efe8bf',stroke:'#5f9b8c'});
+ });
+ it('keeps a board pet targeting a bench shovel invalid',()=>{
+  const engine=new BattleEngine({autoWaves:false}),source=pet('hamster'),target={...pet('shovel',false),id:11,location:{zone:'bench' as const,slot:1}};
+  engine.state.units=[source,target];const before=structuredClone(engine.state.units),preview=occupiedNestPreview(engine,source);
+  expect(engine.move(source.id,{zone:'bench',slot:1})).toMatchObject({ok:false,key:'hint.toolOnly'});
+  expect(engine.state.units).toEqual(before);expect(preview).toEqual({fill:'#efd7c6',stroke:'#d28e78'});
+ });
+ it.each([
+  ['hamster','shovel','source','washing','m2.washing'],
+  ['shovel','hamster','target','washing','m2.washing'],
+  ['hamster','hamster','source','washing','m2.washing'],
+  ['hamster','hamster','target','washing','m2.washing'],
+  ['hamster','hamster','source','mergeLock','hint.mergeLocked'],
+  ['hamster','hamster','target','mergeLock','hint.mergeLocked'],
+ ])('keeps %s to %s invalid when the %s has %s',(sourceKind,targetKind,locked,restriction,key)=>{
+  const engine=new BattleEngine({autoWaves:false}),source=pet(sourceKind,false),target={...pet(targetKind,false),id:11,location:{zone:'bench' as const,slot:1}};
+  const unit=locked==='source'?source:target;if(restriction==='washing')unit.washing=1;else unit.statuses.MERGE_LOCK=1;
+  engine.state.units=[source,target];const before=structuredClone(engine.state.units),preview=occupiedNestPreview(engine,source);
+  expect(engine.move(source.id,{zone:'bench',slot:1})).toMatchObject({ok:false,key});
+  expect(engine.state.units).toEqual(before);expect(preview).toEqual({fill:'#efd7c6',stroke:'#d28e78'});
+ });
  it.each(['kungfu_po','puss_in_hat'])('keeps captured %s art/size/enhancement after moving, unequipping or deleting its source',kind=>{
   const engine=new BattleEngine({autoWaves:false,loadouts:{player:{equippedWeapons:{[kind]:kind==='kungfu_po'?'m10_bamboo_staff':'m09_cat_blade'}}}});engine.start();engine.grant(kind);const source=engine.state.units[0];source.location={zone:'board',col:2,row:1};source.empowered=1;const enemy=engine.spawnEnemy('rat','player');Object.assign(enemy,{progress:2,col:2,row:0,hp:100000,maxHp:100000,speed:0});engine.tick(.05);
   const slash=engine.state.events.find(v=>v.type==='slash')!;slash.age=.1;engine.state.events=[slash];const sprites=new Map(['vfx_slash_spin','vfx_slash_heavy','vfx_slash_cross','vfx_slash_crescent'].map(id=>[id,image(id)]));vi.spyOn(assets,'get').mockImplementation(id=>sprites.get(id));

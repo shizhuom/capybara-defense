@@ -1,0 +1,564 @@
+{
+  "passed": true,
+  "checks": [
+    "Solo6×7 clean mobile, initial22/1, real tutorial deployment, cost10→12→14 and failed-redraw atomicity",
+    "Mouse drag/click bench shovel digs, staged bench+pouch repair, storage/full rejection and nest swaps work",
+    "Real touch shovel drag digs the intended tile without page scroll",
+    "All four6×7 maps show real mid-swing mounted weapons, spin slash, ranged projectiles, bench shovels and cost14",
+    "Real kills produce comic death dust and +1food visual events",
+    "Solo pause/result, Boss HUD and all80 bilingual encyclopedia entries remain functional",
+    "Developer grant includes shovels and Boss button creates exactly one player-lane Boss",
+    "Final-wave clearance awards only player loot, capped food coins, stars and one ticket; receipt survives reload without duplication",
+    "Absent optional images retain playable solo board, held weapons, slash/projectile fallback and bench shovel",
+    "Console/pageerror:0"
+  ],
+  "errors": [],
+  "screenshots": [
+    "p2-mobile-menu.png",
+    "p2-mobile-tutorial.png",
+    "p2-mobile-tutorial-en.png",
+    "p2-mobile-repair-half.png",
+    "p2-mobile-sunny_backyard.png",
+    "p2-desktop-combat.png",
+    "p2-tablet-desktop-combat.png",
+    "p2-narrow-desktop-combat.png",
+    "p2-mobile-sakura_onsen.png",
+    "p2-mobile-midnight_kitchen.png",
+    "p2-mobile-cat_tower_maze.png",
+    "p2-mobile-hit-food-feedback.png",
+    "p2-mobile-combat-en.png",
+    "p2-mobile-boss.png",
+    "p2-desktop-clean-boss.png",
+    "p2-desktop-victory.png",
+    "p2-mobile-fallback.png"
+  ],
+  "combat": [
+    {
+      "mapId": "sunny_backyard",
+      "units": [
+        {
+          "kind": "kungfu_po",
+          "attackAnim": 0.783,
+          "facing": 1,
+          "attackAngle": 1.5707963267948966
+        },
+        {
+          "kind": "corgi",
+          "attackAnim": 0.783,
+          "facing": -1,
+          "attackAngle": 2.356194490192345
+        },
+        {
+          "kind": "bamboo_mafia",
+          "attackAnim": 0.783,
+          "facing": 1,
+          "attackAngle": 1.2490457723982544
+        },
+        {
+          "kind": "squirrel",
+          "attackAnim": 0.783,
+          "facing": 1,
+          "attackAngle": 0.4636476090008061
+        },
+        {
+          "kind": "puss_in_hat",
+          "attackAnim": 0.783,
+          "facing": 1,
+          "attackAngle": 0.7853981633974483
+        },
+        {
+          "kind": "pepe_king",
+          "attackAnim": 0.783,
+          "facing": 1,
+          "attackAngle": 0
+        }
+      ],
+      "events": [
+        {
+          "type": "slash",
+          "effect": "spin360",
+          "age": 0.06999999999999999
+        },
+        {
+          "type": "hit",
+          "effect": "vfx_hit_burst",
+          "age": 0.06999999999999999
+        },
+        {
+          "type": "damage",
+          "age": 0.06999999999999999
+        },
+        {
+          "type": "slash",
+          "effect": "spin360",
+          "age": 0.06999999999999999
+        },
+        {
+          "type": "hit",
+          "effect": "vfx_hit_burst",
+          "age": 0.06999999999999999
+        },
+        {
+          "type": "damage",
+          "age": 0.06999999999999999
+        },
+        {
+          "type": "projectile",
+          "effect": "bamboo_mafia",
+          "age": 0.06999999999999999
+        },
+        {
+          "type": "hit",
+          "effect": "vfx_hit_burst",
+          "age": 0.06999999999999999
+        },
+        {
+          "type": "damage",
+          "age": 0.06999999999999999
+        },
+        {
+          "type": "projectile",
+          "effect": "squirrel",
+          "age": 0.06999999999999999
+        },
+        {
+          "type": "hit",
+          "effect": "vfx_hit_burst",
+          "age": 0.06999999999999999
+        },
+        {
+          "type": "damage",
+          "age": 0.06999999999999999
+        },
+        {
+          "type": "slash",
+          "effect": "cross_slash",
+          "age": 0.06999999999999999
+        },
+        {
+          "type": "hit",
+          "effect": "vfx_hit_burst",
+          "age": 0.06999999999999999
+        },
+        {
+          "type": "damage",
+          "age": 0.06999999999999999
+        },
+        {
+          "type": "projectile",
+          "effect": "pepe_king",
+          "age": 0.06999999999999999
+        },
+        {
+          "type": "hit",
+          "effect": "vfx_hit_burst",
+          "age": 0.06999999999999999
+        },
+        {
+          "type": "damage",
+          "age": 0.06999999999999999
+        }
+      ],
+      "aiUnits": 0,
+      "aiEnemies": 0
+    },
+    {
+      "mapId": "sakura_onsen",
+      "units": [
+        {
+          "kind": "kungfu_po",
+          "attackAnim": 0.783,
+          "facing": 1,
+          "attackAngle": 0.7853981633974483
+        },
+        {
+          "kind": "corgi",
+          "attackAnim": 0.783,
+          "facing": 1,
+          "attackAngle": 0.7853981633974483
+        },
+        {
+          "kind": "bamboo_mafia",
+          "attackAnim": 0.783,
+          "facing": 1,
+          "attackAngle": 1.5707963267948966
+        },
+        {
+          "kind": "squirrel",
+          "attackAnim": 0.783,
+          "facing": 1,
+          "attackAngle": -0.4636476090008061
+        },
+        {
+          "kind": "puss_in_hat",
+          "attackAnim": 0.783,
+          "facing": 1,
+          "attackAngle": 0.7853981633974483
+        },
+        {
+          "kind": "pepe_king",
+          "attackAnim": 0.783,
+          "facing": 1,
+          "attackAngle": 0
+        }
+      ],
+      "events": [
+        {
+          "type": "slash",
+          "effect": "spin360",
+          "age": 0.06999999999999999
+        },
+        {
+          "type": "hit",
+          "effect": "vfx_hit_burst",
+          "age": 0.06999999999999999
+        },
+        {
+          "type": "damage",
+          "age": 0.06999999999999999
+        },
+        {
+          "type": "slash",
+          "effect": "spin360",
+          "age": 0.06999999999999999
+        },
+        {
+          "type": "hit",
+          "effect": "vfx_hit_burst",
+          "age": 0.06999999999999999
+        },
+        {
+          "type": "damage",
+          "age": 0.06999999999999999
+        },
+        {
+          "type": "projectile",
+          "effect": "bamboo_mafia",
+          "age": 0.06999999999999999
+        },
+        {
+          "type": "hit",
+          "effect": "vfx_hit_burst",
+          "age": 0.06999999999999999
+        },
+        {
+          "type": "damage",
+          "age": 0.06999999999999999
+        },
+        {
+          "type": "weapon",
+          "effect": "fire_dragon",
+          "age": 0.06999999999999999
+        },
+        {
+          "type": "projectile",
+          "effect": "squirrel",
+          "age": 0.06999999999999999
+        },
+        {
+          "type": "hit",
+          "effect": "vfx_hit_burst",
+          "age": 0.06999999999999999
+        },
+        {
+          "type": "damage",
+          "age": 0.06999999999999999
+        },
+        {
+          "type": "slash",
+          "effect": "cross_slash",
+          "age": 0.06999999999999999
+        },
+        {
+          "type": "hit",
+          "effect": "vfx_hit_burst",
+          "age": 0.06999999999999999
+        },
+        {
+          "type": "damage",
+          "age": 0.06999999999999999
+        },
+        {
+          "type": "projectile",
+          "effect": "pepe_king",
+          "age": 0.06999999999999999
+        },
+        {
+          "type": "hit",
+          "effect": "vfx_hit_burst",
+          "age": 0.06999999999999999
+        },
+        {
+          "type": "damage",
+          "age": 0.06999999999999999
+        }
+      ],
+      "aiUnits": 0,
+      "aiEnemies": 0
+    },
+    {
+      "mapId": "midnight_kitchen",
+      "units": [
+        {
+          "kind": "kungfu_po",
+          "attackAnim": 0.783,
+          "facing": 1,
+          "attackAngle": -0.7853981633974483
+        },
+        {
+          "kind": "corgi",
+          "attackAnim": 0.783,
+          "facing": 1,
+          "attackAngle": 0.7853981633974483
+        },
+        {
+          "kind": "bamboo_mafia",
+          "attackAnim": 0.783,
+          "facing": 1,
+          "attackAngle": 1.5707963267948966
+        },
+        {
+          "kind": "squirrel",
+          "attackAnim": 0.783,
+          "facing": -1,
+          "attackAngle": 2.0344439357957027
+        },
+        {
+          "kind": "puss_in_hat",
+          "attackAnim": 0.783,
+          "facing": -1,
+          "attackAngle": 2.356194490192345
+        },
+        {
+          "kind": "pepe_king",
+          "attackAnim": 0.783,
+          "facing": 1,
+          "attackAngle": 0.7853981633974483
+        }
+      ],
+      "events": [
+        {
+          "type": "slash",
+          "effect": "spin360",
+          "age": 0.06999999999999999
+        },
+        {
+          "type": "hit",
+          "effect": "vfx_hit_burst",
+          "age": 0.06999999999999999
+        },
+        {
+          "type": "damage",
+          "age": 0.06999999999999999
+        },
+        {
+          "type": "slash",
+          "effect": "spin360",
+          "age": 0.06999999999999999
+        },
+        {
+          "type": "hit",
+          "effect": "vfx_hit_burst",
+          "age": 0.06999999999999999
+        },
+        {
+          "type": "damage",
+          "age": 0.06999999999999999
+        },
+        {
+          "type": "projectile",
+          "effect": "bamboo_mafia",
+          "age": 0.06999999999999999
+        },
+        {
+          "type": "hit",
+          "effect": "vfx_hit_burst",
+          "age": 0.06999999999999999
+        },
+        {
+          "type": "damage",
+          "age": 0.06999999999999999
+        },
+        {
+          "type": "weapon",
+          "effect": "fire_dragon",
+          "age": 0.06999999999999999
+        },
+        {
+          "type": "projectile",
+          "effect": "squirrel",
+          "age": 0.06999999999999999
+        },
+        {
+          "type": "hit",
+          "effect": "vfx_hit_burst",
+          "age": 0.06999999999999999
+        },
+        {
+          "type": "damage",
+          "age": 0.06999999999999999
+        },
+        {
+          "type": "slash",
+          "effect": "cross_slash",
+          "age": 0.06999999999999999
+        },
+        {
+          "type": "hit",
+          "effect": "vfx_hit_burst",
+          "age": 0.06999999999999999
+        },
+        {
+          "type": "damage",
+          "age": 0.06999999999999999
+        },
+        {
+          "type": "projectile",
+          "effect": "pepe_king",
+          "age": 0.06999999999999999
+        },
+        {
+          "type": "hit",
+          "effect": "vfx_hit_burst",
+          "age": 0.06999999999999999
+        },
+        {
+          "type": "damage",
+          "age": 0.06999999999999999
+        }
+      ],
+      "aiUnits": 0,
+      "aiEnemies": 0
+    },
+    {
+      "mapId": "cat_tower_maze",
+      "units": [
+        {
+          "kind": "kungfu_po",
+          "attackAnim": 0.783,
+          "facing": -1,
+          "attackAngle": 2.356194490192345
+        },
+        {
+          "kind": "corgi",
+          "attackAnim": 0.783,
+          "facing": -1,
+          "attackAngle": 2.356194490192345
+        },
+        {
+          "kind": "bamboo_mafia",
+          "attackAnim": 0.783,
+          "facing": 1,
+          "attackAngle": 1.5707963267948966
+        },
+        {
+          "kind": "squirrel",
+          "attackAnim": 0.783,
+          "facing": 1,
+          "attackAngle": 0.4636476090008061
+        },
+        {
+          "kind": "puss_in_hat",
+          "attackAnim": 0.783,
+          "facing": 1,
+          "attackAngle": 0.7853981633974483
+        },
+        {
+          "kind": "pepe_king",
+          "attackAnim": 0.783,
+          "facing": 1,
+          "attackAngle": 0.7853981633974483
+        }
+      ],
+      "events": [
+        {
+          "type": "slash",
+          "effect": "spin360",
+          "age": 0.06999999999999999
+        },
+        {
+          "type": "hit",
+          "effect": "vfx_hit_burst",
+          "age": 0.06999999999999999
+        },
+        {
+          "type": "damage",
+          "age": 0.06999999999999999
+        },
+        {
+          "type": "slash",
+          "effect": "spin360",
+          "age": 0.06999999999999999
+        },
+        {
+          "type": "hit",
+          "effect": "vfx_hit_burst",
+          "age": 0.06999999999999999
+        },
+        {
+          "type": "damage",
+          "age": 0.06999999999999999
+        },
+        {
+          "type": "projectile",
+          "effect": "bamboo_mafia",
+          "age": 0.06999999999999999
+        },
+        {
+          "type": "hit",
+          "effect": "vfx_hit_burst",
+          "age": 0.06999999999999999
+        },
+        {
+          "type": "damage",
+          "age": 0.06999999999999999
+        },
+        {
+          "type": "projectile",
+          "effect": "squirrel",
+          "age": 0.06999999999999999
+        },
+        {
+          "type": "hit",
+          "effect": "vfx_hit_burst",
+          "age": 0.06999999999999999
+        },
+        {
+          "type": "damage",
+          "age": 0.06999999999999999
+        },
+        {
+          "type": "slash",
+          "effect": "cross_slash",
+          "age": 0.06999999999999999
+        },
+        {
+          "type": "hit",
+          "effect": "vfx_hit_burst",
+          "age": 0.06999999999999999
+        },
+        {
+          "type": "damage",
+          "age": 0.06999999999999999
+        },
+        {
+          "type": "projectile",
+          "effect": "pepe_king",
+          "age": 0.06999999999999999
+        },
+        {
+          "type": "hit",
+          "effect": "vfx_hit_burst",
+          "age": 0.06999999999999999
+        },
+        {
+          "type": "damage",
+          "age": 0.06999999999999999
+        }
+      ],
+      "aiUnits": 0,
+      "aiEnemies": 0
+    }
+  ],
+  "failure": null
+}

@@ -24,13 +24,13 @@ try{
   assert.equal(await page.locator('#dev-map option').count(),5);
   await page.locator('[data-action="start"]').click();
   await page.locator('[data-action="food"]').click();
-  assert.equal(await page.locator('#food-value').innerText(),'540');
+  assert.equal(await page.locator('#food-value').innerText(),'522');
   await page.locator('[data-action="summon"]').click();
-  assert.equal(await page.locator('#food-value').innerText(),'530');
+  assert.equal(await page.locator('#food-value').innerText(),'512');
   assert.equal(await page.locator('#summon-title').innerText(),'换一窝');
   assert.match(await page.locator('#summon-note').innerText(),/5/);
   await page.locator('[data-action="summon"]').click();
-  assert.equal(await page.locator('#food-value').innerText(),'520');
+  assert.equal(await page.locator('#food-value').innerText(),'500');
   await page.locator('[data-action="pause"]').click();
   assert.ok(await page.locator('#game-dialog').evaluate(e=>e.open));
   await page.locator('[data-action="surrender"]').click();

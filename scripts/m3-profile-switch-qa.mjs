@@ -9,7 +9,7 @@ const runtime = path.join(root, '.runtime', 'browser-tmp');
 const output = path.join(root, 'verification');
 fs.mkdirSync(runtime, { recursive: true }); fs.mkdirSync(output, { recursive: true });
 const label = process.argv.find(value => value.startsWith('--label='))?.slice(8) ?? 'latest';
-if (!/^[a-z]+$/.test(label)) throw Error('Use a plain alphabetic label.');
+if (!/^[a-z][a-z0-9-]*$/.test(label)) throw Error('Use a lowercase label with optional digits or hyphens.');
 const executablePath = process.env.CAPY_CHROME ?? [
   path.join(process.env.PROGRAMFILES ?? 'C:/Program Files', 'Google/Chrome/Application/chrome.exe'),
   path.join(process.env['PROGRAMFILES(X86)'] ?? 'C:/Program Files (x86)', 'Microsoft/Edge/Application/msedge.exe'),
