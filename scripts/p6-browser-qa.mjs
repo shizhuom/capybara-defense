@@ -5,6 +5,7 @@ import {fileURLToPath} from 'node:url';
 import {chromium} from 'playwright-core';
 const root=path.resolve(path.dirname(fileURLToPath(import.meta.url)),'..'),out=path.join(root,'verification'),temp=path.join(root,'.runtime/browser-tmp');
 fs.mkdirSync(temp,{recursive:true});fs.mkdirSync(out,{recursive:true});
+process.env.TEMP=temp;process.env.TMP=temp;
 const browser=await chromium.launch({headless:true,executablePath:process.env.CAPY_CHROME??'C:/Program Files/Google/Chrome/Application/chrome.exe',env:{...process.env,TEMP:temp,TMP:temp},args:['--disable-breakpad','--disable-crash-reporter','--disable-background-networking']});
 const checks=[],errors=[],screenshots=[],measurements=[];let failure,lastPage;
 const mark=s=>{checks.push(s);console.log('PASS '+s);};
@@ -32,7 +33,7 @@ async function guideFit(p,label){
  const notice=await p.locator('#toast').evaluate(e=>e.hidden?null:e.getBoundingClientRect().toJSON());if(m.card&&notice)assert.ok(!overlap(notice,m.card),label+' toast leaves card clear');
  measurements.push({label,...m});
 }
-async function seed(p){await p.evaluate(async()=>{const{createProfile}=await import('/src/core/MetaProgression.ts'),{WEAPONS}=await import('/src/config/weapons.ts'),{PROPS}=await import('/src/config/props.ts');const v=createProfile();Object.assign(v,{tutorialCompleted:true,coins:9999,stars:86,highestStars:86,wins:41,matches:50,winStreak:4,bestWinStreak:9,freeLotteryTickets:3,unlockedWeapons:Object.keys(WEAPONS),ownedProps:Object.fromEntries(Object.keys(PROPS).map(id=>[id,PROPS[id].maxLevel])),equippedWeapons:{kungfu_po:'m10_bamboo_staff'},equippedActiveProps:['milk_bottle','glue_trap'],equippedPassiveProps:['gold_doge','auto_shovel'],selectedMap:'sunny_backyard'});localStorage.setItem('capybara_defense_v1:profile',JSON.stringify(v));});await p.reload({waitUntil:'networkidle'});}
+async function seed(p){await p.evaluate(async()=>{const{createProfile}=await import('/src/core/MetaProgression.ts'),{WEAPONS}=await import('/src/config/weapons.ts'),{PROPS}=await import('/src/config/props.ts');const v=createProfile();Object.assign(v,{tutorialCompleted:true,coins:9999,stars:86,highestStars:86,wins:41,matches:50,winStreak:4,bestWinStreak:9,freeLotteryTickets:3,unlockedWeapons:Object.keys(WEAPONS),ownedProps:Object.fromEntries(['milk_bottle','glue_trap','gold_doge','auto_shovel','extra_oranges','emp_jammer','promo_badge','tall_perch'].map(id=>[id,PROPS[id].maxLevel])),equippedWeapons:{kungfu_po:'m10_bamboo_staff'},equippedActiveProps:['milk_bottle','glue_trap'],equippedPassiveProps:['gold_doge','auto_shovel'],selectedMap:'sunny_backyard'});localStorage.setItem('capybara_defense_v1:profile',JSON.stringify(v));});await p.reload({waitUntil:'networkidle'});}
 try{
  for(const[label,viewport,mobile]of[['desktop',{width:1280,height:720},false],['mobile-landscape',{width:844,height:390},true]]){
   const context=await browser.newContext({viewport,isMobile:mobile,hasTouch:mobile,deviceScaleFactor:1}),p=await context.newPage();lastPage=p;p.setDefaultTimeout(10000);

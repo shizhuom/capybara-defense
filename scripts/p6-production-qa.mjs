@@ -5,6 +5,7 @@ import {fileURLToPath} from 'node:url';
 import {chromium} from 'playwright-core';
 const root=path.resolve(path.dirname(fileURLToPath(import.meta.url)),'..'),dist=path.join(root,'dist'),temp=path.join(root,'.runtime/browser-tmp');
 fs.mkdirSync(temp,{recursive:true});
+process.env.TEMP=temp;process.env.TMP=temp;
 const browser=await chromium.launch({headless:true,executablePath:process.env.CAPY_CHROME??'C:/Program Files/Google/Chrome/Application/chrome.exe',env:{...process.env,TEMP:temp,TMP:temp},args:['--disable-breakpad','--disable-crash-reporter']});
 const errors=[],checks=[],requests=[];
 const mark=text=>{checks.push(text);console.log('PASS '+text);};
@@ -18,7 +19,9 @@ try{
   assert.equal(await page.evaluate(()=>typeof window.__CAPY_DEBUG__),'undefined');
   assert.equal(await page.locator('.sandbox-column').isVisible(),false);
   assert.ok(await page.evaluate(()=>document.documentElement.scrollHeight<=innerHeight+1&&document.documentElement.scrollWidth<=innerWidth+1));
-  await click('start');await click('tutorial-skip');await click('summon');
+  await click('start');await click('summon');
+  const badge=await page.locator('.redraw-hero-badge').boundingBox();assert.ok(badge&&badge.height<=26&&badge.width>=80,'Portrait hero reminder must stay a compact horizontal badge: '+JSON.stringify(badge));
+  await click('tutorial-skip');
   assert.match(await page.locator('#summon-button').innerText(),/12/);await click('summon');
   assert.equal(await page.locator('#food-value').innerText(),'0');
   await page.screenshot({path:path.join(root,'verification/p6-production-mobile.png')});

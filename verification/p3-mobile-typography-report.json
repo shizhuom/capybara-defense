@@ -1,5 +1,5 @@
 {
-  "at": "2026-11-14T21:40:30.507Z",
+  "at": "2026-11-14T23:28:58.515Z",
   "checks": [
     "phone-landscape-zh-CN: readable contained menu and five tutorial steps with real touch summon/deploy/acknowledge",
     "phone-landscape-zh-CN: readable Boss status with non-overlapping resource and control docks",
@@ -95,7 +95,7 @@
       "sizes": [
         {
           "selector": ".tutorial-bubble strong",
-          "size": 14,
+          "size": 13,
           "text": "STEP 1/51 · 摇铃，叫来五位伙伴"
         },
         {
@@ -111,9 +111,9 @@
       ],
       "bubble": {
         "left": 319.0625,
-        "top": 167.90625,
-        "right": 575.59375,
-        "bottom": 295.875
+        "top": 113.734375,
+        "right": 546.546875,
+        "bottom": 229.75
       },
       "stage": {
         "left": 75.328125,
@@ -128,7 +128,7 @@
       "sizes": [
         {
           "selector": ".tutorial-bubble strong",
-          "size": 14,
+          "size": 13,
           "text": "STEP 2/52 · 把伙伴放上白色肉垫"
         },
         {
@@ -144,9 +144,9 @@
       ],
       "bubble": {
         "left": 319.0625,
-        "top": 167.90625,
-        "right": 575.59375,
-        "bottom": 295.875
+        "top": 173.3125,
+        "right": 546.546875,
+        "bottom": 289.328125
       },
       "stage": {
         "left": 75.328125,
@@ -161,7 +161,7 @@
       "sizes": [
         {
           "selector": ".tutorial-bubble strong",
-          "size": 14,
+          "size": 13,
           "text": "STEP 3/53 · 同种同星，叠出更强伙伴"
         },
         {
@@ -181,10 +181,10 @@
         }
       ],
       "bubble": {
-        "left": 319.0625,
-        "top": 167.90625,
-        "right": 575.59375,
-        "bottom": 306.28125
+        "left": 172.8125,
+        "top": 113.734375,
+        "right": 400.296875,
+        "bottom": 255.75
       },
       "stage": {
         "left": 75.328125,
@@ -199,13 +199,13 @@
       "sizes": [
         {
           "selector": ".tutorial-bubble strong",
-          "size": 14,
+          "size": 13,
           "text": "STEP 4/54 · 动物 + 穿搭 = 传说英雄"
         },
         {
           "selector": ".tutorial-bubble p",
           "size": 12,
-          "text": "把熊猫与大侠斗笠叠在一起，功夫阿宝登场！英雄还能吃对应配方散件升级。若已合出或换过窝，可点下方继续。"
+          "text": "先把熊猫抱上白色空垫，再把斗笠叠上去，让功夫阿宝站在场上迎战！"
         },
         {
           "selector": ".tutorial-bubble button",
@@ -214,10 +214,10 @@
         }
       ],
       "bubble": {
-        "left": 319.0625,
-        "top": 167.90625,
-        "right": 575.59375,
-        "bottom": 322.390625
+        "left": 432.8125,
+        "top": 173.3125,
+        "right": 660.296875,
+        "bottom": 303.96875
       },
       "stage": {
         "left": 75.328125,
@@ -232,7 +232,7 @@
       "sizes": [
         {
           "selector": ".tutorial-bubble strong",
-          "size": 14,
+          "size": 13,
           "text": "STEP 5/55 · 图鉴就是你的合成小抄"
         },
         {
@@ -252,10 +252,10 @@
         }
       ],
       "bubble": {
-        "left": 319.0625,
-        "top": 167.90625,
-        "right": 575.59375,
-        "bottom": 321.875
+        "left": 172.8125,
+        "top": 113.734375,
+        "right": 400.296875,
+        "bottom": 255.75
       },
       "stage": {
         "left": 75.328125,
@@ -321,7 +321,7 @@
       "resource": {
         "left": 85.0625,
         "top": 6.484375,
-        "right": 261.6875,
+        "right": 291.921875,
         "bottom": 32.46875
       }
     },
@@ -407,7 +407,7 @@
       "sizes": [
         {
           "selector": ".tutorial-bubble strong",
-          "size": 14,
+          "size": 13,
           "text": "STEP 1/51 · Ring for five friends"
         },
         {
@@ -423,9 +423,9 @@
       ],
       "bubble": {
         "left": 319.0625,
-        "top": 167.90625,
-        "right": 575.59375,
-        "bottom": 295.875
+        "top": 113.734375,
+        "right": 546.546875,
+        "bottom": 245.109375
       },
       "stage": {
         "left": 75.328125,
@@ -440,7 +440,7 @@
       "sizes": [
         {
           "selector": ".tutorial-bubble strong",
-          "size": 14,
+          "size": 13,
           "text": "STEP 2/52 · Place a friend on a paw pad"
         },
         {
@@ -456,9 +456,9 @@
       ],
       "bubble": {
         "left": 319.0625,
-        "top": 167.90625,
-        "right": 575.59375,
-        "bottom": 295.875
+        "top": 173.3125,
+        "right": 546.546875,
+        "bottom": 289.328125
       },
       "stage": {
         "left": 75.328125,
@@ -473,7 +473,7 @@
       "sizes": [
         {
           "selector": ".tutorial-bubble strong",
-          "size": 14,
+          "size": 13,
           "text": "STEP 3/53 · Matching pets gain a star"
         },
         {
@@ -493,10 +493,10 @@
         }
       ],
       "bubble": {
-        "left": 319.0625,
-        "top": 167.90625,
-        "right": 575.59375,
-        "bottom": 321.875
+        "left": 172.8125,
+        "top": 113.734375,
+        "right": 400.296875,
+        "bottom": 272
       },
       "stage": {
         "left": 75.328125,
@@ -511,13 +511,13 @@
       "sizes": [
         {
           "selector": ".tutorial-bubble strong",
-          "size": 14,
+          "size": 13,
           "text": "STEP 4/54 · A pet + gear makes a hero"
         },
         {
           "selector": ".tutorial-bubble p",
           "size": 12,
-          "text": "Stack Panda and Bamboo Hat to summon Kungfu Po! Feed re"
+          "text": "Put Panda on a white pad first, then stack the Bamboo H"
         },
         {
           "selector": ".tutorial-bubble button",
@@ -526,10 +526,10 @@
         }
       ],
       "bubble": {
-        "left": 319.0625,
-        "top": 167.90625,
-        "right": 575.59375,
-        "bottom": 322.390625
+        "left": 432.8125,
+        "top": 162.515625,
+        "right": 660.296875,
+        "bottom": 323.890625
       },
       "stage": {
         "left": 75.328125,
@@ -544,7 +544,7 @@
       "sizes": [
         {
           "selector": ".tutorial-bubble strong",
-          "size": 14,
+          "size": 13,
           "text": "STEP 5/55 · The Guide has every recipe"
         },
         {
@@ -564,10 +564,10 @@
         }
       ],
       "bubble": {
-        "left": 319.0625,
-        "top": 167.90625,
-        "right": 575.59375,
-        "bottom": 322.390625
+        "left": 172.8125,
+        "top": 113.734375,
+        "right": 400.296875,
+        "bottom": 287.359375
       },
       "stage": {
         "left": 75.328125,
@@ -633,7 +633,7 @@
       "resource": {
         "left": 85.0625,
         "top": 6.484375,
-        "right": 261.6875,
+        "right": 313.890625,
         "bottom": 32.46875
       }
     },
@@ -829,7 +829,7 @@
         {
           "selector": ".tutorial-bubble p",
           "size": 12,
-          "text": "把熊猫与大侠斗笠叠在一起，功夫阿宝登场！英雄还能吃对应配方散件升级。若已合出或换过窝，可点下方继续。"
+          "text": "先把熊猫抱上白色空垫，再把斗笠叠上去，让功夫阿宝站在场上迎战！"
         },
         {
           "selector": ".tutorial-bubble button",
@@ -1141,7 +1141,7 @@
         {
           "selector": ".tutorial-bubble p",
           "size": 12,
-          "text": "Stack Panda and Bamboo Hat to summon Kungfu Po! Feed re"
+          "text": "Put Panda on a white pad first, then stack the Bamboo H"
         },
         {
           "selector": ".tutorial-bubble button",
@@ -1151,7 +1151,7 @@
       ],
       "bubble": {
         "left": 8,
-        "top": 24.3125,
+        "top": 42.3125,
         "right": 382,
         "bottom": 248.3125
       },

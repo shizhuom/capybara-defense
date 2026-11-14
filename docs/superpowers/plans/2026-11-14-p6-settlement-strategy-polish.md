@@ -82,6 +82,6 @@ Interfaces: HitTarget adds bench-lock/slot. HitTest accepts optional interaction
 
 ## Task 6: Verification and delivery
 
-- [ ] Capture P6 desktop1280×720/mobile844×390 pause/win/loss, armory/English guide/settings/shop, tutorial4 and wave/lock/merge HUD. Verify no card collision, all6tabs/whole words, complete settings/footer, scroll reachability, console/pageerror0; inspect screenshots.
-- [ ] Run full npm test/typecheck/build, sync193, production relative paths and profile backup checks. Compare protected baseline hashes and source asset bytes.
-- [ ] One independent whole-branch review; fix material findings with failing regression first. Archive docs/P6-verification.md, commit/tag local v1.0-p6, leave4175 production service healthy and Git clean.
+- [x] Capture P6 desktop1280×720/mobile844×390 pause/win/loss, armory/English guide/settings/shop, tutorial4 and wave/lock/merge HUD. Verify no card collision, all6tabs/whole words, complete settings/footer, scroll reachability, console/pageerror0; inspect screenshots.
+- [x] Run full npm test/typecheck/build, sync193, production relative paths and profile backup checks. Compare protected baseline hashes and source asset bytes.
+- [x] One independent whole-branch review; fix material findings with failing regression first. Archive docs/P6-verification.md, commit/tag local v1.0-p6, leave4175 production service healthy and Git clean.

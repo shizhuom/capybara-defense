@@ -15,6 +15,7 @@ const executablePath = process.env.CAPY_CHROME ?? [
   path.join(process.env['PROGRAMFILES(X86)'] ?? 'C:/Program Files (x86)', 'Microsoft/Edge/Application/msedge.exe'),
 ].find(file => fs.existsSync(file));
 if (!executablePath) throw Error('Set CAPY_CHROME to installed Chrome/Edge.');
+process.env.TEMP=runtime;process.env.TMP=runtime;
 const browser = await chromium.launch({ headless: true, executablePath, env: { ...process.env, TEMP: runtime, TMP: runtime }, args: ['--disable-breakpad', '--disable-crash-reporter', '--disable-background-networking'] });
 const cases = [], errors = [];
 const stored = page => page.evaluate(() => JSON.parse(localStorage.getItem('capybara_defense_v1:profile')));
@@ -39,7 +40,7 @@ async function setup() {
   await page.locator('.keyboard-card').evaluate(el => { el.open = true; });
   return { page, context };
 }
-async function surrender(page) { await click(page, 'pause'); await click(page, 'surrender'); await page.locator('#game-dialog [data-action="menu"]').waitFor(); }
+async function surrender(page) { await click(page, 'pause'); await click(page, 'surrender'); await page.locator('#game-dialog [data-action="menu"]').first().waitFor(); }
 async function caseRun(name, fn) {
   const { page, context } = await setup(); const evidence = {};
   try { await fn(page, evidence); cases.push({ name, passed: true, evidence }); console.log(`PASS ${name}`); }

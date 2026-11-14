@@ -1,5 +1,5 @@
 {
-  "at": "2026-11-14T21:46:38.901Z",
+  "at": "2026-11-14T23:28:36.154Z",
   "checks": [
     "Landscape9×5 clean stage; P2 initial22/1 and costs10→12→14 remain transactional",
     "New landscape pointer coordinates dig grass and live shovel card stores into pouch",
@@ -140,9 +140,6 @@
         "slash",
         "hit",
         "damage",
-        "hit",
-        "damage",
-        "weapon",
         "slash",
         "hit",
         "damage",
@@ -192,8 +189,8 @@
         },
         {
           "kind": "rat",
-          "progress": 11,
-          "col": 3,
+          "progress": 11.024,
+          "col": 3.023999999999999,
           "row": 2
         },
         {
@@ -250,6 +247,7 @@
         "projectile",
         "hit",
         "damage",
+        "weapon",
         "projectile",
         "hit",
         "damage",
@@ -345,6 +343,9 @@
         "slash",
         "hit",
         "damage",
+        "hit",
+        "damage",
+        "weapon",
         "slash",
         "hit",
         "damage",
@@ -370,9 +371,9 @@
         },
         {
           "kind": "roach",
-          "progress": 3.0239999999999996,
+          "progress": 3,
           "col": 2,
-          "row": 0.9760000000000004
+          "row": 1
         },
         {
           "kind": "rat",

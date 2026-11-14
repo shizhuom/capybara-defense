@@ -148,7 +148,7 @@ Regular enemies use a 98px base box; bosses use 126px. The four HUD icons are il
 
 ## P5 canonical asset path and sticker additions
 
-The canonical directory is now `public/assets/sprites/` (185 PNGs). `AssetRegistry` resolves `BASE_URL + assets/sprites/`, so production and nested hosting work without absolute URLs. `npm run sync-assets` reads `../../design/assets/sprites/` only and writes inside this game. P4's original path remains recoverable from tag `v1.0-p4`.
+The canonical directory is `public/assets/sprites/` (193 PNGs in P6, originally185 in P5). `AssetRegistry` resolves `BASE_URL + assets/sprites/`, so production and nested hosting work without absolute URLs. `npm run sync-assets` reads `../../design/assets/sprites/` only and writes inside this game. P4's original path remains recoverable from tag `v1.0-p4`.
 
 - 256×256 transparent mascot headers: `ui_header_compendium`, `ui_header_armory`, `ui_header_market`, `ui_header_rank`, `ui_header_profile`, `ui_header_settings`.
 - 192×192 transparent UI stickers: `ui_tutorial_pointer`, `ui_tutorial_capy`, `ui_coin_gold`, `ui_star_rank`, `ui_ticket_gacha`, `ui_skull_threat`.

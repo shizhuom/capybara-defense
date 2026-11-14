@@ -7,6 +7,7 @@ import {chromium} from 'playwright-core';
 const root=path.resolve(path.dirname(fileURLToPath(import.meta.url)),'..');
 const output=path.join(root,'verification'),temp=path.join(root,'.runtime/browser-tmp');
 fs.mkdirSync(temp,{recursive:true});fs.mkdirSync(output,{recursive:true});
+process.env.TEMP=temp;process.env.TMP=temp;
 const browser=await chromium.launch({headless:true,executablePath:process.env.CAPY_CHROME??'C:/Program Files/Google/Chrome/Application/chrome.exe',
  env:{...process.env,TEMP:temp,TMP:temp},args:['--disable-breakpad','--disable-crash-reporter','--disable-background-networking']});
 const errors=[],checks=[],screenshots=[],measurements=[];let failure;

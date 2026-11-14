@@ -6,6 +6,7 @@ import {chromium} from 'playwright-core';
 
 const root=path.resolve(path.dirname(fileURLToPath(import.meta.url)),'..'),output=path.join(root,'verification'),temp=path.join(root,'.runtime/browser-tmp');
 fs.mkdirSync(temp,{recursive:true});
+process.env.TEMP=temp;process.env.TMP=temp;
 const browser=await chromium.launch({headless:true,executablePath:process.env.CAPY_CHROME??'C:/Program Files/Google/Chrome/Application/chrome.exe',env:{...process.env,TEMP:temp,TMP:temp},args:['--disable-breakpad','--disable-crash-reporter']});
 const checks=[],errors=[],measurements=[];let failure=null;
 const overlap=(a,b)=>a.left<b.right-1&&a.right>b.left+1&&a.top<b.bottom-1&&a.bottom>b.top+1;

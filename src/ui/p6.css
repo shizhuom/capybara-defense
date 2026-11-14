@@ -179,5 +179,5 @@
  .wave-strategy>button { font-size:11px;padding:2px 5px;border-width:1px; }
  .resource-dock #wave-preview :is(svg,img),.resource-dock #early-wave-button :is(svg,img) { width:20px;height:20px; }
  #early-wave-button b { font-size:12px; }
- .redraw-hero-badge { font-size:9px;max-width:160px;white-space:normal;text-align:center;padding:2px 5px; }
+ .redraw-hero-badge { font-size:9px;width:max-content;max-width:160px;white-space:nowrap;text-align:center;padding:2px 5px; }
 }
