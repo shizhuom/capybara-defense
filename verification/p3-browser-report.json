@@ -1,0 +1,421 @@
+{
+  "at": "2026-11-14T10:04:26.178Z",
+  "checks": [
+    "Landscape9×5 clean stage; P2 initial22/1 and costs10→12→14 remain transactional",
+    "New landscape pointer coordinates dig grass and live shovel card stores into pouch",
+    "All four scenic maps show live held-weapon attacks, larger enemies and component synthesis card",
+    "Six compendium tabs and exact selected-unit deep-link work",
+    "844×390 landscape and390×844 portrait remain contained and clickable",
+    "English six-tab content has no Chinese leakage or raw translation keys",
+    "Unlocked map chips persist selection and refresh live scenic courtyard",
+    "Real preparation shop weapon equip, prop purchase/equip and passive effects sync immediately",
+    "Shop preserves previous pause state; failed profile persistence leaves profile and active loadout unchanged",
+    "First enemy permanently locks active battle loadout while profile changes remain available for next battle",
+    "Real mobile context844×390: touch drag digs, unit card opens and its details scroll without page movement",
+    "Real portrait390×844: readable letterbox unit card, touch book/close/reselect, unobstructed stage and no page scroll",
+    "Missing optional art falls back to illustrated icons and procedural map; developer drawer never resizes stage",
+    "Console/pageerror:0"
+  ],
+  "errors": [],
+  "screenshots": [
+    "p3-landscape-menu.png",
+    "p3-landscape-tutorial.png",
+    "p3-landscape-combat.png",
+    "p3-map-sakura_onsen.png",
+    "p3-map-midnight_kitchen.png",
+    "p3-map-cat_tower_maze.png",
+    "p3-compendium-matrix.png",
+    "p3-compendium-pets.png",
+    "p3-mobile-landscape.png",
+    "p3-mobile-portrait.png",
+    "p3-portrait-compendium.png",
+    "p3-landscape-english.png",
+    "p3-menu-sakura.png",
+    "p3-preparation-shop.png",
+    "p3-locked-battle-shop.png",
+    "p3-fallback-developer.png"
+  ],
+  "combat": [
+    {
+      "map": "sunny_backyard",
+      "unitAttacks": [
+        "kungfu_po",
+        "corgi",
+        "bamboo_mafia",
+        "squirrel",
+        "puss_in_hat",
+        "pepe_king"
+      ],
+      "events": [
+        "bubble",
+        "slash",
+        "hit",
+        "damage",
+        "slash",
+        "hit",
+        "damage",
+        "projectile",
+        "hit",
+        "damage",
+        "projectile",
+        "hit",
+        "damage",
+        "slash",
+        "hit",
+        "damage",
+        "projectile",
+        "hit",
+        "damage"
+      ],
+      "enemies": [
+        {
+          "kind": "rat",
+          "progress": 1.024,
+          "col": 1,
+          "row": 0.02400000000000002
+        },
+        {
+          "kind": "roach",
+          "progress": 3.0239999999999996,
+          "col": 1,
+          "row": 2.0239999999999996
+        },
+        {
+          "kind": "rat",
+          "progress": 5.023999999999999,
+          "col": 1.0239999999999991,
+          "row": 4
+        },
+        {
+          "kind": "rat",
+          "progress": 7.023999999999999,
+          "col": 3.023999999999999,
+          "row": 4
+        },
+        {
+          "kind": "husky_wrecker",
+          "progress": 9.024,
+          "col": 4,
+          "row": 2.976000000000001
+        },
+        {
+          "kind": "rat",
+          "progress": 11.024,
+          "col": 4,
+          "row": 0.9760000000000009
+        },
+        {
+          "kind": "rat",
+          "progress": 13.024,
+          "col": 5.023999999999999,
+          "row": 0
+        },
+        {
+          "kind": "roach",
+          "progress": 15.024,
+          "col": 7,
+          "row": 0.023999999999999133
+        },
+        {
+          "kind": "rat",
+          "progress": 17.024000000000004,
+          "col": 7,
+          "row": 2.0240000000000045
+        }
+      ],
+      "aiUnits": 0
+    },
+    {
+      "map": "sakura_onsen",
+      "unitAttacks": [
+        "kungfu_po",
+        "corgi",
+        "bamboo_mafia",
+        "squirrel",
+        "puss_in_hat",
+        "pepe_king"
+      ],
+      "events": [
+        "bubble",
+        "slash",
+        "hit",
+        "damage",
+        "slash",
+        "hit",
+        "damage",
+        "projectile",
+        "hit",
+        "damage",
+        "projectile",
+        "hit",
+        "damage",
+        "slash",
+        "hit",
+        "damage",
+        "projectile",
+        "hit",
+        "damage"
+      ],
+      "enemies": [
+        {
+          "kind": "rat",
+          "progress": 1.024,
+          "col": 6.976,
+          "row": 0
+        },
+        {
+          "kind": "roach",
+          "progress": 3.0239999999999996,
+          "col": 4.976000000000001,
+          "row": 0
+        },
+        {
+          "kind": "rat",
+          "progress": 5.023999999999999,
+          "col": 2.976000000000001,
+          "row": 0
+        },
+        {
+          "kind": "rat",
+          "progress": 7.023999999999999,
+          "col": 1,
+          "row": 0.023999999999999133
+        },
+        {
+          "kind": "husky_wrecker",
+          "progress": 9.024,
+          "col": 1.0239999999999991,
+          "row": 2
+        },
+        {
+          "kind": "rat",
+          "progress": 11.024,
+          "col": 3.023999999999999,
+          "row": 2
+        },
+        {
+          "kind": "rat",
+          "progress": 13.024,
+          "col": 5.023999999999999,
+          "row": 2
+        },
+        {
+          "kind": "roach",
+          "progress": 15.024,
+          "col": 7,
+          "row": 2.023999999999999
+        },
+        {
+          "kind": "rat",
+          "progress": 17.024000000000004,
+          "col": 6.9759999999999955,
+          "row": 4
+        },
+        {
+          "kind": "rat",
+          "progress": 19.024000000000004,
+          "col": 4.9759999999999955,
+          "row": 4
+        },
+        {
+          "kind": "roach",
+          "progress": 21.024000000000004,
+          "col": 2.9759999999999955,
+          "row": 4
+        }
+      ],
+      "aiUnits": 0
+    },
+    {
+      "map": "midnight_kitchen",
+      "unitAttacks": [
+        "kungfu_po",
+        "corgi",
+        "bamboo_mafia",
+        "squirrel",
+        "puss_in_hat",
+        "pepe_king"
+      ],
+      "events": [
+        "bubble",
+        "slash",
+        "hit",
+        "damage",
+        "slash",
+        "hit",
+        "damage",
+        "projectile",
+        "hit",
+        "damage",
+        "projectile",
+        "hit",
+        "damage",
+        "slash",
+        "hit",
+        "damage",
+        "projectile",
+        "hit",
+        "damage"
+      ],
+      "enemies": [
+        {
+          "kind": "rat",
+          "progress": 1.024,
+          "col": 0,
+          "row": 2.976
+        },
+        {
+          "kind": "roach",
+          "progress": 3.0239999999999996,
+          "col": 0,
+          "row": 0.9760000000000004
+        },
+        {
+          "kind": "rat",
+          "progress": 5.023999999999999,
+          "col": 1.0239999999999991,
+          "row": 0
+        },
+        {
+          "kind": "rat",
+          "progress": 7.023999999999999,
+          "col": 3.023999999999999,
+          "row": 0
+        },
+        {
+          "kind": "husky_wrecker",
+          "progress": 9.024,
+          "col": 5,
+          "row": 0.023999999999999133
+        },
+        {
+          "kind": "rat",
+          "progress": 11.024,
+          "col": 4.976000000000001,
+          "row": 2
+        },
+        {
+          "kind": "rat",
+          "progress": 13.024,
+          "col": 2.976000000000001,
+          "row": 2
+        },
+        {
+          "kind": "roach",
+          "progress": 15.024,
+          "col": 2,
+          "row": 3.023999999999999
+        },
+        {
+          "kind": "rat",
+          "progress": 17.024000000000004,
+          "col": 3.0240000000000045,
+          "row": 4
+        },
+        {
+          "kind": "rat",
+          "progress": 19.024000000000004,
+          "col": 5.0240000000000045,
+          "row": 4
+        },
+        {
+          "kind": "roach",
+          "progress": 21.024000000000004,
+          "col": 7,
+          "row": 3.9759999999999955
+        }
+      ],
+      "aiUnits": 0
+    },
+    {
+      "map": "cat_tower_maze",
+      "unitAttacks": [
+        "kungfu_po",
+        "corgi",
+        "bamboo_mafia",
+        "squirrel",
+        "puss_in_hat",
+        "pepe_king"
+      ],
+      "events": [
+        "bubble",
+        "slash",
+        "hit",
+        "damage",
+        "slash",
+        "hit",
+        "damage",
+        "projectile",
+        "hit",
+        "damage",
+        "projectile",
+        "hit",
+        "damage",
+        "slash",
+        "hit",
+        "damage",
+        "projectile",
+        "hit",
+        "damage"
+      ],
+      "enemies": [
+        {
+          "kind": "rat",
+          "progress": 1.024,
+          "col": 1.024,
+          "row": 2
+        },
+        {
+          "kind": "roach",
+          "progress": 3.0239999999999996,
+          "col": 2,
+          "row": 0.9760000000000004
+        },
+        {
+          "kind": "rat",
+          "progress": 5.023999999999999,
+          "col": 3.023999999999999,
+          "row": 0
+        },
+        {
+          "kind": "rat",
+          "progress": 7.023999999999999,
+          "col": 5.023999999999999,
+          "row": 0
+        },
+        {
+          "kind": "husky_wrecker",
+          "progress": 9.024,
+          "col": 6,
+          "row": 1.0239999999999991
+        },
+        {
+          "kind": "rat",
+          "progress": 11.024,
+          "col": 4.976000000000001,
+          "row": 2
+        },
+        {
+          "kind": "rat",
+          "progress": 13.024,
+          "col": 4,
+          "row": 3.023999999999999
+        },
+        {
+          "kind": "roach",
+          "progress": 15.024,
+          "col": 5.023999999999999,
+          "row": 4
+        },
+        {
+          "kind": "rat",
+          "progress": 17.024000000000004,
+          "col": 7.0240000000000045,
+          "row": 4
+        }
+      ],
+      "aiUnits": 0
+    }
+  ],
+  "failure": null
+}
