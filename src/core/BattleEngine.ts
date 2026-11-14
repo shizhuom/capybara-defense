@@ -14,7 +14,7 @@ import { Random } from './Random';
 import {copyLoadout,PropSystem,type PropTarget} from './PropSystem';
 import {WeaponSystem} from './WeaponSystem';
 import {getBaseUnitStats,getBeeProduction,type UnitStats} from './UnitStats';
-import type { BattleLoadout,BattleState, CommandResult, Enemy, Point, Side, Unit, UnitLocation, VisualEvent,SideState,MapId } from './types';
+import type { BattleLoadout,BattleState, CommandResult, Enemy, Point, Side, Unit, UnitLocation, VisualEvent,SideState,MapId,WavePreview } from './types';
 export interface EngineOptions { seed?:number; autoWaves?:boolean; ai?:boolean; loadouts?:Partial<Record<Side,Partial<BattleLoadout>>>; mapId?:MapId; rankIndex?:number; aiOverrides?:Partial<OpponentTuning>; tutorialGuided?:boolean }
 let battleSequence=0;
 export class BattleEngine {
@@ -26,12 +26,16 @@ export class BattleEngine {
   private enemyEverSpawned=false;
   private tutorialHold=false;
   private pendingBosses:{kind:string;at:number}[]=[];
+  private waveBossSchedule:readonly (readonly string[])[];
+  private lockedBenchUnit?:Unit;
   private effectOwners=new WeakMap<Enemy,Partial<Record<'burn'|'poison'|'bleed',Unit>>>();
   constructor(public options:EngineOptions={}) {
     const seed=options.seed??Math.floor(Math.random()*0xffffffff);
     this.random=new Random(seed);
     const mapId=getMap(options.mapId).id,rankIndex=Number.isFinite(options.rankIndex)?Math.max(0,Math.min(53,Math.trunc(options.rankIndex!))):0;
-    const side=(side:Side):SideState=>({food:ECONOMY.initialFood,summons:0,oranges:ECONOMY.initialOranges,shovels:ECONOMY.initialShovels,shovelTimer:0,kills:0,damage:0,loot:[],fog:0,loadout:copyLoadout(side==='player'?options.loadouts?.player:undefined),propCooldowns:{},sprinklerUsed:false,giantCatUses:0,catnipTime:0});
+    const scheduleRandom=new Random(((seed^0x6d2b79f5)>>>0)||1);
+    this.waveBossSchedule=Array.from({length:10},(_,i)=>Object.freeze(bossesForWave(mapId,rankIndex,i+1,()=>scheduleRandom.next())));
+    const side=(side:Side):SideState=>({lockedBenchSlot:null,food:ECONOMY.initialFood,summons:0,oranges:ECONOMY.initialOranges,shovels:ECONOMY.initialShovels,shovelTimer:0,kills:0,damage:0,loot:[],fog:0,loadout:copyLoadout(side==='player'?options.loadouts?.player:undefined),propCooldowns:{},sprinklerUsed:false,giantCatUses:0,catnipTime:0});
     this.state={id:`${Date.now()}-${++battleSequence}`,phase:'ready',time:0,wave:0,waveTime:0,nextSpawn:0,spawned:0,mapId,rankIndex,mergedHeroes:{player:[],ai:[]},grid:GridSystem.create(mapId),craterHits:{},sides:{player:side('player'),ai:side('ai')},units:[],enemies:[],events:[],traps:[],result:null};
     this.props=new PropSystem(this,()=>this.random.next());this.props.initialize();this.weapons=new WeaponSystem(this,()=>this.random.next());
   }
@@ -60,7 +64,49 @@ export class BattleEngine {
     this.tutorialHold=active;
   }
   currentWaveTargetCount():number {return waveEnemyCount(Math.max(1,this.state.wave),this.state.rankIndex);}
-  useProp(id:string,target:PropTarget={},side:Side='player'):CommandResult{return side==='player'?this.props.use(id,target,side):{ok:false,key:'hint.invalid'};}
+  getUpcomingWavePreview():WavePreview|null {
+    if(this.state.phase==='finished'||this.state.wave>=10)return null;
+    const wave=this.state.wave<=1&&this.state.spawned===0?1:this.state.wave+1;
+    const count=waveEnemyCount(wave,this.state.rankIndex);
+    const kinds=new Set(Array.from({length:count},(_,i)=>minionForWave(wave,i,this.state.rankIndex)));
+    const minion=['charmed_rat','killer_bee','crab','roach','rat'].find(kind=>kinds.has(kind))!;
+    return{wave,count,bosses:[...this.waveBossSchedule[wave-1]],minion};
+  }
+  canCallEarlyWave():{allowed:boolean;bonusFood:number} {
+    const s=this.state;
+    if(s.phase!=='playing'||this.tutorialHold||s.sides.player.oranges<=0||s.enemies.length>0)return{allowed:false,bonusFood:0};
+    const prep=s.wave===1&&s.spawned===0,wait=(prep?FIRST_WAVE_PREPARATION:WAVE_DURATION)-s.waveTime;
+    const clear=s.wave>=1&&s.wave<10&&s.spawned>=this.currentWaveTargetCount()&&!this.pendingBosses.length;
+    if(wait<=1.5||(!prep&&!clear))return{allowed:false,bonusFood:0};
+    return{allowed:true,bonusFood:Math.max(3,Math.min(prep?8:10,Math.ceil(wait*(prep?.4:.35))))};
+  }
+  callEarlyWave():CommandResult {
+    const {allowed,bonusFood}=this.canCallEarlyWave();if(!allowed)return{ok:false,key:'p6.earlyUnavailable'};
+    if(this.state.wave===1&&this.state.spawned===0){this.state.waveTime=FIRST_WAVE_PREPARATION;this.state.nextSpawn=0;this.updateWaves(0);}
+    else this.beginWave(this.state.wave+1);
+    this.state.sides.player.food+=bonusFood;
+    this.event({type:'food',side:'player',col:2,row:0,value:bonusFood,textKey:'hint.food',duration:1.1});
+    return{ok:true,key:'p6.earlyCalled'};
+  }
+  toggleBenchLock(slot:number):CommandResult {
+    if(this.state.phase!=='playing'||this.tutorialHold)return{ok:false,key:'hint.paused'};
+    if(!Number.isInteger(slot)||slot<0||slot>=5)return{ok:false,key:'hint.invalid'};
+    const unit=this.state.units.find(u=>u.side==='player'&&u.location.zone==='bench'&&u.location.slot===slot);
+    if(!unit)return{ok:false,key:'hint.invalid'};
+    this.validateBenchLock();
+    const unlock=this.state.sides.player.lockedBenchSlot===slot;
+    this.state.sides.player.lockedBenchSlot=unlock?null:slot;this.lockedBenchUnit=unlock?undefined:unit;
+    return{ok:true,key:unlock?'p6.benchUnlocked':'p6.benchLocked',unitId:unit.id};
+  }
+  private validateBenchLock():void {
+    const slot=this.state.sides.player.lockedBenchSlot,unit=this.lockedBenchUnit;
+    if(slot===null||slot===undefined||!unit||!this.state.units.includes(unit)||unit.location.zone!=='bench'||unit.location.slot!==slot){
+      this.state.sides.player.lockedBenchSlot=null;this.lockedBenchUnit=undefined;
+    }
+  }
+  useProp(id:string,target:PropTarget={},side:Side='player'):CommandResult{
+    const result=side==='player'?this.props.use(id,target,side):{ok:false,key:'hint.invalid'};this.validateBenchLock();return result;
+  }
   useSprinkler(side:Side='player'):CommandResult{return side==='player'?this.props.sprinkler(side):{ok:false,key:'hint.invalid'};}
   getShovelRules(side:Side='player'):{interval:number;maxStored:number}{return this.props.shovelRules(side);}
   canSyncPreparationLoadout():boolean {
@@ -100,10 +146,11 @@ export class BattleEngine {
     const discarded=this.state.units.some(u=>u.side===side&&u.location.zone==='bench');
     const teachingPack=this.options.tutorialGuided&&this.state.sides[side].summons===0?['hamster','hamster','panda','hat_bamboo','squirrel']:undefined;
     // Validate the price before discarding. A pack replaces this bench atomically.
-    this.state.units=this.state.units.filter(u=>u.side!==side||u.location.zone!=='bench');
+    this.validateBenchLock();const kept=this.lockedBenchUnit;
+    this.state.units=this.state.units.filter(u=>u.side!==side||u.location.zone!=='bench'||u===kept);
     this.state.sides[side].food-=cost;this.state.sides[side].summons++;
-    let firstId:number|undefined,shovels=0;
-    for(let i=0;i<ECONOMY.summonCount;i++){
+    let firstId:number|undefined,shovels=kept?.kind==='shovel'?1:0;
+    for(let i=0;i<ECONOMY.summonCount-(kept?1:0);i++){
       const result=this.grant(teachingPack?.[i]??this.props.draw(side,shovels<2),side);firstId??=result.unitId;
       const unit=this.state.units.find(u=>u.id===result.unitId);if(unit){if(unit.kind==='shovel')shovels++;if(!teachingPack)this.props.promoteDraw(unit);}
     }
@@ -116,7 +163,7 @@ export class BattleEngine {
     if(source.kind==='shovel'&&target.zone==='board'){
       if(source.location.zone!=='bench')return{ok:false,key:'hint.toolOnly'};
       const result=this.useShovel(target.col,target.row,source.side,1);
-      if(result.ok)this.state.units=this.state.units.filter(u=>u.id!==id);
+      if(result.ok){this.state.units=this.state.units.filter(u=>u.id!==id);this.validateBenchLock();}
       return result;
     }
     if(target.zone==='board'&&!GridSystem.owns(source.side,target.col,target.row))return{ok:false,key:'hint.enemyTerritory'};
@@ -130,17 +177,18 @@ export class BattleEngine {
       if(outcome.unit){
         this.state.units=this.state.units.filter(u=>u.id!==source.id&&u.id!==occupant.id);
         this.state.units.push(outcome.unit);
+        this.validateBenchLock();
         const position=this.unitPosition(outcome.unit);
         if(HEROES[outcome.unit.kind]&&!this.state.mergedHeroes[source.side].includes(outcome.unit.kind))this.state.mergedHeroes[source.side].push(outcome.unit.kind);
         const legendary=!!HEROES[outcome.unit.kind]&&!HEROES[source.kind]&&!HEROES[occupant.kind];
         this.event({type:'purge',side:source.side,...position,textKey:'hint.purged',effect:legendary?'legendary':undefined,unitId:outcome.unit.id,duration:1.4});
         return{ok:true,key:outcome.key,unitId:outcome.unit.id};
       }
-      if(outcome.swap){const from=source.location;source.location={...target};occupant.location={...from};source.animation=1;occupant.animation=1;}
+      if(outcome.swap){const from=source.location;source.location={...target};occupant.location={...from};source.animation=1;occupant.animation=1;this.validateBenchLock();}
       if(!outcome.ok)this.event({type:'bubble',side:source.side,...this.unitPosition(occupant),textKey:outcome.key,unitId:occupant.id,duration:1.6});
       return{ok:outcome.ok,key:outcome.key,unitId:id};
     }
-    source.location={...target};source.animation=1;return{ok:true,key:'hint.deployed',unitId:id};
+    source.location={...target};source.animation=1;this.validateBenchLock();return{ok:true,key:'hint.deployed',unitId:id};
   }
   storeShovel(id:number):CommandResult {
     if(!this.actionAllowed())return{ok:false,key:'hint.paused'};
@@ -148,6 +196,7 @@ export class BattleEngine {
     if(!unit)return{ok:false,key:'hint.toolOnly'};
     if(this.state.sides.player.shovels>=this.getShovelRules().maxStored)return{ok:false,key:'hint.shovelFull'};
     this.state.sides.player.shovels++;this.state.units=this.state.units.filter(u=>u.id!==id);
+    this.validateBenchLock();
     return{ok:true,key:'hint.shovelStored'};
   }
   dig(col:number,row:number,side:Side='player'):CommandResult {
@@ -220,6 +269,7 @@ export class BattleEngine {
     this.state.time+=dt;
     this.state.events=this.state.events.filter(e=>(e.age+=dt)<e.duration);
     this.props.tick(dt);
+    this.validateBenchLock();
     for(const side of ['player'] as Side[]){
       const resources=this.state.sides[side];resources.fog=Math.max(0,resources.fog-dt);
       const rules=this.getShovelRules(side);
@@ -293,7 +343,7 @@ export class BattleEngine {
       if(wave>1)this.state.sides[side].food+=ECONOMY.waveIncome;
     }
     this.event({type:'bubble',side:'player',col:3.5,row:4.5,textKey:'hint.wave',value:wave,duration:1.8});
-    const bosses=bossesForWave(this.state.mapId,this.state.rankIndex,wave,()=>this.random.next());
+    const bosses=this.waveBossSchedule[wave-1];
     this.pendingBosses=bosses.slice(1).map(kind=>({kind,at:5}));if(bosses[0])this.spawnBoss(bosses[0]);
   }
   private updateWaves(dt:number):void {

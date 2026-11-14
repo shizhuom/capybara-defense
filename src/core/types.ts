@@ -26,6 +26,7 @@ export interface BattleLoadout {
   equippedActiveProps: string[]; equippedPassiveProps: string[];
 }
 export interface SideState {
+  lockedBenchSlot?:number|null;
   food: number; summons:number; oranges: number; shovels: number; shovelTimer:number; kills: number; damage: number; loot: string[]; fog: number;
   loadout:BattleLoadout; propCooldowns:Record<string,number>; sprinklerUsed:boolean; giantCatUses:number; catnipTime:number;
 }
@@ -53,6 +54,7 @@ export interface BattleState {
   events: VisualEvent[]; traps:Trap[]; result: BattleResult | null;
 }
 export interface CommandResult { ok: boolean; key: string; unitId?: number }
+export interface WavePreview {wave:number;count:number;bosses:readonly string[];minion:string}
 export interface Profile extends BattleLoadout {
   tutorialCompleted?:boolean; tutorialRewardClaimed?:boolean;
   coins:number; wins:number; matches:number; fragments:string[]; awardedBattles:string[];

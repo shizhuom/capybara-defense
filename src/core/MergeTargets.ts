@@ -13,3 +13,13 @@ export function getMergeTargets(state:BattleState,sourceId:number):Array<{unitId
       ...(HEROES[outcome.unit.kind]?{heroId:outcome.unit.kind}:{})}];
   });
 }
+
+/** Passive dock hints distinguish creating a hero from feeding an existing one. */
+export function getBenchMergeHints(state:BattleState):Array<{unitId:number;slot:number;kind:'hero'|'upgrade'}> {
+  return state.units.flatMap(unit=>{
+    if(unit.side!=='player'||unit.location.zone!=='bench'||unit.kind==='shovel')return [];
+    const targets=getMergeTargets(state,unit.id);if(!targets.length)return [];
+    const hero=targets.some(target=>target.kind==='hero'&&!HEROES[unit.kind]&&!HEROES[state.units.find(u=>u.id===target.unitId)!.kind]);
+    return [{unitId:unit.id,slot:unit.location.slot,kind:hero?'hero' as const:'upgrade' as const}];
+  });
+}
