@@ -252,7 +252,7 @@ export class GameApp {
       this.assetsDirty=false; force=true;
       this.quickStamp=''; this.battlePropsStamp=''; this.bossStamp='';
       this.root.querySelector('.brand-mark')!.innerHTML=sceneSticker('logo_capy',capyLogo,54);
-      const ids=['ui_fish_food','ui_bell_summon','ui_compendium_book','ui_shop_bag','orange'] as const;
+      const ids=['ui_fish_food','ui_bell_summon','ui_compendium_book','ui_shop_bag','orange','ui_trophy_rank','ui_map_sign'] as const;
       for(const id of ids)this.root.querySelectorAll<HTMLElement>(`#stage [data-sticker="${id}"]`).forEach(el=>{el.outerHTML=sceneSticker(id,'',Number(el.getAttribute('width'))||34);});
     }
     const developer = isDeveloperMode(location.search,this.profile.settings);

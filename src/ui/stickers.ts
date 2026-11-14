@@ -35,6 +35,8 @@ const enemies:Record<string,string>={
   dj_rat_king:rat+crown+r(-38,10,18,27,'#9d91aa')+r(20,10,18,27,'#9d91aa')+e(-29,25,6,6,'#d3c0d4')+e(29,25,6,6,'#d3c0d4')+p('M-29 8 V-12 Q0 -39 29 -12 V8','none','#91859b',5),
 };
 const tools:Record<string,string>={
+  ui_trophy_rank:p('M-20 -18 H20 V0 Q20 18 0 23 Q-20 18 -20 0Z','#e8bb57')+p('M-20 -13 H-31 Q-37 11 -16 11 M20 -13 H31 Q37 11 16 11 M0 23 V32','none','#b58a43',5)+r(-17,31,34,8,'#e4bd6e')+e(0,4,6,5,'#fff2bf')+e(-8,-4,3,4,'#fff2bf')+e(0,-7,3,4,'#fff2bf')+e(8,-4,3,4,'#fff2bf')+orange(0,-28),
+  ui_map_sign:p('M-3 -33 V39','none','#b08959',7)+p('M-29 -26 H22 L34 -15 22 -4 H-29Z','#e7c187')+p('M30 1 H-22 L-34 12 -22 23 H30Z','#cba675')+p('M-21 -16 H16 M22 12 H-15','none','#957249',2)+p('M0 -32 Q-17 -47 -20 -32 Q-15 -22 0 -27Z','#91b477'),
   orange:orange(0,4),
   ui_fish_food:p('M-22 0 Q0 -22 22 0 Q0 22 -22 0 L-37 -13 V13Z','#d9a86d')+e(12,-2,2,2,ink)+p('M-4 -8 L-8 7 M4 -8 L0 8'),
   ui_bell_summon:p('M-25 17 Q-16 6 -17 -10 Q-14 -29 0 -29 Q14 -29 17 -10 Q16 6 25 17Z','#e6bc62')+e(0,18,28,7,'#f5d98e')+e(0,29,6,6,'#a27c46')+p('M0 -29 V-38','none','#87653e',5),
@@ -84,7 +86,26 @@ export function unitSticker(kind:string,size=40):string {
   if(['hamster','squirrel','bee'].includes(key))return avatarSticker(key,n);
   return `<span role="img" aria-label="${key}" data-sticker="${key}" style="display:inline-grid;place-items:center;width:${n}px;height:${n}px;font-size:${Math.round(n*.63)}px">${escapeHtml(UNIT_ICONS[key])}</span>`;
 }
-export function sceneSticker(id:'menu_banner'|'logo_capy'|'sprinkler'|'shovel'|'ui_compendium_book'|'ui_fish_food'|'ui_bell_summon'|'ui_shop_bag'|'orange',fallback:string,size?:number):string {
+export function sceneSticker(id:'menu_banner'|'logo_capy'|'sprinkler'|'shovel'|'ui_compendium_book'|'ui_fish_food'|'ui_bell_summon'|'ui_shop_bag'|'orange'|'ui_trophy_rank'|'ui_map_sign',fallback:string,size?:number):string {
   const n=sizeOf(size??(id==='menu_banner'?400:64),64);
   return image(id,n)||(Object.hasOwn(tools,id)?geometry(id,tools[id],n):fallback);
+}
+
+type ArtStickerId='title_logo_zh'|'title_logo_en'|'ui_btn_start_zh'|'ui_btn_start_en';
+/** Wide transparent art keeps its own silhouette, including before optional PNGs decode. */
+export function artSticker(id:ArtStickerId,fallbackText:string):string {
+  const url=spriteUrl(id),label=escapeHtml(fallbackText),title=id.startsWith('title_');
+  if(url)return `<img src="${escapeHtml(url)}" alt="${label}" data-art-sticker="${id}" draggable="false"/>`;
+  const width=title?960:520,height=title?320:220;
+  const lines=title&&id.endsWith('_en')?['CAPYBARA!','CHILL DEFENSE']:[fallbackText];
+  const letters=lines.map((text,row)=>{
+    const chars=Array.from(text),step=(width*.83)/Math.max(chars.length,1),size=Math.min(title?120:84,step*1.4);
+    const spans=chars.map((char,i)=>{
+      const phase=chars.length>1?i/(chars.length-1):.5;
+      const x=width*.5+(i-(chars.length-1)/2)*step,y=(lines.length>1?145+row*103:height*.63)-Math.sin(phase*Math.PI)*(title?20:10);
+      return `<tspan x="${x.toFixed(1)}" y="${y.toFixed(1)}" rotate="${((phase-.5)*9).toFixed(1)}">${escapeHtml(char)}</tspan>`;
+    }).join('');
+    return `<text text-anchor="middle" font-size="${size}" font-weight="900" font-family="Trebuchet MS, Microsoft YaHei, sans-serif" fill="#ffc568" stroke="#684020" stroke-width="${title?8:5}" paint-order="stroke fill" stroke-linejoin="round">${spans}</text>`;
+  }).join('');
+  return `<svg viewBox="0 0 ${width} ${height}" role="img" aria-label="${label}" data-art-sticker="${id}"><g stroke-linecap="round" stroke-linejoin="round"><g transform="translate(${width/2} ${title?43:31}) scale(${title?1.6:1})">${orange(0,0)}</g>${letters}</g></svg>`;
 }
