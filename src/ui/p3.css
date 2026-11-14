@@ -154,6 +154,7 @@ body { background:#231d18;background-image:none; }
   .page-shell .control-dock button { font-size:12px;line-height:1;padding:0 3px;gap:2px;border-width:1px; }
   .page-shell .control-dock :is(svg,img) { width:12px;height:12px; }
   .page-shell .control-dock #hud-speed,.page-shell .control-dock #pause-button { width:20px;font-size:12px; }
+  .page-shell .boss-banner { width:19%; }
   .page-shell .resource-dock { height:18px;gap:3px; }
   .page-shell .resource-dock>div { padding:0 3px;gap:2px;border-width:1px; }
   .page-shell .resource-dock :is(svg,img) { width:12px;height:12px; }
