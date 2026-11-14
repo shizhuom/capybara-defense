@@ -10,6 +10,8 @@ import { assets } from './AssetRegistry';
 import { drawCapybaraArt, drawEnemyArt, drawOrange, drawShovelArt, drawUnitArt, ellipse, INK, line, PAPER, polygon, round, star } from './StickerArt';
 import { drawGlueTrap, drawM2Event, drawPropCursor, drawSealed, drawWasher, drawWet } from './M2Effects';
 import {boneShield,confusionSpiral,drawM3Event,drawThemeEdges} from './M3Effects';
+import {bodyPose,drawHeldWeapon} from './HeldWeaponRenderer';
+import {drawCombatEvent} from './CombatEffects';
 
 export type HitTarget = { kind: 'cell'; col: number; row: number } | { kind: 'bench'; slot: number } | { kind: 'shovel' };
 type Position = { x: number; y: number };
@@ -42,7 +44,7 @@ export class StickerRenderer {
   hitTest(x:number,y:number):HitTarget|null {
     if (!Number.isFinite(x) || !Number.isFinite(y)) return null;
     const {boardX,boardY,cell,benchX,benchY,benchStep,benchSize,shovelX,shovelY}=STAGE;
-    if (x>=boardX && x<boardX+cell*8 && y>=boardY && y<boardY+cell*10)
+    if (x>=boardX && x<boardX+cell*STAGE.cols && y>=boardY && y<boardY+cell*STAGE.rows)
       return {kind:'cell',col:Math.floor((x-boardX)/cell),row:Math.floor((y-boardY)/cell)};
     if (y>=benchY && y<benchY+benchSize) {
       for(let slot=0;slot<5;slot++) {
@@ -68,20 +70,19 @@ export class StickerRenderer {
     this.drawPaper(state,seconds);
     this.drawBoard(state,seconds);
     this.drawTraps(state);
-    this.drawBanners(state,seconds);
     this.drawInteractionUnderlay(state,interaction,seconds);
     this.drawGuardians(state,seconds);
 
     const liveIds=new Set(state.units.map(unit=>unit.id));
     for(const id of this.unitPositions.keys()) if(!liveIds.has(id)) this.unitPositions.delete(id);
-    for(const unit of [...state.units].filter(unit=>unit.location.zone==='board').sort((a,b)=>this.position(a).y-this.position(b).y)) {
+    for(const unit of [...state.units].filter(unit=>unit.side==='player'&&unit.location.zone==='board'&&unit.kind!=='shovel').sort((a,b)=>this.position(a).y-this.position(b).y)) {
       const target=this.position(unit), previous=this.unitPositions.get(unit.id)||target;
       const ease=1-Math.exp(-dt*16);
       const point={x:previous.x+(target.x-previous.x)*ease,y:previous.y+(target.y-previous.y)*ease};
       this.unitPositions.set(unit.id,point);
       this.drawUnit(unit,point,seconds,interaction.draggingId===unit.id ? .23 : 1,false,state.sides[unit.side].loadout);
     }
-    for(const enemy of [...state.enemies].sort((a,b)=>a.row-b.row)) this.drawEnemy(enemy,seconds);
+    for(const enemy of [...state.enemies].filter(enemy=>enemy.side==='player').sort((a,b)=>a.row-b.row)) this.drawEnemy(enemy,seconds);
     this.drawEvents(state,seconds,false,interaction.showDamageNumbers!==false);
     this.drawOrangeMotions();
     this.drawFog(state,seconds);
@@ -113,13 +114,13 @@ export class StickerRenderer {
     }
     // Quiet garden doodles around the board, never on top of the interaction grid.
     c.save();c.globalAlpha=.55;
-    this.flower(610,189,9,'#eab8a2');this.flower(24,1064,9,'#e5bb9a');this.flower(602,1218,7,'#e2c879');
+    this.flower(610,189,9,'#eab8a2');this.flower(24,1064,9,'#e5bb9a');this.flower(602,1198,7,'#e2c879');
     line(c,[[19,206],[16,196],[24,202]],'#a7b79a',2);line(c,[[614,1076],[619,1066],[620,1081]],'#9eb59a',2);
     c.restore();
     drawThemeEdges(c,state.mapId,seconds,theme.accent);
     // The low footer scallop visually grounds the UI's summon button.
     c.save();c.globalAlpha=.3;
-    for(let x=0;x<670;x+=30) ellipse(c,x,1379+Math.sin(x*.03+seconds*.3)*1.5,20,13,'#c1d1b2','#c1d1b2',0);
+    for(let x=0;x<670;x+=30) ellipse(c,x,(STAGE.height-7)+Math.sin(x*.03+seconds*.3)*1.5,20,13,'#c1d1b2','#c1d1b2',0);
     c.restore();
   }
 
@@ -132,11 +133,11 @@ export class StickerRenderer {
   private drawBoard(state:BattleState,seconds:number):void {
     const c=this.c,{boardX:x,boardY:y,cell}=STAGE,map=getMap(state.mapId),theme=map.theme;
     c.save();c.shadowColor='rgba(93,87,62,.16)';c.shadowBlur=0;c.shadowOffsetY=7;
-    round(c,x-9,y-9,cell*8+18,cell*10+18,24,'#fffaf0',INK,2.6);c.restore();
-    c.save();c.beginPath();c.roundRect(x,y,cell*8,cell*10,17);c.clip();
+    round(c,x-9,y-9,cell*STAGE.cols+18,cell*STAGE.rows+18,24,'#fffaf0',INK,2.6);c.restore();
+    c.save();c.beginPath();c.roundRect(x,y,cell*STAGE.cols,cell*STAGE.rows,17);c.clip();
     const mapImage=this.assets.get(`map_${state.mapId}`);
-    if(mapImage)c.drawImage(mapImage,x,y,cell*8,cell*10);
-    for(let row=0;row<10;row++) for(let col=0;col<8;col++) {
+    if(mapImage)c.drawImage(mapImage,x,y,cell*STAGE.cols,cell*STAGE.rows);
+    for(let row=0;row<STAGE.rows;row++) for(let col=0;col<STAGE.cols;col++) {
       const tile=state.grid[row][col],tx=x+col*cell,ty=y+row*cell;
       const grass=tile==='G'||tile==='B';
       if(!mapImage){
@@ -151,7 +152,7 @@ export class StickerRenderer {
           const ox=13+(col*13+row*7+i*23)%49,oy=16+(row*17+col*11+i*19)%41;
           line(c,[[tx+ox-4,ty+oy+2],[tx+ox-2,ty+oy-4],[tx+ox+1,ty+oy+1],[tx+ox+5,ty+oy-2]],'#94b17c',1.4);
         }
-        if((row*8+col)%9===2) this.flower(tx+52,ty+52,4,'#f6eed0');
+        if((row*STAGE.cols+col)%9===2) this.flower(tx+52,ty+52,4,'#f6eed0');
       } else if(tile==='O') {
         round(c,tx+3,ty+3,cell-6,cell-6,8,'rgba(255,248,232,0.78)','#eee1c6',1);
         c.fillStyle='rgba(218,148,119,.095)';
@@ -162,21 +163,22 @@ export class StickerRenderer {
         ellipse(c,tx+16+(col*7)%30,ty+18+(row*9)%28,2,1.4,'#c5ac87','#c5ac87',0);
         ellipse(c,tx+51,ty+55,2.5,1.2,'#d0b58f','#d0b58f',0);
       } else if(tile==='B') {
-        c.save();c.translate(tx+36,ty+39);c.rotate(-.12);
+        c.save();c.translate(tx+cell/2,ty+cell/2+3);c.rotate(-.12);
         round(c,-25,-16,49,31,7,'#ae9c7f',INK,2.3);round(c,-28,-3,9,22,4,'#978a70',INK,2);round(c,19,-3,10,22,4,'#978a70',INK,2);
         line(c,[[-17,-10],[-6,-2],[-13,9],[3,16]],'#665c48',2.3);line(c,[[11,-11],[6,-3],[16,5]],'#665c48',2.3);
         polygon(c,[[-3,-10],[3,-8],[0,-2],[7,1]],'#e2d2b1',INK,1);c.restore();
         ellipse(c,tx+13,ty+54,3,2,'#e1d4ba',INK,0);ellipse(c,tx+57,ty+18,3,2,'#e1d4ba',INK,0);
       } else if(tile==='S'&&!mapImage) {
-        c.save();c.translate(tx+36,ty+37);
+        c.save();c.translate(tx+cell/2,ty+cell/2+1);
         ellipse(c,0,11,30,17,'#bd9d77',INK,1.8);ellipse(c,0,5,25,21,'#6e6955',INK,2.8);ellipse(c,0,11,21,11,'#555443',INK,0);
         line(c,[[-23,9],[-22,-5],[-10,-17],[9,-18],[24,-5],[24,10]],'#9a9271',7);
         ellipse(c,-5,5,2,2,'#f3d495',INK,0);ellipse(c,5,5,2,2,'#f3d495',INK,0);
         c.restore();
       }
+      if(tile==='B'&&state.craterHits[col+','+row]){round(c,tx+28,ty+cell-26,40,21,7,'#fff2c9',INK,1.5);this.label('1/2',tx+48,ty+cell-15,13,INK,'center',800);}
       if(grass||mapImage){c.strokeStyle='rgba(105,135,87,.13)';c.lineWidth=1;c.strokeRect(tx+.5,ty+.5,cell-1,cell-1);}
     }
-    for(const side of ['ai','player'] as const) {
+    for(const side of ['player'] as const) {
       const path=map.paths[side];
       for(let i=1;i<path.length-1;i++) {
         if(i%2===0) continue;
@@ -185,54 +187,27 @@ export class StickerRenderer {
         c.globalAlpha=.32+.04*Math.sin(seconds*2-i);line(c,[[-4,-5],[2,0],[-4,5]],'#9d825d',2.5);c.restore();
       }
     }
-    // A low stone wall sits exactly on the boundary; neither route crosses it.
-    if(!mapImage){c.save();c.translate(x,y+cell*5);
-    line(c,[[0,1],[576,1]],'#9b9c83',13);
-    for(let i=0;i<16;i++) round(c,i*37-9,-6,35,12,4,i%3?'#d4d6b9':'#e1dfc3','#a5ad91',1.3);
-    c.restore();}c.restore();
-    round(c,x,y,cell*8,cell*10,17,'rgba(255,255,255,0)','#8d9d7d',1.7);
-  }
-
-  private drawBanners(state:BattleState,seconds:number):void {
-    const c=this.c;
-    // Offset the rival ribbon to leave room for their orange tower.
-    round(c,177,193,282,34,14,'#edd7bf',INK,1.7);
-    if(!state.opponent){
-    ellipse(c,200,210,8,8,'#d39e89',INK,1.3);line(c,[[196,210],[200,214],[205,207]],PAPER,1.8);
-    this.label(t('render.rival'),219,211,17,INK,'left',800,192);
-    this.label('AI',439,210,12,'#987b64','center',800);
-    }
-    round(c,41,981,273,34,14,'#dce7cb',INK,1.7);
-    this.flower(62,998,8,'#e2bd73');this.label(t('render.yourGarden'),82,999,17,INK,'left',800,213);
-    // Readability comes from oranges, while these small chips show collected loot.
-    this.drawLootChip(473,194,state.sides.ai.loot.length);
-    this.drawLootChip(329,982,state.sides.player.loot.length);
-    void seconds;
-  }
-
-  private drawLootChip(x:number,y:number,count:number):void {
-    const c=this.c;round(c,x,y,89,32,13,'#fff9e8','#d6cbb2',1.5);
-    polygon(c,[[x+18,y+7],[x+26,y+12],[x+24,y+23],[x+15,y+26],[x+9,y+16]],'#c4b4d4',INK,1.5);
-    line(c,[[x+13,y+16],[x+21,y+12],[x+21,y+21]],PAPER,1.5);
-    this.label(String(count),x+52,y+17,16,INK,'center',800);
+    c.restore();
+    round(c,x,y,cell*STAGE.cols,cell*STAGE.rows,17,'rgba(255,255,255,0)','#8d9d7d',1.7);
   }
 
   private drawGuardians(state:BattleState,seconds:number):void {
     const c=this.c;
-    for(const side of ['ai','player'] as const) {
-      const position=side==='ai'?cellCenter(0,0):cellCenter(7,9);
+    for(const side of ['player'] as const) {
+      const endpoint=getMap(state.mapId).paths.player.at(-1)!;
+      const position=cellCenter(endpoint.col,endpoint.row);
       c.save();c.translate(position.x,position.y-2);
       ellipse(c,0,35,34,9,'rgba(76,89,63,.14)','',0);
-      c.translate(0,Math.sin(seconds*1.5+(side==='ai'?2:0))*1.3);
+      c.translate(0,Math.sin(seconds*1.5)*1.3);
       const override=this.assets.get('capybara');
       if(override){
         c.save();
         if(state.sides[side].oranges<=0){c.translate(3,16);c.rotate(.45);}
-        this.drawImage(override,84,92,0,-2);c.restore();this.drawOrangeStack(state.sides[side].oranges,seconds);
+        this.drawImage(override,104,112,0,-2);c.restore();this.drawOrangeStack(state.sides[side].oranges,seconds);
       }
       else {
         const orange=this.assets.get('orange');
-        drawCapybaraArt(c,seconds,orange?0:state.sides[side].oranges,state.sides[side].oranges<=0);
+        c.save();c.scale(1.24,1.22);drawCapybaraArt(c,seconds,orange?0:state.sides[side].oranges,state.sides[side].oranges<=0);c.restore();
         if(orange)this.drawOrangeStack(state.sides[side].oranges,seconds);
       }
       c.restore();
@@ -240,7 +215,7 @@ export class StickerRenderer {
   }
 
   private drawOrangeStack(count:number,seconds:number):void {
-    for(let i=0;i<Math.max(0,count);i++)this.drawOrangeArt(Math.sin(seconds*1.5-i*.38)*(1.5+i*.8),-44-i*16,10,Math.sin(seconds*1.2-i*.4)*.07*(i+1));
+    for(let i=0;i<Math.max(0,count);i++)this.drawOrangeArt(Math.sin(seconds*1.5-i*.38)*(1.5+i*.8),-54-i*16,10,Math.sin(seconds*1.2-i*.4)*.07*(i+1));
   }
 
   private drawOrangeArt(x:number,y:number,size:number,rotation:number):void {
@@ -257,30 +232,36 @@ export class StickerRenderer {
   private drawUnit(unit:Unit,position:Position,seconds:number,opacity=1,drag=false,loadout:Partial<BattleLoadout>={}):void {
     const c=this.c,hero=HEROES[unit.kind],onBench=unit.location.zone==='bench';
     const requiredCharge=hero?combatCharge(unit,loadout):1;
-    const scale=(onBench ? .85 : .72)*(1+(unit.level-1)*.08);
+    const scale=(onBench ? .85 : .92)*(1+(unit.level-1)*.06);
+    const pose=onBench?{x:0,y:0,scaleX:1,scaleY:1}:bodyPose(unit);
     const wave=Math.sin(seconds*2.7+unit.id*1.71);
     c.save();c.globalAlpha=opacity;c.translate(position.x,position.y);
+    if(unit.kind==='shovel'){this.drawShovel(false);if(!drag){round(c,16,-37,33,20,6,'#f2d68c',INK,1.4);this.label(t('render.dig'),32,-27,11,INK,'center',800);}c.restore();return;}
     ellipse(c,0,25,(hero?25:22)*scale,6,'rgba(72,79,53,.14)','',0);
+    c.save();if(!onBench)c.scale(1.2,1.2);
     if(hero) {
       ellipse(c,0,24,32,12,'#f3d58a','#bb9146',2.3);
       ellipse(c,0,24,27,8,hero.color,'#ffeab0',1.8);
       if(unit.energy>=requiredCharge-1) {c.save();c.globalAlpha*=.4+.15*Math.sin(seconds*5);ellipse(c,0,1,33,33,'rgba(255,255,255,0)','#f1c966',2);c.restore();}
     }
-    c.save();c.translate(0,-2-Math.max(0,unit.animation)*3);c.scale(scale*(1+wave*.018),scale*(1-wave*.025));
+    c.restore();
+    c.save();c.translate(pose.x,pose.y-2-Math.max(0,unit.animation)*3);c.scale(scale*(1+wave*.018)*pose.scaleX*(onBench?1:unit.facing??1),scale*(1-wave*.025)*pose.scaleY);
     if(unit.statuses.KNOCKDOWN)c.rotate(-.55);
     const override=this.assets.get(unit.kind);
-    if(override)this.drawImage(override,77,77,0,-3);else drawUnitArt(c,unit.kind,seconds);
+    if(override)this.drawImage(override,onBench?77:88,onBench?77:88,0,-3);else {if(!onBench)c.scale(88/77,88/77);drawUnitArt(c,unit.kind,seconds);}
     if(unit.buffTime>0){star(c,-30,-24+Math.sin(seconds*4)*2,5,'#efcf72',1);star(c,31,10,3.5,'#f9e19b',1);}
     c.restore();
+    if(!drag){c.save();c.translate(pose.x,pose.y);drawHeldWeapon(c,unit,seconds,loadout);c.restore();}
     if(unit.animation>.1){c.save();c.globalAlpha*=Math.min(.2,unit.animation*.16);ellipse(c,0,-3,20,22,'#fffce5','#fffce5',0);c.restore();}
     if(!drag) {
+      c.save();if(!onBench)c.scale(1.2,1.2);
       const badgeColor=hero?'#f1cc7d':'#fff7e3';
       round(c,14,-31,22,18,6,badgeColor,INK,1.6);this.label(String(unit.level),25,-21,12,INK,'center',800);
       if(hero){
         round(c,-24,30,48,6,3,'#ded6c3',INK,1);const fill=clamp(unit.energy/requiredCharge,0,1);
         if(fill>0)round(c,-23,31,46*fill,4,2,hero.color,hero.color,0);
       }
-      this.drawStatus(unit,seconds);
+      this.drawStatus(unit,seconds);c.restore();
     }
     c.restore();
   }
@@ -300,11 +281,11 @@ export class StickerRenderer {
   }
 
   private drawEnemy(enemy:Enemy,seconds:number):void {
-    const c=this.c,p=cellCenter(enemy.col,enemy.row),size=(enemy.boss ? .84 : .61)*clamp(enemy.size||1,.6,1.65);
+    const c=this.c,p=cellCenter(enemy.col,enemy.row),size=(enemy.boss ? 1.04 : .76)*clamp(enemy.size||1,.6,1.65);
     const bounce=Math.sin(seconds*(enemy.kind==='roach'?14:7)+enemy.id)*2;
-    c.save();c.translate(p.x,p.y);
+    c.save();c.translate(p.x+(enemy.hitFlash>0?(enemy.knockX||0)+Math.sin(seconds*95)*1.4:0),p.y+(enemy.hitFlash>0?(enemy.knockY||0):0));
     ellipse(c,0,20,enemy.boss?27:18,5,'rgba(80,70,51,.19)','',0);
-    c.save();c.translate(0,bounce);c.rotate(enemy.stun>0?Math.sin(seconds*15)*.04:Math.sin(seconds*5+enemy.id)*.035);c.scale(size,size);
+    c.save();c.translate(0,bounce);c.rotate(enemy.stun>0?Math.sin(seconds*15)*.04:Math.sin(seconds*5+enemy.id)*.035);c.scale(size*(enemy.hitFlash>0?1.14:1),size*(enemy.hitFlash>0?.88:1));
     const override=this.assets.get(enemy.kind);
     if(enemy.hitFlash>0)c.filter='brightness(0) invert(1)';
     if(override)this.drawImage(override,79,79,0,-4);else drawEnemyArt(c,enemy.kind,seconds);
@@ -324,27 +305,29 @@ export class StickerRenderer {
 
   private drawInteractionUnderlay(state:BattleState,interaction:Interaction,seconds:number):void {
     const c=this.c,drag=state.units.find(unit=>unit.id===interaction.draggingId),selected=state.units.find(unit=>unit.id===interaction.selectedId);
+    const source=drag??selected,benchTool=source?.kind==='shovel'&&source.location.zone==='bench';
+    const digging=!!interaction.shovel||benchTool,canDig=benchTool||state.sides.player.shovels>=1;
     if(interaction.propId){this.drawPropTargets(state,interaction,seconds);return;}
     this.drawMergeTargets(state,interaction,seconds,'board');
     if(selected?.location.zone==='board'&&!drag&&!interaction.shovel) {
       const p=this.position(selected),range=combatRange(selected,state.sides[selected.side].loadout);
-      c.save();c.beginPath();c.rect(STAGE.boardX,STAGE.boardY+5*STAGE.cell,STAGE.cell*8,STAGE.cell*5);c.clip();
+      c.save();c.beginPath();c.rect(STAGE.boardX,STAGE.boardY,STAGE.cell*STAGE.cols,STAGE.cell*STAGE.rows);c.clip();
       if(range>0){c.fillStyle='rgba(92,153,138,.09)';c.strokeStyle='rgba(82,137,121,.58)';c.lineWidth=1.8;c.setLineDash([5,6]);c.beginPath();c.arc(p.x,p.y,range*STAGE.cell,0,Math.PI*2);c.fill();c.stroke();}
       c.restore();round(c,p.x-32,p.y-32,64,64,12,'rgba(255,248,221,.16)',TEAL,3);
     }
-    if(drag||interaction.shovel) {
-      for(let row=5;row<10;row++)for(let col=0;col<8;col++){
-        const tile=state.grid[row][col],valid=interaction.shovel?(tile==='G'&&state.sides.player.shovels>=1)||(tile==='B'&&state.sides.player.shovels>=2):tile==='O';
-        if(valid){const p=cellCenter(col,row);round(c,p.x-32,p.y-32,64,64,10,'rgba(255,253,222,.16)',interaction.shovel?'#c9a25a':'#7aa18c',1.5);}
+    if(drag||digging) {
+      for(let row=0;row<STAGE.rows;row++)for(let col=0;col<STAGE.cols;col++){
+        const tile=state.grid[row][col],valid=digging?canDig&&(tile==='G'||tile==='B'):tile==='O';
+        if(valid){const p=cellCenter(col,row);round(c,p.x-40,p.y-40,80,80,10,'rgba(255,253,222,.16)',digging?'#c9a25a':'#7aa18c',1.5);}
       }
     }
     const hover=interaction.hover||(interaction.pointer?this.hitTest(interaction.pointer.x,interaction.pointer.y):null);
     const point=hover&&'col'in hover&&'row'in hover?hover:null;
-    if(point&&(drag||interaction.shovel)) {
-      const tile=state.grid[point.row]?.[point.col],own=point.row>=5;
+    if(point&&(drag||digging)) {
+      const tile=state.grid[point.row]?.[point.col],own=point.row>=0&&point.row<STAGE.rows&&point.col>=0&&point.col<STAGE.cols;
       const p=cellCenter(point.col,point.row),target=state.units.find(unit=>unit.side==='player'&&unit.location.zone==='board'&&unit.location.col===point.col&&unit.location.row===point.row);
-      const outcome=drag&&target&&drag.id!==target.id?MergeSystem.combine(drag,target):null;
-      const valid=own&&(interaction.shovel?((tile==='G'&&state.sides.player.shovels>=1)||(tile==='B'&&state.sides.player.shovels>=2)):tile==='O')&&(!outcome||outcome.ok);
+      const outcome=!digging&&drag&&target&&drag.id!==target.id?MergeSystem.combine(drag,target):null;
+      const valid=own&&(digging?canDig&&(tile==='G'||tile==='B'):tile==='O')&&(!outcome||outcome.ok);
       const merging=!!outcome?.unit;
       round(c,p.x-34,p.y-34,68,68,12,valid?'rgba(251,237,163,.4)':'rgba(218,138,119,.22)',valid?(merging?'#cfaa54':TEAL):CORAL,3);
       if(valid&&merging){star(c,p.x+25,p.y-25,7,'#f1cf75',1.6);star(c,p.x-24,p.y+24,5,'#f1cf75',1.3);}
@@ -354,7 +337,7 @@ export class StickerRenderer {
   }
 
   private drawTraps(state:BattleState):void {
-    for(const trap of state.traps||[]) {
+    for(const trap of (state.traps||[]).filter(trap=>trap.side==='player')) {
       const point=cellCenter(trap.col,trap.row);this.c.save();this.c.translate(point.x,point.y);
       const image=this.assets.get('glue_trap_placed');if(image)this.drawImage(image,65,52);else drawGlueTrap(this.c,trap.charges);
       this.label(String(trap.charges),20,-15,11,INK,'center',800);this.c.restore();
@@ -364,7 +347,7 @@ export class StickerRenderer {
   private drawMergeTargets(state:BattleState,interaction:Interaction,seconds:number,zone:'board'|'bench',onlyId?:number):void {
     if(interaction.shovel||interaction.propId)return;
     const source=state.units.find(unit=>unit.id===(interaction.draggingId??interaction.selectedId));
-    if(!source||source.side!=='player')return;
+    if(!source||source.side!=='player'||source.kind==='shovel')return;
     for(const target of getMergeTargets(state,source.id)){
       const unit=state.units.find(unit=>unit.id===target.unitId);
       if(!unit||unit.location.zone!==zone||(onlyId!==undefined&&unit.id!==onlyId))continue;
@@ -384,6 +367,7 @@ export class StickerRenderer {
 
   private propUnitValid(id:string,unit:Unit):boolean {
     if(unit.side!=='player'||(unit.washing||0)>0)return false;
+    if(unit.kind==='shovel')return id==='recycle_bin';
     const component=!!UNITS[unit.kind]&&UNITS[unit.kind].category==='component';
     if(id==='washer')return component||(!HEROES[unit.kind]&&unit.level===1);
     if(id==='clay')return component;
@@ -396,7 +380,7 @@ export class StickerRenderer {
   private drawPropTargets(state:BattleState,interaction:Interaction,seconds:number):void {
     const id=interaction.propId!,c=this.c,hover=interaction.hover||(interaction.pointer?this.hitTest(interaction.pointer.x,interaction.pointer.y):null);
     if(id==='glue_trap') {
-      for(let row=5;row<10;row++)for(let col=0;col<8;col++)if(state.grid[row][col]==='R'&&!(state.traps||[]).some(trap=>trap.side==='player'&&trap.col===col&&trap.row===row)) {
+      for(let row=0;row<STAGE.rows;row++)for(let col=0;col<STAGE.cols;col++)if(state.grid[row][col]==='R'&&!(state.traps||[]).some(trap=>trap.side==='player'&&trap.col===col&&trap.row===row)) {
         const p=cellCenter(col,row),hot=hover&&'col'in hover&&hover.col===col&&hover.row===row;
         round(c,p.x-31,p.y-31,62,62,11,hot?'rgba(217,195,237,.34)':'rgba(217,195,237,.10)','#a083c0',hot?3:1.5);
       }
@@ -410,23 +394,23 @@ export class StickerRenderer {
     if(interaction.pointer) {
       const target=hover&&'kind'in hover&&hover.kind==='bench'?state.units.find(unit=>unit.side==='player'&&unit.location.zone==='bench'&&unit.location.slot===hover.slot):hover&&'col'in hover?state.units.find(unit=>unit.side==='player'&&unit.location.zone==='board'&&unit.location.col===hover.col&&unit.location.row===hover.row):undefined;
       const cell=hover&&'col'in hover?hover:null;
-      const valid=id==='glue_trap'?!!cell&&cell.row>=5&&state.grid[cell.row]?.[cell.col]==='R'&&!(state.traps||[]).some(trap=>trap.side==='player'&&trap.col===cell.col&&trap.row===cell.row):!!target&&this.propUnitValid(id,target);
+      const valid=id==='glue_trap'?!!cell&&cell.row>=0&&cell.row<STAGE.rows&&state.grid[cell.row]?.[cell.col]==='R'&&!(state.traps||[]).some(trap=>trap.side==='player'&&trap.col===cell.col&&trap.row===cell.row):!!target&&this.propUnitValid(id,target);
       if(!valid){const {x,y}=interaction.pointer;line(c,[[x-5,y-5],[x+5,y+5]],CORAL,2.5);line(c,[[x+5,y-5],[x-5,y+5]],CORAL,2.5);}
     }
   }
 
   private drawNests(state:BattleState,interaction:Interaction,seconds:number):void {
     const c=this.c;
-    this.label(t('render.petNests'),73,1092,18,INK,'left',800,350);
+    this.label(t('render.petNests'),48,STAGE.benchY-14,18,INK,'left',800,350);
     const filled=state.units.filter(unit=>unit.side==='player'&&unit.location.zone==='bench').length;
-    this.label(`${filled} / 5`,555,1092,13,'#92846b','right',700);
+    this.label(`${filled} / 5`,592,STAGE.benchY-14,13,'#92846b','right',700);
     for(let slot=0;slot<5;slot++){
       const x=STAGE.benchX+slot*STAGE.benchStep,y=STAGE.benchY,w=STAGE.benchSize;
       const unit=state.units.find(unit=>unit.side==='player'&&unit.location.zone==='bench'&&unit.location.slot===slot);
       const hovered=interaction.pointer?this.hitTest(interaction.pointer.x,interaction.pointer.y):null;
       const hot=hovered?.kind==='bench'&&hovered.slot===slot&&interaction.draggingId!==undefined;
       const source=state.units.find(candidate=>candidate.id===interaction.draggingId);
-      const invalid=hot&&source&&unit&&source.id!==unit.id&&!MergeSystem.combine(source,unit).ok;
+      const invalid=hot&&source&&unit&&source.id!==unit.id&&(source.kind==='shovel'||unit.kind==='shovel'||!MergeSystem.combine(source,unit).ok);
       const selected=unit&&unit.id===interaction.selectedId;
       c.save();c.shadowColor='rgba(93,80,54,.12)';c.shadowOffsetY=5;
       round(c,x,y,w,w,19,invalid?'#efd7c6':hot?'#efe8bf':unit?'#fff9e8':'#eee4cf',invalid?CORAL:selected||hot?TEAL:'#bbaa8a',selected||hot?2.8:1.9);c.restore();
@@ -443,20 +427,27 @@ export class StickerRenderer {
         star(c,x+w-10,y+11,5,'#e8d29b',1);
       }
     }
-    if(!state.sides.player.loadout.equippedPassiveProps.length)this.label(t('render.mergeHint'),320,1220,13,'#8e8067','center',500,530);
+    if(!state.sides.player.loadout.equippedPassiveProps.length)this.label(t('render.mergeHint'),320,STAGE.benchY+STAGE.benchSize+20,13,'#8e8067','center',500,530);
   }
 
   private drawTools(state:BattleState,interaction:Interaction,seconds:number):void {
     const c=this.c,selected=state.units.find(unit=>unit.id===interaction.selectedId),{shovelX:x,shovelY:y}=STAGE;
+    const source=state.units.find(unit=>unit.id===(interaction.draggingId??interaction.selectedId));
+    const storing=source?.kind==='shovel'&&source.location.zone==='bench';
+    const capacity=state.sides.player.loadout.equippedPassiveProps?.includes('auto_shovel')?6:4;
     let title=t('render.dragHint'),subtitle=t('render.keepCalm');
-    if(interaction.shovel){title=t('render.shovelHint');subtitle=t('render.repairHint');}
+    if(interaction.shovel||selected?.kind==='shovel'){title=t('render.shovelHint');subtitle=t('render.repairHint');}
     else if(selected){title=t(`${HEROES[selected.kind]?'hero':'unit'}.${selected.kind}`);const statuses=Object.entries(selected.statuses).filter(([,value])=>!!value).map(([key])=>t(`render.${({SEALED:'sealed',WET:'wet',KNOCKDOWN:'stunned',CONFUSED:'confused',MERGE_LOCK:'mergeLocked'} as Record<string,string>)[key]}`));subtitle=selected.statuses.SEALED?t('render.sealedHint'):statuses.join(' · ')||t(HEROES[selected.kind]?'render.legendary':'render.keepCalm');}
-    this.label(title,320,1040,17,INK,'center',800,350);
-    this.label(subtitle,320,1064,12,'#92836a','center',500,350);
+    this.label(title,320,STAGE.shovelY-10,17,INK,'center',800,325);
+    this.label(subtitle,320,STAGE.shovelY+14,12,'#92836a','center',500,325);
+    c.save();c.translate(84,STAGE.shovelY);const truck=this.assets.get('sprinkler');
+    if(truck)this.drawImage(truck,65,58);else {round(c,-26,-14,43,28,7,'#aac8b7',INK,2);round(c,13,-8,21,22,4,'#efcb78',INK,2);ellipse(c,-14,17,7,7,INK,PAPER,1);ellipse(c,23,17,7,7,INK,PAPER,1);}
+    c.restore();
     c.save();c.shadowColor='rgba(76,70,51,.13)';c.shadowOffsetY=4;
     ellipse(c,x,y,39,39,interaction.shovel?'#f1d48a':'#e4e7ce',INK,2.2);c.restore();
     c.save();c.translate(x,y-2);c.scale(.72,.72);this.drawShovel(!!interaction.shovel,state.sides.player.loadout?.equippedPassiveProps.includes('gold_doge'));c.restore();
     if(interaction.shovel){c.save();c.setLineDash([3,6]);ellipse(c,x,y,44,44,'rgba(255,255,255,0)',TEAL,2);c.restore();}
+    if(storing){c.save();c.setLineDash([4,5]);ellipse(c,x,y,44,44,'rgba(255,246,201,.25)',state.sides.player.shovels<capacity?'#c9a25a':CORAL,3);c.restore();}
     round(c,x+13,y+19,35,22,9,state.sides.player.shovels?'#fff6da':'#e4d4c2',INK,1.7);
     this.label(`×${state.sides.player.shovels}`,x+30,y+31,13,INK,'center',800);
     void seconds;
@@ -479,6 +470,8 @@ export class StickerRenderer {
       const isForeground=event.type==='bubble'||event.type==='purge';
       if(isForeground!==foreground)continue;
       if(event.type==='damage'&&!showDamageNumbers)continue;
+      if(event.side!=='player')continue;
+      if(drawCombatEvent(this.c,event,state.units))continue;
       if(drawM3Event(this.c,event))continue;
       if(event.type==='sprinkler'&&this.assets.has('sprinkler')){this.drawSprinklerOverride(event);continue;}
       if(drawM2Event(this.c,event))continue;
@@ -486,20 +479,7 @@ export class StickerRenderer {
       const p=clamp(event.age/event.duration,0,1),from=eventUnit?this.position(eventUnit):cellCenter(event.col,event.row),c=this.c;
       if(event.type==='orange')continue; // Count observation also covers debug additions/removals.
       c.save();
-      if(event.type==='projectile') {
-        const target=cellCenter(event.targetCol??event.col,event.targetRow??event.row);
-        const x=from.x+(target.x-from.x)*p,y=from.y+(target.y-from.y)*p-Math.sin(p*Math.PI)*13;
-        const unit=state.units.find(unit=>unit.id===event.unitId),kind=unit?.kind||'';
-        c.strokeStyle=event.color||'#d2b578';c.lineWidth=4;c.globalAlpha=.45;
-        c.beginPath();c.moveTo(x-(target.x-from.x)*.1,y-(target.y-from.y)*.1);c.lineTo(x,y);c.stroke();c.globalAlpha=1;
-        c.translate(x,y);c.rotate(Math.atan2(target.y-from.y,target.x-from.x));
-        if(kind==='ballin_rooster'){ellipse(c,0,0,7,7,'#eda267',INK,1.3);line(c,[[-5,0],[5,0]],INK,1);line(c,[[0,-5],[0,5]],INK,1);}
-        else if(kind==='bamboo_mafia'){round(c,-7,-4,14,8,3,'#a7b67c',INK,1.5);polygon(c,[[-7,-3],[-13,0],[-7,3]],'#f1b870',INK,0);}
-        else if(kind==='squirrel'){ellipse(c,0,0,5,6,'#b99061',INK,1.3);round(c,-6,-5,12,4,2,'#8d7554',INK,1.2);}
-        else if(kind==='zen_master'){ellipse(c,0,0,9,9,PAPER,INK,1.2);c.beginPath();c.arc(0,0,8,-Math.PI/2,Math.PI/2);c.fillStyle=INK;c.fill();}
-        else if(kind==='pepe_king'||kind==='purrcerer'){ellipse(c,0,0,6,6,event.color||'#b99dd0',PAPER,2);star(c,-8,0,3,'#eddb99',0);}
-        else {ellipse(c,0,0,4.5,3,event.color||'#e5bd73',PAPER,1.4);}
-      } else if(event.type==='damage') {
+      if(event.type==='damage') {
         c.globalAlpha=1-p;const value=event.value??0;
         const text=`${value>0?'−':''}${Math.abs(Math.round(value))}`;c.font=`900 ${value>=100?20:15}px ${FONT}`;c.textAlign='center';c.strokeStyle=event.color==='#fff7da'?INK:PAPER;c.lineWidth=3.5;c.strokeText(text,from.x,from.y-20-p*29);c.fillStyle=event.color||'#bd7862';c.fillText(text,from.x,from.y-20-p*29);
       } else if(event.type==='bubble') {
@@ -597,11 +577,11 @@ export class StickerRenderer {
 
   private drawFog(state:BattleState,seconds:number):void {
     const c=this.c;
-    for(const side of ['ai','player'] as const) {
+    for(const side of ['player'] as const) {
       const fog=state.sides[side].fog;if(fog<=0)continue;
-      const x=STAGE.boardX,y=STAGE.boardY+(side==='player'?5*STAGE.cell:0),height=5*STAGE.cell;
-      c.save();c.beginPath();c.rect(x,y,STAGE.cell*8,height);c.clip();
-      c.globalAlpha=Math.min(1,fog)*.54;c.fillStyle='#4d6b55';c.fillRect(x,y,STAGE.cell*8,height);
+      const x=STAGE.boardX,y=STAGE.boardY,height=STAGE.rows*STAGE.cell;
+      c.save();c.beginPath();c.rect(x,y,STAGE.cell*STAGE.cols,height);c.clip();
+      c.globalAlpha=Math.min(1,fog)*.54;c.fillStyle='#4d6b55';c.fillRect(x,y,STAGE.cell*STAGE.cols,height);
       for(let i=0;i<8;i++){
         const px=x+((i*103+seconds*12)%760)-80,py=y+50+(i*61)%280;
         const gradient=c.createRadialGradient(px,py,5,px,py,120);gradient.addColorStop(0,'rgba(143,166,106,.32)');gradient.addColorStop(1,'rgba(143,166,106,0)');c.fillStyle=gradient;c.fillRect(px-120,py-120,240,240);
@@ -611,9 +591,10 @@ export class StickerRenderer {
   }
 
   private observeOranges(state:BattleState,dt:number):void {
-    if(this.previousOranges)for(const side of ['ai','player'] as const) {
-      const old=this.previousOranges[side],now=state.sides[side].oranges,diff=now-old,point=side==='ai'?cellCenter(0,0):cellCenter(7,9);
-      for(let i=0;i<Math.min(Math.abs(diff),12);i++)this.orangeMotions.push({x:point.x,y:point.y-46-Math.max(0,old-1-i)*16,age:0,index:i,add:diff>0,direction:side==='ai'?1:-1,targetY:point.y-46-Math.max(0,now-1-i)*16});
+    if(this.previousOranges)for(const side of ['player'] as const) {
+      const endpoint=getMap(state.mapId).paths.player.at(-1)!;
+      const old=this.previousOranges[side],now=state.sides[side].oranges,diff=now-old,point=cellCenter(endpoint.col,endpoint.row);
+      for(let i=0;i<Math.min(Math.abs(diff),12);i++)this.orangeMotions.push({x:point.x,y:point.y-56-Math.max(0,old-1-i)*16,age:0,index:i,add:diff>0,direction:-1,targetY:point.y-56-Math.max(0,now-1-i)*16});
     }
     this.previousOranges={player:state.sides.player.oranges,ai:state.sides.ai.oranges};
     this.orangeMotions=this.orangeMotions.filter(motion=>(motion.age+=dt)<1.1);

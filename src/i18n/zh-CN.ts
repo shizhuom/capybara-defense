@@ -100,7 +100,7 @@ export const zhCN = {
   'hint.storage': '保存暂不可用，本页仍可继续玩。', 'hint.selected': '已选中，再点一个目标。',
   'hint.summoned': '新的一窝来啦！把想留下的伙伴拖到白垫上。',
   'render.rival': '对手的松弛后院', 'render.yourGarden': '你的后院 · 认真守护', 'render.petNests': '一次来一窝，没摆完也能换',
-  'render.dragHint': '拖到白垫上', 'render.mergeHint': '叠在一起能合成', 'render.shovelHint': '铲开草坪',
+  'render.dig': '铲', 'render.dragHint': '拖到白垫上', 'render.mergeHint': '叠在一起能合成', 'render.shovelHint': '铲开草坪',
   'render.repairHint': '修复 ×2', 'render.ready': '准备开泡', 'render.chill': '稳住，能泡', 'render.sunny': '阳光后院',
   'render.sealed': '封印', 'render.wet': '淋湿', 'render.stunned': '眩晕', 'render.confused': '混乱',
   'render.mergeLocked': '禁合', 'render.range': '攻击范围', 'render.emptyNest': '空窝', 'render.legendary': '传奇！',

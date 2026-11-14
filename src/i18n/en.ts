@@ -91,7 +91,7 @@ export const en: Record<keyof typeof zhCN, string> = {
   'hint.storage': 'Saving is unavailable. You can keep playing on this page.',
   'hint.selected': 'Selected. Now choose a target.', 'hint.summoned': 'A new pack! Drag the pets you want to keep onto white mats.',
   'render.rival': 'RIVAL’S COZY CORNER', 'render.yourGarden': 'YOUR GARDEN · HOLD THE CHILL',
-  'render.petNests': 'ONE WHOLE PACK. SWAP IT ANYTIME.', 'render.dragHint': 'Drag onto a white mat',
+  'render.petNests': 'ONE WHOLE PACK. SWAP IT ANYTIME.', 'render.dig': 'DIG', 'render.dragHint': 'Drag onto a white mat',
   'render.mergeHint': 'Stack pets to merge', 'render.shovelHint': 'Dig some grass', 'render.repairHint': 'Repair ×2',
   'render.ready': 'Ready to soak', 'render.chill': 'Keep it cozy', 'render.sunny': 'Sunny Backyard',
   'render.sealed': 'BOXED', 'render.wet': 'WET', 'render.stunned': 'STUNNED', 'render.confused': 'CONFUSED',

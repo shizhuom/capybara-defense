@@ -39,15 +39,15 @@ describe('M3 canvas integration',()=>{
     const state=new BattleEngine({ai:false,autoWaves:false}).state;state.mapId=id;state.grid=MAPS[id].grid;
     const {renderer,calls}=surface();renderer.draw(state,.2);
     expect(calls.some(c=>c.name==='fillRect'&&c.fill===MAPS[id].theme.road)).toBe(true);
-    const a=MAPS[id].paths.ai[1],b=MAPS[id].paths.ai[2],rotation=Math.atan2(b.row-a.row,b.col-a.col);
-    expect(calls.some((c,i)=>c.name==='translate'&&c.args[0]===68+a.col*72&&c.args[1]===276+a.row*72&&calls[i+1]?.name==='rotate'&&calls[i+1].args[0]===rotation)).toBe(true);
+    const a=MAPS[id].paths.player[1],b=MAPS[id].paths.player[2],rotation=Math.atan2(b.row-a.row,b.col-a.col);
+    expect(calls.some((c,i)=>c.name==='translate'&&c.args[0]===80+a.col*96&&c.args[1]===236+a.row*96&&calls[i+1]?.name==='rotate'&&calls[i+1].args[0]===rotation)).toBe(true);
   });
   it('hides only damage text, retaining projectile and skill geometry',()=>{
     const state=new BattleEngine({ai:false,autoWaves:false}).state;
-    state.events=[{id:1,type:'damage',side:'player',col:2,row:7,value:987,age:.2,duration:1},{id:2,type:'projectile',side:'player',col:2,row:7,targetCol:3,targetRow:7,age:.2,duration:1}];
+    state.events=[{id:1,type:'damage',side:'player',col:2,row:4,value:987,age:.2,duration:1},{id:2,type:'projectile',side:'player',col:2,row:4,targetCol:3,targetRow:7,age:.2,duration:1}];
     const hidden=surface();hidden.renderer.draw(state,.2,{showDamageNumbers:false});
     expect(hidden.calls.some(c=>c.name==='fillText'&&c.args[0]==='−987')).toBe(false);
-    expect(hidden.calls.some(c=>c.name==='translate'&&c.args[0]===226.4)).toBe(true);
+    expect(hidden.calls.some(c=>c.name==='translate'&&c.args[0]===291.2)).toBe(true);
     const shown=surface();shown.renderer.draw(state,.2);
     expect(shown.calls.some(c=>c.name==='fillText'&&c.args[0]==='−987')).toBe(true);
   });
@@ -60,9 +60,9 @@ describe('M3 canvas integration',()=>{
     const own=surface(),fallback=surface();drawEnemyArt(own.context,kind,.3);drawEnemyArt(fallback.context,'unknown',.3);
     expect(own.calls).not.toEqual(fallback.calls);
     const state=new BattleEngine({ai:false,autoWaves:false}).state;
-    state.events=[{id:4,type:'boss_skill',side:'player',col:2,row:7,points:[{col:4,row:8}],effect:kind,age:.4,duration:1} as VisualEvent];
+    state.events=[{id:4,type:'boss_skill',side:'player',col:2,row:4,points:[{col:4,row:5}],effect:kind,age:.4,duration:1} as VisualEvent];
     const {renderer,calls}=surface();renderer.draw(state,.4);
-    expect(calls.some(c=>c.name==='translate'&&c.args[0]===356&&c.args[1]===852)).toBe(true);
+    expect(calls.some(c=>c.name==='translate'&&c.args[0]===464&&c.args[1]===716)).toBe(true);
   });
   it('gives killer bees, charmed rats and bone shields visible identifying marks',()=>{
     const bee=surface(),rat=surface(),normal=surface();drawEnemyArt(bee.context,'killer_bee',0);drawEnemyArt(rat.context,'charmed_rat',0);drawEnemyArt(normal.context,'rat',0);
@@ -71,7 +71,7 @@ describe('M3 canvas integration',()=>{
     const s=surface();s.renderer.draw(engine.state,0);expect(s.calls.some(c=>c.name==='fill'&&c.fill==='#f4e7c8')).toBe(true);
   });
   it('uses transparent Canvas fills for shockwave rings',()=>{
-    const {context,calls}=surface();drawM3Event(context,{id:3,type:'boss_skill',effect:'buff_roo',side:'player',col:2,row:7,age:.3,duration:1,points:[{col:3,row:7}]});
+    const {context,calls}=surface();drawM3Event(context,{id:3,type:'boss_skill',effect:'buff_roo',side:'player',col:2,row:4,age:.3,duration:1,points:[{col:3,row:4}]});
     // Canvas rejects the SVG-only color "none" and otherwise inherits an opaque fill.
     expect(calls.filter(c=>c.name==='fill').every(c=>c.fill!=='none')).toBe(true);
   });

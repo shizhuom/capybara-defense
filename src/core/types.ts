@@ -30,11 +30,17 @@ export interface SideState {
   loadout:BattleLoadout; propCooldowns:Record<string,number>; sprinklerUsed:boolean; giantCatUses:number; catnipTime:number;
 }
 export interface Trap extends Point { id:number; side:Side; charges:number; hitIds:number[] }
+/** Captured before attack counters/hooks change; event age remains mutable independently. */
+export interface AttackPresentation {
+  readonly sourceKind:string; readonly hero:boolean; readonly awakened:boolean;
+  readonly empowered:boolean; readonly critical:boolean; readonly enhanced:boolean;
+}
 export interface VisualEvent {
   id: number; type: 'slash' | 'hit' | 'death' | 'food' | 'projectile' | 'burst' | 'bubble' | 'damage' | 'purge' | 'orange' | 'dash' | 'bounce' | 'sprinkler' | 'giant_cat' | 'weapon' | 'boss_skill';
   side: Side; col: number; row: number; targetCol?: number; targetRow?: number;
   textKey?: string; value?: number; color?: string; age: number; duration: number; unitId?: number;
   points?:Point[]; effect?:string;
+  readonly presentation?:Readonly<AttackPresentation>;
 }
 export interface BattleResult { winner: Side; reason: 'oranges' | 'waves' | 'surrender'; loot: string[]; playerLoot: string[]; aiLoot: string[]; coins: number; elapsed: number; rankIndex?:number; mergedHeroes?:string[] }
 export interface BattleState {

@@ -25,11 +25,11 @@ Keep the silhouette readable at 56 logical pixels. Large boss PNGs are drawn aro
 
 Run `npm run sync-assets` in the game directory. The zero-dependency script copies only regular lowercase PNG filenames matching `^[a-z][a-z0-9_]*\.png$` from the optional read-only source `../../design/assets/sprites/`. It scans the destination and writes a sorted array manifest. It never deletes existing destination art, creates the source, or fails because the source is absent/empty. Uppercase extensions, hyphens, directories and symlinks are skipped. Canvas and HTML share a loaded-only registry; malformed manifests, missing files and decode failures retain the built-in fallback. Vite's `BASE_URL` supports relative/subdirectory hosting. HTML refreshes once the initial asset batch settles.
 
-The lists below are the complete P1 catalog and extend the original examples above. Characters, objects, props, weapons and avatars should be transparent RGBA PNG at 256×256 or 512×512 with clear margins. Keep feet near the lower center so gold hero disks remain visible. Level/status badges, energy, hits, shields, weapon effects and input positions remain dynamic.
+The lists below are the complete P2 catalog: **145 PNGs**, including four basic held weapons and eight combat VFX added to P1. Characters, objects, props, weapons and avatars should be transparent RGBA PNG at 256×256 or 512×512 with clear margins. Keep feet near the lower center so gold hero disks remain visible. Level/status badges, energy, hits, shields, weapon effects and input positions remain dynamic.
 
 ## Four maps and tile aliases
 
-Maps fill the exact 8×10 board, 576×720 logical pixels. Recommended size: 1152×1440 or 960×1200. Align roads, grass, nests, guardian corners and the center wall to this grid. Maps may be opaque and are clipped to the board. Static G/R/S/C tiles never paint over external maps; route arrows and subtle grid lines remain.
+Maps fill the exact **6×7** board, **576×672** logical pixels at `(32,188)` on the **640×1216** stage. The supplied maps are **768×896**. Roads and endpoints align to 96px cells; the sole guardian uses the current map's final player path point. Maps may be opaque and are clipped to the board. Static G/R/S/C tiles never paint over external maps; route arrows and subtle grid lines remain. Open/broken tile changes and the `1/2` repair tag are live overlays.
 
 `map_sunny_backyard`, `map_sakura_onsen`, `map_midnight_kitchen`, `map_cat_tower_maze`.
 
@@ -54,6 +54,16 @@ Components (14): `panda`, `cat`, `shiba`, `hat_bamboo`, `hat_shades`, `hat_wizar
 Heroes (12): `kungfu_po`, `bamboo_mafia`, `zen_master`, `puss_in_hat`, `meowfia`, `purrcerer`, `samurai_doge`, `doge_wick`, `ronin_goose`, `ballin_rooster`, `rocket_coon`, `pepe_king`.
 
 All heroes retain gold double-ring disks and near-full energy pulses on board and bench. Merge candidates receive green upgrade or gold recipe target indicators.
+
+## Board held weapons and combat VFX
+
+All four combat basics and all twelve heroes mount a separate, visible weapon on the board. Bee, components and bench units have no mounted weapons. Heroes prefer the equipped `weapon_<id>` (then direct `<id>` alias); defaults use the signature art or `cleaver`/`basketball`. Basic weapon frames are 44px, default hero frames about 54px. Equipped hero frames scale by rarity from 1.05 to 1.52 with a colored aura and a breathing gold signature glow. Upright and diagonal sticker orientations are corrected before target aim is applied.
+
+`weapon_basic_club`, `weapon_basic_slingshot`, `weapon_basic_spear`, `weapon_basic_hammer`.
+
+`vfx_slash_spin`, `vfx_slash_crescent`, `vfx_slash_heavy`, `vfx_slash_cross`, `vfx_thrust_cone`, `vfx_hit_burst`, `vfx_dust_puff`, `vfx_muzzle_flash`.
+
+Melee uses captured slash events; no melee projectile dots are drawn. Spin weapons orbit at 46/54px inside 145–185px slash rings. Thrust extends 28px; ranged weapons recoil 10px with a 0.12s flash. Ranged/magic projectiles are themed 20–32px shapes with tapered trails. Missing weapon/VFX art always retains procedural Canvas geometry. Death dust and fish-icon `+1`/`+8` food popups are independent of damage-number visibility. The bench shovel uses `shovel`, a translated short tag, grass/broken-cell highlights and a capacity-aware pouch outline.
 
 ## Five mobs and twelve Bosses
 

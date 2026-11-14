@@ -79,7 +79,7 @@ describe('12被动道具',()=>{
     const rng=vi.spyOn(Random.prototype,'next').mockReturnValue(.1);const e=arena([],['gold_doge']);const food=e.state.sides.player.food;
     e.dig(0,1);expect(e.state.sides.player.food).toBe(food+12);
     e.state.sides.player.shovels=1;rng.mockReturnValueOnce(.1).mockReturnValueOnce(.9).mockReturnValue(.1);e.dig(0,2);expect(e.state.sides.player.loot[0]).toMatch(/^[mrw]\d{2}_/);
-    const before=e.state.sides.player.loot.length;e.state.grid[2][0]='B';e.state.sides.player.shovels=2;e.dig(1,8);expect(e.state.sides.player.loot).toHaveLength(before);
+    const before=e.state.sides.player.loot.length,repairFood=e.state.sides.player.food;e.state.grid[2][0]='B';e.state.sides.player.shovels=2;expect(e.dig(0,2).ok).toBe(true);expect(e.state.grid[2][0]).toBe('O');expect(e.state.sides.player.shovels).toBe(0);expect(e.state.sides.player.loot).toHaveLength(before);expect(e.state.sides.player.food).toBe(repairFood);
     const no=arena([],['gold_doge']);rng.mockReturnValue(.35);no.dig(0,1);expect(no.state.sides.player.food).toBe(22);
   });
   it('自动铲30秒一把、上限6，AI不生产',()=>{

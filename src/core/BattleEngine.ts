@@ -327,7 +327,14 @@ export class BattleEngine {
   private attack(unit:Unit,target:Enemy,damage:number):void {
     const position=this.unitPosition(unit),dx=target.col-position.col,dy=target.row-position.row,style=COMBAT_STYLES[unit.kind];
     unit.attackAngle=Math.atan2(dy,dx);unit.facing=dx<0?-1:1;unit.attackAnim=1;
-    if(style&&['spin360','cleave180','cross_slash','thrust'].includes(style))this.event({type:'slash',side:unit.side,...position,targetCol:target.col,targetRow:target.row,unitId:unit.id,effect:unit.kind==='samurai_doge'?'heavy_cleave':style,duration:.33});
+    if(style&&['spin360','cleave180','cross_slash','thrust'].includes(style)){
+      const awakened=!!this.weapons.awakened(unit),empowered=unit.empowered>0;
+      // The empowered Puss branch below is the only critical basic slash. Capture it
+      // before its final charge is consumed; later ultimates/hooks are separate attacks.
+      const critical=unit.kind==='puss_in_hat'&&empowered;
+      const presentation=Object.freeze({sourceKind:unit.kind,hero:!!HEROES[unit.kind],awakened,empowered,critical,enhanced:awakened||empowered||critical});
+      this.event({type:'slash',side:unit.side,...position,targetCol:target.col,targetRow:target.row,unitId:unit.id,effect:unit.kind==='samurai_doge'?'heavy_cleave':style,duration:.33,presentation});
+    }
     else this.shot(unit,target);
     switch(unit.kind){
       case 'hedgehog':this.pierce(unit,target,damage);break;
