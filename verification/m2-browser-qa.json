@@ -1,0 +1,14 @@
+{
+  "checks": [
+    "Old save migrates without losing currency, history or receipts; three-item shop buys, equips and refreshes",
+    "Lottery spends a free ticket first, saves the prize before animation, and never recharges on language switch or reopen",
+    "Full test save grants 36 weapons, 12 signatures and 20 props; repeated activation preserves the original backup; restore is exact",
+    "Armory filters all three 12-weapon families, prevents cross-family options, transfers a unique weapon, and recycles only selected surplus",
+    "Battle copies loadout, retains five-card redraw, displays 2+6 props, click-casts milk, DOM-drags a road trap, uses sprinkler once, and shows bilingual seal guidance",
+    "A real boss death drops concrete weapon IDs; winning pools both bags, unlocks a weapon, awards one ticket and survives reload exactly once",
+    "320px menu, armory, lottery, battle and bilingual pause fit without horizontal overflow; sprinkler stays inside the stage",
+    "No console errors or uncaught page errors"
+  ],
+  "errors": [],
+  "success": true
+}

@@ -1,0 +1,26 @@
+{
+  "passed": true,
+  "checks": [
+    "Chinese menu, 19 unit options and all 12 bosses",
+    "Summon spends 10; +500; actual pointer drag deploys",
+    "Partially used and full packs can redraw; deployed pets survive; cost stays 10",
+    "Insufficient food preserves every card and shows shortage",
+    "Cross bench/board recipe creates Kung-Fu Po",
+    "Feeding purges live Box Kraken seal",
+    "Feeding purges live rain debuff",
+    "Shovel drag opens grass and spends one shovel",
+    "All six boss buttons spawn mirrored pairs; fog allows dragging",
+    "Orange and speed controls change live state",
+    "English hot switch preserves battle",
+    "Pause freezes time and supports language switch inside dialog",
+    "Boss death drops loot; skip reaches result; winner receives both pools",
+    "Returning to menu and reloading preserves rewards exactly once",
+    "Narrow layout collapses sandbox and has no horizontal overflow",
+    "Reset clears this game profile",
+    "Narrow canvas pointer deployment uses correct scaled coordinates",
+    "320px redraw and shortage labels remain inside the button",
+    "All 12 procedural hero and ultimate rendering branches run without exceptions",
+    "No browser console errors or runtime exceptions"
+  ],
+  "errors": []
+}

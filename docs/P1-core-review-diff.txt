@@ -1,0 +1,732 @@
+# P1 core review diff
+Base: backups/m3-before-p1.zip (M3 427 tests)
+Current: isolated game working tree
+
+
+## src/core/types.ts
+diff --git "D:\\rea_game\\games\\capybara-defense\\.runtime\\p1-review-baseline\\src\\core\\types.ts" "D:\\rea_game\\games\\capybara-defense\\src\\core\\types.ts"
+index 88e1af5..7786ec4 100644
+--- "D:\\rea_game\\games\\capybara-defense\\.runtime\\p1-review-baseline\\src\\core\\types.ts"
++++ "D:\\rea_game\\games\\capybara-defense\\src\\core\\types.ts"
+@@ -1,11 +1,12 @@
+ export type Side = 'player' | 'ai';
+ export type MapId = 'sunny_backyard' | 'sakura_onsen' | 'midnight_kitchen' | 'cat_tower_maze';
+-export interface GameSettings { musicVolume:number; soundVolume:number; showDamageNumbers:boolean }
++export interface GameSettings { musicVolume:number; soundVolume:number; showDamageNumbers:boolean; developerMode?:boolean }
++export interface OpponentIdentity {id:string;name:{'zh-CN':string;en:string};avatarId:string;rankIndex:number}
+ export type Tile = 'C' | 'G' | 'O' | 'S' | 'R' | 'B';
+ export type Status = 'SEALED' | 'WET' | 'KNOCKDOWN' | 'CONFUSED' | 'MERGE_LOCK';
+ export interface Point { col: number; row: number }
+ export type UnitLocation = { zone: 'board'; col: number; row: number } | { zone: 'bench'; slot: number };
+ export interface Unit {
+   id: number; kind: string; side: Side; level: number; location: UnitLocation;
+   statuses: Partial<Record<Status, number>>; energy: number; cooldown: number;
+   production: number; buffTime: number; empowered: number; animation: number;
+@@ -30,23 +31,25 @@ export interface Trap extends Point { id:number; side:Side; charges:number; hitI
+ export interface VisualEvent {
+   id: number; type: 'projectile' | 'burst' | 'bubble' | 'damage' | 'purge' | 'orange' | 'dash' | 'bounce' | 'sprinkler' | 'giant_cat' | 'weapon' | 'boss_skill';
+   side: Side; col: number; row: number; targetCol?: number; targetRow?: number;
+   textKey?: string; value?: number; color?: string; age: number; duration: number; unitId?: number;
+   points?:Point[]; effect?:string;
+ }
+ export interface BattleResult { winner: Side; reason: 'oranges' | 'waves' | 'surrender'; loot: string[]; playerLoot: string[]; aiLoot: string[]; coins: number; elapsed: number; rankIndex?:number; mergedHeroes?:string[] }
+ export interface BattleState {
++  opponent?:OpponentIdentity;
+   id: string; phase: 'ready' | 'playing' | 'paused' | 'finished'; time: number;
+   wave: number; waveTime: number; nextSpawn: number; spawned: number;
+   mapId:MapId; rankIndex:number; mergedHeroes:Record<Side,string[]>;
+   grid: Tile[][]; sides: Record<Side, SideState>; units: Unit[]; enemies: Enemy[];
+   events: VisualEvent[]; traps:Trap[]; result: BattleResult | null;
+ }
+ export interface CommandResult { ok: boolean; key: string; unitId?: number }
+ export interface Profile extends BattleLoadout {
++  tutorialCompleted?:boolean; tutorialRewardClaimed?:boolean;
+   coins:number; wins:number; matches:number; fragments:string[]; awardedBattles:string[];
+   schemaVersion:2; weaponFragments:Record<string,number>; unlockedWeapons:string[]; freeLotteryTickets:number;
+   shop:{day:string;offers:string[]}|null;
+   stars:number; highestStars:number; winStreak:number; bestWinStreak:number;
+   selectedMap:'auto'|MapId; avatarId:string; unlockedAvatars:string[]; mergedHeroes:string[]; settings:GameSettings;
+ }
+ export interface Interaction { draggingId?: number; pointer?: { x: number; y: number }; shovel?: boolean; hover?: Point; selectedId?: number; propId?:string; showDamageNumbers?:boolean }
+
+## src/core/OpponentAI.ts
+diff --git "D:\\rea_game\\games\\capybara-defense\\.runtime\\p1-review-baseline\\src\\core\\OpponentAI.ts" "D:\\rea_game\\games\\capybara-defense\\src\\core\\OpponentAI.ts"
+index 5e3caee..0cd51e4 100644
+--- "D:\\rea_game\\games\\capybara-defense\\.runtime\\p1-review-baseline\\src\\core\\OpponentAI.ts"
++++ "D:\\rea_game\\games\\capybara-defense\\src\\core\\OpponentAI.ts"
+@@ -1,39 +1,132 @@
+-import type { BattleEngine } from './BattleEngine';
+-import { MergeSystem } from './MergeSystem';
+-import { GridSystem } from './GridSystem';
+-import { getMap } from '../config/maps';
+-import { HEROES } from '../config/heroes';
+-import { UNITS } from '../config/units';
+-/** The opponent spends the same resources and issues exactly the same legal commands. */
++import type {BattleEngine} from './BattleEngine';
++import type {BattleLoadout,OpponentIdentity,Point,Unit} from './types';
++import {MergeSystem} from './MergeSystem';
++import {GridSystem} from './GridSystem';
++import {getMap} from '../config/maps';
++import {HEROES} from '../config/heroes';
++import {UNITS} from '../config/units';
++import {PROPS} from '../config/props';
++import {WEAPONS,HERO_FAMILIES} from '../config/weapons';
++import {getOpponentTuning,type OpponentTuning} from '../config/opponents';
++
++const sample=(random:()=>number)=>Math.max(0,Math.min(.999999999999,Number(random())||0));
++const shuffled=<T>(values:T[],random:()=>number):T[]=>{
++  const result=[...values];for(let i=result.length-1;i>0;i--){const j=Math.floor(sample(random)*(i+1));[result[i],result[j]]=[result[j],result[i]];}return result;
++};
++const npcRows=[
++  ['橘子汽水豚','Yuzu Capy','capybara'],['瓜子不离手','Seed Snack Captain','hamster'],
++  ['早八遛狗人','Morning Dog Walker','doge_agent'],['猫咖打工喵','Cafe Cat Keeper','cat_swordsman'],
++  ['温泉泡泡糖','Onsen Bubblegum','sakura_capy'],['厨房摸鱼王','Kitchen Daydreamer','salted_fish'],
++  ['鹅村扛把子','Village Goose Boss','goose_bully'],['熊猫不熬夜','Early Bedtime Panda','kungfu_panda'],
++  ['篮球练习生','Basketball Trainee','rooster_star'],['皇冠小短腿','Crowned Short Legs','corgi_crown'],
++  ['黑市常客','Market Regular','market_coon'],['孤寡不孤单','Never Lonely Frog','frog_king'],
++  ['竹林扫地僧','Bamboo Sweeper','bamboo_master'],['后院退休园长','Retired Garden Warden','capybara'],
++  ['情绪稳定祖师爷','Grandmaster of Calm','zen_capy'],
++];
++
++/** Uses a setup-only random stream; never reads or changes profile storage. */
++export function createOpponentSetup(rankIndex:number,random:()=>number):{tuning:OpponentTuning;loadout:BattleLoadout;identity:OpponentIdentity} {
++  const tuning=getOpponentTuning(rankIndex),rank=tuning.rankIndex,tier=rank<6?0:rank<15?1:rank<30?2:rank<45?3:4;
++  const loadout:BattleLoadout={equippedWeapons:{},ownedProps:{},equippedActiveProps:[],equippedPassiveProps:[]};
++  const heroes=shuffled(Object.keys(HERO_FAMILIES),random),used=new Set<string>();
++  for(const hero of heroes){
++    if(Object.keys(loadout.equippedWeapons).length>=[0,2,4,6,12][tier])break;
++    const index=Object.keys(loadout.equippedWeapons).length,signature=tier===4||tier===3&&index<2;
++    const candidates=Object.values(WEAPONS).filter(w=>!used.has(w.id)&&w.family===HERO_FAMILIES[hero]&&
++      (signature?w.signatureHero===hero:tier===1?w.rarity===1||w.rarity===2:w.rarity===3));
++    if(!candidates.length)continue;
++    const weapon=candidates[Math.floor(sample(random)*candidates.length)];
++    loadout.equippedWeapons[hero]=weapon.id;used.add(weapon.id);
++  }
++  const passivePool=Object.values(PROPS).filter(p=>p.type==='passive'&&!['shared_oranges','hyper_party'].includes(p.id)&&
++    (tier===1?p.rarity<=2:tier>=3?p.rarity>=2||['auto_shovel','tall_perch','banana_peel'].includes(p.id):true));
++  const count=[0,1,2+Math.floor(sample(random)*2),4,5+Math.floor(sample(random)*2)][tier];
++  loadout.equippedPassiveProps=shuffled(passivePool,random).slice(0,count).map(p=>p.id);
++  loadout.equippedActiveProps=tier<2?[]:tier===2?[sample(random)<.5?'catnip':'milk_bottle']:['milk_bottle','catnip'];
++  for(const id of [...loadout.equippedPassiveProps,...loadout.equippedActiveProps])loadout.ownedProps[id]=tier===4?PROPS[id].maxLevel:1;
++  const near=npcRows.map((row,index)=>({row,index,rank:Math.min(53,index*4)})).filter(npc=>Math.abs(npc.rank-rank)<=2);
++  const npc=near[Math.floor(sample(random)*near.length)],[zh,en,avatarId]=npc.row;
++  const identity:OpponentIdentity={id:`pet_npc_${npc.index+1}`,name:{'zh-CN':zh,en},avatarId,rankIndex:npc.rank};
++  return {tuning,loadout,identity};
++}
++
++/** All decisions issue the same validated commands and spend the same resources as a player. */
+ export class OpponentAI {
+-  private timer=.4;
++  private elapsed=0;
++  private nextDecision:number;
++  private sealedSince=new Map<number,number>();
++  private tuning:OpponentTuning;
++  constructor(tuning:OpponentTuning=getOpponentTuning(0)){
++    this.tuning={...tuning};this.nextDecision=tuning.openingDelay;
++  }
+   tick(engine:BattleEngine,dt:number):void {
+-    if(!engine.state.sides.ai.sprinklerUsed&&engine.state.enemies.some(enemy=>enemy.side==='ai'&&enemy.hp>0&&enemy.progress>=13))engine.useSprinkler('ai');
+-    this.timer-=dt;if(this.timer>0)return;this.timer=.85;
+-    const {state}=engine,units=state.units.filter(u=>u.side==='ai'),path=getMap(state.mapId).paths.ai;
+-    // Finish a recipe/feed even when the bench is full, before buying another card.
++    this.elapsed+=dt;
++    const {state}=engine,resources=state.sides.ai,units=state.units.filter(u=>u.side==='ai');
++    // An imminent leak retains the pre-P1 emergency save during the opening delay.
++    if(!resources.sprinklerUsed&&engine.lane('ai').some(enemy=>enemy.progress>=13))engine.useSprinkler('ai');
++    for(const id of this.sealedSince.keys())if(!units.some(u=>u.id===id&&(u.statuses.SEALED??0)>0))this.sealedSince.delete(id);
++    for(const unit of units)if((unit.statuses.SEALED??0)>0&&!this.sealedSince.has(unit.id))this.sealedSince.set(unit.id,this.elapsed);
++    if(this.elapsed+1e-8<this.tuning.openingDelay)return;
++    const ready=(id:string)=>resources.loadout.equippedActiveProps.includes(id)&&(resources.propCooldowns[id]??0)<=1e-8;
++    const eligible=(u:Unit)=>!u.washing&&u.level<(HEROES[u.kind]?5:UNITS[u.kind]?.maxLevel??1);
++    const strength=(u:Unit)=>(HEROES[u.kind]?10000:0)+u.level*100+engine.getUnitStats(u).damage;
++    const reacted=units.filter(u=>(u.statuses.SEALED??0)>0&&this.elapsed-(this.sealedSince.get(u.id)??this.elapsed)+1e-8>=this.tuning.reactionDelay);
++    const controlled=units.filter(u=>Object.values(u.statuses).some(value=>(value??0)>0)&&eligible(u)&&
++      (!(u.statuses.SEALED??0)||reacted.includes(u))).sort((a,b)=>strength(b)-strength(a));
++    const crisis=resources.oranges<=2||engine.lane('ai').some(e=>e.boss&&e.progress>=7.5);
++    if((this.tuning.rankIndex>=30||crisis)&&ready('milk_bottle')&&controlled[0])engine.useProp('milk_bottle',{unitId:controlled[0].id},'ai');
++    else if(reacted.some(u=>HEROES[u.kind])&&!resources.sprinklerUsed)engine.useSprinkler('ai');
++    if(crisis){
++      if(ready('catnip'))engine.useProp('catnip',{},'ai');
++      else if(ready('milk_bottle')){
++        const target=units.filter(u=>eligible(u)&&!(u.statuses.SEALED??0)).sort((a,b)=>strength(b)-strength(a))[0];
++        if(target)engine.useProp('milk_bottle',{unitId:target.id},'ai');
++      }
++    }
++    if(this.elapsed+1e-8<this.nextDecision)return;
++    this.nextDecision=this.elapsed+this.tuning.interval;
++    const merges:Array<{source:Unit;target:Unit;priority:number}>=[];
+     for(const a of units)for(const b of units){
+-      if(a.id===b.id)continue;
+-      const result=MergeSystem.combine(a,b);
+-      if(result.unit){engine.move(a.id,b.location);return;}
++      if(a.id===b.id||a.washing||b.washing)continue;
++      if([a,b].some(u=>(u.statuses.SEALED??0)>0&&!reacted.includes(u)))continue;
++      const result=MergeSystem.combine(a,b);if(!result.ok||!result.unit)continue;
++      const hero=HEROES[result.unit.kind],recipe=!!hero&&!HEROES[a.kind]&&!HEROES[b.kind];
++      merges.push({source:a,target:b,priority:(recipe?1000:hero?100:0)+(recipe&&this.tuning.counterMerges?this.counterScore(engine,result.unit.kind):0)});
+     }
+-    const empty=[];
++    merges.sort((a,b)=>b.priority-a.priority);
++    if(merges[0]&&engine.move(merges[0].source.id,merges[0].target.location).ok)return;
++    const empty:Point[]=[],grass:Point[]=[];
+     for(let row=0;row<5;row++)for(let col=0;col<8;col++){
+       if(state.grid[row][col]==='O'&&!units.some(u=>u.location.zone==='board'&&u.location.col===col&&u.location.row===row))empty.push({col,row});
++      if(state.grid[row][col]==='G')grass.push({col,row});
+     }
+-    empty.sort((a,b)=>Math.min(...path.map(p=>GridSystem.distance(p,a)))-Math.min(...path.map(p=>GridSystem.distance(p,b))));
+-    const bench=units.filter(u=>u.location.zone==='bench').sort((a,b)=>(HEROES[b.kind]?.damage??UNITS[b.kind]?.damage??0)-(HEROES[a.kind]?.damage??UNITS[a.kind]?.damage??0));
+-    if(bench.length&&empty.length){
+-      const location=bench[0].kind==='bee'?empty.at(-1)!:empty[0];
+-      engine.move(bench[0].id,{zone:'board',...location});return;
++    const bench=units.filter(u=>u.location.zone==='bench'&&!u.washing).sort((a,b)=>strength(b)-strength(a));
++    if(bench[0]&&empty.length){
++      empty.sort((a,b)=>this.placementScore(engine,bench[0],b)-this.placementScore(engine,bench[0],a));
++      if(engine.move(bench[0].id,{zone:'board',...empty[0]}).ok)return;
+     }
+-    if(!empty.length&&state.sides.ai.shovels>0){
+-      const grass=[];
+-      for(let row=0;row<5;row++)for(let col=0;col<8;col++)if(state.grid[row][col]==='G')grass.push({col,row});
+-      grass.sort((a,b)=>Math.min(...path.map(p=>GridSystem.distance(p,a)))-Math.min(...path.map(p=>GridSystem.distance(p,b))));
+-      if(grass[0]){engine.dig(grass[0].col,grass[0].row,'ai');return;}
++    if(!empty.length&&resources.shovels>0&&grass.length){
++      const unit=bench[0]??units.find(u=>u.kind!=='bee');
++      grass.sort((a,b)=>unit?this.placementScore(engine,unit,b)-this.placementScore(engine,unit,a):a.row-b.row||a.col-b.col);
++      if(engine.dig(grass[0].col,grass[0].row,'ai').ok)return;
+     }
+-    // If no remaining card can be played or merged, the rival may redraw its own pack too.
+-    if(state.sides.ai.food>=10)engine.summon('ai');
++    if(resources.food>=10)engine.summon('ai');
++  }
++  private counterScore(engine:BattleEngine,hero:string):number {
++    const bosses=engine.lane('ai').filter(e=>e.boss),family=HERO_FAMILIES[hero];
++    return bosses.reduce((score,boss)=>score+(
++      ['mega_roomba','buff_roo','dr_clippers'].includes(boss.kind)?family==='ranged'?40:family==='magic'?20:0:
++      ['dj_rat_king','hornet_queen','trash_coon'].includes(boss.kind)?['pepe_king','bamboo_mafia','purrcerer','ballin_rooster'].includes(hero)?40:0:
++      ['box_kraken','screaming_marmot'].includes(boss.kind)?['kungfu_po','samurai_doge','purrcerer'].includes(hero)?30:0:
++      family==='magic'?20:0),0);
++  }
++  private placementScore(engine:BattleEngine,unit:Unit,p:Point):number {
++    const path=getMap(engine.state.mapId).paths.ai,distance=Math.min(...path.map(q=>GridSystem.distance(p,q)));
++    const center=Math.hypot(p.col-3.5,p.row-2);
++    if(unit.kind==='bee')return distance*100-center;
++    const range=engine.getUnitStats(unit).range,coverage=path.filter(q=>GridSystem.distance(p,q)<=range).length;
++    if(range>=2.4)return coverage*4+Math.min(distance,2)*6-center*2;
++    const adjacent=path.filter(q=>GridSystem.distance(p,q)<=1.5).length;
++    return adjacent*10+coverage*2-distance*5-center;
+   }
+ }
+
+## src/core/BattleEngine.ts
+diff --git "D:\\rea_game\\games\\capybara-defense\\.runtime\\p1-review-baseline\\src\\core\\BattleEngine.ts" "D:\\rea_game\\games\\capybara-defense\\src\\core\\BattleEngine.ts"
+index 421630b..3fcad0b 100644
+--- "D:\\rea_game\\games\\capybara-defense\\.runtime\\p1-review-baseline\\src\\core\\BattleEngine.ts"
++++ "D:\\rea_game\\games\\capybara-defense\\src\\core\\BattleEngine.ts"
+@@ -3,36 +3,40 @@ import { BEE_PRODUCTION, ECONOMY, SHOVEL_PRODUCTION, UNITS } from '../config/uni
+ import { HEROES } from '../config/heroes';
+ import { ENEMIES } from '../config/enemies';
+ import {getMap} from '../config/maps';
+ import {RANKS} from '../config/ranks';
+ import {applyNewBossMechanic} from './BossMechanics';
+ import {rollWeapon} from '../config/weapons';
+ import { FIRST_WAVE_PREPARATION, WAVES, WAVE_DURATION,bossForWave } from '../config/waves';
+ import { MergeSystem } from './MergeSystem';
+-import { OpponentAI } from './OpponentAI';
++import { OpponentAI,createOpponentSetup } from './OpponentAI';
++import type {OpponentTuning} from '../config/opponents';
+ import { Random } from './Random';
+ import {copyLoadout,PropSystem,type PropTarget} from './PropSystem';
+ import {WeaponSystem} from './WeaponSystem';
+ import type { BattleLoadout,BattleState, CommandResult, Enemy, Point, Side, Unit, UnitLocation, VisualEvent,SideState,MapId } from './types';
+-export interface EngineOptions { seed?:number; autoWaves?:boolean; ai?:boolean; loadouts?:Partial<Record<Side,Partial<BattleLoadout>>>; mapId?:MapId; rankIndex?:number }
++export interface EngineOptions { seed?:number; autoWaves?:boolean; ai?:boolean; loadouts?:Partial<Record<Side,Partial<BattleLoadout>>>; mapId?:MapId; rankIndex?:number; aiOverrides?:Partial<OpponentTuning> }
+ let battleSequence=0;
+ export class BattleEngine {
+   state:BattleState;
+   private sequence=1;
+   private random:Random;
+-  private opponent=new OpponentAI();
++  private opponent:OpponentAI;
+   private props:PropSystem;
+   private weapons:WeaponSystem;
+   private effectOwners=new WeakMap<Enemy,Partial<Record<'burn'|'poison'|'bleed',Unit>>>();
+   constructor(public options:EngineOptions={}) {
+-    this.random=new Random(options.seed??Math.floor(Math.random()*0xffffffff));
+-    const side=(side:Side):SideState=>({food:ECONOMY.initialFood,oranges:ECONOMY.initialOranges,shovels:ECONOMY.initialShovels,shovelTimer:0,kills:0,damage:0,loot:[],fog:0,loadout:copyLoadout(options.loadouts?.[side]),propCooldowns:{},sprinklerUsed:false,giantCatUses:0,catnipTime:0});
++    const seed=options.seed??Math.floor(Math.random()*0xffffffff);
++    this.random=new Random(seed);
+     const mapId=getMap(options.mapId).id,rankIndex=Number.isFinite(options.rankIndex)?Math.max(0,Math.min(53,Math.trunc(options.rankIndex!))):0;
+-    this.state={id:`${Date.now()}-${++battleSequence}`,phase:'ready',time:0,wave:0,waveTime:0,nextSpawn:0,spawned:0,mapId,rankIndex,mergedHeroes:{player:[],ai:[]},grid:GridSystem.create(mapId),sides:{player:side('player'),ai:side('ai')},units:[],enemies:[],events:[],traps:[],result:null};
++    const setupRandom=new Random(seed^0x70657473),setup=createOpponentSetup(rankIndex,()=>setupRandom.next());
++    this.opponent=new OpponentAI({...setup.tuning,...options.aiOverrides});
++    const side=(side:Side):SideState=>({food:ECONOMY.initialFood,oranges:ECONOMY.initialOranges,shovels:ECONOMY.initialShovels,shovelTimer:0,kills:0,damage:0,loot:[],fog:0,loadout:copyLoadout(options.loadouts?.[side]??(side==='ai'&&options.ai!==false?setup.loadout:undefined)),propCooldowns:{},sprinklerUsed:false,giantCatUses:0,catnipTime:0});
++    this.state={id:`${Date.now()}-${++battleSequence}`,phase:'ready',time:0,wave:0,waveTime:0,nextSpawn:0,spawned:0,mapId,rankIndex,opponent:setup.identity,mergedHeroes:{player:[],ai:[]},grid:GridSystem.create(mapId),sides:{player:side('player'),ai:side('ai')},units:[],enemies:[],events:[],traps:[],result:null};
+     this.props=new PropSystem(this,()=>this.random.next());this.props.initialize();this.weapons=new WeaponSystem(this,()=>this.random.next());
+   }
+   start():void {
+     if(this.state.phase!=='ready')return;
+     this.state.phase='playing';if(this.options.autoWaves!==false)this.beginWave(1);
+   }
+   tick(dt:number):void {
+     if(!Number.isFinite(dt)||dt<=0||this.state.phase!=='playing')return;
+@@ -123,17 +127,17 @@ export class BattleEngine {
+   }
+   spawnEnemy(kind:string,side:Side,scale=1):Enemy {
+     const config=ENEMIES[kind];if(!config)throw new Error('Unknown enemy');
+     scale*=RANKS[this.state.rankIndex].hpMultiplier;
+     const p=GridSystem.pathPosition(side,0,this.state.mapId);
+     const enemy:Enemy={id:this.sequence++,kind,side,boss:config.boss,hp:config.hp*scale,maxHp:config.hp*scale,progress:0,col:p.col,row:p.row,speed:config.speed,armor:config.armor,size:1,abilityCooldown:config.interval,stun:0,slow:0,slowFactor:1,burn:0,burnDps:0,poison:0,poisonDps:0,stolenBy:[],hitFlash:0};
+     this.state.enemies.push(enemy);
+     if(enemy.boss){
+-      this.event({type:'bubble',side,col:p.col,row:p.row,textKey:`boss.${kind}.bubble`,duration:2.2});
++      this.event({type:'bubble',side,col:p.col,row:p.row,textKey:`boss.${kind}.bubble`,effect:'boss_spawn',duration:2.2});
+       if(['box_kraken','sad_rain_frog','king_skunk'].includes(kind))this.bossAbility(enemy);
+     }
+     return enemy;
+   }
+   adjustOranges(delta:number,side:Side='player'):void {
+     if(!this.actionAllowed()||!Number.isFinite(delta))return;
+     this.state.sides[side].oranges=Math.max(0,this.state.sides[side].oranges+Math.trunc(delta));
+     this.event({type:'orange',side,col:side==='player'?7:0,row:side==='player'?9:0,value:delta,duration:1.2,textKey:delta<0?'hint.orangeLost':'hint.orangeAdded'});
+
+## src/core/PropSystem.ts
+diff --git "D:\\rea_game\\games\\capybara-defense\\.runtime\\p1-review-baseline\\src\\core\\PropSystem.ts" "D:\\rea_game\\games\\capybara-defense\\src\\core\\PropSystem.ts"
+index b4d5d53..d502852 100644
+--- "D:\\rea_game\\games\\capybara-defense\\.runtime\\p1-review-baseline\\src\\core\\PropSystem.ts"
++++ "D:\\rea_game\\games\\capybara-defense\\src\\core\\PropSystem.ts"
+@@ -83,16 +83,20 @@ export class PropSystem {
+   }
+   sprinkler(side:Side):CommandResult {
+     const state=this.engine.state,resources=state.sides[side];
+     if(state.phase!=='playing')return{ok:false,key:'hint.paused'};
+     if(resources.sprinklerUsed)return{ok:false,key:'m2.sprinklerUsed'};
+     resources.sprinklerUsed=true;
+     const points=[...getMap(this.engine.state.mapId).paths[side]].reverse().map(p=>({...p}));
+     this.engine.event({type:'sprinkler',side,...points[0],points,duration:1.1});
++    for(const unit of state.units)if(unit.side===side&&(unit.statuses.SEALED??0)>0){
++      delete unit.statuses.SEALED;
++      this.engine.event({type:'purge',side,...this.engine.unitPosition(unit),unitId:unit.id,effect:'sprinkler',textKey:'hint.purged',duration:1.1});
++    }
+     for(const enemy of this.engine.lane(side)){
+       this.engine.knockback(enemy,4.5);this.engine.hurt(enemy,120,undefined,false,false,true);enemy.slow=Math.max(enemy.slow,2);enemy.slowFactor=.5;
+     }
+     return{ok:true,key:'m2.sprinklerReady'};
+   }
+   tick(dt:number):void {
+     for(const side of ['player','ai'] as Side[]){
+       const resources=this.engine.state.sides[side];resources.catnipTime=Math.max(0,resources.catnipTime-dt);
+@@ -122,17 +126,17 @@ export class PropSystem {
+     if(!this.has(enemy.side,'emp_jammer')||this.random()>=.45)return false;
+     this.engine.hurt(enemy,enemy.maxHp*.08,undefined,true,false,true);
+     this.engine.event({type:'bubble',side:enemy.side,col:enemy.col,row:enemy.row,textKey:'m2.empBackfire',duration:1.2});return true;
+   }
+   treasure(side:Side,col:number,row:number):void {
+     if(!this.has(side,'gold_doge')||this.random()>=.35)return;
+     const food=this.random()<.5;
+     if(food)this.engine.state.sides[side].food+=12;else this.engine.state.sides[side].loot.push(this.engine.rollWeaponFragment());
+-    this.engine.event({type:'bubble',side,col,row,textKey:food?'m2.treasureFood':'m2.treasureFragment',duration:1.4});
++    this.engine.event({type:'bubble',side,col,row,textKey:food?'m2.treasureFood':'m2.treasureFragment',effect:'treasure',duration:1.4});
+     this.engine.event({type:'weapon',side,col,row,effect:'treasure',color:'#eabc4c',duration:.8});
+   }
+   private randomComponent(exclude:string):string {
+     const options=DRAW_POOL.filter(unit=>unit.category==='component'&&unit.id!==exclude);return options[Math.floor(this.random()*options.length)].id;
+   }
+   private transform(unit:Unit,kind:string):void {unit.kind=kind;unit.level=1;unit.energy=0;unit.cooldown=0;unit.animation=1;unit.statuses={};}
+   private upgrade(unit:Unit,delta:number):void {
+     const previous=unit.level,max=HEROES[unit.kind]?5:UNITS[unit.kind]?.maxLevel??1;unit.level=Math.min(max,Math.max(1,unit.level+delta));unit.animation=1;
+
+## src/core/PlayerProgression.ts
+diff --git "D:\\rea_game\\games\\capybara-defense\\.runtime\\p1-review-baseline\\src\\core\\PlayerProgression.ts" "D:\\rea_game\\games\\capybara-defense\\src\\core\\PlayerProgression.ts"
+index 91dbd76..e55b1ea 100644
+--- "D:\\rea_game\\games\\capybara-defense\\.runtime\\p1-review-baseline\\src\\core\\PlayerProgression.ts"
++++ "D:\\rea_game\\games\\capybara-defense\\src\\core\\PlayerProgression.ts"
+@@ -1,16 +1,16 @@
+ import { AVATARS, DEFAULT_AVATARS } from '../config/avatars';
+ import { HEROES } from '../config/heroes';
+ import { PROPS } from '../config/props';
+ import { RANKS, getRank } from '../config/ranks';
+ import { WEAPONS } from '../config/weapons';
+ import type { GameSettings, MapId, Profile } from './types';
+ 
+-export const DEFAULT_SETTINGS:GameSettings={musicVolume:.5,soundVolume:.75,showDamageNumbers:true};
++export const DEFAULT_SETTINGS:GameSettings={musicVolume:.5,soundVolume:.75,showDamageNumbers:true,developerMode:false};
+ const own=(object:object,id:string)=>Object.hasOwn(object,id);
+ const unique=(ids:string[])=>[...new Set(ids)];
+ const maps:MapId[]=['sunny_backyard','sakura_onsen','midnight_kitchen','cat_tower_maze'];
+ const volume=(value:unknown,fallback:number)=>typeof value==='number'&&Number.isFinite(value)?Math.max(0,Math.min(1,value)):fallback;
+ 
+ /** Awards are monotonic: historical evidence or an already granted avatar both suffice. */
+ export function unlockAchievements(profile:Profile):Profile {
+   const best=Math.max(profile.winStreak,profile.bestWinStreak);
+@@ -41,17 +41,18 @@ export function selectMap(profile:Profile,id:'auto'|MapId):Profile {
+ }
+ export function selectAvatar(profile:Profile,id:string):Profile {
+   if(!own(AVATARS,id)||!profile.unlockedAvatars.includes(id)) return profile;
+   return {...profile,avatarId:id};
+ }
+ export function updateSettings(profile:Profile,patch:Partial<GameSettings>):Profile {
+   const values={...profile.settings,...patch};
+   return {...profile,settings:{musicVolume:volume(values.musicVolume,DEFAULT_SETTINGS.musicVolume),soundVolume:volume(values.soundVolume,DEFAULT_SETTINGS.soundVolume),
+-    showDamageNumbers:typeof values.showDamageNumbers==='boolean'?values.showDamageNumbers:DEFAULT_SETTINGS.showDamageNumbers}};
++    showDamageNumbers:typeof values.showDamageNumbers==='boolean'?values.showDamageNumbers:DEFAULT_SETTINGS.showDamageNumbers,
++    developerMode:typeof values.developerMode==='boolean'?values.developerMode:false}};
+ }
+ export function setRank(profile:Profile,index:number):Profile {
+   if(!Number.isInteger(index)||index<0||index>=RANKS.length) return profile;
+   let p=unlockAchievements({...profile,stars:RANKS[index].minStars,highestStars:Math.max(profile.highestStars,RANKS[index].minStars)});
+   if(p.selectedMap!=='auto'&&!getUnlockedMaps(p).includes(p.selectedMap)) p={...p,selectedMap:'auto'};
+   return p;
+ }
+ export function applyBattleProgress(profile:Profile,won:boolean,mergedHeroes:string[]=[]):Profile {
+
+## src/core/MetaProgression.ts
+diff --git "D:\\rea_game\\games\\capybara-defense\\.runtime\\p1-review-baseline\\src\\core\\MetaProgression.ts" "D:\\rea_game\\games\\capybara-defense\\src\\core\\MetaProgression.ts"
+index cae5b3b..960e7c7 100644
+--- "D:\\rea_game\\games\\capybara-defense\\.runtime\\p1-review-baseline\\src\\core\\MetaProgression.ts"
++++ "D:\\rea_game\\games\\capybara-defense\\src\\core\\MetaProgression.ts"
+@@ -19,23 +19,25 @@ const copy = (profile:Profile):Profile => ({...profile,fragments:[...profile.fra
+   weaponFragments:{...profile.weaponFragments},unlockedWeapons:[...profile.unlockedWeapons],equippedWeapons:{...profile.equippedWeapons},
+   ownedProps:{...profile.ownedProps},equippedActiveProps:[...profile.equippedActiveProps],equippedPassiveProps:[...profile.equippedPassiveProps],
+   unlockedAvatars:[...profile.unlockedAvatars],mergedHeroes:[...profile.mergedHeroes],settings:{...profile.settings},
+   shop:profile.shop ? {...profile.shop,offers:[...profile.shop.offers]} : null});
+ const fail = (profile:Profile,key:string):MetaResult => ({profile:copy(profile),ok:false,key});
+ const success = (profile:Profile,key:string,amount?:number):MetaResult => ({profile:unlockAchievements(profile),ok:true,key,...(amount===undefined?{}:{amount})});
+ 
+ export function createProfile():Profile {
+-  return {coins:0,wins:0,matches:0,fragments:[],awardedBattles:[],schemaVersion:2,
++  return {coins:0,wins:0,matches:0,fragments:[],awardedBattles:[],schemaVersion:2,tutorialCompleted:false,tutorialRewardClaimed:false,
+     weaponFragments:{},unlockedWeapons:[],equippedWeapons:{},ownedProps:{},equippedActiveProps:[],equippedPassiveProps:[],freeLotteryTickets:0,shop:null,
+     stars:0,highestStars:0,winStreak:0,bestWinStreak:0,selectedMap:'auto',avatarId:'capybara',unlockedAvatars:[...DEFAULT_AVATARS],mergedHeroes:[],settings:{...DEFAULT_SETTINGS}};
+ }
+ export function normalizeProfile(raw:unknown):Profile {
+   const data=object(raw);const p=createProfile();
+   p.coins=count(data.coins);p.matches=count(data.matches);p.wins=Math.min(count(data.wins),p.matches);
++  p.tutorialCompleted=typeof data.tutorialCompleted==='boolean'?data.tutorialCompleted:p.matches>0;
++  p.tutorialRewardClaimed=typeof data.tutorialRewardClaimed==='boolean'?data.tutorialRewardClaimed:p.matches>0||p.tutorialCompleted;
+   // Only absence migrates from wins: explicit zero and malformed stars never replay progress.
+   p.stars=has(data,'stars')?count(data.stars):p.wins;
+   p.highestStars=Math.max(p.stars,count(data.highestStars));
+   p.winStreak=count(data.winStreak);p.bestWinStreak=Math.max(p.winStreak,count(data.bestWinStreak));
+   p.unlockedAvatars=unique([...DEFAULT_AVATARS,...strings(data.unlockedAvatars).filter(id=>has(AVATARS,id))]);
+   p.avatarId=typeof data.avatarId==='string'?data.avatarId:'capybara';
+   p.mergedHeroes=unique(strings(data.mergedHeroes).filter(id=>has(HEROES,id)));
+   p.settings=updateSettings(p,object(data.settings)).settings;
+@@ -159,16 +161,17 @@ export function spinLottery(profile:Profile,prizes:LotteryPrize[],random:()=>num
+   else if(prize.type==='prop') {
+     const id=prize.id!;if((p.ownedProps[id]??0)>=PROPS[id].maxLevel) p.coins+=PROPS[id].price;
+     else {p.ownedProps[id]=(p.ownedProps[id]??0)+1;replaceCappedShopOffer(p,id);}
+   } else {const granted=grantWeaponFragments(p,[prize.id!]);p=granted.profile;newWeapons=granted.newWeapons;}
+   return {...success(p,'meta.lotteryWon'),prize,index,newWeapons};
+ }
+ export function unlockAllProfile(profile:Profile):Profile {
+   const p=copy(profile);p.coins=9999;p.unlockedWeapons=Object.keys(WEAPONS);
++  p.tutorialCompleted=true;p.tutorialRewardClaimed=true;
+   p.stars=Math.max(180,p.stars);p.highestStars=Math.max(p.highestStars,p.stars);
+   p.unlockedAvatars=Object.keys(AVATARS);p.mergedHeroes=Object.keys(HEROES);
+   p.equippedWeapons={};
+   for(const weapon of Object.values(WEAPONS)) {
+     p.weaponFragments[weapon.id]=Math.max(p.weaponFragments[weapon.id]??0,RARITY_RULES[weapon.rarity].fragments);
+     if(weapon.signatureHero) p.equippedWeapons[weapon.signatureHero]=weapon.id;
+   }
+   p.ownedProps=Object.fromEntries(Object.values(PROPS).map(prop=>[prop.id,prop.maxLevel]));
+
+## src/config/opponents.ts
+diff --git "D:\\rea_game\\games\\capybara-defense\\.runtime\\p1-review-baseline\\__empty__" "D:\\rea_game\\games\\capybara-defense\\src\\config\\opponents.ts"
+index e69de29..0f06601 100644
+--- "D:\\rea_game\\games\\capybara-defense\\.runtime\\p1-review-baseline\\__empty__"
++++ "D:\\rea_game\\games\\capybara-defense\\src\\config\\opponents.ts"
+@@ -0,0 +1,6 @@
++export interface OpponentTuning {rankIndex:number;interval:number;openingDelay:number;reactionDelay:number;counterMerges:boolean}
++export function getOpponentTuning(rankIndex:number):OpponentTuning {
++  const rank=Number.isFinite(rankIndex)?Math.max(0,Math.min(53,Math.trunc(rankIndex))):0;
++  const tier=rank<6?0:rank<15?1:rank<30?2:rank<45?3:4;
++  return {rankIndex:rank,interval:[1.65,1.3,1,.82,.68][tier],openingDelay:[3.5,2,1,.5,.3][tier],reactionDelay:[2.5,2.3,2,1.6,1.2][tier],counterMerges:tier===4};
++}
+
+## src/core/MergeTargets.ts
+diff --git "D:\\rea_game\\games\\capybara-defense\\.runtime\\p1-review-baseline\\__empty__" "D:\\rea_game\\games\\capybara-defense\\src\\core\\MergeTargets.ts"
+index e69de29..aa73ac5 100644
+--- "D:\\rea_game\\games\\capybara-defense\\.runtime\\p1-review-baseline\\__empty__"
++++ "D:\\rea_game\\games\\capybara-defense\\src\\core\\MergeTargets.ts"
+@@ -0,0 +1,15 @@
++import type {BattleState} from './types';
++import {MergeSystem} from './MergeSystem';
++import {HEROES} from '../config/heroes';
++
++export function getMergeTargets(state:BattleState,sourceId:number):Array<{unitId:number;kind:'upgrade'|'hero';heroId?:string}> {
++  const source=state.units.find(unit=>unit.id===sourceId);
++  if(!source||source.washing)return [];
++  return state.units.flatMap(candidate=>{
++    if(candidate.id===source.id||candidate.side!==source.side||candidate.washing)return [];
++    const outcome=MergeSystem.combine(source,candidate);
++    if(!outcome.ok||!outcome.unit)return [];
++    return [{unitId:candidate.id,kind:HEROES[outcome.unit.kind]?'hero' as const:'upgrade' as const,
++      ...(HEROES[outcome.unit.kind]?{heroId:outcome.unit.kind}:{})}];
++  });
++}
+
+## src/core/Tutorial.ts
+diff --git "D:\\rea_game\\games\\capybara-defense\\.runtime\\p1-review-baseline\\__empty__" "D:\\rea_game\\games\\capybara-defense\\src\\core\\Tutorial.ts"
+index e69de29..db39318 100644
+--- "D:\\rea_game\\games\\capybara-defense\\.runtime\\p1-review-baseline\\__empty__"
++++ "D:\\rea_game\\games\\capybara-defense\\src\\core\\Tutorial.ts"
+@@ -0,0 +1,20 @@
++import type {Profile} from './types';
++
++export type TutorialStep=1|2|3|'done';
++export type TutorialAction='summon'|'deploy'|'dig'|'merge'|'acknowledge'|'skip';
++/** Call only after a real command succeeds; the guide never pauses the battle. */
++export function advanceTutorial(step:TutorialStep,action:TutorialAction):TutorialStep {
++  if(step==='done'||action==='skip')return 'done';
++  if(step===1&&action==='summon')return 2;
++  if(step===2&&(action==='deploy'||action==='dig'))return 3;
++  if(step===3&&(action==='merge'||action==='acknowledge'))return 'done';
++  return step;
++}
++/** The caller persists this candidate before adopting it, making storage retries safe. */
++export function finishTutorial(profile:Profile,reward:boolean):{profile:Profile;awarded:boolean} {
++  const awarded=reward&&!profile.tutorialRewardClaimed;
++  return {profile:{...profile,tutorialCompleted:true,tutorialRewardClaimed:!!profile.tutorialRewardClaimed||awarded,coins:profile.coins+(awarded?20:0)},awarded};
++}
++export function replayTutorial(profile:Profile):Profile {
++  return {...profile,tutorialCompleted:false};
++}
+
+## tests/p1-core.test.ts
+diff --git "D:\\rea_game\\games\\capybara-defense\\.runtime\\p1-review-baseline\\__empty__" "D:\\rea_game\\games\\capybara-defense\\tests\\p1-core.test.ts"
+index e69de29..dbedea2 100644
+--- "D:\\rea_game\\games\\capybara-defense\\.runtime\\p1-review-baseline\\__empty__"
++++ "D:\\rea_game\\games\\capybara-defense\\tests\\p1-core.test.ts"
+@@ -0,0 +1,179 @@
++import {describe,it,expect,vi} from 'vitest';
++import {BattleEngine} from '../src/core/BattleEngine';
++import * as AI from '../src/core/OpponentAI';
++import {createProfile,normalizeProfile,unlockAllProfile} from '../src/core/MetaProgression';
++import {updateSettings} from '../src/core/PlayerProgression';
++import {WEAPONS,HERO_FAMILIES} from '../src/config/weapons';
++import {PROPS} from '../src/config/props';
++import {RECIPES} from '../src/config/recipes';
++import {MAP_IDS,getMap} from '../src/config/maps';
++import {GridSystem} from '../src/core/GridSystem';
++import {Random} from '../src/core/Random';
++import {enableTestProfile,restoreNormalProfile,saveProfile} from '../src/ui/storage';
++import type {Unit} from '../src/core/types';
++
++const arena=(rankIndex=0,ai=false)=>{const e=new BattleEngine({rankIndex,ai,seed:49,autoWaves:false});e.start();return e;};
++function pet(e:BattleEngine,kind:string,side:'player'|'ai'='player'):Unit {const id=e.grant(kind,side).unitId!;return e.state.units.find(u=>u.id===id)!;}
++const setup=(rank:number,random=()=>.4)=>{expect(AI).toHaveProperty('createOpponentSetup');return AI.createOpponentSetup(rank,random);};
++const tuning=async(rank:number)=>(await import('../src/config/opponents')).getOpponentTuning(rank);
++const targets=async(e:BattleEngine,id:number)=>(await import('../src/core/MergeTargets')).getMergeTargets(e.state,id);
++
++describe('P1 opponent tier contracts',()=>{
++  it.each([[0,1.65,3.5,0],[5,1.65,3.5,0],[6,1.3,2,2],[14,1.3,2,2],[15,1,1,4],[29,1,1,4],[30,.82,.5,6],[44,.82,.5,6],[45,.68,.3,12],[53,.68,.3,12]])('scales exact rank %i boundary',async(rank,interval,openingDelay,count)=>{
++    expect(await tuning(rank)).toMatchObject({rankIndex:rank,interval,openingDelay,counterMerges:rank>=45});
++    const s=setup(rank);expect(Object.keys(s.loadout.equippedWeapons)).toHaveLength(count);
++    const ids=Object.values(s.loadout.equippedWeapons);expect(new Set(ids).size).toBe(ids.length);
++    for(const [hero,id] of Object.entries(s.loadout.equippedWeapons))expect(WEAPONS[id].family).toBe(HERO_FAMILIES[hero]);
++    const rarities=ids.map(id=>WEAPONS[id].rarity);
++    if(rank>=45)for(const [hero,id] of Object.entries(s.loadout.equippedWeapons))expect(WEAPONS[id].signatureHero).toBe(hero);
++    else if(rank>=30){expect(rarities.filter(r=>r===4)).toHaveLength(2);expect(rarities.every(r=>r>=3)).toBe(true);}
++    else if(rank>=15)expect(rarities.every(r=>r===3)).toBe(true);
++    else expect(rarities.every(r=>r===1||r===2)).toBe(true);
++    const passive=s.loadout.equippedPassiveProps;
++    expect(passive.length).toBeGreaterThanOrEqual(rank<6?0:rank<15?1:rank<30?2:rank<45?4:5);
++    expect(passive.length).toBeLessThanOrEqual(rank<6?0:rank<15?1:rank<30?3:rank<45?4:6);
++    for(const id of [...passive,...s.loadout.equippedActiveProps])expect(s.loadout.ownedProps[id]).toBeGreaterThan(0);
++    for(const id of passive){expect(PROPS[id].type).toBe('passive');expect(['shared_oranges','hyper_party','expired_can']).not.toContain(id);}
++    expect(s.loadout.equippedActiveProps.length).toBe(rank<15?0:rank<30?1:2);
++    if(rank>=30)expect(s.loadout.equippedActiveProps).toEqual(['milk_bottle','catnip']);
++    expect(s.identity.name.en.length).toBeGreaterThan(2);expect(s.identity.name['zh-CN']).toMatch(/[\u4e00-\u9fff]/);expect(Math.abs(s.identity.rankIndex-rank)).toBeLessThanOrEqual(2);
++  });
++  it('clamps malformed rank and creates isolated setups',async()=>{
++    expect((await tuning(NaN)).rankIndex).toBe(0);expect((await tuning(-3)).rankIndex).toBe(0);expect((await tuning(999)).rankIndex).toBe(53);
++    const a=setup(35),b=setup(35);a.loadout.equippedActiveProps.pop();expect(b.loadout.equippedActiveProps).toHaveLength(2);
++  });
++  it('keeps every rank legal across seeded and extreme setup samples',()=>{
++    for(let rank=0;rank<=53;rank++)for(let seed=0;seed<10;seed++){
++      const random=new Random(seed),s=setup(rank,()=>random.next()),weapons=Object.values(s.loadout.equippedWeapons);
++      expect(weapons).toHaveLength(rank<6?0:rank<15?2:rank<30?4:rank<45?6:12);
++      expect(new Set(weapons).size).toBe(weapons.length);
++      for(const [hero,id] of Object.entries(s.loadout.equippedWeapons))expect(HERO_FAMILIES[hero]).toBe(WEAPONS[id].family);
++      expect(s.loadout.equippedPassiveProps).not.toContain('shared_oranges');expect(s.loadout.equippedPassiveProps).not.toContain('hyper_party');
++      expect(Math.abs(s.identity.rankIndex-rank)).toBeLessThanOrEqual(2);
++    }
++    for(const value of [0,1,NaN,Infinity,-1])expect(Object.keys(setup(35,()=>value).loadout.equippedWeapons)).toHaveLength(6);
++  });
++  it('uses each configured decision interval and independent engine clocks',async()=>{
++    for(const rank of [0,6,15,35,50]){
++      const t=await tuning(rank),a=arena(rank,true),b=arena(rank,true),u=pet(a,'hamster','ai');
++      const calls=vi.spyOn(a,'move');a.tick(t.openingDelay+.001);expect(calls).toHaveBeenCalledTimes(1);expect(u.location.zone).toBe('board');expect(b.state.units).toHaveLength(0);
++      pet(a,'squirrel','ai');a.tick(t.interval-.1);expect(calls).toHaveBeenCalledTimes(1);a.tick(.15);expect(calls).toHaveBeenCalledTimes(2);
++    }
++  });
++  it.each([0,6,15,35,50])('waits for rank %i opening before ordinary actions',async rank=>{
++    const e=arena(rank,true),delay=(await tuning(rank)).openingDelay;
++    e.tick(delay-.05);expect(e.state.units).toHaveLength(0);expect(e.state.sides.ai.food).toBeGreaterThanOrEqual(30);
++    e.tick(.1);expect(e.state.units.filter(u=>u.side==='ai')).toHaveLength(5);
++  });
++  it('keeps setup away from disabled AI and combat RNG; honors explicit loadout and tuning overrides',()=>{
++    const off=arena(50),on=arena(50,true);expect(off.state.sides.ai.loadout.equippedWeapons).toEqual({});
++    off.summon();on.summon();expect(off.state.units.map(u=>u.kind)).toEqual(on.state.units.map(u=>u.kind));expect(on.state.opponent).toBeDefined();
++    const custom=new BattleEngine({seed:49,rankIndex:50,autoWaves:false,loadouts:{ai:{}},aiOverrides:{openingDelay:4,interval:3}});custom.start();custom.tick(3.9);
++    expect(custom.state.sides.ai.loadout.equippedWeapons).toEqual({});expect(custom.state.units).toHaveLength(0);custom.tick(.2);expect(custom.state.units).toHaveLength(5);
++  });
++});
++
++describe('P1 actual legal AI tactics',()=>{
++  it('moderate rank holds its single bottle until a crisis and pays its normal cooldown',()=>{
++    const e=new BattleEngine({rankIndex:20,seed:5,autoWaves:false,loadouts:{ai:{ownedProps:{milk_bottle:1},equippedActiveProps:['milk_bottle']}}});e.start();
++    const hero=pet(e,'kungfu_po','ai');hero.statuses={WET:18};e.tick(1.1);expect(hero.level).toBe(1);expect(hero.statuses.WET).toBeGreaterThan(0);
++    e.state.sides.ai.oranges=2;e.tick(.1);expect(hero.level).toBe(2);expect(e.state.sides.ai.propCooldowns.milk_bottle).toBeGreaterThan(49);
++  });
++  it('does not spend unavailable food or shovels and can legally redraw a blocked pack',()=>{
++    const e=arena(0,true);e.state.sides.ai.food=0;e.state.sides.ai.shovels=0;e.tick(8);expect(e.state.units).toHaveLength(0);expect(e.state.sides.ai.food).toBe(0);
++    // Five incompatible loose parts on a board with no open or grass tile force a paid redraw.
++    for(let row=0;row<5;row++)for(let col=0;col<8;col++)if(['O','G'].includes(e.state.grid[row][col]))e.state.grid[row][col]='B';
++    for(const kind of ['hat_bamboo','hat_shades','hat_wizard','cleaver','basketball'])pet(e,kind,'ai');
++    const ids=e.state.units.map(u=>u.id);e.state.sides.ai.food=10;e.tick(1.7);expect(e.state.sides.ai.food).toBe(0);expect(e.state.units).toHaveLength(5);expect(e.state.units.every(u=>!ids.includes(u.id))).toBe(true);
++  });
++  it('uses the bottle on the strongest eligible controlled hero after reaction delay and respects cooldown',()=>{
++    const e=arena(35,true),weak=pet(e,'hamster','ai'),hero=pet(e,'kungfu_po','ai');hero.level=3;hero.statuses={SEALED:18,WET:18};weak.statuses={SEALED:18};
++    e.tick(1.1);expect(hero.level).toBe(3);expect(hero.statuses.SEALED).toBeGreaterThan(0);
++    e.tick(1.4);expect(hero.level).toBe(4);expect(hero.statuses).toEqual({});expect(e.state.sides.ai.propCooldowns.milk_bottle).toBeGreaterThan(47);
++    hero.statuses={SEALED:18};e.tick(1);expect(hero.level).toBe(4);
++  });
++  it('does not bypass the sealed reaction delay by immediately feeding a matching part',()=>{
++    const e=arena(35,true),hero=pet(e,'kungfu_po','ai');hero.level=2;hero.statuses={SEALED:18};pet(e,'panda','ai');
++    e.tick(1.1);expect(e.state.units.find(u=>u.kind==='kungfu_po')?.statuses.SEALED).toBeGreaterThan(0);
++    e.tick(1.4);expect(e.state.units.find(u=>u.kind==='kungfu_po')?.statuses.SEALED).toBeUndefined();
++  });
++  it('uses a finite one-use sprinkler to clear seals when bottle is unavailable, retaining other statuses and sides',()=>{
++    const e=arena(35,true),hero=pet(e,'kungfu_po','ai'),other=pet(e,'hamster');hero.level=5;hero.statuses={SEALED:18,WET:18};other.statuses={SEALED:18};
++    e.tick(1.1);expect(e.state.sides.ai.sprinklerUsed).toBe(false);e.tick(1.4);
++    expect(e.state.sides.ai.sprinklerUsed).toBe(true);expect(hero.statuses.SEALED).toBeUndefined();expect(hero.statuses.WET).toBeGreaterThan(0);expect(other.statuses.SEALED).toBeGreaterThan(0);
++    expect(e.state.events.some(v=>v.type==='purge'&&v.effect==='sprinkler')).toBe(true);expect(e.useSprinkler('ai').ok).toBe(false);
++  });
++  it('uses legal catnip only in crisis and cannot bypass cooldowns',()=>{
++    const e=arena(35,true);e.tick(1);expect(e.state.sides.ai.catnipTime).toBe(0);
++    e.state.sides.ai.oranges=2;e.tick(.1);expect(e.state.sides.ai.catnipTime).toBeGreaterThan(7);expect(e.state.sides.ai.propCooldowns.catnip).toBeGreaterThan(54);
++    e.tick(9);expect(e.state.sides.ai.catnipTime).toBe(0);expect(e.state.sides.ai.propCooldowns.catnip).toBeGreaterThan(40);
++  });
++  it('prioritizes recipes over an earlier basic upgrade',()=>{
++    const e=arena(0,true);pet(e,'hamster','ai');pet(e,'hamster','ai');pet(e,'panda','ai');pet(e,'hat_bamboo','ai');e.tick(3.6);
++    expect(e.state.units.some(u=>u.kind==='kungfu_po')).toBe(true);expect(e.state.units.filter(u=>u.kind==='hamster')).toHaveLength(2);
++  });
++  it('high rank prioritizes a ranged counter against the swallowing boss',()=>{
++    const e=arena(50,true);for(const k of ['panda','hat_bamboo','cat','hat_shades'])pet(e,k,'ai');e.spawnEnemy('mega_roomba','ai');e.tick(.4);
++    expect(e.state.units.some(u=>u.kind==='meowfia'||u.kind==='bamboo_mafia')).toBe(true);
++  });
++  it.each(MAP_IDS)('uses map-aware melee inner coverage, ranged safety and bee distance on %s',mapId=>{
++    function placed(kind:string){const e=new BattleEngine({mapId,rankIndex:0,seed:2,autoWaves:false});e.start();const u=pet(e,kind,'ai');e.tick(3.6);return u.location;}
++    const melee=placed('kungfu_po'),ranged=placed('meowfia'),bee=placed('bee');for(const p of [melee,ranged,bee])expect(p.zone).toBe('board');
++    if(melee.zone!=='board'||ranged.zone!=='board'||bee.zone!=='board')return;
++    const path=getMap(mapId).paths.ai,dist=(p:{col:number;row:number})=>Math.min(...path.map(q=>GridSystem.distance(p,q)));
++    expect(dist(bee)).toBeGreaterThanOrEqual(dist(melee));expect(dist(ranged)).toBeGreaterThanOrEqual(dist(melee));
++    const nearby=path.filter(q=>GridSystem.distance(melee,q)<=1.5);expect(nearby.length).toBeGreaterThanOrEqual(3);
++  });
++  it('sprinkler purge preserves damage, knockback and slow; treasure and boss events have audio effects',()=>{
++    const e=arena(),u=pet(e,'hamster');u.statuses={SEALED:10,CONFUSED:5};const m=e.spawnEnemy('rat','player');m.hp=m.maxHp=500;m.progress=10;
++    expect(e.useSprinkler().ok).toBe(true);expect(m.hp).toBe(380);expect(m.progress).toBe(5.5);expect(m.slow).toBe(2);expect(u.statuses).toEqual({CONFUSED:5});
++    e.spawnEnemy('husky_wrecker','player');expect(e.state.events.some(v=>v.type==='bubble'&&v.effect==='boss_spawn')).toBe(true);
++  });
++});
++
++describe('P1 merge target queries',()=>{
++  it('finds upgrades and excludes swaps, mismatched levels, maxed, locked, washing, self and opponent without mutation',async()=>{
++    const e=arena(),source=pet(e,'hamster'),match=pet(e,'hamster'),swap=pet(e,'squirrel'),locked=pet(e,'hamster'),washed=pet(e,'hamster');
++    locked.statuses.MERGE_LOCK=3;washed.washing=3;pet(e,'hamster','ai');const before=JSON.stringify(e.state);
++    expect(await targets(e,source.id)).toEqual([{unitId:match.id,kind:'upgrade'}]);expect(JSON.stringify(e.state)).toBe(before);
++    match.level=2;expect(await targets(e,source.id)).toEqual([]);match.level=source.level=5;expect(await targets(e,source.id)).toEqual([]);
++    source.washing=1;expect(await targets(e,source.id)).toEqual([]);expect(await targets(e,999)).toEqual([]);expect(swap.kind).toBe('squirrel');
++  });
++  it.each(RECIPES)('recognizes both directions and feeding for $hero',async recipe=>{
++    const e=arena(),a=pet(e,recipe.parts[0]),b=pet(e,recipe.parts[1]);
++    expect(await targets(e,a.id)).toEqual([{unitId:b.id,kind:'hero',heroId:recipe.hero}]);expect(await targets(e,b.id)).toEqual([{unitId:a.id,kind:'hero',heroId:recipe.hero}]);
++    b.kind=recipe.hero;expect(await targets(e,a.id)).toEqual([{unitId:b.id,kind:'hero',heroId:recipe.hero}]);expect(await targets(e,b.id)).toEqual([{unitId:a.id,kind:'hero',heroId:recipe.hero}]);
++    b.level=5;expect(await targets(e,a.id)).toEqual([]);expect(await targets(e,b.id)).toEqual([]);
++  });
++});
++
++describe('P1 tutorial and migrations',()=>{
++  it('advances ordered real actions, skip and done idempotently',async()=>{
++    const m=await import('../src/core/Tutorial');
++    expect(m.advanceTutorial(1,'deploy')).toBe(1);expect(m.advanceTutorial(1,'summon')).toBe(2);expect(m.advanceTutorial(2,'merge')).toBe(2);
++    for(const a of ['deploy','dig'] as const)expect(m.advanceTutorial(2,a)).toBe(3);
++    for(const a of ['merge','acknowledge'] as const)expect(m.advanceTutorial(3,a)).toBe('done');
++    for(const step of [1,2,3,'done'] as const){expect(m.advanceTutorial(step,'skip')).toBe('done');expect(m.advanceTutorial('done','summon')).toBe('done');}
++  });
++  it('awards twenty once on completion including replay after skip, without mutating input',async()=>{
++    const m=await import('../src/core/Tutorial'),p=createProfile(),before=JSON.stringify(p),done=m.finishTutorial(p,true);
++    expect(done).toMatchObject({awarded:true,profile:{coins:20,tutorialCompleted:true,tutorialRewardClaimed:true}});expect(JSON.stringify(p)).toBe(before);
++    expect(m.finishTutorial(done.profile,true).awarded).toBe(false);expect(m.finishTutorial(m.replayTutorial(done.profile),true).profile.coins).toBe(20);
++    const skip=m.finishTutorial(p,false);expect(skip).toMatchObject({awarded:false,profile:{coins:0,tutorialCompleted:true,tutorialRewardClaimed:false}});
++    const firstReplay=m.finishTutorial(m.replayTutorial(skip.profile),true);expect(firstReplay).toMatchObject({awarded:true,profile:{coins:20,tutorialRewardClaimed:true}});
++    expect(m.finishTutorial(m.replayTutorial(firstReplay.profile),true)).toMatchObject({awarded:false,profile:{coins:20,tutorialRewardClaimed:true}});
++    // Explicit unclaimed evidence governs awards even for a completed pre-P1 caller.
++    expect(m.finishTutorial({...p,tutorialCompleted:true,tutorialRewardClaimed:false},true).awarded).toBe(true);
++  });
++  it('normalizes defaults, legacy coins/wins/settings and explicit replay false',()=>{
++    expect(createProfile()).toMatchObject({tutorialCompleted:false,tutorialRewardClaimed:false,settings:{developerMode:false}});
++    const old=normalizeProfile({matches:7,wins:3,coins:91,settings:{soundVolume:0}});expect(old).toMatchObject({matches:7,wins:3,coins:91,tutorialCompleted:true,tutorialRewardClaimed:true,settings:{soundVolume:0,developerMode:false}});
++    expect(normalizeProfile({...old,tutorialCompleted:false})).toMatchObject({tutorialCompleted:false,tutorialRewardClaimed:true});
++    expect(updateSettings(createProfile(),{developerMode:true}).settings.developerMode).toBe(true);expect(updateSettings(createProfile(),{developerMode:'bad' as never}).settings.developerMode).toBe(false);
++  });
++  it('full test profile marks tutorial done/claimed and restores the ordinary backup through existing APIs',()=>{
++    const data=new Map<string,string>();const storage={getItem:(k:string)=>data.get(k)??null,setItem:(k:string,v:string)=>{data.set(k,v);},removeItem:(k:string)=>{data.delete(k);}} as Storage;
++    const normal={...createProfile(),coins:37};saveProfile(normal,storage);expect(enableTestProfile(storage)).toMatchObject({tutorialCompleted:true,tutorialRewardClaimed:true});
++    expect(restoreNormalProfile(storage)).toEqual(normal);expect(unlockAllProfile(normal)).toMatchObject({tutorialCompleted:true,tutorialRewardClaimed:true});
++  });
++});
+
+## tests/ui.test.ts
+diff --git "D:\\rea_game\\games\\capybara-defense\\.runtime\\p1-review-baseline\\tests\\ui.test.ts" "D:\\rea_game\\games\\capybara-defense\\tests\\ui.test.ts"
+index 8d71361..b05d92d 100644
+--- "D:\\rea_game\\games\\capybara-defense\\.runtime\\p1-review-baseline\\tests\\ui.test.ts"
++++ "D:\\rea_game\\games\\capybara-defense\\tests\\ui.test.ts"
+@@ -36,17 +36,17 @@ describe('isolated profile persistence', () => {
+ 
+   it('validates numeric counters, known fragments and battle receipts on load', () => {
+     const storage = memoryStorage();
+     storage.setItem(`${STORAGE_PREFIX}profile`, JSON.stringify({
+       coins: -5, matches: 3, wins: 100, fragments: ['orange_wand', null, 'fake_fragment'],
+       awardedBattles: ['battle-1', 'battle-1', 100, ''],
+     }));
+     expect(loadProfile(storage)).toEqual({
+-      ...emptyProfile(),
++      ...emptyProfile(), tutorialCompleted:true, tutorialRewardClaimed:true,
+       coins: 0, matches: 3, wins: 3, fragments: ['orange_wand'], awardedBattles: ['battle-1'],
+       weaponFragments:{m01_swatter:1},unlockedWeapons:['m01_swatter'],
+       stars:3,highestStars:3,unlockedAvatars:['capybara','hamster','squirrel','bee','cat_swordsman'],
+     });
+   });
+ 
+   it('awards a finished battle once, including after a save and reload', () => {
+     const storage = memoryStorage();
+
+## tests/m3-progression.test.ts
+diff --git "D:\\rea_game\\games\\capybara-defense\\.runtime\\p1-review-baseline\\tests\\m3-progression.test.ts" "D:\\rea_game\\games\\capybara-defense\\tests\\m3-progression.test.ts"
+index 9b84f5a..9393307 100644
+--- "D:\\rea_game\\games\\capybara-defense\\.runtime\\p1-review-baseline\\tests\\m3-progression.test.ts"
++++ "D:\\rea_game\\games\\capybara-defense\\tests\\m3-progression.test.ts"
+@@ -172,19 +172,19 @@ describe('M3 avatars and local leaderboard',()=>{
+     const npcs=rows.filter(r=>!r.isPlayer);expect(Math.min(...npcs.map(r=>r.stars))).toBe(6);expect(Math.max(...npcs.map(r=>r.stars))).toBe(168);
+     for(const row of npcs){expect(row.name.en.length).toBeGreaterThan(2);expect(row.name['zh-CN'].length).toBeGreaterThan(1);expect(row.matches).toBeGreaterThanOrEqual(row.wins);expect(avatarIds).toContain(row.avatarId);}
+     expect(m.getLeaderboard(p)).toEqual(rows);
+     const tied=m.getLeaderboard({...p,stars:npcs[0].stars,wins:npcs[0].wins});
+     expect(tied).toEqual([...tied].sort((a,b)=>b.stars-a.stars||b.wins-a.wins||a.id.localeCompare(b.id)));
+   });
+   it('updates valid settings immediately, clamps volume, and defaults malformed values',async()=>{
+     const m=await progression();const p=createProfile();const settings=m.updateSettings(p,{musicVolume:0,soundVolume:-1,showDamageNumbers:false});
+-    expect(settings.settings).toEqual({musicVolume:0,soundVolume:0,showDamageNumbers:false});
+-    expect(p.settings).toEqual({musicVolume:.5,soundVolume:.75,showDamageNumbers:true});
+-    expect(m.updateSettings(settings,{musicVolume:Infinity,soundVolume:2,showDamageNumbers:1 as never}).settings).toEqual({musicVolume:.5,soundVolume:1,showDamageNumbers:true});
++    expect(settings.settings).toEqual({musicVolume:0,soundVolume:0,showDamageNumbers:false,developerMode:false});
++    expect(p.settings).toEqual({musicVolume:.5,soundVolume:.75,showDamageNumbers:true,developerMode:false});
++    expect(m.updateSettings(settings,{musicVolume:Infinity,soundVolume:2,showDamageNumbers:1 as never}).settings).toEqual({musicVolume:.5,soundVolume:1,showDamageNumbers:true,developerMode:false});
+   });
+ });
+ 
+ describe('M3 full-profile isolation',()=>{
+   it('includes all maps, avatars and heroes while preserving settings and ordinary backup',async()=>{
+     const m=await progression();const storage=memoryStorage();const ordinary=normalizeProfile({...createProfile(),coins:371,stars:22,highestStars:60,winStreak:2,bestWinStreak:7,avatarId:'bee',selectedMap:'midnight_kitchen',settings:{musicVolume:0,soundVolume:.2,showDamageNumbers:false}});
+     saveProfile(ordinary,storage);const full=enableTestProfile(storage);
+     expect(full.stars).toBeGreaterThanOrEqual(180);expect(full.highestStars).toBeGreaterThanOrEqual(full.stars);

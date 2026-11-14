@@ -1,0 +1,1424 @@
+M3 review against m2-before-m3.zip; generated 2026-11-13T13:40:27.3580822-08:00
+diff --git "a/D:\\rea_game\\games\\capybara-defense\\.runtime\\m3-review-base\\src\\ui\\GameApp.ts" "b/D:\\rea_game\\games\\capybara-defense\\src\\ui\\GameApp.ts"
+index ad80ddf..70dcbc2 100644
+--- "a/D:\\rea_game\\games\\capybara-defense\\.runtime\\m3-review-base\\src\\ui\\GameApp.ts"
++++ "b/D:\\rea_game\\games\\capybara-defense\\src\\ui\\GameApp.ts"
+@@ -1,256 +1,297 @@
+ import { BattleEngine } from '../core/BattleEngine';
+-import type { BattleState, CommandResult, Interaction, Unit, UnitLocation } from '../core/types';
++import type { BattleState, CommandResult, Interaction, MapId, Profile, Unit, UnitLocation } from '../core/types';
+ import { UNITS, BEE_PRODUCTION, ECONOMY, SHOVEL_PRODUCTION } from '../config/units';
+ import { HEROES } from '../config/heroes';
+ import { RECIPES } from '../config/recipes';
+ import { BOSS_IDS } from '../config/enemies';
+-import { STAGE } from '../config/maps';
++import { MAP_IDS, STAGE } from '../config/maps';
+ import { FIRST_WAVE_PREPARATION, WAVES, WAVE_DURATION } from '../config/waves';
+ import { StickerRenderer } from '../render/StickerRenderer';
+ import { getLanguage, onLanguageChange, setLanguage, t } from '../i18n/i18n';
+ import { awardBattle, emptyProfile, loadProfile, resetOwnStorage, saveProfile, enableTestProfile, restoreNormalProfile, isTestProfile } from './storage';
+ import { MetaScreens, propSlots, type MetaScreen } from './MetaScreens';
+ import { PROPS } from '../config/props';
+ import { setPropSlots } from '../core/MetaProgression';
+ import './m2.css';
++import './m3.css';
++import { RANKS, getRank } from '../config/ranks';
++import { recordMergedHeroes, resolveMap } from '../core/PlayerProgression';
++import { ProfileScreens, rankCard, mapOptions, type ProfileScreen } from './ProfileScreens';
++import { SoundManager } from './SoundManager';
+ import { capyIllustration, capyLogo, escapeHtml as esc, UNIT_ICONS } from './art';
+ 
+ type Hit = { kind: 'cell'; col: number; row: number } | { kind: 'bench'; slot: number } | { kind: 'shovel' };
+-type DialogKind = 'pause' | 'recipes' | 'result' | MetaScreen;
++type DialogKind = 'pause' | 'recipes' | 'result' | MetaScreen | ProfileScreen;
+ type Drag = { pointerId: number; start: { x: number; y: number }; point: { x: number; y: number }; id?: number; shovel: boolean; moved: boolean };
+ const tr = (key: string, vars?: Record<string, string | number>) => esc(t(key, vars));
+ const unitName = (kind: string) => t(`${HEROES[kind] ? 'hero' : 'unit'}.${kind}`);
+ const clock = (seconds: number) => `${Math.floor(seconds / 60)}:${String(Math.floor(seconds % 60)).padStart(2, '0')}`;
+ const icon = (kind: string) => `<span aria-hidden="true" class="pet-icon">${UNIT_ICONS[kind] ?? '🍊'}</span>`;
+ 
+ export class GameApp {
+   engine: BattleEngine | null = null;
+   profile = loadProfile();
+   private canvas: HTMLCanvasElement;
+   private renderer: StickerRenderer;
+   private dialog: HTMLDialogElement;
+   private dialogKind: DialogKind | null = null;
+   private resumeAfterRecipe = false;
+   private speed: 1 | 2 = 1;
+   private selectedId?: number;
+   private shovelSelected = false;
+   private selectedProp?: string;
+   private propDrag?: { pointerId: number; startX: number; startY: number; moved: boolean; id: string; button: HTMLElement; point?: { x: number; y: number } };
+   private suppressPropClick = false;
+   private newWeapons: string[] = [];
+   private meta: MetaScreens;
++  private profileScreens: ProfileScreens;
++  private sound = new SoundManager(this.profile.settings);
++  private devMapOverride?: MapId;
++  private retainedPage = false;
++  private overlayReturn: { dialog: DialogKind | null; resume: boolean } | null = null;
++  private newAvatars: string[] = [];
++  private resultStars = 0;
++  private previousRank = 0;
++  private mergedStamp = '';
+   private quickStamp = '';
+   private battlePropsStamp = '';
+   private drag?: Drag;
+   private completedId = '';
+   private savedResult = true;
+   private lastFrame = performance.now();
+   private lastRefresh = 0;
+   private inspectorStamp = '';
+   private keyboardStamp = '';
+   private toast?: { key: string; vars: Record<string, string | number>; error: boolean; until: number };
+ 
+   constructor(private root: HTMLElement) {
+-    this.meta = new MetaScreens(() => this.profile, profile => { this.profile = profile; this.quickStamp = ''; this.renderMenu(); }, () => { if (this.dialogKind === 'armory' || this.dialogKind === 'market') this.renderDialog(); }, (key, error, vars) => this.notify(key, error, vars));
++    this.meta = new MetaScreens(() => this.profile, profile => {
++      this.profile = profile; this.sound.setSettings(profile.settings); this.quickStamp = ''; this.renderMenu();
++    }, () => { if (this.dialogKind === 'armory' || this.dialogKind === 'market') this.renderDialog(); }, (key, error, vars) => this.notify(key, error, vars), cue => this.sound.play(cue));
++    this.profileScreens = new ProfileScreens(() => this.profile, profile => this.persistProfile(profile), () => this.refresh(true), key => this.notify(key));
+     this.root.innerHTML = this.shell();
+     this.canvas = this.element<HTMLCanvasElement>('battle-canvas');
+     this.dialog = this.element<HTMLDialogElement>('game-dialog');
+     this.renderer = new StickerRenderer(this.canvas);
+     this.bindEvents();
+     onLanguageChange(() => this.refresh(true));
+     const narrow = matchMedia('(max-width: 1050px)');
+     this.element<HTMLDetailsElement>('dev-tools').open = !narrow.matches;
+     narrow.addEventListener('change', () => { this.element<HTMLDetailsElement>('dev-tools').open = !narrow.matches; });
+     this.refresh(true);
+     requestAnimationFrame(this.frame);
+   }
+ 
+   private element<T extends HTMLElement = HTMLElement>(id: string): T {
+     return this.root.querySelector<T>(`#${id}`)!;
+   }
+ 
+   private shell(): string {
+     return `<div class="page-shell">
+       <header class="masthead">
+         <a class="brand" href="#" data-action="brand" aria-label="${tr('app.title')}"><span class="brand-mark">${capyLogo}</span><span><strong data-i18n="app.title"></strong><small data-i18n="app.subtitle"></small></span></a>
+-        <div class="header-actions"><span class="edition" data-i18n="app.edition"></span><div class="language-switch" role="group" data-label="app.language"><button type="button" data-action="zh-CN">中</button><button type="button" data-action="en">EN</button></div></div>
++        <div class="header-actions"><span class="edition" data-i18n="app.edition"></span><button type="button" class="icon-button settings-button" data-action="settings" data-label="m3.settings">⚙</button><div class="language-switch" role="group" data-label="app.language"><button type="button" data-action="zh-CN">中</button><button type="button" data-action="en">EN</button></div></div>
+       </header>
+       <main class="game-layout">
+         <aside class="sandbox-column">
+           <details id="dev-tools" class="paper-card dev-panel" open>
+             <summary><span class="eyebrow" data-i18n="dev.tag"></span><span class="dev-heading"><span aria-hidden="true">✳</span> <span data-i18n="dev.title"></span><span class="collapse-chevron" aria-hidden="true">⌄</span></span></summary>
+             <div class="dev-content"><p class="muted" data-i18n="dev.subtitle"></p><div class="live-strip"><i></i><span id="dev-state"></span><b id="dev-wave"></b></div>
+               <button type="button" class="button food-button" data-action="food" data-battle><span aria-hidden="true">🥫</span><span data-i18n="dev.addFood"></span></button>
+               <p class="control-caption" data-i18n="dev.addFoodNote"></p>
+               <div class="control-group"><label for="dev-unit" data-i18n="dev.unitLabel"></label><select id="dev-unit" data-battle></select><button type="button" class="button button-light" data-action="grant" data-battle data-i18n="dev.grant"></button></div>
+               <div class="control-group"><label for="dev-boss" data-i18n="dev.bossLabel"></label><select id="dev-boss" data-battle></select><button type="button" class="button button-peach" data-action="boss" data-battle data-i18n="dev.boss"></button><p class="control-caption" data-i18n="dev.bossNote"></p></div>
+               <div class="control-group"><span class="field-label" data-i18n="dev.oranges"></span><div class="button-row"><button type="button" class="button button-light" data-action="orange-minus" data-battle data-i18n="dev.orangeRemove"></button><button type="button" class="button button-light" data-action="orange-plus" data-battle data-i18n="dev.orangeAdd"></button></div></div>
+               <button type="button" class="button button-light" data-action="skip" data-battle><span aria-hidden="true">↠</span> <span data-i18n="dev.skip"></span></button>
+               <div class="speed-control"><span data-i18n="dev.speed"></span><div class="segmented"><button type="button" data-action="speed-1" data-battle>1×</button><button type="button" data-action="speed-2" data-battle>2×</button></div></div>
+               <div class="dev-live" id="dev-live"></div><p class="control-caption" id="dev-tip"></p>
+-              <section class="m2-dev"><strong id="profile-mode"></strong><button type="button" class="button button-peach" data-action="test-enable" data-i18n="m2.testEnable"></button><button type="button" class="button button-light" data-action="test-restore" data-i18n="m2.testRestore"></button><p data-i18n="m2.nextBattle"></p><div id="quick-loadout"></div></section>
++              <section class="m2-dev"><strong id="profile-mode"></strong><button type="button" class="button button-peach" data-action="test-enable" data-i18n="m2.testEnable"></button><button type="button" class="button button-light" data-action="test-restore" data-i18n="m2.testRestore"></button><label for="dev-rank" data-i18n="m3.devRank"></label><select id="dev-rank"></select><label for="dev-map" data-i18n="m3.devMap"></label><select id="dev-map"></select><p data-i18n="m2.nextBattle"></p><div id="quick-loadout"></div></section>
+               <div class="reset-control"><button type="button" class="text-button" data-action="reset" data-i18n="dev.reset"></button><p class="control-caption" data-i18n="dev.resetNote"></p></div>
+             </div>
+           </details>
+           <div class="side-note"><span aria-hidden="true">✿</span><p data-i18n="guide.survival"></p></div>
+         </aside>
+         <section class="center-column">
+           <div class="stage menu-mode" id="stage">
+             <canvas id="battle-canvas" width="640" height="1386" tabindex="0" role="img"></canvas>
+             <section class="menu-screen" id="menu-screen"></section>
+             <div class="battle-hud" id="battle-hud" hidden>
+               <div class="hud-topline"><div><span class="map-eyebrow" data-i18n="hud.map"></span><strong id="hud-wave"></strong></div><button type="button" class="icon-button" data-action="pause" data-label="hud.pause" id="pause-button"><span aria-hidden="true">Ⅱ</span></button></div>
+               <div class="hud-resource-row"><div class="food-pill"><span aria-hidden="true">🥫</span><strong id="food-value">30</strong><span data-i18n="hud.food"></span></div><span class="time-chip" id="battle-clock"></span><button type="button" class="speed-pill" data-action="speed" data-label="hud.speedLabel" id="hud-speed">1×</button></div>
+             </div>
+             <div class="battle-actions" id="battle-actions" hidden><button type="button" class="recipe-shortcut icon-button" data-action="recipes" data-label="recipe.open"><span aria-hidden="true">✦</span></button><button type="button" class="summon-button" data-action="summon" id="summon-button"><span aria-hidden="true" class="bell">♧</span><span class="summon-copy"><strong id="summon-title"></strong><small id="summon-note"></small><small id="summon-shortage" hidden></small></span><span aria-hidden="true">＋</span></button></div>
+             <div id="battle-props" hidden></div><div id="sealed-hint" class="sealed-hint" hidden></div>
+           </div>
+           <p class="stage-caption" data-i18n="guide.controls"></p>
+         </section>
+         <aside class="journal-column">
+           <section class="paper-card guide-card"><span class="eyebrow" data-i18n="menu.new"></span><h2 data-i18n="guide.title"></h2><ol class="how-to"><li><b>01</b><div><h3 data-i18n="guide.step1"></h3><p data-i18n="guide.step1Body"></p></div></li><li><b>02</b><div><h3 data-i18n="guide.step2"></h3><p data-i18n="guide.step2Body"></p></div></li><li><b>03</b><div><h3 data-i18n="guide.step3"></h3><p data-i18n="guide.step3Body"></p></div></li></ol><div class="tiny-recipe"><span>🐼</span><b>+</b><span>🎋</span><b>=</b><span class="legend-sticker">🐼<i>✦</i></span></div><button type="button" class="text-button recipe-link" data-action="recipes" data-i18n="recipe.open"></button></section>
+           <section class="paper-card inspect-card"><h2 data-i18n="inspect.title"></h2><div id="inspector"></div></section>
+           <div class="tip-note"><span aria-hidden="true">☂</span><p data-i18n="guide.tip"></p></div>
+           <details class="paper-card keyboard-card"><summary data-i18n="keyboard.title"></summary><p class="muted" data-i18n="keyboard.help"></p><div id="keyboard-controls"></div></details>
+         </aside>
+       </main>
+       <footer class="page-footer"><span aria-hidden="true">✿</span> <span data-i18n="app.footer"></span></footer>
+       <div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
+       <dialog id="game-dialog" class="game-dialog"></dialog>
+     </div>`;
+   }
+ 
+   start(): void {
+     this.closeDialog(false);
+-    this.engine = new BattleEngine({ loadouts: { player: structuredClone(this.profile) } });
++    this.overlayReturn = null;
++    this.engine = new BattleEngine({ mapId: this.devMapOverride ?? resolveMap(this.profile), rankIndex: getRank(this.profile.stars).index, loadouts: { player: structuredClone(this.profile) } });
+     this.engine.start();
+     this.speed = 1;
+     this.completedId = '';
+     this.newWeapons = [];
++    this.newAvatars = []; this.mergedStamp = '';
+     this.battlePropsStamp = '';
+     this.clearSelection();
+     this.lastFrame = performance.now();
+     this.refresh(true);
+     this.canvas.focus({ preventScroll: true });
+   }
+ 
+   private menu(): void {
+     this.closeDialog(false);
++    this.overlayReturn = null;
+     this.engine = null;
+     this.clearSelection();
+     this.refresh(true);
+     this.root.querySelector<HTMLButtonElement>('[data-action="start"]')?.focus({ preventScroll: true });
+   }
+ 
+   private frame = (now: number): void => {
+     const dt = Math.min(Math.max((now - this.lastFrame) / 1000, 0), 0.06);
+     this.lastFrame = now;
+     if (this.engine) {
+       this.engine.tick(dt * this.speed);
+       const state = this.engine.state;
++      this.sound.consumeBattle(state);
++      this.sound.setDucked(this.retainedPage || document.hidden || state.phase !== 'playing');
++      const merged = state.mergedHeroes.player;
++      const mergedStamp = merged.join(',');
++      if (mergedStamp !== this.mergedStamp) {
++        this.mergedStamp = mergedStamp;
++        const next = recordMergedHeroes(this.profile, merged);
++        if (JSON.stringify(next) !== JSON.stringify(this.profile)) this.persistProfile(next);
++      }
+       if (this.selectedId && !state.units.some(unit => unit.id === this.selectedId && unit.side === 'player')) this.selectedId = undefined;
+       if (state.phase === 'finished' && this.completedId !== state.id) this.finish(state);
+-      const interaction: Interaction = { selectedId: this.selectedId, shovel: this.shovelSelected, propId: this.selectedProp };
++      const interaction: Interaction = { selectedId: this.selectedId, shovel: this.shovelSelected, propId: this.selectedProp, showDamageNumbers: this.profile.settings.showDamageNumbers };
+       if (this.drag?.moved) {
+         interaction.draggingId = this.drag.id;
+         interaction.pointer = this.drag.point;
+         interaction.shovel = this.drag.shovel;
+         const hit = this.renderer.hitTest(this.drag.point.x, this.drag.point.y);
+         if (hit?.kind === 'cell') interaction.hover = { col: hit.col, row: hit.row };
+       }
+       if (this.propDrag?.moved && this.propDrag.point) {
+         interaction.pointer = this.propDrag.point;
+         const hit = this.renderer.hitTest(interaction.pointer.x, interaction.pointer.y);
+         if (hit?.kind === 'cell') interaction.hover = { col: hit.col, row: hit.row };
+       }
+       this.renderer.draw(state, state.time, interaction);
+-    }
++    } else this.sound.setDucked(this.retainedPage || document.hidden);
+     if (now - this.lastRefresh > 120) { this.refresh(); this.lastRefresh = now; }
+     requestAnimationFrame(this.frame);
+   };
+ 
+   private finish(state: BattleState): void {
+     this.completedId = state.id;
+     this.clearSelection();
+     if (state.result) {
++      const before = this.profile;
++      this.previousRank = getRank(before.stars).index;
+       const award = awardBattle(this.profile, state.id, state.result);
+-      this.profile = award.profile;
+-      this.newWeapons = award.newWeapons;
+-      if (award.awarded) this.savedResult = saveProfile(this.profile);
++      this.savedResult = !award.awarded || saveProfile(award.profile);
++      if (this.savedResult) {
++        this.profile = award.profile;
++        this.newWeapons = award.newWeapons;
++        this.newAvatars = this.profile.unlockedAvatars.filter(id => !before.unlockedAvatars.includes(id));
++      }
++      this.resultStars = this.profile.stars - before.stars;
++      this.sound.play(state.result.winner === 'player' ? 'victory' : 'defeat');
+     }
+     this.showDialog('result');
+     this.refresh(true);
+   }
+ 
+   private refresh(force = false): void {
+     const state = this.engine?.state;
+     const active = state?.phase === 'playing';
+     if (force) {
+       document.documentElement.lang = getLanguage();
+       document.title = t('app.title');
+       const guideVars = { cost: ECONOMY.summonCost, count: ECONOMY.summonCount };
+       this.root.querySelectorAll<HTMLElement>('[data-i18n]').forEach(el => { el.textContent = t(el.dataset.i18n!, guideVars); });
+       this.root.querySelectorAll<HTMLElement>('[data-label]').forEach(el => { el.setAttribute('aria-label', t(el.dataset.label!)); });
+       this.root.querySelectorAll<HTMLButtonElement>('.language-switch button').forEach(button => {
+         const selected = button.dataset.action === getLanguage();
+         button.classList.toggle('selected', selected);
+         button.setAttribute('aria-pressed', String(selected));
+       });
+       this.canvas.setAttribute('aria-label', `${t('hud.map')}. ${t('guide.controls')} ${t('keyboard.help')}`);
+       this.updateSelect('dev-unit', Object.keys(UNITS), id => unitName(id));
+       this.updateSelect('dev-boss', BOSS_IDS, id => t(`boss.${id}`));
++      this.updateSelect('dev-rank', RANKS.map(rank => String(rank.index)), id => `${id} · ${t(`rank.${id}`)}`);
++      this.element<HTMLSelectElement>('dev-rank').value = String(getRank(this.profile.stars).index);
++      this.element('dev-map').innerHTML = `<option value="auto">${tr('m3.autoMap', { map: t(`map.${resolveMap(this.profile)}`) })}</option>${MAP_IDS.map(id => `<option value="${id}">${tr(`map.${id}`)}</option>`).join('')}`;
++      this.element<HTMLSelectElement>('dev-map').value = this.devMapOverride ?? 'auto';
+       this.renderMenu();
+       this.inspectorStamp = '';
+       this.keyboardStamp = '';
+       if (this.dialogKind) this.renderDialog();
+     }
+     this.element('stage').classList.toggle('menu-mode', !state);
+     this.element('menu-screen').hidden = !!state;
+     this.element('battle-hud').hidden = !state;
+     this.element('battle-actions').hidden = !state;
+     this.canvas.hidden = !state;
+     this.element('battle-props').hidden = !state;
+     this.element('profile-mode').textContent = t(isTestProfile() ? 'm2.testMode' : 'm2.normalMode');
+     this.element('profile-mode').classList.toggle('test-mode', isTestProfile());
+     if (!this.drag && !this.propDrag) {
+       const quickStamp = JSON.stringify([getLanguage(), this.profile.ownedProps, this.profile.equippedActiveProps, this.profile.equippedPassiveProps]);
+       if (quickStamp !== this.quickStamp) { this.element('quick-loadout').innerHTML = propSlots(this.profile, true); this.quickStamp = quickStamp; }
+       this.renderBattleProps();
+     }
+     const selected = state?.units.find(unit => unit.id === this.selectedId);
+     const sealed = !!selected?.statuses.SEALED;
+     this.element('sealed-hint').hidden = !sealed;
+     this.element('sealed-hint').textContent = t('m2.sealed');
+     this.root.querySelectorAll<HTMLButtonElement | HTMLSelectElement>('[data-battle]').forEach(el => { el.disabled = !active; });
+     this.element('dev-state').textContent = t(`hud.${!state ? 'preparing' : state.phase === 'ready' ? 'preparing' : state.phase}`);
+     this.element('dev-wave').textContent = state ? `${Math.max(1, state.wave)} / ${WAVES.length}` : '✿';
+     this.element('dev-tip').textContent = !state ? t('dev.startFirst')
+       : state.wave === 1 && state.spawned === 0 && state.waveTime < FIRST_WAVE_PREPARATION
+         ? t('hud.preparation', { time: Math.ceil(FIRST_WAVE_PREPARATION - state.waveTime) })
+         : t(state.wave === WAVES.length ? 'hud.lastWave' : 'hud.nextWave', { time: Math.floor(state.waveTime), duration: WAVE_DURATION });
+     this.element('dev-live').textContent = state ? `${t('dev.units', { count: state.units.filter(unit => unit.side === 'player' && unit.location.zone === 'board').length })} · ${t('dev.enemies', { count: state.enemies.filter(enemy => enemy.side === 'player').length })}` : '';
+     this.root.querySelectorAll<HTMLButtonElement>('[data-action^="speed-"]').forEach(button => { button.classList.toggle('selected', button.dataset.action === `speed-${this.speed}`); });
+     this.element('hud-speed').textContent = `${this.speed}×`;
+     this.element<HTMLButtonElement>('hud-speed').disabled = !active;
+     this.element<HTMLButtonElement>('pause-button').disabled = state?.phase !== 'playing';
+     if (state) {
++      this.root.querySelector<HTMLElement>('.map-eyebrow')!.textContent = t(`map.${state.mapId}`);
+       const player = state.sides.player;
+       const remaining = state.units.filter(unit => unit.side === 'player' && unit.location.zone === 'bench').length;
+       const shortage = Math.max(0, Math.ceil(ECONOMY.summonCost - player.food));
+       const summonTitle = t(remaining > 0 ? 'hud.redraw' : 'hud.summon');
+       const summonNote = t(remaining > 0 ? 'hud.redrawCost' : 'hud.cost', { remaining, cost: ECONOMY.summonCost, count: ECONOMY.summonCount });
+       this.element('hud-wave').textContent = t('hud.wave', { wave: Math.max(1, state.wave), total: WAVES.length });
+       this.element('food-value').textContent = String(Math.floor(player.food));
+       this.element('battle-clock').textContent = clock(state.time);
+       this.element('battle-clock').setAttribute('aria-label', `${t('hud.time')} ${clock(state.time)}`);
+       this.element('summon-title').textContent = summonTitle;
+       this.element('summon-note').textContent = summonNote;
+       this.element('summon-shortage').hidden = shortage === 0;
+       this.element('summon-shortage').textContent = t('hud.noFood', { count: shortage });
+       // An occupied bench can be replaced. Low-food clicks explain that the current pack is retained.
+       this.element<HTMLButtonElement>('summon-button').disabled = !active;
+       this.element('summon-button').classList.toggle('unaffordable', shortage > 0);
+       this.element('summon-button').setAttribute('aria-label', `${summonTitle}. ${summonNote}${shortage ? `. ${t('hud.noFood', { count: shortage })}` : ''}`);
+     }
+     // Keep the canvas fixed in the viewport while a pointer is captured. Replacing
+     // a tall hero inspector with the short shovel card can otherwise clamp page
+@@ -261,40 +302,42 @@ export class GameApp {
+     }
+     const toast = this.element('toast');
+     toast.hidden = !this.toast || performance.now() > this.toast.until;
+     if (this.toast) {
+       const message = t(this.toast.key, this.toast.vars);
+       if (toast.textContent !== message) toast.textContent = message;
+       toast.classList.toggle('toast-error', this.toast.error);
+     }
+   }
+ 
+   private updateSelect(id: string, ids: readonly string[], label: (id: string) => string): void {
+     const select = this.element<HTMLSelectElement>(id);
+     const previous = select.value;
+     select.innerHTML = ids.map(value => `<option value="${esc(value)}">${esc(label(value))}</option>`).join('');
+     if (ids.includes(previous)) select.value = previous;
+   }
+ 
+   private renderMenu(): void {
+     this.element('menu-screen').innerHTML = `<div class="menu-top"><span class="menu-chip"><i></i>${tr('menu.eyebrow')}</span><span class="doodle-star" aria-hidden="true">✳</span></div><h1>${tr('menu.title').replace(/\n/g, '<br>')}</h1><p class="menu-subtitle">${tr('menu.subtitle').replace(/\n/g, '<br>')}</p><div class="hero-illustration">${capyIllustration}<span class="illustration-caption">${tr('render.keepCalm')} ✦</span></div><button type="button" class="button start-button" data-action="start"><span>${tr('menu.start')}</span><span aria-hidden="true">↗</span></button><p class="duration">${tr('menu.duration', { waves: WAVES.length, preparation: FIRST_WAVE_PREPARATION })}</p><div class="menu-stats"><span><strong>${this.profile.coins}</strong><small>${tr('profile.coins')}</small></span><span><strong>${this.profile.wins}</strong><small>${tr('profile.wins')}</small></span><span><strong>${Object.values(this.profile.weaponFragments).reduce((sum, amount) => sum + amount, 0)}</strong><small>${tr('profile.fragments')}</small></span></div><p class="profile-history">${tr('menu.record', { count: this.profile.matches })}</p><button type="button" class="text-button menu-recipe-link" data-action="recipes">${tr('menu.recipes')} <span aria-hidden="true">→</span></button>`;
+     this.element('menu-screen').querySelector('.menu-stats')!.insertAdjacentHTML('beforebegin', `<div class="meta-menu"><button type="button" class="button button-light" data-action="armory">⚔ ${tr('m2.armory')} <small>${this.profile.unlockedWeapons.length}/36</small></button><button type="button" class="button button-peach" data-action="market">🦝 ${tr('m2.market')} ${this.profile.freeLotteryTickets ? `<b class="ticket-badge">🎟 ${this.profile.freeLotteryTickets}</b>` : ''}</button></div>`);
++    this.element('menu-screen').querySelector('.start-button')!.insertAdjacentHTML('beforebegin', `${rankCard(this.profile)}<label class="map-select" for="menu-map"><span>${tr('m3.map')}</span><select id="menu-map" data-map>${mapOptions(this.profile)}</select><small>${tr('m3.mapRule')}</small></label>`);
++    this.element('menu-screen').querySelector('.meta-menu')!.insertAdjacentHTML('beforeend', `<button type="button" class="button button-light" data-action="leaderboard">♛ ${tr('m3.leaderboard')}</button>`);
+   }
+ 
+   private renderBattleProps(): void {
+     const player = this.engine?.state.sides.player;
+     if (!player) return;
+     const active = this.canInteract();
+     const stamp = JSON.stringify([getLanguage(), active, player.loadout, player.sprinklerUsed, this.selectedProp, Object.entries(player.propCooldowns).map(([id, time]) => [id, Math.ceil(time)])]);
+     if (stamp === this.battlePropsStamp) return;
+     this.battlePropsStamp = stamp;
+     const slots = Array.from({ length: 2 }, (_, slot) => {
+       const id = player.loadout.equippedActiveProps[slot]; const prop = PROPS[id];
+       const cooldown = Math.ceil(player.propCooldowns[id] ?? 0);
+       const name = prop ? t(`prop.${id}`) : t('m2.emptySlot');
+       const status = cooldown ? t('m2.cooldown', { time: cooldown }) : t('m2.ready');
+       return `<button type="button" class="battle-prop prop-${slot} ${id === this.selectedProp ? 'selected' : ''}" data-action="prop:${id ?? ''}" ${prop ? `data-prop-drag="${id}"` : ''} aria-label="${esc(name)}${prop ? `. ${esc(status)}. ${tr(`prop.${id}.desc`)}` : ''}" title="${prop ? tr(`prop.${id}.desc`) : esc(name)}"${!prop || !active || cooldown ? ' disabled' : ''}><span>${prop ? esc(prop.icon) : '+'}</span><small>${esc(name)}</small>${cooldown ? `<b>${cooldown}s</b>` : ''}</button>`;
+     }).join('');
+     this.element('battle-props').innerHTML = `<button type="button" class="sprinkler-button" data-action="sprinkler" title="${tr('m2.sprinklerDesc')}" aria-label="${tr('m2.sprinkler')}. ${tr(player.sprinklerUsed ? 'm2.sprinklerUsed' : 'm2.sprinklerReady')}"${!active || player.sprinklerUsed ? ' disabled' : ''}><span>🚿</span><small>${tr('m2.sprinkler')}</small><b>${player.sprinklerUsed ? '0' : '1'}</b></button>${slots}<div class="passive-icons">${player.loadout.equippedPassiveProps.map(id => `<span title="${tr(`prop.${id}`)}: ${tr(`prop.${id}.desc`)}" aria-label="${tr(`prop.${id}`)}">${esc(PROPS[id].icon)}</span>`).join('')}</div>${this.selectedProp ? `<p class="prop-target-hint" role="status">${tr(PROPS[this.selectedProp].target === 'road' ? 'm2.targetRoad' : 'm2.targetUnit')}</p>` : ''}`;
+   }
+ 
+   private renderInspector(): void {
+@@ -359,78 +402,117 @@ export class GameApp {
+     if (oldFocus) container.querySelector<HTMLButtonElement>(`[data-target="${oldFocus}"]`)?.focus({ preventScroll: true });
+   }
+ 
+   private lootMarkup(loot: string[]): string {
+     if (!loot.length) return `<p class="loot-empty">${tr('loot.none')}</p>`;
+     const counts = new Map<string, number>();
+     loot.forEach(id => counts.set(id, (counts.get(id) ?? 0) + 1));
+     return `<ul class="loot-list">${[...counts].map(([id, count]) => `<li><span aria-hidden="true">✦</span><span>${tr(`fragment.${id}`)}</span><b>×${count}</b></li>`).join('')}</ul>`;
+   }
+ 
+   private showDialog(kind: DialogKind): void {
+     this.dialogKind = kind;
+     this.renderDialog();
+     if (!this.dialog.open) this.dialog.showModal();
+   }
+ 
+   private renderDialog(): void {
+     const kind = this.dialogKind;
+     this.dialog.classList.toggle('recipe-dialog', kind === 'recipes');
+     this.dialog.classList.toggle('meta-dialog', kind === 'armory' || kind === 'market');
++    this.dialog.classList.toggle('profile-dialog', kind === 'profile' || kind === 'leaderboard');
+     this.dialog.setAttribute('aria-labelledby', 'dialog-title');
+-    if (kind === 'armory' || kind === 'market') {
++    if (kind === 'profile' || kind === 'leaderboard' || kind === 'settings') {
++      this.dialog.innerHTML = this.profileScreens.markup(kind);
++    } else if (kind === 'armory' || kind === 'market') {
+       this.dialog.innerHTML = this.meta.markup(kind);
+     } else if (kind === 'pause' && this.engine) {
+       this.dialog.innerHTML = `<div class="dialog-decoration" aria-hidden="true">♨</div><span class="eyebrow">${tr('pause.eyebrow')}</span><h2 id="dialog-title">${tr('pause.title')}</h2><p class="dialog-subtitle">${tr('pause.subtitle')}</p><h3>${tr('pause.loot')}</h3><div class="loot-columns"><section><h4>${tr('loot.you')}</h4>${this.lootMarkup(this.engine.state.sides.player.loot)}</section><section><h4>${tr('loot.ai')}</h4>${this.lootMarkup(this.engine.state.sides.ai.loot)}</section></div><p class="dialog-rule">${tr('pause.rule')}</p><button type="button" class="button button-teal" data-action="resume" autofocus>${tr('pause.keep')}</button><button type="button" class="text-button surrender-button" data-action="surrender">${tr('pause.surrender')}</button>`;
+     } else if (kind === 'recipes') {
+       const rows = (start: number, end: number) => RECIPES.slice(start, end).map(recipe => `<article class="recipe-card"><div class="recipe-equation">${recipe.parts.map(part => `<span title="${esc(unitName(part))}">${icon(part)}<small>${esc(unitName(part))}</small></span>`).join('<b>＋</b>')}<b>→</b></div><h4>${tr(`hero.${recipe.hero}`)}</h4><p><strong>${tr(`skill.${recipe.hero}`)}</strong> · ${tr(`skill.${recipe.hero}.desc`, { charge: HEROES[recipe.hero].charge })}</p></article>`).join('');
+       this.dialog.innerHTML = `<button type="button" class="dialog-close icon-button" data-action="close-recipes" aria-label="${tr('recipe.close')}">×</button><span class="eyebrow">✦ 8 + 4 ✦</span><h2 id="dialog-title">${tr('recipe.title')}</h2><p class="dialog-subtitle">${tr('recipe.subtitle')}</p><p class="recipe-note">${tr('recipe.note')}</p><h3>${tr('recipe.cross')}</h3><div class="recipe-grid">${rows(0, 8)}</div><h3>${tr('recipe.unique')}</h3><div class="recipe-grid">${rows(8, 12)}</div><p class="doge-note">🐕 + 🧙 · ${tr('recipe.doge')}</p><button type="button" class="button button-teal" data-action="close-recipes">${tr('recipe.close')}</button>`;
+     } else if (kind === 'result' && this.engine?.state.result) {
+       const result = this.engine.state.result;
+       const won = result.winner === 'player';
+       this.dialog.innerHTML = `<div class="result-sticker" aria-hidden="true">${won ? '🍊' : '☁'}</div><span class="eyebrow">${tr('result.time', { time: clock(result.elapsed) })}</span><h2 id="dialog-title">${tr(won ? 'result.win' : 'result.loss')}</h2><p class="dialog-subtitle">${tr(won ? 'result.winSub' : 'result.lossSub')}</p><p class="result-reason">${tr(`result.reason.${result.reason}`)}</p><div class="result-rewards"><span><b>+${won ? result.coins : 0}</b><small>${tr('profile.coins')}</small></span><span><b>+${won ? result.loot.length : 0}</b><small>${tr('profile.fragments')}</small></span></div><h3>${tr('result.pool')}</h3>${this.lootMarkup(result.loot)}<p class="save-note">${tr(this.savedResult ? 'result.awarded' : 'result.memory')}</p><button type="button" class="button button-teal" data-action="start" autofocus>${tr('result.again')}</button><button type="button" class="text-button back-menu" data-action="menu">${tr('result.menu')}</button>`;
+     }
++    if (kind === 'pause') this.dialog.insertAdjacentHTML('beforeend', `<div class="meta-tabs"><button type="button" data-action="profile">${tr('m3.profile')}</button><button type="button" data-action="settings">${tr('m3.settings')}</button></div>`);
+     if (kind === 'result' && this.engine?.state.result?.winner === 'player') this.dialog.insertAdjacentHTML('beforeend', `<p class="ticket-reward">🎟 ${tr('m2.freeTicket')}</p>${this.newWeapons.length ? `<section class="unlock-reward"><h3>✦ ${tr('m2.newWeapons')}</h3>${this.newWeapons.map(id => `<p>${tr(`weapon.${id}`)}</p>`).join('')}</section>` : ''}`);
++    if (kind === 'result' && this.engine?.state.result) {
++      const rank = getRank(this.profile.stars), won = this.engine.state.result.winner === 'player';
++      this.dialog.querySelector('.result-rewards')?.insertAdjacentHTML('afterend', `<section class="rank-result" role="status"><strong>${tr('m3.starChange', { change: this.resultStars > 0 ? `+${this.resultStars}` : this.resultStars, stars: this.profile.stars })}</strong>${!won && this.resultStars === 0 ? `<p>${tr(this.previousRank < 10 ? 'm3.protected' : 'm3.floorProtected')}</p>` : ''}${won && this.resultStars > 1 ? `<p>${tr('m3.streakBonus')}</p>` : ''}${rank.index > this.previousRank ? `<h3>${tr('m3.promotion', { rank: t(`rank.${rank.index}`) })}</h3>` : ''}${this.newAvatars.length ? `<h3>${tr('m3.newAvatars')}</h3>${this.newAvatars.map(id => `<p>${tr(`avatar.${id}`)}</p>`).join('')}` : ''}</section>`);
++    }
+     if (kind) this.dialog.insertAdjacentHTML('afterbegin', `<div class="language-switch dialog-language" role="group" aria-label="${tr('app.language')}"><button type="button" data-action="zh-CN" class="${getLanguage() === 'zh-CN' ? 'selected' : ''}" aria-pressed="${getLanguage() === 'zh-CN'}">中</button><button type="button" data-action="en" class="${getLanguage() === 'en' ? 'selected' : ''}" aria-pressed="${getLanguage() === 'en'}">EN</button></div>`);
+   }
+ 
+   private closeDialog(resume: boolean): void {
+     if (this.dialog.open) this.dialog.close();
+     this.dialogKind = null;
+     if (resume && this.engine?.state.phase === 'paused') this.engine.pause(false);
++    this.sound.setDucked(this.retainedPage || document.hidden || !!this.engine && this.engine.state.phase !== 'playing');
++  }
++
++  private persistProfile(profile: Profile): boolean {
++    if (!saveProfile(profile)) { this.notify('hint.storage', true); return false; }
++    const unlocked = profile.unlockedAvatars.some(id => !this.profile.unlockedAvatars.includes(id));
++    this.profile = profile;
++    this.sound.setSettings(profile.settings);
++    this.quickStamp = '';
++    this.renderMenu();
++    if (unlocked) this.notify('m3.newAvatars');
++    return true;
++  }
++
++  private openProfileScreen(screen: ProfileScreen): void {
++    if (!this.overlayReturn) {
++      this.overlayReturn = { dialog: this.dialogKind, resume: this.canInteract() };
++      if (this.canInteract()) this.engine!.pause(true);
++    }
++    this.cancelDrag(); this.cancelPropDrag();
++    this.showDialog(screen); this.refresh();
++  }
++
++  private closeProfileScreen(): void {
++    const previous = this.overlayReturn;
++    this.overlayReturn = null;
++    if (previous?.dialog) this.showDialog(previous.dialog);
++    else this.closeDialog(previous?.resume ?? false);
++    this.refresh();
+   }
+ 
+   private pause(): void {
+     if (this.engine?.state.phase !== 'playing') return;
+     this.engine.pause(true);
+     this.cancelDrag();
+     this.cancelPropDrag();
+     this.showDialog('pause');
+     this.refresh();
+   }
+ 
+   private notify(key: string, error = false, vars: Record<string, string | number> = {}): void {
+     this.toast = { key, vars, error, until: performance.now() + (error ? 4200 : 2600) };
+     this.refresh();
+   }
+ 
+   private apply(result: CommandResult): void {
++    if (result.ok && (result.key === 'hint.dig' || result.key === 'hint.repaired')) this.sound.play('dig');
++    if (result.ok && result.key === 'hint.merged' && result.unitId && this.engine?.state.units.some(unit => unit.id === result.unitId && !!HEROES[unit.kind] && unit.level === 1)) this.sound.play('legendary');
+     if (result.ok && result.unitId) {
+       this.selectedId = result.unitId;
+       this.shovelSelected = false;
+     }
+     this.notify(result.key, !result.ok);
+   }
+ 
+   private canInteract(): boolean { return this.engine?.state.phase === 'playing'; }
+ 
+   private clearSelection(): void { this.selectedId = undefined; this.shovelSelected = false; this.selectedProp = undefined; this.cancelDrag(); this.cancelPropDrag(); }
+ 
+   private unitAt(hit: Hit): Unit | undefined {
+     return this.engine?.state.units.find(unit => unit.side === 'player' && (hit.kind === 'bench'
+       ? unit.location.zone === 'bench' && unit.location.slot === hit.slot
+       : hit.kind === 'cell' && unit.location.zone === 'board' && unit.location.col === hit.col && unit.location.row === hit.row));
+   }
+ 
+   private activate(hit: Hit): void {
+     if (!this.canInteract() || !this.engine) return;
+     if (this.selectedProp) {
+@@ -465,43 +547,54 @@ export class GameApp {
+     this.refresh();
+   }
+ 
+   private point(event: PointerEvent): { x: number; y: number } {
+     const bounds = this.canvas.getBoundingClientRect();
+     return { x: (event.clientX - bounds.left) / bounds.width * STAGE.width, y: (event.clientY - bounds.top) / bounds.height * STAGE.height };
+   }
+ 
+   private cancelDrag(): void {
+     const previous = this.drag;
+     this.drag = undefined;
+     if (previous && this.canvas?.hasPointerCapture(previous.pointerId)) this.canvas.releasePointerCapture(previous.pointerId);
+   }
+ 
+   private cancelPropDrag(): void {
+     const drag = this.propDrag; this.propDrag = undefined;
+     if (drag?.button.hasPointerCapture(drag.pointerId)) drag.button.releasePointerCapture(drag.pointerId);
+   }
+ 
+   private bindEvents(): void {
++    this.root.addEventListener('pointerdown', () => { void this.sound.unlock().catch(() => undefined); }, { passive: true });
++    this.root.addEventListener('keydown', () => { void this.sound.unlock().catch(() => undefined); });
++    this.root.addEventListener('input', event => {
++      if (event.target instanceof HTMLInputElement && event.target.type === 'range') this.profileScreens.change(event.target);
++    });
+     this.root.addEventListener('change', event => {
+       const element = event.target;
+       if (!(element instanceof HTMLInputElement || element instanceof HTMLSelectElement)) return;
++      if (element.id === 'dev-map') {
++        this.devMapOverride = MAP_IDS.includes(element.value as MapId) ? element.value as MapId : undefined;
++        this.refresh(true); return;
++      }
++      if (element.dataset.map !== undefined) this.devMapOverride = undefined;
++      if (this.profileScreens.change(element)) return;
+       if (this.meta.change(element)) return;
+       if (element.dataset.propSlot) {
+         const collect = (type: string) => [...this.root.querySelectorAll<HTMLSelectElement>(`[data-prop-slot^="${type}:"]`)].map(select => select.value).filter(Boolean);
+         const result = setPropSlots(this.profile, collect('active'), collect('passive'));
+         if (result.ok && saveProfile(result.profile)) this.profile = result.profile;
+         else this.notify(result.ok ? 'hint.storage' : result.key, true);
+         this.quickStamp = ''; this.refresh();
+       }
+     });
+     this.root.addEventListener('pointerdown', event => {
+       const button = (event.target as HTMLElement).closest<HTMLElement>('[data-prop-drag]');
+       if (!button || !event.isPrimary || event.button !== 0 || (button as HTMLButtonElement).disabled || !this.canInteract()) return;
+       const id = button.dataset.propDrag!;
+       this.propDrag = { pointerId: event.pointerId, startX: event.clientX, startY: event.clientY, moved: false, id, button };
+       button.setPointerCapture(event.pointerId);
+     });
+     this.root.addEventListener('pointermove', event => {
+       const drag = this.propDrag; if (!drag || drag.pointerId !== event.pointerId) return;
+       if (Math.hypot(event.clientX - drag.startX, event.clientY - drag.startY) > 5) {
+         event.preventDefault(); drag.moved = true; drag.point = this.point(event); this.selectedProp = drag.id; this.selectedId = undefined; this.shovelSelected = false;
+@@ -558,96 +651,112 @@ export class GameApp {
+       const drag = this.drag;
+       if (!drag || drag.pointerId !== event.pointerId) return;
+       const point = this.point(event);
+       const hit = this.renderer.hitTest(point.x, point.y);
+       this.cancelDrag();
+       if (!this.canInteract() || !hit) { this.refresh(); return; }
+       if (drag.moved) {
+         this.selectedId = drag.id;
+         this.shovelSelected = drag.shovel;
+         if (hit.kind !== 'shovel') this.activate(hit);
+       } else this.activate(hit);
+       this.refresh();
+     });
+     this.canvas.addEventListener('pointercancel', () => { this.cancelDrag(); this.refresh(); });
+     this.canvas.addEventListener('lostpointercapture', () => { this.drag = undefined; });
+     this.dialog.addEventListener('cancel', event => {
+       event.preventDefault();
+       if (this.dialogKind === 'pause') this.action('resume');
+       else if (this.dialogKind === 'recipes') this.action('close-recipes');
+       else if (this.dialogKind === 'armory' || this.dialogKind === 'market') this.action('close-meta');
++      else if (this.dialogKind === 'profile' || this.dialogKind === 'leaderboard' || this.dialogKind === 'settings') this.action('close-profile');
+       else this.menu();
+     });
+     document.addEventListener('keydown', event => {
+       if (event.target instanceof HTMLInputElement || event.target instanceof HTMLSelectElement || event.target instanceof HTMLTextAreaElement) return;
+       if (event.key === 'Escape' && !this.dialog.open) { this.clearSelection(); this.refresh(); }
+       if (event.key.toLowerCase() === 'p' && !event.repeat && !this.dialog.open) this.pause();
+       if (event.code === 'Space' && event.target === this.canvas && this.canInteract()) { event.preventDefault(); this.action('summon'); }
+     });
+-    document.addEventListener('visibilitychange', () => { if (document.hidden) this.pause(); });
++    document.addEventListener('visibilitychange', () => { this.sound.setDucked(this.retainedPage || document.hidden || !!this.engine && this.engine.state.phase !== 'playing'); if (document.hidden) this.pause(); });
++    window.addEventListener('pagehide', event => {
++      if (event.persisted) { this.retainedPage = true; this.sound.setDucked(true); }
++      else this.sound.dispose();
++    });
++    window.addEventListener('pageshow', () => {
++      this.retainedPage = false;
++      this.sound.setDucked(document.hidden || !!this.engine && this.engine.state.phase !== 'playing');
++    });
+   }
+ 
+   private action(action: string): void {
+     if (action === 'zh-CN' || action === 'en') { setLanguage(action); return; }
++    if (this.profileScreens.action(action)) return;
++    if (action === 'profile' || action === 'leaderboard' || action === 'settings' || action === 'brand') { this.openProfileScreen(action === 'brand' ? 'profile' : action); return; }
++    if (action === 'close-profile') { this.closeProfileScreen(); return; }
+     if (this.meta.action(action)) return;
+     if (action === 'armory' || action === 'market') { this.meta.open(action); this.showDialog(action); return; }
+     if (action === 'close-meta') { this.closeDialog(false); this.refresh(true); return; }
+     if (action === 'test-enable' || action === 'test-restore') {
++      if (action === 'test-restore') this.devMapOverride = undefined;
+       this.meta.reset();
+       this.profile = action === 'test-enable' ? enableTestProfile() : restoreNormalProfile();
++      this.sound.setSettings(this.profile.settings);
+       this.quickStamp = ''; this.refresh(true);
+       const success = action === 'test-enable' ? isTestProfile() && this.profile.unlockedWeapons.length === 36 : !isTestProfile();
+       this.notify(success ? action === 'test-enable' ? 'm2.testReady' : 'm2.testRestored' : 'hint.storage', !success); return;
+     }
+     if (action.startsWith('prop:')) {
+       if (this.suppressPropClick || !this.canInteract() || !this.engine) return;
+       const id = action.slice(5); const prop = PROPS[id]; if (!prop) return;
+       if (prop.target === 'self') { this.selectedProp = undefined; this.apply(this.engine.useProp(id)); }
+       else { this.selectedProp = this.selectedProp === id ? undefined : id; this.selectedId = undefined; this.shovelSelected = false; }
+       this.refresh(); return;
+     }
+     if (action === 'sprinkler') { if (this.canInteract()) this.apply(this.engine!.useSprinkler()); return; }
+-    if (action === 'brand') { if (this.canInteract()) this.pause(); return; }
+     if (action === 'start') { this.start(); return; }
+     if (action === 'menu') { this.menu(); return; }
+     if (action === 'clear') { this.clearSelection(); this.refresh(); return; }
+     if (action === 'pause') { this.pause(); return; }
+     if (action === 'resume') { this.closeDialog(true); this.refresh(); this.canvas.focus({ preventScroll: true }); return; }
+     if (action === 'recipes') {
+       this.resumeAfterRecipe = this.canInteract();
+       if (this.resumeAfterRecipe) this.engine!.pause(true);
+       this.cancelDrag();
+       this.showDialog('recipes');
+       this.refresh();
+       return;
+     }
+     if (action === 'close-recipes') { this.closeDialog(this.resumeAfterRecipe); this.resumeAfterRecipe = false; this.refresh(); return; }
+     if (action === 'surrender') {
+       if (this.engine?.state.phase === 'paused') { this.closeDialog(false); this.engine.surrender(); if (this.engine.state.result) this.finish(this.engine.state); }
+       return;
+     }
+     if (action === 'reset') {
+-      this.meta.reset();
+       const success = resetOwnStorage();
++      if (!success) { this.notify('hint.storage', true); return; }
++      this.meta.reset();
++      this.devMapOverride = undefined;
+       this.profile = emptyProfile();
++      this.sound.setSettings(this.profile.settings);
+       this.menu();
+       setLanguage('zh-CN');
+       this.notify(success ? 'hint.reset' : 'hint.storage', !success);
+       return;
+     }
+     if (!this.canInteract() || !this.engine) return;
+     if (action === 'summon') {
+       const result = this.engine.summon();
+-      if (result.ok) this.cancelDrag();
++      if (result.ok) { this.cancelDrag(); this.sound.play('summon'); }
+       this.apply(result);
+     }
+     else if (action === 'food') { this.engine.addFood(500); this.notify('hint.foodAdded'); }
+     else if (action === 'grant') this.apply(this.engine.grant(this.element<HTMLSelectElement>('dev-unit').value));
+     else if (action === 'boss') this.apply(this.engine.spawnBoss(this.element<HTMLSelectElement>('dev-boss').value));
+     else if (action === 'orange-plus' || action === 'orange-minus') { this.engine.adjustOranges(action === 'orange-plus' ? 1 : -1); this.notify(action === 'orange-plus' ? 'hint.orangeAdded' : 'hint.orangeLost'); }
+     else if (action === 'skip') { this.engine.skipWave(); this.notify('hint.waveSkipped'); }
+     else if (action === 'speed') this.speed = this.speed === 1 ? 2 : 1;
+     else if (action === 'speed-1') this.speed = 1;
+     else if (action === 'speed-2') this.speed = 2;
+     this.refresh();
+   }
+ }
+
+diff --git "a/D:\\rea_game\\games\\capybara-defense\\.runtime\\m3-review-base\\src\\ui\\MetaScreens.ts" "b/D:\\rea_game\\games\\capybara-defense\\src\\ui\\MetaScreens.ts"
+index 6101783..eae928b 100644
+--- "a/D:\\rea_game\\games\\capybara-defense\\.runtime\\m3-review-base\\src\\ui\\MetaScreens.ts"
++++ "b/D:\\rea_game\\games\\capybara-defense\\src\\ui\\MetaScreens.ts"
+@@ -1,138 +1,146 @@
+ import type { Profile } from '../core/types';
+ import { WEAPONS, HERO_FAMILIES, RARITY_RULES, type WeaponFamily } from '../config/weapons';
+ import { PROPS } from '../config/props';
+ import { buyProp, createLotteryPrizes, ensureDailyShop, equipProp, equipWeapon, recycleFragments, refreshShop, spinLottery, type LotteryPrize, type MetaResult } from '../core/MetaProgression';
+ import { t } from '../i18n/i18n';
+ import { escapeHtml as esc } from './art';
+ import { saveProfile } from './storage';
++import { weaponSticker } from '../render/M3Art';
++import type { SoundCue } from './SoundManager';
+ 
+ const tr = (key: string, vars?: Record<string, string | number>) => esc(t(key, vars));
+ const day = () => { const date = new Date(); return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`; };
+ export type MetaScreen = 'armory' | 'market';
+ 
+ export function propSlots(profile: Profile, quick = false): string {
+   return (['active', 'passive'] as const).map(type => `<section class="slot-group"><h4>${tr(`m2.${type}`)} · ${type === 'active' ? 2 : 6}</h4><div class="${quick ? 'quick-slots' : 'prop-slots'}">${Array.from({ length: type === 'active' ? 2 : 6 }, (_, index) => {
+     const ids = type === 'active' ? profile.equippedActiveProps : profile.equippedPassiveProps;
+     const id = ids[index];
+     const label = t('m2.slot', { type: t(`m2.${type}`), slot: index + 1 });
+     if (quick) return `<label><span>${esc(label)}</span><select data-prop-slot="${type}:${index}" aria-label="${esc(label)}"><option value="">${tr('m2.emptySlot')}</option>${Object.values(PROPS).filter(item => item.type === type && profile.ownedProps[item.id]).map(item => `<option value="${item.id}"${id === item.id ? ' selected' : ''}>${esc(item.icon)} ${tr(`prop.${item.id}`)}</option>`).join('')}</select></label>`;
+     return `<button type="button" class="prop-slot ${id ? 'filled' : ''}" ${id ? `data-action="meta-prop:${id}" title="${tr(`prop.${id}.desc`)}"` : 'disabled'} aria-label="${esc(label)}${id ? `: ${tr(`prop.${id}`)}` : ''}"><span>${id ? esc(PROPS[id].icon) : '+'}</span><small>${id ? tr(`prop.${id}`) : tr('m2.emptySlot')}</small></button>`;
+   }).join('')}</div></section>`).join('');
+ }
+ 
+ export class MetaScreens {
+   family: WeaponFamily | 'all' = 'all';
+   tab: 'shop' | 'lottery' = 'shop';
+   rarities = new Set([0, 1, 2, 3, 4]);
++  orangeFirst = false;
+   private prizes: LotteryPrize[] = [];
+   private spinning = false;
+   private highlight = -1;
+   private prize?: LotteryPrize;
+   private convertedCoins?: number;
+   private newWeapons: string[] = [];
+   private timer?: ReturnType<typeof setTimeout>;
+-  constructor(private profile: () => Profile, private commit: (profile: Profile) => void, private render: () => void, private notify: (key: string, error?: boolean, vars?: Record<string, string | number>) => void) {}
++  constructor(private profile: () => Profile, private commit: (profile: Profile) => void, private render: () => void, private notify: (key: string, error?: boolean, vars?: Record<string, string | number>) => void, private onSound?: (cue: SoundCue) => void) {}
+ 
+   reset(): void {
+     clearTimeout(this.timer); this.timer = undefined;
+     this.prizes = []; this.spinning = false; this.highlight = -1;
+     this.prize = undefined; this.convertedCoins = undefined; this.newWeapons = [];
+   }
+ 
+   open(screen: MetaScreen): void {
+     if (screen === 'market') {
+       const profile = ensureDailyShop(this.profile(), day(), Math.random);
+       this.persist(profile);
+       if (!this.prizes.length) this.prizes = createLotteryPrizes(this.profile(), Math.random);
+     }
+   }
+   private persist(profile: Profile): boolean {
+     if (!saveProfile(profile)) { this.notify('hint.storage', true); return false; }
+     this.commit(profile); return true;
+   }
+   private apply(result: MetaResult): boolean {
+     if (!result.ok) { this.notify(result.key, true, { amount: result.amount ?? 0 }); return false; }
++    const newAvatar = result.profile.unlockedAvatars.some(id => !this.profile().unlockedAvatars.includes(id));
+     if (!this.persist(result.profile)) return false;
+-    this.notify(result.key, false, { amount: result.amount ?? 0 }); this.render(); return true;
++    this.notify(newAvatar ? 'm3.newAvatars' : result.key, false, { amount: result.amount ?? 0 }); this.render(); return true;
+   }
+   action(action: string): boolean {
+     if (!action.startsWith('meta-')) return false;
+     const [command, id] = action.split(':');
+     if (command === 'meta-family') this.family = id as WeaponFamily | 'all';
++    if (command === 'meta-sort') this.orangeFirst = id === 'orange';
+     if (command === 'meta-tab') this.tab = id as 'shop' | 'lottery';
+     if (command === 'meta-buy') this.apply(buyProp(this.profile(), id));
+     if (command === 'meta-prop') this.apply(equipProp(this.profile(), id));
+     if (command === 'meta-unequip') this.apply(equipWeapon(this.profile(), id, null));
+     if (command === 'meta-refresh') this.apply(refreshShop(this.profile(), day(), Math.random));
+     if (command === 'meta-recycle') this.apply(recycleFragments(this.profile(), [...this.rarities]));
+     if (command === 'meta-spin') this.spin();
+     this.render(); return true;
+   }
+   change(element: HTMLInputElement | HTMLSelectElement): boolean {
+     if (element.dataset.rarity) {
+       const value = Number(element.dataset.rarity);
+       if ((element as HTMLInputElement).checked) this.rarities.add(value); else this.rarities.delete(value);
+       return true;
+     }
+     if (element.dataset.weapon) { this.apply(equipWeapon(this.profile(), element.value, element.dataset.weapon)); return true; }
+     if (element.dataset.hero) { this.apply(equipWeapon(this.profile(), element.dataset.hero, null)); return true; }
+     return false;
+   }
+   private spin(): void {
+     if (this.spinning) return;
+     const before = this.profile();
+     const result = spinLottery(this.profile(), this.prizes, Math.random);
+     if (!result.ok) { this.notify(result.key, true); return; }
+     // The complete transaction is persisted once, before any animation begins.
+     if (!this.persist(result.profile)) return;
++    if (result.profile.unlockedAvatars.some(id => !before.unlockedAvatars.includes(id))) this.notify('m3.newAvatars');
+     this.spinning = true; this.prize = undefined;
+     this.newWeapons = result.newWeapons ?? [];
+     this.convertedCoins = result.prize?.type === 'prop' && (before.ownedProps[result.prize.id!] ?? 0) >= PROPS[result.prize.id!].maxLevel ? PROPS[result.prize.id!].price : undefined;
+     const winner = result.index ?? 0;
+     let step = 0;
+     const total = 24 + winner;
+     const animate = () => {
+-      this.highlight = step % 8; this.render();
++      this.highlight = step % 8; this.onSound?.('lottery_tick'); this.render();
+       if (step++ < total) this.timer = setTimeout(animate, step > 18 ? 90 + (step - 18) * 18 : 65);
+-      else { this.spinning = false; this.prize = result.prize; this.timer = undefined; this.render(); }
++      else { this.spinning = false; this.prize = result.prize; this.timer = undefined; this.onSound?.('lottery_win'); this.render(); }
+     };
+     clearTimeout(this.timer); animate();
+   }
+   private prizeText(prize: LotteryPrize): string {
+     if (prize.type === 'coins') return tr('m2.prizeCoins', { amount: prize.amount });
+     return tr(prize.type === 'prop' ? 'm2.prizeProp' : 'm2.prizeFragment', { name: t(`${prize.type === 'prop' ? 'prop' : 'weapon'}.${prize.id}`), amount: prize.amount });
+   }
+   markup(screen: MetaScreen): string {
+     const profile = this.profile();
+     const heading = `<button type="button" class="dialog-close icon-button" data-action="close-meta" aria-label="${tr('m2.close')}">×</button><h2 id="dialog-title">${tr(screen === 'armory' ? 'm2.armory' : 'm2.market')}</h2><div class="meta-wallet"><b>${tr('m2.coins', { count: profile.coins })}</b><span>${tr('m2.tickets', { count: profile.freeLotteryTickets })}</span></div>`;
+     if (screen === 'armory') return heading + this.armory(profile);
+     return heading + `<div class="meta-tabs">${['shop', 'lottery'].map(tab => `<button type="button" data-action="meta-tab:${tab}" aria-pressed="${this.tab === tab}" class="${this.tab === tab ? 'selected' : ''}">${tr(`m2.${tab}`)}</button>`).join('')}</div>${this.tab === 'shop' ? this.shop(profile) : this.lottery()}<section class="loadout-panel"><h3>${tr('m2.loadout')}</h3>${propSlots(profile)}<p>${tr('m2.nextBattle')}</p></section><h3>${tr('m2.inventory')}</h3><div class="inventory-grid">${Object.values(PROPS).filter(prop => profile.ownedProps[prop.id]).map(prop => {
+       const equipped = [...profile.equippedActiveProps, ...profile.equippedPassiveProps].includes(prop.id);
+       return `<button type="button" data-action="meta-prop:${prop.id}" class="inventory-prop ${equipped ? 'equipped' : ''}" aria-pressed="${equipped}"><b>${esc(prop.icon)} ${tr(`prop.${prop.id}`)}</b><small>${tr(`m2.${prop.type}`)} · ${tr('m2.level', { level: profile.ownedProps[prop.id], max: prop.maxLevel })}</small><p>${tr(`prop.${prop.id}.desc`)}</p><strong>${tr(equipped ? 'm2.unequip' : 'm2.equip')}</strong></button>`;
+     }).join('') || `<p>${tr('m2.noProps')}</p>`}</div>`;
+   }
+   private armory(profile: Profile): string {
+-    return `<p>${tr('m2.collection', { count: profile.unlockedWeapons.length })}</p><p class="meta-rule">${tr('m2.weaponRule')}</p><div class="meta-tabs family-tabs">${['all', 'melee', 'ranged', 'magic'].map(family => `<button type="button" data-action="meta-family:${family}" aria-pressed="${family === this.family}" class="${family === this.family ? 'selected' : ''}">${tr(`m2.family.${family}`)}</button>`).join('')}</div><div class="weapon-grid">${Object.values(WEAPONS).filter(weapon => this.family === 'all' || this.family === weapon.family).map(weapon => {
++    const weapons = Object.values(WEAPONS).filter(weapon => this.family === 'all' || this.family === weapon.family);
++    if (this.orangeFirst) weapons.sort((a, b) => b.rarity - a.rarity);
++    return `<section class="hero-overview"><h3>${tr('m3.heroOverview')}</h3><div class="hero-loadout-grid">${Object.keys(HERO_FAMILIES).map(hero => { const id = profile.equippedWeapons[hero]; return `<article data-loadout-hero="${hero}"><span>${id ? weaponSticker(id, 42) : '＋'}</span><div><strong>${tr(`hero.${hero}`)}</strong><small>${id ? tr(`weapon.${id}`) : tr('m3.emptyWeapon')}</small></div></article>`; }).join('')}</div></section><p>${tr('m2.collection', { count: profile.unlockedWeapons.length })}</p><p class="meta-rule">${tr('m2.weaponRule')}</p><div class="meta-tabs sort-tabs">${['default', 'orange'].map(sort => `<button type="button" data-action="meta-sort:${sort}" aria-pressed="${this.orangeFirst === (sort === 'orange')}" class="${this.orangeFirst === (sort === 'orange') ? 'selected' : ''}">${tr(sort === 'orange' ? 'm3.orangeSort' : 'm3.defaultSort')}</button>`).join('')}</div><div class="meta-tabs family-tabs">${['all', 'melee', 'ranged', 'magic'].map(family => `<button type="button" data-action="meta-family:${family}" aria-pressed="${family === this.family}" class="${family === this.family ? 'selected' : ''}">${tr(`m2.family.${family}`)}</button>`).join('')}</div><div class="weapon-grid">${weapons.map(weapon => {
+       const unlocked = profile.unlockedWeapons.includes(weapon.id);
+       const wearer = Object.keys(profile.equippedWeapons).find(hero => profile.equippedWeapons[hero] === weapon.id);
+       const rule = RARITY_RULES[weapon.rarity];
+-      return `<article class="weapon-card rarity-${weapon.rarity} ${unlocked ? 'unlocked' : 'locked'}"><small>${tr(`m2.rarity.${weapon.rarity}`)} · ${tr(`m2.family.${weapon.family}`)}</small><h3>${tr(`weapon.${weapon.id}`)}</h3><b>${tr('m2.damage', { value: Math.round(rule.damageBonus * 100) })}</b><p>${tr(`weapon.${weapon.id}.desc`)}</p>${weapon.signatureHero ? `<p class="signature-note">✦ ${tr('m2.signature', { hero: t(`hero.${weapon.signatureHero}`) })}</p>` : ''}<div class="fragment-track"><i style="width:${Math.min(100, (profile.weaponFragments[weapon.id] ?? 0) / rule.fragments * 100)}%"></i></div><small>${tr('m2.progress', { count: profile.weaponFragments[weapon.id] ?? 0, total: rule.fragments })}</small>${unlocked ? `<label class="equip-hero"><span>${tr('m2.chooseHero')}</span><select data-weapon="${weapon.id}" aria-label="${tr('m2.equip')} ${tr(`weapon.${weapon.id}`)}"><option value="" disabled${wearer ? '' : ' selected'}>${tr('m2.chooseHero')}</option>${Object.keys(HERO_FAMILIES).filter(hero => HERO_FAMILIES[hero] === weapon.family).map(hero => `<option value="${hero}"${wearer === hero ? ' selected' : ''}>${tr(`hero.${hero}`)}</option>`).join('')}</select></label>${wearer ? `<p>${tr('m2.equipped', { hero: t(`hero.${wearer}`) })}</p><button type="button" class="text-button" data-action="meta-unequip:${wearer}">${tr('m2.unequip')}</button>` : ''}` : `<strong class="locked-label">${tr('m2.locked')}</strong>`}</article>`;
++      return `<article class="weapon-card rarity-${weapon.rarity} ${unlocked ? 'unlocked' : 'locked'}" data-weapon-id="${weapon.id}" data-weapon-rarity="${weapon.rarity}"><span class="weapon-sticker">${weaponSticker(weapon.id, 56)}</span><small>${tr(`m2.rarity.${weapon.rarity}`)} · ${tr(`m2.family.${weapon.family}`)}</small><h3>${tr(`weapon.${weapon.id}`)}</h3><b>${tr('m2.damage', { value: Math.round(rule.damageBonus * 100) })}</b><p>${tr(`weapon.${weapon.id}.desc`)}</p>${weapon.signatureHero ? `<p class="signature-note">✦ ${tr('m2.signature', { hero: t(`hero.${weapon.signatureHero}`) })}</p>` : ''}<div class="fragment-track"><i style="width:${Math.min(100, (profile.weaponFragments[weapon.id] ?? 0) / rule.fragments * 100)}%"></i></div><small>${tr('m2.progress', { count: profile.weaponFragments[weapon.id] ?? 0, total: rule.fragments })}</small>${unlocked ? `<label class="equip-hero"><span>${tr('m2.chooseHero')}</span><select data-weapon="${weapon.id}" aria-label="${tr('m2.equip')} ${tr(`weapon.${weapon.id}`)}"><option value="" disabled${wearer ? '' : ' selected'}>${tr('m2.chooseHero')}</option>${Object.keys(HERO_FAMILIES).filter(hero => HERO_FAMILIES[hero] === weapon.family).map(hero => `<option value="${hero}"${wearer === hero ? ' selected' : ''}>${tr(`hero.${hero}`)}</option>`).join('')}</select></label>${wearer ? `<p>${tr('m2.equipped', { hero: t(`hero.${wearer}`) })}</p><button type="button" class="text-button" data-action="meta-unequip:${wearer}">${tr('m2.unequip')}</button>` : ''}` : `<strong class="locked-label">${tr('m2.locked')}</strong>`}</article>`;
+     }).join('')}</div><section class="recycle-panel"><h3>${tr('m2.recycle')}</h3><p>${tr('m2.recycleRule')}</p><div class="rarity-checks">${RARITY_RULES.map((rule, rarity) => `<label><input type="checkbox" data-rarity="${rarity}"${this.rarities.has(rarity) ? ' checked' : ''}>${tr(`m2.rarity.${rarity}`)}<small>${tr('m2.recycleRate', { value: rule.recycle })}</small></label>`).join('')}</div><button type="button" class="button button-teal" data-action="meta-recycle">${tr('m2.recycle')}</button></section>`;
+   }
+   private shop(profile: Profile): string {
+     return `<button type="button" class="button button-light shop-refresh" data-action="meta-refresh">${tr('m2.refresh')}</button><div class="shop-grid">${(profile.shop?.offers ?? []).map(id => {
+       const prop = PROPS[id]; if (!prop) return '';
+       const level = profile.ownedProps[id] ?? 0;
+       return `<article class="shop-card rarity-${prop.rarity}"><span class="shop-icon">${esc(prop.icon)}</span><h3>${tr(`prop.${id}`)}</h3><small>${tr(`m2.${prop.type}`)} · ${tr('m2.level', { level, max: prop.maxLevel })}</small><p>${tr(`prop.${id}.desc`)}</p><button type="button" class="button button-teal" data-action="meta-buy:${id}"${level >= prop.maxLevel ? ' disabled' : ''}>${tr(level >= prop.maxLevel ? 'm2.maxed' : level ? 'm2.upgrade' : 'm2.buy', { price: prop.price })}</button></article>`;
+     }).join('') || `<p>${tr('m2.shopEmpty')}</p>`}</div>`;
+   }
+   private lottery(): string {
+     const positions = [0, 1, 2, 5, 8, 7, 6, 3];
+     const cells = Array.from({ length: 9 }, (_, position) => {
+       if (position === 4) return `<button type="button" class="lottery-center" data-action="meta-spin"${this.spinning ? ' disabled' : ''}><b>${tr(this.spinning ? 'm2.spinning' : 'm2.spin')}</b><small>${tr('m2.spinCost')}</small></button>`;
+       const index = positions.indexOf(position); const prize = this.prizes[index];
+       return `<div class="lottery-cell ${index === this.highlight ? 'lit' : ''}"><span>${prize?.type === 'prop' ? esc(PROPS[prize.id!]?.icon ?? '🎁') : prize?.type === 'coins' ? '🪙' : '✦'}</span><small>${prize ? this.prizeText(prize) : ''}</small></div>`;
+     });
+     return `<div class="lottery-grid">${cells.join('')}</div><p class="meta-rule">${tr('m2.lotteryRule')}</p>${this.prize ? `<section class="lottery-result" role="status"><h3>${tr('m2.prize')}</h3><p>${this.prizeText(this.prize)}</p>${this.convertedCoins !== undefined ? `<p>${tr('m2.convertedCoins', { amount: this.convertedCoins })}</p>` : ''}${this.newWeapons.length ? `<h4>${tr('m2.newWeapons')}</h4>${this.newWeapons.map(id => `<p>${tr(`weapon.${id}`)}</p>`).join('')}` : ''}</section>` : ''}`;
+   }
+ }
+
+diff --git "a/D:\\rea_game\\games\\capybara-defense\\.runtime\\m3-review-base\\src\\ui\\ProfileScreens.ts" "b/D:\\rea_game\\games\\capybara-defense\\src\\ui\\ProfileScreens.ts"
+index e69de29..4e88bc3 100644
+--- "a/D:\\rea_game\\games\\capybara-defense\\.runtime\\m3-review-base\\src\\ui\\ProfileScreens.ts"
++++ "b/D:\\rea_game\\games\\capybara-defense\\src\\ui\\ProfileScreens.ts"
+@@ -0,0 +1,63 @@
++import type { Profile } from '../core/types';
++import { AVATARS } from '../config/avatars';
++import { RANKS } from '../config/ranks';
++import { getLeaderboard, getUnlockedMaps, selectAvatar, selectMap, setRank, updateSettings } from '../core/PlayerProgression';
++import { getRank } from '../config/ranks';
++import { avatarSticker } from '../render/M3Art';
++import { t } from '../i18n/i18n';
++import { escapeHtml as esc } from './art';
++
++export type ProfileScreen = 'profile' | 'leaderboard' | 'settings';
++const tr = (key: string, vars?: Record<string, string | number>) => esc(t(key, vars));
++
++export function rankCard(profile: Profile): string {
++  const rank = getRank(profile.stars), next = RANKS[rank.index + 1];
++  const progress = next ? Math.max(0, Math.min(100, (profile.stars - rank.minStars) / (next.minStars - rank.minStars) * 100)) : 100;
++  return `<button type="button" data-action="profile" class="rank-card"><span class="rank-avatar">${avatarSticker(profile.avatarId, 68)}</span><span><small>${tr('m3.rankIndex', { index: rank.index })}</small><strong>${tr(`rank.${rank.index}`)}</strong><b>★ ${tr('m3.stars', { count: profile.stars })}</b><span class="rank-track"><i style="width:${progress}%"></i></span><small>${tr(next ? 'm3.rankProgress' : 'm3.topRank', { count: next ? next.minStars - profile.stars : 0 })}</small></span></button>`;
++}
++
++export function mapOptions(profile: Profile, includeAuto = true): string {
++  const auto = getRank(profile.stars).mapId;
++  return `${includeAuto ? `<option value="auto"${profile.selectedMap === 'auto' ? ' selected' : ''}>${tr('m3.autoMap', { map: t(`map.${auto}`) })}</option>` : ''}${getUnlockedMaps(profile).map(id => `<option value="${id}"${profile.selectedMap === id ? ' selected' : ''}>${tr(`map.${id}`)}</option>`).join('')}`;
++}
++
++export class ProfileScreens {
++  constructor(private profile: () => Profile, private persist: (profile: Profile) => boolean, private render: () => void, private notify: (key: string) => void) {}
++  action(action: string): boolean {
++    if (!action.startsWith('avatar:')) return false;
++    const id = action.slice(7), current = this.profile();
++    if (current.unlockedAvatars.includes(id) && this.persist(selectAvatar(current, id))) { this.notify('m3.avatarEquipped'); this.render(); }
++    return true;
++  }
++  change(element: HTMLInputElement | HTMLSelectElement): boolean {
++    const before = this.profile();
++    if (element.dataset.setting) {
++      const key = element.dataset.setting;
++      const patch = key === 'showDamageNumbers' ? { showDamageNumbers: (element as HTMLInputElement).checked } : { [key]: Number(element.value) };
++      if (this.persist(updateSettings(before, patch))) {
++        const output = element.closest('label')?.querySelector('output');
++        if (output) output.textContent = `${Math.round(Number(element.value) * 100)}%`;
++      } else this.render();
++      return true;
++    }
++    if (element.dataset.map !== undefined) {
++      if (this.persist(selectMap(before, element.value as Profile['selectedMap']))) this.notify('m3.mapSaved');
++      this.render(); return true;
++    }
++    if (element.id === 'dev-rank') {
++      if (this.persist(setRank(before, Number(element.value)))) this.notify('m3.rankSaved');
++      this.render(); return true;
++    }
++    return false;
++  }
++  markup(screen: ProfileScreen): string {
++    const profile = this.profile();
++    const header = `<button type="button" class="dialog-close icon-button" data-action="close-profile" aria-label="${tr('m3.close')}">×</button><h2 id="dialog-title">${tr(`m3.${screen}`)}</h2>`;
++    if (screen === 'settings') return header + `<div class="settings-form">${(['musicVolume', 'soundVolume'] as const).map(key => `<label><span>${tr(key === 'musicVolume' ? 'm3.music' : 'm3.sound')} <output>${Math.round(profile.settings[key] * 100)}%</output></span><input type="range" min="0" max="1" step="0.01" value="${profile.settings[key]}" data-setting="${key}" aria-label="${tr(key === 'musicVolume' ? 'm3.music' : 'm3.sound')}"></label>`).join('')}<label class="damage-setting"><input type="checkbox" data-setting="showDamageNumbers"${profile.settings.showDamageNumbers ? ' checked' : ''}><span>${tr('m3.damage')}</span></label><p>${tr('m3.settingsSaved')}</p></div>`;
++    if (screen === 'leaderboard') return header + `<p class="meta-rule">${tr('m3.localBoard')}</p><ol class="leaderboard-list">${getLeaderboard(profile).map((entry, index) => `<li class="leaderboard-row ${entry.isPlayer ? 'is-player' : ''}" data-player="${entry.isPlayer}" aria-label="${tr('m3.place', { place: index + 1 })}"><b>${index + 1}</b><span>${avatarSticker(entry.avatarId, 48)}</span><div><strong>${esc(entry.name[document.documentElement.lang === 'en' ? 'en' : 'zh-CN'])}</strong><small>${tr(`rank.${getRank(entry.stars).index}`)}</small><small>${tr('m3.record', { wins: entry.wins, matches: entry.matches, rate: entry.matches ? Math.round(entry.wins / entry.matches * 100) : 0 })}</small></div><strong>★ ${entry.stars}</strong></li>`).join('')}</ol>`;
++    return header + rankCard(profile) + `<p>${tr('m3.record', { wins: profile.wins, matches: profile.matches, rate: profile.matches ? Math.round(profile.wins / profile.matches * 100) : 0 })}</p><p>${tr('m3.streak', { current: profile.winStreak, best: profile.bestWinStreak })}</p><div class="avatar-grid">${Object.values(AVATARS).map(avatar => {
++      const unlocked = profile.unlockedAvatars.includes(avatar.id), selected = profile.avatarId === avatar.id;
++      return `<button type="button" class="avatar-card ${unlocked ? 'unlocked' : 'locked'}" data-action="avatar:${avatar.id}" aria-pressed="${selected}"${unlocked ? '' : ' disabled'}>${avatarSticker(avatar.id, 72)}<strong>${tr(`avatar.${avatar.id}`)}</strong><small>${tr(`avatar.${avatar.id}.desc`)}</small><b>${tr(selected ? 'm3.avatarCurrent' : unlocked ? 'm3.avatarUnlocked' : 'm3.avatarLocked')}</b></button>`;
++    }).join('')}</div>`;
++  }
++}
+
+diff --git "a/D:\\rea_game\\games\\capybara-defense\\.runtime\\m3-review-base\\src\\ui\\m3.css" "b/D:\\rea_game\\games\\capybara-defense\\src\\ui\\m3.css"
+index e69de29..de836f2 100644
+--- "a/D:\\rea_game\\games\\capybara-defense\\.runtime\\m3-review-base\\src\\ui\\m3.css"
++++ "b/D:\\rea_game\\games\\capybara-defense\\src\\ui\\m3.css"
+@@ -0,0 +1,85 @@
++.settings-button { width:35px; height:35px; flex:none; font-size:21px; }
++.rank-card { display:flex; align-items:center; gap:13px; width:100%; margin:16px 0; padding:13px; border:1.5px solid #bca879; background:#edf1da; border-radius:14px; text-align:left; color:inherit; font:inherit; cursor:pointer; }
++.rank-card > span:last-child { display:grid; gap:5px; min-width:0; flex:1; }
++.rank-card strong { font-size:16px; line-height:1.4; }
++.rank-card b { font-size:13px; color:#ac7838; }
++.rank-card small { font-size:10px; line-height:1.5; }
++.rank-avatar { display:block; width:68px; flex:none; }
++.rank-avatar svg { display:block; width:100%; height:auto; }
++.rank-track { display:block; height:6px; background:#d4dbc0; border-radius:10px; overflow:hidden; }
++.rank-track i { display:block; height:100%; background:#8caa79; border-radius:inherit; }
++.map-select { display:grid; text-align:left; gap:6px; margin:12px 0 18px; }
++.map-select > span { font-size:12px; font-weight:700; }
++.map-select small { font-size:9px; color:#968062; line-height:1.6; }
++.map-select select,.m2-dev > select { width:100%; min-width:0; padding:9px; background:#fff9ea; border:1px solid #bca987; border-radius:7px; color:inherit; font:inherit; font-size:12px; }
++.m2-dev > label { font-size:11px; font-weight:700; }
++.game-dialog.profile-dialog { width:min(850px,calc(100vw - 24px)); }
++.profile-dialog > p { font-size:12px; line-height:1.7; }
++.profile-dialog > .rank-card { max-width:430px; margin:20px auto; }
++.avatar-grid { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:12px; margin-top:20px; }
++.avatar-card { display:flex; flex-direction:column; align-items:center; gap:7px; padding:14px 8px; min-width:0; border:1px solid #d4c29e; border-radius:13px; background:#fff8e9; font:inherit; color:inherit; text-align:center; cursor:pointer; }
++.avatar-card strong { font-size:12px; }
++.avatar-card small { font-size:10px; line-height:1.6; }
++.avatar-card b { font-size:9px; color:#6e8869; margin-top:auto; }
++.avatar-card[aria-pressed="true"] { background:#e1eccc; box-shadow:inset 0 0 0 2px #7c9970; }
++.avatar-card.locked { opacity:.7; cursor:default; background:#ebe5d8; }
++.avatar-card svg { width:72px; max-width:100%; flex:none; }
++.leaderboard-list { padding:0; margin:20px 0 0; list-style:none; display:grid; gap:8px; }
++.leaderboard-row { display:grid; grid-template-columns:22px 48px minmax(0,1fr) auto; align-items:center; gap:9px; padding:10px; border:1px solid #d6c7aa; border-radius:10px; background:#fff9e9; font-size:12px; }
++.leaderboard-row > b { color:#a67c3d; text-align:center; }
++.leaderboard-row > div { min-width:0; display:grid; gap:4px; }
++.leaderboard-row small { font-size:10px; color:#907b5d; line-height:1.5; }
++.leaderboard-row.is-player { background:#e3eccf; border:2px solid #8ba278; }
++.leaderboard-row svg { display:block; width:48px; height:48px; }
++.settings-form { display:grid; gap:24px; margin-top:30px; }
++.settings-form label { font-size:13px; display:grid; gap:13px; }
++.settings-form label > span { display:flex; justify-content:space-between; gap:10px; }
++.settings-form output { color:#8b713f; font-weight:700; }
++.settings-form input[type="range"] { width:100%; accent-color:#7f9a73; }
++.settings-form .damage-setting { display:flex; align-items:center; gap:10px; }
++.settings-form p { font-size:11px; color:#8b795d; line-height:1.7; }
++.hero-overview { padding:14px; background:#edf0dd; border-radius:13px; margin:20px 0; }
++.hero-loadout-grid { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:8px; }
++.hero-loadout-grid article { display:flex; gap:7px; align-items:center; min-width:0; background:#fff9ec; padding:9px 6px; border:1px solid #d9cfb7; border-radius:8px; }
++.hero-loadout-grid article > span { width:42px; flex:none; color:#baa983; font-size:28px; text-align:center; }
++.hero-loadout-grid article > div { min-width:0; display:grid; gap:4px; }
++.hero-loadout-grid strong { font-size:11px; line-height:1.5; }
++.hero-loadout-grid small { font-size:9px; color:#8e795b; }
++.weapon-sticker { float:right; margin:0 0 8px 8px; }
++.weapon-sticker svg { width:56px; height:56px; display:block; }
++.rank-result { display:grid; gap:7px; margin:15px 0; padding:13px; background:#edf0dc; border-radius:10px; font-size:12px; line-height:1.6; }
++.rank-result h3,.rank-result p { margin:0; }
++@media(max-width:700px) {
++  .masthead .header-actions { gap:6px; }
++  .settings-button { width:29px; height:29px; font-size:18px; }
++  .masthead .brand small { max-width:145px; }
++  .avatar-grid { grid-template-columns:repeat(2,minmax(0,1fr)); gap:8px; }
++  .game-dialog.profile-dialog { padding:24px 15px; width:calc(100vw - 18px); }
++  .hero-loadout-grid { grid-template-columns:repeat(2,minmax(0,1fr)); }
++  .hero-overview { padding:10px; }
++  .hero-loadout-grid article { padding:8px 4px; gap:4px; }
++  .hero-loadout-grid article > span { width:33px; }
++  .hero-loadout-grid svg { width:33px; height:33px; }
++  .leaderboard-row { grid-template-columns:17px 36px minmax(0,1fr) auto; gap:6px; padding:8px 6px; font-size:11px; }
++  .leaderboard-row svg { width:36px; height:36px; }
++  .leaderboard-row small { font-size:9px; }
++  .sealed-hint { top:66%; left:5%; right:5%; padding:3px 5px; font-size:9px; line-height:1.25; border-width:1px; }
++  .rank-card { padding:10px; gap:8px; }
++  .rank-avatar { width:55px; }
++  .rank-card strong { font-size:14px; }
++}
++@media(max-width:370px) {
++  .masthead .brand { gap:4px; }
++  .masthead .brand strong { font-size:13px; }
++  html[lang="en"] .masthead .brand strong { font-size:10px; }
++  .masthead .brand small { max-width:124px; font-size:6px; }
++  .masthead .header-actions { gap:4px; }
++  .masthead .language-switch button { padding:5px; font-size:10px; }
++  .settings-button { width:25px; height:27px; }
++  .stage .menu-screen { padding-left:18px; padding-right:18px; }
++  .rank-avatar { width:45px; }
++  .rank-card strong { font-size:12px; }
++  .rank-card small { font-size:9px; }
++  .hero-loadout-grid { grid-template-columns:1fr; }
++  .sealed-hint { top:65.5%; font-size:8px; }
++}
+
+
+
+diff --git "a/D:\\rea_game\\games\\capybara-defense\\.runtime\\m3-review-base\\src\\i18n\\m3.ts" "b/D:\\rea_game\\games\\capybara-defense\\src\\i18n\\m3.ts"
+index e69de29..3d2aac4 100644
+--- "a/D:\\rea_game\\games\\capybara-defense\\.runtime\\m3-review-base\\src\\i18n\\m3.ts"
++++ "b/D:\\rea_game\\games\\capybara-defense\\src\\i18n\\m3.ts"
+@@ -0,0 +1,58 @@
++import { MAPS } from '../config/maps';
++import { RANKS } from '../config/ranks';
++import { AVATARS } from '../config/avatars';
++
++const phrases: Record<string, [string, string]> = {
++  'app.edition': ['四季温泉 · v1.0', 'Four Seasons Onsen · v1.0'],
++  'm2.testEnable': ['一键全满 M3 测试档', 'Unlock All M3'],
++  'm3.profile': ['铲屎官名片与头像馆', 'Keeper Card & Avatar Gallery'],
++  'm3.leaderboard': ['温泉风云榜', 'Onsen Leaderboard'],
++  'm3.settings': ['设置', 'Settings'], 'm3.close': ['返回', 'Back'],
++  'm3.stars': ['{count} 颗星', '{count} stars'],
++  'm3.rankProgress': ['再获 {count} 星晋级', '{count} stars to next rank'],
++  'm3.topRank': ['已达最高段位', 'Highest rank reached'],
++  'm3.rankIndex': ['第 {index} 段', 'Rank {index}'],
++  'm3.map': ['本局地图', 'Battle map'], 'm3.autoMap': ['跟随段位 · {map}', 'Auto · {map}'],
++  'm3.mapRule': ['历史最高段位 10 / 20 / 30 永久解锁新地图', 'New maps unlock permanently at best ranks 10 / 20 / 30'],
++  'm3.devRank': ['测试段位 · 下局生效', 'Test rank · next battle'],
++  'm3.devMap': ['测试地图 · 下局生效', 'Test map · next battle'],
++  'm3.rankSaved': ['段位已保存，下局生效', 'Rank saved for the next battle'],
++  'm3.mapSaved': ['地图选择已保存，下局生效', 'Map saved for the next battle'],
++  'm3.avatarEquipped': ['头像已佩戴', 'Avatar equipped'],
++  'm3.avatarLocked': ['未解锁', 'Locked'], 'm3.avatarUnlocked': ['已解锁 · 点击佩戴', 'Unlocked · select to equip'],
++  'm3.avatarCurrent': ['当前头像', 'Current avatar'],
++  'm3.record': ['{wins} 胜 / {matches} 场 · 胜率 {rate}%', '{wins} wins / {matches} matches · {rate}% win rate'],
++  'm3.streak': ['当前 {current} 连胜 · 最高 {best} 连胜', 'Current streak {current} · Best streak {best}'],
++  'm3.localBoard': ['本地榜样与我的即时排名', 'Local keepers and your live ranking'],
++  'm3.place': ['排名 {place}', 'Place {place}'],
++  'm3.music': ['背景音乐', 'Background music'], 'm3.sound': ['游戏音效', 'Sound effects'],
++  'm3.damage': ['显示伤害数字', 'Show damage numbers'],
++  'm3.settingsSaved': ['设置即时保存并生效', 'Settings save and apply immediately'],
++  'm3.heroOverview': ['12 英雄配装总览', '12-Hero Loadout Overview'],
++  'm3.emptyWeapon': ['空手', 'Empty hands'],
++  'm3.defaultSort': ['默认排序', 'Default order'], 'm3.orangeSort': ['橙品优先', 'Orange first'],
++  'm3.starChange': ['本局星数 {change} · 当前 {stars} 星', 'Stars {change} · Total {stars}'],
++  'm3.protected': ['新手段位保护 · 本局不扣星', 'Rookie protection · no stars lost'],
++  'm3.floorProtected': ['20 星底线保护', '20-star floor protection'],
++  'm3.streakBonus': ['三连胜奖励 · 额外 +1 星', 'Winning streak · extra +1 star'],
++  'm3.promotion': ['晋级！{rank}', 'Promoted! {rank}'],
++  'm3.newAvatars': ['新头像解锁', 'New avatars unlocked'],
++  'enemy.killer_bee': ['杀人蜂', 'Killer Bee'], 'enemy.charmed_rat': ['迷弟耗子', 'Charmed Rat'],
++  'boss.diva_kitty': ['绿茶波斯猫', 'Diva Kitty'], 'boss.diva_kitty.bubble': ['来做我的迷弟吧～', 'Be my biggest fan!'],
++  'boss.buff_roo': ['澳洲拳王袋鼠', 'Buff Roo'], 'boss.buff_roo.bubble': ['来一拳醒醒神！', 'Time for a knockout!'],
++  'boss.hornet_queen': ['疯批大马蜂后', 'Hornet Queen'], 'boss.hornet_queen.bubble': ['小的们，冲呀！', 'Swarm, charge!'],
++  'boss.screaming_marmot': ['尖叫土拨鼠', 'Screaming Marmot'], 'boss.screaming_marmot.bubble': ['啊——！！', 'AAAAAH!!'],
++  'boss.trash_coon': ['死灵垃圾浣熊', 'Trash Necro-Coon'], 'boss.trash_coon.bubble': ['垃圾里也有第二春！', 'Rise from the rubbish!'],
++  'boss.dj_rat_king': ['打鸡血鼠王', 'DJ Rat King'], 'boss.dj_rat_king.bubble': ['全场一起嗨！', 'Everybody, turn it up!'],
++};
++
++export const m3Zh: Record<string, string> = Object.fromEntries(Object.entries(phrases).map(([key, pair]) => [key, pair[0]]));
++export const m3En: Record<string, string> = Object.fromEntries(Object.entries(phrases).map(([key, pair]) => [key, pair[1]]));
++for (const [language, dictionary] of [['zh-CN', m3Zh], ['en', m3En]] as const) {
++  for (const map of Object.values(MAPS)) dictionary[`map.${map.id}`] = map.name[language];
++  for (const rank of RANKS) dictionary[`rank.${rank.index}`] = rank.name[language];
++  for (const avatar of Object.values(AVATARS)) {
++    dictionary[`avatar.${avatar.id}`] = avatar.name[language];
++    dictionary[`avatar.${avatar.id}.desc`] = avatar.description[language];
++  }
++}
+
+diff --git "a/D:\\rea_game\\games\\capybara-defense\\.runtime\\m3-review-base\\src\\i18n\\i18n.ts" "b/D:\\rea_game\\games\\capybara-defense\\src\\i18n\\i18n.ts"
+index bbef161..73d2188 100644
+--- "a/D:\\rea_game\\games\\capybara-defense\\.runtime\\m3-review-base\\src\\i18n\\i18n.ts"
++++ "b/D:\\rea_game\\games\\capybara-defense\\src\\i18n\\i18n.ts"
+@@ -1,31 +1,33 @@
+ import { en } from './en';
+ import { zhCN } from './zh-CN';
+ import { m2Zh, m2En } from './m2';
++import { m3Zh, m3En } from './m3';
+ import { readSetting, writeSetting } from '../ui/storage';
+ 
+ export type Language = 'zh-CN' | 'en';
+ let language: Language = readSetting('language') === 'en' ? 'en' : 'zh-CN';
+ const listeners = new Set<() => void>();
+ 
+ export function getLanguage(): Language { return language; }
+ 
+ export function setLanguage(next: Language): void {
+   if (next !== 'zh-CN' && next !== 'en') return;
+   writeSetting('language', next);
+   if (next === language) return;
+   language = next;
+   listeners.forEach(listener => listener());
+ }
+ 
+ export function onLanguageChange(callback: () => void): () => void {
+   listeners.add(callback);
+   return () => { listeners.delete(callback); };
+ }
+ 
+ export function t(key: string, vars: Record<string, string | number> = {}): string {
+   const dictionary: Record<string, string> = language === 'en' ? en : zhCN;
+   const fallback: Record<string, string> = zhCN;
+   const extra = language === 'en' ? m2En : m2Zh;
+-  const phrase = extra[key] ?? dictionary[key] ?? m2Zh[key] ?? fallback[key] ?? key;
++  const latest = language === 'en' ? m3En : m3Zh;
++  const phrase = latest[key] ?? extra[key] ?? dictionary[key] ?? m3Zh[key] ?? m2Zh[key] ?? fallback[key] ?? key;
+   return phrase.replace(/\{(\w+)\}/g, (match, name: string) => String(vars[name] ?? match));
+ }
+
+diff --git "a/D:\\rea_game\\games\\capybara-defense\\.runtime\\m3-review-base\\tests\\m3-i18n.test.ts" "b/D:\\rea_game\\games\\capybara-defense\\tests\\m3-i18n.test.ts"
+index e69de29..39d9881 100644
+--- "a/D:\\rea_game\\games\\capybara-defense\\.runtime\\m3-review-base\\tests\\m3-i18n.test.ts"
++++ "b/D:\\rea_game\\games\\capybara-defense\\tests\\m3-i18n.test.ts"
+@@ -0,0 +1,54 @@
++import { afterEach, describe, expect, it } from 'vitest';
++import { readFileSync } from 'node:fs';
++import { m3Zh, m3En } from '../src/i18n/m3';
++import { MAPS } from '../src/config/maps';
++import { RANKS } from '../src/config/ranks';
++import { AVATARS } from '../src/config/avatars';
++import { BOSS_IDS, ENEMIES } from '../src/config/enemies';
++import { setLanguage, t } from '../src/i18n/i18n';
++
++describe('M3 complete live localization', () => {
++  afterEach(() => setLanguage('zh-CN'));
++  it('covers every configuration name, avatar condition and boss bubble', () => {
++    for (const language of ['zh-CN', 'en'] as const) {
++      setLanguage(language);
++      expect(Object.values(MAPS)).toHaveLength(4);
++      expect(RANKS).toHaveLength(54);
++      expect(Object.values(AVATARS)).toHaveLength(16);
++      for (const map of Object.values(MAPS)) expect(t(`map.${map.id}`)).toBe(map.name[language]);
++      for (const rank of RANKS) expect(t(`rank.${rank.index}`)).toBe(rank.name[language]);
++      for (const avatar of Object.values(AVATARS)) {
++        expect(t(`avatar.${avatar.id}`)).toBe(avatar.name[language]);
++        expect(t(`avatar.${avatar.id}.desc`)).toBe(avatar.description[language]);
++      }
++      for (const { id } of Object.values(ENEMIES).filter(enemy => !enemy.boss)) expect(t(`enemy.${id}`)).not.toBe(`enemy.${id}`);
++      for (const id of BOSS_IDS) {
++        expect(t(`boss.${id}`)).not.toBe(`boss.${id}`);
++        expect(t(`boss.${id}.bubble`)).not.toBe(`boss.${id}.bubble`);
++      }
++    }
++  });
++  it('has exactly matching keys and placeholder sets with no unresolved substitutions', () => {
++    expect(Object.keys(m3Zh).sort()).toEqual(Object.keys(m3En).sort());
++    for (const key of Object.keys(m3Zh)) {
++      const names = (value: string) => [...value.matchAll(/\{(\w+)\}/g)].map(match => match[1]).sort();
++      expect(names(m3Zh[key]), key).toEqual(names(m3En[key]));
++      for (const language of ['zh-CN', 'en'] as const) {
++        setLanguage(language);
++        expect(t(key, Object.fromEntries(names(m3Zh[key]).map(name => [name, 7])))).not.toMatch(/\{\w+\}/);
++      }
++    }
++    setLanguage('en'); expect(t('app.edition')).toContain('v1.0');
++  });
++  it('translates all literal M3 UI keys and changes immediately', () => {
++    for (const file of ['GameApp.ts', 'MetaScreens.ts', 'ProfileScreens.ts']) {
++      const code = readFileSync(new URL(`../src/ui/${file}`, import.meta.url), 'utf8');
++      for (const match of code.matchAll(/['"](m3\.[A-Za-z]+)['"]/g)) {
++        expect(m3Zh[match[1]], match[1]).toBeTruthy();
++        expect(m3En[match[1]], match[1]).toBeTruthy();
++      }
++    }
++    setLanguage('zh-CN'); const before = t('m3.promotion', { rank: 'X' });
++    setLanguage('en'); expect(t('m3.promotion', { rank: 'X' })).not.toBe(before);
++  });
++});
+
+diff --git "a/D:\\rea_game\\games\\capybara-defense\\.runtime\\m3-review-base\\scripts\\m3-browser-qa.mjs" "b/D:\\rea_game\\games\\capybara-defense\\scripts\\m3-browser-qa.mjs"
+index e69de29..083b8b4 100644
+--- "a/D:\\rea_game\\games\\capybara-defense\\.runtime\\m3-review-base\\scripts\\m3-browser-qa.mjs"
++++ "b/D:\\rea_game\\games\\capybara-defense\\scripts\\m3-browser-qa.mjs"
+@@ -0,0 +1,285 @@
++import assert from 'node:assert/strict';
++import fs from 'node:fs';
++import path from 'node:path';
++import { fileURLToPath } from 'node:url';
++import { chromium } from 'playwright-core';
++
++// Run only after the integration owner freezes source and confirms dev4175.
++// This script never starts, stops, or changes a server, and uses isolated storage.
++const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
++const runtime = path.join(root, '.runtime', 'browser-tmp');
++const output = path.join(root, 'verification');
++fs.mkdirSync(runtime, { recursive: true }); fs.mkdirSync(output, { recursive: true });
++const executablePath = process.env.CAPY_CHROME ?? [
++  path.join(process.env.PROGRAMFILES ?? 'C:/Program Files', 'Google/Chrome/Application/chrome.exe'),
++  path.join(process.env['PROGRAMFILES(X86)'] ?? 'C:/Program Files (x86)', 'Microsoft/Edge/Application/msedge.exe'),
++].find(file => fs.existsSync(file));
++if (!executablePath) throw new Error('Set CAPY_CHROME to installed Chrome/Edge.');
++const browser = await chromium.launch({ headless: true, executablePath, env: { ...process.env, TEMP: runtime, TMP: runtime }, args: ['--disable-breakpad', '--disable-crash-reporter', '--disable-background-networking'] });
++const context = await browser.newContext({ viewport: { width: 1536, height: 1200 }, deviceScaleFactor: 1 });
++const page = await context.newPage(); page.setDefaultTimeout(15000);
++const checks = [], errors = [], screenshots = [];
++const captureErrors = target => {
++  target.on('pageerror', error => errors.push(error.message));
++  target.on('console', message => { if (message.type() === 'error') errors.push(message.text()); });
++};
++captureErrors(page);
++const mark = message => { checks.push(message); console.log('PASS ' + message); };
++const click = action => page.locator(`[data-action="${action}"]`).filter({ visible: true }).first().click();
++const modalClick = action => page.locator(`#game-dialog [data-action="${action}"]`).click();
++const profile = () => page.evaluate(() => structuredClone(window.__CAPY_DEBUG__.profile));
++const state = () => page.evaluate(() => structuredClone(window.__CAPY_DEBUG__.engine.state));
++const stored = () => page.evaluate(() => JSON.parse(localStorage.getItem('capybara_defense_v1:profile')));
++const snap = async name => { const filename = `m3-${name}.png`; const modal = await page.locator('#game-dialog').evaluate(el => el.open); await page.screenshot({ path: path.join(output, filename), fullPage: !modal }); screenshots.push(filename); };
++async function fit() {
++  assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1), 'page fits viewport');
++  if (await page.locator('#game-dialog').evaluate(el => el.open)) assert.ok(await page.locator('#game-dialog').evaluate(el => el.scrollWidth <= el.clientWidth + 1), 'dialog fits viewport');
++}
++async function quietBattle() {
++  await page.evaluate(() => { const e = window.__CAPY_DEBUG__.engine; e.options.autoWaves = false; e.options.ai = false; e.state.enemies = []; });
++}
++async function watchSound() {
++  await page.evaluate(async () => {
++    const resource = performance.getEntriesByType('resource').findLast(entry => new URL(entry.name).pathname === '/src/ui/SoundManager.ts');
++    const { SoundManager } = await import(resource?.name ?? '/src/ui/SoundManager.ts');
++    const play = SoundManager.prototype.play;
++    const tone = SoundManager.prototype.tone;
++    window.__m3Cues = []; window.__m3EffectNotes = 0;
++    SoundManager.prototype.play = function(cue) { window.__m3Sound = this; window.__m3Cues.push(cue); return play.call(this, cue); };
++    SoundManager.prototype.tone = function(note, bus, at) { if (bus === this.effects) window.__m3EffectNotes++; return tone.call(this, note, bus, at); };
++  });
++}
++const cueCount = cue => page.evaluate(cue => (window.__m3Cues ?? []).filter(value => value === cue).length, cue);
++async function win() {
++  await page.evaluate(() => window.__CAPY_DEBUG__.engine.adjustOranges(-999, 'ai'));
++  await page.locator('#game-dialog [data-action="menu"]').waitFor();
++}
++async function reviewRegressions() {
++  const failures = [];
++  const isolated = await browser.newContext({ viewport: { width: 1280, height: 1000 } });
++  const mapPage = await isolated.newPage(); captureErrors(mapPage);
++  const action = (target, value) => target.locator(`[data-action="${value}"]`).filter({ visible: true }).first().click();
++  const guard = p => ({ stars: p.stars, highestStars: p.highestStars, selectedMap: p.selectedMap, unlockedAvatars: p.unlockedAvatars });
++  try {
++    await mapPage.goto('http://127.0.0.1:4175/', { waitUntil: 'networkidle' });
++    const original = await mapPage.evaluate(() => structuredClone(window.__CAPY_DEBUG__.profile));
++    assert.equal(original.stars, 0); assert.equal(await mapPage.locator('#menu-map option').count(), 2);
++    assert.equal(await mapPage.locator('#dev-map option').count(), 5, 'rank0 sandbox must offer auto plus all four maps');
++    const finish = async () => { await action(mapPage, 'pause'); await action(mapPage, 'surrender'); await action(mapPage, 'menu'); };
++    for (const mapId of ['sunny_backyard', 'sakura_onsen', 'midnight_kitchen', 'cat_tower_maze']) {
++      const rawBefore = await mapPage.evaluate(() => localStorage.getItem('capybara_defense_v1:profile'));
++      await mapPage.locator('#dev-map').selectOption(mapId);
++      assert.equal(await mapPage.evaluate(() => localStorage.getItem('capybara_defense_v1:profile')), rawBefore, 'sandbox choice must not persist');
++      await action(mapPage, 'start');
++      assert.equal(await mapPage.evaluate(() => window.__CAPY_DEBUG__.engine.state.mapId), mapId);
++      assert.deepEqual(guard(await mapPage.evaluate(() => window.__CAPY_DEBUG__.profile)), guard(original));
++      await finish(); assert.equal(await mapPage.locator('#menu-map option').count(), 2);
++      assert.deepEqual(guard(await mapPage.evaluate(() => JSON.parse(localStorage.getItem('capybara_defense_v1:profile')))), guard(original));
++    }
++    await mapPage.locator('#dev-map').selectOption('cat_tower_maze'); await mapPage.locator('#menu-map').selectOption('sunny_backyard');
++    assert.equal(await mapPage.locator('#dev-map').inputValue(), 'auto'); await action(mapPage, 'start');
++    assert.equal(await mapPage.evaluate(() => window.__CAPY_DEBUG__.engine.state.mapId), 'sunny_backyard'); await finish();
++    await mapPage.locator('#dev-map').selectOption('cat_tower_maze'); await mapPage.locator('#dev-map').selectOption('auto'); await action(mapPage, 'start');
++    assert.equal(await mapPage.evaluate(() => window.__CAPY_DEBUG__.engine.state.mapId), 'sunny_backyard'); await finish();
++    await mapPage.locator('#dev-map').selectOption('cat_tower_maze'); await action(mapPage, 'test-enable'); await action(mapPage, 'test-restore');
++    assert.equal(await mapPage.locator('#dev-map').inputValue(), 'auto'); assert.equal(await mapPage.locator('#menu-map option').count(), 2);
++    await mapPage.locator('#dev-map').selectOption('cat_tower_maze'); await action(mapPage, 'reset');
++    assert.equal(await mapPage.locator('#dev-map').inputValue(), 'auto'); assert.equal(await mapPage.locator('#menu-map option').count(), 2);
++    mark('Normal rank0 sandbox selects all four maps without changing stars, map unlocks or achievements; normal selection, restore and reset clear its page-only override');
++  } catch (error) { failures.push(`Sandbox override: ${error.message}`); }
++  const audioPage = await isolated.newPage(); captureErrors(audioPage);
++  try {
++    await audioPage.goto('http://127.0.0.1:4175/', { waitUntil: 'networkidle' });
++    await audioPage.evaluate(async () => {
++      const resource = performance.getEntriesByType('resource').findLast(entry => new URL(entry.name).pathname === '/src/ui/SoundManager.ts');
++      const { SoundManager } = await import(resource?.name ?? '/src/ui/SoundManager.ts'); const play = SoundManager.prototype.play, tone = SoundManager.prototype.tone;
++      window.__reviewNotes = 0;
++      SoundManager.prototype.play = function(cue) { window.__reviewSound = this; return play.call(this, cue); };
++      SoundManager.prototype.tone = function(note, bus, at) { if (bus === this.effects) window.__reviewNotes++; return tone.call(this, note, bus, at); };
++    });
++    await action(audioPage, 'start'); await action(audioPage, 'food'); await action(audioPage, 'summon'); await audioPage.waitForTimeout(100);
++    await audioPage.evaluate(() => { window.__reviewContext = window.__reviewSound.context; window.__reviewTimer = window.__reviewSound.timer; });
++    const initial = await audioPage.evaluate(() => ({ running: window.__reviewContext?.state, notes: window.__reviewNotes }));
++    assert.equal(initial.running, 'running'); assert.ok(initial.notes > 0);
++    for (let cycle = 0; cycle < 2; cycle++) {
++      const hidden = await audioPage.evaluate(() => {
++        window.dispatchEvent(new PageTransitionEvent('pagehide', { persisted: true }));
++        return { disposed: window.__reviewSound.disposed, same: window.__reviewSound.context === window.__reviewContext, ducked: window.__reviewSound.ducked };
++      });
++      assert.equal(hidden.disposed, false, 'persisted pagehide must retain manager'); assert.ok(hidden.same); assert.ok(hidden.ducked);
++      await audioPage.waitForTimeout(100); assert.equal(await audioPage.evaluate(() => window.__reviewSound.ducked), true);
++      await audioPage.evaluate(() => window.dispatchEvent(new PageTransitionEvent('pageshow', { persisted: true })));
++      assert.equal(await audioPage.evaluate(() => window.__reviewSound.ducked), false);
++      const noteCount = await audioPage.evaluate(() => window.__reviewNotes);
++      await action(audioPage, 'summon');
++      assert.ok(await audioPage.evaluate(() => window.__reviewSound.context === window.__reviewContext && window.__reviewSound.timer === window.__reviewTimer));
++      assert.ok(await audioPage.evaluate(() => window.__reviewNotes) > noteCount);
++    }
++    await audioPage.evaluate(() => window.__reviewContext.suspend());
++    const notesBeforeResume = await audioPage.evaluate(() => window.__reviewNotes);
++    await action(audioPage, 'summon'); await audioPage.waitForTimeout(100); await action(audioPage, 'summon');
++    assert.equal(await audioPage.evaluate(() => window.__reviewContext.state), 'running');
++    assert.ok(await audioPage.evaluate(() => window.__reviewSound.context === window.__reviewContext && window.__reviewSound.timer === window.__reviewTimer));
++    assert.ok(await audioPage.evaluate(() => window.__reviewNotes) > notesBeforeResume);
++    await audioPage.evaluate(() => window.dispatchEvent(new PageTransitionEvent('pagehide', { persisted: false })));
++    assert.deepEqual(await audioPage.evaluate(() => ({ disposed: window.__reviewSound.disposed, context: window.__reviewSound.context, timer: window.__reviewSound.timer })), { disposed: true, context: null, timer: null });
++    mark('Synthetic persisted pagehide/pageshow twice retains playable context and timer; suspended context resumes by gesture; permanent pagehide releases audio (no claim of actual BFCache hit)');
++  } catch (error) { failures.push(`Page lifecycle: ${error.message}`); }
++  await isolated.close();
++  fs.writeFileSync(path.join(output, 'm3-review-regressions.json'), JSON.stringify({ success: failures.length === 0, failures }, null, 2));
++  assert.deepEqual(failures, [], 'M3 final-review regressions');
++}
++
++try {
++  await reviewRegressions();
++  if (!process.argv.includes('--regression-only')) {
++  await page.addInitScript(() => {
++    if (localStorage.getItem('capybara_defense_v1:m3QaSeeded')) return;
++    localStorage.setItem('capybara_defense_v1:m3QaSeeded', 'yes');
++    localStorage.setItem('capybara_defense_v1:language', 'zh-CN');
++    localStorage.setItem('capybara_defense_v1:profile', JSON.stringify({ coins: 1234, wins: 3, matches: 7, fragments: ['bamboo_blade'], awardedBattles: ['m3-legacy-receipt'] }));
++  });
++  await page.goto('http://127.0.0.1:4175/', { waitUntil: 'networkidle' });
++  assert.ok(await page.evaluate(() => !!window.__CAPY_DEBUG__), 'M3 QA requires frozen Vite development server on 4175');
++  let p = await profile(); assert.equal(p.coins, 1234); assert.equal(p.wins, 3); assert.equal(p.matches, 7);
++  assert.deepEqual(p.awardedBattles, ['m3-legacy-receipt']); assert.equal(p.stars, 3); assert.equal(p.selectedMap, 'auto');
++  assert.equal(p.weaponFragments.m01_swatter, 1); assert.equal(await page.locator('#dev-rank option').count(), 54);
++  assert.equal(await page.locator('#dev-boss option').count(), 12);
++  await snap('desktop-menu'); mark('M1 save preserves coins, wins, matches, fragments and receipts; M3 defaults and 54 ranks / 12 bosses appear');
++
++  await click('brand'); assert.equal(await page.locator('.avatar-card').count(), 16);
++  assert.ok(await page.locator('[data-action="avatar:zen_capy"]').isDisabled());
++  await modalClick('avatar:hamster'); assert.equal((await stored()).avatarId, 'hamster');
++  await modalClick('en'); assert.match(await page.locator('#dialog-title').innerText(), /Avatar/); await fit();
++  await snap('desktop-profile'); await modalClick('close-profile');
++  await click('leaderboard'); assert.equal(await page.locator('.leaderboard-row').count(), 16); assert.equal(await page.locator('[data-player="true"]').count(), 1);
++  const boardStars = await page.locator('.leaderboard-row > strong').allTextContents();
++  assert.deepEqual(boardStars.map(value => Number(value.replace(/\D/g, ''))), [...boardStars.map(value => Number(value.replace(/\D/g, '')))].sort((a, b) => b - a));
++  await snap('desktop-leaderboard'); await modalClick('close-profile');
++  mark('16 unique avatar SVGs show transparent conditions; selection persists; bilingual 15 NPC plus player leaderboard sorts immediately');
++
++  await click('settings');
++  for (const [key, value] of [['musicVolume', '.17'], ['soundVolume', '0']]) {
++    await page.locator(`[data-setting="${key}"]`).evaluate((el, value) => { el.value = value; el.dispatchEvent(new Event('input', { bubbles: true })); }, value);
++    assert.equal((await stored()).settings[key], Number(value));
++    assert.equal((await profile()).settings[key], Number(value));
++  }
++  await page.locator('[data-setting="showDamageNumbers"]').uncheck(); assert.equal((await stored()).settings.showDamageNumbers, false);
++  const settingsBeforeFailure = (await profile()).settings;
++  await page.evaluate(() => { window.__m3OriginalSetItem = Storage.prototype.setItem; Storage.prototype.setItem = function(key, value) { if (key === 'capybara_defense_v1:profile') throw Error('QA storage denied'); return window.__m3OriginalSetItem.call(this, key, value); }; });
++  await page.locator('[data-setting="musicVolume"]').evaluate(el => { el.value = '.91'; el.dispatchEvent(new Event('input', { bubbles: true })); });
++  assert.deepEqual((await profile()).settings, settingsBeforeFailure);
++  await page.evaluate(() => { Storage.prototype.setItem = window.__m3OriginalSetItem; });
++  await snap('desktop-settings'); await modalClick('close-profile'); await page.reload({ waitUntil: 'networkidle' });
++  assert.deepEqual((await profile()).settings, settingsBeforeFailure);
++  mark('Settings save and apply on range input, accept mute, preserve damage switch across reload, and leave memory unchanged on storage failure');
++
++  const normal = await profile();
++  await watchSound();
++  await page.locator('#dev-tools').evaluate(el => { el.open = true; });
++  await click('test-enable'); p = await profile();
++  assert.equal(p.unlockedAvatars.length, 16); assert.equal(p.mergedHeroes.length, 12); assert.ok(p.stars >= 180);
++  assert.equal(await page.locator('#menu-map option').count(), 5);
++  const backup = await page.evaluate(() => localStorage.getItem('capybara_defense_v1:normalProfileBackup'));
++  await click('test-enable'); assert.equal(await page.evaluate(() => localStorage.getItem('capybara_defense_v1:normalProfileBackup')), backup);
++  await click('settings'); await page.locator('[data-setting="soundVolume"]').evaluate(el => { el.value = '.35'; el.dispatchEvent(new Event('input', { bubbles: true })); }); await modalClick('close-profile');
++  await click('leaderboard'); assert.equal(await page.locator('.leaderboard-row').first().getAttribute('data-player'), 'true'); await modalClick('close-profile');
++  await click('armory'); assert.equal(await page.locator('[data-loadout-hero]').count(), 12); assert.equal(await page.locator('.weapon-sticker svg').count(), 36);
++  await modalClick('meta-sort:orange'); assert.equal(await page.locator('.weapon-card').first().getAttribute('data-weapon-rarity'), '4');
++  await modalClick('meta-sort:default'); assert.equal(await page.locator('.weapon-card').first().getAttribute('data-weapon-id'), 'm01_swatter');
++  await snap('desktop-armory'); await modalClick('zh-CN'); await modalClick('close-meta');
++  mark('M3 full test profile unlocks all maps and avatars without replacing backup; armory has 12 loadouts, 36 SVGs and reversible orange/default order');
++
++  await click('market'); await modalClick('meta-tab:lottery');
++  const ticks = await cueCount('lottery_tick'), lotteryWins = await cueCount('lottery_win');
++  await modalClick('meta-spin'); const lotteryOnce = await stored();
++  await modalClick('en'); await modalClick('close-meta'); await click('market');
++  await page.locator('.lottery-result').waitFor(); assert.deepEqual(await stored(), lotteryOnce);
++  assert.ok(await cueCount('lottery_tick') > ticks + 20); assert.equal(await cueCount('lottery_win'), lotteryWins + 1);
++  await modalClick('zh-CN'); await snap('desktop-lottery'); assert.equal(await cueCount('lottery_win'), lotteryWins + 1); await modalClick('close-meta');
++  mark('Real lottery steps and award emit one sequence of ticks and one win cue across language switch and reopen, with no repeated transaction');
++
++  for (const mapId of ['sunny_backyard', 'sakura_onsen', 'midnight_kitchen', 'cat_tower_maze']) {
++    await page.locator('#menu-map').selectOption(mapId); await page.locator('#dev-rank').selectOption('30');
++    await click('start'); await quietBattle(); let s = await state(); assert.equal(s.mapId, mapId); assert.equal(s.rankIndex, 30);
++    const summonCues = await cueCount('summon'), noteCount = await page.evaluate(() => window.__m3EffectNotes);
++    await click('summon'); assert.equal((await state()).units.filter(unit => unit.side === 'player' && unit.location.zone === 'bench').length, 5);
++    assert.equal(await cueCount('summon'), summonCues + 1);
++    assert.ok(await page.evaluate(() => window.__m3EffectNotes) > noteCount, 'non-muted browser synthesizes actual SFX notes');
++    // Use the accessible controls to place a real summoned unit on this map's open tile.
++    await page.locator('.keyboard-card').evaluate(el => { el.open = true; });
++    const open = s.grid.flatMap((row, y) => row.map((tile, x) => ({ tile, x, y }))).find(cell => cell.y >= 5 && cell.tile === 'O');
++    await page.locator('[data-target="bench:0"]').click(); await page.locator(`[data-target="cell:${open.x}:${open.y}"]`).click();
++    assert.ok((await state()).units.some(unit => unit.side === 'player' && unit.location.zone === 'board'));
++    // Spawn and advance an actual enemy through this engine's configured path.
++    const moved = await page.evaluate(() => { const e = window.__CAPY_DEBUG__.engine, enemy = e.spawnEnemy('rat', 'player'); const start = { col: enemy.col, row: enemy.row }; e.tick(2); return { start, end: { col: enemy.col, row: enemy.row }, progress: enemy.progress }; });
++    assert.ok(moved.progress > 0); assert.notDeepEqual(moved.start, moved.end);
++    await page.evaluate(() => { window.__m3AudioContext = window.__m3Sound.context; window.__m3AudioTimer = window.__m3Sound.timer; });
++    await click('brand'); assert.equal((await state()).phase, 'paused'); const pausedTime = (await state()).time;
++    await page.waitForTimeout(150); assert.equal((await state()).time, pausedTime); await modalClick('close-profile'); assert.equal((await state()).phase, 'playing');
++    await click('pause'); await modalClick('settings'); await modalClick('close-profile'); assert.equal((await state()).phase, 'paused');
++    assert.ok(await page.locator('#game-dialog [data-action="resume"]').isVisible()); await click('resume');
++    assert.ok(await page.evaluate(() => window.__m3Sound.context === window.__m3AudioContext && window.__m3Sound.timer === window.__m3AudioTimer));
++    await snap(`desktop-battle-${mapId}`); const victories = await cueCount('victory'); await win();
++    assert.equal(await cueCount('victory'), victories + 1); await modalClick('menu');
++  }
++  mark('All four maps start with selected map/rank, real summon and placement, advancing path enemy, and profile/settings preserve active versus existing pause');
++
++  // Real merge commands must record achievements before the battle is settled.
++  await page.evaluate(() => { const p = window.__CAPY_DEBUG__.profile; p.mergedHeroes = []; p.unlockedAvatars = p.unlockedAvatars.filter(id => id !== 'kungfu_panda'); });
++  await click('start'); await quietBattle();
++  for (const kind of ['panda', 'hat_bamboo']) { await page.locator('#dev-unit').selectOption(kind); await click('grant'); }
++  const legendaryCues = await cueCount('legendary'), upgradeCues = await cueCount('upgrade');
++  await page.locator('[data-target="bench:0"]').click(); await page.locator('[data-target="bench:1"]').click();
++  await page.waitForFunction(() => window.__CAPY_DEBUG__.profile.mergedHeroes.includes('kungfu_po'));
++  assert.ok((await stored()).unlockedAvatars.includes('kungfu_panda')); await win(); await modalClick('menu');
++  assert.equal(await cueCount('legendary'), legendaryCues + 1); assert.equal(await cueCount('upgrade'), upgradeCues);
++  // A rank-9 win crosses rank 10 and unlocks its avatar at the real settlement.
++  await page.locator('#dev-rank').selectOption('9');
++  await page.evaluate(() => { const p = window.__CAPY_DEBUG__.profile; p.stars = 19; p.highestStars = 19; p.winStreak = 0; p.unlockedAvatars = p.unlockedAvatars.filter(id => id !== 'sakura_capy'); });
++  await click('start'); await quietBattle(); const matches = (await profile()).matches;
++  await win(); p = await profile(); assert.equal(p.stars, 20); assert.equal(p.matches, matches + 1);
++  assert.match(await page.locator('.rank-result').innerText(), /晋级/); assert.match(await page.locator('.rank-result').innerText(), /樱花/);
++  const once = await stored(); await modalClick('en'); await modalClick('zh-CN'); assert.deepEqual(await stored(), once);
++  await snap('desktop-promotion'); await modalClick('menu'); await page.reload({ waitUntil: 'networkidle' }); assert.deepEqual(await profile(), once);
++  mark('Actual legendary merge records its avatar immediately; real rank-9 settlement promotes to rank 10 and shows new avatar, with one receipt across language/reload');
++
++  for (const width of [320, 390]) {
++    await page.setViewportSize({ width, height: 844 }); await page.waitForTimeout(120); await fit(); await snap(`${width}-menu`);
++    await click('brand'); await fit(); await snap(`${width}-profile`); await modalClick('en'); await fit(); await modalClick('close-profile');
++    await click('leaderboard'); await fit(); await snap(`${width}-leaderboard`); await modalClick('close-profile');
++    await click('armory'); await fit(); await snap(`${width}-armory`); await modalClick('close-meta');
++    await click('settings'); await fit(); await snap(`${width}-settings`); await modalClick('close-profile');
++    await click('start'); await quietBattle();
++    await page.locator('#dev-tools').evaluate(el => { el.open = true; }); await page.locator('#dev-unit').selectOption('hamster'); await click('grant');
++    await page.locator('.keyboard-card').evaluate(el => { el.open = true; }); await page.locator('[data-target="bench:0"]').click();
++    await page.evaluate(() => { window.__CAPY_DEBUG__.engine.state.units.find(unit => unit.side === 'player').statuses.SEALED = 10; });
++    await page.waitForTimeout(180); await page.locator('#stage').scrollIntoViewIfNeeded(); await fit();
++    const seal = await page.locator('#sealed-hint').boundingBox(), stage = await page.locator('#stage').boundingBox();
++    assert.ok(seal && seal.x >= stage.x && seal.x + seal.width <= stage.x + stage.width);
++    assert.ok(seal.y + seal.height < stage.y + stage.height * (981 / 1386) - 3, 'seal leaves at least 3px above actual canvas capsule');
++    await snap(`${width}-battle-sealed`);
++    const stageFile = `m3-${width}-battle-stage.png`; await page.locator('#stage').screenshot({ path: path.join(output, stageFile) }); screenshots.push(stageFile);
++    await click('pause'); await modalClick('surrender'); await modalClick('menu'); await click('zh-CN');
++  }
++  mark('Desktop and 320/390 layouts fit in both languages; avatars, board, settings, armory and battle screenshots captured; seal clears status capsule');
++
++  await page.locator('#dev-tools').evaluate(el => { el.open = true; }); await click('test-restore'); assert.deepEqual(await profile(), normal);
++  await page.reload({ waitUntil: 'networkidle' }); assert.deepEqual(await profile(), normal);
++  assert.equal(await page.evaluate(() => localStorage.getItem('capybara_defense_v1:normalProfileBackup')), null);
++  mark('All M3 test progress discards on restore; exact normal save including settings and receipts survives reload');
++
++  const silent = await context.newPage(); captureErrors(silent);
++  await silent.addInitScript(() => { Object.defineProperty(window, 'AudioContext', { configurable: true, value: undefined }); Object.defineProperty(window, 'webkitAudioContext', { configurable: true, value: undefined }); });
++  await silent.goto('http://127.0.0.1:4175/', { waitUntil: 'networkidle' });
++  await silent.locator('[data-action="start"]').click(); await silent.locator('[data-action="summon"]').click(); await silent.locator('[data-action="pause"]').click();
++  await silent.close(); assert.deepEqual(errors, []);
++  mark('Missing WebAudio safely supports gesture, summon and pause; no console errors or uncaught page errors');
++  }
++} catch (error) {
++  console.error(error); errors.push(String(error.stack ?? error)); process.exitCode = 1;
++  try { await snap('failure'); } catch { /* Page may already be unavailable. */ }
++} finally {
++  fs.writeFileSync(path.join(output, 'm3-browser-qa.json'), JSON.stringify({ success: !process.exitCode, checks, errors, screenshots }, null, 2));
++  await browser.close();
++}

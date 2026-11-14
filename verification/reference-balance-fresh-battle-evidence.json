@@ -1,0 +1,584 @@
+{
+  "evidence_id": "ev_c9c327862a3ec87ffbec89dcedb622bbe686ef8191b13d5f7104ecc4b8a4ecba",
+  "subject": null,
+  "provider": {
+    "id": "rea-playwright-browser-scenario",
+    "name": "REA Playwright browser scenario capture provider",
+    "version": "1"
+  },
+  "analysis_profile": null,
+  "predicate_type": "rea.browser-scenario-capture",
+  "operation": "capture_browser_scenario",
+  "parameters": {
+    "browser": {
+      "mode": "launch",
+      "executable_path": "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",
+      "headless": true
+    },
+    "start_url": {
+      "url": "http://127.0.0.1:4174/game/",
+      "query": []
+    },
+    "environment": {
+      "viewport": {
+        "width": 1280,
+        "height": 720,
+        "device_scale_factor": 1
+      },
+      "locale": "en-US",
+      "timezone": "UTC",
+      "color_scheme": "light",
+      "reduced_motion": "reduce",
+      "service_workers": "block"
+    },
+    "actions": [
+      {
+        "step_id": "inspect-fresh-battle-timers",
+        "action": "wait_for_timeout",
+        "duration_ms": 12500
+      }
+    ],
+    "storage": {
+      "cookies": [],
+      "local_storage": [],
+      "session_storage": []
+    },
+    "secrets": [],
+    "capture": {
+      "after_each_step": [],
+      "at_end": [
+        "url"
+      ],
+      "events": [
+        "console",
+        "page-errors"
+      ],
+      "network": {
+        "request_body": false,
+        "response_body": false,
+        "header_values": false
+      },
+      "limits": {
+        "max_events": 10000,
+        "max_event_allocation_bytes": 4194304,
+        "max_total_event_allocation_bytes": 16777216,
+        "max_network_transactions": 1024,
+        "max_network_body_bytes": 65536,
+        "max_network_body_allocation_bytes": 1048576,
+        "max_network_header_allocation_bytes": 1048576,
+        "max_network_metadata_allocation_bytes": 1048576
+      }
+    },
+    "scenario_sha256": "56cfde3ed5b6b7f90843055fc3b2054cbd0cffa406e24d06185c20a6577c2e95"
+  },
+  "raw_result": null,
+  "normalized_result": {
+    "browser": {
+      "mode": "launch",
+      "process_ownership": "provider-owned",
+      "cleanup": "terminated-owned-process",
+      "product": "Chromium",
+      "version": "157.0.8103.51"
+    },
+    "scenario": {
+      "start_origin": "http://127.0.0.1:4174",
+      "action_count": 1,
+      "secret_references": [],
+      "network_content": {
+        "request_body": false,
+        "response_body": false,
+        "header_values": false
+      },
+      "event_families": [
+        "console",
+        "page-errors"
+      ],
+      "limits": {
+        "max_events": 10000,
+        "max_event_allocation_bytes": 4194304,
+        "max_total_event_allocation_bytes": 16777216,
+        "max_network_transactions": 1024,
+        "max_network_body_bytes": 65536,
+        "max_network_body_allocation_bytes": 1048576,
+        "max_network_header_allocation_bytes": 1048576,
+        "max_network_metadata_allocation_bytes": 1048576
+      }
+    },
+    "duration_ms": 13224,
+    "steps": [
+      {
+        "step_index": 0,
+        "step_id": "scenario_start",
+        "action": "goto_start",
+        "elapsed_ms": 493,
+        "before_url": {
+          "url": "about:blank",
+          "origin": null,
+          "query_parameter_names": [],
+          "redacted": false
+        },
+        "after_url": {
+          "url": "http://127.0.0.1:4174/game/",
+          "origin": "http://127.0.0.1:4174",
+          "query_parameter_names": [],
+          "redacted": false
+        },
+        "event_sequence_start": 1,
+        "event_sequence_end": 2,
+        "artifacts": {
+          "screenshot": {
+            "state": "not_requested"
+          },
+          "dom": {
+            "state": "not_requested"
+          },
+          "accessibility": {
+            "state": "not_requested"
+          },
+          "url": {
+            "state": "not_requested"
+          },
+          "history": {
+            "state": "not_requested"
+          },
+          "storage": {
+            "state": "not_requested"
+          }
+        },
+        "completeness": {
+          "status": "complete",
+          "equality_eligible": true,
+          "missing_sections": [],
+          "truncated_sections": []
+        },
+        "status": "completed",
+        "error": null
+      },
+      {
+        "step_index": 1,
+        "step_id": "inspect-fresh-battle-timers",
+        "action": "wait_for_timeout",
+        "elapsed_ms": 12501,
+        "before_url": {
+          "url": "http://127.0.0.1:4174/game/",
+          "origin": "http://127.0.0.1:4174",
+          "query_parameter_names": [],
+          "redacted": false
+        },
+        "after_url": {
+          "url": "http://127.0.0.1:4174/game/",
+          "origin": "http://127.0.0.1:4174",
+          "query_parameter_names": [],
+          "redacted": false
+        },
+        "event_sequence_start": 3,
+        "event_sequence_end": 25,
+        "artifacts": {
+          "screenshot": {
+            "state": "not_requested"
+          },
+          "dom": {
+            "state": "not_requested"
+          },
+          "accessibility": {
+            "state": "not_requested"
+          },
+          "url": {
+            "state": "captured",
+            "value": {
+              "url": "http://127.0.0.1:4174/game/",
+              "origin": "http://127.0.0.1:4174",
+              "query_parameter_names": [],
+              "redacted": false
+            }
+          },
+          "history": {
+            "state": "not_requested"
+          },
+          "storage": {
+            "state": "not_requested"
+          }
+        },
+        "completeness": {
+          "status": "complete",
+          "equality_eligible": true,
+          "missing_sections": [],
+          "truncated_sections": []
+        },
+        "status": "completed",
+        "error": null
+      }
+    ],
+    "events": {
+      "retained": 25,
+      "dropped": 0,
+      "items": [
+        {
+          "sequence": 1,
+          "step_index": 0,
+          "kind": "console",
+          "level": "info",
+          "text": "[study-runner] Browser renderer; recovered game bundle and assets.",
+          "url": {
+            "url": "http://127.0.0.1:4174/game/compat.js",
+            "origin": "http://127.0.0.1:4174",
+            "query_parameter_names": [],
+            "redacted": false
+          }
+        },
+        {
+          "sequence": 2,
+          "step_index": 0,
+          "kind": "console",
+          "level": "log",
+          "text": "武器注册文件已加载，所有武器类已注册到WeaponFactory",
+          "url": {
+            "url": "http://127.0.0.1:4174/game/js/bundle.js",
+            "origin": "http://127.0.0.1:4174",
+            "query_parameter_names": [],
+            "redacted": false
+          }
+        },
+        {
+          "sequence": 3,
+          "step_index": 1,
+          "kind": "console",
+          "level": "log",
+          "text": "langType zh",
+          "url": {
+            "url": "http://127.0.0.1:4174/game/js/bundle.js",
+            "origin": "http://127.0.0.1:4174",
+            "query_parameter_names": [],
+            "redacted": false
+          }
+        },
+        {
+          "sequence": 4,
+          "step_index": 1,
+          "kind": "console",
+          "level": "log",
+          "text": "启动主流程",
+          "url": {
+            "url": "http://127.0.0.1:4174/game/js/bundle.js",
+            "origin": "http://127.0.0.1:4174",
+            "query_parameter_names": [],
+            "redacted": false
+          }
+        },
+        {
+          "sequence": 5,
+          "step_index": 1,
+          "kind": "console",
+          "level": "log",
+          "text": "[LoadScene] startLoadFlow1",
+          "url": {
+            "url": "http://127.0.0.1:4174/game/js/bundle.js",
+            "origin": "http://127.0.0.1:4174",
+            "query_parameter_names": [],
+            "redacted": false
+          }
+        },
+        {
+          "sequence": 6,
+          "step_index": 1,
+          "kind": "console",
+          "level": "log",
+          "text": "[PlatMgr] runLoadScenePreloadTasks _0x10ff4f",
+          "url": {
+            "url": "http://127.0.0.1:4174/game/js/bundle.js",
+            "origin": "http://127.0.0.1:4174",
+            "query_parameter_names": [],
+            "redacted": false
+          }
+        },
+        {
+          "sequence": 7,
+          "step_index": 1,
+          "kind": "console",
+          "level": "log",
+          "text": "[LoadScene] startLoadFlow2",
+          "url": {
+            "url": "http://127.0.0.1:4174/game/js/bundle.js",
+            "origin": "http://127.0.0.1:4174",
+            "query_parameter_names": [],
+            "redacted": false
+          }
+        },
+        {
+          "sequence": 8,
+          "step_index": 1,
+          "kind": "console",
+          "level": "error",
+          "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+          "url": {
+            "url": "http://127.0.0.1:4174/favicon.ico",
+            "origin": "http://127.0.0.1:4174",
+            "query_parameter_names": [],
+            "redacted": false
+          }
+        },
+        {
+          "sequence": 9,
+          "step_index": 1,
+          "kind": "console",
+          "level": "log",
+          "text": "this._data._saveTime 1794553496520",
+          "url": {
+            "url": "http://127.0.0.1:4174/game/js/bundle.js",
+            "origin": "http://127.0.0.1:4174",
+            "query_parameter_names": [],
+            "redacted": false
+          }
+        },
+        {
+          "sequence": 10,
+          "step_index": 1,
+          "kind": "console",
+          "level": "log",
+          "text": "Date.now() 1794553497046",
+          "url": {
+            "url": "http://127.0.0.1:4174/game/js/bundle.js",
+            "origin": "http://127.0.0.1:4174",
+            "query_parameter_names": [],
+            "redacted": false
+          }
+        },
+        {
+          "sequence": 11,
+          "step_index": 1,
+          "kind": "console",
+          "level": "log",
+          "text": "打印测试 Map(54)",
+          "url": {
+            "url": "http://127.0.0.1:4174/game/js/bundle.js",
+            "origin": "http://127.0.0.1:4174",
+            "query_parameter_names": [],
+            "redacted": false
+          }
+        },
+        {
+          "sequence": 12,
+          "step_index": 1,
+          "kind": "console",
+          "level": "log",
+          "text": "打印武器数据 Map(44)",
+          "url": {
+            "url": "http://127.0.0.1:4174/game/js/bundle.js",
+            "origin": "http://127.0.0.1:4174",
+            "query_parameter_names": [],
+            "redacted": false
+          }
+        },
+        {
+          "sequence": 13,
+          "step_index": 1,
+          "kind": "console",
+          "level": "log",
+          "text": "打印不同品质不同种类的武器 [Array(5), Array(5), Array(5), Array(5), Array(5)]",
+          "url": {
+            "url": "http://127.0.0.1:4174/game/js/bundle.js",
+            "origin": "http://127.0.0.1:4174",
+            "query_parameter_names": [],
+            "redacted": false
+          }
+        },
+        {
+          "sequence": 14,
+          "step_index": 1,
+          "kind": "console",
+          "level": "warning",
+          "text": "[Server] 未登录，跳过云端存档同步",
+          "url": {
+            "url": "http://127.0.0.1:4174/game/js/bundle.js",
+            "origin": "http://127.0.0.1:4174",
+            "query_parameter_names": [],
+            "redacted": false
+          }
+        },
+        {
+          "sequence": 15,
+          "step_index": 1,
+          "kind": "console",
+          "level": "log",
+          "text": "当前玩家天数 8",
+          "url": {
+            "url": "http://127.0.0.1:4174/game/js/bundle.js",
+            "origin": "http://127.0.0.1:4174",
+            "query_parameter_names": [],
+            "redacted": false
+          }
+        },
+        {
+          "sequence": 16,
+          "step_index": 1,
+          "kind": "console",
+          "level": "info",
+          "text": "[测试模式] 已载入 44 种武器、16 个头像、25 类道具和 4 张地图。排行榜使用示例数据，奖励由本地模式模拟。",
+          "url": {
+            "url": "http://127.0.0.1:4174/test-mode/runtime.js",
+            "origin": "http://127.0.0.1:4174",
+            "query_parameter_names": [],
+            "redacted": false
+          }
+        },
+        {
+          "sequence": 17,
+          "step_index": 1,
+          "kind": "console",
+          "level": "log",
+          "text": "REFERENCE_BALANCE_METHODS {\"gameStart\":\"[\\\"\\\\u0073\\\\u0074\\\\u0061\\\\u0072\\\\u0074\\\\u0047\\\\u0061\\\\u006d\\\\u0065\\\"](){function _0x2d6043(_0x18eebc,_0x2e246f,_0x523031,_0x66a0cf,_0xa87c00){return _0x1c1c(_0xa87c00-0x2ce,_0x66a0cf);}const _0x1aece3={\\\"\\\\u0071\\\\u0062\\\\u0078\\\\u0079\\\\u0055\\\":_0x2d6043(0x21f1,0x1f54,0x1efe,\\\"X1l1\\\".split(\\\"\\\").reverse().join(\\\"\\\"),0x3917)};return _0x20c237['instance']()[\\\"\\\\u0048\\\\u006e\\\"]({'fail':_0xf69423=>{console[\\\"\\\\u0077\\\\u0061\\\\u0072\\\\u006e\\\"](_0x1aece3['qbxyU'],_0xf69423);}}),_0x1f6ae6[\\\"\\\\u0069\\\\u006e\\\\u0073\\\\u0074\\\\u0061\\\\u006e\\\\u0063\\\\u0065\\\"]()['startGame'](),_0x9b490a[\\\"\\\\u0069\\\\u006e\\\\u0073\\\\u0074\\\\u0061\\\\u006e\\\\u0063\\\\u0065\\\"]()[\\\"\\\\u0054\\\\u006c\\\"](),_0x17d2eb['instance']()['startGame'](),_0x222d72[\\\"\\\\u0069\\\\u006e\\\\u0073\\\\u0074\\\\u0061\\\\u006e\\\\u0063\\\\u0065\\\"]()[\\\"\\\\u0073\\\\u0074\\\\u0061\\\\u0072\\\\u0074\\\\u0047\\\\u0061\\\\u006d\\\\u0065\\\"](),_0x526be7['instance']()[\\\"\\\\u0073\\\\u0074\\\\u0061\\\\u0072\\\\u0074\\\\u0047\\\\u0061\\\\u006d\\\\u0065\\\"](),_0x37b3fd[\\\"\\\\u0069\\\\u006e\\\\u0073\\\\u0074\\\\u0061\\\\u006e\\\\u0063\\\\u0065\\\"]()['startGame'](),_0x1568dd[\\\"\\\\u0069\\\\u006e\\\\u0073\\\\u0074\\\\u0061\\\\u006e\\\\u0063\\\\u0065\\\"]()['startGame'](),_0xc5cede[\\\"\\\\u0069\\\\u006e\\\\u0073\\\\u0074\\\\u0061\\\\u006e\\\\u0063\\\\u0065\\\"]()[\\\"\\\\u0073\\\\u0074\\\\u0061\\\\u0072\\\\u0074\\\\u0047\\\\u0061\\\\u006d\\\\u0065\\\"](),_0x24d34a['instance']()[\\\"\\\\u0073\\\\u0074\\\\u0061\\\\u0072\\\\u0074\\\\u0047\\\\u0061\\\\u006d\\\\u0065\\\"](),_0x4299f3[\\\"\\\\u0069\\\\u006e\\\\u0073\\\\u0074\\\\u0061\\\\u006e\\\\u0063\\\\u0065\\\"]()[\\\"\\\\u0073\\\\u0074\\\\u0061\\\\u0072\\\\u0074\\\\u0047\\\\u0061\\\\u006d\\\\u0065\\\"](),new Promise(_0x5b25a3=>{function _0x3c9124(_0x5406aa,_0x315458,_0xf0fdaf,_0xf5d11c,_0x485d87){return _0x1c1c(_0xf0fdaf-0x11a,_0x315458);}_0x505fa6['instance']()[\\\"\\\\u0057\\\\u0072\\\"](_0x3c9124(-0x280,\\\"\\\\u0070\\\\u002a\\\\u006b\\\\u0040\\\",0xcb5,0x839,0x2abb),!(0x3bce0^0x3bce1),null,_0xc8e973=>{_0x13edf5[\\\"\\\\u0069\\\\u006e\\\\u0073\\\\u0074\\\\u0061\\\\u006e\\\\u0063\\\\u0065\\\"]()[\\\"\\\\u0073\\\\u0074\\\\u0061\\\\u0072\\\\u0074\\\\u0047\\\\u0061\\\\u006d\\\\u0065\\\"](),_0x19a15c[\\\"\\\\u0069\\\\u006e\\\\u0073\\\\u0074\\\\u0061\\\\u006e\\\\u0063\\\\u0065\\\"]()[\\\"\\\\u0073\\\\u0074\\\\u0061\\\\u0072\\\\u0074\\\\u0047\\\\u0061\\\\u006d\\\\u0065\\\"](),_0x593d46['instance']()[\\\"\\\\u0073\\\\u0074\\\\u0061\\\\u0072\\\\u0074\\\\u0047\\\\u0061\\\\u006d\\\\u0065\\\"](),_0x5b25a3(_0xc8e973);});});}\",\"mainStart\":\"[\\\"\\\\u0073\\\\u0074\\\\u0061\\\\u0072\\\\u0074\\\\u0047\\\\u0061\\\\u006d\\\\u0065\\\"](){const _0x9d1da5={\\\"\\\\u0059\\\\u0048\\\\u006e\\\\u004f\\\\u0056\\\":function(_0x5d7b18,_0x331ece){return _0x4bc2b2[\\\"\\\\u0075\\\\u0066\\\\u005a\\\\u006f\\\\u0045\\\"](_0x5d7b18,_0x331ece);}};return _0x4406c8(this,null,function*(){if(!_0x5e8b03[\\\"\\\\u0069\\\\u006e\\\\u0073\\\\u0074\\\\u0061\\\\u006e\\\\u0063\\\\u0065\\\"]()[\\\"\\\\u005a\\\\u0048\\\"]())return _0x2bc30f[\\\"\\\\u0069\\\\u006e\\\\u0073\\\\u0074\\\\u0061\\\\u006e\\\\u0063\\\\u0065\\\"]()['showTip'](_0xa92bb6(-0x2da,0xb68,0x1249,0x2198,0x46b)),Promise[\\\"\\\\u0072\\\\u0065\\\\u006a\\\\u0065\\\\u0063\\\\u0074\\\"](_0x61de93(0x35b3,0x3b40,0x37b9,\\\"\\\\u0040\\\\u0076\\\\u0042\\\\u0048\\\",0x4a6b));function _0xa92bb6(_0x3fd006,_0x17f122,_0x46bcab,_0x720204,_0x5a65cb){return _0x3843(_0x5a65cb- -0x2ac,_0x17f122);}function _0x8f5796(_0x164118,_0x4af0f5,_0x68664c,_0x3eadee,_0xbb1bec){return _0x3843(_0x164118- -0x3c4,_0xbb1bec);}function _0x4c748b(_0x163521,_0x40daa2,_0x24c7d1,_0x25daca,_0x2529f6){return _0x1c1c(_0x24c7d1- -0x335,_0x163521);}function _0x61de93(_0x4d041f,_0x375236,_0x5f0407,_0x2ecf9c,_0x12b32d){return _0x1c1c(_0x4d041f- -0x22a,_0x2ecf9c);}function _0x46830c(_0x4a546e,_0x525b2c,_0x235312,_0x46e599,_0x51d90c){return _0x3843(_0x46e599-0x1a9,_0x51d90c);}_0x9d1da5['YHnOV'](Date['now']()-this['KQ'],this['ZQ'])||(_0x5e8b03['instance']()[\\\"\\\\u004b\\\\u0048\\\"](),this['KQ']=Date[\\\"\\\\u006e\\\\u006f\\\\u0077\\\"](),yield this['XZ'](),_0x222d72[\\\"\\\\u0069\\\\u006e\\\\u0073\\\\u0074\\\\u0061\\\\u006e\\\\u0063\\\\u0065\\\"]()['Yu'](),_0x203c39[\\\"\\\\u0069\\\\u006e\\\\u0073\\\\u0074\\\\u0061\\\\u006e\\\\u0063\\\\u0065\\\"]()['GB'](),_0x505fa6[\\\"\\\\u0069\\\\u006e\\\\u0073\\\\u0074\\\\u0061\\\\u006e\\\\u0063\\\\u0065\\\"]()['Wr'](_0x61de93(0x51e,0x25be,0x18dd,\\\"U(JT\\\".split(\\\"\\\").reverse().join(\\\"\\\"),-0x18a3)),Laya[\\\"\\\\u0054\\\\u0077\\\\u0065\\\\u0065\\\\u006e\\\"][\\\"\\\\u006b\\\\u0069\\\\u006c\\\\u006c\\\\u0041\\\\u006c\\\\u006c\\\"](this[\\\"\\\\u0073\\\\u0068\\\\u006f\\\\u0070\\\\u0057\\\\u0061\\\\u006c\\\\u006b\\\"]),this['shopWalk'][\\\"\\\\u0076\\\\u0069\\\\u0073\\\\u0069\\\\u0062\\\\u006c\\\\u0065\\\"]=!(0x5d6d6^0x5d6d7),this[\\\"\\\\u0073\\\\u0068\\\\u006f\\\\u0070\\\\u0057\\\\u0061\\\\u006c\\\\u006b\\\"][\\\"\\\\u0078\\\"]=0x99c4b^0x99d0b,_0xc5cede[\\\"\\\\u0069\\\\u006e\\\\u0073\\\\u0074\\\\u0061\\\\u006e\\\\u0063\\\\u0065\\\"]()[\\\"\\\\u0073\\\\u0067\\\"](_0x46830c(0x3cd7,0x2a51,0xe9c,0x2b69,0x2c93),this[\\\"\\\\u0047\\\\u005a\\\"]),this['shopWalk']['skin']=_0xa92bb6(0x58a7,0x4b90,0x2c5c,0x2d61,0x3a18));});}\",\"dataTy\":\"[\\\"yT\\\".split(\\\"\\\").reverse().join(\\\"\\\")](_0x452a6c,_0xbae945){var _0x24e9cc,_0x7d41f8;_0x4bc2b2['iwcqU'](_0x452a6c,this[\\\"\\\\u0065\\\\u006e\\\\u0065\\\\u006d\\\\u0079\\\"][\\\"\\\\u0061\\\\u0065\\\"][\\\"\\\\u006c\\\\u0065\\\\u006e\\\\u0067\\\\u0074\\\\u0068\\\"])&&(_0x452a6c=this['map'][\\\"\\\\u0074\\\\u0061\\\"]);let _0x4f8cc0=this[\\\"\\\\u006e\\\\u0075\\\"][\\\"\\\\u0068\\\\u0068\\\"];if(_0x4f8cc0=Math['max'](_0x4bc2b2['zDtNa'](0x4758e,0x4758f),_0x4f8cc0),this[\\\"\\\\u006e\\\\u0075\\\"][\\\"\\\\u0065\\\\u0068\\\"]&&_0x4f8cc0>this[\\\"\\\\u006e\\\\u0075\\\"][\\\"\\\\u0061\\\\u0068\\\"])this[\\\"\\\\u0070\\\\u0079\\\"][\\\"\\\\u006e\\\\u0065\\\"]=this[\\\"\\\\u0065\\\\u006e\\\\u0065\\\\u006d\\\\u0079\\\"][\\\"\\\\u0061\\\\u0065\\\"][_0x452a6c][\\\"\\\\u006e\\\\u0065\\\"][0xecbc5^0xecbc5]*Math[\\\"\\\\u0070\\\\u006f\\\\u0077\\\"](1.5,_0x4bc2b2['EXJhc'](_0x4f8cc0,0xea94e^0xea94f));else{const _0x12cdc7=this[\\\"\\\\u0065\\\\u006e\\\\u0065\\\\u006d\\\\u0079\\\"][\\\"\\\\u0061\\\\u0065\\\"][_0x452a6c]['ne'],_0x3e5796=this['nu'][\\\"\\\\u006e\\\\u0068\\\"],_0x1aa462=Math['min'](_0x4f8cc0,_0x12cdc7[\\\"\\\\u006c\\\\u0065\\\\u006e\\\\u0067\\\\u0074\\\\u0068\\\"])-(0xe811a^0xe811b),_0x32a62c=Math['max'](0x4810a^0x4810a,Math[\\\"\\\\u006d\\\\u0069\\\\u006e\\\"](_0x4bc2b2['aOCeA'](_0x4f8cc0,0x524a7^0x524a6),_0x3e5796['length']-(0x572a6^0x572a7)));this['player']['round']<(0x63814^0x6381e)&&_0x4bc2b2['vEflh'](_0x4f8cc0,0x81bec^0x81be6)?this[\\\"\\\\u0070\\\\u0079\\\"]['ne']=_0x12cdc7[_0x1aa462]*(null!=(_0x24e9cc=_0x3e5796[_0x32a62c])?_0x24e9cc:0x8dd93^0x8dd92)*this[\\\"\\\\u0065\\\\u006e\\\\u0065\\\\u006d\\\\u0079\\\"]['ee'][this[\\\"\\\\u0070\\\\u006c\\\\u0061\\\\u0079\\\\u0065\\\\u0072\\\"][\\\"\\\\u0072\\\\u006f\\\\u0075\\\\u006e\\\\u0064\\\"]]:this['py'][\\\"\\\\u006e\\\\u0065\\\"]=_0x12cdc7[_0x1aa462]*(null!=(_0x7d41f8=_0x3e5796[_0x32a62c])?_0x7d41f8:_0x4bc2b2['sndon'](0xd035d,0xd035c)),_0x4bc2b2['yQhOY'](_0x4f8cc0,_0x4bc2b2[\\\"\\\\u0047\\\\u0051\\\\u0052\\\\u004c\\\\u0053\\\"](0x513b7,0x513bd))&&(this['py'][\\\"\\\\u006e\\\\u0065\\\"]+=this[\\\"\\\\u0070\\\\u0079\\\"]['ne']*this['rank'][\\\"\\\\u0074\\\\u0072\\\"][\\\"\\\\u0067\\\\u0065\\\\u0074\\\"](this[\\\"\\\\u0072\\\\u0061\\\\u006e\\\\u006b\\\"]['fu'][\\\"\\\\u0069\\\\u0064\\\"])[\\\"\\\\u0061\\\\u0064\\\\u0064\\\\u0048\\\\u0070\\\"]);}return this['py']['speed']=this['enemy'][\\\"\\\\u0061\\\\u0065\\\"][_0x452a6c]['speed'],this['py'];}\"}",
+          "url": {
+            "url": "http://127.0.0.1:4174/reference-balance-probe.js",
+            "origin": "http://127.0.0.1:4174",
+            "query_parameter_names": [],
+            "redacted": false
+          }
+        },
+        {
+          "sequence": 18,
+          "step_index": 1,
+          "kind": "console",
+          "level": "log",
+          "text": "打印ai数据 军士.一 2",
+          "url": {
+            "url": "http://127.0.0.1:4174/game/js/bundle.js",
+            "origin": "http://127.0.0.1:4174",
+            "query_parameter_names": [],
+            "redacted": false
+          }
+        },
+        {
+          "sequence": 19,
+          "step_index": 1,
+          "kind": "console",
+          "level": "error",
+          "text": "本局对手强度预估 0",
+          "url": {
+            "url": "http://127.0.0.1:4174/game/js/bundle.js",
+            "origin": "http://127.0.0.1:4174",
+            "query_parameter_names": [],
+            "redacted": false
+          }
+        },
+        {
+          "sequence": 20,
+          "step_index": 1,
+          "kind": "console",
+          "level": "log",
+          "text": "打印ai道具 0 0 []",
+          "url": {
+            "url": "http://127.0.0.1:4174/game/js/bundle.js",
+            "origin": "http://127.0.0.1:4174",
+            "query_parameter_names": [],
+            "redacted": false
+          }
+        },
+        {
+          "sequence": 21,
+          "step_index": 1,
+          "kind": "console",
+          "level": "log",
+          "text": "[TutorialMgr] 新手教程已启动，AI 难度 0，AI 攻击力 70%，无波数限制，不出现 Boss",
+          "url": {
+            "url": "http://127.0.0.1:4174/game/js/bundle.js",
+            "origin": "http://127.0.0.1:4174",
+            "query_parameter_names": [],
+            "redacted": false
+          }
+        },
+        {
+          "sequence": 22,
+          "step_index": 1,
+          "kind": "console",
+          "level": "log",
+          "text": "当前对局的敌人出兵策略 [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]",
+          "url": {
+            "url": "http://127.0.0.1:4174/game/js/bundle.js",
+            "origin": "http://127.0.0.1:4174",
+            "query_parameter_names": [],
+            "redacted": false
+          }
+        },
+        {
+          "sequence": 23,
+          "step_index": 1,
+          "kind": "console",
+          "level": "log",
+          "text": "设置格子",
+          "url": {
+            "url": "http://127.0.0.1:4174/game/js/bundle.js",
+            "origin": "http://127.0.0.1:4174",
+            "query_parameter_names": [],
+            "redacted": false
+          }
+        },
+        {
+          "sequence": 24,
+          "step_index": 1,
+          "kind": "console",
+          "level": "log",
+          "text": "[TutorialMgr] 游戏已加载，等待玩家完成第一次随机刷新",
+          "url": {
+            "url": "http://127.0.0.1:4174/game/js/bundle.js",
+            "origin": "http://127.0.0.1:4174",
+            "query_parameter_names": [],
+            "redacted": false
+          }
+        },
+        {
+          "sequence": 25,
+          "step_index": 1,
+          "kind": "console",
+          "level": "log",
+          "text": "REFERENCE_BALANCE_BATTLE {\"nu\":{\"hh\":0,\"eh\":true,\"ah\":20,\"nh\":[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],\"rh\":20,\"oh\":10,\"uh\":10,\"ph\":false,\"yh\":\"无\",\"fh\":3,\"gh\":3,\"_gold\":20,\"props\":null,\"dh\":true,\"Lh\":0,\"mh\":0.7,\"wh\":3,\"kh\":3,\"Sh\":10,\"xh\":{\"id\":0,\"rank\":\"军士.一\",\"level\":2,\"bh\":[{\"general\":\"关兴\",\"Mc\":22},{\"general\":\"赵云\",\"Mc\":10},{\"general\":\"张翼\",\"Mc\":31}],\"Mh\":0,\"win\":10,\"lose\":-10,\"Ph\":37.37957962987046},\"Ah\":{\"Eh\":false,\"num\":0,\"range\":0,\"pos\":{\"x\":0,\"y\":0}},\"Bh\":{\"Eh\":false,\"num\":0,\"range\":0,\"pos\":{\"x\":0,\"y\":0}},\"Dh\":false,\"Ih\":false,\"Th\":false,\"Rh\":false,\"delayTime\":999999999,\"Ch\":false,\"Uh\":true,\"Fh\":false,\"Oh\":false,\"Yh\":false,\"Gh\":[],\"Xh\":[],\"jh\":[],\"Hh\":[],\"zh\":{},\"Wh\":{},\"Nh\":false},\"firstEnemyStats\":{\"ne\":6,\"speed\":50,\"ue\":0,\"pe\":0},\"round\":0,\"scene\":{\"_bits\":1687,\"_reactiveBits\":16,\"_hideFlags\":0,\"_parent\":{\"kind\":\"tn\",\"keys\":[\"_bits\",\"_reactiveBits\",\"_hideFlags\",\"_parent\",\"_destroyed\",\"_nodeType\",\"name\",\"_children\",\"_$children\",\"_$container\",\"_extra\",\"_x\",\"_y\",\"_width\",\"_height\",\"_scaleX\",\"_scaleY\",\"_skewX\",\"_skewY\",\"_pivotX\",\"_pivotY\",\"_anchorX\",\"_anchorY\",\"_rotation\",\"_alpha\",\"_blendMode\",\"_visible\",\"_mouseState\",\"_zOrder\",\"_renderType\",\"_subpassUpdateFlag\",\"mouseThrough\",\"hitTestPrior\",\"_autosize\",\"_repaint\",\"_repaintCount\",\"_previousType\",\"_sizeFlag\",\"_cacheAsBmp\",\"_layer\",\"_ownPostProcess\",\"_struct\",\"_globalTrans\",\"_$parent\",\"_activeChangeScripts\",\"_tfChanged\",\"_events\",\"_transform\"]},\"_destroyed\":false,\"_nodeType\":0,\"name\":\"Scene2D\",\"_children\":{\"kind\":\"Array\",\"keys\":[\"0\",\"1\",\"2\"]},\"_$children\":{\"kind\":\"Array\",\"keys\":[\"0\",\"1\",\"2\"]},\"_$container\":{\"kind\":\"_0x7fda88\",\"keys\":[\"_bits\",\"_reactiveBits\",\"_hideFlags\",\"_parent\",\"_destroyed\",\"_nodeType\",\"name\",\"_children\",\"_$children\",\"_$container\",\"_extra\",\"_x\",\"_y\",\"_width\",\"_height\",\"_scaleX\",\"_scaleY\",\"_skewX\",\"_skewY\",\"_pivotX\",\"_pivotY\",\"_anchorX\",\"_anchorY\",\"_rotation\",\"_alpha\",\"_blendMode\",\"_visible\",\"_mouseState\",\"_zOrder\",\"_renderType\",\"_subpassUpdateFlag\",\"mouseThrough\",\"hitTestPrior\",\"_autosize\",\"_repaint\",\"_repaintCount\",\"_previousType\",\"_sizeFlag\",\"_cacheAsBmp\",\"_layer\",\"_ownPostProcess\",\"_struct\",\"_globalTrans\",\"autoDestroyAtClosed\",\"_componentElementDatasMap\",\"_specialManager\",\"_timer\",\"_widget\",\"_area2Ds\",\"_scene\",\"_globalRenderData\",\"_shaderData\",\"op\",\"Zy\",\"Ky\",\"gm\",\"mapIndex\",\"g$\",\"d$\",\"L$\",\"m$\",\"w$\",\"v$\",\"_$\",\"k$\",\"S$\",\"x$\",\"b$\",\"M$\",\"P$\"]},\"_extra\":{\"kind\":\"Object\",\"keys\":[]},\"_x\":0,\"_y\":0,\"_width\":621.3592233009708,\"_height\":349.5145631067961,\"_scaleX\":1.029016465073322,\"_scaleY\":1.029016465073322,\"_skewX\":0,\"_skewY\":0,\"_pivotX\":0,\"_pivotY\":0,\"_anchorX\":0,\"_anchorY\":0,\"_rotation\":0,\"_alpha\":1,\"_blendMode\":0,\"_visible\":true,\"_mouseState\":0,\"_zOrder\":0,\"_renderType\":0,\"_subpassUpdateFlag\":0,\"mouseThrough\":false,\"hitTestPrior\":false,\"_autosize\":false,\"_repaint\":194,\"_repaintCount\":194,\"_previousType\":0,\"_sizeFlag\":3,\"_cacheAsBmp\":false,\"_layer\":0,\"_ownPostProcess\":false,\"_struct\":{\"kind\":\"WebRenderStruct2D\",\"keys\":[\"_parentData\",\"_currentData\",\"zIndex\",\"_effectZ\",\"stackingRoot\",\"rect\",\"_enableCulling\",\"renderLayer\",\"children\",\"renderType\",\"renderUpdateMask\",\"_alpha\",\"_blendMode\",\"needUploadClip\",\"needUploadAlpha\",\"enabled\",\"isRenderStruct\",\"renderElements\",\"spriteShaderData\",\"_globalShaderData\",\"_globalRenderData\",\"_clipRect\",\"_clipInfo\",\"_uniformClip\",\"_rnUpdateFun\",\"owner\",\"parent\"]},\"_globalTrans\":{\"kind\":\"Ia\",\"keys\":[\"_flags\",\"_x\",\"_y\",\"_rot\",\"_scaleX\",\"_scaleY\",\"_modifiedFrame\",\"_sp\",\"_cache\",\"_matrix\"]},\"autoDestroyAtClosed\":false,\"_componentElementDatasMap\":{\"kind\":\"Object\",\"keys\":[]},\"_specialManager\":{\"kind\":\"In\",\"keys\":[\"componentElementMap\",\"_shaderData\"]},\"_timer\":{\"kind\":\"mn\",\"keys\":[\"scale\",\"currFrame\",\"delta\",\"unscaledDelta\",\"_map\",\"_handlers\",\"currTimer\",\"_lastTimer\",\"_greedy\"]},\"_widget\":{\"kind\":\"An\",\"keys\":[\"_hideFlags\",\"_status\",\"_enabled\",\"_id\",\"_singleton\",\"_extra\",\"_top\",\"_bottom\",\"_left\",\"_right\",\"_centerX\",\"_centerY\",\"runInEditor\",\"__InPool\",\"owner\",\"_enableState\",\"_driver\"]},\"_area2Ds\":{\"kind\":\"Set\",\"keys\":[]},\"_scene\":{\"kind\":\"_0x7fda88\",\"keys\":[\"_bits\",\"_reactiveBits\",\"_hideFlags\",\"_parent\",\"_destroyed\",\"_nodeType\",\"name\",\"_children\",\"_$children\",\"_$container\",\"_extra\",\"_x\",\"_y\",\"_width\",\"_height\",\"_scaleX\",\"_scaleY\",\"_skewX\",\"_skewY\",\"_pivotX\",\"_pivotY\",\"_anchorX\",\"_anchorY\",\"_rotation\",\"_alpha\",\"_blendMode\",\"_visible\",\"_mouseState\",\"_zOrder\",\"_renderType\",\"_subpassUpdateFlag\",\"mouseThrough\",\"hitTestPrior\",\"_autosize\",\"_repaint\",\"_repaintCount\",\"_previousType\",\"_sizeFlag\",\"_cacheAsBmp\",\"_layer\",\"_ownPostProcess\",\"_struct\",\"_globalTrans\",\"autoDestroyAtClosed\",\"_componentElementDatasMap\",\"_specialManager\",\"_timer\",\"_widget\",\"_area2Ds\",\"_scene\",\"_globalRenderData\",\"_shaderData\",\"op\",\"Zy\",\"Ky\",\"gm\",\"mapIndex\",\"g$\",\"d$\",\"L$\",\"m$\",\"w$\",\"v$\",\"_$\",\"k$\",\"S$\",\"x$\",\"b$\",\"M$\",\"P$\"]},\"_globalRenderData\":{\"kind\":\"WebGlobalRenderData\",\"keys\":[\"globalShaderData\",\"renderLayerMask\"]},\"_shaderData\":{\"kind\":\"WebGLShaderData\",\"keys\":[\"_ownerResource\",\"_data\",\"_defineDatas\",\"_needCacheData\",\"_updateCacheArray\",\"_subUboBufferNumber\",\"_gammaColorMap\",\"_uniformBuffers\",\"_subUniformBuffers\",\"_uniformBuffersPropertyMap\"]},\"op\":{\"kind\":\"Array\",\"keys\":[]},\"Zy\":{\"kind\":\"d\",\"keys\":[\"x\",\"y\"]},\"Ky\":{\"kind\":\"d\",\"keys\":[\"x\",\"y\"]},\"gm\":false,\"mapIndex\":0,\"g$\":{\"kind\":\"Array\",\"keys\":[\"0\",\"1\",\"2\",\"3\",\"4\",\"5\",\"6\",\"7\"]},\"d$\":{\"kind\":\"Map\",\"keys\":[]},\"L$\":0,\"m$\":1000,\"w$\":0,\"v$\":0,\"_$\":300,\"k$\":0,\"S$\":0,\"x$\":null,\"b$\":true,\"M$\":true,\"P$\":0,\"A$\":0,\"E$\":4,\"B$\":3,\"D$\":1,\"I$\":false,\"T$\":false,\"R$\":false,\"C$\":false,\"U$\":{\"kind\":\"d\",\"keys\":[\"x\",\"y\"]},\"F$\":{\"kind\":\"d\",\"keys\":[\"x\",\"y\"]},\"qe\":{\"kind\":\"d\",\"keys\":[\"x\",\"y\"]},\"Ze\":{\"kind\":\"d\",\"keys\":[\"x\",\"y\"]},\"_tfChanged\":true,\"bg\":{\"kind\":\"S\",\"keys\":[\"_bits\",\"_reactiveBits\",\"_hideFlags\",\"_parent\",\"_destroyed\",\"_nodeType\",\"name\",\"_children\",\"_$children\",\"_$container\",\"_extra\",\"_x\",\"_y\",\"_width\",\"_height\",\"_scaleX\",\"_scaleY\",\"_skewX\",\"_skewY\",\"_pivotX\",\"_pivotY\",\"_anchorX\",\"_anchorY\",\"_rotation\",\"_alpha\",\"_blendMode\",\"_visible\",\"_mouseState\",\"_zOrder\",\"_renderType\",\"_subpassUpdateFlag\",\"mouseThrough\",\"hitTestPrior\",\"_autosize\",\"_repaint\",\"_repaintCount\",\"_previousType\",\"_sizeFlag\",\"_cacheAsBmp\",\"_layer\",\"_ownPostProcess\",\"_struct\",\"_globalTrans\",\"_widget\",\"_graphics\",\"_ownGraphics\",\"_events\",\"_graphicsRenderer\",\"_$parent\",\"_scene\",\"_tfChanged\",\"_skin\",\"_components\",\"_useSourceSize\"]},\"mapBgImg\":{\"kind\":\"S\",\"keys\":[\"_bits\",\"_reactiveBits\",\"_hideFlags\",\"_parent\",\"_destroyed\",\"_nodeType\",\"name\",\"_children\",\"_$children\",\"_$container\",\"_extra\",\"_x\",\"_y\",\"_width\",\"_height\",\"_scaleX\",\"_scaleY\",\"_skewX\",\"_skewY\",\"_pivotX\",\"_pivotY\",\"_anchorX\",\"_anchorY\",\"_rotation\",\"_alpha\",\"_blendMode\",\"_visible\",\"_mouseState\",\"_zOrder\",\"_renderType\",\"_subpassUpdateFlag\",\"mouseThrough\",\"hitTestPrior\",\"_autosize\",\"_repaint\",\"_repaintCount\",\"_previousType\",\"_sizeFlag\",\"_cacheAsBmp\",\"_layer\",\"_ownPostProcess\",\"_struct\",\"_globalTrans\",\"_widget\",\"_graphics\",\"_ownGraphics\",\"_events\",\"_graphicsRenderer\",\"_$parent\",\"_scene\",\"_tfChanged\",\"_skin\"]},\"mapBgImgNew\":{\"kind\":\"S\",\"keys\":[\"_bits\",\"_reactiveBits\",\"_hideFlags\",\"_parent\",\"_destroyed\",\"_nodeType\",\"name\",\"_children\",\"_$children\",\"_$container\",\"_extra\",\"_x\",\"_y\",\"_width\",\"_height\",\"_scaleX\",\"_scaleY\",\"_skewX\",\"_skewY\",\"_pivotX\",\"_pivotY\",\"_anchorX\",\"_anchorY\",\"_rotation\",\"_alpha\",\"_blendMode\",\"_visible\",\"_mouseState\",\"_zOrder\",\"_renderType\",\"_subpassUpdateFlag\",\"mouseThrough\",\"hitTestPrior\",\"_autosize\",\"_repaint\",\"_repaintCount\",\"_previousType\",\"_sizeFlag\",\"_cacheAsBmp\",\"_layer\",\"_ownPostProcess\",\"_struct\",\"_globalTrans\",\"_widget\",\"_graphics\",\"_ownGraphics\",\"_events\",\"_graphicsRenderer\",\"_$parent\",\"_scene\",\"_tfChanged\",\"_skin\"]},\"mapTitle\":{\"kind\":\"S\",\"keys\":[\"_bits\",\"_reactiveBits\",\"_hideFlags\",\"_parent\",\"_destroyed\",\"_nodeType\",\"name\",\"_children\",\"_$children\",\"_$container\",\"_extra\",\"_x\",\"_y\",\"_width\",\"_height\",\"_scaleX\",\"_scaleY\",\"_skewX\",\"_skewY\",\"_pivotX\",\"_pivotY\",\"_anchorX\",\"_anchorY\",\"_rotation\",\"_alpha\",\"_blendMode\",\"_visible\",\"_mouseState\",\"_zOrder\",\"_renderType\",\"_subpassUpdateFlag\",\"mouseThrough\",\"hitTestPrior\",\"_autosize\",\"_repaint\",\"_repaintCount\",\"_previousType\",\"_sizeFlag\",\"_cacheAsBmp\",\"_layer\",\"_ownPostProcess\",\"_struct\",\"_globalTrans\",\"_widget\",\"_graphics\",\"_ownGraphics\",\"_events\",\"_graphicsRenderer\",\"_$parent\",\"_scene\",\"_tfChanged\",\"_skin\",\"_useSourceSize\"]},\"road\":{\"kind\":\"S\",\"keys\":[\"_bits\",\"_reactiveBits\",\"_hideFlags\",\"_parent\",\"_destroyed\",\"_nodeType\",\"name\",\"_children\",\"_$children\",\"_$container\",\"_extra\",\"_x\",\"_y\",\"_width\",\"_height\",\"_scaleX\",\"_scaleY\",\"_skewX\",\"_skewY\",\"_pivotX\",\"_pivotY\",\"_anchorX\",\"_anchorY\",\"_rotation\",\"_alpha\",\"_blendMode\",\"_visible\",\"_mouseState\",\"_zOrder\",\"_renderType\",\"_subpassUpdateFlag\",\"mouseThrough\",\"hitTestPrior\",\"_autosize\",\"_repaint\",\"_repaintCount\",\"_previousType\",\"_sizeFlag\",\"_cacheAsBmp\",\"_layer\",\"_ownPostProcess\",\"_struct\",\"_globalTrans\",\"_widget\",\"_graphics\",\"_ownGraphics\",\"_events\",\"_graphicsRenderer\",\"_$parent\",\"_scene\",\"_tfChanged\",\"_components\"]},\"highGround\":{\"kind\":\"S\",\"keys\":[\"_bits\",\"_reactiveBits\",\"_hideFlags\",\"_parent\",\"_destroyed\",\"_nodeType\",\"name\",\"_children\",\"_$children\",\"_$container\",\"_extra\",\"_x\",\"_y\",\"_width\",\"_height\",\"_scaleX\",\"_scaleY\",\"_skewX\",\"_skewY\",\"_pivotX\",\"_pivotY\",\"_anchorX\",\"_anchorY\",\"_rotation\",\"_alpha\",\"_blendMode\",\"_visible\",\"_mouseState\",\"_zOrder\",\"_renderType\",\"_subpassUpdateFlag\",\"mouseThrough\",\"hitTestPrior\",\"_autosize\",\"_repaint\",\"_repaintCount\",\"_previousType\",\"_sizeFlag\",\"_cacheAsBmp\",\"_layer\",\"_ownPostProcess\",\"_struct\",\"_globalTrans\",\"_widget\",\"_graphics\",\"_ownGraphics\",\"_events\",\"_graphicsRenderer\",\"_$parent\",\"_scene\",\"_tfChanged\",\"_components\"]},\"bound\":{\"kind\":\"tn\",\"keys\":[\"_bits\",\"_reactiveBits\",\"_hideFlags\",\"_parent\",\"_destroyed\",\"_nodeType\",\"name\",\"_children\",\"_$children\",\"_$container\",\"_extra\",\"_x\",\"_y\",\"_width\",\"_height\",\"_scaleX\",\"_scaleY\",\"_skewX\",\"_skewY\",\"_pivotX\",\"_pivotY\",\"_anchorX\",\"_anchorY\",\"_rotation\",\"_alpha\",\"_blendMode\",\"_visible\",\"_mouseState\",\"_zOrder\",\"_renderType\",\"_subpassUpdateFlag\",\"mouseThrough\",\"hitTestPrior\",\"_autosize\",\"_repaint\",\"_repaintCount\",\"_previousType\",\"_sizeFlag\",\"_cacheAsBmp\",\"_layer\",\"_ownPostProcess\",\"_struct\",\"_globalTrans\",\"_$parent\",\"_scene\",\"_tfChanged\",\"_graphics\",\"_ownGraphics\",\"_events\",\"_graphicsRenderer\",\"_shaderData\"]},\"divide\":{\"kind\":\"S\",\"keys\":[\"_bits\",\"_reactiveBits\",\"_hideFlags\",\"_parent\",\"_destroyed\",\"_nodeType\",\"name\",\"_children\",\"_$children\",\"_$container\",\"_extra\",\"_x\",\"_y\",\"_width\",\"_height\",\"_scaleX\",\"_scaleY\",\"_skewX\",\"_skewY\",\"_pivotX\",\"_pivotY\",\"_anchorX\",\"_anchorY\",\"_rotation\",\"_alpha\",\"_blendMode\",\"_visible\",\"_mouseState\",\"_zOrder\",\"_renderType\",\"_subpassUpdateFlag\",\"mouseThrough\",\"hitTestPrior\",\"_autosize\",\"_repaint\",\"_repaintCount\",\"_previousType\",\"_sizeFlag\",\"_cacheAsBmp\",\"_layer\",\"_ownPostProcess\",\"_struct\",\"_globalTrans\",\"_widget\",\"_graphics\",\"_ownGraphics\",\"_events\",\"_graphicsRenderer\",\"_$parent\",\"_scene\",\"_tfChanged\",\"_skin\"]},\"end1\":{\"kind\":\"tn\",\"keys\":[\"_bits\",\"_reactiveBits\",\"_hideFlags\",\"_parent\",\"_destroyed\",\"_nodeType\",\"name\",\"_children\",\"_$children\",\"_$container\",\"_extra\",\"_x\",\"_y\",\"_width\",\"_height\",\"_scaleX\",\"_scaleY\",\"_skewX\",\"_skewY\",\"_pivotX\",\"_pivotY\",\"_anchorX\",\"_anchorY\",\"_rotation\",\"_alpha\",\"_blendMode\",\"_visible\",\"_mouseState\",\"_zOrder\",\"_renderType\",\"_subpassUpdateFlag\",\"mouseThrough\",\"hitTestPrior\",\"_autosize\",\"_repaint\",\"_repaintCount\",\"_previousType\",\"_sizeFlag\",\"_cacheAsBmp\",\"_layer\",\"_ownPostProcess\",\"_struct\",\"_globalTrans\",\"_$parent\",\"_scene\",\"_tfChanged\",\"_components\"]},\"end2\":{\"kind\":\"tn\",\"keys\":[\"_bits\",\"_reactiveBits\",\"_hideFlags\",\"_parent\",\"_destroyed\",\"_nodeType\",\"name\",\"_children\",\"_$children\",\"_$container\",\"_extra\",\"_x\",\"_y\",\"_width\",\"_height\",\"_scaleX\",\"_scaleY\",\"_skewX\",\"_skewY\",\"_pivotX\",\"_pivotY\",\"_anchorX\",\"_anchorY\",\"_rotation\",\"_alpha\",\"_blendMode\",\"_visible\",\"_mouseState\",\"_zOrder\",\"_renderType\",\"_subpassUpdateFlag\",\"mouseThrough\",\"hitTestPrior\",\"_autosize\",\"_repaint\",\"_repaintCount\",\"_previousType\",\"_sizeFlag\",\"_cacheAsBmp\",\"_layer\",\"_ownPostProcess\",\"_struct\",\"_globalTrans\",\"_$parent\",\"_scene\",\"_tfChanged\",\"_components\"]},\"pathTip0\":{\"kind\":\"a\",\"keys\":[\"_bits\",\"_reactiveBits\",\"_hideFlags\",\"_parent\",\"_destroyed\",\"_nodeType\",\"name\",\"_children\",\"_$children\",\"_$container\",\"_extra\",\"_x\",\"_y\",\"_width\",\"_height\",\"_scaleX\",\"_scaleY\",\"_skewX\",\"_skewY\",\"_pivotX\",\"_pivotY\",\"_anchorX\",\"_anchorY\",\"_rotation\",\"_alpha\",\"_blendMode\",\"_visible\",\"_mouseState\",\"_zOrder\",\"_renderType\",\"_subpassUpdateFlag\",\"mouseThrough\",\"hitTestPrior\",\"_autosize\",\"_repaint\",\"_repaintCount\",\"_previousType\",\"_sizeFlag\",\"_cacheAsBmp\",\"_layer\",\"_ownPostProcess\",\"_struct\",\"_globalTrans\",\"_widget\",\"_$parent\",\"_scene\",\"_tfChanged\"]},\"pathTip1\":{\"kind\":\"a\",\"keys\":[\"_bits\",\"_reactiveBits\",\"_hideFlags\",\"_parent\",\"_destroyed\",\"_nodeType\",\"name\",\"_children\",\"_$children\",\"_$container\",\"_extra\",\"_x\",\"_y\",\"_width\",\"_height\",\"_scaleX\",\"_scaleY\",\"_skewX\",\"_skewY\",\"_pivotX\",\"_pivotY\",\"_anchorX\",\"_anchorY\",\"_rotation\",\"_alpha\",\"_blendMode\",\"_visible\",\"_mouseState\",\"_zOrder\",\"_renderType\",\"_subpassUpdateFlag\",\"mouseThrough\",\"hitTestPrior\",\"_autosize\",\"_repaint\",\"_repaintCount\",\"_previousType\",\"_sizeFlag\",\"_cacheAsBmp\",\"_layer\",\"_ownPostProcess\",\"_struct\",\"_globalTrans\",\"_widget\",\"_$parent\",\"_scene\",\"_tfChanged\"]},\"map\":{\"kind\":\"S\",\"keys\":[\"_bits\",\"_reactiveBits\",\"_hideFlags\",\"_parent\",\"_destroyed\",\"_nodeType\",\"name\",\"_children\",\"_$children\",\"_$container\",\"_extra\",\"_x\",\"_y\",\"_width\",\"_height\",\"_scaleX\",\"_scaleY\",\"_skewX\",\"_skewY\",\"_pivotX\",\"_pivotY\",\"_anchorX\",\"_anchorY\",\"_rotation\",\"_alpha\",\"_blendMode\",\"_visible\",\"_mouseState\",\"_zOrder\",\"_renderType\",\"_subpassUpdateFlag\",\"mouseThrough\",\"hitTestPrior\",\"_autosize\",\"_repaint\",\"_repaintCount\",\"_previousType\",\"_sizeFlag\",\"_cacheAsBmp\",\"_layer\",\"_ownPostProcess\",\"_struct\",\"_globalTrans\",\"_widget\",\"_graphics\",\"_ownGraphics\",\"_events\",\"_graphicsRenderer\",\"_$parent\",\"_scene\",\"_tfChanged\"]},\"refreshBox\":{\"kind\":\"a\",\"keys\":[\"_bits\",\"_reactiveBits\",\"_hideFlags\",\"_parent\",\"_destroyed\",\"_nodeType\",\"name\",\"_children\",\"_$children\",\"_$container\",\"_extra\",\"_x\",\"_y\",\"_width\",\"_height\",\"_scaleX\",\"_scaleY\",\"_skewX\",\"_skewY\",\"_pivotX\",\"_pivotY\",\"_anchorX\",\"_anchorY\",\"_rotation\",\"_alpha\",\"_blendMode\",\"_visible\",\"_mouseState\",\"_zOrder\",\"_renderType\",\"_subpassUpdateFlag\",\"mouseThrough\",\"hitTestPrior\",\"_autosize\",\"_repaint\",\"_repaintCount\",\"_previousType\",\"_sizeFlag\",\"_cacheAsBmp\",\"_layer\",\"_ownPostProcess\",\"_struct\",\"_globalTrans\",\"_widget\",\"_$parent\",\"_scene\",\"_tfChanged\"]},\"gameObjectBox\":{\"kind\":\"a\",\"keys\":[\"_bits\",\"_reactiveBits\",\"_hideFlags\",\"_parent\",\"_destroyed\",\"_nodeType\",\"name\",\"_children\",\"_$children\",\"_$container\",\"_extra\",\"_x\",\"_y\",\"_width\",\"_height\",\"_scaleX\",\"_scaleY\",\"_skewX\",\"_skewY\",\"_pivotX\",\"_pivotY\",\"_anchorX\",\"_anchorY\",\"_rotation\",\"_alpha\",\"_blendMode\",\"_visible\",\"_mouseState\",\"_zOrder\",\"_renderType\",\"_subpassUpdateFlag\",\"mouseThrough\",\"hitTestPrior\",\"_autosize\",\"_repaint\",\"_repaintCount\",\"_previousType\",\"_sizeFlag\",\"_cacheAsBmp\",\"_layer\",\"_ownPostProcess\",\"_struct\",\"_globalTrans\",\"_widget\",\"_$parent\",\"_scene\",\"_tfChanged\"]},\"xBtn\":{\"kind\":\"S\",\"keys\":[\"_bits\",\"_reactiveBits\",\"_hideFlags\",\"_parent\",\"_destroyed\",\"_nodeType\",\"name\",\"_children\",\"_$children\",\"_$container\",\"_extra\",\"_x\",\"_y\",\"_width\",\"_height\",\"_scaleX\",\"_scaleY\",\"_skewX\",\"_skewY\",\"_pivotX\",\"_pivotY\",\"_anchorX\",\"_anchorY\",\"_rotation\",\"_alpha\",\"_blendMode\",\"_visible\",\"_mouseState\",\"_zOrder\",\"_renderType\",\"_subpassUpdateFlag\",\"mouseThrough\",\"hitTestPrior\",\"_autosize\",\"_repaint\",\"_repaintCount\",\"_previousType\",\"_sizeFlag\",\"_cacheAsBmp\",\"_layer\",\"_ownPostProcess\",\"_struct\",\"_globalTrans\",\"_widget\",\"_graphics\",\"_ownGraphics\",\"_events\",\"_graphicsRenderer\",\"_$parent\",\"_scene\",\"_tfChanged\",\"_skin\",\"_useSourceSize\",\"_shaderData\"]},\"danger0\":{\"kind\":\"S\",\"keys\":[\"_bits\",\"_reactiveBits\",\"_hideFlags\",\"_parent\",\"_destroyed\",\"_nodeType\",\"name\",\"_children\",\"_$children\",\"_$container\",\"_extra\",\"_x\",\"_y\",\"_width\",\"_height\",\"_scaleX\",\"_scaleY\",\"_skewX\",\"_skewY\",\"_pivotX\",\"_pivotY\",\"_anchorX\",\"_anchorY\",\"_rotation\",\"_alpha\",\"_blendMode\",\"_visible\",\"_mouseState\",\"_zOrder\",\"_renderType\",\"_subpassUpdateFlag\",\"mouseThrough\",\"hitTestPrior\",\"_autosize\",\"_repaint\",\"_repaintCount\",\"_previousType\",\"_sizeFlag\",\"_cacheAsBmp\",\"_layer\",\"_ownPostProcess\",\"_struct\",\"_globalTrans\",\"_widget\",\"_graphics\",\"_ownGraphics\",\"_events\",\"_graphicsRenderer\",\"_$parent\",\"_scene\",\"_tfChanged\",\"_skin\",\"_useSourceSize\",\"_shaderData\"]},\"danger1\":{\"kind\":\"S\",\"keys\":[\"_bits\",\"_reactiveBits\",\"_hideFlags\",\"_parent\",\"_destroyed\",\"_nodeType\",\"name\",\"_children\",\"_$children\",\"_$container\",\"_extra\",\"_x\",\"_y\",\"_width\",\"_height\",\"_scaleX\",\"_scaleY\",\"_skewX\",\"_skewY\",\"_pivotX\",\"_pivotY\",\"_anchorX\",\"_anchorY\",\"_rotation\",\"_alpha\",\"_blendMode\",\"_visible\",\"_mouseState\",\"_zOrder\",\"_renderType\",\"_subpassUpdateFlag\",\"mouseThrough\",\"hitTestPrior\",\"_autosize\",\"_repaint\",\"_repaintCount\",\"_previousType\",\"_sizeFlag\",\"_cacheAsBmp\",\"_layer\",\"_ownPostProcess\",\"_struct\",\"_globalTrans\",\"_widget\",\"_graphics\",\"_ownGraphics\",\"_events\",\"_graphicsRenderer\",\"_$parent\",\"_scene\",\"_tfChanged\",\"_skin\",\"_useSourceSize\",\"_shaderData\"]},\"danger2\":{\"kind\":\"S\",\"keys\":[\"_bits\",\"_reactiveBits\",\"_hideFlags\",\"_parent\",\"_destroyed\",\"_nodeType\",\"name\",\"_children\",\"_$children\",\"_$container\",\"_extra\",\"_x\",\"_y\",\"_width\",\"_height\",\"_scaleX\",\"_scaleY\",\"_skewX\",\"_skewY\",\"_pivotX\",\"_pivotY\",\"_anchorX\",\"_anchorY\",\"_rotation\",\"_alpha\",\"_blendMode\",\"_visible\",\"_mouseState\",\"_zOrder\",\"_renderType\",\"_subpassUpdateFlag\",\"mouseThrough\",\"hitTestPrior\",\"_autosize\",\"_repaint\",\"_repaintCount\",\"_previousType\",\"_sizeFlag\",\"_cacheAsBmp\",\"_layer\",\"_ownPostProcess\",\"_struct\",\"_globalTrans\",\"_widget\",\"_graphics\",\"_ownGraphics\",\"_events\",\"_graphicsRenderer\",\"_$parent\",\"_scene\",\"_tfChanged\",\"_skin\",\"_useSourceSize\",\"_shaderData\"]},\"danger3\":{\"kind\":\"S\",\"keys\":[\"_bits\",\"_reactiveBits\",\"_hideFlags\",\"_parent\",\"_destroyed\",\"_nodeType\",\"name\",\"_children\",\"_$children\",\"_$container\",\"_extra\",\"_x\",\"_y\",\"_width\",\"_height\",\"_scaleX\",\"_scaleY\",\"_skewX\",\"_skewY\",\"_pivotX\",\"_pivotY\",\"_anchorX\",\"_anchorY\",\"_rotation\",\"_alpha\",\"_blendMode\",\"_visible\",\"_mouseState\",\"_zOrder\",\"_renderType\",\"_subpassUpdateFlag\",\"mouseThrough\",\"hitTestPrior\",\"_autosize\",\"_repaint\",\"_repaintCount\",\"_previousType\",\"_sizeFlag\",\"_cacheAsBmp\",\"_layer\",\"_ownPostProcess\",\"_struct\",\"_globalTrans\",\"_widget\",\"_graphics\",\"_ownGraphics\",\"_events\",\"_graphicsRenderer\",\"_$parent\",\"_scene\",\"_tfChanged\",\"_skin\",\"_useSourceSize\",\"_shaderData\"]},\"goldImg\":{\"kind\":\"S\",\"keys\":[\"_bits\",\"_reactiveBits\",\"_hideFlags\",\"_parent\",\"_destroyed\",\"_nodeType\",\"name\",\"_children\",\"_$children\",\"_$container\",\"_extra\",\"_x\",\"_y\",\"_width\",\"_height\",\"_scaleX\",\"_scaleY\",\"_skewX\",\"_skewY\",\"_pivotX\",\"_pivotY\",\"_anchorX\",\"_anchorY\",\"_rotation\",\"_alpha\",\"_blendMode\",\"_visible\",\"_mouseState\",\"_zOrder\",\"_renderType\",\"_subpassUpdateFlag\",\"mouseThrough\",\"hitTestPrior\",\"_autosize\",\"_repaint\",\"_repaintCount\",\"_previousType\",\"_sizeFlag\",\"_cacheAsBmp\",\"_layer\",\"_ownPostProcess\",\"_struct\",\"_globalTrans\",\"_widget\",\"_graphics\",\"_ownGraphics\",\"_events\",\"_graphicsRenderer\",\"_$parent\",\"_scene\",\"_tfChanged\",\"_skin\",\"_useSourceSize\",\"_shaderData\"]},\"goldNum\":{\"kind\":\"mo\",\"keys\":[\"_bits\",\"_reactiveBits\",\"_hideFlags\",\"_parent\",\"_destroyed\",\"_nodeType\",\"name\",\"_children\",\"_$children\",\"_$container\",\"_extra\",\"_x\",\"_y\",\"_width\",\"_height\",\"_scaleX\",\"_scaleY\",\"_skewX\",\"_skewY\",\"_pivotX\",\"_pivotY\",\"_anchorX\",\"_anchorY\",\"_rotation\",\"_alpha\",\"_blendMode\",\"_visible\",\"_mouseState\",\"_zOrder\",\"_renderType\",\"_subpassUpdateFlag\",\"mouseThrough\",\"hitTestPrior\",\"_autosize\",\"_repaint\",\"_repaintCount\",\"_previousType\",\"_sizeFlag\",\"_cacheAsBmp\",\"_layer\",\"_ownPostProcess\",\"_struct\",\"_globalTrans\",\"_overflow\",\"_singleCharRender\",\"_prompt\",\"_wordWrap\",\"_asPassword\",\"_textWidth\",\"_textHeight\",\"_html\",\"_ubb\",\"_maxWidth\",\"_hideText\",\"_textStyle\",\"_text\",\"_realFont\",\"_bitmapFont\",\"_elements\",\"_lines\",\"_padding\",\"_fontSizeScale\",\"_graphics\",\"_ownGraphics\",\"_events\",\"_graphicsRenderer\",\"_$parent\",\"_scene\",\"_tfChanged\",\"_isChanged\"]},\"shovelAdBg\":{\"kind\":\"S\",\"keys\":[\"_bits\",\"_reactiveBits\",\"_hideFlags\",\"_parent\",\"_destroyed\",\"_nodeType\",\"name\",\"_children\",\"_$children\",\"_$container\",\"_extra\",\"_x\",\"_y\",\"_width\",\"_height\",\"_scaleX\",\"_scaleY\",\"_skewX\",\"_skewY\",\"_pivotX\",\"_pivotY\",\"_anchorX\",\"_anchorY\",\"_rotation\",\"_alpha\",\"_blendMode\",\"_visible\",\"_mouseState\",\"_zOrder\",\"_renderType\",\"_subpassUpdateFlag\",\"mouseThrough\",\"hitTestPrior\",\"_autosize\",\"_repaint\",\"_repaintCount\",\"_previousType\",\"_sizeFlag\",\"_cacheAsBmp\",\"_layer\",\"_ownPostProcess\",\"_struct\",\"_globalTrans\",\"_widget\",\"_graphics\",\"_ownGraphics\",\"_events\",\"_graphicsRenderer\",\"_$parent\",\"_scene\",\"_tfChanged\",\"_skin\",\"_useSourceSize\",\"_shaderData\"]},\"adLight\":{\"kind\":\"S\",\"keys\":[\"_bits\",\"_reactiveBits\",\"_hideFlags\",\"_parent\",\"_destroyed\",\"_nodeType\",\"name\",\"_children\",\"_$children\",\"_$container\",\"_extra\",\"_x\",\"_y\",\"_width\",\"_height\",\"_scaleX\",\"_scaleY\",\"_skewX\",\"_skewY\",\"_pivotX\",\"_pivotY\",\"_anchorX\",\"_anchorY\",\"_rotation\",\"_alpha\",\"_blendMode\",\"_visible\",\"_mouseState\",\"_zOrder\",\"_renderType\",\"_subpassUpdateFlag\",\"mouseThrough\",\"hitTestPrior\",\"_autosize\",\"_repaint\",\"_repaintCount\",\"_previousType\",\"_sizeFlag\",\"_cacheAsBmp\",\"_layer\",\"_ownPostProcess\",\"_struct\",\"_globalTrans\",\"_widget\",\"_graphics\",\"_ownGraphics\",\"_events\",\"_graphicsRenderer\",\"_$parent\",\"_scene\",\"_tfChanged\",\"_skin\",\"_useSourceSize\",\"_shaderData\"]},\"shovelAdImg\":{\"kind\":\"S\",\"keys\":[\"_bits\",\"_reactiveBits\",\"_hideFlags\",\"_parent\",\"_destroyed\",\"_nodeType\",\"name\",\"_children\",\"_$children\",\"_$container\",\"_extra\",\"_x\",\"_y\",\"_width\",\"_height\",\"_scaleX\",\"_scaleY\",\"_skewX\",\"_skewY\",\"_pivotX\",\"_pivotY\",\"_anchorX\",\"_anchorY\",\"_rotation\",\"_alpha\",\"_blendMode\",\"_visible\",\"_mouseState\",\"_zOrder\",\"_renderType\",\"_subpassUpdateFlag\",\"mouseThrough\",\"hitTestPrior\",\"_autosize\",\"_repaint\",\"_repaintCount\",\"_previousType\",\"_sizeFlag\",\"_cacheAsBmp\",\"_layer\",\"_ownPostProcess\",\"_struct\",\"_globalTrans\",\"_widget\",\"_graphics\",\"_ownGraphics\",\"_events\",\"_graphicsRenderer\",\"_$parent\",\"_scene\",\"_tfChanged\",\"_skin\",\"_shaderData\"]},\"shovelNum\":{\"kind\":\"mo\",\"keys\":[\"_bits\",\"_reactiveBits\",\"_hideFlags\",\"_parent\",\"_destroyed\",\"_nodeType\",\"name\",\"_children\",\"_$children\",\"_$container\",\"_extra\",\"_x\",\"_y\",\"_width\",\"_height\",\"_scaleX\",\"_scaleY\",\"_skewX\",\"_skewY\",\"_pivotX\",\"_pivotY\",\"_anchorX\",\"_anchorY\",\"_rotation\",\"_alpha\",\"_blendMode\",\"_visible\",\"_mouseState\",\"_zOrder\",\"_renderType\",\"_subpassUpdateFlag\",\"mouseThrough\",\"hitTestPrior\",\"_autosize\",\"_repaint\",\"_repaintCount\",\"_previousType\",\"_sizeFlag\",\"_cacheAsBmp\",\"_layer\",\"_ownPostProcess\",\"_struct\",\"_globalTrans\",\"_overflow\",\"_singleCharRender\",\"_prompt\",\"_wordWrap\",\"_asPassword\",\"_textWidth\",\"_textHeight\",\"_html\",\"_ubb\",\"_maxWidth\",\"_hideText\",\"_textStyle\",\"_text\",\"_realFont\",\"_bitmapFont\",\"_elements\",\"_lines\",\"_padding\",\"_fontSizeScale\",\"_graphics\",\"_ownGraphics\",\"_events\",\"_graphicsRenderer\",\"_$parent\",\"_scene\",\"_tfChanged\",\"_isChanged\"]},\"shovelAd\":{\"kind\":\"S\",\"keys\":[\"_bits\",\"_reactiveBits\",\"_hideFlags\",\"_parent\",\"_destroyed\",\"_nodeType\",\"name\",\"_children\",\"_$children\",\"_$container\",\"_extra\",\"_x\",\"_y\",\"_width\",\"_height\",\"_scaleX\",\"_scaleY\",\"_skewX\",\"_skewY\",\"_pivotX\",\"_pivotY\",\"_anchorX\",\"_anchorY\",\"_rotation\",\"_alpha\",\"_blendMode\",\"_visible\",\"_mouseState\",\"_zOrder\",\"_renderType\",\"_subpassUpdateFlag\",\"mouseThrough\",\"hitTestPrior\",\"_autosize\",\"_repaint\",\"_repaintCount\",\"_previousType\",\"_sizeFlag\",\"_cacheAsBmp\",\"_layer\",\"_ownPostProcess\",\"_struct\",\"_globalTrans\",\"_widget\",\"_graphics\",\"_ownGraphics\",\"_events\",\"_graphicsRenderer\",\"_$parent\",\"_scene\",\"_tfChanged\",\"_skin\",\"_useSourceSize\",\"_shaderData\"]},\"deckLight\":{\"kind\":\"S\",\"keys\":[\"_bits\",\"_reactiveBits\",\"_hideFlags\",\"_parent\",\"_destroyed\",\"_nodeType\",\"name\",\"_children\",\"_$children\",\"_$container\",\"_extra\",\"_x\",\"_y\",\"_width\",\"_height\",\"_scaleX\",\"_scaleY\",\"_skewX\",\"_skewY\",\"_pivotX\",\"_pivotY\",\"_anchorX\",\"_anchorY\",\"_rotation\",\"_alpha\",\"_blendMode\",\"_visible\",\"_mouseState\",\"_zOrder\",\"_renderType\",\"_subpassUpdateFlag\",\"mouseThrough\",\"hitTestPrior\",\"_autosize\",\"_repaint\",\"_repaintCount\",\"_previousType\",\"_sizeFlag\",\"_cacheAsBmp\",\"_layer\",\"_ownPostProcess\",\"_struct\",\"_globalTrans\",\"_widget\",\"_graphics\",\"_ownGraphics\",\"_events\",\"_graphicsRenderer\",\"_$parent\",\"_scene\",\"_tfChanged\",\"_skin\",\"_useSourceSize\",\"_shaderData\"]},\"roof\":{\"kind\":\"S\",\"keys\":[\"_bits\",\"_reactiveBits\",\"_hideFlags\",\"_parent\",\"_destroyed\",\"_nodeType\",\"name\",\"_children\",\"_$children\",\"_$container\",\"_extra\",\"_x\",\"_y\",\"_width\",\"_height\",\"_scaleX\",\"_scaleY\",\"_skewX\",\"_skewY\",\"_pivotX\",\"_pivotY\",\"_anchorX\",\"_anchorY\",\"_rotation\",\"_alpha\",\"_blendMode\",\"_visible\",\"_mouseState\",\"_zOrder\",\"_renderType\",\"_subpassUpdateFlag\",\"mouseThrough\",\"hitTestPrior\",\"_autosize\",\"_repaint\",\"_repaintCount\",\"_previousType\",\"_sizeFlag\",\"_cacheAsBmp\",\"_layer\",\"_ownPostProcess\",\"_struct\",\"_globalTrans\",\"_widget\",\"_graphics\",\"_ownGraphics\",\"_events\",\"_graphicsRenderer\",\"_$parent\",\"_scene\",\"_tfChanged\",\"_skin\",\"_useSourceSize\",\"_shaderData\"]},\"deckBtn\":{\"kind\":\"tn\",\"keys\":[\"_bits\",\"_reactiveBits\",\"_hideFlags\",\"_parent\",\"_destroyed\",\"_nodeType\",\"name\",\"_children\",\"_$children\",\"_$container\",\"_extra\",\"_x\",\"_y\",\"_width\",\"_height\",\"_scaleX\",\"_scaleY\",\"_skewX\",\"_skewY\",\"_pivotX\",\"_pivotY\",\"_anchorX\",\"_anchorY\",\"_rotation\",\"_alpha\",\"_blendMode\",\"_visible\",\"_mouseState\",\"_zOrder\",\"_renderType\",\"_subpassUpdateFlag\",\"mouseThrough\",\"hitTestPrior\",\"_autosize\",\"_repaint\",\"_repaintCount\",\"_previousType\",\"_sizeFlag\",\"_cacheAsBmp\",\"_layer\",\"_ownPostProcess\",\"_struct\",\"_globalTrans\",\"_$parent\",\"_scene\",\"_tfChanged\",\"_events\"]},\"specialPropsBox\":{\"kind\":\"a\",\"keys\":[\"_bits\",\"_reactiveBits\",\"_hideFlags\",\"_parent\",\"_destroyed\",\"_nodeType\",\"name\",\"_children\",\"_$children\",\"_$container\",\"_extra\",\"_x\",\"_y\",\"_width\",\"_height\",\"_scaleX\",\"_scaleY\",\"_skewX\",\"_skewY\",\"_pivotX\",\"_pivotY\",\"_anchorX\",\"_anchorY\",\"_rotation\",\"_alpha\",\"_blendMode\",\"_visible\",\"_mouseState\",\"_zOrder\",\"_renderType\",\"_subpassUpdateFlag\",\"mouseThrough\",\"hitTestPrior\",\"_autosize\",\"_repaint\",\"_repaintCount\",\"_previousType\",\"_sizeFlag\",\"_cacheAsBmp\",\"_layer\",\"_ownPostProcess\",\"_struct\",\"_globalTrans\",\"_widget\",\"_$parent\",\"_scene\",\"_tfChanged\"]},\"propsBoxBg\":{\"kind\":\"S\",\"keys\":[\"_bits\",\"_reactiveBits\",\"_hideFlags\",\"_parent\",\"_destroyed\",\"_nodeType\",\"name\",\"_children\",\"_$children\",\"_$container\",\"_extra\",\"_x\",\"_y\",\"_width\",\"_height\",\"_scaleX\",\"_scaleY\",\"_skewX\",\"_skewY\",\"_pivotX\",\"_pivotY\",\"_anchorX\",\"_anchorY\",\"_rotation\",\"_alpha\",\"_blendMode\",\"_visible\",\"_mouseState\",\"_zOrder\",\"_renderType\",\"_subpassUpdateFlag\",\"mouseThrough\",\"hitTestPrior\",\"_autosize\",\"_repaint\",\"_repaintCount\",\"_previousType\",\"_sizeFlag\",\"_cacheAsBmp\",\"_layer\",\"_ownPostProcess\",\"_struct\",\"_globalTrans\",\"_widget\",\"_graphics\",\"_ownGraphics\",\"_events\",\"_graphicsRenderer\",\"_$parent\",\"_scene\",\"_tfChanged\",\"_skin\",\"_shaderData\"]},\"propsBox\":{\"kind\":\"a\",\"keys\":[\"_bits\",\"_reactiveBits\",\"_hideFlags\",\"_parent\",\"_destroyed\",\"_nodeType\",\"name\",\"_children\",\"_$children\",\"_$container\",\"_extra\",\"_x\",\"_y\",\"_width\",\"_height\",\"_scaleX\",\"_scaleY\",\"_skewX\",\"_skewY\",\"_pivotX\",\"_pivotY\",\"_anchorX\",\"_anchorY\",\"_rotation\",\"_alpha\",\"_blendMode\",\"_visible\",\"_mouseState\",\"_zOrder\",\"_renderType\",\"_subpassUpdateFlag\",\"mouseThrough\",\"hitTestPrior\",\"_autosize\",\"_repaint\",\"_repaintCount\",\"_previousType\",\"_sizeFlag\",\"_cacheAsBmp\",\"_layer\",\"_ownPostProcess\",\"_struct\",\"_globalTrans\",\"_widget\",\"_$parent\",\"_scene\",\"_tfChanged\"]},\"propsBoxAi\":{\"kind\":\"a\",\"keys\":[\"_bits\",\"_reactiveBits\",\"_hideFlags\",\"_parent\",\"_destroyed\",\"_nodeType\",\"name\",\"_children\",\"_$children\",\"_$container\",\"_extra\",\"_x\",\"_y\",\"_width\",\"_height\",\"_scaleX\",\"_scaleY\",\"_skewX\",\"_skewY\",\"_pivotX\",\"_pivotY\",\"_anchorX\",\"_anchorY\",\"_rotation\",\"_alpha\",\"_blendMode\",\"_visible\",\"_mouseState\",\"_zOrder\",\"_renderType\",\"_subpassUpdateFlag\",\"mouseThrough\",\"hitTestPrior\",\"_autosize\",\"_repaint\",\"_repaintCount\",\"_previousType\",\"_sizeFlag\",\"_cacheAsBmp\",\"_layer\",\"_ownPostProcess\",\"_struct\",\"_globalTrans\",\"_widget\",\"_$parent\",\"_scene\",\"_tfChanged\"]},\"refreshBtnMask\":{\"kind\":\"tn\",\"keys\":[\"_bits\",\"_reactiveBits\",\"_hideFlags\",\"_parent\",\"_destroyed\",\"_nodeType\",\"name\",\"_children\",\"_$children\",\"_$container\",\"_extra\",\"_x\",\"_y\",\"_width\",\"_height\",\"_scaleX\",\"_scaleY\",\"_skewX\",\"_skewY\",\"_pivotX\",\"_pivotY\",\"_anchorX\",\"_anchorY\",\"_rotation\",\"_alpha\",\"_blendMode\",\"_visible\",\"_mouseState\",\"_zOrder\",\"_renderType\",\"_subpassUpdateFlag\",\"mouseThrough\",\"hitTestPrior\",\"_autosize\",\"_repaint\",\"_repaintCount\",\"_previousType\",\"_sizeFlag\",\"_cacheAsBmp\",\"_layer\",\"_ownPostProcess\",\"_struct\",\"_globalTrans\",\"_$parent\",\"_scene\",\"_tfChanged\",\"_graphics\",\"_ownGraphics\",\"_events\",\"_graphicsRenderer\",\"_shaderData\",\"_maskParent\",\"_transform\",\"_subStructRender\",\"_subStruct\",\"_oriRenderPass\",\"_drawOriRT\"]},\"maskImg\":{\"kind\":\"S\",\"keys\":[\"_bits\",\"_reactiveBits\",\"_hideFlags\",\"_parent\",\"_destroyed\",\"_nodeType\",\"name\",\"_children\",\"_$children\",\"_$container\",\"_extra\",\"_x\",\"_y\",\"_width\",\"_height\",\"_scaleX\",\"_scaleY\",\"_skewX\",\"_skewY\",\"_pivotX\",\"_pivotY\",\"_anchorX\",\"_anchorY\",\"_rotation\",\"_alpha\",\"_blendMode\",\"_visible\",\"_mouseState\",\"_zOrder\",\"_renderType\",\"_subpassUpdateFlag\",\"mouseThrough\",\"hitTestPrior\",\"_autosize\",\"_repaint\",\"_repaintCount\",\"_previousType\",\"_sizeFlag\",\"_cacheAsBmp\",\"_layer\",\"_ownPostProcess\",\"_struct\",\"_globalTrans\",\"_widget\",\"_graphics\",\"_ownGraphics\",\"_events\",\"_graphicsRenderer\",\"_$parent\",\"_scene\",\"_tfChanged\",\"_mask\",\"_skin\",\"_useSourceSize\",\"_shaderData\",\"_subStructRender\",\"_subStruct\",\"_oriRenderPass\",\"_drawOriRT\"]},\"goldNumTxt\":{\"kind\":\"mo\",\"keys\":[\"_bits\",\"_reactiveBits\",\"_hideFlags\",\"_parent\",\"_destroyed\",\"_nodeType\",\"name\",\"_children\",\"_$children\",\"_$container\",\"_extra\",\"_x\",\"_y\",\"_width\",\"_height\",\"_scaleX\",\"_scaleY\",\"_skewX\",\"_skewY\",\"_pivotX\",\"_pivotY\",\"_anchorX\",\"_anchorY\",\"_rotation\",\"_alpha\",\"_blendMode\",\"_visible\",\"_mouseState\",\"_zOrder\",\"_renderType\",\"_subpassUpdateFlag\",\"mouseThrough\",\"hitTestPrior\",\"_autosize\",\"_repaint\",\"_repaintCount\",\"_previousType\",\"_sizeFlag\",\"_cacheAsBmp\",\"_layer\",\"_ownPostProcess\",\"_struct\",\"_globalTrans\",\"_overflow\",\"_singleCharRender\",\"_prompt\",\"_wordWrap\",\"_asPassword\",\"_textWidth\",\"_textHeight\",\"_html\",\"_ubb\",\"_maxWidth\",\"_hideText\",\"_textStyle\",\"_text\",\"_realFont\",\"_bitmapFont\",\"_elements\",\"_lines\",\"_padding\",\"_fontSizeScale\",\"_graphics\",\"_ownGraphics\",\"_events\",\"_graphicsRenderer\",\"_$parent\",\"_scene\",\"_tfChanged\",\"_isChanged\"]},\"refreshBtn\":{\"kind\":\"S\",\"keys\":[\"_bits\",\"_reactiveBits\",\"_hideFlags\",\"_parent\",\"_destroyed\",\"_nodeType\",\"name\",\"_children\",\"_$children\",\"_$container\",\"_extra\",\"_x\",\"_y\",\"_width\",\"_height\",\"_scaleX\",\"_scaleY\",\"_skewX\",\"_skewY\",\"_pivotX\",\"_pivotY\",\"_anchorX\",\"_anchorY\",\"_rotation\",\"_alpha\",\"_blendMode\",\"_visible\",\"_mouseState\",\"_zOrder\",\"_renderType\",\"_subpassUpdateFlag\",\"mouseThrough\",\"hitTestPrior\",\"_autosize\",\"_repaint\",\"_repaintCount\",\"_previousType\",\"_sizeFlag\",\"_cacheAsBmp\",\"_layer\",\"_ownPostProcess\",\"_struct\",\"_globalTrans\",\"_widget\",\"_graphics\",\"_ownGraphics\",\"_events\",\"_graphicsRenderer\",\"_$parent\",\"_scene\",\"_tfChanged\",\"_skin\",\"_useSourceSize\",\"_shaderData\"]},\"effectBox\":{\"kind\":\"a\",\"keys\":[\"_bits\",\"_reactiveBits\",\"_hideFlags\",\"_parent\",\"_destroyed\",\"_nodeType\",\"name\",\"_children\",\"_$children\",\"_$container\",\"_extra\",\"_x\",\"_y\",\"_width\",\"_height\",\"_scaleX\",\"_scaleY\",\"_skewX\",\"_skewY\",\"_pivotX\",\"_pivotY\",\"_anchorX\",\"_anchorY\",\"_rotation\",\"_alpha\",\"_blendMode\",\"_visible\",\"_mouseState\",\"_zOrder\",\"_renderType\",\"_subpassUpdateFlag\",\"mouseThrough\",\"hitTestPrior\",\"_autosize\",\"_repaint\",\"_repaintCount\",\"_previousType\",\"_sizeFlag\",\"_cacheAsBmp\",\"_layer\",\"_ownPostProcess\",\"_struct\",\"_globalTrans\",\"_widget\",\"_$parent\",\"_scene\",\"_tfChanged\"]},\"round\":{\"kind\":\"mo\",\"keys\":[\"_bits\",\"_reactiveBits\",\"_hideFlags\",\"_parent\",\"_destroyed\",\"_nodeType\",\"name\",\"_children\",\"_$children\",\"_$container\",\"_extra\",\"_x\",\"_y\",\"_width\",\"_height\",\"_scaleX\",\"_scaleY\",\"_skewX\",\"_skewY\",\"_pivotX\",\"_pivotY\",\"_anchorX\",\"_anchorY\",\"_rotation\",\"_alpha\",\"_blendMode\",\"_visible\",\"_mouseState\",\"_zOrder\",\"_renderType\",\"_subpassUpdateFlag\",\"mouseThrough\",\"hitTestPrior\",\"_autosize\",\"_repaint\",\"_repaintCount\",\"_previousType\",\"_sizeFlag\",\"_cacheAsBmp\",\"_layer\",\"_ownPostProcess\",\"_struct\",\"_globalTrans\",\"_overflow\",\"_singleCharRender\",\"_prompt\",\"_wordWrap\",\"_asPassword\",\"_textWidth\",\"_textHeight\",\"_html\",\"_ubb\",\"_maxWidth\",\"_hideText\",\"_textStyle\",\"_text\",\"_realFont\",\"_bitmapFont\",\"_elements\",\"_lines\",\"_padding\",\"_fontSizeScale\",\"_graphics\",\"_ownGraphics\",\"_events\",\"_graphicsRenderer\",\"_$parent\",\"_scene\",\"_tfChanged\",\"_isChanged\"]},\"box\":{\"kind\":\"a\",\"keys\":[\"_bits\",\"_reactiveBits\",\"_hideFlags\",\"_parent\",\"_destroyed\",\"_nodeType\",\"name\",\"_children\",\"_$children\",\"_$container\",\"_extra\",\"_x\",\"_y\",\"_width\",\"_height\",\"_scaleX\",\"_scaleY\",\"_skewX\",\"_skewY\",\"_pivotX\",\"_pivotY\",\"_anchorX\",\"_anchorY\",\"_rotation\",\"_alpha\",\"_blendMode\",\"_visible\",\"_mouseState\",\"_zOrder\",\"_renderType\",\"_subpassUpdateFlag\",\"mouseThrough\",\"hitTestPrior\",\"_autosize\",\"_repaint\",\"_repaintCount\",\"_previousType\",\"_sizeFlag\",\"_cacheAsBmp\",\"_layer\",\"_ownPostProcess\",\"_struct\",\"_globalTrans\",\"_widget\",\"_$parent\",\"_scene\",\"_tfChanged\",\"_events\",\"_components\"]},\"_components\":{\"kind\":\"Array\",\"keys\":[\"0\"]},\"_url\":\"scene/BattleScene.ls\",\"_$parent\":{\"kind\":\"tn\",\"keys\":[\"_bits\",\"_reactiveBits\",\"_hideFlags\",\"_parent\",\"_destroyed\",\"_nodeType\",\"name\",\"_children\",\"_$children\",\"_$container\",\"_extra\",\"_x\",\"_y\",\"_width\",\"_height\",\"_scaleX\",\"_scaleY\",\"_skewX\",\"_skewY\",\"_pivotX\",\"_pivotY\",\"_anchorX\",\"_anchorY\",\"_rotation\",\"_alpha\",\"_blendMode\",\"_visible\",\"_mouseState\",\"_zOrder\",\"_renderType\",\"_subpassUpdateFlag\",\"mouseThrough\",\"hitTestPrior\",\"_autosize\",\"_repaint\",\"_repaintCount\",\"_previousType\",\"_sizeFlag\",\"_cacheAsBmp\",\"_layer\",\"_ownPostProcess\",\"_struct\",\"_globalTrans\",\"_$parent\",\"_activeChangeScripts\",\"_tfChanged\",\"_events\",\"_transform\"]},\"_activeChangeScripts\":{\"kind\":\"Array\",\"keys\":[]},\"ew\":{\"kind\":\"_0x53cf89\",\"keys\":[\"py\",\"yy\",\"gy\",\"_map\",\"Ly\",\"my\",\"wy\",\"vy\",\"_props\",\"_player\",\"ky\",\"Sy\",\"xy\",\"by\",\"_stamina\",\"By\",\"Uy\"]},\"iq\":{\"kind\":\"_0x43cf79\",\"keys\":[\"_bits\",\"_reactiveBits\",\"_hideFlags\",\"_parent\",\"_destroyed\",\"_nodeType\",\"name\",\"_children\",\"_$children\",\"_$container\",\"_extra\",\"_x\",\"_y\",\"_width\",\"_height\",\"_scaleX\",\"_scaleY\",\"_skewX\",\"_skewY\",\"_pivotX\",\"_pivotY\",\"_anchorX\",\"_anchorY\",\"_rotation\",\"_alpha\",\"_blendMode\",\"_visible\",\"_mouseState\",\"_zOrder\",\"_renderType\",\"_subpassUpdateFlag\",\"mouseThrough\",\"hitTestPrior\",\"_autosize\",\"_repaint\",\"_repaintCount\",\"_previousType\",\"_sizeFlag\",\"_cacheAsBmp\",\"_layer\",\"_ownPostProcess\",\"_struct\",\"_globalTrans\",\"Cd\",\"_components\",\"_shaderData\",\"_renderNode\",\"spine\",\"_tfChanged\",\"__InPool\",\"_$parent\",\"_scene\",\"_activeChangeScripts\",\"_events\"]},\"hq\":{\"kind\":\"_0x43cf79\",\"keys\":[\"_bits\",\"_reactiveBits\",\"_hideFlags\",\"_parent\",\"_destroyed\",\"_nodeType\",\"name\",\"_children\",\"_$children\",\"_$container\",\"_extra\",\"_x\",\"_y\",\"_width\",\"_height\",\"_scaleX\",\"_scaleY\",\"_skewX\",\"_skewY\",\"_pivotX\",\"_pivotY\",\"_anchorX\",\"_anchorY\",\"_rotation\",\"_alpha\",\"_blendMode\",\"_visible\",\"_mouseState\",\"_zOrder\",\"_renderType\",\"_subpassUpdateFlag\",\"mouseThrough\",\"hitTestPrior\",\"_autosize\",\"_repaint\",\"_repaintCount\",\"_previousType\",\"_sizeFlag\",\"_cacheAsBmp\",\"_layer\",\"_ownPostProcess\",\"_struct\",\"_globalTrans\",\"Cd\",\"_components\",\"_shaderData\",\"_renderNode\",\"spine\",\"_tfChanged\",\"__InPool\",\"_$parent\",\"_scene\",\"_activeChangeScripts\",\"_events\"]},\"Cq\":{\"kind\":\"S\",\"keys\":[\"_bits\",\"_reactiveBits\",\"_hideFlags\",\"_parent\",\"_destroyed\",\"_nodeType\",\"name\",\"_children\",\"_$children\",\"_$container\",\"_extra\",\"_x\",\"_y\",\"_width\",\"_height\",\"_scaleX\",\"_scaleY\",\"_skewX\",\"_skewY\",\"_pivotX\",\"_pivotY\",\"_anchorX\",\"_anchorY\",\"_rotation\",\"_alpha\",\"_blendMode\",\"_visible\",\"_mouseState\",\"_zOrder\",\"_renderType\",\"_subpassUpdateFlag\",\"mouseThrough\",\"hitTestPrior\",\"_autosize\",\"_repaint\",\"_repaintCount\",\"_previousType\",\"_sizeFlag\",\"_cacheAsBmp\",\"_layer\",\"_ownPostProcess\",\"_struct\",\"_globalTrans\",\"_widget\",\"_graphics\",\"_ownGraphics\",\"_events\",\"_graphicsRenderer\",\"_skin\",\"_shaderData\",\"_$parent\",\"_scene\",\"_activeChangeScripts\"]},\"eq\":{\"kind\":\"_0x43cf79\",\"keys\":[\"_bits\",\"_reactiveBits\",\"_hideFlags\",\"_parent\",\"_destroyed\",\"_nodeType\",\"name\",\"_children\",\"_$children\",\"_$container\",\"_extra\",\"_x\",\"_y\",\"_width\",\"_height\",\"_scaleX\",\"_scaleY\",\"_skewX\",\"_skewY\",\"_pivotX\",\"_pivotY\",\"_anchorX\",\"_anchorY\",\"_rotation\",\"_alpha\",\"_blendMode\",\"_visible\",\"_mouseState\",\"_zOrder\",\"_renderType\",\"_subpassUpdateFlag\",\"mouseThrough\",\"hitTestPrior\",\"_autosize\",\"_repaint\",\"_repaintCount\",\"_previousType\",\"_sizeFlag\",\"_cacheAsBmp\",\"_layer\",\"_ownPostProcess\",\"_struct\",\"_globalTrans\",\"Cd\",\"_components\",\"_shaderData\",\"_renderNode\",\"spine\",\"_tfChanged\",\"__InPool\",\"_$parent\",\"_scene\",\"_activeChangeScripts\",\"_events\"]},\"aq\":{\"kind\":\"_0x43cf79\",\"keys\":[\"_bits\",\"_reactiveBits\",\"_hideFlags\",\"_parent\",\"_destroyed\",\"_nodeType\",\"name\",\"_children\",\"_$children\",\"_$container\",\"_extra\",\"_x\",\"_y\",\"_width\",\"_height\",\"_scaleX\",\"_scaleY\",\"_skewX\",\"_skewY\",\"_pivotX\",\"_pivotY\",\"_anchorX\",\"_anchorY\",\"_rotation\",\"_alpha\",\"_blendMode\",\"_visible\",\"_mouseState\",\"_zOrder\",\"_renderType\",\"_subpassUpdateFlag\",\"mouseThrough\",\"hitTestPrior\",\"_autosize\",\"_repaint\",\"_repaintCount\",\"_previousType\",\"_sizeFlag\",\"_cacheAsBmp\",\"_layer\",\"_ownPostProcess\",\"_struct\",\"_globalTrans\",\"Cd\",\"_components\",\"_shaderData\",\"_renderNode\",\"spine\",\"_tfChanged\",\"__InPool\",\"_$parent\",\"_scene\",\"_activeChangeScripts\",\"_events\"]},\"H$\":{\"kind\":\"Map\",\"keys\":[]},\"Bq\":{\"kind\":\"a\",\"keys\":[\"_bits\",\"_reactiveBits\",\"_hideFlags\",\"_parent\",\"_destroyed\",\"_nodeType\",\"name\",\"_children\",\"_$children\",\"_$container\",\"_extra\",\"_x\",\"_y\",\"_width\",\"_height\",\"_scaleX\",\"_scaleY\",\"_skewX\",\"_skewY\",\"_pivotX\",\"_pivotY\",\"_anchorX\",\"_anchorY\",\"_rotation\",\"_alpha\",\"_blendMode\",\"_visible\",\"_mouseState\",\"_zOrder\",\"_renderType\",\"_subpassUpdateFlag\",\"mouseThrough\",\"hitTestPrior\",\"_autosize\",\"_repaint\",\"_repaintCount\",\"_previousType\",\"_sizeFlag\",\"_cacheAsBmp\",\"_layer\",\"_ownPostProcess\",\"_struct\",\"_globalTrans\",\"_widget\",\"_tfChanged\",\"_components\",\"_url\",\"_$parent\",\"_scene\",\"_activeChangeScripts\",\"_subStructRender\",\"_subStruct\",\"_oriRenderPass\",\"_drawOriRT\"]},\"_events\":{\"kind\":\"Object\",\"keys\":[\"resize\"]}},\"sceneMethods\":[\"constructor\",\"onAwake\",\"onOpened\",\"onClosed\",\"addEvent\",\"update\",\"O$\",\"$$\",\"Y$\",\"V$\",\"Q$\",\"Z$\",\"nq\",\"rq\",\"oq\",\"lq\",\"X$\",\"W$\",\"Iq\",\"uq\",\"pq\",\"yq\",\"N$\",\"tq\",\"gq\",\"dq\",\"Rq\",\"G$\",\"Uq\",\"q$\",\"Sq\",\"fq\",\"K$\",\"Fq\",\"Oq\",\"addHp\",\"Yq\",\"Lq\",\"Wj\",\"z$\",\"mq\",\"Eq\",\"j$\",\"wq\",\"vq\",\"pause\",\"sq\",\"Xq\",\"_q\",\"kq\",\"cq\",\"xq\",\"Gq\",\"jq\",\"bq\",\"Hq\",\"zq\",\"Mq\",\"Nq\",\"$q\",\"Wq\",\"Aq\",\"cw\",\"Dq\",\"Vq\",\"Qq\",\"J$\",\"Zq\",\"Pq\",\"sV\",\"iV\",\"Jq\",\"Kq\",\"tV\",\"Tq\",\"gameOver\"],\"handlers\":[{\"delay\":1,\"repeat\":true,\"method\":\"update\",\"caller\":\"_0x3da3aa\",\"source\":\"[\\\"\\\\u0075\\\\u0070\\\\u0064\\\\u0061\\\\u0074\\\\u0065\\\"](){if(this[\\\"\\\\u006d\\\\u006e\\\"])return;const _0x14e2a0=Laya[\\\"\\\\u0074\\\\u0069\\\\u006d\\\\u0065\\\\u0072\\\"][\\\"\\\\u0063\\\\u0075\\\\u0072\\\\u0072\\\\u0054\\\\u0069\\\\u006d\\\\u0065\\\\u0072\\\"];let _0x1c1069=_0x4bc2b2[\\\"\\\\u0051\\\\u0078\\\\u006f\\\\u0046\\\\u004e\\\"](_0x14e2a0,this[\\\"\\\\u005f\\\\u006e\\\"]);if(!_0x4bc2b2[\\\"\\\\u0067\\\\u0048\\\\u004b\\\\u0041\\\\u005a\\\"](_0x1c1069,_0x4bc2b2['RdEqj'](0x8bd4c,0x8bd4c))){for(_0x1c1069=Math[\\\"\\\\u006d\\\\u0069\\\\u006e\\\"](_0x1c1069,_0x3da3aa['bn']),this['delta']=_0x1c1069;_0x4bc2b2['GcsSP'](_0x1c1069,0x3986d^0x3986d);){const _0x1a13e9=Math['min'](_0x3da3aa['Mn'],_0x1c1069);for(let _0xac25ee of this['vn'])_0xac25ee[_0x4bc2b2['JjtqU'](0xb7522,0xb7523)]['Sn'][\\\"\\\\u0063\\\\u0061\\\\u006c\\\\u006c\\\"](_0xac25ee[0x2cd0c^0x2cd0d][\\\"\\\\u0063\\\\u0061\\\\u006c\\\\u006c\\\\u0065\\\\u0072\\\"],_0x1a13e9);this[\\\"\\\\u0077\\\\u006e\\\"]+=_0x1a13e9,_0x1c1069-=_0x1a13e9;}this[\\\"\\\\u005f\\\\u006e\\\"]=_0x14e2a0;}}\"},{\"delay\":500,\"repeat\":true,\"method\":\"\",\"caller\":\"_0x595739\",\"source\":\"()=>{this[\\\"\\\\u0055\\\\u0051\\\"]=(this[\\\"\\\\u0055\\\\u0051\\\"]+(0xbc421^0xbc420))%(0x77ed8^0x77edc),this[\\\"\\\\u004f\\\\u0051\\\"]();}\"},{\"delay\":1000,\"repeat\":false,\"method\":\"\",\"caller\":\"_0x7fda88\",\"source\":\"()=>{this[\\\"\\\\u004a\\\\u0024\\\"](!(0xabbb8^0xabbb8)),this['J$'](!_0x4bc2b2[\\\"\\\\u004d\\\\u0059\\\\u0076\\\\u005a\\\\u0042\\\"](0x25695,0x25694));}\"},{\"delay\":400,\"repeat\":false,\"method\":\"\",\"caller\":\"_0x7fda88\",\"source\":\"()=>{const _0x75efa3={\\\"\\\\u0072\\\\u0071\\\\u0065\\\\u0066\\\\u004f\\\":function(_0x5f0ea2,_0x3727a1){return _0x5f0ea2^_0x3727a1;},'XDhtH':function(_0xc99fae,_0x3d6b68){return _0x4bc2b2['RiUoa'](_0xc99fae,_0x3d6b68);}};_0x18c7f3[\\\"\\\\u0067\\\\u0065\\\\u0074\\\\u0043\\\\u0068\\\\u0069\\\\u006c\\\\u0064\\\\u0041\\\\u0074\\\"](_0x177db9)[\\\"\\\\u0061\\\\u006c\\\\u0070\\\\u0068\\\\u0061\\\"]=0xbe121^0xbe120,_0x177db9==_0x4bc2b2[\\\"\\\\u004c\\\\u0068\\\\u0041\\\\u007a\\\\u006c\\\"](_0x18c7f3[\\\"\\\\u006e\\\\u0075\\\\u006d\\\\u0043\\\\u0068\\\\u0069\\\\u006c\\\\u0064\\\\u0072\\\\u0065\\\\u006e\\\"],0x94c5e^0x94c5f)?Laya[\\\"\\\\u0054\\\\u0077\\\\u0065\\\\u0065\\\\u006e\\\"][\\\"\\\\u0074\\\\u006f\\\"](_0x18c7f3['getChildAt'](_0x177db9),{'alpha':0x0},0x8edc1^0x8e971,null,Laya[\\\"\\\\u0048\\\\u0061\\\\u006e\\\\u0064\\\\u006c\\\\u0065\\\\u0072\\\"][\\\"\\\\u0063\\\\u0072\\\\u0065\\\\u0061\\\\u0074\\\\u0065\\\"](this,()=>{(_0x4fe6c2+=_0x75efa3[\\\"\\\\u0072\\\\u0071\\\\u0065\\\\u0066\\\\u004f\\\"](0xd7d06,0xd7d07))<=_0x75efa3['XDhtH'](0x2a3a1,0x2a3a4)&&this['sq'](_0x18c7f3,_0x4fe6c2);})):Laya[\\\"\\\\u0054\\\\u0077\\\\u0065\\\\u0065\\\\u006e\\\"]['to'](_0x18c7f3['getChildAt'](_0x177db9),{'alpha':0x0},0xf278b^0xf233b);}\"},{\"delay\":800,\"repeat\":false,\"method\":\"\",\"caller\":\"_0x7fda88\",\"source\":\"()=>{const _0x75efa3={\\\"\\\\u0072\\\\u0071\\\\u0065\\\\u0066\\\\u004f\\\":function(_0x5f0ea2,_0x3727a1){return _0x5f0ea2^_0x3727a1;},'XDhtH':function(_0xc99fae,_0x3d6b68){return _0x4bc2b2['RiUoa'](_0xc99fae,_0x3d6b68);}};_0x18c7f3[\\\"\\\\u0067\\\\u0065\\\\u0074\\\\u0043\\\\u0068\\\\u0069\\\\u006c\\\\u0064\\\\u0041\\\\u0074\\\"](_0x177db9)[\\\"\\\\u0061\\\\u006c\\\\u0070\\\\u0068\\\\u0061\\\"]=0xbe121^0xbe120,_0x177db9==_0x4bc2b2[\\\"\\\\u004c\\\\u0068\\\\u0041\\\\u007a\\\\u006c\\\"](_0x18c7f3[\\\"\\\\u006e\\\\u0075\\\\u006d\\\\u0043\\\\u0068\\\\u0069\\\\u006c\\\\u0064\\\\u0072\\\\u0065\\\\u006e\\\"],0x94c5e^0x94c5f)?Laya[\\\"\\\\u0054\\\\u0077\\\\u0065\\\\u0065\\\\u006e\\\"][\\\"\\\\u0074\\\\u006f\\\"](_0x18c7f3['getChildAt'](_0x177db9),{'alpha':0x0},0x8edc1^0x8e971,null,Laya[\\\"\\\\u0048\\\\u0061\\\\u006e\\\\u0064\\\\u006c\\\\u0065\\\\u0072\\\"][\\\"\\\\u0063\\\\u0072\\\\u0065\\\\u0061\\\\u0074\\\\u0065\\\"](this,()=>{(_0x4fe6c2+=_0x75efa3[\\\"\\\\u0072\\\\u0071\\\\u0065\\\\u0066\\\\u004f\\\"](0xd7d06,0xd7d07))<=_0x75efa3['XDhtH'](0x2a3a1,0x2a3a4)&&this['sq'](_0x18c7f3,_0x4fe6c2);})):Laya[\\\"\\\\u0054\\\\u0077\\\\u0065\\\\u0065\\\\u006e\\\"]['to'](_0x18c7f3['getChildAt'](_0x177db9),{'alpha':0x0},0xf278b^0xf233b);}\"},{\"delay\":400,\"repeat\":false,\"method\":\"\",\"caller\":\"_0x7fda88\",\"source\":\"()=>{const _0x75efa3={\\\"\\\\u0072\\\\u0071\\\\u0065\\\\u0066\\\\u004f\\\":function(_0x5f0ea2,_0x3727a1){return _0x5f0ea2^_0x3727a1;},'XDhtH':function(_0xc99fae,_0x3d6b68){return _0x4bc2b2['RiUoa'](_0xc99fae,_0x3d6b68);}};_0x18c7f3[\\\"\\\\u0067\\\\u0065\\\\u0074\\\\u0043\\\\u0068\\\\u0069\\\\u006c\\\\u0064\\\\u0041\\\\u0074\\\"](_0x177db9)[\\\"\\\\u0061\\\\u006c\\\\u0070\\\\u0068\\\\u0061\\\"]=0xbe121^0xbe120,_0x177db9==_0x4bc2b2[\\\"\\\\u004c\\\\u0068\\\\u0041\\\\u007a\\\\u006c\\\"](_0x18c7f3[\\\"\\\\u006e\\\\u0075\\\\u006d\\\\u0043\\\\u0068\\\\u0069\\\\u006c\\\\u0064\\\\u0072\\\\u0065\\\\u006e\\\"],0x94c5e^0x94c5f)?Laya[\\\"\\\\u0054\\\\u0077\\\\u0065\\\\u0065\\\\u006e\\\"][\\\"\\\\u0074\\\\u006f\\\"](_0x18c7f3['getChildAt'](_0x177db9),{'alpha':0x0},0x8edc1^0x8e971,null,Laya[\\\"\\\\u0048\\\\u0061\\\\u006e\\\\u0064\\\\u006c\\\\u0065\\\\u0072\\\"][\\\"\\\\u0063\\\\u0072\\\\u0065\\\\u0061\\\\u0074\\\\u0065\\\"](this,()=>{(_0x4fe6c2+=_0x75efa3[\\\"\\\\u0072\\\\u0071\\\\u0065\\\\u0066\\\\u004f\\\"](0xd7d06,0xd7d07))<=_0x75efa3['XDhtH'](0x2a3a1,0x2a3a4)&&this['sq'](_0x18c7f3,_0x4fe6c2);})):Laya[\\\"\\\\u0054\\\\u0077\\\\u0065\\\\u0065\\\\u006e\\\"]['to'](_0x18c7f3['getChildAt'](_0x177db9),{'alpha':0x0},0xf278b^0xf233b);}\"},{\"delay\":800,\"repeat\":false,\"method\":\"\",\"caller\":\"_0x7fda88\",\"source\":\"()=>{const _0x75efa3={\\\"\\\\u0072\\\\u0071\\\\u0065\\\\u0066\\\\u004f\\\":function(_0x5f0ea2,_0x3727a1){return _0x5f0ea2^_0x3727a1;},'XDhtH':function(_0xc99fae,_0x3d6b68){return _0x4bc2b2['RiUoa'](_0xc99fae,_0x3d6b68);}};_0x18c7f3[\\\"\\\\u0067\\\\u0065\\\\u0074\\\\u0043\\\\u0068\\\\u0069\\\\u006c\\\\u0064\\\\u0041\\\\u0074\\\"](_0x177db9)[\\\"\\\\u0061\\\\u006c\\\\u0070\\\\u0068\\\\u0061\\\"]=0xbe121^0xbe120,_0x177db9==_0x4bc2b2[\\\"\\\\u004c\\\\u0068\\\\u0041\\\\u007a\\\\u006c\\\"](_0x18c7f3[\\\"\\\\u006e\\\\u0075\\\\u006d\\\\u0043\\\\u0068\\\\u0069\\\\u006c\\\\u0064\\\\u0072\\\\u0065\\\\u006e\\\"],0x94c5e^0x94c5f)?Laya[\\\"\\\\u0054\\\\u0077\\\\u0065\\\\u0065\\\\u006e\\\"][\\\"\\\\u0074\\\\u006f\\\"](_0x18c7f3['getChildAt'](_0x177db9),{'alpha':0x0},0x8edc1^0x8e971,null,Laya[\\\"\\\\u0048\\\\u0061\\\\u006e\\\\u0064\\\\u006c\\\\u0065\\\\u0072\\\"][\\\"\\\\u0063\\\\u0072\\\\u0065\\\\u0061\\\\u0074\\\\u0065\\\"](this,()=>{(_0x4fe6c2+=_0x75efa3[\\\"\\\\u0072\\\\u0071\\\\u0065\\\\u0066\\\\u004f\\\"](0xd7d06,0xd7d07))<=_0x75efa3['XDhtH'](0x2a3a1,0x2a3a4)&&this['sq'](_0x18c7f3,_0x4fe6c2);})):Laya[\\\"\\\\u0054\\\\u0077\\\\u0065\\\\u0065\\\\u006e\\\"]['to'](_0x18c7f3['getChildAt'](_0x177db9),{'alpha':0x0},0xf278b^0xf233b);}\"},{\"delay\":600,\"repeat\":false,\"method\":\"\",\"caller\":\"_0x4d860b\",\"source\":\"()=>{_0x2a4701['instance'][\\\"\\\\u0065\\\\u0076\\\\u0065\\\\u006e\\\\u0074\\\"](_0x195167['ds'],_0xb30f83['OTMWi']);}\"}]}",
+          "url": {
+            "url": "http://127.0.0.1:4174/reference-balance-probe.js",
+            "origin": "http://127.0.0.1:4174",
+            "query_parameter_names": [],
+            "redacted": false
+          }
+        }
+      ],
+      "omissions": {
+        "by_kind": [],
+        "network_transactions": [],
+        "network_transaction_range": null
+      }
+    },
+    "completeness": {
+      "status": "complete",
+      "equality_eligible": true,
+      "missing_sections": [],
+      "truncated_sections": []
+    },
+    "limitations": [
+      "Event sequence records provider receipt order; simultaneous browser causality is not inferred.",
+      "Network content is retained only when selected; Playwright response-body bytes are API results and are not guaranteed to match wire bytes.",
+      "Request bytes are limited to what Playwright exposes; not_exposed does not establish body absence or multipart file coverage.",
+      "Network content reads settle within 5 seconds each and the observer does not request bodies from unfinished responses.",
+      "Playwright scenario events do not expose request initiator stacks; receipt order does not prove causality.",
+      "Storage values are hashed only after declared-secret redaction."
+    ]
+  },
+  "confidence": "observed",
+  "authority": "controlled-replay",
+  "environment": {
+    "id": "Chromium@157.0.8103.51",
+    "platform": "unknown",
+    "architecture": "unknown",
+    "isolation": "process"
+  },
+  "limitations": [
+    "Artifact identity is unavailable for this observation.",
+    "Event sequence records provider receipt order; simultaneous browser causality is not inferred.",
+    "Network content is retained only when selected; Playwright response-body bytes are API results and are not guaranteed to match wire bytes.",
+    "Request bytes are limited to what Playwright exposes; not_exposed does not establish body absence or multipart file coverage.",
+    "Network content reads settle within 5 seconds each and the observer does not request bodies from unfinished responses.",
+    "Playwright scenario events do not expose request initiator stacks; receipt order does not prove causality.",
+    "Storage values are hashed only after declared-secret redaction.",
+    "Browser host platform and architecture were not observed."
+  ],
+  "relationship_coverage": null,
+  "locations": [],
+  "evidence_links": []
+}

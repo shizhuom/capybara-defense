@@ -1,0 +1,64 @@
+import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import path from 'node:path';
+import {fileURLToPath} from 'node:url';
+import {chromium} from 'playwright-core';
+const root=path.resolve(path.dirname(fileURLToPath(import.meta.url)),'..'),output=path.join(root,'verification'),temp=path.join(root,'.runtime/browser-tmp');
+fs.mkdirSync(temp,{recursive:true});
+const browser=await chromium.launch({headless:true,executablePath:process.env.CAPY_CHROME??'C:/Program Files/Google/Chrome/Application/chrome.exe',env:{...process.env,TEMP:temp,TMP:temp},args:['--disable-breakpad','--disable-crash-reporter']});
+const checks=[],errors=[];
+const newPage=async()=>{const context=await browser.newContext({viewport:{width:390,height:844},deviceScaleFactor:1,hasTouch:true,isMobile:true});const page=await context.newPage();page.setDefaultTimeout(10000);page.on('pageerror',e=>errors.push(e.message));page.on('console',e=>{if(e.type()==='error')errors.push(e.text());});return{context,page};};
+const click=(page,action)=>page.locator(`[data-action="${action}"]`).filter({visible:true}).first().click();
+const mark=text=>{checks.push(text);console.log('PASS '+text);};
+try{
+  const fallback=await newPage(),requests=[];
+  await fallback.page.route('**/sprites/manifest.json',route=>route.fulfill({contentType:'application/json',body:'[]'}));
+  fallback.page.on('request',request=>{if(/\/sprites\/.*\.png/.test(request.url()))requests.push(request.url());});
+  await fallback.page.goto('http://127.0.0.1:4175/',{waitUntil:'networkidle'});
+  await click(fallback.page,'recipes');await click(fallback.page,'book:props');
+  assert.equal(await fallback.page.locator('#book-content [data-sticker^="prop_"]').count(),20);
+  assert.equal(await fallback.page.locator('#book-content img').count(),0);
+  assert.equal(await fallback.page.locator('#book-content svg').count(),20);
+  await fallback.page.screenshot({path:path.join(output,'p1-mobile-props-fallback.png')});
+  await click(fallback.page,'close-recipes');await click(fallback.page,'start');await click(fallback.page,'tutorial-skip');
+  await fallback.page.screenshot({path:path.join(output,'p1-mobile-map-fallback.png')});assert.deepEqual(requests,[]);
+  await fallback.context.close();mark('Empty sprite manifest uses all20 distinct cream SVG props and procedural board, without PNG requests');
+
+  const late=await newPage();let release;const ready=new Promise(resolve=>{release=resolve;});
+  await late.page.addInitScript(()=>localStorage.setItem('capybara_defense_v1:profile',JSON.stringify({coins:1000,wins:1,matches:1,freeLotteryTickets:1,tutorialCompleted:true,tutorialRewardClaimed:true})));
+  await late.page.route('**/sprites/*.png',async route=>{await ready;await route.continue();});
+  await late.page.goto('http://127.0.0.1:4175/',{waitUntil:'domcontentloaded'});
+  await click(late.page,'market');await click(late.page,'meta-tab:lottery');await click(late.page,'meta-spin');
+  const afterSpin=await late.page.evaluate(()=>localStorage.getItem('capybara_defense_v1:profile'));
+  release();await late.page.locator('.lottery-result').waitFor();await late.page.waitForLoadState('networkidle');
+  assert.equal(await late.page.evaluate(()=>localStorage.getItem('capybara_defense_v1:profile')),afterSpin);
+  assert.ok(await late.page.locator('.lottery-grid img').count()>0);
+  await late.context.close();mark('Late arrival of133 external PNGs refreshes an active lottery without a second fee/reward or reset');
+
+  const touch=await newPage();await touch.page.goto('http://127.0.0.1:4175/',{waitUntil:'networkidle'});
+  await touch.page.evaluate(async()=>{
+    const resource=performance.getEntriesByType('resource').findLast(r=>new URL(r.name).pathname==='/src/ui/SoundManager.ts');
+    const {SoundManager}=await import(resource?.name??'/src/ui/SoundManager.ts');const setMode=SoundManager.prototype.setMode;
+    SoundManager.prototype.setMode=function(mode){window.__p1Sound=this;return setMode.call(this,mode);};
+  });
+  await click(touch.page,'start');await click(touch.page,'tutorial-skip');await click(touch.page,'summon');
+  await touch.page.evaluate(()=>{const e=window.__CAPY_DEBUG__.engine;e.options.autoWaves=false;e.options.ai=false;e.state.enemies=[];});
+  const destination=await touch.page.evaluate(()=>{const s=window.__CAPY_DEBUG__.engine.state;for(let row=5;row<10;row++)for(let col=0;col<8;col++)if(s.grid[row][col]==='O')return{col,row};});
+  const box=await touch.page.locator('canvas').boundingBox(),point=(x,y)=>({x:box.x+x*box.width/640,y:box.y+y*box.height/1386});
+  const from=point(114,1162),to=point(32+(destination.col+.5)*72,240+(destination.row+.5)*72),cdp=await touch.context.newCDPSession(touch.page);
+  await cdp.send('Input.dispatchTouchEvent',{type:'touchStart',touchPoints:[{...from,id:1}]});
+  for(let i=1;i<=8;i++)await cdp.send('Input.dispatchTouchEvent',{type:'touchMove',touchPoints:[{x:from.x+(to.x-from.x)*i/8,y:from.y+(to.y-from.y)*i/8,id:1}]});
+  await cdp.send('Input.dispatchTouchEvent',{type:'touchEnd',touchPoints:[]});
+  assert.equal(await touch.page.evaluate(()=>scrollY),0);
+  assert.ok(await touch.page.evaluate(()=>window.__CAPY_DEBUG__.engine.state.units.some(u=>u.side==='player'&&u.location.zone==='board')));
+  await touch.page.waitForFunction(()=>window.__p1Sound?.mode==='battle');
+  const audio=await touch.page.evaluate(()=>({state:window.__p1Sound.context?.state,contexts:window.__p1Sound.modeBuses.size,timer:window.__p1Sound.timer!==null}));
+  assert.equal(audio.state,'running');assert.ok(audio.timer);
+  await touch.page.evaluate(()=>window.__CAPY_DEBUG__.engine.spawnEnemy('husky_wrecker','player'));
+  await touch.page.waitForFunction(()=>window.__p1Sound.mode==='boss');
+  await click(touch.page,'recipes');await touch.page.waitForFunction(()=>window.__p1Sound.mode==='menu');
+  await click(touch.page,'close-recipes');await touch.page.waitForFunction(()=>window.__p1Sound.mode==='boss');
+  await touch.page.evaluate(()=>{window.__CAPY_DEBUG__.engine.state.enemies=[];});await touch.page.waitForFunction(()=>window.__p1Sound.mode==='battle');
+  await touch.context.close();mark('Real touch drag places a pet with scrollY0; gesture-unlocked WebAudio follows battle→boss→browsing→boss→battle');
+  assert.deepEqual(errors,[]);mark('Additional browser Console/pageerror:0');
+}finally{fs.writeFileSync(path.join(output,'p1-assets-browser-report.json'),JSON.stringify({checks,errors},null,2));await browser.close();}

@@ -1,0 +1,558 @@
+{
+  "evidence_id": "ev_ce7d2ebf30074761e856715001498b1bedb44d903ff13e826ed9c987452be6d5",
+  "subject": null,
+  "provider": {
+    "id": "rea-playwright-browser-scenario",
+    "name": "REA Playwright browser scenario capture provider",
+    "version": "1"
+  },
+  "analysis_profile": null,
+  "predicate_type": "rea.browser-scenario-capture",
+  "operation": "capture_browser_scenario",
+  "parameters": {
+    "browser": {
+      "mode": "launch",
+      "executable_path": "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",
+      "headless": true
+    },
+    "start_url": {
+      "url": "http://127.0.0.1:4174/game/",
+      "query": []
+    },
+    "environment": {
+      "viewport": {
+        "width": 1280,
+        "height": 720,
+        "device_scale_factor": 1
+      },
+      "locale": "en-US",
+      "timezone": "UTC",
+      "color_scheme": "light",
+      "reduced_motion": "reduce",
+      "service_workers": "block"
+    },
+    "actions": [
+      {
+        "step_id": "verify-initial-troop-attack-values",
+        "action": "wait_for_timeout",
+        "duration_ms": 9500
+      }
+    ],
+    "storage": {
+      "cookies": [],
+      "local_storage": [],
+      "session_storage": []
+    },
+    "secrets": [],
+    "capture": {
+      "after_each_step": [],
+      "at_end": [
+        "url"
+      ],
+      "events": [
+        "console",
+        "page-errors"
+      ],
+      "network": {
+        "request_body": false,
+        "response_body": false,
+        "header_values": false
+      },
+      "limits": {
+        "max_events": 10000,
+        "max_event_allocation_bytes": 4194304,
+        "max_total_event_allocation_bytes": 16777216,
+        "max_network_transactions": 1024,
+        "max_network_body_bytes": 65536,
+        "max_network_body_allocation_bytes": 1048576,
+        "max_network_header_allocation_bytes": 1048576,
+        "max_network_metadata_allocation_bytes": 1048576
+      }
+    },
+    "scenario_sha256": "6aa8a3b7d5f434761c59ba2312e7df4def8c75ff66d4397c676a7f27fe0884c6"
+  },
+  "raw_result": null,
+  "normalized_result": {
+    "browser": {
+      "mode": "launch",
+      "process_ownership": "provider-owned",
+      "cleanup": "terminated-owned-process",
+      "product": "Chromium",
+      "version": "157.0.8103.51"
+    },
+    "scenario": {
+      "start_origin": "http://127.0.0.1:4174",
+      "action_count": 1,
+      "secret_references": [],
+      "network_content": {
+        "request_body": false,
+        "response_body": false,
+        "header_values": false
+      },
+      "event_families": [
+        "console",
+        "page-errors"
+      ],
+      "limits": {
+        "max_events": 10000,
+        "max_event_allocation_bytes": 4194304,
+        "max_total_event_allocation_bytes": 16777216,
+        "max_network_transactions": 1024,
+        "max_network_body_bytes": 65536,
+        "max_network_body_allocation_bytes": 1048576,
+        "max_network_header_allocation_bytes": 1048576,
+        "max_network_metadata_allocation_bytes": 1048576
+      }
+    },
+    "duration_ms": 10216,
+    "steps": [
+      {
+        "step_index": 0,
+        "step_id": "scenario_start",
+        "action": "goto_start",
+        "elapsed_ms": 496,
+        "before_url": {
+          "url": "about:blank",
+          "origin": null,
+          "query_parameter_names": [],
+          "redacted": false
+        },
+        "after_url": {
+          "url": "http://127.0.0.1:4174/game/",
+          "origin": "http://127.0.0.1:4174",
+          "query_parameter_names": [],
+          "redacted": false
+        },
+        "event_sequence_start": 1,
+        "event_sequence_end": 2,
+        "artifacts": {
+          "screenshot": {
+            "state": "not_requested"
+          },
+          "dom": {
+            "state": "not_requested"
+          },
+          "accessibility": {
+            "state": "not_requested"
+          },
+          "url": {
+            "state": "not_requested"
+          },
+          "history": {
+            "state": "not_requested"
+          },
+          "storage": {
+            "state": "not_requested"
+          }
+        },
+        "completeness": {
+          "status": "complete",
+          "equality_eligible": true,
+          "missing_sections": [],
+          "truncated_sections": []
+        },
+        "status": "completed",
+        "error": null
+      },
+      {
+        "step_index": 1,
+        "step_id": "verify-initial-troop-attack-values",
+        "action": "wait_for_timeout",
+        "elapsed_ms": 9501,
+        "before_url": {
+          "url": "http://127.0.0.1:4174/game/",
+          "origin": "http://127.0.0.1:4174",
+          "query_parameter_names": [],
+          "redacted": false
+        },
+        "after_url": {
+          "url": "http://127.0.0.1:4174/game/",
+          "origin": "http://127.0.0.1:4174",
+          "query_parameter_names": [],
+          "redacted": false
+        },
+        "event_sequence_start": 3,
+        "event_sequence_end": 23,
+        "artifacts": {
+          "screenshot": {
+            "state": "not_requested"
+          },
+          "dom": {
+            "state": "not_requested"
+          },
+          "accessibility": {
+            "state": "not_requested"
+          },
+          "url": {
+            "state": "captured",
+            "value": {
+              "url": "http://127.0.0.1:4174/game/",
+              "origin": "http://127.0.0.1:4174",
+              "query_parameter_names": [],
+              "redacted": false
+            }
+          },
+          "history": {
+            "state": "not_requested"
+          },
+          "storage": {
+            "state": "not_requested"
+          }
+        },
+        "completeness": {
+          "status": "complete",
+          "equality_eligible": true,
+          "missing_sections": [],
+          "truncated_sections": []
+        },
+        "status": "completed",
+        "error": null
+      }
+    ],
+    "events": {
+      "retained": 23,
+      "dropped": 0,
+      "items": [
+        {
+          "sequence": 1,
+          "step_index": 0,
+          "kind": "console",
+          "level": "info",
+          "text": "[study-runner] Browser renderer; recovered game bundle and assets.",
+          "url": {
+            "url": "http://127.0.0.1:4174/game/compat.js",
+            "origin": "http://127.0.0.1:4174",
+            "query_parameter_names": [],
+            "redacted": false
+          }
+        },
+        {
+          "sequence": 2,
+          "step_index": 0,
+          "kind": "console",
+          "level": "log",
+          "text": "武器注册文件已加载，所有武器类已注册到WeaponFactory",
+          "url": {
+            "url": "http://127.0.0.1:4174/game/js/bundle.js",
+            "origin": "http://127.0.0.1:4174",
+            "query_parameter_names": [],
+            "redacted": false
+          }
+        },
+        {
+          "sequence": 3,
+          "step_index": 1,
+          "kind": "console",
+          "level": "log",
+          "text": "langType zh",
+          "url": {
+            "url": "http://127.0.0.1:4174/game/js/bundle.js",
+            "origin": "http://127.0.0.1:4174",
+            "query_parameter_names": [],
+            "redacted": false
+          }
+        },
+        {
+          "sequence": 4,
+          "step_index": 1,
+          "kind": "console",
+          "level": "log",
+          "text": "启动主流程",
+          "url": {
+            "url": "http://127.0.0.1:4174/game/js/bundle.js",
+            "origin": "http://127.0.0.1:4174",
+            "query_parameter_names": [],
+            "redacted": false
+          }
+        },
+        {
+          "sequence": 5,
+          "step_index": 1,
+          "kind": "console",
+          "level": "log",
+          "text": "[LoadScene] startLoadFlow1",
+          "url": {
+            "url": "http://127.0.0.1:4174/game/js/bundle.js",
+            "origin": "http://127.0.0.1:4174",
+            "query_parameter_names": [],
+            "redacted": false
+          }
+        },
+        {
+          "sequence": 6,
+          "step_index": 1,
+          "kind": "console",
+          "level": "log",
+          "text": "[PlatMgr] runLoadScenePreloadTasks _0x10ff4f",
+          "url": {
+            "url": "http://127.0.0.1:4174/game/js/bundle.js",
+            "origin": "http://127.0.0.1:4174",
+            "query_parameter_names": [],
+            "redacted": false
+          }
+        },
+        {
+          "sequence": 7,
+          "step_index": 1,
+          "kind": "console",
+          "level": "log",
+          "text": "[LoadScene] startLoadFlow2",
+          "url": {
+            "url": "http://127.0.0.1:4174/game/js/bundle.js",
+            "origin": "http://127.0.0.1:4174",
+            "query_parameter_names": [],
+            "redacted": false
+          }
+        },
+        {
+          "sequence": 8,
+          "step_index": 1,
+          "kind": "console",
+          "level": "error",
+          "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+          "url": {
+            "url": "http://127.0.0.1:4174/favicon.ico",
+            "origin": "http://127.0.0.1:4174",
+            "query_parameter_names": [],
+            "redacted": false
+          }
+        },
+        {
+          "sequence": 9,
+          "step_index": 1,
+          "kind": "console",
+          "level": "log",
+          "text": "this._data._saveTime 1794553913043",
+          "url": {
+            "url": "http://127.0.0.1:4174/game/js/bundle.js",
+            "origin": "http://127.0.0.1:4174",
+            "query_parameter_names": [],
+            "redacted": false
+          }
+        },
+        {
+          "sequence": 10,
+          "step_index": 1,
+          "kind": "console",
+          "level": "log",
+          "text": "Date.now() 1794553913583",
+          "url": {
+            "url": "http://127.0.0.1:4174/game/js/bundle.js",
+            "origin": "http://127.0.0.1:4174",
+            "query_parameter_names": [],
+            "redacted": false
+          }
+        },
+        {
+          "sequence": 11,
+          "step_index": 1,
+          "kind": "console",
+          "level": "log",
+          "text": "打印测试 Map(54)",
+          "url": {
+            "url": "http://127.0.0.1:4174/game/js/bundle.js",
+            "origin": "http://127.0.0.1:4174",
+            "query_parameter_names": [],
+            "redacted": false
+          }
+        },
+        {
+          "sequence": 12,
+          "step_index": 1,
+          "kind": "console",
+          "level": "log",
+          "text": "打印武器数据 Map(44)",
+          "url": {
+            "url": "http://127.0.0.1:4174/game/js/bundle.js",
+            "origin": "http://127.0.0.1:4174",
+            "query_parameter_names": [],
+            "redacted": false
+          }
+        },
+        {
+          "sequence": 13,
+          "step_index": 1,
+          "kind": "console",
+          "level": "log",
+          "text": "打印不同品质不同种类的武器 [Array(5), Array(5), Array(5), Array(5), Array(5)]",
+          "url": {
+            "url": "http://127.0.0.1:4174/game/js/bundle.js",
+            "origin": "http://127.0.0.1:4174",
+            "query_parameter_names": [],
+            "redacted": false
+          }
+        },
+        {
+          "sequence": 14,
+          "step_index": 1,
+          "kind": "console",
+          "level": "warning",
+          "text": "[Server] 未登录，跳过云端存档同步",
+          "url": {
+            "url": "http://127.0.0.1:4174/game/js/bundle.js",
+            "origin": "http://127.0.0.1:4174",
+            "query_parameter_names": [],
+            "redacted": false
+          }
+        },
+        {
+          "sequence": 15,
+          "step_index": 1,
+          "kind": "console",
+          "level": "log",
+          "text": "当前玩家天数 8",
+          "url": {
+            "url": "http://127.0.0.1:4174/game/js/bundle.js",
+            "origin": "http://127.0.0.1:4174",
+            "query_parameter_names": [],
+            "redacted": false
+          }
+        },
+        {
+          "sequence": 16,
+          "step_index": 1,
+          "kind": "console",
+          "level": "info",
+          "text": "[测试模式] 已载入 44 种武器、16 个头像、25 类道具和 4 张地图。排行榜使用示例数据，奖励由本地模式模拟。",
+          "url": {
+            "url": "http://127.0.0.1:4174/test-mode/runtime.js",
+            "origin": "http://127.0.0.1:4174",
+            "query_parameter_names": [],
+            "redacted": false
+          }
+        },
+        {
+          "sequence": 17,
+          "step_index": 1,
+          "kind": "console",
+          "level": "log",
+          "text": "当前对局的敌人出兵策略 [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]",
+          "url": {
+            "url": "http://127.0.0.1:4174/game/js/bundle.js",
+            "origin": "http://127.0.0.1:4174",
+            "query_parameter_names": [],
+            "redacted": false
+          }
+        },
+        {
+          "sequence": 18,
+          "step_index": 1,
+          "kind": "console",
+          "level": "log",
+          "text": "设置格子",
+          "url": {
+            "url": "http://127.0.0.1:4174/game/js/bundle.js",
+            "origin": "http://127.0.0.1:4174",
+            "query_parameter_names": [],
+            "redacted": false
+          }
+        },
+        {
+          "sequence": 19,
+          "step_index": 1,
+          "kind": "console",
+          "level": "log",
+          "text": "REFERENCE_BALANCE_CORE {\"round\":1,\"firstEnemyStats\":{\"ne\":6,\"speed\":50,\"ue\":0,\"pe\":0},\"initialDelay\":10000,\"betweenWaves\":5000,\"spawnInterval\":1500,\"startingFood\":20,\"drawCost\":10,\"drawCount\":5,\"basePool\":{\"刀\":21,\"弓\":19,\"枪\":18,\"骑\":17,\"铲\":11,\"刘\":1,\"赵\":2,\"云\":1,\"关\":1,\"羽\":1,\"平\":1,\"兴\":1,\"马\":2,\"超\":1,\"张\":2,\"飞\":1,\"苞\":1,\"翼\":1,\"黄\":2,\"忠\":1,\"盖\":1,\"祖\":1,\"备\":1},\"currentPool\":{\"刀\":21,\"弓\":19,\"枪\":18,\"骑\":17,\"铲\":13,\"刘\":1,\"赵\":2,\"云\":1,\"关\":1,\"羽\":1,\"平\":1,\"兴\":1,\"马\":2,\"超\":1,\"张\":2,\"飞\":1,\"苞\":1,\"翼\":1,\"黄\":2,\"忠\":1,\"盖\":1,\"祖\":1,\"备\":1},\"waveSource\":\"class extends _0xf2538d{constructor(){super(...arguments),this[\\\"\\\\u0052\\\\u006a\\\"]=0x9c0f9^0x9c0f9,this[\\\"\\\\u0043\\\\u006a\\\"]=_0x4bc2b2['FmUiO'](0xdc4b6,0xdd73e),this[\\\"\\\\u0055\\\\u006a\\\"]=_0x4bc2b2[\\\"\\\\u0065\\\\u005a\\\\u0059\\\\u0068\\\\u0043\\\"](0xb4d12,0xb48ce),this[\\\"\\\\u0046\\\\u006a\\\"]=_0x4bc2b2['JcNTe'](0xe5746,0xe5746),this[\\\"\\\\u004f\\\\u006a\\\"]=0xa7604^0xa7604,this['Yj']=0x9540c^0x9540c,this[\\\"\\\\u0047\\\\u006a\\\"]=-(0x866c9^0x866c8),this['Xj']=-(0xbd4c3^0xbd4c2);}[\\\"tini\\\".split(\\\"\\\").reverse().join(\\\"\\\")](){this[\\\"\\\\u0065\\\\u0077\\\"]=_0x1f6ae6[\\\"\\\\u0069\\\\u006e\\\\u0073\\\\u0074\\\\u0061\\\\u006e\\\\u0063\\\\u0065\\\"](),this[\\\"\\\\u0055\\\\u0078\\\"]=_0x37b3fd[\\\"\\\\u0069\\\\u006e\\\\u0073\\\\u0074\\\\u0061\\\\u006e\\\\u0063\\\\u0065\\\"](),this['jj']=_0x2a4701['instance'],this[\\\"\\\\u0048\\\\u006a\\\"]=this['ew'][\\\"\\\\u006e\\\\u0075\\\"];}[\\\"\\\\u0073\\\\u0074\\\\u0061\\\\u0072\\\\u0074\\\\u0047\\\\u0061\\\\u006d\\\\u0065\\\"](){function _0x42d95b(_0x5e2096,_0x4be0a8,_0x133332,_0x4a30a5,_0x8ddcbf){return _0x3843(_0x4be0a8- -0x35f,_0x133332);}function _0x2b96a1(_0x4aa1b2,_0x1fa6c7,_0x5793ef,_0x2cd276,_0x59a2de){return _0x3843(_0x4aa1b2- -0x191,_0x1fa6c7);}_0x2e3b63[\\\"\\\\u0069\\\\u006e\\\\u0073\\\\u0074\\\\u0061\\\\u006e\\\\u0063\\\\u0065\\\"]()[\\\"\\\\u0063\\\\u006c\\\\u0065\\\\u0061\\\\u0072\\\"](),this['Hj']['gold']+=this[\\\"\\\\u0048\\\\u006a\\\"][\\\"\\\\u0072\\\\u0068\\\"],this[\\\"\\\\u0052\\\\u006a\\\"]=0x96a9b^0x96a9a,this['ew'][\\\"\\\\u006e\\\\u0075\\\"][\\\"\\\\u006e\\\\u0068\\\"]=this['ew'][\\\"\\\\u0065\\\\u006e\\\\u0065\\\\u006d\\\\u0079\\\"][\\\"\\\\u0066\\\\u0065\\\"][_0x8da2f[\\\"\\\\u006b\\\\u0069\\\"](this[\\\"\\\\u0065\\\\u0077\\\"][\\\"\\\\u0065\\\\u006e\\\\u0065\\\\u006d\\\\u0079\\\"]['ye'])],console['log'](_0x2b96a1(0x29b7,0x3a5b,0x2d8e,0xc2a,0x1373),this[\\\"\\\\u0065\\\\u0077\\\"][\\\"\\\\u006e\\\\u0075\\\"][\\\"\\\\u006e\\\\u0068\\\"]),_0x1352f3['instance']()[\\\"\\\\u006b\\\\u006e\\\"](_0x42d95b(0x3223,0x1749,0x3193,0x173,0x2e6b),this,this['update']),this[\\\"\\\\u007a\\\\u006a\\\"]();}[\\\"\\\\u0075\\\\u0070\\\\u0064\\\\u0061\\\\u0074\\\\u0065\\\"](_0x566627){this[\\\"\\\\u0057\\\\u006a\\\"](_0x566627),this[\\\"\\\\u004e\\\\u006a\\\"](_0x566627);}[\\\"jW\\\".split(\\\"\\\").reverse().join(\\\"\\\")](_0x3d63c0){this[\\\"\\\\u0046\\\\u006a\\\"]+=_0x3d63c0,(0x45b5a^0x45b5b)==this[\\\"\\\\u0052\\\\u006a\\\"]?(this['Fj']>=this['Hj'][\\\"\\\\u0064\\\\u0065\\\\u006c\\\\u0061\\\\u0079\\\\u0054\\\\u0069\\\\u006d\\\\u0065\\\"]||this[\\\"\\\\u0048\\\\u006a\\\"]['Ch']&&this['Hj'][\\\"\\\\u0055\\\\u0068\\\"])&&(this['Fj']=0x283f6^0x283f6,this['Rj']=0xc6fbf^0xc6fbd,this[\\\"\\\\u0024\\\\u006a\\\"]()):(0x67c52^0x67c50)==this['Rj']?this['qj']():(0x390f1^0x390f2)==this[\\\"\\\\u0052\\\\u006a\\\"]&&this['Fj']>=this['Cj']\",\"bossCheckSource\":\"[\\\"\\\\u006e\\\\u0054\\\"](){const _0x50f1b9=_0x1f6ae6[\\\"\\\\u0069\\\\u006e\\\\u0073\\\\u0074\\\\u0061\\\\u006e\\\\u0063\\\\u0065\\\"]()[\\\"\\\\u006e\\\\u0075\\\"],_0x4c531c=_0x50f1b9[\\\"\\\\u0068\\\\u0068\\\"];if(_0x50f1b9['ph'])return _0x50f1b9['zh'][_0x4c531c]=!_0x4bc2b2['RUYjn'](0xd663d,0xd663d),_0x50f1b9['Hh'][\\\"\\\\u0070\\\\u0075\\\\u0073\\\\u0068\\\"](_0x4c531c),this['rT'](!(0x9df6d^0x9df6d),_0x4c531c,!_0x4bc2b2[\\\"\\\\u0074\\\\u0066\\\\u0073\\\\u0076\\\\u006e\\\"](0x4fd59,0x4fd59)),this[\\\"\\\\u0072\\\\u0054\\\"](!(0xde1e6^0xde1e7),_0x4c531c,!_0x4bc2b2['lNGQI'](0x68fdc,0x68fdd)),void(_0x50f1b9[\\\"\\\\u0070\\\\u0068\\\"]=!(0x68ac6^0x68ac7));const _0x59930b=_0x1f6ae6[\\\"\\\\u0069\\\\u006e\\\\u0073\\\\u0074\\\\u0061\\\\u006e\\\\u0063\\\\u0065\\\"]()[\\\"\\\\u0065\\\\u006e\\\\u0065\\\\u006d\\\\u0079\\\"][\\\"\\\\u006f\\\\u0065\\\"]['indexOf'](_0x4c531c);if(_0x4bc2b2['uNyqu'](_0x59930b,0x6eeb8^0x6eeb8))return;if(void(0x2a15a^0x2a15a)!==_0x50f1b9[\\\"\\\\u007a\\\\u0068\\\"][_0x4c531c])return;const _0x5d1f1f=_0x4bc2b2[\\\"\\\\u0075\\\\u0043\\\\u0049\\\\u0065\\\\u004e\\\"](Math['random'](),_0x1f6ae6[\\\"\\\\u0069\\\\u006e\\\\u0073\\\\u0074\\\\u0061\\\\u006e\\\\u0063\\\\u0065\\\"]()['enemy']['le'][_0x59930b]);_0x50f1b9['zh'][_0x4c531c]=_0x5d1f1f,_0x5d1f1f&&(_0x50f1b9[\\\"\\\\u0048\\\\u0068\\\"]['push'](_0x4c531c),this[\\\"\\\\u0072\\\\u0054\\\"](!(0x9b6d6^0x9b6d6),_0x4c531c,!(0x1cc53^0x1cc53)),this[\\\"\\\\u0072\\\\u0054\\\"](!(0x59cd2^0x59cd3),_0x4c531c,!(0x5eca0^0x5eca1)));}\"}",
+          "url": {
+            "url": "http://127.0.0.1:4174/reference-balance-probe.js",
+            "origin": "http://127.0.0.1:4174",
+            "query_parameter_names": [],
+            "redacted": false
+          }
+        },
+        {
+          "sequence": 20,
+          "step_index": 1,
+          "kind": "console",
+          "level": "log",
+          "text": "铲子",
+          "url": {
+            "url": "http://127.0.0.1:4174/game/js/bundle.js",
+            "origin": "http://127.0.0.1:4174",
+            "query_parameter_names": [],
+            "redacted": false
+          }
+        },
+        {
+          "sequence": 21,
+          "step_index": 1,
+          "kind": "console",
+          "level": "log",
+          "text": "铲子",
+          "url": {
+            "url": "http://127.0.0.1:4174/game/js/bundle.js",
+            "origin": "http://127.0.0.1:4174",
+            "query_parameter_names": [],
+            "redacted": false
+          }
+        },
+        {
+          "sequence": 22,
+          "step_index": 1,
+          "kind": "console",
+          "level": "log",
+          "text": "铲子",
+          "url": {
+            "url": "http://127.0.0.1:4174/game/js/bundle.js",
+            "origin": "http://127.0.0.1:4174",
+            "query_parameter_names": [],
+            "redacted": false
+          }
+        },
+        {
+          "sequence": 23,
+          "step_index": 1,
+          "kind": "console",
+          "level": "log",
+          "text": "REFERENCE_BALANCE_DRAW_AND_BOSS {\"before\":{\"food\":20,\"cost\":10,\"bench\":[null,null,null,null,null]},\"first\":{\"food\":10,\"cost\":12,\"bench\":[{\"kind\":\"0\",\"id\":1,\"level\":1,\"type\":0,\"attackPower\":3,\"attackIntervalSeconds\":0.8,\"attacksPerSecond\":1.25},{\"kind\":\"_0x172575\",\"id\":1,\"level\":1,\"type\":0},{\"kind\":\"2\",\"id\":2,\"level\":1,\"type\":2,\"attackPower\":2,\"attackIntervalSeconds\":0.8,\"attacksPerSecond\":1.25},{\"kind\":\"0\",\"id\":3,\"level\":1,\"type\":0,\"attackPower\":3,\"attackIntervalSeconds\":0.8,\"attacksPerSecond\":1.25},{\"kind\":\"2\",\"id\":4,\"level\":1,\"type\":2,\"attackPower\":2,\"attackIntervalSeconds\":0.8,\"attacksPerSecond\":1.25}]},\"second\":{\"food\":38,\"cost\":14,\"bench\":[{\"kind\":\"3\",\"id\":5,\"level\":1,\"type\":3,\"attackPower\":2,\"attackIntervalSeconds\":0.8,\"attacksPerSecond\":1.25},{\"kind\":\"_0x172575\",\"id\":2,\"level\":1,\"type\":0},{\"kind\":\"0\",\"id\":6,\"level\":1,\"type\":0,\"attackPower\":3,\"attackIntervalSeconds\":0.8,\"attacksPerSecond\":1.25},{\"kind\":\"_0x172575\",\"id\":3,\"level\":1,\"type\":0},{\"kind\":\"2\",\"id\":12,\"level\":1,\"type\":2,\"attackPower\":2,\"attackIntervalSeconds\":0.8,\"attacksPerSecond\":1.25}]},\"boss\":{\"kind\":\"_0x240ed7\",\"type\":3,\"hp\":42,\"cooldownMs\":10000,\"range\":800,\"speed\":10,\"skillSource\":\"[\\\"wm\\\".split(\\\"\\\").reverse().join(\\\"\\\")](){function _0x135d2c(_0x187b8b,_0x21e61f,_0xd6ec9,_0x5d5662,_0x5587c4){return _0x1c1c(_0x21e61f- -0x22d,_0x5d5662);}console[\\\"\\\\u006c\\\\u006f\\\\u0067\\\"](_0x4bc2b2[\\\"\\\\u0061\\\\u006a\\\\u006f\\\\u0051\\\\u0059\\\"]),this['hw'][\\\"\\\\u006f\\\\u006e\\\\u0053\\\\u0074\\\\u006f\\\\u0070\\\"](()=>{this[\\\"\\\\u0068\\\\u0077\\\"][\\\"\\\\u0071\\\\u0044\\\"](Laya['Event'][\\\"\\\\u0053\\\\u0054\\\\u004f\\\\u0050\\\\u0050\\\\u0045\\\\u0044\\\"]),this['changeState'](0x667db^0x667da);}),this['hw']['play'](_0x135d2c(0x246c,0x3bfa,0x44ea,\\\"\\\\u0043\\\\u0046\\\\u0061\\\\u0067\\\",0x4263),!(0x4f36e^0x4f36f)),Laya['timer'][\\\"\\\\u006f\\\\u006e\\\\u0063\\\\u0065\\\"](_0x4bc2b2['NGHRZ'](0xa0e52,0xa0fa6),this,()=>{let _0x21433b=new Laya[\\\"\\\\u0049\\\\u006d\\\\u0061\\\\u0067\\\\u0065\\\"](_0x4a4088(0x3276,0x118c,0x287a,0x161c,0x2be7));function _0x4a4088(_0x4594ea,_0x5c0132,_0x6b82d9,_0x3408ae,_0x20e6dc){return _0x3843(_0x6b82d9- -0x88,_0x3408ae);}_0x21433b['size'](0xb9bec^0xb9bd0,0xbe165^0xbe159),_0x21433b[\\\"\\\\u0061\\\\u006e\\\\u0063\\\\u0068\\\\u006f\\\\u0072\\\"](0.5,0.5),_0x21433b[\\\"\\\\u0070\\\\u006f\\\\u0073\\\"](this[\\\"\\\\u0065\\\\u006e\\\\u0065\\\\u006d\\\\u0079\\\"][\\\"\\\\u0078\\\"]+this[\\\"\\\\u0065\\\\u006e\\\\u0065\\\\u006d\\\\u0079\\\"]['width'],this[\\\"\\\\u0065\\\\u006e\\\\u0065\\\\u006d\\\\u0079\\\"][\\\"\\\\u0079\\\"]),this['enemy'][\\\"\\\\u0070\\\\u0061\\\\u0072\\\\u0065\\\\u006e\\\\u0074\\\"]['addChild'](_0x21433b),_0x2a4701[\\\"\\\\u0069\\\\u006e\\\\u0073\\\\u0074\\\\u0061\\\\u006e\\\\u0063\\\\u0065\\\"]['event'](_0x195167[\\\"\\\\u0042\\\\u0074\\\"],this['lm'],_0x21433b);});}\"},\"terrainSource\":\"[\\\"\\\\u0079\\\\u0071\\\"](_0x42354d,_0x2346d0){function _0x3d5b51(_0x1b8c5c,_0x254c30,_0x3046a1,_0x2671f6,_0x3376f6){return _0x3843(_0x2671f6-0x351,_0x3376f6);}const _0x57347f={'cRYyS':_0x1a2dc4(0x109d,0xca3,0x329a,0x2c3c,0x245d),'MTfNi':function(_0x12a390,_0x16f6f6){return _0x12a390*_0x16f6f6;},\\\"\\\\u0043\\\\u007a\\\\u0066\\\\u004a\\\\u0054\\\":function(_0x1d2e73,_0x3d23fe){return _0x1d2e73^_0x3d23fe;}};let _0x51ce37=_0x42354d?_0x1a2dc4(0x2b3,0xc73,0x1afd,0xcf4,0x1351):_0x4bc2b2[\\\"\\\\u004e\\\\u0072\\\\u0069\\\\u0053\\\\u0055\\\"],_0x1533df=[];function _0x100610(_0x3f40e7,_0x6810d1,_0x2c74e3,_0x505e1c,_0x19f79c){return _0x1c1c(_0x6810d1- -0x3c9,_0x3f40e7);}for(let _0x48bb6f=0x66c94^0x66c94;_0x4bc2b2[\\\"\\\\u0041\\\\u0052\\\\u007a\\\\u0044\\\\u0073\\\"](_0x48bb6f,this['ew']['map'][\\\"\\\\u0065\\\\u0061\\\"][\\\"\\\\u006c\\\\u0065\\\\u006e\\\\u0067\\\\u0074\\\\u0068\\\"]);_0x48bb6f++)for(let _0x3de884=_0x4bc2b2['EegGo'](0x5875d,0x5875d);_0x3de884<this['ew']['map'][\\\"\\\\u0065\\\\u0061\\\"][_0x48bb6f][\\\"\\\\u006c\\\\u0065\\\\u006e\\\\u0067\\\\u0074\\\\u0068\\\"];_0x3de884++)this[\\\"\\\\u0065\\\\u0077\\\"]['map'][\\\"\\\\u0065\\\\u0061\\\"][_0x48bb6f][_0x3de884]==_0x51ce37&&(_0x1568dd['instance']()[\\\"\\\\u0043\\\\u0044\\\"](_0x42354d,_0x48bb6f,_0x3de884)||_0x1533df['push']({\\\"\\\\u0078\\\":_0x48bb6f,\\\"\\\\u0079\\\":_0x3de884}));if(console[\\\"\\\\u006c\\\\u006f\\\\u0067\\\"](_0x4bc2b2[\\\"\\\\u0044\\\\u006f\\\\u007a\\\\u0055\\\\u0078\\\"]),_0x4bc2b2[\\\"\\\\u0067\\\\u0048\\\\u004b\\\\u0041\\\\u005a\\\"](_0x1533df['length'],_0x4bc2b2['zSiAX'](0x965f5,0x965f5)))return void _0x2346d0[\\\"\\\\u0072\\\\u0065\\\\u006d\\\\u006f\\\\u0076\\\\u0065\\\\u0053\\\\u0065\\\\u006c\\\\u0066\\\"]();function _0x194815(_0x4830dc,_0x54a4de,_0x1adf50,_0x28507c,_0x269169){return _0x1c1c(_0x269169- -0x2e9,_0x4830dc);}let _0x422b9e=_0x1533df[_0x8da2f[\\\"\\\\u0072\\\\u0061\\\\u006e\\\\u0067\\\\u0065\\\"](_0x4bc2b2['GXAZy'](0xaa4fe,0xaa4fe),_0x1533df[\\\"\\\\u006c\\\\u0065\\\\u006e\\\\u0067\\\\u0074\\\\u0068\\\"],!_0x4bc2b2['ddsvU'](0x88166,0x88166))],_0x5a0a62=new Laya[\\\"\\\\u0049\\\\u006d\\\\u0061\\\\u0067\\\\u0065\\\"](_0x3d5b51(0x13b7,0x23b,-0x2ee,0x1c4a,0x2b48));_0x5a0a62[\\\"\\\\u0073\\\\u0069\\\\u007a\\\\u0065\\\"](0x70e6c^0x70e11,0x6d08a^0x6d0fa),_0x5a0a62['anchor'](0.5,0.5),_0x5a0a62[\\\"\\\\u0070\\\\u006f\\\\u0073\\\"](_0x4bc2b2[\\\"\\\\u0072\\\\u0058\\\\u007a\\\\u0069\\\\u0066\\\"](_0x422b9e[\\\"\\\\u0078\\\"]+0.5,this['ew'][\\\"\\\\u006d\\\\u0061\\\\u0070\\\"]['aa']),(_0x422b9e[\\\"\\\\u0079\\\"]+0.5)*this[\\\"\\\\u0065\\\\u0077\\\"][\\\"\\\\u006d\\\\u0061\\\\u0070\\\"][\\\"\\\\u0067\\\\u0072\\\\u0069\\\\u0064\\\\u0048\\\\u0065\\\\u0069\\\"]),_0x5a0a62['scale'](0x69b6c^0x69b6c,0x7bcd1^0x7bcd1),this[\\\"\\\\u0067\\\\u0061\\\\u006d\\\\u0065\\\\u004f\\\\u0062\\\\u006a\\\\u0065\\\\u0063\\\\u0074\\\\u0042\\\\u006f\\\\u0078\\\"]['addChild'](_0x5a0a62);let _0x425603=_0x422b9e[\\\"\\\\u0078\\\"]*this[\\\"\\\\u0065\\\\u0077\\\"][\\\"\\\\u006d\\\\u0061\\\\u0070\\\"]['aa'],_0x752a7e=_0x422b9e[\\\"\\\\u0079\\\"]*this[\\\"\\\\u0065\\\\u0077\\\"]['map']['gridHei'];function _0x1a2dc4(_0x474987,_0x8f78ef,_0x250b16,_0x2acce2,_0x42db41){return _0x3843(_0x2acce2- -0x269,_0x42db41);}function _0x3b8ecb(_0x1883b0,_0x45a388,_0x2f825c,_0x317187,_0x301655){return _0x3843(_0x45a388- -0x33f,_0x301655);}function _0x142251(_0x308619,_0x3fdf55,_0x339e1e,_0x31d550,_0x349f2d){return _0x3843(_0x31d550-0x36f,_0x339e1e);}this[\\\"\\\\u005a\\\\u0079\\\"][\\\"\\\\u0078\\\"]=_0x2346d0[\\\"\\\\u0078\\\"],this[\\\"\\\\u005a\\\\u0079\\\"][\\\"\\\\u0079\\\"]=_0x2346d0[\\\"\\\\u0079\\\"],this[\\\"\\\\u004b\\\\u0079\\\"][\\\"\\\\u0078\\\"]=_0x425603+this[\\\"\\\\u0065\\\\u0077\\\"]['map'][\\\"\\\\u0061\\\\u0061\\\"]/(0x2158d^0x2158f),this[\\\"\\\\u004b\\\\u0079\\\"][\\\"\\\\u0079\\\"]=_0x4bc2b2[\\\"\\\\u0057\\\\u006e\\\\u006e\\\\u0076\\\\u004a\\\"](_0x752a7e,this[\\\"\\\\u0065\\\\u0077\\\"]['map'][\\\"\\\\u0067\\\\u0072\\\\u0069\\\\u0064\\\\u0048\\\\u0065\\\\u0069\\\"]/(0x4860c^0x4860e));let _0x19fd9d=_0x8da2f[\\\"\\\\u004c\\\\u0069\\\"](this[\\\"\\\\u005a\\\\u0079\\\"],this[\\\"\\\\u004b\\\\u0079\\\"]);Laya[\\\"\\\\u0054\\\\u0077\\\\u0065\\\\u0065\\\\u006e\\\"][\\\"\\\\u0063\\\\u0072\\\\u0065\\\\u0061\\\\u0074\\\\u0065\\\"](_0x2346d0)[\\\"\\\\u0074\\\\u006f\\\"](\\\"\\\\u0078\\\",this['Ky'][\\\"\\\\u0078\\\"])['to'](\\\"\\\\u0079\\\",this[\\\"\\\\u004b\\\\u0079\\\"][\\\"\\\\u0079\\\"])[\\\"\\\\u0064\\\\u0075\\\\u0072\\\\u0061\\\\u0074\\\\u0069\\\\u006f\\\\u006e\\\"](_0x19fd9d)['parallel']()['to'](_0x142251(0x2d57,0x2d18,0x1bb9,0x375c,0x3355),_0x4bc2b2[\\\"\\\\u0056\\\\u0046\\\\u0066\\\\u006d\\\\u0063\\\"](_0x19fd9d,0x618de^0x618dc))[\\\"\\\\u0063\\\\u0068\\\\u0061\\\\u0069\\\\u006e\\\"]()['to'](_0x4bc2b2[\\\"\\\\u0078\\\\u0066\\\\u0075\\\\u0077\\\\u005a\\\"],0xbf377^0xbf377)[\\\"\\\\u0064\\\\u0075\\\\u0072\\\\u0061\\\\u0074\\\\u0069\\\\u006f\\\\u006e\\\"](0x9be2a^0x9be4e)['then'](()=>{_0x2346d0['removeSelf']();})[\\\"\\\\u0070\\\\u0061\\\\u0072\\\\u0061\\\\u006c\\\\u006c\\\\u0065\\\\u006c\\\"](_0x5a0a62)[\\\"\\\\u0074\\\\u006f\\\"](_0x4bc2b2['XsATr'],0x599b2^0x599b3)['to'](_0x100610(\\\"\\\\u0041\\\\u005b\\\\u0050\\\\u0032\\\",0x2e17,0x486c,0x4ace,0x311e),0xd5960^0xd5961)[\\\"\\\\u0064\\\\u0075\\\\u0072\\\\u0061\\\\u0074\\\\u0069\\\\u006f\\\\u006e\\\"](0xdfecb^0xdffe7)[\\\"\\\\u0063\\\\u0068\\\\u0061\\\\u0069\\\\u006e\\\"](_0x5a0a62)[\\\"\\\\u0074\\\\u006f\\\"](_0x194815(\\\"$6BH\\\".split(\\\"\\\").reverse().join(\\\"\\\"),-0xb49,0x68d,0x6a5,0x11a5),0x5becc^0x5becc)[\\\"\\\\u0064\\\\u0075\\\\u0072\\\\u0061\\\\u0074\\\\u0069\\\\u006f\\\\u006e\\\"](0x629d2^0x628fe)[\\\"\\\\u0074\\\\u0068\\\\u0065\\\\u006e\\\"](()=>{function _0x93f3fb(_0x4aba6b,_0x3bc50c,_0x38ba02,_0xcd352a,_0x7718cf){return _0x3843(_0xcd352a-0x39f,_0x7718cf);}const _0x463d70={'RlkFr':function(_0x265a4f,_0x132707){return _0x265a4f^_0x132707;}};function _0x9cca39(_0x404ac7,_0x2dfc1f,_0x4399bc,_0x16ddde,_0x2c5df7){return _0x3843(_0x2dfc1f-0x2fa,_0x4399bc);}function _0x88e05(_0xc4487f,_0x42f649,_0x620ecb,_0x322580,_0x406034){return _0x1c1c(_0x406034-0x151,_0xc4487f);}function _0x34c244(_0x3cae67,_0x1d97b8,_0x3fbb53,_0x38ca11,_0x35db00){return _0x3843(_0x35db00- -0xf5,_0x3fbb53);}function _0x3507e9(_0x4af7d1,_0x1f304b,_0x2c4588,_0xf45d13,_0x546c0e){return _0x3843(_0x1f304b-0x235,_0x2c4588);}_0x5a0a62['removeSelf']();function _0x70ab9b(_0x1dd5d0,_0x2000a6,_0x449c14,_0x194014,_0xf67ab3){return _0x3843(_0x449c14-0x2f2,_0x194014);}function _0x50b282(_0x40d0c4,_0xe356b3,_0x468f89,_0x202498,_0x34f866){return _0x1c1c(_0x468f89-0x141,_0x40d0c4);}let _0x463103=new Laya[\\\"\\\\u0049\\\\u006d\\\\u0061\\\\u0067\\\\u0065\\\"](_0x57347f[\\\"\\\\u0063\\\\u0052\\\\u0059\\\\u0079\\\\u0053\\\"]+(_0x42354d?\\\"\\\\u0030\\\":\\\"\\\\u0031\\\")+_0x302e6b(0x226,-0x10b2,-0x37b,\\\"\\\\u0043\\\\u0032\\\\u0039\\\\u0028\\\",-0xeaa));function _0x302e6b(_0x44c482,_0x35067e,_0x5d4f4e,_0x25c9a6,_0x4ad90d){return _0x1c1c(_0x44c482- -0x2dc,_0x25c9a6);}_0x463103[\\\"\\\\u006e\\\\u0061\\\\u006d\\\\u0065\\\"]=_0x3507e9(0x1430,0x117f,-0x588,0x2b31,0x27cf),_0x463103['size'](this[\\\"\\\\u0065\\\\u0077\\\"][\\\"\\\\u006d\\\\u0061\\\\u0070\\\"]['aa'],this[\\\"\\\\u0065\\\\u0077\\\"]['map']['gridHei']),_0x463103[\\\"\\\\u0070\\\\u006f\\\\u0073\\\"](_0x422b9e[\\\"\\\\u0078\\\"]*this['ew']['map'][\\\"\\\\u0061\\\\u0061\\\"],_0x57347f[\\\"\\\\u004d\\\\u0054\\\\u0066\\\\u004e\\\\u0069\\\"](_0x422b9e[\\\"\\\\u0079\\\"],this['ew']['map'][\\\"\\\\u0067\\\\u0072\\\\u0069\\\\u0064\\\\u0048\\\\u0065\\\\u0069\\\"])),_0x463103['alpha']=0.7,this['gameObjectBox'][\\\"\\\\u0061\\\\u0064\\\\u0064\\\\u0043\\\\u0068\\\\u0069\\\\u006c\\\\u0064\\\"](_0x463103),_0xc5cede['instance']()['tg'](_0x463103,[_0x3507e9(0x29d8,0x30da,0x48c6,0x33f1,0x3d9f)+(_0x42354d?\\\"\\\\u0030\\\":\\\"\\\\u0031\\\")+_0x93f3fb(0x4d9,0x1363,0x3102,0x2182,0x129c),_0x93f3fb(0x30eb,0x2718,0x4dd2,0x3244,0x2f93)+(_0x42354d?\\\"\\\\u0030\\\":\\\"\\\\u0031\\\")+_0x50b282(\\\"Gg5L\\\".split(\\\"\\\").reverse().join(\\\"\\\"),0x2382,0xd6a,0x1944,0x8b1),_0x302e6b(0x130c,-0xaa6,0x17ec,\\\"\\\\u0032\\\\u005d\\\\u0068\\\\u0049\\\",0x754)+(_0x42354d?\\\"\\\\u0030\\\":\\\"\\\\u0031\\\")+_0x93f3fb(-0xb2f,0x2813,0x4a1,0xdad,0x1c4)],0xee952^0xee87e,0x9b9a2^0x9b9a2,_0x57347f[\\\"\\\\u0043\\\\u007a\\\\u0066\\\\u004a\\\\u0054\\\"](0x9ac5d,0x9ac5c),_0x377118=>{function _0x5715c0(_0x38d519,_0xa1899e,_0x5360c2,_0x2513b9,_0x270413){return _0x1c1c(_0x38d519- -0x164,_0x270413);}function _0x32c538(_0x4fd125,_0xad322c,_0x56066f,_0x46def8,_0x388960){return _0x3843(_0x4fd125-0x386,_0xad322c);}function _0x3fb109(_0x2bdca2,_0x5a80aa,_0x33e58c,_0x298325,_0x3ab85f){return _0x3843(_0x3ab85f-0x265,_0x5a80aa);}function _0x123093(_0x16b5dd,_0x4a2ae7,_0x5813b3,_0x3d096e,_0x5bb0fc){return _0x1c1c(_0x5813b3- -0x28f,_0x4a2ae7);}function _0x1f31f4(_0x178b52,_0x570b69,_0x246099,_0x2197a3,_0x11cd2b){return _0x3843(_0x246099-0x188,_0x570b69);}function _0x13502f(_0xe98f82,_0x230565,_0x603a5c,_0x3ead83,_0x1b55bf){return _0x3843(_0xe98f82- -0x3cf,_0x1b55bf);}function _0x116cb7(_0x1018b4,_0x5743ca,_0x3dd758,_0x2bfe31,_0x5e730a){return _0x3843(_0x1018b4- -0x113,_0x3dd758);}Laya[\\\"\\\\u0054\\\\u0077\\\\u0065\\\\u0065\\\\u006e\\\"]['create'](_0x463103)[\\\"\\\\u0074\\\\u006f\\\"](_0x116cb7(0x1512,0x809,0x788,0xf7c,0x34df),_0x463d70[\\\"\\\\u0052\\\\u006c\\\\u006b\\\\u0046\\\\u0072\\\"](0x4de88,0x4de88))[\\\"\\\\u0064\\\\u0075\\\\u0072\\\\u0061\\\\u0074\\\\u0069\\\\u006f\\\\u006e\\\"](0x60073^0x600bb)['then'](()=>{_0x463103[\\\"\\\\u0072\\\\u0065\\\\u006d\\\\u006f\\\\u0076\\\\u0065\\\\u0053\\\\u0065\\\\u006c\\\\u0066\\\"]();}),_0x42354d?(this['d$'][\\\"\\\\u0067\\\\u0065\\\\u0074\\\"](_0x422b9e[\\\"\\\\u0078\\\"]+\\\"\\\\u005f\\\"+_0x422b9e[\\\"\\\\u0079\\\"])[\\\"\\\\u0073\\\\u006b\\\\u0069\\\\u006e\\\"]=_0x123093(0x19d0,\\\"ZTyB\\\".split(\\\"\\\").reverse().join(\\\"\\\"),0x1a1c,0x3613,0x27ab)+this[\\\"\\\\u006d\\\\u0061\\\\u0070\\\\u0049\\\\u006e\\\\u0064\\\\u0065\\\\u0078\\\"]+_0x116cb7(0x1cd0,-0x340,0x2de4,0x2d5f,-0x3c6),this[\\\"\\\\u0065\\\\u0077\\\"][\\\"\\\\u006d\\\\u0061\\\\u0070\\\"][\\\"\\\\u0065\\\\u0061\\\"][_0x422b9e[\\\"\\\\u0078\\\"]][_0x422b9e[\\\"\\\\u0079\\\"]]=_0x5715c0(0x398b,0x5102,0x2214,0x4bb1,\\\"\\\\u006f\\\\u004b\\\\u0038\\\\u0069\\\")):(this['d$'][\\\"\\\\u0067\\\\u0065\\\\u0074\\\"](_0x422b9e[\\\"\\\\u0078\\\"]+\\\"\\\\u005f\\\"+_0x422b9e[\\\"\\\\u0079\\\"])['skin']=_0x116cb7(0x18f2,0x10f4,0x1c53,0x24a9,0x13f5)+this[\\\"\\\\u006d\\\\u0061\\\\u0070\\\\u0049\\\\u006e\\\\u0064\\\\u0065\\\\u0078\\\"]+_0x32c538(0x2b45,0xc5f,0x1429,0x2785,0xe6b),this[\\\"\\\\u0065\\\\u0077\\\"][\\\"\\\\u006d\\\\u0061\\\\u0070\\\"]['ea'][_0x422b9e[\\\"\\\\u0078\\\"]][_0x422b9e[\\\"\\\\u0079\\\"]]=_0x13502f(0x14cf,0x1e7c,0x2767,0x120d,0x1e3c));});});}\",\"discardSource\":\"[\\\"\\\\u0065\\\\u0047\\\"](_0x409fb7){let _0x24a1cd,_0x85fa2b=this['iY'][\\\"\\\\u0062\\\\u0050\\\"](_0x4bc2b2[\\\"\\\\u0070\\\\u0053\\\\u0057\\\\u0045\\\\u0044\\\"](0xcd057,0xcd054),_0x409fb7),_0x179637=_0x409fb7&&_0x203c39[\\\"\\\\u0069\\\\u006e\\\\u0073\\\\u0074\\\\u0061\\\\u006e\\\\u0063\\\\u0065\\\"]()[\\\"\\\\u006a\\\\u0042\\\"](_0x409fb7,0x78f60^0x78f75);for(let _0x502a4d=0x67cc9^0x67cc9;_0x502a4d<_0x85fa2b['mP'][\\\"\\\\u006c\\\\u0065\\\\u006e\\\\u0067\\\\u0074\\\\u0068\\\"];_0x502a4d++)_0x24a1cd=_0x85fa2b[\\\"\\\\u0067\\\\u0065\\\\u0074\\\\u0049\\\\u0074\\\\u0065\\\\u006d\\\"](_0x502a4d),_0x24a1cd instanceof _0x5bd892?(_0x179637&&(Laya['Point']['TEMP'][\\\"\\\\u0078\\\"]=0x7559e^0x75594,Laya[\\\"\\\\u0050\\\\u006f\\\\u0069\\\\u006e\\\\u0074\\\"][\\\"\\\\u0054\\\\u0045\\\\u004d\\\\u0050\\\"][\\\"\\\\u0079\\\"]=0x96c23^0x96c23,_0x24a1cd[\\\"\\\\u0059\\\\u0063\\\"]['localToGlobal'](Laya['Point']['TEMP']),_0xc5cede['instance']()[\\\"\\\\u0064\\\\u0067\\\"](Laya[\\\"\\\\u0050\\\\u006f\\\\u0069\\\\u006e\\\\u0074\\\"][\\\"\\\\u0054\\\\u0045\\\\u004d\\\\u0050\\\"][\\\"\\\\u0078\\\"],Laya[\\\"\\\\u0050\\\\u006f\\\\u0069\\\\u006e\\\\u0074\\\"]['TEMP'][\\\"\\\\u0079\\\"],_0x24a1cd[\\\"\\\\u006c\\\\u0065\\\\u0076\\\\u0065\\\\u006c\\\"])),this[\\\"\\\\u0042\\\\u0059\\\"][\\\"\\\\u0061\\\\u0042\\\"](_0x24a1cd[\\\"\\\\u0069\\\\u0064\\\"])):_0x4bc2b2[\\\"\\\\u0049\\\\u0073\\\\u0068\\\\u006e\\\\u0057\\\"](_0x24a1cd,_0x1b32b1)?(_0x179637&&(Laya[\\\"\\\\u0050\\\\u006f\\\\u0069\\\\u006e\\\\u0074\\\"]['TEMP'][\\\"\\\\u0078\\\"]=0xd0b9b^0xd0b91,Laya[\\\"\\\\u0050\\\\u006f\\\\u0069\\\\u006e\\\\u0074\\\"][\\\"\\\\u0054\\\\u0045\\\\u004d\\\\u0050\\\"][\\\"\\\\u0079\\\"]=_0x4bc2b2[\\\"\\\\u0077\\\\u004f\\\\u0076\\\\u006f\\\\u006e\\\"](0x47309,0x47309),_0x24a1cd['Yc'][\\\"\\\\u006c\\\\u006f\\\\u0063\\\\u0061\\\\u006c\\\\u0054\\\\u006f\\\\u0047\\\\u006c\\\\u006f\\\\u0062\\\\u0061\\\\u006c\\\"](Laya['Point'][\\\"\\\\u0054\\\\u0045\\\\u004d\\\\u0050\\\"]),_0xc5cede[\\\"\\\\u0069\\\\u006e\\\\u0073\\\\u0074\\\\u0061\\\\u006e\\\\u0063\\\\u0065\\\"]()['dg'](Laya[\\\"\\\\u0050\\\\u006f\\\\u0069\\\\u006e\\\\u0074\\\"][\\\"\\\\u0054\\\\u0045\\\\u004d\\\\u0050\\\"][\\\"\\\\u0078\\\"],Laya[\\\"\\\\u0050\\\\u006f\\\\u0069\\\\u006e\\\\u0074\\\"][\\\"\\\\u0054\\\\u0045\\\\u004d\\\\u0050\\\"][\\\"\\\\u0079\\\"],_0x24a1cd[\\\"\\\\u006c\\\\u0065\\\\u0076\\\\u0065\\\\u006c\\\"])),this[\\\"\\\\u0042\\\\u0059\\\"][\\\"\\\\u0065\\\\u0042\\\"](_0x24a1cd[\\\"\\\\u0069\\\\u0064\\\"])):_0x4bc2b2['pipvr'](_0x24a1cd,_0x526847)?this[\\\"\\\\u0042\\\\u0059\\\"][\\\"\\\\u006e\\\\u0041\\\"](_0x24a1cd['id']):_0x24a1cd instanceof _0x2440cb&&this[\\\"\\\\u0044\\\\u0059\\\"]['MB'](_0x24a1cd['id']);_0x85fa2b['removeAll']();}\"}",
+          "url": {
+            "url": "http://127.0.0.1:4174/reference-balance-probe.js",
+            "origin": "http://127.0.0.1:4174",
+            "query_parameter_names": [],
+            "redacted": false
+          }
+        }
+      ],
+      "omissions": {
+        "by_kind": [],
+        "network_transactions": [],
+        "network_transaction_range": null
+      }
+    },
+    "completeness": {
+      "status": "complete",
+      "equality_eligible": true,
+      "missing_sections": [],
+      "truncated_sections": []
+    },
+    "limitations": [
+      "Event sequence records provider receipt order; simultaneous browser causality is not inferred.",
+      "Network content is retained only when selected; Playwright response-body bytes are API results and are not guaranteed to match wire bytes.",
+      "Request bytes are limited to what Playwright exposes; not_exposed does not establish body absence or multipart file coverage.",
+      "Network content reads settle within 5 seconds each and the observer does not request bodies from unfinished responses.",
+      "Playwright scenario events do not expose request initiator stacks; receipt order does not prove causality.",
+      "Storage values are hashed only after declared-secret redaction."
+    ]
+  },
+  "confidence": "observed",
+  "authority": "controlled-replay",
+  "environment": {
+    "id": "Chromium@157.0.8103.51",
+    "platform": "unknown",
+    "architecture": "unknown",
+    "isolation": "process"
+  },
+  "limitations": [
+    "Artifact identity is unavailable for this observation.",
+    "Event sequence records provider receipt order; simultaneous browser causality is not inferred.",
+    "Network content is retained only when selected; Playwright response-body bytes are API results and are not guaranteed to match wire bytes.",
+    "Request bytes are limited to what Playwright exposes; not_exposed does not establish body absence or multipart file coverage.",
+    "Network content reads settle within 5 seconds each and the observer does not request bodies from unfinished responses.",
+    "Playwright scenario events do not expose request initiator stacks; receipt order does not prove causality.",
+    "Storage values are hashed only after declared-secret redaction.",
+    "Browser host platform and architecture were not observed."
+  ],
+  "relationship_coverage": null,
+  "locations": [],
+  "evidence_links": []
+}

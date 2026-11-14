@@ -1,0 +1,1059 @@
+# P1 assets review diff
+Base: backups/m3-before-p1.zip (M3 427 tests)
+Current: isolated game working tree
+
+
+## src/render/AssetRegistry.ts
+diff --git "D:\\rea_game\\games\\capybara-defense\\.runtime\\p1-review-baseline\\src\\render\\AssetRegistry.ts" "D:\\rea_game\\games\\capybara-defense\\src\\render\\AssetRegistry.ts"
+index 3b5ff44..221b148 100644
+--- "D:\\rea_game\\games\\capybara-defense\\.runtime\\p1-review-baseline\\src\\render\\AssetRegistry.ts"
++++ "D:\\rea_game\\games\\capybara-defense\\src\\render\\AssetRegistry.ts"
+@@ -1,34 +1,55 @@
+ /** Optional local PNG overrides. Nothing is requested unless its id is in the manifest. */
+ export class AssetRegistry {
+   private readonly images = new Map<string, HTMLImageElement>();
++  private readonly callbacks = new Set<()=>void>();
++  private settled = false;
+   readonly ready: Promise<void>;
+ 
+-  constructor(private readonly base = `${import.meta.env.BASE_URL || '/'}sprites/`) {
+-    this.ready = this.loadManifest();
++  constructor(private readonly base = `${import.meta.env.BASE_URL || './'}sprites/`) {
++    this.ready = this.loadManifest().then(()=>{
++      this.settled=true;
++      for(const callback of this.callbacks){try{callback();}catch{/* A consumer cannot prevent other refreshes. */}}
++      this.callbacks.clear();
++    });
+   }
+ 
+   get(id: string): HTMLImageElement | undefined {
++    if(!/^[a-z][a-z0-9_]*$/.test(id))return undefined;
+     const image = this.images.get(id);
+     return image?.complete && image.naturalWidth > 0 ? image : undefined;
+   }
+ 
++  has(id:string):boolean { return !!this.get(id); }
++  url(id:string):string|undefined { return this.has(id)?`${this.base}${id}.png`:undefined; }
++  onReady(callback:()=>void):()=>void {
++    let active=true;
++    if(this.settled)queueMicrotask(()=>{if(active)callback();});else this.callbacks.add(callback);
++    return ()=>{active=false;this.callbacks.delete(callback);};
++  }
++
+   private async loadManifest(): Promise<void> {
+     if (typeof Image === 'undefined') return;
+     try {
+       const response = await fetch(`${this.base}manifest.json`);
+       if (!response.ok) return;
+       const manifest: unknown = await response.json();
+       if (!Array.isArray(manifest)) return;
+-      await Promise.all(manifest.filter((id): id is string =>
++      await Promise.all([...new Set(manifest.filter((id): id is string =>
+         typeof id === 'string' && /^[a-z][a-z0-9_]*$/.test(id)
+-      ).map(id => new Promise<void>(resolve => {
++      ))].map(id => new Promise<void>(resolve => {
+         const image = new Image();
+         image.onload = () => { this.images.set(id, image); resolve(); };
+         image.onerror = () => resolve();
+         image.src = `${this.base}${id}.png`;
+       })));
+     } catch {
+       // Offline, malformed, or absent optional assets never prevent the game drawing.
+     }
+   }
+ }
++
++/** Canvas and HTML share one fetch and the same successfully decoded images. */
++export const assets=new AssetRegistry();
++export const hasSprite=(id:string):boolean=>assets.has(id);
++export const spriteUrl=(id:string):string|undefined=>assets.url(id);
++export const onAssetsReady=(callback:()=>void):(()=>void)=>assets.onReady(callback);
+
+## src/render/StickerRenderer.ts
+diff --git "D:\\rea_game\\games\\capybara-defense\\.runtime\\p1-review-baseline\\src\\render\\StickerRenderer.ts" "D:\\rea_game\\games\\capybara-defense\\src\\render\\StickerRenderer.ts"
+index 2c18356..71c159b 100644
+--- "D:\\rea_game\\games\\capybara-defense\\.runtime\\p1-review-baseline\\src\\render\\StickerRenderer.ts"
++++ "D:\\rea_game\\games\\capybara-defense\\src\\render\\StickerRenderer.ts"
+@@ -1,16 +1,17 @@
+ import type { BattleLoadout, BattleState, Enemy, Interaction, Side, Unit, VisualEvent } from '../core/types';
+ import {combatRange,combatCharge} from '../core/CombatRules';
+ import { getMap, STAGE } from '../config/maps';
+ import { UNITS } from '../config/units';
+ import { HEROES } from '../config/heroes';
+ import { MergeSystem } from '../core/MergeSystem';
++import {getMergeTargets} from '../core/MergeTargets';
+ import { t } from '../i18n/i18n';
+-import { AssetRegistry } from './AssetRegistry';
++import { assets } from './AssetRegistry';
+ import { drawCapybaraArt, drawEnemyArt, drawOrange, drawShovelArt, drawUnitArt, ellipse, INK, line, PAPER, polygon, round, star } from './StickerArt';
+ import { drawGlueTrap, drawM2Event, drawPropCursor, drawSealed, drawWasher, drawWet } from './M2Effects';
+ import {boneShield,confusionSpiral,drawM3Event,drawThemeEdges} from './M3Effects';
+ 
+ export type HitTarget = { kind: 'cell'; col: number; row: number } | { kind: 'bench'; slot: number } | { kind: 'shovel' };
+ type Position = { x: number; y: number };
+ type OrangeMotion = Position & { add: boolean; age: number; index: number; direction: number; targetY: number };
+ 
+@@ -18,17 +19,17 @@ const FONT = '"Trebuchet MS", "Microsoft YaHei", "PingFang SC", sans-serif';
+ const TEAL = '#5f9b8c';
+ const CORAL = '#d28e78';
+ const cellCenter = (col:number,row:number):Position => ({x:STAGE.boardX+(col+.5)*STAGE.cell,y:STAGE.boardY+(row+.5)*STAGE.cell});
+ const clamp = (v:number,min:number,max:number) => Math.max(min,Math.min(max,v));
+ 
+ /** Immediate-mode Canvas renderer; game rules and pointer dispatch remain in core/UI. */
+ export class StickerRenderer {
+   private readonly c: CanvasRenderingContext2D;
+-  readonly assets = new AssetRegistry();
++  readonly assets = assets;
+   private pixelRatio = 0;
+   private lastSeconds = 0;
+   private battleId = '';
+   private readonly unitPositions = new Map<number, Position>();
+   private previousOranges: Record<Side,number> | null = null;
+   private orangeMotions: OrangeMotion[] = [];
+ 
+   constructor(private readonly canvas: HTMLCanvasElement) {
+@@ -128,75 +129,84 @@ export class StickerRenderer {
+     ellipse(c,x,y,size*.32,size*.32,'#f4d482','#f4d482',0);
+   }
+ 
+   private drawBoard(state:BattleState,seconds:number):void {
+     const c=this.c,{boardX:x,boardY:y,cell}=STAGE,map=getMap(state.mapId),theme=map.theme;
+     c.save();c.shadowColor='rgba(93,87,62,.16)';c.shadowBlur=0;c.shadowOffsetY=7;
+     round(c,x-9,y-9,cell*8+18,cell*10+18,24,'#fffaf0',INK,2.6);c.restore();
+     c.save();c.beginPath();c.roundRect(x,y,cell*8,cell*10,17);c.clip();
++    const mapImage=this.assets.get(`map_${state.mapId}`);
++    if(mapImage)c.drawImage(mapImage,x,y,cell*8,cell*10);
+     for(let row=0;row<10;row++) for(let col=0;col<8;col++) {
+       const tile=state.grid[row][col],tx=x+col*cell,ty=y+row*cell;
+       const grass=tile==='G'||tile==='B';
+-      c.fillStyle=grass?theme.grass[(row+col)%2]:tile==='O'?theme.open:tile==='C'?theme.water:theme.road;
+-      c.fillRect(tx,ty,cell,cell);
+-      if(tile==='G') {
++      if(!mapImage){
++        c.fillStyle=grass?theme.grass[(row+col)%2]:tile==='O'?theme.open:tile==='C'?theme.water:theme.road;
++        c.fillRect(tx,ty,cell,cell);
++      }
++      const tileImage=tile==='O'?(this.assets.get(`tile_open_${state.mapId}`)||this.assets.get('tile_open')):tile==='B'?this.assets.get('tile_broken'):undefined;
++      if(tileImage){c.drawImage(tileImage,tx+2,ty+2,cell-4,cell-4);}
++      else if(tile==='G'&&!mapImage) {
+         // Tiny tufts reveal diggable grass without competing with the pets.
+         for(let i=0;i<3;i++) {
+           const ox=13+(col*13+row*7+i*23)%49,oy=16+(row*17+col*11+i*19)%41;
+           line(c,[[tx+ox-4,ty+oy+2],[tx+ox-2,ty+oy-4],[tx+ox+1,ty+oy+1],[tx+ox+5,ty+oy-2]],'#94b17c',1.4);
+         }
+         if((row*8+col)%9===2) this.flower(tx+52,ty+52,4,'#f6eed0');
+       } else if(tile==='O') {
++        round(c,tx+3,ty+3,cell-6,cell-6,8,'rgba(255,248,232,0.78)','#eee1c6',1);
+         c.fillStyle='rgba(218,148,119,.095)';
+         for(let i=9;i<cell;i+=18){c.fillRect(tx+i,ty,5,cell);c.fillRect(tx,ty+i,cell,5);}
+         c.save();c.strokeStyle='#d8cbb1';c.lineWidth=1;c.setLineDash([3,4]);c.strokeRect(tx+5,ty+5,cell-10,cell-10);c.restore();
+         round(c,tx+2,ty+2,cell-4,cell-4,5,'rgba(255,255,255,0)','#eee1c6',1);
+-      } else if(tile==='R') {
++      } else if(tile==='R'&&!mapImage) {
+         ellipse(c,tx+16+(col*7)%30,ty+18+(row*9)%28,2,1.4,'#c5ac87','#c5ac87',0);
+         ellipse(c,tx+51,ty+55,2.5,1.2,'#d0b58f','#d0b58f',0);
+       } else if(tile==='B') {
+         c.save();c.translate(tx+36,ty+39);c.rotate(-.12);
+         round(c,-25,-16,49,31,7,'#ae9c7f',INK,2.3);round(c,-28,-3,9,22,4,'#978a70',INK,2);round(c,19,-3,10,22,4,'#978a70',INK,2);
+         line(c,[[-17,-10],[-6,-2],[-13,9],[3,16]],'#665c48',2.3);line(c,[[11,-11],[6,-3],[16,5]],'#665c48',2.3);
+         polygon(c,[[-3,-10],[3,-8],[0,-2],[7,1]],'#e2d2b1',INK,1);c.restore();
+         ellipse(c,tx+13,ty+54,3,2,'#e1d4ba',INK,0);ellipse(c,tx+57,ty+18,3,2,'#e1d4ba',INK,0);
+-      } else if(tile==='S') {
++      } else if(tile==='S'&&!mapImage) {
+         c.save();c.translate(tx+36,ty+37);
+         ellipse(c,0,11,30,17,'#bd9d77',INK,1.8);ellipse(c,0,5,25,21,'#6e6955',INK,2.8);ellipse(c,0,11,21,11,'#555443',INK,0);
+         line(c,[[-23,9],[-22,-5],[-10,-17],[9,-18],[24,-5],[24,10]],'#9a9271',7);
+         ellipse(c,-5,5,2,2,'#f3d495',INK,0);ellipse(c,5,5,2,2,'#f3d495',INK,0);
+         c.restore();
+       }
+-      if(grass){c.strokeStyle='rgba(105,135,87,.13)';c.lineWidth=1;c.strokeRect(tx+.5,ty+.5,cell-1,cell-1);}
++      if(grass||mapImage){c.strokeStyle='rgba(105,135,87,.13)';c.lineWidth=1;c.strokeRect(tx+.5,ty+.5,cell-1,cell-1);}
+     }
+     for(const side of ['ai','player'] as const) {
+       const path=map.paths[side];
+       for(let i=1;i<path.length-1;i++) {
+         if(i%2===0) continue;
+         const a=cellCenter(path[i].col,path[i].row), b=cellCenter(path[i+1].col,path[i+1].row);
+         c.save();c.translate(a.x,a.y);c.rotate(Math.atan2(b.y-a.y,b.x-a.x));
+         c.globalAlpha=.32+.04*Math.sin(seconds*2-i);line(c,[[-4,-5],[2,0],[-4,5]],'#9d825d',2.5);c.restore();
+       }
+     }
+     // A low stone wall sits exactly on the boundary; neither route crosses it.
+-    c.save();c.translate(x,y+cell*5);
++    if(!mapImage){c.save();c.translate(x,y+cell*5);
+     line(c,[[0,1],[576,1]],'#9b9c83',13);
+     for(let i=0;i<16;i++) round(c,i*37-9,-6,35,12,4,i%3?'#d4d6b9':'#e1dfc3','#a5ad91',1.3);
+-    c.restore();c.restore();
++    c.restore();}c.restore();
+     round(c,x,y,cell*8,cell*10,17,'rgba(255,255,255,0)','#8d9d7d',1.7);
+   }
+ 
+   private drawBanners(state:BattleState,seconds:number):void {
+     const c=this.c;
+     // Offset the rival ribbon to leave room for their orange tower.
+     round(c,177,193,282,34,14,'#edd7bf',INK,1.7);
++    if(!state.opponent){
+     ellipse(c,200,210,8,8,'#d39e89',INK,1.3);line(c,[[196,210],[200,214],[205,207]],PAPER,1.8);
+     this.label(t('render.rival'),219,211,17,INK,'left',800,192);
+     this.label('AI',439,210,12,'#987b64','center',800);
++    }
+     round(c,41,981,273,34,14,'#dce7cb',INK,1.7);
+     this.flower(62,998,8,'#e2bd73');this.label(t('render.yourGarden'),82,999,17,INK,'left',800,213);
+     // Readability comes from oranges, while these small chips show collected loot.
+     this.drawLootChip(473,194,state.sides.ai.loot.length);
+     this.drawLootChip(329,982,state.sides.player.loot.length);
+     void seconds;
+   }
+ 
+@@ -215,39 +225,50 @@ export class StickerRenderer {
+       ellipse(c,0,35,34,9,'rgba(76,89,63,.14)','',0);
+       c.translate(0,Math.sin(seconds*1.5+(side==='ai'?2:0))*1.3);
+       const override=this.assets.get('capybara');
+       if(override){
+         c.save();
+         if(state.sides[side].oranges<=0){c.translate(3,16);c.rotate(.45);}
+         this.drawImage(override,84,92,0,-2);c.restore();this.drawOrangeStack(state.sides[side].oranges,seconds);
+       }
+-      else drawCapybaraArt(c,seconds,state.sides[side].oranges,state.sides[side].oranges<=0);
++      else {
++        const orange=this.assets.get('orange');
++        drawCapybaraArt(c,seconds,orange?0:state.sides[side].oranges,state.sides[side].oranges<=0);
++        if(orange)this.drawOrangeStack(state.sides[side].oranges,seconds);
++      }
+       c.restore();
+     }
+   }
+ 
+   private drawOrangeStack(count:number,seconds:number):void {
+-    for(let i=0;i<Math.max(0,count);i++)drawOrange(this.c,Math.sin(seconds*1.5-i*.38)*(1.5+i*.8),-44-i*16,10,Math.sin(seconds*1.2-i*.4)*.07*(i+1));
++    for(let i=0;i<Math.max(0,count);i++)this.drawOrangeArt(Math.sin(seconds*1.5-i*.38)*(1.5+i*.8),-44-i*16,10,Math.sin(seconds*1.2-i*.4)*.07*(i+1));
++  }
++
++  private drawOrangeArt(x:number,y:number,size:number,rotation:number):void {
++    const image=this.assets.get('orange');
++    if(!image){drawOrange(this.c,x,y,size,rotation);return;}
++    this.c.save();this.c.translate(x,y);this.c.rotate(rotation);this.drawImage(image,size*2.3,size*2.3);this.c.restore();
+   }
+ 
+   private position(unit:Unit):Position {
+     if(unit.location.zone==='board')return cellCenter(unit.location.col,unit.location.row);
+     return{x:STAGE.benchX+unit.location.slot*STAGE.benchStep+STAGE.benchSize/2,y:STAGE.benchY+STAGE.benchSize/2+2};
+   }
+ 
+   private drawUnit(unit:Unit,position:Position,seconds:number,opacity=1,drag=false,loadout:Partial<BattleLoadout>={}):void {
+     const c=this.c,hero=HEROES[unit.kind],onBench=unit.location.zone==='bench';
+     const requiredCharge=hero?combatCharge(unit,loadout):1;
+     const scale=(onBench ? .85 : .72)*(1+(unit.level-1)*.08);
+     const wave=Math.sin(seconds*2.7+unit.id*1.71);
+     c.save();c.globalAlpha=opacity;c.translate(position.x,position.y);
+     ellipse(c,0,25,(hero?25:22)*scale,6,'rgba(72,79,53,.14)','',0);
+     if(hero) {
+-      c.save();c.globalAlpha*=.23;ellipse(c,0,10,31,25,hero.color,hero.color,0);c.restore();
++      ellipse(c,0,24,32,12,'#f3d58a','#bb9146',2.3);
++      ellipse(c,0,24,27,8,hero.color,'#ffeab0',1.8);
+       if(unit.energy>=requiredCharge-1) {c.save();c.globalAlpha*=.4+.15*Math.sin(seconds*5);ellipse(c,0,1,33,33,'rgba(255,255,255,0)','#f1c966',2);c.restore();}
+     }
+     c.save();c.translate(0,-2-Math.max(0,unit.animation)*3);c.scale(scale*(1+wave*.018),scale*(1-wave*.025));
+     if(unit.statuses.KNOCKDOWN)c.rotate(-.55);
+     const override=this.assets.get(unit.kind);
+     if(override)this.drawImage(override,77,77,0,-3);else drawUnitArt(c,unit.kind,seconds);
+     if(unit.buffTime>0){star(c,-30,-24+Math.sin(seconds*4)*2,5,'#efcf72',1);star(c,31,10,3.5,'#f9e19b',1);}
+     c.restore();
+@@ -299,16 +320,17 @@ export class StickerRenderer {
+     if(enemy.poison>0){ellipse(c,19,3,4,4,'#99b483',INK,1);ellipse(c,24,-5,2.4,2.4,'#a5bb8c',INK,1);}
+     if((enemy.hasteTime||0)>0){line(c,[[-25,9],[-32,9]],'#b69bc6',2.5);line(c,[[-23,16],[-35,16]],'#b69bc6',2);star(c,22,-15,4,'#c4a3cf',1);}
+     c.restore();
+   }
+ 
+   private drawInteractionUnderlay(state:BattleState,interaction:Interaction,seconds:number):void {
+     const c=this.c,drag=state.units.find(unit=>unit.id===interaction.draggingId),selected=state.units.find(unit=>unit.id===interaction.selectedId);
+     if(interaction.propId){this.drawPropTargets(state,interaction,seconds);return;}
++    this.drawMergeTargets(state,interaction,seconds,'board');
+     if(selected?.location.zone==='board'&&!drag&&!interaction.shovel) {
+       const p=this.position(selected),range=combatRange(selected,state.sides[selected.side].loadout);
+       c.save();c.beginPath();c.rect(STAGE.boardX,STAGE.boardY+5*STAGE.cell,STAGE.cell*8,STAGE.cell*5);c.clip();
+       if(range>0){c.fillStyle='rgba(92,153,138,.09)';c.strokeStyle='rgba(82,137,121,.58)';c.lineWidth=1.8;c.setLineDash([5,6]);c.beginPath();c.arc(p.x,p.y,range*STAGE.cell,0,Math.PI*2);c.fill();c.stroke();}
+       c.restore();round(c,p.x-32,p.y-32,64,64,12,'rgba(255,248,221,.16)',TEAL,3);
+     }
+     if(drag||interaction.shovel) {
+       for(let row=5;row<10;row++)for(let col=0;col<8;col++){
+@@ -329,17 +351,39 @@ export class StickerRenderer {
+       else if(!valid){line(c,[[p.x-6,p.y-6],[p.x+6,p.y+6]],CORAL,2.7);line(c,[[p.x+6,p.y-6],[p.x-6,p.y+6]],CORAL,2.7);}
+     }
+     void seconds;
+   }
+ 
+   private drawTraps(state:BattleState):void {
+     for(const trap of state.traps||[]) {
+       const point=cellCenter(trap.col,trap.row);this.c.save();this.c.translate(point.x,point.y);
+-      drawGlueTrap(this.c,trap.charges);this.label(String(trap.charges),20,-15,11,INK,'center',800);this.c.restore();
++      const image=this.assets.get('glue_trap_placed');if(image)this.drawImage(image,65,52);else drawGlueTrap(this.c,trap.charges);
++      this.label(String(trap.charges),20,-15,11,INK,'center',800);this.c.restore();
++    }
++  }
++
++  private drawMergeTargets(state:BattleState,interaction:Interaction,seconds:number,zone:'board'|'bench',onlyId?:number):void {
++    if(interaction.shovel||interaction.propId)return;
++    const source=state.units.find(unit=>unit.id===(interaction.draggingId??interaction.selectedId));
++    if(!source||source.side!=='player')return;
++    for(const target of getMergeTargets(state,source.id)){
++      const unit=state.units.find(unit=>unit.id===target.unitId);
++      if(!unit||unit.location.zone!==zone||(onlyId!==undefined&&unit.id!==onlyId))continue;
++      const c=this.c,p=this.position(unit),pulse=(Math.sin(seconds*4+unit.id)+1)/2,hero=target.kind==='hero';
++      c.save();c.globalAlpha=.72+pulse*.25;
++      ellipse(c,p.x,p.y+23,31+pulse*3,12+pulse*2,'rgba(255,255,255,0)',hero?'#d8aa46':'#62ac80',2.7);
++      if(hero){
++        ellipse(c,p.x,p.y+23,36+pulse*3,16+pulse*2,'rgba(255,255,255,0)','#d8aa46',1.8);
++        for(let i=0;i<3;i++){const a=seconds*.8+i*Math.PI*2/3;star(c,p.x+Math.cos(a)*36,p.y+23+Math.sin(a)*15,4,'#f1cf75',1);}
++        const y=p.y-48-Math.sin(seconds*2)*2;
++        round(c,p.x-33,y-9,66,18,8,'rgba(249,223,153,.92)','#c4a159',1.2);
++        this.label(t('p1.merge'),p.x,y+1,11,'#86612c','center',800,61);
++      }else this.label('▲',p.x+25,p.y-39-Math.sin(seconds*3)*2,15,'#62ac80','center',900);
++      c.restore();
+     }
+   }
+ 
+   private propUnitValid(id:string,unit:Unit):boolean {
+     if(unit.side!=='player'||(unit.washing||0)>0)return false;
+     const component=!!UNITS[unit.kind]&&UNITS[unit.kind].category==='component';
+     if(id==='washer')return component||(!HEROES[unit.kind]&&unit.level===1);
+     if(id==='clay')return component;
+@@ -382,16 +426,17 @@ export class StickerRenderer {
+       const hovered=interaction.pointer?this.hitTest(interaction.pointer.x,interaction.pointer.y):null;
+       const hot=hovered?.kind==='bench'&&hovered.slot===slot&&interaction.draggingId!==undefined;
+       const source=state.units.find(candidate=>candidate.id===interaction.draggingId);
+       const invalid=hot&&source&&unit&&source.id!==unit.id&&!MergeSystem.combine(source,unit).ok;
+       const selected=unit&&unit.id===interaction.selectedId;
+       c.save();c.shadowColor='rgba(93,80,54,.12)';c.shadowOffsetY=5;
+       round(c,x,y,w,w,19,invalid?'#efd7c6':hot?'#efe8bf':unit?'#fff9e8':'#eee4cf',invalid?CORAL:selected||hot?TEAL:'#bbaa8a',selected||hot?2.8:1.9);c.restore();
+       c.save();c.setLineDash([2,5]);round(c,x+6,y+6,w-12,w-12,14,'rgba(255,255,255,0)','#d5c6a7',1.2);c.restore();
++      if(unit)this.drawMergeTargets(state,interaction,seconds,'bench',unit.id);
+       if(unit)this.drawUnit(unit,this.position(unit),seconds,interaction.draggingId===unit.id ? .2 : 1,false,state.sides[unit.side].loadout);
+       else {
+         c.save();c.globalAlpha=.42;c.translate(x+w/2,y+w/2+1);ellipse(c,0,7,11,9,'#bbaa8c','',0);
+         [[-11,-4],[-4,-10],[5,-10],[13,-3]].forEach(([px,py])=>ellipse(c,px,py,4,5,'#bbaa8c','',0));c.restore();
+       }
+       ellipse(c,x+5,y+5,3.5,3.5,'#faf3df','#a89779',1.2);
+       if(unit&&interaction.propId&&this.propUnitValid(interaction.propId,unit)) {
+         round(c,x+3,y+3,w-6,w-6,16,'rgba(217,195,237,.10)','#a083c0',2.5);
+@@ -405,41 +450,42 @@ export class StickerRenderer {
+     const c=this.c,selected=state.units.find(unit=>unit.id===interaction.selectedId),{shovelX:x,shovelY:y}=STAGE;
+     let title=t('render.dragHint'),subtitle=t('render.keepCalm');
+     if(interaction.shovel){title=t('render.shovelHint');subtitle=t('render.repairHint');}
+     else if(selected){title=t(`${HEROES[selected.kind]?'hero':'unit'}.${selected.kind}`);const statuses=Object.entries(selected.statuses).filter(([,value])=>!!value).map(([key])=>t(`render.${({SEALED:'sealed',WET:'wet',KNOCKDOWN:'stunned',CONFUSED:'confused',MERGE_LOCK:'mergeLocked'} as Record<string,string>)[key]}`));subtitle=selected.statuses.SEALED?t('render.sealedHint'):statuses.join(' · ')||t(HEROES[selected.kind]?'render.legendary':'render.keepCalm');}
+     this.label(title,320,1040,17,INK,'center',800,350);
+     this.label(subtitle,320,1064,12,'#92836a','center',500,350);
+     c.save();c.shadowColor='rgba(76,70,51,.13)';c.shadowOffsetY=4;
+     ellipse(c,x,y,39,39,interaction.shovel?'#f1d48a':'#e4e7ce',INK,2.2);c.restore();
+-    c.save();c.translate(x,y-2);c.scale(.72,.72);drawShovelArt(c,!!interaction.shovel,state.sides.player.loadout?.equippedPassiveProps.includes('gold_doge'));c.restore();
++    c.save();c.translate(x,y-2);c.scale(.72,.72);this.drawShovel(!!interaction.shovel,state.sides.player.loadout?.equippedPassiveProps.includes('gold_doge'));c.restore();
+     if(interaction.shovel){c.save();c.setLineDash([3,6]);ellipse(c,x,y,44,44,'rgba(255,255,255,0)',TEAL,2);c.restore();}
+     round(c,x+13,y+19,35,22,9,state.sides.player.shovels?'#fff6da':'#e4d4c2',INK,1.7);
+     this.label(`×${state.sides.player.shovels}`,x+30,y+31,13,INK,'center',800);
+     void seconds;
+   }
+ 
+   private drawDrag(state:BattleState,interaction:Interaction,seconds:number):void {
+     if(!interaction.pointer)return;
+     const c=this.c,p=interaction.pointer;
+     if(interaction.propId){c.save();c.translate(p.x,p.y-23);c.globalAlpha=.92;drawPropCursor(c,interaction.propId,seconds);c.restore();return;}
+-    if(interaction.shovel){c.save();c.translate(p.x,p.y-12);c.globalAlpha=.9;drawShovelArt(c,true,state.sides.player.loadout?.equippedPassiveProps.includes('gold_doge'));c.restore();return;}
++    if(interaction.shovel){c.save();c.translate(p.x,p.y-12);c.globalAlpha=.9;this.drawShovel(true,state.sides.player.loadout?.equippedPassiveProps.includes('gold_doge'));c.restore();return;}
+     const drag=state.units.find(unit=>unit.id===interaction.draggingId);
+     if(!drag)return;
+     c.save();c.shadowColor='rgba(76,66,43,.18)';c.shadowBlur=15;c.shadowOffsetY=8;
+     this.drawUnit(drag,{x:p.x,y:p.y-20},seconds,.96,true,state.sides[drag.side].loadout);c.restore();
+     ellipse(c,p.x,p.y+18,3,3,TEAL,PAPER,1.5);
+   }
+ 
+   private drawEvents(state:BattleState,seconds:number,foreground=false,showDamageNumbers=true):void {
+     for(const event of state.events) {
+       const isForeground=event.type==='bubble'||event.type==='purge';
+       if(isForeground!==foreground)continue;
+       if(event.type==='damage'&&!showDamageNumbers)continue;
+       if(drawM3Event(this.c,event))continue;
++      if(event.type==='sprinkler'&&this.assets.has('sprinkler')){this.drawSprinklerOverride(event);continue;}
+       if(drawM2Event(this.c,event))continue;
+       const eventUnit=isForeground?state.units.find(unit=>unit.id===event.unitId):undefined;
+       const p=clamp(event.age/event.duration,0,1),from=eventUnit?this.position(eventUnit):cellCenter(event.col,event.row),c=this.c;
+       if(event.type==='orange')continue; // Count observation also covers debug additions/removals.
+       c.save();
+       if(event.type==='projectile') {
+         const target=cellCenter(event.targetCol??event.col,event.targetRow??event.row);
+         const x=from.x+(target.x-from.x)*p,y=from.y+(target.y-from.y)*p-Math.sin(p*Math.PI)*13;
+@@ -574,17 +620,34 @@ export class StickerRenderer {
+   }
+ 
+   private drawOrangeMotions():void {
+     const c=this.c;
+     for(const motion of this.orangeMotions){
+       const p=motion.age/1.1;c.save();c.globalAlpha=motion.add?Math.sin(p*Math.PI):1-p;
+       const x=motion.add?motion.x+motion.direction*(1-p)*72:motion.x+motion.direction*(25+motion.index*12)*p;
+       const y=motion.add?motion.targetY-70*(1-p):motion.y-24*p+150*p*p;
+-      drawOrange(c,x,y,10,motion.add?-.3*(1-p):motion.direction*p*5);c.restore();
++      this.drawOrangeArt(x,y,10,motion.add?-.3*(1-p):motion.direction*p*5);c.restore();
+     }
+   }
+ 
+   private drawImage(image:HTMLImageElement,width:number,height:number,x=0,y=0):void {
+     const ratio=Math.min(width/image.naturalWidth,height/image.naturalHeight),w=image.naturalWidth*ratio,h=image.naturalHeight*ratio;
+     this.c.drawImage(image,x-w/2,y-h/2,w,h);
+   }
++
++  private drawShovel(active:boolean,gold=false):void {
++    const image=this.assets.get('shovel');if(image)this.drawImage(image,82,82);else drawShovelArt(this.c,active,gold);
++  }
++
++  private drawSprinklerOverride(event:VisualEvent):void {
++    const image=this.assets.get('sprinkler');if(!image)return;
++    const points=event.points?.length?event.points:[{col:event.col,row:event.row},{col:event.targetCol??event.col,row:event.targetRow??event.row}];
++    const progress=clamp(event.duration>0?event.age/event.duration:1,0,1),step=progress*Math.max(0,points.length-1),index=Math.min(Math.floor(step),Math.max(0,points.length-2));
++    const a=points[index],b=points[Math.min(index+1,points.length-1)],local=step-index,p=cellCenter(a.col+(b.col-a.col)*local,a.row+(b.row-a.row)*local);
++    const c=this.c;c.save();c.globalAlpha*=Math.min(1,(1-progress)*7+.15);c.translate(p.x,p.y);c.rotate(Math.atan2(b.row-a.row,b.col-a.col));this.drawImage(image,70,70,0,-2);c.restore();
++    c.save();c.globalAlpha*=Math.min(1,(1-progress)*7+.15);c.translate(p.x,p.y);c.rotate(Math.atan2(b.row-a.row,b.col-a.col));
++    for(let i=0;i<8;i++){
++      const travel=(event.age*3+i/8)%1,x=15+travel*53,y=Math.sin(i*2.7)*travel*39;
++      line(c,[[x-9,y*.83],[x,y]],'#91d3df',3*(1-travel)+1);
++    }c.restore();
++  }
+ }
+
+## src/render/M3Art.ts
+diff --git "D:\\rea_game\\games\\capybara-defense\\.runtime\\p1-review-baseline\\src\\render\\M3Art.ts" "D:\\rea_game\\games\\capybara-defense\\src\\render\\M3Art.ts"
+index 0d833d8..b2aabca 100644
+--- "D:\\rea_game\\games\\capybara-defense\\.runtime\\p1-review-baseline\\src\\render\\M3Art.ts"
++++ "D:\\rea_game\\games\\capybara-defense\\src\\render\\M3Art.ts"
+@@ -1,8 +1,9 @@
++import {spriteUrl} from './AssetRegistry';
+ /** Inline, offline SVG stickers. Only fixed local geometry enters the markup. */
+ const ink='#514739',paper='#fff9eb';
+ const p=(d:string,fill='none',stroke=ink,width=2.4)=>`<path d="${d}" fill="${fill}" stroke="${stroke}" stroke-width="${width}"/>`;
+ const e=(x:number,y:number,rx:number,ry:number,fill:string,stroke=ink,width=2.4)=>`<ellipse cx="${x}" cy="${y}" rx="${rx}" ry="${ry}" fill="${fill}" stroke="${stroke}" stroke-width="${width}"/>`;
+ const r=(x:number,y:number,w:number,h:number,fill:string,rad=4)=>`<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="${rad}" fill="${fill}" stroke="${ink}" stroke-width="2.4"/>`;
+ const sparkle=p('M0 -7 L2 -2 7 0 2 2 0 7 -2 2 -7 0 -2 -2Z','#f3ce71');
+ const eyes=e(-9,-2,1.9,2.4,ink,ink,0)+e(9,-2,1.9,2.4,ink,ink,0)+p('M-4 8 Q0 12 4 8');
+ const crown=p('M-20 -18 L-23 -35 -10 -27 0 -39 10 -27 23 -35 20 -18Z','#efc85c')+e(0,-24,3,3,'#da8d8b');
+@@ -72,10 +73,14 @@ const weapons:Record<string,string>={
+   w10_cosmic_vacuum:r(-27,0,35,28,'#a598ba')+e(-18,30,6,6,'#6b697e')+e(3,30,6,6,'#6b697e')+p('M-8 0 Q-25 -25 1 -26 L24 -24','none','#857793',8)+p('M19 -33 L33 -34 36 -15 21 -14Z','#b4a6c8')+e(29,-24,8,11,'#6d5c84')+p('M28 -30 Q18 -12 32 -22','none','#dbbfdf',2)+p('M-17 10 H-5','none','#e1c88d',3),
+   w11_golden_hoop_ball:e(0,4,24,24,'#e9a25d')+p('M-24 4 H24 M0 -20 V28 M-16 -14 Q10 4 -16 22 M16 -14 Q-10 4 16 22','none','#8c704b',1.8)+e(0,4,33,12,'none','#e7c15f',4)+p('M-22 -16 L-27 -30 -8 -22 1 -37 10 -22 25 -28 21 -14','none','#eebc70',4),
+   w12_rain_crown_scepter:p('M0 0 V35','none','#c8ae67',7)+p('M-18 -25 L-23 -38 -8 -31 0 -43 8 -31 23 -38 18 -25Z','#efd077')+p('M-20 -22 L13 -27 26 -12 13 4 -20 -4Z','#a4b997')+e(15,-12,11,16,'#ccdab6')+e(16,-12,6,10,'#6c8e72')+p('M-31 -12 Q-34 -24 -25 -23 M30 -5 Q40 -10 33 -20','none','#90b5c3',2)+e(0,25,4,4,'#d0a2b1'),
+ };
+ function svg(id:string,art:string,size:number,fallback:number):string {
+   const n=Number.isFinite(size)&&size>0?Math.min(512,Math.max(16,Math.round(size))):fallback;
+   return `<svg viewBox="-48 -48 96 96" width="${n}" height="${n}" role="img" aria-label="${id}" data-sticker="${id}"><g stroke-linecap="round" stroke-linejoin="round"><path d="M-39 -26 Q-42 -42 -19 -40 L19 -41 Q42 -39 40 -18 L41 22 Q38 43 17 41 L-22 42 Q-43 38 -40 18Z" fill="${paper}" stroke="#fffdf6" stroke-width="5"/>${art}</g></svg>`;
+ }
+-export function avatarSticker(id:string,size=64):string {const key=Object.hasOwn(portraits,id)?id:'capybara';return svg(key,portraits[key],size,64);}
+-export function weaponSticker(id:string,size=48):string {const key=Object.hasOwn(weapons,id)?id:'m01_swatter';return svg(key,weapons[key],size,48);}
++function image(id:string,url:string,size:number,fallback:number):string {
++  const n=Number.isFinite(size)&&size>0?Math.min(512,Math.max(16,Math.round(size))):fallback;
++  return `<img src="${url.replace(/&/g,'&amp;').replace(/"/g,'&quot;')}" width="${n}" height="${n}" alt="${id}" data-sticker="${id}" style="object-fit:contain"/>`;
++}
++export function avatarSticker(id:string,size=64):string {const key=Object.hasOwn(portraits,id)?id:'capybara',url=spriteUrl(`avatar_${key}`);return url?image(key,url,size,64):svg(key,portraits[key],size,64);}
++export function weaponSticker(id:string,size=48):string {const key=Object.hasOwn(weapons,id)?id:'m01_swatter',url=spriteUrl(`weapon_${key}`)||spriteUrl(key);return url?image(key,url,size,48):svg(key,weapons[key],size,48);}
+
+## src/ui/stickers.ts
+diff --git "D:\\rea_game\\games\\capybara-defense\\.runtime\\p1-review-baseline\\__empty__" "D:\\rea_game\\games\\capybara-defense\\src\\ui\\stickers.ts"
+index e69de29..4bd035e 100644
+--- "D:\\rea_game\\games\\capybara-defense\\.runtime\\p1-review-baseline\\__empty__"
++++ "D:\\rea_game\\games\\capybara-defense\\src\\ui\\stickers.ts"
+@@ -0,0 +1,84 @@
++import {spriteUrl} from '../render/AssetRegistry';
++import {avatarSticker} from '../render/M3Art';
++import {UNIT_ICONS,escapeHtml} from './art';
++
++const ink='#514739';
++const p=(d:string,fill='none',stroke=ink,width=2.5)=>`<path d="${d}" fill="${fill}" stroke="${stroke}" stroke-width="${width}"/>`;
++const r=(x:number,y:number,w:number,h:number,fill:string,rx=5)=>`<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="${rx}" fill="${fill}" stroke="${ink}" stroke-width="2.5"/>`;
++const e=(x:number,y:number,rx:number,ry:number,fill:string)=>`<ellipse cx="${x}" cy="${y}" rx="${rx}" ry="${ry}" fill="${fill}" stroke="${ink}" stroke-width="2.5"/>`;
++const leaf=p('M0 17 Q-27 1 -19 -22 Q3 -21 0 17 Q0 -15 24 -28 Q34 -1 0 17Z','#9eb77c')+p('M0 29 V-5');
++const orange=(x:number,y:number)=>e(x,y,10,10,'#edb25f')+p(`M${x} ${y-9} q3 -10 11 -6 q-1 8 -11 6Z`,'#94ad75');
++const eyes=e(-9,-1,2,3,ink)+e(9,-1,2,3,ink)+p('M-5 12 Q0 17 5 12');
++const head=(color:string)=>e(-19,-20,8,10,color)+e(19,-20,8,10,color)+e(0,3,26,24,color)+eyes;
++const crown=p('M-20 -22 L-23 -36 -9 -29 0 -42 9 -29 23 -36 20 -22Z','#e7c679');
++const rat=head('#bcae94')+p('M-22 19 Q-42 29 -28 35 Q-15 38 -18 28','none','#b794a0',4)+e(0,7,5,4,'#d49f9d')+p('M-6 16 H6 V24 H-6Z','#fff6d8');
++const bee=e(-18,-8,12,18,'#d5e4dc')+e(18,-8,12,18,'#d5e4dc')+e(0,7,20,25,'#e8c46f')+p('M-18 7 H18 M-15 21 H15','none',ink,6)+eyes;
++const frog=e(0,10,28,22,'#9bb88a')+e(-17,-13,11,12,'#9bb88a')+e(17,-13,11,12,'#9bb88a')+e(-17,-14,5,6,'#fff9eb')+e(17,-14,5,6,'#fff9eb')+e(-16,-14,2,3,ink)+e(16,-14,2,3,ink)+p('M-16 13 Q0 23 16 13');
++const coon=head('#a7b2a5')+p('M-25 -4 L-15 -12 0 -5 15 -12 25 -4 15 5 0 0 -15 5Z','#687a71')+e(-9,-4,2,3,'#fff9eb')+e(9,-4,2,3,'#fff9eb');
++const enemies:Record<string,string>={
++  rat,
++  roach:e(0,7,16,28,'#aa9173')+p('M0 -18 V32 M-12 -12 L-29 -24 M12 -12 L29 -24 M-14 0 L-30 -6 M14 0 L30 -6 M-15 12 L-33 18 M15 12 L33 18 M-10 27 L-22 38 M10 27 L22 38','none',ink,3)+e(-5,-10,2,3,ink)+e(5,-10,2,3,ink),
++  crab:e(0,12,25,18,'#d69f87')+e(-12,-8,5,9,'#e8bd9d')+e(12,-8,5,9,'#e8bd9d')+e(-12,-11,2,3,ink)+e(12,-11,2,3,ink)+p('M-19 7 L-34 -9 -35 -22 -25 -15 -20 -29 -17 -14 -27 -5 M19 7 L34 -9 35 -22 25 -15 20 -29 17 -14 27 -5 M-23 18 L-36 24 M23 18 L36 24 M-17 27 L-28 34 M17 27 L28 34','none','#b4826c',5),
++  killer_bee:bee+p('M-14 -10 L-3 -5 M14 -10 L3 -5 M-6 31 L0 42 6 31Z','#aa8067')+p('M-23 -17 L-30 -29 M23 -17 L30 -29'),
++  charmed_rat:rat+p('M17 -21 Q8 -32 18 -36 Q23 -37 26 -31 Q31 -36 36 -31 Q42 -21 26 -13Z','#dbaaaf'),
++  husky_wrecker:p('M-25 -3 L-28 -35 -7 -20 Q0 -23 8 -20 L29 -35 25 -2 Q33 29 0 32 Q-33 29 -25 -3Z','#a7b9b5')+p('M-18 -6 L-7 -14 0 -3 7 -14 18 -6 12 15 0 26 -12 15Z','#f8efd6')+e(-10,-3,3,4,ink)+e(10,-3,3,4,ink)+p('M-4 9 H4 L0 14Z',ink)+p('M-22 28 L-11 21 -2 30 10 23 24 30','#c9ac87'),
++  mega_roomba:e(0,16,34,19,'#879d98')+e(0,4,34,22,'#c7d3c2')+e(0,0,22,12,'#a7b8a7')+r(-9,-9,18,13,'#e1b185')+e(0,-3,3,3,'#f5dfad')+p('M-24 15 H24 M-18 22 H18 M-25 27 L-34 37 M25 27 L34 37'),
++  dr_clippers:head('#d8bd96')+p('M-22 -8 H22 L17 -21 H-17Z','#f2ead7')+r(15,9,20,30,'#a5b8b4')+r(13,4,24,8,'#d3d8c8')+p('M16 3 V-7 M22 3 V-7 M28 3 V-7 M34 3 V-7 M20 21 H30'),
++  box_kraken:r(-27,-22,54,51,'#c7a780')+p('M-27 -22 L-7 -36 10 -23 27 -22 M-27 -22 L-10 -10 0 -21 12 -10 27 -22 M0 -21 V27','none','#8b755a')+e(-12,0,3,4,ink)+e(12,0,3,4,ink)+p('M-26 17 Q-43 7 -38 27 Q-33 40 -22 29 M26 17 Q43 7 38 27 Q33 40 22 29','none','#ae91af',6),
++  sad_rain_frog:frog+p('M-31 -26 Q-38 -37 -24 -39 Q-17 -49 -6 -41 Q7 -45 11 -33 Q26 -34 24 -23Z','#b4bec1')+p('M-22 -19 L-26 -11 M-9 -20 L-12 -12 M7 -18 L4 -10','none','#88b8c4',3),
++  king_skunk:p('M-18 19 Q-46 9 -29 -31 Q-14 -49 -3 -31 Q5 -6 -6 12Z','#68766d')+p('M-24 -29 Q-35 0 -15 17','none','#f4e9d2',8)+head('#77857c')+p('M0 -20 Q-9 -3 0 5 Q9 -3 0 -20Z','#f9f0d7')+p('M25 17 Q43 6 38 29 Q27 41 22 28Z','#a2b48a'),
++  diva_kitty:p('M-24 0 L-29 -33 -9 -21 Q0 -25 10 -21 L29 -33 24 0 Q32 28 0 31 Q-32 28 -24 0Z','#d8c5c0')+p('M-17 -1 Q-10 7 -3 -1 M3 -1 Q10 7 17 -1 M-15 -1 L-19 -6 M15 -1 L19 -6 M-3 10 Q0 16 3 10')+p('M23 -21 Q16 -36 26 -37 Q32 -39 35 -32 Q44 -39 45 -29 Q42 -20 31 -14Z','#deacb6'),
++  buff_roo:p('M-17 -8 L-19 -39 -8 -37 -4 -15 M17 -8 L19 -39 8 -37 4 -15','#c8a17c')+head('#c8a17c')+e(-27,21,13,15,'#c88d7f')+e(27,21,13,15,'#c88d7f')+r(-34,11,15,8,'#edc6a0')+r(19,11,15,8,'#edc6a0')+p('M-11 27 Q0 37 11 27','none','#eed3ac',6),
++  hornet_queen:bee+crown+p('M-18 -14 L-7 -7 M18 -14 L7 -7 M-6 32 L0 43 6 32Z','#a37e64')+p('M-29 0 L-37 10 M29 0 L37 10','none','#b799c0',4),
++  screaming_marmot:head('#b79b7a')+e(0,12,12,16,'#766957')+p('M-8 1 H8 V10 H-8Z','#fff0ce')+p('M-31 -10 L-39 -18 M-32 1 H-43 M31 -10 L39 -18 M32 1 H43','none','#d5b781',3),
++  trash_coon:coon+r(-24,19,48,18,'#9aaa9b')+r(-28,15,56,8,'#c3cbb3')+p('M-15 27 H15 M-8 33 H8 M25 -15 L35 -35','none','#8c759f',4)+e(34,-34,8,8,'#d7b4ca')+p('M29 -33 H39 M34 -39 V-29'),
++  dj_rat_king:rat+crown+r(-38,10,18,27,'#9d91aa')+r(20,10,18,27,'#9d91aa')+e(-29,25,6,6,'#d3c0d4')+e(29,25,6,6,'#d3c0d4')+p('M-29 8 V-12 Q0 -39 29 -12 V8','none','#91859b',5),
++};
++const tools:Record<string,string>={
++  shovel:p('M0 -7 V-29 M-10 -29 V-39 H10 V-29Z','none','#b39a79',6)+p('M-15 -7 H15 L12 18 0 33 -12 18Z','#bbc8b9')+p('M0 0 V23','none','#e3e5cd',3),
++  sprinkler:r(-28,-6,47,29,'#e9c977')+r(-15,-25,25,22,'#b4d5cf')+p('M9 -19 H27 L34 -11','none','#c8a157',5)+e(-17,24,8,8,'#798b80')+e(15,24,8,8,'#798b80')+p('M26 -3 L38 -8 M26 3 H42 M26 9 L38 15','none','#94c8d0',3),
++};
++const props:Record<string,string>={
++  washer:r(-29,-30,58,62,'#b6c9c1')+r(-24,-25,48,11,'#f5e4bb')+e(0,10,20,20,'#f8f2d9')+e(0,10,13,13,'#a1c7cb')+p('M-10 9 Q0 0 10 11 Q0 21 -10 9Z','#d6b1be'),
++  clay:e(0,12,28,17,'#cbb0cc')+p('M-22 3 Q-25 -18 -9 -17 Q-3 -35 13 -22 Q29 -15 23 6Z','#dcbdd0')+e(-8,-4,3,4,'#f5dfad')+p('M3 11 Q15 -2 20 8','none','#a681aa',4),
++  milk_bottle:p('M-11 -19 V-28 Q0 -42 11 -28 V-19Z','#e0b98e')+r(-17,-20,34,9,'#c3aec9')+p('M-16 -9 Q-27 4 -21 29 Q0 40 21 29 Q27 4 16 -9Z','#fff1cc')+p('M8 1 H18 M8 10 H19 M8 19 H18','none','#bda3b5')+e(-7,13,5,7,'#e2bfa1'),
++  whistle:p('M-29 -3 Q-34 23 -7 27 Q17 28 21 7 L35 -3 29 -17 10 -8 Q-10 -23 -29 -3Z','#dfc16f')+e(-9,6,11,12,'#f5da8b')+p('M21 -8 L28 4 M-24 -18 Q-34 -33 -22 -36 M-12 -25 L-9 -36','none','#a697b2'),
++  expired_can:r(-23,-27,46,58,'#b5c4a2')+e(0,-26,23,7,'#d7ddc5')+r(-23,-8,46,25,'#e8bc98',0)+p('M-12 5 L-3 -3 6 6 -1 13Z','#e3cf94')+p('M-13 -28 H10 M-15 28 H15'),
++  catnip:leaf+r(-17,16,34,16,'#d4b18d')+p('M-12 24 H12','none','#f7dfad'),
++  glue_trap:p('M-33 5 L17 -22 36 10 -15 34Z','#c9ae82')+p('M-24 6 L14 -14 25 9 -14 26Z','#e7cc8c')+p('M-8 2 Q11 -9 14 3 Q11 13 -2 13 Q-15 9 -8 2Z','#bca0c1')+e(-2,3,3,3,'#f3e1b8'),
++  recycle_bin:r(-23,-18,46,50,'#9fb89a')+r(-28,-24,56,9,'#c3d2ae')+p('M-10 -25 V-32 H10 V-25 M-11 2 L0 -7 11 2 M0 -7 V15 M-11 15 H11','none','#f9ebc5',4),
++  gold_doge:p('M-23 -3 L-28 -29 -9 -17 Q0 -24 10 -17 L28 -29 23 -2 Q33 29 0 31 Q-33 29 -23 -3Z','#e3c16e')+e(-10,3,2,3,ink)+e(10,3,2,3,ink)+p('M-12 13 Q0 26 12 13 M-3 12 H3')+e(26,25,10,10,'#f2d58b')+p('M26 19 V31'),
++  auto_shovel:r(-31,8,62,26,'#abc2ad')+r(-20,-24,40,31,'#e1c894')+p('M-9 -23 V-34 H9 V-23 M0 2 V22','none','#8c9d96',6)+p('M-10 20 H10 L8 30 H-8Z','#c9d4ca')+e(-22,32,6,6,'#86978b')+e(22,32,6,6,'#86978b'),
++  giant_orange_cat:p('M-28 -4 L-28 -29 -11 -18 Q0 -24 12 -18 L28 -29 29 -4 Q38 28 0 32 Q-37 27 -28 -4Z','#e4ad6b')+p('M-16 3 H-7 M7 3 H16 M-5 15 Q0 22 5 15 M-8 -18 L-6 -8 M0 -21 V-10 M8 -18 L6 -8')+p('M-27 15 H-38 M27 15 H38'),
++  vip_poster:r(-25,-33,50,65,'#ead9ac')+p('M-27 -23 H27 M-27 25 H27','none','#b29471',5)+p('M-12 4 L-15 -11 -5 -6 0 -17 6 -6 15 -11 12 4Z','#e4bd66')+p('M-13 15 H13 M-7 21 H7','none','#ac9a77'),
++  extra_oranges:e(0,20,33,10,'#d4c7a4')+orange(-17,8)+orange(16,8)+orange(0,-9),
++  shared_oranges:p('M-33 -20 H33 V-6 Q22 0 33 6 V25 H-33 V6 Q-22 0 -33 -6Z','#d3bea2')+p('M8 -15 V20','none','#faf0d0',3)+orange(-12,2)+p('M18 -8 H26 M18 3 H26 M18 14 H26'),
++  hyper_party:p('M-30 30 L-18 -10 11 17Z','#d8a0b2')+p('M-24 11 L-8 22 M-20 0 L1 15','none','#f7df9f',5)+p('M-7 -15 Q-14 -34 0 -32 Q16 -26 7 -15 M13 -6 Q31 -24 32 -9 M16 7 L35 3 M-22 -25 L-29 -34','none','#a5bb91',3)+e(24,24,4,4,'#c4afd0'),
++  banana_peel:p('M-3 -16 Q-20 -3 -30 20 Q-11 24 1 3 Q11 23 31 20 Q17 -7 5 -17Z','#edce76')+p('M-3 -16 L-2 -28 7 -26 5 -17Z','#b1b983')+p('M0 -9 L1 3 M-23 18 L-7 -1 M25 17 L10 -2','none','#bda65c',2),
++  emp_jammer:r(-21,-3,42,35,'#aebbc2')+e(0,15,7,7,'#d3b4cf')+p('M0 -3 V-22 M-10 -17 Q0 -28 10 -17 M-19 -24 Q0 -43 19 -24','none','#9287aa',3)+p('M-26 8 H-32 M26 8 H32 M-12 29 H12'),
++  promo_badge:p('M-19 9 L-23 35 -7 28 0 37 8 10 M19 9 L24 34 9 27 1 35 -7 8','#c5a9c8')+e(0,-7,25,25,'#e6c577')+e(0,-7,17,17,'#f5df9f')+p('M0 -19 L4 -11 13 -10 7 -3 8 6 0 2 -8 6 -7 -3 -13 -10 -4 -11Z','#c3a05e'),
++  tall_perch:p('M-19 31 V-16 M18 31 V-16','none','#b69976',6)+r(-29,22,58,10,'#ceb48e')+r(-27,-17,54,9,'#b4c59e')+p('M-18 -26 L13 -36 21 -19 -12 -11Z','#adbcc1')+e(17,-28,9,10,'#d5ddd0')+p('M0 -17 V-4 M-7 -4 H8'),
++  bee_overtime:e(-18,-13,12,16,'#d3e3df')+e(15,-13,12,16,'#d3e3df')+e(0,4,19,24,'#efd07c')+p('M-18 3 H18 M-14 17 H14','none','#665e4c',6)+e(-7,-5,2,3,ink)+e(7,-5,2,3,ink)+e(23,25,12,12,'#eed49a')+p('M23 18 V25 L29 28'),
++};
++const sizeOf=(size:number,fallback:number)=>Number.isFinite(size)&&size>0?Math.max(16,Math.min(512,Math.round(size))):fallback;
++function geometry(id:string,art:string,size:number):string {
++  return `<svg viewBox="-48 -48 96 96" width="${size}" height="${size}" role="img" aria-label="${id}" data-sticker="${id}"><g stroke-linecap="round" stroke-linejoin="round"><path d="M-39 -26 Q-42 -42 -19 -40 L19 -41 Q42 -39 40 -18 L41 22 Q38 43 17 41 L-22 42 Q-43 38 -40 18Z" fill="#fff9eb" stroke="#fffdf6" stroke-width="5"/>${art}</g></svg>`;
++}
++function image(id:string,size:number):string|undefined {
++  const url=spriteUrl(id);return url?`<img src="${escapeHtml(url)}" width="${size}" height="${size}" alt="${id}" data-sticker="${id}" style="object-fit:contain"/>`:undefined;
++}
++export function propSticker(id:string,size=48):string {
++  const key=Object.hasOwn(props,id)?id:'washer',n=sizeOf(size,48),override=image(`prop_${key}`,n);
++  return override||`<svg viewBox="-48 -48 96 96" width="${n}" height="${n}" role="img" aria-label="${key}" data-sticker="prop_${key}"><g stroke-linecap="round" stroke-linejoin="round"><path d="M-39 -26 Q-42 -42 -19 -40 L19 -41 Q42 -39 40 -18 L41 22 Q38 43 17 41 L-22 42 Q-43 38 -40 18Z" fill="#fff9eb" stroke="#fffdf6" stroke-width="5"/>${props[key]}</g></svg>`;
++}
++export function unitSticker(kind:string,size=40):string {
++  const key=Object.hasOwn(UNIT_ICONS,kind)||Object.hasOwn(enemies,kind)?kind:'hamster',n=sizeOf(size,40),override=image(key,n);
++  if(override)return override;
++  if(Object.hasOwn(enemies,key))return geometry(key,enemies[key],n);
++  if(['hamster','squirrel','bee'].includes(key))return avatarSticker(key,n);
++  return `<span role="img" aria-label="${key}" data-sticker="${key}" style="display:inline-grid;place-items:center;width:${n}px;height:${n}px;font-size:${Math.round(n*.63)}px">${escapeHtml(UNIT_ICONS[key])}</span>`;
++}
++export function sceneSticker(id:'menu_banner'|'logo_capy'|'sprinkler'|'shovel',fallback:string,size?:number):string {
++  const n=sizeOf(size??(id==='menu_banner'?400:64),64);
++  return image(id,n)||(Object.hasOwn(tools,id)?geometry(id,tools[id],n):fallback);
++}
+
+## scripts/sync-assets.mjs
+diff --git "D:\\rea_game\\games\\capybara-defense\\.runtime\\p1-review-baseline\\__empty__" "D:\\rea_game\\games\\capybara-defense\\scripts\\sync-assets.mjs"
+index e69de29..2e6d0ce 100644
+--- "D:\\rea_game\\games\\capybara-defense\\.runtime\\p1-review-baseline\\__empty__"
++++ "D:\\rea_game\\games\\capybara-defense\\scripts\\sync-assets.mjs"
+@@ -0,0 +1,45 @@
++import {copyFile,mkdir,readdir,writeFile,lstat,realpath} from 'node:fs/promises';
++import path from 'node:path';
++import {fileURLToPath} from 'node:url';
++
++const projectRoot=path.resolve(path.dirname(fileURLToPath(import.meta.url)),'..');
++const safeName=/^[a-z][a-z0-9_]*\.png$/;
++function assertInside(root,target){
++  const relative=path.relative(root,target);
++  if(relative==='..'||relative.startsWith(`..${path.sep}`)||path.isAbsolute(relative))throw Error(`Sprite target is outside the game directory: ${target}`);
++}
++async function rejectLink(filename){
++  try{if((await lstat(filename)).isSymbolicLink())throw Error(`Sprite target link/junction is not allowed: ${filename}`);}
++  catch(error){if(error.code!=='ENOENT')throw error;}
++}
++async function checkTargetDirectory(targetDir){
++  assertInside(projectRoot,targetDir);
++  // Check every existing ancestor before mkdir can follow a directory junction.
++  for(let current=targetDir;;current=path.dirname(current)){
++    await rejectLink(current);
++    if(current===path.dirname(current))break;
++  }
++  await mkdir(targetDir,{recursive:true});
++  assertInside(await realpath(projectRoot),await realpath(targetDir));
++}
++async function pngNames(directory){
++  try{return (await readdir(directory,{withFileTypes:true})).filter(entry=>entry.isFile()&&safeName.test(entry.name)).map(entry=>entry.name).sort();}
++  catch(error){if(error.code==='ENOENT')return [];throw error;}
++}
++/** Copies optional local art without deleting an existing destination override. */
++export async function syncAssets({sourceDir=path.resolve(projectRoot,'../../design/assets/sprites'),targetDir=path.resolve(projectRoot,'public/sprites')}={}){
++  targetDir=path.resolve(targetDir);
++  await checkTargetDirectory(targetDir);
++  const source=await pngNames(sourceDir);
++  // Validate the entire write batch before replacing any PNG or manifest bytes.
++  const targets=new Set([...source,'manifest.json',...(await readdir(targetDir)).filter(name=>safeName.test(name))]);
++  for(const name of targets)await rejectLink(path.join(targetDir,name));
++  for(const name of source)await copyFile(path.join(sourceDir,name),path.join(targetDir,name));
++  const ids=(await pngNames(targetDir)).map(name=>name.slice(0,-4));
++  await writeFile(path.join(targetDir,'manifest.json'),`${JSON.stringify(ids,null,2)}\n`);
++  console.log(`Sprites: copied ${source.length}; manifest contains ${ids.length} images${source.length?'':' (optional source absent or empty)'}.`);
++  return ids;
++}
++if(process.argv[1]&&path.resolve(process.argv[1])===fileURLToPath(import.meta.url)){
++  syncAssets().catch(error=>{console.error(error);process.exitCode=1;});
++}
+
+## public/sprites/README.md
+diff --git "D:\\rea_game\\games\\capybara-defense\\.runtime\\p1-review-baseline\\public\\sprites\\README.md" "D:\\rea_game\\games\\capybara-defense\\public\\sprites\\README.md"
+index fae5c6c..93153be 100644
+--- "D:\\rea_game\\games\\capybara-defense\\.runtime\\p1-review-baseline\\public\\sprites\\README.md"
++++ "D:\\rea_game\\games\\capybara-defense\\public\\sprites\\README.md"
+@@ -1,9 +1,9 @@
+-# Optional sticker artwork
++# Optional full-scene sticker artwork
+ 
+ The game ships with complete procedural Canvas artwork. No image download is required.
+ 
+ To override a character, place a transparent PNG here and list its bare id in `manifest.json`:
+ 
+ ```json
+ ["capybara", "hamster", "kungfu_po", "box_kraken"]
+ ```
+@@ -15,8 +15,88 @@ Use a square 256 × 256 or larger canvas, transparent background, generous clear
+ - Basic pets: `hamster`, `hedgehog`, `squirrel`, `corgi`, `bee`.
+ - Components: `panda`, `cat`, `shiba`, `hat_bamboo`, `hat_shades`, `hat_wizard`, `goose`, `cleaver`, `rooster`, `basketball`, `raccoon`, `trash_lid`, `frog`, `crown`.
+ - Heroes: `kungfu_po`, `bamboo_mafia`, `zen_master`, `puss_in_hat`, `meowfia`, `purrcerer`, `samurai_doge`, `doge_wick`, `ronin_goose`, `ballin_rooster`, `rocket_coon`, `pepe_king`.
+ - Enemies: `rat`, `roach`, `crab`.
+ - Bosses: `husky_wrecker`, `mega_roomba`, `dr_clippers`, `box_kraken`, `sad_rain_frog`, `king_skunk`.
+ - Guardian: `capybara`. Include the capybara **and its wooden bath tub**, but no oranges. The live orange stack is always drawn separately so life remains readable. Keep the top of the head near 23% of image height; the tub should reach 85%.
+ 
+ Keep the silhouette readable at 56 logical pixels. Large boss PNGs are drawn around 66–90 logical pixels. Art is cosmetic only: changing it does not alter range, movement, input targets, or game rules.
++
++## Synchronization and loading
++
++Run `npm run sync-assets` in the game directory. The zero-dependency script copies only regular lowercase PNG filenames matching `^[a-z][a-z0-9_]*\.png$` from the optional read-only source `../../design/assets/sprites/`. It scans the destination and writes a sorted array manifest. It never deletes existing destination art, creates the source, or fails because the source is absent/empty. Uppercase extensions, hyphens, directories and symlinks are skipped. Canvas and HTML share a loaded-only registry; malformed manifests, missing files and decode failures retain the built-in fallback. Vite's `BASE_URL` supports relative/subdirectory hosting. HTML refreshes once the initial asset batch settles.
++
++The lists below are the complete P1 catalog and extend the original examples above. Characters, objects, props, weapons and avatars should be transparent RGBA PNG at 256×256 or 512×512 with clear margins. Keep feet near the lower center so gold hero disks remain visible. Level/status badges, energy, hits, shields, weapon effects and input positions remain dynamic.
++
++## Four maps and tile aliases
++
++Maps fill the exact 8×10 board, 576×720 logical pixels. Recommended size: 1152×1440 or 960×1200. Align roads, grass, nests, guardian corners and the center wall to this grid. Maps may be opaque and are clipped to the board. Static G/R/S/C tiles never paint over external maps; route arrows and subtle grid lines remain.
++
++`map_sunny_backyard`, `map_sakura_onsen`, `map_midnight_kitchen`, `map_cat_tower_maze`.
++
++Dynamic tiles should be square 256×256 RGBA with transparent margins. Open tiles prefer the map-specific alias then the generic alias. Missing art becomes a translucent cream soft mat with an inset dashed border; broken tiles retain cracked rubble.
++
++`tile_open`, `tile_open_sunny_backyard`, `tile_open_sakura_onsen`, `tile_open_midnight_kitchen`, `tile_open_cat_tower_maze`, `tile_broken`.
++
++## Five guardians and objects
++
++- `capybara`: guardian and wooden tub only; exclude oranges. Head top near 23% of image height, tub bottom near 85%. The tub still tips on defeat.
++- `orange`: one orange and leaf; life stacks and flying gain/loss remain dynamic.
++- `shovel`: garden shovel, centered upright; covers the tool button and dragged cursor.
++- `sprinkler`: compact water truck pointing right, following the captured path with procedural water jets.
++- `glue_trap_placed`: glue board from above; charge counter remains a separate overlay.
++
++## Nineteen basic pets/components and twelve heroes
++
++Basics (5): `hamster`, `squirrel`, `hedgehog`, `corgi`, `bee`.
++
++Components (14): `panda`, `cat`, `shiba`, `hat_bamboo`, `hat_shades`, `hat_wizard`, `goose`, `cleaver`, `rooster`, `basketball`, `raccoon`, `trash_lid`, `frog`, `crown`.
++
++Heroes (12): `kungfu_po`, `bamboo_mafia`, `zen_master`, `puss_in_hat`, `meowfia`, `purrcerer`, `samurai_doge`, `doge_wick`, `ronin_goose`, `ballin_rooster`, `rocket_coon`, `pepe_king`.
++
++All heroes retain gold double-ring disks and near-full energy pulses on board and bench. Merge candidates receive green upgrade or gold recipe target indicators.
++
++## Five mobs and twelve Bosses
++
++Mobs: `rat`, `roach`, `crab`, `killer_bee`, `charmed_rat`.
++
++Bosses: `husky_wrecker`, `mega_roomba`, `dr_clippers`, `box_kraken`, `sad_rain_frog`, `king_skunk`, `diva_kitty`, `buff_roo`, `hornet_queen`, `screaming_marmot`, `trash_coon`, `dj_rat_king`.
++
++Bosses retain HP, hit flashes, shields, burn, poison, haste and captured-path skills. HTML compendium/HUD icons have distinct geometric SVG fallbacks.
++
++## Twenty black-market props
++
++Use the `prop_` prefix. Each missing prop has its own cream-board SVG geometry, with no Emoji text inside SVG.
++
++- `prop_washer`, `prop_clay`, `prop_milk_bottle`, `prop_whistle`
++- `prop_expired_can`, `prop_catnip`, `prop_glue_trap`, `prop_recycle_bin`
++- `prop_gold_doge`, `prop_auto_shovel`, `prop_giant_orange_cat`, `prop_vip_poster`
++- `prop_extra_oranges`, `prop_shared_oranges`, `prop_hyper_party`, `prop_banana_peel`
++- `prop_emp_jammer`, `prop_promo_badge`, `prop_tall_perch`, `prop_bee_overtime`
++
++## Thirty-six weapons
++
++Use `weapon_<id>` (preferred). Direct `<id>` aliases also work; prefixed IDs win. Missing art retains the original distinct M3 SVG.
++
++- `weapon_m01_swatter`, `weapon_m02_slipper`, `weapon_m03_scratcher`, `weapon_m04_baguette`
++- `weapon_m05_duster`, `weapon_m06_stool`, `weapon_m07_rolling_pin`, `weapon_m08_durian`
++- `weapon_m09_cat_blade`, `weapon_m10_bamboo_staff`, `weapon_m11_salted_fish`, `weapon_m12_iron_wok`
++- `weapon_r01_rubber_band`, `weapon_r02_duck_squirt`, `weapon_r03_bubble_gun`, `weapon_r04_tennis_launcher`
++- `weapon_r05_hair_dryer`, `weapon_r06_pressure_washer`, `weapon_r07_popcorn_cannon`, `weapon_r08_coin_slingshot`
++- `weapon_r09_bamboo_bazooka`, `weapon_r10_acorn_minigun`, `weapon_r11_sniper_laser`, `weapon_r12_junk_mortar`
++- `weapon_w01_teaser`, `weapon_w02_balloon`, `weapon_w03_bug_zapper`, `weapon_w04_yarn_orb`
++- `weapon_w05_disco_ball`, `weapon_w06_yarn_storm`, `weapon_w07_cat_scratch_meteor`, `weapon_w08_fortune_fish`
++- `weapon_w09_yin_yang_burner`, `weapon_w10_cosmic_vacuum`, `weapon_w11_golden_hoop_ball`, `weapon_w12_rain_crown_scepter`
++
++## Sixteen avatars
++
++- `avatar_capybara`, `avatar_hamster`, `avatar_squirrel`, `avatar_bee`
++- `avatar_cat_swordsman`, `avatar_doge_agent`, `avatar_goose_bully`, `avatar_kungfu_panda`
++- `avatar_rooster_star`, `avatar_frog_king`, `avatar_market_coon`, `avatar_salted_fish`
++- `avatar_bamboo_master`, `avatar_sakura_capy`, `avatar_corgi_crown`, `avatar_zen_capy`
++
++## Two main illustrations
++
++- `menu_banner`: transparent 4:3 scene, recommended 1200×900. Center capybara and orange tower with clear margins; HTML preserves aspect ratio.
++- `logo_capy`: transparent square brand mascot, recommended 256×256 or 512×512, legible at 40–64 logical pixels.
++
++The existing menu illustration and brand SVG remain the fallback. No remote art or web fonts are fetched.
+
+## public/sprites/manifest.json
+diff --git "D:\\rea_game\\games\\capybara-defense\\.runtime\\p1-review-baseline\\public\\sprites\\manifest.json" "D:\\rea_game\\games\\capybara-defense\\public\\sprites\\manifest.json"
+index fe51488..a75a916 100644
+--- "D:\\rea_game\\games\\capybara-defense\\.runtime\\p1-review-baseline\\public\\sprites\\manifest.json"
++++ "D:\\rea_game\\games\\capybara-defense\\public\\sprites\\manifest.json"
+@@ -1 +1,135 @@
+-[]
++[
++  "avatar_bamboo_master",
++  "avatar_bee",
++  "avatar_capybara",
++  "avatar_cat_swordsman",
++  "avatar_corgi_crown",
++  "avatar_doge_agent",
++  "avatar_frog_king",
++  "avatar_goose_bully",
++  "avatar_hamster",
++  "avatar_kungfu_panda",
++  "avatar_market_coon",
++  "avatar_rooster_star",
++  "avatar_sakura_capy",
++  "avatar_salted_fish",
++  "avatar_squirrel",
++  "avatar_zen_capy",
++  "ballin_rooster",
++  "bamboo_mafia",
++  "basketball",
++  "bee",
++  "box_kraken",
++  "buff_roo",
++  "capybara",
++  "cat",
++  "charmed_rat",
++  "cleaver",
++  "corgi",
++  "crab",
++  "crown",
++  "diva_kitty",
++  "dj_rat_king",
++  "doge_wick",
++  "dr_clippers",
++  "frog",
++  "glue_trap_placed",
++  "goose",
++  "hamster",
++  "hat_bamboo",
++  "hat_shades",
++  "hat_wizard",
++  "hedgehog",
++  "hornet_queen",
++  "husky_wrecker",
++  "killer_bee",
++  "king_skunk",
++  "kungfu_po",
++  "logo_capy",
++  "map_cat_tower_maze",
++  "map_midnight_kitchen",
++  "map_sakura_onsen",
++  "map_sunny_backyard",
++  "mega_roomba",
++  "menu_banner",
++  "meowfia",
++  "orange",
++  "panda",
++  "pepe_king",
++  "prop_auto_shovel",
++  "prop_banana_peel",
++  "prop_bee_overtime",
++  "prop_catnip",
++  "prop_clay",
++  "prop_emp_jammer",
++  "prop_expired_can",
++  "prop_extra_oranges",
++  "prop_giant_orange_cat",
++  "prop_glue_trap",
++  "prop_gold_doge",
++  "prop_hyper_party",
++  "prop_milk_bottle",
++  "prop_promo_badge",
++  "prop_recycle_bin",
++  "prop_shared_oranges",
++  "prop_tall_perch",
++  "prop_vip_poster",
++  "prop_washer",
++  "prop_whistle",
++  "purrcerer",
++  "puss_in_hat",
++  "raccoon",
++  "rat",
++  "roach",
++  "rocket_coon",
++  "ronin_goose",
++  "rooster",
++  "sad_rain_frog",
++  "samurai_doge",
++  "screaming_marmot",
++  "shiba",
++  "shovel",
++  "sprinkler",
++  "squirrel",
++  "tile_broken",
++  "tile_open",
++  "trash_coon",
++  "trash_lid",
++  "weapon_m01_swatter",
++  "weapon_m02_slipper",
++  "weapon_m03_scratcher",
++  "weapon_m04_baguette",
++  "weapon_m05_duster",
++  "weapon_m06_stool",
++  "weapon_m07_rolling_pin",
++  "weapon_m08_durian",
++  "weapon_m09_cat_blade",
++  "weapon_m10_bamboo_staff",
++  "weapon_m11_salted_fish",
++  "weapon_m12_iron_wok",
++  "weapon_r01_rubber_band",
++  "weapon_r02_duck_squirt",
++  "weapon_r03_bubble_gun",
++  "weapon_r04_tennis_launcher",
++  "weapon_r05_hair_dryer",
++  "weapon_r06_pressure_washer",
++  "weapon_r07_popcorn_cannon",
++  "weapon_r08_coin_slingshot",
++  "weapon_r09_bamboo_bazooka",
++  "weapon_r10_acorn_minigun",
++  "weapon_r11_sniper_laser",
++  "weapon_r12_junk_mortar",
++  "weapon_w01_teaser",
++  "weapon_w02_balloon",
++  "weapon_w03_bug_zapper",
++  "weapon_w04_yarn_orb",
++  "weapon_w05_disco_ball",
++  "weapon_w06_yarn_storm",
++  "weapon_w07_cat_scratch_meteor",
++  "weapon_w08_fortune_fish",
++  "weapon_w09_yin_yang_burner",
++  "weapon_w10_cosmic_vacuum",
++  "weapon_w11_golden_hoop_ball",
++  "weapon_w12_rain_crown_scepter",
++  "zen_master"
++]
+
+## package.json
+diff --git "D:\\rea_game\\games\\capybara-defense\\.runtime\\p1-review-baseline\\package.json" "D:\\rea_game\\games\\capybara-defense\\package.json"
+index f9b307e..21ef574 100644
+--- "D:\\rea_game\\games\\capybara-defense\\.runtime\\p1-review-baseline\\package.json"
++++ "D:\\rea_game\\games\\capybara-defense\\package.json"
+@@ -1,12 +1,13 @@
+ {
+   "name": "capybara-chill-defense", "version": "1.0.0", "private": true, "type": "module",
+   "engines": { "node": "^22.12.0 || ^24.0.0 || >=26.0.0" },
+   "scripts": {
++    "sync-assets": "node scripts/sync-assets.mjs",
+     "dev": "vite --host 127.0.0.1 --port 4175 --strictPort",
+     "build": "tsc --noEmit && vite build",
+     "typecheck": "tsc --noEmit",
+     "test": "vitest run",
+     "test:browser": "node scripts/browser-qa.mjs",
+     "preview": "vite preview --host 127.0.0.1 --port 4175 --strictPort"
+   },
+   "devDependencies": { "typescript": "6.0.3", "vite": "8.3.1", "vitest": "5.0.3", "@types/node": "24.10.14", "playwright-core": "1.58.2" }
+
+## tests/p1-assets.test.ts
+diff --git "D:\\rea_game\\games\\capybara-defense\\.runtime\\p1-review-baseline\\__empty__" "D:\\rea_game\\games\\capybara-defense\\tests\\p1-assets.test.ts"
+index e69de29..c018c30 100644
+--- "D:\\rea_game\\games\\capybara-defense\\.runtime\\p1-review-baseline\\__empty__"
++++ "D:\\rea_game\\games\\capybara-defense\\tests\\p1-assets.test.ts"
+@@ -0,0 +1,109 @@
++import {afterEach,describe,expect,it,vi} from 'vitest';
++import {mkdir,readFile,writeFile,rm,symlink,unlink,lstat} from 'node:fs/promises';
++import path from 'node:path';
++import * as registry from '../src/render/AssetRegistry';
++import {avatarSticker,weaponSticker} from '../src/render/M3Art';
++import {PROPS} from '../src/config/props';
++import {WEAPONS} from '../src/config/weapons';
++
++afterEach(()=>{vi.unstubAllGlobals();vi.restoreAllMocks();});
++function imageEnvironment(ids:unknown,fail:string[]=[]){
++  const requested:string[]=[];
++  vi.stubGlobal('fetch',vi.fn(async()=>({ok:true,json:async()=>ids})));
++  vi.stubGlobal('Image',class {
++    complete=false;naturalWidth=0;naturalHeight=256;onload?:()=>void;onerror?:()=>void;
++    set src(value:string){requested.push(value);queueMicrotask(()=>{this.complete=true;this.naturalWidth=fail.some(id=>value.endsWith(`/${id}.png`))?0:256;(this.naturalWidth?this.onload:this.onerror)?.();});}
++  });return requested;
++}
++describe('P1 loaded-only asset registry',()=>{
++  it('uses safe unique ids, a relative base, successful images only and readiness callbacks',async()=>{
++    const requests=imageEnvironment(['hamster','hamster','map_sunny_backyard','bad/name','A','x"','rat'],['rat']);
++    const assets=new registry.AssetRegistry('./nested/sprites/');
++    const ready=vi.fn();const unsubscribe=assets.onReady(ready);
++    expect(assets.get('hamster')).toBeUndefined();expect(assets.url('hamster')).toBeUndefined();
++    await assets.ready;
++    expect(requests).toEqual(['./nested/sprites/hamster.png','./nested/sprites/map_sunny_backyard.png','./nested/sprites/rat.png']);
++    expect(assets.url('hamster')).toBe('./nested/sprites/hamster.png');expect(assets.has('rat')).toBe(false);
++    expect(ready).toHaveBeenCalledTimes(1);unsubscribe();
++    const late=vi.fn();assets.onReady(late);await Promise.resolve();expect(late).toHaveBeenCalledTimes(1);
++  });
++  it('resolves safely without DOM and handles a failed manifest',async()=>{
++    vi.stubGlobal('Image',undefined);const assets=new registry.AssetRegistry();await assets.ready;expect(assets.has('capybara')).toBe(false);
++    imageEnvironment([]);vi.stubGlobal('fetch',vi.fn(async()=>{throw Error('offline');}));await expect(new registry.AssetRegistry().ready).resolves.toBeUndefined();
++    expect(typeof registry.onAssetsReady).toBe('function');expect(registry.spriteUrl('../x')).toBeUndefined();
++  });
++});
++describe('P1 HTML stickers',()=>{
++  it('identifies every Boss and summoned mob without external art, and supplies tool scene geometry',async()=>{
++    const {unitSticker,sceneSticker}=await import('../src/ui/stickers');
++    const kinds=['rat','roach','crab','killer_bee','charmed_rat','husky_wrecker','mega_roomba','dr_clippers','box_kraken','sad_rain_frog','king_skunk','diva_kitty','buff_roo','hornet_queen','screaming_marmot','trash_coon','dj_rat_king'];
++    const shapes=kinds.map(id=>unitSticker(id,44));
++    for(let i=0;i<shapes.length;i++){expect(shapes[i]).toContain(`<svg`);expect(shapes[i]).toContain(`data-sticker="${kinds[i]}"`);expect(shapes[i]).not.toMatch(/<text|[\u{1F300}-\u{1FAFF}]/u);}
++    expect(new Set(shapes.map(svg=>svg.replace(/(?:aria-label|data-sticker|fill|stroke)="[^"]*"/g,''))).size).toBe(kinds.length);
++    expect(sceneSticker('sprinkler','wrong',32)).toContain('<svg');expect(sceneSticker('shovel','wrong',32)).toContain('<svg');
++    vi.spyOn(registry.assets,'get').mockImplementation(id=>id==='husky_wrecker'?({complete:true,naturalWidth:256} as HTMLImageElement):undefined);
++    expect(unitSticker('husky_wrecker')).toContain('sprites/husky_wrecker.png');
++  });
++  it('draws distinct cream-board geometry for all 20 props, with safe ids and sizes',async()=>{
++    const {propSticker,unitSticker,sceneSticker}=await import('../src/ui/stickers');
++    const shapes=Object.keys(PROPS).map(id=>propSticker(id,72));
++    expect(shapes).toHaveLength(20);
++    for(const svg of shapes){expect(svg).toContain('width="72"');expect(svg).toContain('#fff9eb');expect(svg).not.toMatch(/<text|<script|[\u{1F300}-\u{1FAFF}]/u);}
++    expect(new Set(shapes.map(svg=>svg.replace(/(?:aria-label|data-sticker|fill|stroke)="[^"]*"/g,''))).size).toBe(20);
++    expect(propSticker('<script>',NaN)).toContain('width="48"');expect(unitSticker('" onerror="x')).not.toContain('onerror');
++    expect(sceneSticker('menu_banner','<svg data-fallback="cover"/>')).toContain('data-fallback="cover"');
++  });
++  it('uses loaded PNGs across units, props, scenes, all weapons and avatars',async()=>{
++    const {propSticker,unitSticker,sceneSticker}=await import('../src/ui/stickers');
++    vi.spyOn(registry.assets,'get').mockImplementation(id=>/^[a-z][a-z0-9_]*$/.test(id)?({complete:true,naturalWidth:256} as HTMLImageElement):undefined);
++    expect(propSticker('washer')).toContain('sprites/prop_washer.png');expect(unitSticker('kungfu_po')).toContain('sprites/kungfu_po.png');
++    for(const id of ['menu_banner','logo_capy','sprinkler','shovel'] as const)expect(sceneSticker(id,'fallback')).toContain(`sprites/${id}.png`);
++    for(const id of Object.keys(WEAPONS))expect(weaponSticker(id)).toContain(`sprites/weapon_${id}.png`);
++    for(const id of ['capybara','hamster','squirrel','bee','cat_swordsman','doge_agent','goose_bully','kungfu_panda','rooster_star','frog_king','market_coon','salted_fish','bamboo_master','sakura_capy','corgi_crown','zen_capy'])expect(avatarSticker(id)).toContain(`sprites/avatar_${id}.png`);
++    vi.mocked(registry.assets.get).mockImplementation(id=>id==='m01_swatter'?({complete:true,naturalWidth:256} as HTMLImageElement):undefined);
++    expect(weaponSticker('m01_swatter')).toContain('sprites/m01_swatter.png');
++  });
++});
++describe('P1 asset synchronization',()=>{
++  it.each(['png','manifest','directory','ancestor'] as const)('rejects a linked %s target before changing any linked files',async kind=>{
++    const fixture=path.resolve(`.runtime/p1-assets-link-${kind}`),sourceDir=path.join(fixture,'source'),targetDir=path.join(fixture,'target'),protectedDir=path.join(fixture,'protected');
++    expect(fixture.startsWith(path.resolve('.')+path.sep)).toBe(true);
++    let linkPath:string|undefined;
++    try{
++      await mkdir(sourceDir,{recursive:true});await mkdir(protectedDir,{recursive:true});
++      await writeFile(path.join(sourceDir,'apple.png'),'new art');
++      await writeFile(path.join(protectedDir,'apple.png'),'keep png');
++      await writeFile(path.join(protectedDir,'manifest.json'),'keep manifest');
++      if(kind==='directory'||kind==='ancestor'){
++        linkPath=targetDir;await symlink(protectedDir,linkPath,'junction');
++      }else{
++        await mkdir(targetDir);linkPath=path.join(targetDir,kind==='png'?'apple.png':'manifest.json');
++        await symlink(path.join(protectedDir,kind==='png'?'apple.png':'manifest.json'),linkPath,'file');
++      }
++      expect((await lstat(linkPath)).isSymbolicLink()).toBe(true);
++      const modulePath='../scripts/sync-assets.mjs';const {syncAssets}=await import(modulePath);
++      await expect(syncAssets({sourceDir,targetDir:kind==='ancestor'?path.join(targetDir,'nested'):targetDir})).rejects.toThrow(/link|junction|outside/i);
++      expect(await readFile(path.join(protectedDir,'apple.png'),'utf8')).toBe('keep png');
++      expect(await readFile(path.join(protectedDir,'manifest.json'),'utf8')).toBe('keep manifest');
++    }finally{
++      // Remove the exact link first; every resolved fixture reference is inside the game.
++      if(linkPath)await unlink(linkPath).catch(error=>{if(error.code!=='ENOENT')throw error;});
++      await rm(fixture,{recursive:true,force:true});
++    }
++  });
++  it('copies safe lowercase PNG names, keeps destination art and produces stable sorted manifests without source',async()=>{
++    const fixture=path.resolve('.runtime/p1-assets-fixture'),sourceDir=path.join(fixture,'source'),targetDir=path.join(fixture,'target');
++    expect(fixture.startsWith(path.resolve('.')+path.sep)).toBe(true);
++    try{
++      await mkdir(sourceDir,{recursive:true});await mkdir(targetDir,{recursive:true});
++      await Promise.all(['zebra.png','apple.png','BAD.png','bad-name.png','a.PNG'].map(id=>writeFile(path.join(sourceDir,id),'fixture')));
++      await writeFile(path.join(targetDir,'kept.png'),'existing');
++      const modulePath='../scripts/sync-assets.mjs';const {syncAssets}=await import(modulePath);
++      await syncAssets({sourceDir,targetDir});const first=await readFile(path.join(targetDir,'manifest.json'),'utf8');
++      expect(JSON.parse(first)).toEqual(['apple','kept','zebra']);expect(await readFile(path.join(targetDir,'apple.png'),'utf8')).toBe('fixture');
++      await syncAssets({sourceDir,targetDir});expect(await readFile(path.join(targetDir,'manifest.json'),'utf8')).toBe(first);
++      await syncAssets({sourceDir:path.join(fixture,'absent'),targetDir});expect(await readFile(path.join(targetDir,'manifest.json'),'utf8')).toBe(first);
++      const empty=path.join(fixture,'empty');await mkdir(empty);await syncAssets({sourceDir:empty,targetDir});expect(await readFile(path.join(targetDir,'manifest.json'),'utf8')).toBe(first);
++    }finally{await rm(fixture,{recursive:true,force:true});}
++  });
++});
+
+## tests/p1-render.test.ts
+diff --git "D:\\rea_game\\games\\capybara-defense\\.runtime\\p1-review-baseline\\__empty__" "D:\\rea_game\\games\\capybara-defense\\tests\\p1-render.test.ts"
+index e69de29..1227512 100644
+--- "D:\\rea_game\\games\\capybara-defense\\.runtime\\p1-review-baseline\\__empty__"
++++ "D:\\rea_game\\games\\capybara-defense\\tests\\p1-render.test.ts"
+@@ -0,0 +1,72 @@
++import {afterEach,describe,expect,it,vi} from 'vitest';
++import {BattleEngine} from '../src/core/BattleEngine';
++import {StickerRenderer} from '../src/render/StickerRenderer';
++import {assets} from '../src/render/AssetRegistry';
++import {HEROES} from '../src/config/heroes';
++import {MAPS,STAGE} from '../src/config/maps';
++import {t} from '../src/i18n/i18n';
++import type {BattleState,Interaction,Unit} from '../src/core/types';
++type Call={name:string;args:unknown[];fill:unknown;stroke:unknown};
++function surface(){
++ const calls:Call[]=[],values:Record<string,unknown>={globalAlpha:1};
++ const context=new Proxy(values,{get(target,key:string){if(key in target)return target[key];if(key==='measureText')return (s:string)=>({width:s.length*8});if(key==='createLinearGradient'||key==='createRadialGradient')return ()=>({addColorStop(){}});return (...args:unknown[])=>calls.push({name:key,args,fill:target.fillStyle,stroke:target.strokeStyle});},set(target,key:string,value){target[key]=value;return true;}}) as unknown as CanvasRenderingContext2D;
++ return {calls,renderer:new StickerRenderer({width:0,height:0,getContext:()=>context} as unknown as HTMLCanvasElement)};
++}
++const image={complete:true,naturalWidth:256,naturalHeight:256} as HTMLImageElement;
++afterEach(()=>vi.restoreAllMocks());
++function unit(engine:BattleEngine,kind:string,location:Unit['location']):Unit {engine.grant(kind);const u=engine.state.units.at(-1)!;u.location=location;return u;}
++describe('P1 map and object pipeline',()=>{
++ it.each(Object.keys(MAPS) as Array<keyof typeof MAPS>)('keeps %s image uncovered by static tile blocks, with visible open and broken cells',mapId=>{
++   vi.spyOn(assets,'get').mockImplementation(id=>id===`map_${mapId}`?image:undefined);
++   const state=new BattleEngine({ai:false,autoWaves:false}).state;state.mapId=mapId;state.grid=MAPS[mapId].grid.map(row=>[...row]);state.grid[6][0]='O';state.grid[6][1]='B';
++   const {renderer,calls}=surface();expect(renderer.assets).toBe(assets);renderer.draw(state,.2);
++   const mapIndex=calls.findIndex(c=>c.name==='drawImage'&&c.args[0]===image);expect(mapIndex).toBeGreaterThan(calls.findIndex(c=>c.name==='clip'));
++   expect(calls[mapIndex].args.slice(1)).toEqual([32,240,576,720]);
++   expect(calls.some(c=>c.name==='fillRect'&&c.args[2]===72&&c.args[3]===72)).toBe(false);
++   expect(calls.some(c=>c.name==='fill'&&c.fill==='rgba(255,248,232,0.78)')).toBe(true);
++   expect(calls.some(c=>c.name==='lineTo'&&c.stroke==='#665c48')).toBe(true);
++ });
++ it('draws tile aliases and all object images while retaining a live orange stack',()=>{
++   const images=new Map(['map_sunny_backyard','tile_open_sunny_backyard','tile_broken','capybara','orange','shovel','sprinkler','glue_trap_placed'].map(id=>[id,{...image,id} as unknown as HTMLImageElement]));
++   vi.spyOn(assets,'get').mockImplementation(id=>images.get(id));
++   const state=new BattleEngine({ai:false,autoWaves:false}).state;state.grid[6][0]='O';state.grid[6][1]='B';state.traps=[{id:1,side:'player',col:2,row:7,charges:3,hitIds:[]}];state.events=[{id:4,type:'sprinkler',side:'player',col:7,row:9,points:[{col:7,row:9},{col:7,row:8}],age:.3,duration:1}];
++   const {renderer,calls}=surface();renderer.draw(state,.3);
++   for(const value of images.values())expect(calls.some(c=>c.name==='drawImage'&&c.args[0]===value)).toBe(true);
++   expect(calls.some(c=>c.name==='fill'&&c.fill==='#f2ca62')).toBe(false);
++   expect(calls.some(c=>c.name==='stroke'&&c.stroke==='#91d3df')).toBe(true);
++   expect(calls.filter(c=>c.name==='drawImage'&&c.args[0]===images.get('orange')).length).toBe(state.sides.ai.oranges+state.sides.player.oranges);
++ });
++ it('omits legacy rival text only when an opponent identity is supplied',()=>{
++   const state=new BattleEngine({ai:false,autoWaves:false}).state;
++   Object.assign(state,{opponent:{id:'test',name:{'zh-CN':'测试',en:'Test'},avatarId:'capybara',rankIndex:0}});
++   const {renderer,calls}=surface();renderer.draw(state,0);expect(calls.some(c=>c.name==='fillText'&&c.args[0]==='AI')).toBe(false);
++ });
++});
++describe('P1 complete merge targets and hero bases',()=>{
++ it.each(['selected','dragged'] as const)('highlights all valid board and bench upgrades from a %s source',mode=>{
++   const e=new BattleEngine({ai:false,autoWaves:false}),source=unit(e,'hamster',{zone:'bench',slot:0});unit(e,'hamster',{zone:'board',col:1,row:6});unit(e,'hamster',{zone:'bench',slot:1});unit(e,'squirrel',{zone:'bench',slot:2});
++   const {renderer,calls}=surface();renderer.draw(e.state,.2,mode==='selected'?{selectedId:source.id}:{draggingId:source.id,pointer:{x:280,y:900}});
++   const arrows=calls.filter(c=>c.name==='fillText'&&c.args[0]==='▲');expect(arrows).toHaveLength(2);
++   expect(arrows.map(c=>c.args[1])).toEqual(expect.arrayContaining([140+25,STAGE.benchX+STAGE.benchStep+STAGE.benchSize/2+25]));
++   const benchBackground=calls.reduce((last,c,i)=>c.name==='roundRect'&&c.args[0]===STAGE.benchX+STAGE.benchStep&&c.args[1]===STAGE.benchY?i:last,-1);
++   expect(calls.indexOf(arrows.find(c=>Number(c.args[2])>1100)!)).toBeGreaterThan(benchBackground);
++ });
++ it('gives hero recipe targets gold double rings, stars and a merge capsule in both zones',()=>{
++   const e=new BattleEngine({ai:false,autoWaves:false}),source=unit(e,'panda',{zone:'bench',slot:0});unit(e,'hat_bamboo',{zone:'board',col:1,row:6});unit(e,'hat_shades',{zone:'bench',slot:1});
++   const {renderer,calls}=surface();renderer.draw(e.state,.3,{selectedId:source.id});
++   expect(calls.filter(c=>c.name==='fillText'&&c.args[0]===t('p1.merge')).length).toBe(2);
++   expect(calls.filter(c=>c.name==='stroke'&&c.stroke==='#d8aa46').length).toBeGreaterThanOrEqual(4);
++   expect(calls.some(c=>c.name==='fill'&&c.fill==='#f1cf75')).toBe(true);
++ });
++ it.each([{shovel:true},{propId:'washer'}] as Interaction[])('suppresses merge suggestions in tool mode %j',mode=>{
++   const e=new BattleEngine({ai:false,autoWaves:false}),source=unit(e,'hamster',{zone:'bench',slot:0});unit(e,'hamster',{zone:'bench',slot:1});
++   const {renderer,calls}=surface();renderer.draw(e.state,.2,{selectedId:source.id,...mode});expect(calls.some(c=>c.name==='fillText'&&c.args[0]==='▲')).toBe(false);
++ });
++ it.each(Object.keys(HEROES))('gives %s gold disks and near-full energy rings on board and bench',kind=>{
++   const e=new BattleEngine({ai:false,autoWaves:false});const board=unit(e,kind,{zone:'board',col:1,row:6}),bench=unit(e,kind,{zone:'bench',slot:0});board.energy=999;bench.energy=999;
++   const {renderer,calls}=surface();renderer.draw(e.state,.2);
++   expect(calls.filter(c=>c.name==='fill'&&c.fill==='#f3d58a')).toHaveLength(2);
++   expect(calls.filter(c=>c.name==='stroke'&&c.stroke==='#bb9146')).toHaveLength(2);
++   expect(calls.filter(c=>c.name==='stroke'&&c.stroke==='#f1c966')).toHaveLength(2);
++ });
++});

@@ -1,0 +1,15 @@
+# P1 Task 1 — AI, match queries and tutorial migration
+
+Read full readonly P1 spec and overall design first, then relevant existing M3 code and P1-contracts.md. Your requirements are spec sections2/3/5.1 and this brief. All changes only inside the game. No service/Git/design changes, no agents.
+
+Own: src/core/types.ts, OpponentAI.ts, BattleEngine.ts, PropSystem.ts, PlayerProgression.ts, MetaProgression.ts; new config/opponents.ts, core/MergeTargets.ts, core/Tutorial.ts, tests/p1-core.test.ts. You may only extend expected new fields in old tests/ui.test.ts and m3-progression.test.ts; do not delete cases. Report any broader old-test conflict before changing it.
+
+Use exact contracts. Five AI tiers0..5/6..14/15..29/30..44/45..53 intervals1.65/1.30/1/.82/.68 and delays3.5/2/1/.5/.3. Legal weapons counts0/2green-blue/4purple/6purple-orange(two signatures)/12signatures. Passives0/1/2..3/4/5..6, non-reciprocal pools; no expired_can (active anyway). Moderate rank uses one crisis active, high uses milk_bottle+catnip with cooldowns, targeted bottle highest controlled eligible hero; SEALED response1.2..2.5s, sprinkler valid and finite. Preserve resource legality and AI summoning/redraw.
+
+Hero recipe priority above basic upgrades, high tier prioritize useful counter hero against current Boss; melee inner corners, ranged safe middle, bees out of danger. Identity chooses a nearby-rank local bilingual pet NPC, optional new pool (do not depend on profile storage). Keep generated loadouts away from ai:false and do not consume game combat RNG for setup. options.loadouts.ai and tuning overrides must still work; separate per-engine state.
+
+Implement spec-implied SEALED cleanup in successful sprinkler for same-side units, while all original120dmg/4.5knockback/2sslow/one-use remains. Add purge effect sprinkler to suppress false upgrade SFX. Existing treasure bubble/weapon event gets effect treasure and Boss spawn bubble gets effect boss_spawn for audio (no new event types required).
+
+Migration adds developerMode false, tutorial false new / true absent old(matches>0), reward claim flag. Old explicitly false tutorial remains false for replay. Complete20 coins once, skip none, repeat/replay cannot re-award; storage writes remain root UI responsibility and existing isolation untouched. unlockAllProfile marks tutorial done/claimed but preserves normal backup through old APIs.
+
+RED tests before implementation: exact tier edges and counts/family compatibility; opening delay/no premature action; actual rank35+ legal bottle/sprinkler seal purge/catnip crisis; map-aware placements/recipe priority; match helper basic/all12recipe/feeding/locks/washing/no-mutation; tutorial state order and once-only reward/replay; migration old coins/wins/settings and normal-test backup. Run targeted then current full suite, report every concurrent failure by owner rather than edit others' files. Report docs/P1-core-report.md with tests/results/decisions/API differences; final reply concise status+path.

@@ -1,0 +1,34 @@
+{
+  "checks": [
+    "390×844 clean menu fits one screen; sandbox hidden",
+    "Real summon and drag advance tutorial; +20 persists once; replay/skip cannot duplicate it",
+    "Developer setting toggles immediately, persists, and keeps current battle",
+    "Gold board + nest matches, hero base, box seal and live Boss health/cooldown visible",
+    "All 80 compendium entries render with resolved Chinese/English descriptions",
+    "Desktop sandbox, 36-weapon armory, shop/lottery and all four textured maps work",
+    "Query dev=1 enables sandbox; settings can turn it off and remove the override",
+    "Console and pageerror: 0"
+  ],
+  "errors": [],
+  "screenshots": [
+    "p1-mobile-menu.png",
+    "p1-mobile-tutorial.png",
+    "p1-mobile-gold-matches.png",
+    "p1-mobile-drag-gold-matches.png",
+    "p1-mobile-boss.png",
+    "p1-mobile-book-heroes.png",
+    "p1-mobile-book-bosses.png",
+    "p1-mobile-book-weapons.png",
+    "p1-mobile-book-props.png",
+    "p1-desktop-clean-boss.png",
+    "p1-desktop-sandbox.png",
+    "p1-desktop-armory.png",
+    "p1-desktop-market.png",
+    "p1-desktop-lottery.png",
+    "p1-map-sunny_backyard.png",
+    "p1-map-sakura_onsen.png",
+    "p1-map-midnight_kitchen.png",
+    "p1-map-cat_tower_maze.png",
+    "p1-desktop-clean-menu.png"
+  ]
+}

@@ -1,0 +1,1155 @@
+# P1 ui review diff
+Base: backups/m3-before-p1.zip (M3 427 tests)
+Current: isolated game working tree
+
+
+## src/main.ts
+diff --git "D:\\rea_game\\games\\capybara-defense\\.runtime\\p1-review-baseline\\src\\main.ts" "D:\\rea_game\\games\\capybara-defense\\src\\main.ts"
+index d7fa7d7..7568da5 100644
+--- "D:\\rea_game\\games\\capybara-defense\\.runtime\\p1-review-baseline\\src\\main.ts"
++++ "D:\\rea_game\\games\\capybara-defense\\src\\main.ts"
+@@ -1,10 +1,10 @@
+-import { GameApp } from './ui/GameApp';
+ import './ui/styles.css';
++import { GameApp } from './ui/GameApp';
+ 
+ const root = document.getElementById('app');
+ if (!root) throw new Error('Missing #app mount point');
+ const app = new GameApp(root);
+ 
+ if (import.meta.env.DEV) {
+   Object.defineProperty(window, '__CAPY_DEBUG__', {
+     configurable: true,
+
+## src/ui/GameApp.ts
+diff --git "D:\\rea_game\\games\\capybara-defense\\.runtime\\p1-review-baseline\\src\\ui\\GameApp.ts" "D:\\rea_game\\games\\capybara-defense\\src\\ui\\GameApp.ts"
+index e7aa51c..46afe82 100644
+--- "D:\\rea_game\\games\\capybara-defense\\.runtime\\p1-review-baseline\\src\\ui\\GameApp.ts"
++++ "D:\\rea_game\\games\\capybara-defense\\src\\ui\\GameApp.ts"
+@@ -9,29 +9,37 @@ import { FIRST_WAVE_PREPARATION, WAVES, WAVE_DURATION } from '../config/waves';
+ import { StickerRenderer } from '../render/StickerRenderer';
+ import { getLanguage, onLanguageChange, setLanguage, t } from '../i18n/i18n';
+ import { awardBattle, emptyProfile, loadProfile, resetOwnStorage, saveProfile, enableTestProfile, restoreNormalProfile, isTestProfile } from './storage';
+ import { MetaScreens, propSlots, type MetaScreen } from './MetaScreens';
+ import { PROPS } from '../config/props';
+ import { setPropSlots } from '../core/MetaProgression';
+ import './m2.css';
+ import './m3.css';
++import './p1.css';
+ import { RANKS, getRank } from '../config/ranks';
+-import { recordMergedHeroes, resolveMap } from '../core/PlayerProgression';
++import { recordMergedHeroes, resolveMap, updateSettings } from '../core/PlayerProgression';
+ import { ProfileScreens, rankCard, mapOptions, type ProfileScreen } from './ProfileScreens';
+ import { SoundManager } from './SoundManager';
+-import { capyIllustration, capyLogo, escapeHtml as esc, UNIT_ICONS } from './art';
++import { capyIllustration, capyLogo, escapeHtml as esc } from './art';
++import { onAssetsReady } from '../render/AssetRegistry';
++import { avatarSticker } from '../render/M3Art';
++import { propSticker, sceneSticker, unitSticker } from './stickers';
++import { Compendium } from './Compendium';
++import { getBossHUD, getWaveHUD, isDeveloperMode } from './BattleHUD';
++import { advanceTutorial, finishTutorial, replayTutorial, type TutorialAction, type TutorialStep } from '../core/Tutorial';
++import { tutorialMarkup } from './TutorialView';
+ 
+ type Hit = { kind: 'cell'; col: number; row: number } | { kind: 'bench'; slot: number } | { kind: 'shovel' };
+ type DialogKind = 'pause' | 'recipes' | 'result' | MetaScreen | ProfileScreen;
+ type Drag = { pointerId: number; start: { x: number; y: number }; point: { x: number; y: number }; id?: number; shovel: boolean; moved: boolean };
+ const tr = (key: string, vars?: Record<string, string | number>) => esc(t(key, vars));
+ const unitName = (kind: string) => t(`${HEROES[kind] ? 'hero' : 'unit'}.${kind}`);
+ const clock = (seconds: number) => `${Math.floor(seconds / 60)}:${String(Math.floor(seconds % 60)).padStart(2, '0')}`;
+-const icon = (kind: string) => `<span aria-hidden="true" class="pet-icon">${UNIT_ICONS[kind] ?? '🍊'}</span>`;
++const icon = (kind: string) => `<span aria-hidden="true" class="pet-icon">${unitSticker(kind,40)}</span>`;
+ 
+ export class GameApp {
+   engine: BattleEngine | null = null;
+   profile = loadProfile();
+   private canvas: HTMLCanvasElement;
+   private renderer: StickerRenderer;
+   private dialog: HTMLDialogElement;
+   private dialogKind: DialogKind | null = null;
+@@ -41,16 +49,22 @@ export class GameApp {
+   private shovelSelected = false;
+   private selectedProp?: string;
+   private propDrag?: { pointerId: number; startX: number; startY: number; moved: boolean; id: string; button: HTMLElement; point?: { x: number; y: number } };
+   private suppressPropClick = false;
+   private newWeapons: string[] = [];
+   private meta: MetaScreens;
+   private profileScreens: ProfileScreens;
+   private sound = new SoundManager(this.profile.settings);
++  private compendium = new Compendium();
++  private tutorialStep: TutorialStep = 'done';
++  private tutorialStamp = '';
++  private opponentStamp = '';
++  private bossStamp = '';
++  private assetsDirty = false;
+   private devMapOverride?: MapId;
+   private retainedPage = false;
+   private overlayReturn: { dialog: DialogKind | null; resume: boolean } | null = null;
+   private newAvatars: string[] = [];
+   private resultStars = 0;
+   private previousRank = 0;
+   private mergedStamp = '';
+   private quickStamp = '';
+@@ -70,31 +84,32 @@ export class GameApp {
+     }, () => { if (this.dialogKind === 'armory' || this.dialogKind === 'market') this.renderDialog(); }, (key, error, vars) => this.notify(key, error, vars), cue => this.sound.play(cue));
+     this.profileScreens = new ProfileScreens(() => this.profile, profile => this.persistProfile(profile), () => this.refresh(true), key => this.notify(key));
+     this.root.innerHTML = this.shell();
+     this.canvas = this.element<HTMLCanvasElement>('battle-canvas');
+     this.dialog = this.element<HTMLDialogElement>('game-dialog');
+     this.renderer = new StickerRenderer(this.canvas);
+     this.bindEvents();
+     onLanguageChange(() => this.refresh(true));
++    onAssetsReady(() => { this.assetsDirty = true; });
+     const narrow = matchMedia('(max-width: 1050px)');
+     this.element<HTMLDetailsElement>('dev-tools').open = !narrow.matches;
+     narrow.addEventListener('change', () => { this.element<HTMLDetailsElement>('dev-tools').open = !narrow.matches; });
+     this.refresh(true);
+     requestAnimationFrame(this.frame);
+   }
+ 
+   private element<T extends HTMLElement = HTMLElement>(id: string): T {
+     return this.root.querySelector<T>(`#${id}`)!;
+   }
+ 
+   private shell(): string {
+     return `<div class="page-shell">
+       <header class="masthead">
+-        <a class="brand" href="#" data-action="brand" aria-label="${tr('app.title')}"><span class="brand-mark">${capyLogo}</span><span><strong data-i18n="app.title"></strong><small data-i18n="app.subtitle"></small></span></a>
++        <a class="brand" href="#" data-action="brand" aria-label="${tr('app.title')}"><span class="brand-mark">${sceneSticker('logo_capy',capyLogo,54)}</span><span><strong data-i18n="app.title"></strong><small data-i18n="app.subtitle"></small></span></a>
+         <div class="header-actions"><span class="edition" data-i18n="app.edition"></span><button type="button" class="icon-button settings-button" data-action="settings" data-label="m3.settings">⚙</button><div class="language-switch" role="group" data-label="app.language"><button type="button" data-action="zh-CN">中</button><button type="button" data-action="en">EN</button></div></div>
+       </header>
+       <main class="game-layout">
+         <aside class="sandbox-column">
+           <details id="dev-tools" class="paper-card dev-panel" open>
+             <summary><span class="eyebrow" data-i18n="dev.tag"></span><span class="dev-heading"><span aria-hidden="true">✳</span> <span data-i18n="dev.title"></span><span class="collapse-chevron" aria-hidden="true">⌄</span></span></summary>
+             <div class="dev-content"><p class="muted" data-i18n="dev.subtitle"></p><div class="live-strip"><i></i><span id="dev-state"></span><b id="dev-wave"></b></div>
+               <button type="button" class="button food-button" data-action="food" data-battle><span aria-hidden="true">🥫</span><span data-i18n="dev.addFood"></span></button>
+@@ -113,19 +128,22 @@ export class GameApp {
+         </aside>
+         <section class="center-column">
+           <div class="stage menu-mode" id="stage">
+             <canvas id="battle-canvas" width="640" height="1386" tabindex="0" role="img"></canvas>
+             <section class="menu-screen" id="menu-screen"></section>
+             <div class="battle-hud" id="battle-hud" hidden>
+               <div class="hud-topline"><div><span class="map-eyebrow" data-i18n="hud.map"></span><strong id="hud-wave"></strong></div><button type="button" class="icon-button" data-action="pause" data-label="hud.pause" id="pause-button"><span aria-hidden="true">Ⅱ</span></button></div>
+               <div class="hud-resource-row"><div class="food-pill"><span aria-hidden="true">🥫</span><strong id="food-value">30</strong><span data-i18n="hud.food"></span></div><span class="time-chip" id="battle-clock"></span><button type="button" class="speed-pill" data-action="speed" data-label="hud.speedLabel" id="hud-speed">1×</button></div>
++              <div id="wave-progress" class="wave-progress" role="progressbar" aria-valuemin="0" aria-valuemax="100"><i></i><span></span></div>
+             </div>
++            <div id="boss-banner" class="boss-banner" hidden></div><div id="opponent-banner" class="opponent-banner" hidden></div>
+             <div class="battle-actions" id="battle-actions" hidden><button type="button" class="recipe-shortcut icon-button" data-action="recipes" data-label="recipe.open"><span aria-hidden="true">✦</span></button><button type="button" class="summon-button" data-action="summon" id="summon-button"><span aria-hidden="true" class="bell">♧</span><span class="summon-copy"><strong id="summon-title"></strong><small id="summon-note"></small><small id="summon-shortage" hidden></small></span><span aria-hidden="true">＋</span></button></div>
+             <div id="battle-props" hidden></div><div id="sealed-hint" class="sealed-hint" hidden></div>
++            <div id="tutorial-overlay" hidden></div>
+           </div>
+           <p class="stage-caption" data-i18n="guide.controls"></p>
+         </section>
+         <aside class="journal-column">
+           <section class="paper-card guide-card"><span class="eyebrow" data-i18n="menu.new"></span><h2 data-i18n="guide.title"></h2><ol class="how-to"><li><b>01</b><div><h3 data-i18n="guide.step1"></h3><p data-i18n="guide.step1Body"></p></div></li><li><b>02</b><div><h3 data-i18n="guide.step2"></h3><p data-i18n="guide.step2Body"></p></div></li><li><b>03</b><div><h3 data-i18n="guide.step3"></h3><p data-i18n="guide.step3Body"></p></div></li></ol><div class="tiny-recipe"><span>🐼</span><b>+</b><span>🎋</span><b>=</b><span class="legend-sticker">🐼<i>✦</i></span></div><button type="button" class="text-button recipe-link" data-action="recipes" data-i18n="recipe.open"></button></section>
+           <section class="paper-card inspect-card"><h2 data-i18n="inspect.title"></h2><div id="inspector"></div></section>
+           <div class="tip-note"><span aria-hidden="true">☂</span><p data-i18n="guide.tip"></p></div>
+           <details class="paper-card keyboard-card"><summary data-i18n="keyboard.title"></summary><p class="muted" data-i18n="keyboard.help"></p><div id="keyboard-controls"></div></details>
+@@ -137,42 +155,46 @@ export class GameApp {
+     </div>`;
+   }
+ 
+   start(): void {
+     this.closeDialog(false);
+     this.overlayReturn = null;
+     this.engine = new BattleEngine({ mapId: this.devMapOverride ?? resolveMap(this.profile), rankIndex: getRank(this.profile.stars).index, loadouts: { player: structuredClone(this.profile) } });
+     this.engine.start();
++    this.tutorialStep = this.profile.tutorialCompleted ? 'done' : 1;
++    this.tutorialStamp = ''; this.bossStamp = ''; this.opponentStamp = '';
+     this.speed = 1;
+     this.completedId = '';
+     this.newWeapons = [];
+     this.newAvatars = []; this.mergedStamp = '';
+     this.battlePropsStamp = '';
+     this.clearSelection();
+     this.lastFrame = performance.now();
+     this.refresh(true);
+     this.canvas.focus({ preventScroll: true });
+   }
+ 
+   private menu(): void {
+     this.closeDialog(false);
+     this.overlayReturn = null;
+     this.engine = null;
++    this.tutorialStep = 'done'; this.tutorialStamp = '';
+     this.clearSelection();
+     this.refresh(true);
+     this.root.querySelector<HTMLButtonElement>('[data-action="start"]')?.focus({ preventScroll: true });
+   }
+ 
+   private frame = (now: number): void => {
+     const dt = Math.min(Math.max((now - this.lastFrame) / 1000, 0), 0.06);
+     this.lastFrame = now;
+     if (this.engine) {
+       this.engine.tick(dt * this.speed);
+       const state = this.engine.state;
++      this.sound.setMode(state.enemies.some(enemy=>enemy.boss&&enemy.hp>0) ? 'boss' : 'battle');
+       this.sound.consumeBattle(state);
+       this.sound.setDucked(this.retainedPage || document.hidden || state.phase !== 'playing');
+       const merged = state.mergedHeroes.player;
+       const mergedStamp = merged.join(',');
+       if (mergedStamp !== this.mergedStamp) {
+         this.mergedStamp = mergedStamp;
+         const next = recordMergedHeroes(this.profile, merged);
+         if (JSON.stringify(next) !== JSON.stringify(this.profile)) this.persistProfile(next);
+@@ -188,17 +210,17 @@ export class GameApp {
+         if (hit?.kind === 'cell') interaction.hover = { col: hit.col, row: hit.row };
+       }
+       if (this.propDrag?.moved && this.propDrag.point) {
+         interaction.pointer = this.propDrag.point;
+         const hit = this.renderer.hitTest(interaction.pointer.x, interaction.pointer.y);
+         if (hit?.kind === 'cell') interaction.hover = { col: hit.col, row: hit.row };
+       }
+       this.renderer.draw(state, state.time, interaction);
+-    } else this.sound.setDucked(this.retainedPage || document.hidden);
++    } else { this.sound.setMode('menu'); this.sound.setDucked(this.retainedPage || document.hidden); }
+     if (now - this.lastRefresh > 120) { this.refresh(); this.lastRefresh = now; }
+     requestAnimationFrame(this.frame);
+   };
+ 
+   private finish(state: BattleState): void {
+     this.completedId = state.id;
+     this.clearSelection();
+     if (state.result) {
+@@ -216,16 +238,24 @@ export class GameApp {
+     }
+     this.showDialog('result');
+     this.refresh(true);
+   }
+ 
+   private refresh(force = false): void {
+     const state = this.engine?.state;
+     const active = state?.phase === 'playing';
++    if(this.assetsDirty && !this.drag && !this.propDrag) {
++      this.assetsDirty=false; force=true;
++      this.quickStamp=''; this.battlePropsStamp=''; this.opponentStamp=''; this.bossStamp='';
++      this.root.querySelector('.brand-mark')!.innerHTML=sceneSticker('logo_capy',capyLogo,54);
++    }
++    const developer = isDeveloperMode(location.search,this.profile.settings);
++    this.root.querySelector('.page-shell')!.classList.toggle('clean-mode',!developer);
++    document.documentElement.classList.toggle('clean-player-mode',!developer);
+     if (force) {
+       document.documentElement.lang = getLanguage();
+       document.title = t('app.title');
+       const guideVars = { cost: ECONOMY.summonCost, count: ECONOMY.summonCount };
+       this.root.querySelectorAll<HTMLElement>('[data-i18n]').forEach(el => { el.textContent = t(el.dataset.i18n!, guideVars); });
+       this.root.querySelectorAll<HTMLElement>('[data-label]').forEach(el => { el.setAttribute('aria-label', t(el.dataset.label!)); });
+       this.root.querySelectorAll<HTMLButtonElement>('.language-switch button').forEach(button => {
+         const selected = button.dataset.action === getLanguage();
+@@ -245,16 +275,18 @@ export class GameApp {
+       if (this.dialogKind) this.renderDialog();
+     }
+     this.element('stage').classList.toggle('menu-mode', !state);
+     this.element('menu-screen').hidden = !!state;
+     this.element('battle-hud').hidden = !state;
+     this.element('battle-actions').hidden = !state;
+     this.canvas.hidden = !state;
+     this.element('battle-props').hidden = !state;
++    this.renderBattleHUD();
++    this.renderTutorial();
+     this.element('profile-mode').textContent = t(isTestProfile() ? 'm2.testMode' : 'm2.normalMode');
+     this.element('profile-mode').classList.toggle('test-mode', isTestProfile());
+     if (!this.drag && !this.propDrag) {
+       const quickStamp = JSON.stringify([getLanguage(), this.profile.ownedProps, this.profile.equippedActiveProps, this.profile.equippedPassiveProps]);
+       if (quickStamp !== this.quickStamp) { this.element('quick-loadout').innerHTML = propSlots(this.profile, true); this.quickStamp = quickStamp; }
+       this.renderBattleProps();
+     }
+     const selected = state?.units.find(unit => unit.id === this.selectedId);
+@@ -312,17 +344,17 @@ export class GameApp {
+   private updateSelect(id: string, ids: readonly string[], label: (id: string) => string): void {
+     const select = this.element<HTMLSelectElement>(id);
+     const previous = select.value;
+     select.innerHTML = ids.map(value => `<option value="${esc(value)}">${esc(label(value))}</option>`).join('');
+     if (ids.includes(previous)) select.value = previous;
+   }
+ 
+   private renderMenu(): void {
+-    this.element('menu-screen').innerHTML = `<div class="menu-top"><span class="menu-chip"><i></i>${tr('menu.eyebrow')}</span><span class="doodle-star" aria-hidden="true">✳</span></div><h1>${tr('menu.title').replace(/\n/g, '<br>')}</h1><p class="menu-subtitle">${tr('menu.subtitle').replace(/\n/g, '<br>')}</p><div class="hero-illustration">${capyIllustration}<span class="illustration-caption">${tr('render.keepCalm')} ✦</span></div><button type="button" class="button start-button" data-action="start"><span>${tr('menu.start')}</span><span aria-hidden="true">↗</span></button><p class="duration">${tr('menu.duration', { waves: WAVES.length, preparation: FIRST_WAVE_PREPARATION })}</p><div class="menu-stats"><span><strong>${this.profile.coins}</strong><small>${tr('profile.coins')}</small></span><span><strong>${this.profile.wins}</strong><small>${tr('profile.wins')}</small></span><span><strong>${Object.values(this.profile.weaponFragments).reduce((sum, amount) => sum + amount, 0)}</strong><small>${tr('profile.fragments')}</small></span></div><p class="profile-history">${tr('menu.record', { count: this.profile.matches })}</p><button type="button" class="text-button menu-recipe-link" data-action="recipes">${tr('menu.recipes')} <span aria-hidden="true">→</span></button>`;
++    this.element('menu-screen').innerHTML = `<div class="menu-top"><span class="menu-chip"><i></i>${tr('menu.eyebrow')}</span><span class="doodle-star" aria-hidden="true">✳</span></div><h1>${tr('menu.title').replace(/\n/g, '<br>')}</h1><p class="menu-subtitle">${tr('menu.subtitle').replace(/\n/g, '<br>')}</p><div class="hero-illustration">${sceneSticker('menu_banner',capyIllustration)}<span class="illustration-caption">${tr('render.keepCalm')} ✦</span></div><button type="button" class="button start-button" data-action="start"><span>${tr('menu.start')}</span><span aria-hidden="true">↗</span></button><p class="duration">${tr('menu.duration', { waves: WAVES.length, preparation: FIRST_WAVE_PREPARATION })}</p><div class="menu-stats"><span><strong>${this.profile.coins}</strong><small>${tr('profile.coins')}</small></span><span><strong>${this.profile.wins}</strong><small>${tr('profile.wins')}</small></span><span><strong>${Object.values(this.profile.weaponFragments).reduce((sum, amount) => sum + amount, 0)}</strong><small>${tr('profile.fragments')}</small></span></div><p class="profile-history">${tr('menu.record', { count: this.profile.matches })}</p><button type="button" class="text-button menu-recipe-link" data-action="recipes">${tr('menu.recipes')} <span aria-hidden="true">→</span></button>`;
+     this.element('menu-screen').querySelector('.menu-stats')!.insertAdjacentHTML('beforebegin', `<div class="meta-menu"><button type="button" class="button button-light" data-action="armory">⚔ ${tr('m2.armory')} <small>${this.profile.unlockedWeapons.length}/36</small></button><button type="button" class="button button-peach" data-action="market">🦝 ${tr('m2.market')} ${this.profile.freeLotteryTickets ? `<b class="ticket-badge">🎟 ${this.profile.freeLotteryTickets}</b>` : ''}</button></div>`);
+     this.element('menu-screen').querySelector('.start-button')!.insertAdjacentHTML('beforebegin', `${rankCard(this.profile)}<label class="map-select" for="menu-map"><span>${tr('m3.map')}</span><select id="menu-map" data-map>${mapOptions(this.profile)}</select><small>${tr('m3.mapRule')}</small></label>`);
+     this.element('menu-screen').querySelector('.meta-menu')!.insertAdjacentHTML('beforeend', `<button type="button" class="button button-light" data-action="leaderboard">♛ ${tr('m3.leaderboard')}</button>`);
+   }
+ 
+   private renderBattleProps(): void {
+     const player = this.engine?.state.sides.player;
+     if (!player) return;
+@@ -330,19 +362,77 @@ export class GameApp {
+     const stamp = JSON.stringify([getLanguage(), active, player.loadout, player.sprinklerUsed, this.selectedProp, Object.entries(player.propCooldowns).map(([id, time]) => [id, Math.ceil(time)])]);
+     if (stamp === this.battlePropsStamp) return;
+     this.battlePropsStamp = stamp;
+     const slots = Array.from({ length: 2 }, (_, slot) => {
+       const id = player.loadout.equippedActiveProps[slot]; const prop = PROPS[id];
+       const cooldown = Math.ceil(player.propCooldowns[id] ?? 0);
+       const name = prop ? t(`prop.${id}`) : t('m2.emptySlot');
+       const status = cooldown ? t('m2.cooldown', { time: cooldown }) : t('m2.ready');
+-      return `<button type="button" class="battle-prop prop-${slot} ${id === this.selectedProp ? 'selected' : ''}" data-action="prop:${id ?? ''}" ${prop ? `data-prop-drag="${id}"` : ''} aria-label="${esc(name)}${prop ? `. ${esc(status)}. ${tr(`prop.${id}.desc`)}` : ''}" title="${prop ? tr(`prop.${id}.desc`) : esc(name)}"${!prop || !active || cooldown ? ' disabled' : ''}><span>${prop ? esc(prop.icon) : '+'}</span><small>${esc(name)}</small>${cooldown ? `<b>${cooldown}s</b>` : ''}</button>`;
++      return `<button type="button" class="battle-prop prop-${slot} ${id === this.selectedProp ? 'selected' : ''}" data-action="prop:${id ?? ''}" ${prop ? `data-prop-drag="${id}"` : ''} aria-label="${esc(name)}${prop ? `. ${esc(status)}. ${tr(`prop.${id}.desc`)}` : ''}" title="${prop ? tr(`prop.${id}.desc`) : esc(name)}"${!prop || !active || cooldown ? ' disabled' : ''}><span>${prop ? propSticker(id,36) : '+'}</span><small>${esc(name)}</small>${cooldown ? `<b>${cooldown}s</b>` : ''}</button>`;
+     }).join('');
+-    this.element('battle-props').innerHTML = `<button type="button" class="sprinkler-button" data-action="sprinkler" title="${tr('m2.sprinklerDesc')}" aria-label="${tr('m2.sprinkler')}. ${tr(player.sprinklerUsed ? 'm2.sprinklerUsed' : 'm2.sprinklerReady')}"${!active || player.sprinklerUsed ? ' disabled' : ''}><span>🚿</span><small>${tr('m2.sprinkler')}</small><b>${player.sprinklerUsed ? '0' : '1'}</b></button>${slots}<div class="passive-icons">${player.loadout.equippedPassiveProps.map(id => `<span title="${tr(`prop.${id}`)}: ${tr(`prop.${id}.desc`)}" aria-label="${tr(`prop.${id}`)}">${esc(PROPS[id].icon)}</span>`).join('')}</div>${this.selectedProp ? `<p class="prop-target-hint" role="status">${tr(PROPS[this.selectedProp].target === 'road' ? 'm2.targetRoad' : 'm2.targetUnit')}</p>` : ''}`;
++    this.element('battle-props').innerHTML = `<button type="button" class="sprinkler-button" data-action="sprinkler" title="${tr('m2.sprinklerDesc')}" aria-label="${tr('m2.sprinkler')}. ${tr(player.sprinklerUsed ? 'm2.sprinklerUsed' : 'm2.sprinklerReady')}"${!active || player.sprinklerUsed ? ' disabled' : ''}><span>${sceneSticker('sprinkler',propSticker('washer',32),32)}</span><small>${tr('p1.sprinklerShort')}</small><b>${player.sprinklerUsed ? '0' : '1'}</b></button>${slots}<div class="passive-icons">${player.loadout.equippedPassiveProps.map(id => `<span title="${tr(`prop.${id}`)}: ${tr(`prop.${id}.desc`)}" aria-label="${tr(`prop.${id}`)}">${propSticker(id,24)}</span>`).join('')}</div>${this.selectedProp ? `<p class="prop-target-hint" role="status">${tr(PROPS[this.selectedProp].target === 'road' ? 'm2.targetRoad' : 'm2.targetUnit')}</p>` : ''}`;
++  }
++
++  private renderBattleHUD(): void {
++    const state=this.engine?.state, banner=this.element('boss-banner'), opponent=this.element('opponent-banner');
++    if(!state){banner.hidden=true;opponent.hidden=true;return;}
++    const wave=getWaveHUD(state), progress=this.element('wave-progress');
++    progress.dataset.kind=wave.kind;
++    progress.setAttribute('aria-valuenow',String(Math.round(wave.fraction*100)));
++    progress.setAttribute('aria-label',t(wave.kind==='preparation'?'p1.prepare':'p1.waveProgress',{time:wave.remaining}));
++    progress.querySelector<HTMLElement>('i')!.style.width=`${wave.fraction*100}%`;
++    progress.querySelector('span')!.textContent=wave.kind==='preparation'?t('p1.prepare',{time:wave.remaining}):'';
++    const identity=state.opponent;
++    opponent.hidden=!identity;
++    if(identity){
++      const stamp=`${getLanguage()}:${identity.id}:${identity.rankIndex}`;
++      if(stamp!==this.opponentStamp){
++        this.opponentStamp=stamp;
++        opponent.innerHTML=`${avatarSticker(identity.avatarId,32)}<span><b>${esc(identity.name[getLanguage()])}</b><small>${tr(`rank.${identity.rankIndex}`)}</small></span>`;
++        opponent.setAttribute('aria-label',`${t('p1.opponent')}: ${identity.name[getLanguage()]}, ${t(`rank.${identity.rankIndex}`)}`);
++      }
++    }
++    const boss=getBossHUD(state);
++    banner.hidden=!boss;
++    if(!boss){this.bossStamp='';return;}
++    const stamp=`${getLanguage()}:${boss.id}:${boss.count}`;
++    if(stamp!==this.bossStamp){
++      this.bossStamp=stamp;
++      banner.innerHTML=`<div class="boss-portrait">${unitSticker(boss.kind,40)}</div><div class="boss-detail"><div class="boss-heading"><strong>${tr(`boss.${boss.kind}`)}${boss.count>1?` ×${boss.count}`:''}</strong><small class="boss-numbers"></small></div><div class="boss-hp" role="progressbar" aria-valuemin="0"><i></i></div><div class="boss-skill"><i></i><span></span></div></div>`;
++    }
++    banner.classList.toggle('skill-warning',boss.warning);
++    banner.querySelector('.boss-numbers')!.textContent=`${boss.hp} / ${boss.maxHp}`;
++    const hp=banner.querySelector<HTMLElement>('.boss-hp')!;
++    hp.setAttribute('aria-valuemax',String(boss.maxHp));hp.setAttribute('aria-valuenow',String(boss.hp));
++    hp.setAttribute('aria-label',t('p1.bossHP',{hp:boss.hp,max:boss.maxHp}));
++    hp.querySelector<HTMLElement>('i')!.style.width=`${boss.fraction*100}%`;
++    banner.querySelector<HTMLElement>('.boss-skill i')!.style.width=`${(1-boss.cooldownFraction)*100}%`;
++    banner.querySelector('.boss-skill span')!.textContent=t(boss.warning?'p1.bossSoon':'p1.bossCooldown',{time:boss.cooldown});
++  }
++
++  private renderTutorial():void {
++    const state=this.engine?.state, overlay=this.element('tutorial-overlay');
++    overlay.hidden=!state||state.phase!=='playing'||this.tutorialStep==='done';
++    if(overlay.hidden||!state)return;
++    const stamp=JSON.stringify([this.tutorialStep,getLanguage(),this.selectedId,state.units.find(unit=>unit.id===this.selectedId)?.location]);
++    if(stamp===this.tutorialStamp)return;
++    this.tutorialStamp=stamp;
++    overlay.innerHTML=tutorialMarkup(this.tutorialStep,state,this.selectedId);
++  }
++
++  private progressTutorial(action:TutorialAction):void {
++    if(this.tutorialStep==='done')return;
++    const next=advanceTutorial(this.tutorialStep,action);
++    if(next==='done'){
++      const result=finishTutorial(this.profile,action!=='skip');
++      if(!this.persistProfile(result.profile))return;
++      this.tutorialStep='done';this.tutorialStamp='';
++      this.notify(action==='skip'?'p1.tutorialSkipped':result.awarded?'p1.tutorialReward':'p1.tutorialDone');
++    }else {this.tutorialStep=next;this.refresh();}
+   }
+ 
+   private renderInspector(): void {
+     const state = this.engine?.state;
+     const player = state?.sides.player;
+     const unit = state?.units.find(item => item.id === this.selectedId && item.side === 'player');
+     const unitStats = unit && this.engine!.getUnitStats(unit);
+     const shovelRules = this.engine?.getShovelRules('player') ?? SHOVEL_PRODUCTION;
+@@ -418,23 +508,23 @@ export class GameApp {
+   private renderDialog(): void {
+     const kind = this.dialogKind;
+     this.dialog.classList.toggle('recipe-dialog', kind === 'recipes');
+     this.dialog.classList.toggle('meta-dialog', kind === 'armory' || kind === 'market');
+     this.dialog.classList.toggle('profile-dialog', kind === 'profile' || kind === 'leaderboard');
+     this.dialog.setAttribute('aria-labelledby', 'dialog-title');
+     if (kind === 'profile' || kind === 'leaderboard' || kind === 'settings') {
+       this.dialog.innerHTML = this.profileScreens.markup(kind);
++      if(kind==='settings')this.dialog.querySelector<HTMLInputElement>('[data-setting="developerMode"]')!.checked=isDeveloperMode(location.search,this.profile.settings);
+     } else if (kind === 'armory' || kind === 'market') {
+       this.dialog.innerHTML = this.meta.markup(kind);
+     } else if (kind === 'pause' && this.engine) {
+       this.dialog.innerHTML = `<div class="dialog-decoration" aria-hidden="true">♨</div><span class="eyebrow">${tr('pause.eyebrow')}</span><h2 id="dialog-title">${tr('pause.title')}</h2><p class="dialog-subtitle">${tr('pause.subtitle')}</p><h3>${tr('pause.loot')}</h3><div class="loot-columns"><section><h4>${tr('loot.you')}</h4>${this.lootMarkup(this.engine.state.sides.player.loot)}</section><section><h4>${tr('loot.ai')}</h4>${this.lootMarkup(this.engine.state.sides.ai.loot)}</section></div><p class="dialog-rule">${tr('pause.rule')}</p><button type="button" class="button button-teal" data-action="resume" autofocus>${tr('pause.keep')}</button><button type="button" class="text-button surrender-button" data-action="surrender">${tr('pause.surrender')}</button>`;
+     } else if (kind === 'recipes') {
+-      const rows = (start: number, end: number) => RECIPES.slice(start, end).map(recipe => `<article class="recipe-card"><div class="recipe-equation">${recipe.parts.map(part => `<span title="${esc(unitName(part))}">${icon(part)}<small>${esc(unitName(part))}</small></span>`).join('<b>＋</b>')}<b>→</b></div><h4>${tr(`hero.${recipe.hero}`)}</h4><p><strong>${tr(`skill.${recipe.hero}`)}</strong> · ${tr(`skill.${recipe.hero}.desc`, { charge: HEROES[recipe.hero].charge })}</p></article>`).join('');
+-      this.dialog.innerHTML = `<button type="button" class="dialog-close icon-button" data-action="close-recipes" aria-label="${tr('recipe.close')}">×</button><span class="eyebrow">✦ 8 + 4 ✦</span><h2 id="dialog-title">${tr('recipe.title')}</h2><p class="dialog-subtitle">${tr('recipe.subtitle')}</p><p class="recipe-note">${tr('recipe.note')}</p><h3>${tr('recipe.cross')}</h3><div class="recipe-grid">${rows(0, 8)}</div><h3>${tr('recipe.unique')}</h3><div class="recipe-grid">${rows(8, 12)}</div><p class="doge-note">🐕 + 🧙 · ${tr('recipe.doge')}</p><button type="button" class="button button-teal" data-action="close-recipes">${tr('recipe.close')}</button>`;
++      this.dialog.innerHTML = this.compendium.markup(this.profile);
+     } else if (kind === 'result' && this.engine?.state.result) {
+       const result = this.engine.state.result;
+       const won = result.winner === 'player';
+       this.dialog.innerHTML = `<div class="result-sticker" aria-hidden="true">${won ? '🍊' : '☁'}</div><span class="eyebrow">${tr('result.time', { time: clock(result.elapsed) })}</span><h2 id="dialog-title">${tr(won ? 'result.win' : 'result.loss')}</h2><p class="dialog-subtitle">${tr(won ? 'result.winSub' : 'result.lossSub')}</p><p class="result-reason">${tr(`result.reason.${result.reason}`)}</p><div class="result-rewards"><span><b>+${won ? result.coins : 0}</b><small>${tr('profile.coins')}</small></span><span><b>+${won ? result.loot.length : 0}</b><small>${tr('profile.fragments')}</small></span></div><h3>${tr('result.pool')}</h3>${this.lootMarkup(result.loot)}<p class="save-note">${tr(this.savedResult ? 'result.awarded' : 'result.memory')}</p><button type="button" class="button button-teal" data-action="start" autofocus>${tr('result.again')}</button><button type="button" class="text-button back-menu" data-action="menu">${tr('result.menu')}</button>`;
+     }
+     if (kind === 'pause') this.dialog.insertAdjacentHTML('beforeend', `<div class="meta-tabs"><button type="button" data-action="profile">${tr('m3.profile')}</button><button type="button" data-action="settings">${tr('m3.settings')}</button></div>`);
+     if (kind === 'result' && this.engine?.state.result?.winner === 'player') this.dialog.insertAdjacentHTML('beforeend', `<p class="ticket-reward">🎟 ${tr('m2.freeTicket')}</p>${this.newWeapons.length ? `<section class="unlock-reward"><h3>✦ ${tr('m2.newWeapons')}</h3>${this.newWeapons.map(id => `<p>${tr(`weapon.${id}`)}</p>`).join('')}</section>` : ''}`);
+     if (kind === 'result' && this.engine?.state.result) {
+@@ -489,23 +579,28 @@ export class GameApp {
+   }
+ 
+   private notify(key: string, error = false, vars: Record<string, string | number> = {}): void {
+     this.toast = { key, vars, error, until: performance.now() + (error ? 4200 : 2600) };
+     this.refresh();
+   }
+ 
+   private apply(result: CommandResult): void {
+-    if (result.ok && (result.key === 'hint.dig' || result.key === 'hint.repaired')) this.sound.play('dig');
+-    if (result.ok && result.key === 'hint.merged' && result.unitId && this.engine?.state.units.some(unit => unit.id === result.unitId && !!HEROES[unit.kind] && unit.level === 1)) this.sound.play('legendary');
++    if (result.ok && (result.key === 'hint.dig' || result.key === 'hint.repaired')) this.sound.play('shovel');
++    if (result.ok && result.key === 'hint.merged' && result.unitId && this.engine?.state.units.some(unit => unit.id === result.unitId && !!HEROES[unit.kind] && unit.level === 1)) this.sound.play('merge_hero');
+     if (result.ok && result.unitId) {
+       this.selectedId = result.unitId;
+       this.shovelSelected = false;
+     }
+     this.notify(result.key, !result.ok);
++    if(result.ok){
++      if(result.key==='hint.dig'||result.key==='hint.repaired')this.progressTutorial('dig');
++      if(result.key==='hint.deployed')this.progressTutorial('deploy');
++      if(result.key==='hint.merged'||result.key==='hint.fed')this.progressTutorial('merge');
++    }
+   }
+ 
+   private canInteract(): boolean { return this.engine?.state.phase === 'playing'; }
+ 
+   private clearSelection(): void { this.selectedId = undefined; this.shovelSelected = false; this.selectedProp = undefined; this.cancelDrag(); this.cancelPropDrag(); }
+ 
+   private unitAt(hit: Hit): Unit | undefined {
+     return this.engine?.state.units.find(unit => unit.side === 'player' && (hit.kind === 'bench'
+@@ -567,16 +662,24 @@ export class GameApp {
+     this.root.addEventListener('pointerdown', () => { void this.sound.unlock().catch(() => undefined); }, { passive: true });
+     this.root.addEventListener('keydown', () => { void this.sound.unlock().catch(() => undefined); });
+     this.root.addEventListener('input', event => {
+       if (event.target instanceof HTMLInputElement && event.target.type === 'range') this.profileScreens.change(event.target);
+     });
+     this.root.addEventListener('change', event => {
+       const element = event.target;
+       if (!(element instanceof HTMLInputElement || element instanceof HTMLSelectElement)) return;
++      if(element.dataset.setting==='developerMode'){
++        const enabled=(element as HTMLInputElement).checked;
++        if(this.persistProfile(updateSettings(this.profile,{developerMode:enabled}))){
++          if(!enabled){const url=new URL(location.href);url.searchParams.delete('dev');history.replaceState(null,'',url);}
++          this.refresh(true);
++        }else this.renderDialog();
++        return;
++      }
+       if (element.id === 'dev-map') {
+         this.devMapOverride = MAP_IDS.includes(element.value as MapId) ? element.value as MapId : undefined;
+         this.refresh(true); return;
+       }
+       if (element.dataset.map !== undefined) this.devMapOverride = undefined;
+       if (this.profileScreens.change(element)) return;
+       if (this.meta.change(element)) return;
+       if (element.dataset.propSlot) {
+@@ -684,17 +787,27 @@ export class GameApp {
+     });
+     window.addEventListener('pageshow', () => {
+       this.retainedPage = false;
+       this.sound.setDucked(document.hidden || !!this.engine && this.engine.state.phase !== 'playing');
+     });
+   }
+ 
+   private action(action: string): void {
++    if(!['summon','sprinkler','grant','boss','food','orange-plus','orange-minus','skip'].includes(action)&&!action.startsWith('prop:'))this.sound.play('ui_click');
+     if (action === 'zh-CN' || action === 'en') { setLanguage(action); return; }
++    if(action.startsWith('book:')){if(this.compendium.select(action.slice(5)))this.renderDialog();return;}
++    if(action==='tutorial-skip'||action==='tutorial-ack'){this.progressTutorial(action==='tutorial-skip'?'skip':'acknowledge');return;}
++    if(action==='tutorial-replay'){
++      if(!this.persistProfile(replayTutorial(this.profile)))return;
++      if(this.engine&&this.engine.state.phase!=='finished'){
++        this.tutorialStep=1;this.tutorialStamp='';this.closeProfileScreen();
++      }else this.notify('p1.tutorialReplayReady');
++      this.refresh();return;
++    }
+     if (this.profileScreens.action(action)) return;
+     if (action === 'profile' || action === 'leaderboard' || action === 'settings' || action === 'brand') { this.openProfileScreen(action === 'brand' ? 'profile' : action); return; }
+     if (action === 'close-profile') { this.closeProfileScreen(); return; }
+     if (this.meta.action(action)) return;
+     if (action === 'armory' || action === 'market') { this.meta.open(action); this.showDialog(action); return; }
+     if (action === 'close-meta') { this.closeDialog(false); this.refresh(true); return; }
+     if (action === 'test-enable' || action === 'test-restore') {
+       const wasTestProfile = isTestProfile();
+@@ -750,17 +863,17 @@ export class GameApp {
+       this.menu();
+       setLanguage('zh-CN');
+       this.notify(success ? 'hint.reset' : 'hint.storage', !success);
+       return;
+     }
+     if (!this.canInteract() || !this.engine) return;
+     if (action === 'summon') {
+       const result = this.engine.summon();
+-      if (result.ok) { this.cancelDrag(); this.sound.play('summon'); }
++      if (result.ok) { this.cancelDrag(); this.sound.play('summon'); this.progressTutorial('summon'); }
+       this.apply(result);
+     }
+     else if (action === 'food') { this.engine.addFood(500); this.notify('hint.foodAdded'); }
+     else if (action === 'grant') this.apply(this.engine.grant(this.element<HTMLSelectElement>('dev-unit').value));
+     else if (action === 'boss') this.apply(this.engine.spawnBoss(this.element<HTMLSelectElement>('dev-boss').value));
+     else if (action === 'orange-plus' || action === 'orange-minus') { this.engine.adjustOranges(action === 'orange-plus' ? 1 : -1); this.notify(action === 'orange-plus' ? 'hint.orangeAdded' : 'hint.orangeLost'); }
+     else if (action === 'skip') { this.engine.skipWave(); this.notify('hint.waveSkipped'); }
+     else if (action === 'speed') this.speed = this.speed === 1 ? 2 : 1;
+
+## src/ui/ProfileScreens.ts
+diff --git "D:\\rea_game\\games\\capybara-defense\\.runtime\\p1-review-baseline\\src\\ui\\ProfileScreens.ts" "D:\\rea_game\\games\\capybara-defense\\src\\ui\\ProfileScreens.ts"
+index 4e88bc3..ea52c8b 100644
+--- "D:\\rea_game\\games\\capybara-defense\\.runtime\\p1-review-baseline\\src\\ui\\ProfileScreens.ts"
++++ "D:\\rea_game\\games\\capybara-defense\\src\\ui\\ProfileScreens.ts"
+@@ -28,17 +28,17 @@ export class ProfileScreens {
+     const id = action.slice(7), current = this.profile();
+     if (current.unlockedAvatars.includes(id) && this.persist(selectAvatar(current, id))) { this.notify('m3.avatarEquipped'); this.render(); }
+     return true;
+   }
+   change(element: HTMLInputElement | HTMLSelectElement): boolean {
+     const before = this.profile();
+     if (element.dataset.setting) {
+       const key = element.dataset.setting;
+-      const patch = key === 'showDamageNumbers' ? { showDamageNumbers: (element as HTMLInputElement).checked } : { [key]: Number(element.value) };
++      const patch = key === 'showDamageNumbers' || key === 'developerMode' ? { [key]: (element as HTMLInputElement).checked } : { [key]: Number(element.value) };
+       if (this.persist(updateSettings(before, patch))) {
+         const output = element.closest('label')?.querySelector('output');
+         if (output) output.textContent = `${Math.round(Number(element.value) * 100)}%`;
+       } else this.render();
+       return true;
+     }
+     if (element.dataset.map !== undefined) {
+       if (this.persist(selectMap(before, element.value as Profile['selectedMap']))) this.notify('m3.mapSaved');
+@@ -48,16 +48,16 @@ export class ProfileScreens {
+       if (this.persist(setRank(before, Number(element.value)))) this.notify('m3.rankSaved');
+       this.render(); return true;
+     }
+     return false;
+   }
+   markup(screen: ProfileScreen): string {
+     const profile = this.profile();
+     const header = `<button type="button" class="dialog-close icon-button" data-action="close-profile" aria-label="${tr('m3.close')}">×</button><h2 id="dialog-title">${tr(`m3.${screen}`)}</h2>`;
+-    if (screen === 'settings') return header + `<div class="settings-form">${(['musicVolume', 'soundVolume'] as const).map(key => `<label><span>${tr(key === 'musicVolume' ? 'm3.music' : 'm3.sound')} <output>${Math.round(profile.settings[key] * 100)}%</output></span><input type="range" min="0" max="1" step="0.01" value="${profile.settings[key]}" data-setting="${key}" aria-label="${tr(key === 'musicVolume' ? 'm3.music' : 'm3.sound')}"></label>`).join('')}<label class="damage-setting"><input type="checkbox" data-setting="showDamageNumbers"${profile.settings.showDamageNumbers ? ' checked' : ''}><span>${tr('m3.damage')}</span></label><p>${tr('m3.settingsSaved')}</p></div>`;
++    if (screen === 'settings') return header + `<div class="settings-form">${(['musicVolume', 'soundVolume'] as const).map(key => `<label><span>${tr(key === 'musicVolume' ? 'm3.music' : 'm3.sound')} <output>${Math.round(profile.settings[key] * 100)}%</output></span><input type="range" min="0" max="1" step="0.01" value="${profile.settings[key]}" data-setting="${key}" aria-label="${tr(key === 'musicVolume' ? 'm3.music' : 'm3.sound')}"></label>`).join('')}<label class="damage-setting"><input type="checkbox" data-setting="showDamageNumbers"${profile.settings.showDamageNumbers ? ' checked' : ''}><span>${tr('m3.damage')}</span></label><label class="damage-setting"><input type="checkbox" data-setting="developerMode"${profile.settings.developerMode ? ' checked' : ''}><span>${tr('p1.developer')}</span></label><button type="button" class="button button-light" data-action="tutorial-replay">${tr('p1.tutorialReplay')}</button><p>${tr('m3.settingsSaved')}</p></div>`;
+     if (screen === 'leaderboard') return header + `<p class="meta-rule">${tr('m3.localBoard')}</p><ol class="leaderboard-list">${getLeaderboard(profile).map((entry, index) => `<li class="leaderboard-row ${entry.isPlayer ? 'is-player' : ''}" data-player="${entry.isPlayer}" aria-label="${tr('m3.place', { place: index + 1 })}"><b>${index + 1}</b><span>${avatarSticker(entry.avatarId, 48)}</span><div><strong>${esc(entry.name[document.documentElement.lang === 'en' ? 'en' : 'zh-CN'])}</strong><small>${tr(`rank.${getRank(entry.stars).index}`)}</small><small>${tr('m3.record', { wins: entry.wins, matches: entry.matches, rate: entry.matches ? Math.round(entry.wins / entry.matches * 100) : 0 })}</small></div><strong>★ ${entry.stars}</strong></li>`).join('')}</ol>`;
+     return header + rankCard(profile) + `<p>${tr('m3.record', { wins: profile.wins, matches: profile.matches, rate: profile.matches ? Math.round(profile.wins / profile.matches * 100) : 0 })}</p><p>${tr('m3.streak', { current: profile.winStreak, best: profile.bestWinStreak })}</p><div class="avatar-grid">${Object.values(AVATARS).map(avatar => {
+       const unlocked = profile.unlockedAvatars.includes(avatar.id), selected = profile.avatarId === avatar.id;
+       return `<button type="button" class="avatar-card ${unlocked ? 'unlocked' : 'locked'}" data-action="avatar:${avatar.id}" aria-pressed="${selected}"${unlocked ? '' : ' disabled'}>${avatarSticker(avatar.id, 72)}<strong>${tr(`avatar.${avatar.id}`)}</strong><small>${tr(`avatar.${avatar.id}.desc`)}</small><b>${tr(selected ? 'm3.avatarCurrent' : unlocked ? 'm3.avatarUnlocked' : 'm3.avatarLocked')}</b></button>`;
+     }).join('')}</div>`;
+   }
+ }
+
+## src/ui/MetaScreens.ts
+diff --git "D:\\rea_game\\games\\capybara-defense\\.runtime\\p1-review-baseline\\src\\ui\\MetaScreens.ts" "D:\\rea_game\\games\\capybara-defense\\src\\ui\\MetaScreens.ts"
+index eae928b..784c749 100644
+--- "D:\\rea_game\\games\\capybara-defense\\.runtime\\p1-review-baseline\\src\\ui\\MetaScreens.ts"
++++ "D:\\rea_game\\games\\capybara-defense\\src\\ui\\MetaScreens.ts"
+@@ -2,28 +2,29 @@ import type { Profile } from '../core/types';
+ import { WEAPONS, HERO_FAMILIES, RARITY_RULES, type WeaponFamily } from '../config/weapons';
+ import { PROPS } from '../config/props';
+ import { buyProp, createLotteryPrizes, ensureDailyShop, equipProp, equipWeapon, recycleFragments, refreshShop, spinLottery, type LotteryPrize, type MetaResult } from '../core/MetaProgression';
+ import { t } from '../i18n/i18n';
+ import { escapeHtml as esc } from './art';
+ import { saveProfile } from './storage';
+ import { weaponSticker } from '../render/M3Art';
+ import type { SoundCue } from './SoundManager';
++import { propSticker } from './stickers';
+ 
+ const tr = (key: string, vars?: Record<string, string | number>) => esc(t(key, vars));
+ const day = () => { const date = new Date(); return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`; };
+ export type MetaScreen = 'armory' | 'market';
+ 
+ export function propSlots(profile: Profile, quick = false): string {
+   return (['active', 'passive'] as const).map(type => `<section class="slot-group"><h4>${tr(`m2.${type}`)} · ${type === 'active' ? 2 : 6}</h4><div class="${quick ? 'quick-slots' : 'prop-slots'}">${Array.from({ length: type === 'active' ? 2 : 6 }, (_, index) => {
+     const ids = type === 'active' ? profile.equippedActiveProps : profile.equippedPassiveProps;
+     const id = ids[index];
+     const label = t('m2.slot', { type: t(`m2.${type}`), slot: index + 1 });
+-    if (quick) return `<label><span>${esc(label)}</span><select data-prop-slot="${type}:${index}" aria-label="${esc(label)}"><option value="">${tr('m2.emptySlot')}</option>${Object.values(PROPS).filter(item => item.type === type && profile.ownedProps[item.id]).map(item => `<option value="${item.id}"${id === item.id ? ' selected' : ''}>${esc(item.icon)} ${tr(`prop.${item.id}`)}</option>`).join('')}</select></label>`;
+-    return `<button type="button" class="prop-slot ${id ? 'filled' : ''}" ${id ? `data-action="meta-prop:${id}" title="${tr(`prop.${id}.desc`)}"` : 'disabled'} aria-label="${esc(label)}${id ? `: ${tr(`prop.${id}`)}` : ''}"><span>${id ? esc(PROPS[id].icon) : '+'}</span><small>${id ? tr(`prop.${id}`) : tr('m2.emptySlot')}</small></button>`;
++    if (quick) return `<label><span>${esc(label)}</span><select data-prop-slot="${type}:${index}" aria-label="${esc(label)}"><option value="">${tr('m2.emptySlot')}</option>${Object.values(PROPS).filter(item => item.type === type && profile.ownedProps[item.id]).map(item => `<option value="${item.id}"${id === item.id ? ' selected' : ''}>${tr(`prop.${item.id}`)}</option>`).join('')}</select></label>`;
++    return `<button type="button" class="prop-slot ${id ? 'filled' : ''}" ${id ? `data-action="meta-prop:${id}" title="${tr(`prop.${id}.desc`)}"` : 'disabled'} aria-label="${esc(label)}${id ? `: ${tr(`prop.${id}`)}` : ''}"><span>${id ? propSticker(id,36) : '+'}</span><small>${id ? tr(`prop.${id}`) : tr('m2.emptySlot')}</small></button>`;
+   }).join('')}</div></section>`).join('');
+ }
+ 
+ export class MetaScreens {
+   family: WeaponFamily | 'all' = 'all';
+   tab: 'shop' | 'lottery' = 'shop';
+   rarities = new Set([0, 1, 2, 3, 4]);
+   orangeFirst = false;
+@@ -109,38 +110,38 @@ export class MetaScreens {
+     return tr(prize.type === 'prop' ? 'm2.prizeProp' : 'm2.prizeFragment', { name: t(`${prize.type === 'prop' ? 'prop' : 'weapon'}.${prize.id}`), amount: prize.amount });
+   }
+   markup(screen: MetaScreen): string {
+     const profile = this.profile();
+     const heading = `<button type="button" class="dialog-close icon-button" data-action="close-meta" aria-label="${tr('m2.close')}">×</button><h2 id="dialog-title">${tr(screen === 'armory' ? 'm2.armory' : 'm2.market')}</h2><div class="meta-wallet"><b>${tr('m2.coins', { count: profile.coins })}</b><span>${tr('m2.tickets', { count: profile.freeLotteryTickets })}</span></div>`;
+     if (screen === 'armory') return heading + this.armory(profile);
+     return heading + `<div class="meta-tabs">${['shop', 'lottery'].map(tab => `<button type="button" data-action="meta-tab:${tab}" aria-pressed="${this.tab === tab}" class="${this.tab === tab ? 'selected' : ''}">${tr(`m2.${tab}`)}</button>`).join('')}</div>${this.tab === 'shop' ? this.shop(profile) : this.lottery()}<section class="loadout-panel"><h3>${tr('m2.loadout')}</h3>${propSlots(profile)}<p>${tr('m2.nextBattle')}</p></section><h3>${tr('m2.inventory')}</h3><div class="inventory-grid">${Object.values(PROPS).filter(prop => profile.ownedProps[prop.id]).map(prop => {
+       const equipped = [...profile.equippedActiveProps, ...profile.equippedPassiveProps].includes(prop.id);
+-      return `<button type="button" data-action="meta-prop:${prop.id}" class="inventory-prop ${equipped ? 'equipped' : ''}" aria-pressed="${equipped}"><b>${esc(prop.icon)} ${tr(`prop.${prop.id}`)}</b><small>${tr(`m2.${prop.type}`)} · ${tr('m2.level', { level: profile.ownedProps[prop.id], max: prop.maxLevel })}</small><p>${tr(`prop.${prop.id}.desc`)}</p><strong>${tr(equipped ? 'm2.unequip' : 'm2.equip')}</strong></button>`;
++      return `<button type="button" data-action="meta-prop:${prop.id}" class="inventory-prop ${equipped ? 'equipped' : ''}" aria-pressed="${equipped}"><b>${propSticker(prop.id,42)} ${tr(`prop.${prop.id}`)}</b><small>${tr(`m2.${prop.type}`)} · ${tr('m2.level', { level: profile.ownedProps[prop.id], max: prop.maxLevel })}</small><p>${tr(`prop.${prop.id}.desc`)}</p><strong>${tr(equipped ? 'm2.unequip' : 'm2.equip')}</strong></button>`;
+     }).join('') || `<p>${tr('m2.noProps')}</p>`}</div>`;
+   }
+   private armory(profile: Profile): string {
+     const weapons = Object.values(WEAPONS).filter(weapon => this.family === 'all' || this.family === weapon.family);
+     if (this.orangeFirst) weapons.sort((a, b) => b.rarity - a.rarity);
+     return `<section class="hero-overview"><h3>${tr('m3.heroOverview')}</h3><div class="hero-loadout-grid">${Object.keys(HERO_FAMILIES).map(hero => { const id = profile.equippedWeapons[hero]; return `<article data-loadout-hero="${hero}"><span>${id ? weaponSticker(id, 42) : '＋'}</span><div><strong>${tr(`hero.${hero}`)}</strong><small>${id ? tr(`weapon.${id}`) : tr('m3.emptyWeapon')}</small></div></article>`; }).join('')}</div></section><p>${tr('m2.collection', { count: profile.unlockedWeapons.length })}</p><p class="meta-rule">${tr('m2.weaponRule')}</p><div class="meta-tabs sort-tabs">${['default', 'orange'].map(sort => `<button type="button" data-action="meta-sort:${sort}" aria-pressed="${this.orangeFirst === (sort === 'orange')}" class="${this.orangeFirst === (sort === 'orange') ? 'selected' : ''}">${tr(sort === 'orange' ? 'm3.orangeSort' : 'm3.defaultSort')}</button>`).join('')}</div><div class="meta-tabs family-tabs">${['all', 'melee', 'ranged', 'magic'].map(family => `<button type="button" data-action="meta-family:${family}" aria-pressed="${family === this.family}" class="${family === this.family ? 'selected' : ''}">${tr(`m2.family.${family}`)}</button>`).join('')}</div><div class="weapon-grid">${weapons.map(weapon => {
+       const unlocked = profile.unlockedWeapons.includes(weapon.id);
+       const wearer = Object.keys(profile.equippedWeapons).find(hero => profile.equippedWeapons[hero] === weapon.id);
+       const rule = RARITY_RULES[weapon.rarity];
+       return `<article class="weapon-card rarity-${weapon.rarity} ${unlocked ? 'unlocked' : 'locked'}" data-weapon-id="${weapon.id}" data-weapon-rarity="${weapon.rarity}"><span class="weapon-sticker">${weaponSticker(weapon.id, 56)}</span><small>${tr(`m2.rarity.${weapon.rarity}`)} · ${tr(`m2.family.${weapon.family}`)}</small><h3>${tr(`weapon.${weapon.id}`)}</h3><b>${tr('m2.damage', { value: Math.round(rule.damageBonus * 100) })}</b><p>${tr(`weapon.${weapon.id}.desc`)}</p>${weapon.signatureHero ? `<p class="signature-note">✦ ${tr('m2.signature', { hero: t(`hero.${weapon.signatureHero}`) })}</p>` : ''}<div class="fragment-track"><i style="width:${Math.min(100, (profile.weaponFragments[weapon.id] ?? 0) / rule.fragments * 100)}%"></i></div><small>${tr('m2.progress', { count: profile.weaponFragments[weapon.id] ?? 0, total: rule.fragments })}</small>${unlocked ? `<label class="equip-hero"><span>${tr('m2.chooseHero')}</span><select data-weapon="${weapon.id}" aria-label="${tr('m2.equip')} ${tr(`weapon.${weapon.id}`)}"><option value="" disabled${wearer ? '' : ' selected'}>${tr('m2.chooseHero')}</option>${Object.keys(HERO_FAMILIES).filter(hero => HERO_FAMILIES[hero] === weapon.family).map(hero => `<option value="${hero}"${wearer === hero ? ' selected' : ''}>${tr(`hero.${hero}`)}</option>`).join('')}</select></label>${wearer ? `<p>${tr('m2.equipped', { hero: t(`hero.${wearer}`) })}</p><button type="button" class="text-button" data-action="meta-unequip:${wearer}">${tr('m2.unequip')}</button>` : ''}` : `<strong class="locked-label">${tr('m2.locked')}</strong>`}</article>`;
+     }).join('')}</div><section class="recycle-panel"><h3>${tr('m2.recycle')}</h3><p>${tr('m2.recycleRule')}</p><div class="rarity-checks">${RARITY_RULES.map((rule, rarity) => `<label><input type="checkbox" data-rarity="${rarity}"${this.rarities.has(rarity) ? ' checked' : ''}>${tr(`m2.rarity.${rarity}`)}<small>${tr('m2.recycleRate', { value: rule.recycle })}</small></label>`).join('')}</div><button type="button" class="button button-teal" data-action="meta-recycle">${tr('m2.recycle')}</button></section>`;
+   }
+   private shop(profile: Profile): string {
+     return `<button type="button" class="button button-light shop-refresh" data-action="meta-refresh">${tr('m2.refresh')}</button><div class="shop-grid">${(profile.shop?.offers ?? []).map(id => {
+       const prop = PROPS[id]; if (!prop) return '';
+       const level = profile.ownedProps[id] ?? 0;
+-      return `<article class="shop-card rarity-${prop.rarity}"><span class="shop-icon">${esc(prop.icon)}</span><h3>${tr(`prop.${id}`)}</h3><small>${tr(`m2.${prop.type}`)} · ${tr('m2.level', { level, max: prop.maxLevel })}</small><p>${tr(`prop.${id}.desc`)}</p><button type="button" class="button button-teal" data-action="meta-buy:${id}"${level >= prop.maxLevel ? ' disabled' : ''}>${tr(level >= prop.maxLevel ? 'm2.maxed' : level ? 'm2.upgrade' : 'm2.buy', { price: prop.price })}</button></article>`;
++      return `<article class="shop-card rarity-${prop.rarity}"><span class="shop-icon">${propSticker(prop.id,42)}</span><h3>${tr(`prop.${id}`)}</h3><small>${tr(`m2.${prop.type}`)} · ${tr('m2.level', { level, max: prop.maxLevel })}</small><p>${tr(`prop.${id}.desc`)}</p><button type="button" class="button button-teal" data-action="meta-buy:${id}"${level >= prop.maxLevel ? ' disabled' : ''}>${tr(level >= prop.maxLevel ? 'm2.maxed' : level ? 'm2.upgrade' : 'm2.buy', { price: prop.price })}</button></article>`;
+     }).join('') || `<p>${tr('m2.shopEmpty')}</p>`}</div>`;
+   }
+   private lottery(): string {
+     const positions = [0, 1, 2, 5, 8, 7, 6, 3];
+     const cells = Array.from({ length: 9 }, (_, position) => {
+       if (position === 4) return `<button type="button" class="lottery-center" data-action="meta-spin"${this.spinning ? ' disabled' : ''}><b>${tr(this.spinning ? 'm2.spinning' : 'm2.spin')}</b><small>${tr('m2.spinCost')}</small></button>`;
+       const index = positions.indexOf(position); const prize = this.prizes[index];
+-      return `<div class="lottery-cell ${index === this.highlight ? 'lit' : ''}"><span>${prize?.type === 'prop' ? esc(PROPS[prize.id!]?.icon ?? '🎁') : prize?.type === 'coins' ? '🪙' : '✦'}</span><small>${prize ? this.prizeText(prize) : ''}</small></div>`;
++      return `<div class="lottery-cell ${index === this.highlight ? 'lit' : ''}"><span>${prize?.type === 'prop' ? propSticker(prize.id!,38) : prize?.type === 'coins' ? '🪙' : prize?.id ? weaponSticker(prize.id,38) : '✦'}</span><small>${prize ? this.prizeText(prize) : ''}</small></div>`;
+     });
+     return `<div class="lottery-grid">${cells.join('')}</div><p class="meta-rule">${tr('m2.lotteryRule')}</p>${this.prize ? `<section class="lottery-result" role="status"><h3>${tr('m2.prize')}</h3><p>${this.prizeText(this.prize)}</p>${this.convertedCoins !== undefined ? `<p>${tr('m2.convertedCoins', { amount: this.convertedCoins })}</p>` : ''}${this.newWeapons.length ? `<h4>${tr('m2.newWeapons')}</h4>${this.newWeapons.map(id => `<p>${tr(`weapon.${id}`)}</p>`).join('')}` : ''}</section>` : ''}`;
+   }
+ }
+
+## src/ui/Compendium.ts
+diff --git "D:\\rea_game\\games\\capybara-defense\\.runtime\\p1-review-baseline\\__empty__" "D:\\rea_game\\games\\capybara-defense\\src\\ui\\Compendium.ts"
+index e69de29..9f4b443 100644
+--- "D:\\rea_game\\games\\capybara-defense\\.runtime\\p1-review-baseline\\__empty__"
++++ "D:\\rea_game\\games\\capybara-defense\\src\\ui\\Compendium.ts"
+@@ -0,0 +1,34 @@
++import { HEROES } from '../config/heroes';
++import { RECIPES } from '../config/recipes';
++import { BOSS_IDS, ENEMIES } from '../config/enemies';
++import { HERO_FAMILIES, RARITY_RULES, WEAPONS } from '../config/weapons';
++import { PROPS } from '../config/props';
++import type { Profile } from '../core/types';
++import { t } from '../i18n/i18n';
++import { weaponSticker } from '../render/M3Art';
++import { propSticker, unitSticker } from './stickers';
++import { escapeHtml as esc } from './art';
++
++export const COMPENDIUM_TABS = ['heroes','bosses','weapons','props'] as const;
++export type CompendiumTab = typeof COMPENDIUM_TABS[number];
++const tr=(key:string,vars?:Record<string,string|number>)=>esc(t(key,vars));
++const counts={heroes:12,bosses:12,weapons:36,props:20};
++export class Compendium {
++  tab:CompendiumTab='heroes';
++  select(tab:string):boolean {
++    if(!COMPENDIUM_TABS.includes(tab as CompendiumTab))return false;
++    this.tab=tab as CompendiumTab;return true;
++  }
++  markup(profile:Profile):string {
++    const header=`<button type="button" class="dialog-close icon-button" data-action="close-recipes" aria-label="${tr('recipe.close')}">×</button><span class="eyebrow">✦ ${tr('p1.bookEyebrow')} ✦</span><h2 id="dialog-title">${tr('p1.encyclopedia')}</h2><p class="dialog-subtitle">${tr('p1.bookSubtitle')}</p><div class="encyclopedia-tabs" role="tablist" aria-label="${tr('p1.encyclopedia')}">${COMPENDIUM_TABS.map(tab=>`<button type="button" role="tab" id="book-tab-${tab}" aria-selected="${tab===this.tab}" aria-controls="book-content" data-action="book:${tab}">${tr(`p1.${tab}`)} <b>${counts[tab]}</b></button>`).join('')}</div>`;
++    let cards='';
++    if(this.tab==='heroes') cards=RECIPES.map(recipe=>{
++      const hero=HEROES[recipe.hero],collected=profile.mergedHeroes.includes(hero.id);
++      return `<article class="recipe-card encyclopedia-card${collected?' collected':''}" data-entry="${hero.id}"><div class="book-heading">${unitSticker(hero.id,62)}<div><small>${tr(`m2.family.${HERO_FAMILIES[hero.id]}`)}</small><h4>${tr(`hero.${hero.id}`)}</h4><b class="collection-state">${tr(collected?'p1.collected':'p1.notCollected')}</b></div></div><div class="recipe-equation">${recipe.parts.map(part=>`<span>${unitSticker(part,38)}<small>${tr(`unit.${part}`)}</small></span>`).join('<b>＋</b>')}</div><p class="book-stats">${tr('p1.heroStats',{damage:hero.damage,rate:hero.rate,range:hero.range})}</p><p><strong>${tr(`skill.${hero.id}`)}</strong> · ${tr(`skill.${hero.id}.desc`,{charge:hero.charge})}</p></article>`;
++    }).join('');
++    if(this.tab==='bosses') cards=BOSS_IDS.map(id=>`<article class="encyclopedia-card boss-card" data-entry="${id}"><div class="book-heading">${unitSticker(id,62)}<h4>${tr(`boss.${id}`)}</h4></div><p class="book-stats">${tr('p1.bossStats',{hp:ENEMIES[id].hp,interval:ENEMIES[id].interval})}</p><p>${tr(`p1.boss.${id}.mechanic`)}</p><aside><b>${tr('p1.counter')}</b><p>${tr(`p1.boss.${id}.tip`)}</p></aside></article>`).join('');
++    if(this.tab==='weapons') cards=Object.values(WEAPONS).map(weapon=>`<article class="encyclopedia-card rarity-${weapon.rarity}" data-entry="${weapon.id}"><div class="book-heading">${weaponSticker(weapon.id,62)}<div><small>${tr(`m2.rarity.${weapon.rarity}`)} · ${tr(`m2.family.${weapon.family}`)}</small><h4>${tr(`weapon.${weapon.id}`)}</h4></div></div><p class="book-stats">${tr('p1.unlock',{count:RARITY_RULES[weapon.rarity].fragments})} · ${tr('m2.damage',{value:Math.round(RARITY_RULES[weapon.rarity].damageBonus*100)})}</p><p>${tr(`weapon.${weapon.id}.desc`)}</p>${weapon.signatureHero?`<aside>${tr('m2.signature',{hero:t(`hero.${weapon.signatureHero}`)})}</aside>`:''}</article>`).join('');
++    if(this.tab==='props') cards=Object.values(PROPS).map(prop=>`<article class="encyclopedia-card rarity-${prop.rarity}" data-entry="${prop.id}"><div class="book-heading">${propSticker(prop.id,62)}<div><small>${tr(`m2.${prop.type}`)} · ${tr('p1.price',{price:prop.price})}</small><h4>${tr(`prop.${prop.id}`)}</h4></div></div><p class="book-stats">${tr(prop.type==='active'?'p1.cooldown':'p1.auto',{time:prop.cooldown})}</p><p>${tr(`prop.${prop.id}.desc`)}</p></article>`).join('');
++    return header+`<section id="book-content" role="tabpanel" aria-labelledby="book-tab-${this.tab}">${this.tab==='heroes'?`<p class="recipe-note">${tr('recipe.note')}</p>`:''}<div class="encyclopedia-grid">${cards}</div>${this.tab==='heroes'?`<p class="doge-note">${tr('recipe.doge')}</p>`:''}</section>`;
++  }
++}
+
+## src/ui/BattleHUD.ts
+diff --git "D:\\rea_game\\games\\capybara-defense\\.runtime\\p1-review-baseline\\__empty__" "D:\\rea_game\\games\\capybara-defense\\src\\ui\\BattleHUD.ts"
+index e69de29..29aa1cf 100644
+--- "D:\\rea_game\\games\\capybara-defense\\.runtime\\p1-review-baseline\\__empty__"
++++ "D:\\rea_game\\games\\capybara-defense\\src\\ui\\BattleHUD.ts"
+@@ -0,0 +1,25 @@
++import type { BattleState, GameSettings } from '../core/types';
++import { ENEMIES } from '../config/enemies';
++import { FIRST_WAVE_PREPARATION, WAVE_DURATION } from '../config/waves';
++
++export function isDeveloperMode(search: string, settings: Partial<GameSettings>): boolean {
++  return new URLSearchParams(search).get('dev') === '1' || settings.developerMode === true;
++}
++
++export function getBossHUD(state: BattleState) {
++  const bosses = state.enemies.filter(enemy => enemy.side === 'player' && enemy.boss && enemy.hp > 0)
++    .sort((a,b) => b.progress-a.progress || a.id-b.id);
++  const boss = bosses[0];
++  if (!boss) return null;
++  const interval = ENEMIES[boss.kind].interval;
++  return {id:boss.id, kind:boss.kind, count:bosses.length, hp:Math.max(0,Math.ceil(boss.hp)), maxHp:Math.ceil(boss.maxHp),
++    fraction:Math.max(0,Math.min(1,boss.hp/boss.maxHp)), cooldown:Math.max(0,Math.ceil(boss.abilityCooldown)),
++    cooldownFraction:Math.max(0,Math.min(1,boss.abilityCooldown/interval)), warning:boss.abilityCooldown<=2};
++}
++
++export function getWaveHUD(state: BattleState) {
++  const preparing = state.wave === 1 && state.spawned === 0 && state.waveTime < FIRST_WAVE_PREPARATION;
++  const kind = getBossHUD(state) ? 'boss' : preparing ? 'preparation' : 'wave';
++  const duration = kind==='preparation' ? FIRST_WAVE_PREPARATION : WAVE_DURATION;
++  return {kind, fraction:Math.max(0,Math.min(1,state.waveTime/duration)), remaining:Math.max(0,Math.ceil(duration-state.waveTime))};
++}
+
+## src/ui/TutorialView.ts
+diff --git "D:\\rea_game\\games\\capybara-defense\\.runtime\\p1-review-baseline\\__empty__" "D:\\rea_game\\games\\capybara-defense\\src\\ui\\TutorialView.ts"
+index e69de29..f65a285 100644
+--- "D:\\rea_game\\games\\capybara-defense\\.runtime\\p1-review-baseline\\__empty__"
++++ "D:\\rea_game\\games\\capybara-defense\\src\\ui\\TutorialView.ts"
+@@ -0,0 +1,22 @@
++import type { TutorialStep } from '../core/Tutorial';
++import type { BattleState } from '../core/types';
++import { STAGE } from '../config/maps';
++import { t } from '../i18n/i18n';
++import { escapeHtml as esc } from './art';
++
++/** The spotlight is purely visual: it never captures the canvas or pauses simulation. */
++export function tutorialMarkup(step:TutorialStep,state:BattleState,selectedId?:number):string {
++  if(step==='done')return '';
++  let area={x:128,y:1226,w:384,h:128};
++  if(step===2)area={x:26,y:1018,w:586,h:170};
++  if(step===3){
++    const unit=state.units.find(unit=>unit.id===selectedId&&unit.side==='player')??state.units.find(unit=>unit.side==='player');
++    if(unit){
++      const location=unit.location;
++      const x=location.zone==='bench'?STAGE.benchX+location.slot*STAGE.benchStep+STAGE.benchSize/2:STAGE.boardX+(location.col+.5)*STAGE.cell;
++      const y=location.zone==='bench'?STAGE.benchY+STAGE.benchSize/2:STAGE.boardY+(location.row+.5)*STAGE.cell;
++      area={x:x-49,y:y-49,w:98,h:98};
++    }else area={x:26,y:1018,w:586,h:170};
++  }
++  return `<div class="tutorial-spotlight" style="left:${area.x/640*100}%;top:${area.y/1386*100}%;width:${area.w/640*100}%;height:${area.h/1386*100}%"></div><section class="tutorial-bubble" role="status" aria-live="polite"><div><strong>${esc(t(`p1.tutorial${step}.title`))}</strong><button type="button" data-action="tutorial-skip">${esc(t('p1.tutorialSkip'))}</button></div><p>${esc(t(`p1.tutorial${step}.body`))}</p><div class="tutorial-dots" aria-hidden="true">${[1,2,3].map(n=>`<i class="${n===step?'current':''}"></i>`).join('')}</div>${step===3?`<button type="button" class="button button-teal" data-action="tutorial-ack">${esc(t('p1.tutorialAck'))}</button>`:''}</section>`;
++}
+
+## src/ui/p1.css
+diff --git "D:\\rea_game\\games\\capybara-defense\\.runtime\\p1-review-baseline\\__empty__" "D:\\rea_game\\games\\capybara-defense\\src\\ui\\p1.css"
+index e69de29..b69c9b0 100644
+--- "D:\\rea_game\\games\\capybara-defense\\.runtime\\p1-review-baseline\\__empty__"
++++ "D:\\rea_game\\games\\capybara-defense\\src\\ui\\p1.css"
+@@ -0,0 +1,155 @@
++/* A single canvas coordinate system; clean mode sizes the whole stage, never crops it. */
++html.clean-player-mode, .clean-player-mode body { height:100%; overflow:hidden; overscroll-behavior:none; }
++.clean-mode.page-shell { max-width:1100px; padding:0 12px; height:100dvh; }
++.clean-mode .masthead { min-height:48px; height:48px; margin:0; border:0; gap:8px; }
++.clean-mode .brand { gap:7px; }
++.clean-mode .brand-mark { width:32px; height:35px; }
++.clean-mode .brand strong { font-size:16px; letter-spacing:0; }
++.clean-mode .brand small, .clean-mode .edition { display:none; }
++.clean-mode .header-actions { gap:9px; }
++.clean-mode .language-switch { padding:2px; }
++.clean-mode .language-switch button { padding:5px 7px; font-size:11px; }
++.clean-mode .settings-button { width:29px; height:29px; font-size:19px; }
++.clean-mode .game-layout { display:flex; justify-content:center; gap:0; height:calc(100dvh - 56px); align-items:flex-start; }
++.clean-mode .sandbox-column,.clean-mode .journal-column,.clean-mode .stage-caption,.clean-mode .page-footer { display:none; }
++.clean-mode .center-column { width:min(calc((100dvh - 62px)*.46176),calc(100vw - 22px),440px); flex:none; }
++.stage { container-type:inline-size; }
++.clean-mode .stage { border:0; outline:2px solid var(--ink); aspect-ratio:640/1386; max-height:calc(100dvh - 56px); border-radius:20px; box-shadow:4px 5px 0 #dfd0b4; touch-action:none; }
++.clean-mode .stage canvas { width:100%; height:100%; }
++.clean-mode .menu-screen { min-height:0; height:100%; padding:5cqw 6cqw 4cqw; display:flex; flex-direction:column; gap:2cqw; overflow:hidden; }
++.clean-mode .menu-top { flex:none; }
++.clean-mode .menu-chip { font-size:2.4cqw; padding:1.3cqw 2cqw; }
++.clean-mode .doodle-star { font-size:6cqw; }
++.clean-mode .menu-screen h1 { font-size:10cqw; line-height:1.07; margin:1cqw 0 0; letter-spacing:-.4px; }
++html[lang="zh-CN"] .clean-mode .menu-screen h1 { font-size:11.5cqw; line-height:1.09; letter-spacing:0; }
++.clean-mode .menu-subtitle { font-size:2.65cqw; line-height:1.6; }
++.clean-mode .hero-illustration { width:100%; margin:0; flex:1 1 auto; min-height:20cqw; max-height:56cqw; display:flex; align-items:center; justify-content:center; }
++.clean-mode .hero-illustration > svg,.clean-mode .hero-illustration > img { max-height:100%; width:100%; object-fit:contain; }
++.clean-mode .illustration-caption { bottom:2px; right:0; font-size:2.4cqw; padding:1cqw 2cqw; }
++.clean-mode .rank-card { margin:0; padding:2cqw; gap:2cqw; border-radius:10px; }
++.clean-mode .rank-avatar { width:13cqw; }
++.clean-mode .rank-card > span:last-child { gap:.5cqw; }
++.clean-mode .rank-card strong { font-size:3.5cqw; line-height:1.2; }
++.clean-mode .rank-card b { font-size:2.8cqw; }
++.clean-mode .rank-card small { font-size:2.2cqw; line-height:1.3; }
++.clean-mode .rank-card small:first-child { display:none; }
++.clean-mode .rank-track { height:4px; }
++.clean-mode .map-select { grid-template-columns:auto minmax(0,1fr); align-items:center; margin:0; gap:2cqw; }
++.clean-mode .map-select > span { font-size:2.6cqw; }
++.clean-mode .map-select select { font-size:2.7cqw; padding:2cqw 1cqw; }
++.clean-mode .map-select small { display:none; }
++.clean-mode .start-button { min-height:11cqw; padding:2cqw 4cqw; font-size:4cqw; flex:none; }
++.clean-mode .start-button span:last-child { font-size:5cqw; }
++.clean-mode .duration { font-size:2.25cqw; line-height:1.4; margin:1cqw 0; }
++.clean-mode .meta-menu { grid-template-columns:1fr 1fr; gap:1.7cqw; padding:0; border:0; margin:0; background:none; }
++.clean-mode .meta-menu .button { min-height:8.5cqw; padding:1.3cqw; font-size:3cqw; gap:1cqw; border-radius:8px; }
++.clean-mode .meta-menu .button:last-child { grid-column:1/-1; min-height:7cqw; }
++.clean-mode .meta-menu small { font-size:2.2cqw; }
++.clean-mode .menu-stats { padding:2cqw 0; }
++.clean-mode .menu-stats strong { font-size:4.7cqw; }
++.clean-mode .menu-stats small { margin:0; font-size:2.3cqw; }
++.clean-mode .profile-history { display:none; }
++.clean-mode .menu-recipe-link { font-size:2.8cqw; margin:0; padding:1cqw 0; }
++.clean-mode .ticket-badge { padding:2px 4px; font-size:2.3cqw; }
++.brand-mark img,.rank-avatar img,.avatar-card img,.hero-loadout-grid img { max-width:100%; height:auto; object-fit:contain; }
++
++/* HUD coordinates are percentages of the unchanged 640 × 1386 stage. */
++.stage .battle-hud { padding:0; height:13.5%; }
++.stage .hud-topline { position:absolute; top:4%; left:5%; right:5%; height:29%; }
++.stage .map-eyebrow { display:block; font-size:2.05cqw; line-height:1.2; }
++.stage .hud-topline strong { font-size:4.2cqw; line-height:1.2; letter-spacing:0; }
++.stage .hud-topline .icon-button { width:7cqw; height:7cqw; font-size:4cqw; border-width:1.5px; box-shadow:0 2px 0 var(--ink); }
++.stage .hud-resource-row { position:absolute; top:33%; left:5%; right:5%; margin:0; gap:2cqw; height:21%; }
++.stage .food-pill { gap:1cqw; padding:.5cqw 1.6cqw; border-width:1px; border-radius:6px; }
++.stage .food-pill strong { font-size:3.3cqw; }
++.stage .food-pill span:first-child { font-size:3.5cqw; }
++.stage .food-pill span:last-child { font-size:2cqw; }
++.stage .time-chip { font-size:2.6cqw; }
++.stage .speed-pill { font-size:2.5cqw; padding:1cqw 2cqw; border-width:1px; }
++.wave-progress { position:absolute; left:5%; right:5%; top:59%; height:4px; background:#dfd6bc; border-radius:8px; }
++.wave-progress > i { display:block; height:100%; border-radius:inherit; background:#78a99a; transition:width .15s linear; }
++.wave-progress[data-kind="preparation"] > i { background:#dfa451; }
++.wave-progress[data-kind="boss"] > i { background:#df8069; }
++.wave-progress > span { display:block; text-align:center; font-size:2.1cqw; padding-top:1cqw; color:#87683e; }
++.boss-banner { position:absolute; left:5%; right:5%; top:8.8%; height:4.6%; display:flex; gap:1.2cqw; padding:.5cqw 1cqw; border:1px solid #b87c64; border-radius:7px; background:#fff2d9f5; pointer-events:none; }
++.boss-portrait { width:7.5cqw; flex:none; display:flex; align-items:center; }
++.boss-portrait > svg,.boss-portrait > img { width:100%; height:auto; }
++.boss-detail { flex:1; min-width:0; }
++.boss-heading { display:flex; justify-content:space-between; align-items:center; gap:1cqw; }
++.boss-heading strong { font-size:2.45cqw; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
++.boss-numbers { font-size:2cqw; white-space:nowrap; font-variant-numeric:tabular-nums; }
++.boss-hp { height:1.5cqw; background:#e2c4b5; border-radius:5px; overflow:hidden; margin:.35cqw 0; }
++.boss-hp i { display:block; height:100%; background:linear-gradient(90deg,#cf675c,#ee9b76); border-radius:inherit; transition:width .15s linear; }
++.boss-skill { position:relative; height:2.1cqw; background:#f0dfc2; border-radius:3px; overflow:hidden; }
++.boss-skill i { position:absolute; inset:0 auto 0 0; background:#edc484; transition:width .15s linear; }
++.boss-skill span { position:absolute; inset:0; font-size:1.9cqw; line-height:2.1cqw; text-align:center; }
++.skill-warning { border-color:#c45847; box-shadow:0 0 0 1px #e99f7e; }
++.skill-warning .boss-skill i { background:#eaa18c; }
++.opponent-banner { position:absolute; left:27.65625%; top:13.925%; width:44.0625%; height:2.453%; display:flex; align-items:center; justify-content:center; gap:1cqw; pointer-events:none; }
++.opponent-banner > svg,.opponent-banner > img { width:5.2cqw; height:5.2cqw; flex:none; object-fit:contain; }
++.opponent-banner > span { display:grid; gap:0; min-width:0; }
++.opponent-banner b { font-size:2.25cqw; line-height:1.15; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
++.opponent-banner small { font-size:1.65cqw; line-height:1.15; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
++.stage .battle-prop > span svg,.stage .battle-prop > span img { display:block; width:6.5cqw; height:6.5cqw; }
++.stage .battle-prop > small { font-size:2cqw; }
++.stage .sprinkler-button > span svg,.stage .sprinkler-button > span img { display:block; width:5.5cqw; height:5.5cqw; }
++.stage .sprinkler-button > small { font-size:1.8cqw; }
++.stage .passive-icons { gap:1cqw; top:86.7%; }
++.stage .passive-icons > span svg,.stage .passive-icons > span img { display:block; width:4cqw; height:4cqw; }
++.stage .battle-actions .summon-button { min-height:0; height:100%; }
++.stage .battle-actions .summon-button strong { font-size:3.2cqw; }
++.stage .battle-actions .summon-button small { font-size:2.05cqw; margin-top:1cqw; }
++.stage .battle-actions .recipe-shortcut { width:6cqw; height:8cqw; font-size:4cqw; }
++.stage .sealed-hint { top:66%; left:5%; right:5%; padding:.7cqw; font-size:2.15cqw; line-height:1.25; border-width:1px; }
++.pet-icon { display:inline-flex; align-items:center; justify-content:center; vertical-align:middle; }
++.pet-icon svg,.pet-icon img { max-width:100%; height:auto; }
++.shop-icon svg,.shop-icon img,.prop-slot svg,.prop-slot img { display:block; margin:auto; max-width:100%; }
++.inventory-prop > b { display:flex; align-items:center; gap:8px; }
++.inventory-prop > b svg,.inventory-prop > b img { flex:none; }
++.lottery-cell > span svg,.lottery-cell > span img { max-width:100%; }
++
++#tutorial-overlay { position:absolute; inset:0; pointer-events:none; z-index:5; }
++.tutorial-spotlight { position:absolute; border:2px solid #f4cb68; border-radius:14px; box-shadow:0 0 0 150vmax #3e352a35,0 0 12px 2px #ffe3a1; }
++.tutorial-bubble { position:absolute; top:30%; left:8%; right:8%; padding:3.5cqw; border:2px solid #695641; background:#fff9e9; border-radius:14px 16px 15px 4px; box-shadow:3px 4px 0 #79614344; color:#594633; }
++.tutorial-bubble > div:first-child { display:flex; justify-content:space-between; align-items:center; gap:2cqw; }
++.tutorial-bubble strong { font-size:3.3cqw; }
++.tutorial-bubble button { pointer-events:auto; }
++.tutorial-bubble > div:first-child button { font-size:2.8cqw; background:#eee6ce; border-radius:6px; padding:1.5cqw 2cqw; flex:none; }
++.tutorial-bubble p { margin:2cqw 0; font-size:2.95cqw; line-height:1.65; }
++.tutorial-bubble .button { min-height:8.5cqw; font-size:2.7cqw; padding:1cqw; margin-top:2cqw; }
++.tutorial-dots { display:flex; justify-content:center; gap:6px; }
++.tutorial-dots i { width:5px; height:5px; background:#d9ccb0; border-radius:50%; }
++.tutorial-dots .current { background:#b89047; width:15px; border-radius:3px; }
++.clean-mode .toast { bottom:8px; padding:8px 13px; font-size:11px; pointer-events:none; }
++
++.game-dialog.recipe-dialog { width:min(900px,calc(100vw - 24px)); }
++.encyclopedia-tabs { position:sticky; top:-30px; z-index:1; display:grid; grid-template-columns:repeat(4,1fr); gap:6px; padding:12px 0; background:var(--paper); }
++.encyclopedia-tabs button { border:1px solid #b8a98b; border-radius:9px; padding:10px 5px; background:#f0ebda; color:#786447; font-size:12px; }
++.encyclopedia-tabs button[aria-selected="true"] { background:#e6edcf; border-color:#7b9467; box-shadow:inset 0 0 0 1px #7b9467; color:#465f38; }
++.encyclopedia-tabs b { display:block; margin-top:3px; font-size:10px; opacity:.65; }
++.encyclopedia-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:13px; margin-top:14px; }
++.encyclopedia-card { border:1.5px solid #d6c5a1; border-top:4px solid var(--rarity,#c6b494); border-radius:13px; background:#fff9eb; padding:16px; min-width:0; }
++.encyclopedia-card.collected { border-color:#d5ab4d; background:linear-gradient(135deg,#fff5cd,#fffaf0 70%); }
++.book-heading { display:flex; align-items:center; gap:10px; margin-bottom:10px; }
++.book-heading > svg,.book-heading > img { flex:none; width:54px; height:54px; object-fit:contain; }
++.book-heading > div { min-width:0; }
++.book-heading h4 { font-size:15px; line-height:1.4; }
++.book-heading small { font-size:10px; color:#96805e; }
++.collection-state { font-size:9px; color:#b28a3d; font-weight:400; }
++.encyclopedia-card p { font-size:11px; line-height:1.8; color:#7b6952; margin:9px 0 0; }
++.encyclopedia-card .book-stats { font-size:10px; color:#8e785a; padding-top:8px; border-top:1px dashed #d8c7a4; }
++.encyclopedia-card aside { padding:9px; margin-top:12px; border-radius:7px; background:#edf0da; color:#6d7955; font-size:11px; line-height:1.7; }
++.encyclopedia-card aside p { margin-top:3px; color:inherit; }
++.encyclopedia-card .recipe-equation { justify-content:center; gap:18px; }
++.encyclopedia-card .recipe-equation > span { display:flex; flex-direction:column; align-items:center; }
++.encyclopedia-card .recipe-equation small { font-size:10px; }
++@media(max-width:700px){
++  .game-dialog.recipe-dialog { padding:24px 15px; }
++  .encyclopedia-grid { grid-template-columns:1fr; gap:10px; }
++  .encyclopedia-tabs { top:-24px; gap:4px; }
++  .encyclopedia-tabs button { font-size:10px; padding:9px 3px; }
++  .encyclopedia-card { padding:13px; }
++  .clean-mode .brand strong { font-size:14px; }
++  html[lang="en"] .clean-mode .brand strong { font-size:12px; }
++}
++@media(prefers-reduced-motion:reduce){ .tutorial-spotlight { box-shadow:0 0 0 150vmax #3e352a35; } }
+
+## src/i18n/i18n.ts
+diff --git "D:\\rea_game\\games\\capybara-defense\\.runtime\\p1-review-baseline\\src\\i18n\\i18n.ts" "D:\\rea_game\\games\\capybara-defense\\src\\i18n\\i18n.ts"
+index 73d2188..e175da5 100644
+--- "D:\\rea_game\\games\\capybara-defense\\.runtime\\p1-review-baseline\\src\\i18n\\i18n.ts"
++++ "D:\\rea_game\\games\\capybara-defense\\src\\i18n\\i18n.ts"
+@@ -1,12 +1,13 @@
+ import { en } from './en';
+ import { zhCN } from './zh-CN';
+ import { m2Zh, m2En } from './m2';
+ import { m3Zh, m3En } from './m3';
++import { p1Zh, p1En } from './p1';
+ import { readSetting, writeSetting } from '../ui/storage';
+ 
+ export type Language = 'zh-CN' | 'en';
+ let language: Language = readSetting('language') === 'en' ? 'en' : 'zh-CN';
+ const listeners = new Set<() => void>();
+ 
+ export function getLanguage(): Language { return language; }
+ 
+@@ -23,11 +24,12 @@ export function onLanguageChange(callback: () => void): () => void {
+   return () => { listeners.delete(callback); };
+ }
+ 
+ export function t(key: string, vars: Record<string, string | number> = {}): string {
+   const dictionary: Record<string, string> = language === 'en' ? en : zhCN;
+   const fallback: Record<string, string> = zhCN;
+   const extra = language === 'en' ? m2En : m2Zh;
+   const latest = language === 'en' ? m3En : m3Zh;
+-  const phrase = latest[key] ?? extra[key] ?? dictionary[key] ?? m3Zh[key] ?? m2Zh[key] ?? fallback[key] ?? key;
++  const polish = language === 'en' ? p1En : p1Zh;
++  const phrase = polish[key] ?? latest[key] ?? extra[key] ?? dictionary[key] ?? p1Zh[key] ?? m3Zh[key] ?? m2Zh[key] ?? fallback[key] ?? key;
+   return phrase.replace(/\{(\w+)\}/g, (match, name: string) => String(vars[name] ?? match));
+ }
+
+## src/i18n/p1.ts
+diff --git "D:\\rea_game\\games\\capybara-defense\\.runtime\\p1-review-baseline\\__empty__" "D:\\rea_game\\games\\capybara-defense\\src\\i18n\\p1.ts"
+index e69de29..cd48d32 100644
+--- "D:\\rea_game\\games\\capybara-defense\\.runtime\\p1-review-baseline\\__empty__"
++++ "D:\\rea_game\\games\\capybara-defense\\src\\i18n\\p1.ts"
+@@ -0,0 +1,55 @@
++const phrases:Record<string,[string,string]> = {
++  'p1.developer':['后院测试台','Developer Sandbox'],
++  'p1.merge':['✦ 合成!','✦ Merge!'],
++  'p1.encyclopedia':['温泉图鉴百科','Onsen Field Guide'],
++  'p1.bookEyebrow':['温泉小笔记','CHILL NOTES'],
++  'recipe.open':['温泉图鉴百科','Onsen Field Guide'],
++  'menu.recipes':['打开温泉图鉴百科','Open the field guide'],
++  'p1.bookSubtitle':['配对、克制与奇思妙想，都在这里。','Every recipe, counter and curious collectible.'],
++  'p1.heroes':['英雄配方','Hero recipes'], 'p1.bosses':['捣蛋首领','Boss counters'],
++  'p1.weapons':['奇葩神兵','Oddball weapons'], 'p1.props':['黑市道具','Market props'],
++  'p1.collected':['已合成','Merged'], 'p1.notCollected':['待发现','Undiscovered'],
++  'p1.heroStats':['普攻 {damage} · 每秒 {rate} 次 · 射程 {range} 格','Attack {damage} · {rate}/s · Range {range} tiles'],
++  'p1.bossStats':['基础生命 {hp} · 技能间隔 {interval} 秒','Base HP {hp} · Ability every {interval}s'],
++  'p1.counter':['克制小贴士','Counter tip'], 'p1.price':['价格 {price} 金币','Price: {price} coins'],
++  'p1.cooldown':['冷却 {time} 秒','Cooldown: {time}s'], 'p1.auto':['局内自动生效','Automatic in battle'],
++  'p1.unlock':['收集 {count} 枚碎片解锁','Unlock with {count} fragments'],
++  'p1.bossSoon':['技能将至！','Skill incoming!'], 'p1.bossCooldown':['技能 {time}s','Skill {time}s'],
++  'p1.bossHP':['首领生命 {hp} / {max}','Boss health {hp} / {max}'],
++  'p1.prepare':['准备布阵 · {time}s','Prepare · {time}s'], 'p1.waveProgress':['本波进度','Wave progress'],
++  'p1.opponent':['本局对手','Your opponent'],
++  'p1.tutorialSkip':['跳过','Skip'], 'p1.tutorialAck':['明白啦 · 领取奖励','Got it · Claim reward'],
++  'p1.tutorialReplay':['重新体验新手引导','Replay the tutorial'],
++  'p1.tutorialReplayReady':['下次开局将展示引导','The tutorial will appear in your next battle'],
++  'p1.tutorialReward':['引导完成！获得 20 金币','Tutorial complete! +20 coins'],
++  'p1.tutorialDone':['引导完成，准备大显身手吧！','Tutorial complete. Time to shine!'],
++  'p1.tutorialSkipped':['已跳过，可在设置中重看','Skipped. Replay anytime in Settings'],
++  'p1.tutorial1.title':['01 · 摇铃叫伙伴','01 · Ring for friends'],
++  'p1.tutorial1.body':['点击下方摇铃，10 小鱼干一次召唤 5 个伙伴。宠物窝没放完也能换一批。','Tap the bell: 10 food calls 5 friends. You can redraw even with pets still in the nest.'],
++  'p1.tutorial2.title':['02 · 安排一个工位','02 · Make a little room'],
++  'p1.tutorial2.body':['把窝里的伙伴拖到下半场空地。也可以选铁锹，再点击草坪开地。','Drag a pet onto an open tile in your half. Or select the shovel and tap grass to clear it.'],
++  'p1.tutorial3.title':['03 · 金圈就是好搭档','03 · Follow the golden ring'],
++  'p1.tutorial3.body':['选中伙伴会标出配对目标。拖到金圈上合成英雄；同宠升星也能解控。试一次，或点“明白啦”。','Select a pet to reveal its matches. Drag onto a gold ring for a hero; upgrades clear control too. Try a merge, or tap “Got it”.'],
++  'p1.sprinklerShort':['洒水救场','Rescue rinse'],
++  'm2.sprinklerDesc':['每局免费 1 次，逆向冲刷道路：击退 4.5 格、造成冲洗伤害与减速，并解除己方纸箱封印。','Once per battle: rinse the road backwards, knock enemies back 4.5 tiles, deal damage, slow them and clear allied box seals.'],
++};
++const bosses:Record<string,[string,string,string,string]> = {
++  husky_wrecker:['每 24 秒破坏一块草坪，最多同时破坏 2 格。','Every 24s, destroys a lawn tile; at most 2 tiles stay broken.','保留铁锹修复毁格，将主力分散在可用空地。','Keep a shovel for repairs and spread your main defenders across open tiles.'],
++  mega_roomba:['吞下附近单位并膨胀，越吃越难对付。','Swallows nearby units and grows larger with each meal.','把高等级主力放远，尽快集火，避免在路边堆散件。','Keep valuable heroes farther away, focus fire and avoid piling spare parts beside the road.'],
++  dr_clippers:['剃毛使单位降级，并暂时禁止合成。','Clips units down a level and temporarily locks merging.','分散站位；禁合结束后及时补喂升级，干扰器有机会反噬。','Spread out, feed upgrades once the lock ends, and use EMP for a chance to backfire.'],
++  box_kraken:['纸箱封印最高等级单位，使其无法攻击。','Seals the highest-level unit in a cardboard box, stopping attacks.','拖配方散件或同名同级宠合成秒解；奶瓶和洒水车也能救场。','Feed a recipe part or merge a matching unit for instant release; a bottle or sprinkler helps too.'],
++  sad_rain_frog:['乌云淋湿全场，使攻击速度下降。','Soaks the whole team under rain clouds, reducing attack speed.','合成或升级立刻脱离淋湿，留一份散件给关键英雄。','Merge or upgrade to dry off instantly; keep a spare part for your key hero.'],
++  king_skunk:['释放臭气遮挡视野，干扰布阵判断。','Releases a stinking fog that obscures the battlefield.','提前记住配对与站位，尽快集火清除雾源。','Remember your pairs and placements, then focus fire to remove the source.'],
++  diva_kitty:['策反最低等级基础宠，把它变成迷弟耗子。','Charms the lowest-level basic pet into a hostile rat.','提前升级基础宠，使用英雄守住关键火力点。','Upgrade basic pets early and let heroes cover your key firing positions.'],
++  buff_roo:['重拳击倒附近最多 2 个单位，持续 9 秒。','Knocks down up to 2 nearby units for 9s.','拖散件升级扶起主力，远程单位离道路稍远。','Feed a part to lift your hero immediately; keep ranged pets away from the road.'],
++  hornet_queen:['召唤 3 只高速杀人蜂向温泉冲刺。','Summons 3 fast killer bees that rush toward the hot spring.','弹射和范围攻击克制蜂群，必要时洒水击退。','Use bouncing and area attacks against the swarm, or rinse it back in an emergency.'],
++  screaming_marmot:['咆哮使附近最多 2 个单位混乱停火 6.5 秒。','Its scream confuses up to 2 nearby units, stopping fire for 6.5s.','合成或奶瓶升级立即解控，分散输出避免一起停火。','Merge or use a growth bottle to clear confusion; spread damage dealers to keep firing.'],
++  trash_coon:['召唤 3 只携带一次性骨盾的耗子。','Raises 3 rats protected by a single-hit bone shield.','高攻速先破盾，再用群攻清场，别让慢速重击浪费在盾上。','Break shields with fast attacks, then use area damage; avoid wasting a heavy hit on a shield.'],
++  dj_rat_king:['摇滚光环治疗敌群 12% 生命并加速 4 秒。','Its rock aura heals the lane for 12% health and hastens enemies for 4s.','集中火力击杀鼠王，粘鼠板与干扰器可以拖慢节奏。','Focus on the king; glue traps and an EMP jammer can disrupt its momentum.'],
++};
++for(const [id,row] of Object.entries(bosses)) {
++  phrases[`p1.boss.${id}.mechanic`]=[row[0],row[1]];
++  phrases[`p1.boss.${id}.tip`]=[row[2],row[3]];
++}
++export const p1Zh:Record<string,string>=Object.fromEntries(Object.entries(phrases).map(([key,pair])=>[key,pair[0]]));
++export const p1En:Record<string,string>=Object.fromEntries(Object.entries(phrases).map(([key,pair])=>[key,pair[1]]));
+
+## vite.config.ts
+diff --git "D:\\rea_game\\games\\capybara-defense\\.runtime\\p1-review-baseline\\vite.config.ts" "D:\\rea_game\\games\\capybara-defense\\vite.config.ts"
+index 329d653..e17ac7f 100644
+--- "D:\\rea_game\\games\\capybara-defense\\.runtime\\p1-review-baseline\\vite.config.ts"
++++ "D:\\rea_game\\games\\capybara-defense\\vite.config.ts"
+@@ -1,6 +1,7 @@
+ import { defineConfig } from 'vitest/config';
+ export default defineConfig({
+-  server: { host: '127.0.0.1', port: 4175, strictPort: true },
++  base: './',
++  server: { host: '127.0.0.1', port: 4175, strictPort: true, watch: { ignored: ['**/.runtime/**', '**/verification/**', '**/backups/**'] } },
+   preview: { host: '127.0.0.1', port: 4175, strictPort: true },
+   test: { environment: 'node', include: ['tests/**/*.test.ts'] },
+ });
+
+## tests/p1-ui.test.ts
+diff --git "D:\\rea_game\\games\\capybara-defense\\.runtime\\p1-review-baseline\\__empty__" "D:\\rea_game\\games\\capybara-defense\\tests\\p1-ui.test.ts"
+index e69de29..794f6f7 100644
+--- "D:\\rea_game\\games\\capybara-defense\\.runtime\\p1-review-baseline\\__empty__"
++++ "D:\\rea_game\\games\\capybara-defense\\tests\\p1-ui.test.ts"
+@@ -0,0 +1,66 @@
++import { afterEach, describe, expect, it } from 'vitest';
++import { BattleEngine } from '../src/core/BattleEngine';
++import { createProfile } from '../src/core/MetaProgression';
++import { getBossHUD, getWaveHUD, isDeveloperMode } from '../src/ui/BattleHUD';
++import { Compendium } from '../src/ui/Compendium';
++import { p1En, p1Zh } from '../src/i18n/p1';
++import { setLanguage } from '../src/i18n/i18n';
++import { BOSS_IDS } from '../src/config/enemies';
++
++afterEach(() => setLanguage('zh-CN'));
++describe('P1 player presentation selectors', () => {
++  it('defaults to a clean view, accepts only dev=1 or the saved setting', () => {
++    expect(isDeveloperMode('', {})).toBe(false);
++    expect(isDeveloperMode('?dev=0', {})).toBe(false);
++    expect(isDeveloperMode('?dev=true', {})).toBe(false);
++    expect(isDeveloperMode('?foo=1&dev=1', {})).toBe(true);
++    expect(isDeveloperMode('', {developerMode:true})).toBe(true);
++  });
++  it('selects the nearest live player boss and excludes the other lane', () => {
++    const engine = new BattleEngine({seed:34, ai:false, autoWaves:false}); engine.start();
++    const a = engine.spawnEnemy('box_kraken','player');
++    const b = engine.spawnEnemy('husky_wrecker','player');
++    engine.spawnEnemy('king_skunk','ai').progress=14;
++    a.progress=2; b.progress=8; b.hp=300; b.abilityCooldown=1.6;
++    expect(getBossHUD(engine.state)).toMatchObject({id:b.id, count:2, hp:300, maxHp:b.maxHp, warning:true, cooldown:2});
++    b.hp=0; expect(getBossHUD(engine.state)?.id).toBe(a.id);
++    a.hp=0; expect(getBossHUD(engine.state)).toBeNull();
++  });
++  it('keeps preparation, wave and boss progress bounded and distinct', () => {
++    const engine = new BattleEngine({seed:35, ai:false, autoWaves:false}); engine.start();
++    engine.state.wave=1; engine.state.waveTime=10;
++    expect(getWaveHUD(engine.state)).toMatchObject({kind:'preparation', fraction:.5, remaining:10});
++    const preview=engine.spawnEnemy('husky_wrecker','player');
++    expect(getWaveHUD(engine.state).kind).toBe('boss'); preview.hp=0;
++    engine.state.waveTime=22;
++    expect(getWaveHUD(engine.state).kind).toBe('wave');
++    engine.spawnEnemy('box_kraken','player');
++    expect(getWaveHUD(engine.state).kind).toBe('boss');
++    engine.state.waveTime=1000; expect(getWaveHUD(engine.state).fraction).toBeLessThanOrEqual(1);
++  });
++});
++describe('P1 bilingual encyclopedia', () => {
++  it.each(['heroes','bosses','weapons','props'] as const)('renders every %s card with resolved bilingual text', tab => {
++    const counts={heroes:12,bosses:12,weapons:36,props:20};
++    const book=new Compendium(); book.tab=tab;
++    for(const lang of ['zh-CN','en'] as const) {
++      setLanguage(lang); const html=book.markup(createProfile());
++      expect((html.match(/data-entry=/g)??[])).toHaveLength(counts[tab]);
++      expect(html).not.toMatch(/(?:p1|hero|boss|weapon|prop)\.[a-z_]+(?:\.desc)?(?=[<\s])/);
++      if(lang==='en') expect(html.replace(/<[^>]*>/g,'')).not.toMatch(/[\u3400-\u9fff]/);
++    }
++  });
++  it('marks only actually merged heroes as collected', () => {
++    const book=new Compendium(), profile=createProfile(); profile.mergedHeroes=['kungfu_po'];
++    const html=book.markup(profile);
++    expect((html.match(/class="recipe-card encyclopedia-card collected"/g)??[])).toHaveLength(1);
++    expect(html).toContain('data-entry="kungfu_po"');
++  });
++  it('covers all new phrases and all twelve counter tips in both languages', () => {
++    expect(Object.keys(p1Zh).sort()).toEqual(Object.keys(p1En).sort());
++    for(const id of BOSS_IDS) {
++      expect(p1Zh[`p1.boss.${id}.tip`]?.length).toBeGreaterThan(10);
++      expect(p1En[`p1.boss.${id}.mechanic`]?.length).toBeGreaterThan(10);
++    }
++  });
++});
+
+## scripts/p1-browser-qa.mjs
+diff --git "D:\\rea_game\\games\\capybara-defense\\.runtime\\p1-review-baseline\\__empty__" "D:\\rea_game\\games\\capybara-defense\\scripts\\p1-browser-qa.mjs"
+index e69de29..17c7da9 100644
+--- "D:\\rea_game\\games\\capybara-defense\\.runtime\\p1-review-baseline\\__empty__"
++++ "D:\\rea_game\\games\\capybara-defense\\scripts\\p1-browser-qa.mjs"
+@@ -0,0 +1,90 @@
++import assert from 'node:assert/strict';
++import fs from 'node:fs';
++import path from 'node:path';
++import {fileURLToPath} from 'node:url';
++import {chromium} from 'playwright-core';
++
++const root=path.resolve(path.dirname(fileURLToPath(import.meta.url)),'..');
++const output=path.join(root,'verification'), temp=path.join(root,'.runtime','browser-tmp');
++fs.mkdirSync(output,{recursive:true});fs.mkdirSync(temp,{recursive:true});
++const browser=await chromium.launch({headless:true,executablePath:process.env.CAPY_CHROME??'C:/Program Files/Google/Chrome/Application/chrome.exe',
++  env:{...process.env,TEMP:temp,TMP:temp},args:['--disable-breakpad','--disable-crash-reporter','--disable-background-networking']});
++const context=await browser.newContext({viewport:{width:390,height:844},deviceScaleFactor:1,hasTouch:true,isMobile:true});
++const page=await context.newPage();page.setDefaultTimeout(10000);
++const errors=[],checks=[],screenshots=[];
++page.on('pageerror',e=>errors.push(e.message));page.on('console',e=>{if(e.type()==='error')errors.push(e.text());});
++const mark=text=>{checks.push(text);console.log('PASS '+text);};
++const click=action=>page.locator(`[data-action="${action}"]`).filter({visible:true}).first().click();
++const snap=async name=>{const file=`p1-${name}.png`;if(name.startsWith('map-'))await page.locator('#stage').screenshot({path:path.join(output,file)});else await page.screenshot({path:path.join(output,file),fullPage:name==='desktop-sandbox'});screenshots.push(file);};
++const fit=async()=>{
++  const geometry=await page.evaluate(()=>({w:innerWidth,h:innerHeight,sw:document.documentElement.scrollWidth,sh:document.documentElement.scrollHeight,stage:document.querySelector('#stage').getBoundingClientRect().toJSON()}));
++  assert.ok(geometry.sw<=geometry.w+1,JSON.stringify(geometry));assert.ok(geometry.sh<=geometry.h+1,JSON.stringify(geometry));
++  assert.ok(geometry.stage.bottom<=geometry.h,JSON.stringify(geometry));
++  assert.ok(Math.abs(geometry.stage.width/geometry.stage.height-640/1386)<.001);
++};
++async function point(x,y){const r=await page.locator('canvas').boundingBox();return{x:r.x+x*r.width/640,y:r.y+y*r.height/1386};}
++async function tap(x,y){const p=await point(x,y);await page.mouse.click(p.x,p.y);}
++async function drag(x,y,tx,ty){const a=await point(x,y),b=await point(tx,ty);await page.mouse.move(a.x,a.y);await page.mouse.down();await page.mouse.move(b.x,b.y,{steps:8});await page.mouse.up();}
++const quiet=()=>page.evaluate(()=>{const e=window.__CAPY_DEBUG__.engine;e.options.autoWaves=false;e.options.ai=false;e.state.enemies=[];});
++try{
++  await page.goto('http://127.0.0.1:4175/',{waitUntil:'networkidle'});
++  await fit();assert.equal(await page.locator('.sandbox-column').isVisible(),false);await snap('mobile-menu');
++  mark('390×844 clean menu fits one screen; sandbox hidden');
++  await click('start');await quiet();await fit();await snap('mobile-tutorial');
++  assert.match(await page.locator('.tutorial-bubble').innerText(),/01/);
++  await click('summon');assert.match(await page.locator('.tutorial-bubble').innerText(),/02/);
++  const target=await page.evaluate(()=>{const s=window.__CAPY_DEBUG__.engine.state;for(let row=5;row<10;row++)for(let col=0;col<8;col++)if(s.grid[row][col]==='O'&&!s.units.some(u=>u.side==='player'&&u.location.zone==='board'&&u.location.col===col&&u.location.row===row))return{col,row};});
++  assert.ok(target);await drag(114,1162,32+(target.col+.5)*72,240+(target.row+.5)*72);
++  assert.match(await page.locator('.tutorial-bubble').innerText(),/03/);await click('tutorial-ack');
++  assert.equal(await page.evaluate(()=>window.__CAPY_DEBUG__.profile.coins),20);
++  assert.equal(await page.evaluate(()=>JSON.parse(localStorage.getItem('capybara_defense_v1:profile')).tutorialCompleted),true);
++  await click('settings');await click('tutorial-replay');await click('tutorial-skip');
++  assert.equal(await page.evaluate(()=>window.__CAPY_DEBUG__.profile.coins),20);
++  mark('Real summon and drag advance tutorial; +20 persists once; replay/skip cannot duplicate it');
++  await click('settings');await page.locator('[data-setting="developerMode"]').check();await click('close-profile');
++  assert.equal(await page.locator('.sandbox-column').isVisible(),true);
++  await click('settings');await page.locator('[data-setting="developerMode"]').uncheck();await click('close-profile');await fit();
++  mark('Developer setting toggles immediately, persists, and keeps current battle');
++  await page.evaluate(()=>{
++    const e=window.__CAPY_DEBUG__.engine;e.state.units=[];e.state.events=[];e.state.grid[6][3]='O';e.state.grid[8][3]='O';
++    const first=e.grant('panda').unitId,second=e.grant('hat_bamboo').unitId;e.move(second,{zone:'board',col:3,row:6});e.grant('hat_shades');
++    const hero=e.grant('ronin_goose').unitId;e.move(hero,{zone:'board',col:3,row:8});
++    e.state.units.find(u=>u.id===hero).energy=7.8;e.state.sides.player.food=500;
++    window.__p1Source=first;
++  });
++  await page.keyboard.press('Escape');await tap(114,1162);await page.waitForTimeout(180);
++  assert.match(await page.locator('#inspector').innerText(),/熊猫|Panda/);
++  await snap('mobile-gold-matches');await fit();
++  await page.evaluate(()=>{const e=window.__CAPY_DEBUG__.engine;const b=e.spawnEnemy('box_kraken','player');b.progress=5;b.abilityCooldown=1.5;b.hp=b.maxHp*.63;e.state.phase='paused';});
++  await page.waitForTimeout(180);assert.equal(await page.locator('#boss-banner').isVisible(),true);await snap('mobile-boss');
++  mark('Gold board + nest matches, hero base, box seal and live Boss health/cooldown visible');
++  await page.evaluate(()=>{window.__CAPY_DEBUG__.engine.state.phase='playing';});
++  await click('recipes');
++  for(const [tab,count]of Object.entries({heroes:12,bosses:12,weapons:36,props:20})){
++    await click(`book:${tab}`);assert.equal(await page.locator('#book-content [data-entry]').count(),count);await snap(`mobile-book-${tab}`);
++    await page.locator('#game-dialog [data-action="en"]').click();
++    const text=await page.locator('#book-content').innerText();assert.doesNotMatch(text,/[\u3400-\u9fff]/);assert.doesNotMatch(text,/p1\.[\w.]+/);
++    await page.locator('#game-dialog [data-action="zh-CN"]').click();
++  }
++  await click('close-recipes');mark('All 80 compendium entries render with resolved Chinese/English descriptions');
++  await page.setViewportSize({width:1440,height:1000});await page.waitForTimeout(150);await fit();await snap('desktop-clean-boss');
++  await click('settings');await page.locator('[data-setting="developerMode"]').check();await click('close-profile');
++  await snap('desktop-sandbox');await click('pause');await click('surrender');await click('menu');
++  await click('test-enable');
++  await click('armory');assert.equal(await page.locator('.weapon-card').count(),36);await snap('desktop-armory');await click('close-meta');
++  await click('market');await snap('desktop-market');await click('meta-tab:lottery');await click('meta-spin');await page.waitForTimeout(3000);await snap('desktop-lottery');await click('close-meta');
++  for(const map of ['sunny_backyard','sakura_onsen','midnight_kitchen','cat_tower_maze']){
++    await page.locator('#dev-map').selectOption(map);await click('start');await quiet();await snap(`map-${map}`);
++    await click('pause');await click('surrender');await click('menu');
++  }
++  mark('Desktop sandbox, 36-weapon armory, shop/lottery and all four textured maps work');
++  await click('test-restore');
++  await page.goto('http://127.0.0.1:4175/?dev=1',{waitUntil:'networkidle'});assert.equal(await page.locator('.sandbox-column').isVisible(),true);
++  await click('settings');await page.locator('[data-setting="developerMode"]').uncheck();await click('close-profile');
++  assert.equal(new URL(page.url()).searchParams.has('dev'),false);assert.equal(await page.locator('.sandbox-column').isVisible(),false);
++  await snap('desktop-clean-menu');mark('Query dev=1 enables sandbox; settings can turn it off and remove the override');
++  assert.deepEqual(errors,[]);mark('Console and pageerror: 0');
++}finally{
++  fs.writeFileSync(path.join(output,'p1-browser-report.json'),JSON.stringify({checks,errors,screenshots},null,2));
++  await browser.close();
++}

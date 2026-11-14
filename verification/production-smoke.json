@@ -1,0 +1,16 @@
+{
+  "passed": true,
+  "errors": [],
+  "checks": [
+    "Built v1.0 bundle loads without debug API; 54 ranks, 12 bosses and four debug maps available",
+    "Actual five-card summon and redraw controls work",
+    "Pause and surrender persist once",
+    "Full M3 profile includes 180 stars, 16 avatars, 12 merged heroes and all four maps",
+    "Avatar gallery, 16-row leaderboard and immediate settings persistence work",
+    "Full test profile, 36-weapon armory and bilingual equipment work",
+    "Paid lottery deducts 80 and rewards 40 exactly once across language change",
+    "Selected Cat Tower map persists and appears in actual battle",
+    "Battle renders 2+6 equipment; actual catnip and sprinkler enter cooldown/used state",
+    "Restoring normal profile discards test changes and survives reload"
+  ]
+}

@@ -1,0 +1,56 @@
+const phrases:Record<string,[string,string]> = {
+  'p1.developer':['开发者沙盒面板','Developer Sandbox'],
+  'p1.merge':['✦ 合成!','✦ Merge!'],
+  'p1.encyclopedia':['温泉图鉴百科','Onsen Field Guide'],
+  'p1.bookEyebrow':['温泉小笔记','CHILL NOTES'],
+  'recipe.open':['温泉图鉴百科','Onsen Field Guide'],
+  'menu.recipes':['打开温泉图鉴百科','Open the field guide'],
+  'p1.bookSubtitle':['配对、克制与奇思妙想，都在这里。','Every recipe, counter and curious collectible.'],
+  'p1.heroes':['英雄配方','Hero recipes'], 'p1.bosses':['捣蛋首领','Boss counters'],
+  'p1.weapons':['奇葩神兵','Oddball weapons'], 'p1.props':['黑市道具','Market props'],
+  'p1.collected':['已合成','Merged'], 'p1.notCollected':['待发现','Undiscovered'],
+  'p1.heroStats':['普攻 {damage} · 每秒 {rate} 次 · 射程 {range} 格','Attack {damage} · {rate}/s · Range {range} tiles'],
+  'p1.bossStats':['基础生命 {hp} · 护甲 {armor}% · 技能间隔 {interval} 秒','Base HP {hp} · Armor {armor}% · Ability every {interval}s'],
+  'p1.counter':['克制小贴士','Counter tip'], 'p1.price':['价格 {price} 金币','Price: {price} coins'],
+  'p1.cooldown':['冷却 {time} 秒','Cooldown: {time}s'], 'p1.auto':['局内自动生效','Automatic in battle'],
+  'p1.unlock':['收集 {count} 枚碎片解锁','Unlock with {count} fragments'],
+  'p1.unlocked':['已解锁','Unlocked'], 'p1.locked':['未解锁','Locked'],
+  'p1.bossSoon':['技能将至！','Skill incoming!'], 'p1.bossCooldown':['技能 {time}s','Skill {time}s'],
+  'p1.bossHP':['首领生命 {hp} / {max}','Boss health {hp} / {max}'],
+  'p1.prepare':['准备布阵 · {time}s','Prepare · {time}s'], 'p1.waveProgress':['本波进度','Wave progress'],
+  'p1.opponent':['本局对手','Your opponent'],
+  'p1.tutorialSkip':['跳过','Skip'], 'p1.tutorialAck':['明白啦 · 领取奖励','Got it · Claim reward'],
+  'p1.tutorialReplay':['重新体验新手引导','Replay the tutorial'],
+  'p1.tutorialReplayReady':['下次开局将展示引导','The tutorial will appear in your next battle'],
+  'p1.tutorialReward':['引导完成！获得 20 金币','Tutorial complete! +20 coins'],
+  'p1.tutorialDone':['引导完成，准备大显身手吧！','Tutorial complete. Time to shine!'],
+  'p1.tutorialSkipped':['已跳过，可在设置中重看','Skipped. Replay anytime in Settings'],
+  'p1.tutorial1.title':['01 · 摇铃叫伙伴','01 · Ring for friends'],
+  'p1.tutorial1.body':['点击下方摇铃，10 小鱼干一次召唤 5 个伙伴。宠物窝没放完也能换一批。','Tap the bell: 10 food calls 5 friends. You can redraw even with pets still in the nest.'],
+  'p1.tutorial2.title':['02 · 安排一个工位','02 · Make a little room'],
+  'p1.tutorial2.body':['把窝里的伙伴拖到下半场空地。也可以选铁锹，再点击草坪开地。','Drag a pet onto an open tile in your half. Or select the shovel and tap grass to clear it.'],
+  'p1.tutorial3.title':['03 · 金圈就是好搭档','03 · Follow the golden ring'],
+  'p1.tutorial3.body':['选中伙伴会标出配对目标。拖到金圈上合成英雄；同宠升星也能解控。试一次，或点“明白啦”。','Select a pet to reveal its matches. Drag onto a gold ring for a hero; upgrades clear control too. Try a merge, or tap “Got it”.'],
+  'p1.sprinklerShort':['洒水救场','Rescue rinse'],
+  'm2.sprinklerDesc':['每局免费 1 次，逆向冲刷道路：击退 4.5 格、造成冲洗伤害与减速，并解除己方纸箱封印。','Once per battle: rinse the road backwards, knock enemies back 4.5 tiles, deal damage, slow them and clear allied box seals.'],
+};
+const bosses:Record<string,[string,string,string,string]> = {
+  husky_wrecker:['每 24 秒破坏一块草坪，最多同时破坏 2 格。','Every 24s, destroys a lawn tile; at most 2 tiles stay broken.','保留铁锹修复毁格，将主力分散在可用空地。','Keep a shovel for repairs and spread your main defenders across open tiles.'],
+  mega_roomba:['吞下附近单位并膨胀，越吃越难对付。','Swallows nearby units and grows larger with each meal.','把高等级主力放远，尽快集火，避免在路边堆散件。','Keep valuable heroes farther away, focus fire and avoid piling spare parts beside the road.'],
+  dr_clippers:['剃毛使单位降级，并暂时禁止合成。','Clips units down a level and temporarily locks merging.','分散站位；禁合结束后及时补喂升级，干扰器有机会反噬。','Spread out, feed upgrades once the lock ends, and use EMP for a chance to backfire.'],
+  box_kraken:['纸箱封印最高等级单位，使其无法攻击。','Seals the highest-level unit in a cardboard box, stopping attacks.','拖配方散件或同名同级宠合成秒解；奶瓶和洒水车也能救场。','Feed a recipe part or merge a matching unit for instant release; a bottle or sprinkler helps too.'],
+  sad_rain_frog:['乌云淋湿全场，使攻击速度下降。','Soaks the whole team under rain clouds, reducing attack speed.','合成或升级立刻脱离淋湿，留一份散件给关键英雄。','Merge or upgrade to dry off instantly; keep a spare part for your key hero.'],
+  king_skunk:['释放臭气遮挡视野，干扰布阵判断。','Releases a stinking fog that obscures the battlefield.','提前记住配对与站位，尽快集火清除雾源。','Remember your pairs and placements, then focus fire to remove the source.'],
+  diva_kitty:['策反最低等级基础宠，把它变成迷弟耗子。','Charms the lowest-level basic pet into a hostile rat.','提前升级基础宠，使用英雄守住关键火力点。','Upgrade basic pets early and let heroes cover your key firing positions.'],
+  buff_roo:['重拳击倒附近最多 2 个单位，持续 9 秒。','Knocks down up to 2 nearby units for 9s.','拖散件升级扶起主力，远程单位离道路稍远。','Feed a part to lift your hero immediately; keep ranged pets away from the road.'],
+  hornet_queen:['召唤 3 只高速杀人蜂向温泉冲刺。','Summons 3 fast killer bees that rush toward the hot spring.','弹射和范围攻击克制蜂群，必要时洒水击退。','Use bouncing and area attacks against the swarm, or rinse it back in an emergency.'],
+  screaming_marmot:['咆哮使附近最多 2 个单位混乱停火 6.5 秒。','Its scream confuses up to 2 nearby units, stopping fire for 6.5s.','合成或奶瓶升级立即解控，分散输出避免一起停火。','Merge or use a growth bottle to clear confusion; spread damage dealers to keep firing.'],
+  trash_coon:['召唤 3 只携带一次性骨盾的耗子。','Raises 3 rats protected by a single-hit bone shield.','高攻速先破盾，再用群攻清场，别让慢速重击浪费在盾上。','Break shields with fast attacks, then use area damage; avoid wasting a heavy hit on a shield.'],
+  dj_rat_king:['摇滚光环治疗敌群 12% 生命并加速 4 秒。','Its rock aura heals the lane for 12% health and hastens enemies for 4s.','集中火力击杀鼠王，粘鼠板与干扰器可以拖慢节奏。','Focus on the king; glue traps and an EMP jammer can disrupt its momentum.'],
+};
+for(const [id,row] of Object.entries(bosses)) {
+  phrases[`p1.boss.${id}.mechanic`]=[row[0],row[1]];
+  phrases[`p1.boss.${id}.tip`]=[row[2],row[3]];
+}
+export const p1Zh:Record<string,string>=Object.fromEntries(Object.entries(phrases).map(([key,pair])=>[key,pair[0]]));
+export const p1En:Record<string,string>=Object.fromEntries(Object.entries(phrases).map(([key,pair])=>[key,pair[1]]));

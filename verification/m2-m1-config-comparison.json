@@ -1,0 +1,29 @@
+﻿{
+    "checks":  [
+                   {
+                       "path":  "src/config/enemies.ts",
+                       "unchanged":  true
+                   },
+                   {
+                       "path":  "src/config/heroes.ts",
+                       "unchanged":  true
+                   },
+                   {
+                       "path":  "src/config/maps.ts",
+                       "unchanged":  true
+                   },
+                   {
+                       "path":  "src/config/recipes.ts",
+                       "unchanged":  true
+                   },
+                   {
+                       "path":  "src/config/units.ts",
+                       "unchanged":  true
+                   },
+                   {
+                       "path":  "src/config/waves.ts",
+                       "unchanged":  true
+                   }
+               ],
+    "passed":  true
+}

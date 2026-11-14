@@ -1,0 +1,659 @@
+# P1 audio review diff
+Base: backups/m3-before-p1.zip (M3 427 tests)
+Current: isolated game working tree
+
+
+## src/ui/SoundManager.ts
+diff --git "D:\\rea_game\\games\\capybara-defense\\.runtime\\p1-review-baseline\\src\\ui\\SoundManager.ts" "D:\\rea_game\\games\\capybara-defense\\src\\ui\\SoundManager.ts"
+index 42694a7..c40c41d 100644
+--- "D:\\rea_game\\games\\capybara-defense\\.runtime\\p1-review-baseline\\src\\ui\\SoundManager.ts"
++++ "D:\\rea_game\\games\\capybara-defense\\src\\ui\\SoundManager.ts"
+@@ -1,43 +1,68 @@
+ import type {BattleState,GameSettings} from '../core/types';
+-export type SoundCue='summon'|'dig'|'upgrade'|'legendary'|'goose'|'orange'|'sprinkler'|'lottery_tick'|'lottery_win'|'victory'|'defeat';
+-type Note={frequency:number;delay:number;duration:number;volume:number;type?:OscillatorType;slide?:number};
++import {musicStep,tempos,type MusicMode,type Note} from './MusicTracks';
++export type {MusicMode} from './MusicTracks';
++type CanonicalCue='ui_click'|'summon'|'shovel'|'treasure'|'merge_upgrade'|'merge_hero'|'hit_soft'|'boss_spawn'|'orange_lost'|'orange_gain'|'sprinkler'|'goose'|'lottery_tick'|'lottery_win'|'victory'|'defeat';
++export type SoundCue=CanonicalCue|'dig'|'upgrade'|'legendary'|'orange';
++const aliases:Partial<Record<SoundCue,CanonicalCue>>={dig:'shovel',upgrade:'merge_upgrade',legendary:'merge_hero',orange:'orange_lost'};
+ const defaults:GameSettings={musicVolume:.5,soundVolume:.75,showDamageNumbers:true};
+ const volume=(n:unknown,fallback:number)=>typeof n==='number'&&Number.isFinite(n)?Math.max(0,Math.min(1,n)):fallback;
+ const arpeggio=(frequencies:number[],duration=.18,step=.09):Note[]=>frequencies.map((frequency,i)=>({frequency,delay:i*step,duration,volume:.24,type:'sine'}));
+-const cues:Record<SoundCue,Note[]>={
++const cues:Record<CanonicalCue,Note[]>={
++  ui_click:[{frequency:720,slide:400,delay:0,duration:.06,volume:.15,type:'triangle'}],
+   summon:[{frequency:1174.66,delay:0,duration:.3,volume:.2},{frequency:1760,delay:.07,duration:.35,volume:.13}],
+-  dig:[{frequency:160,slide:55,delay:0,duration:.12,volume:.32,type:'triangle'},{frequency:310,slide:95,delay:.06,duration:.09,volume:.16,type:'triangle'}],
+-  upgrade:arpeggio([523.25,659.25,783.99],.2,.065),
+-  legendary:[...arpeggio([523.25,659.25,783.99,1046.5],.7,0),...arpeggio([1318.51,1567.98,2093],.28,.11)],
++  shovel:[{frequency:160,slide:55,delay:0,duration:.12,volume:.32,type:'triangle'},{frequency:310,slide:95,delay:.06,duration:.09,volume:.16,type:'triangle'}],
++  treasure:arpeggio([1046.5,1318.51,1567.98,2093],.33,.065),
++  merge_upgrade:arpeggio([659.25,1046.5],.25,.075),
++  merge_hero:arpeggio([523.25,659.25,783.99,1046.5],.85,0),
++  hit_soft:[{frequency:460,slide:190,delay:0,duration:.065,volume:.11}],
++  boss_spawn:[{frequency:130.81,slide:98,delay:0,duration:.65,volume:.24,type:'triangle',cutoff:900,attack:.05},{frequency:75,slide:40,delay:.12,duration:.23,volume:.22},{frequency:110,slide:55,delay:.38,duration:.18,volume:.15}],
+   goose:[{frequency:520,slide:230,delay:0,duration:.18,volume:.2,type:'triangle'},{frequency:620,slide:260,delay:.2,duration:.22,volume:.22,type:'triangle'}],
+-  orange:[{frequency:420,slide:80,delay:0,duration:.26,volume:.24},{frequency:150,slide:310,delay:.16,duration:.15,volume:.18}],
+-  sprinkler:Array.from({length:7},(_,i)=>({frequency:400+i*170,slide:180+i*50,delay:i*.065,duration:.15,volume:.09,type:'triangle'})),
++  orange_lost:[{frequency:420,slide:80,delay:0,duration:.26,volume:.24},{frequency:150,slide:310,delay:.16,duration:.15,volume:.18}],
++  orange_gain:arpeggio([659.25,1046.5],.24,.09),
++  sprinkler:Array.from({length:7},(_,i)=>({frequency:400+i*170,slide:180+i*50,delay:i*.065,duration:.15,volume:.09,type:'triangle',cutoff:2000})),
+   lottery_tick:[{frequency:1046.5,delay:0,duration:.055,volume:.15}],
+   lottery_win:arpeggio([523.25,659.25,783.99,1046.5,1318.51],.35,.075),
+-  victory:[...arpeggio([523.25,659.25,783.99,1046.5],.4,.12),...arpeggio([523.25,659.25,783.99],.75,.0).map(n=>({...n,delay:.5,volume:.14}))],
++  victory:[...arpeggio([523.25,659.25,783.99,1046.5],.4,.12),...arpeggio([523.25,659.25,783.99],.75,0).map(n=>({...n,delay:.5,volume:.14}))],
+   defeat:arpeggio([392,349.23,293.66,261.63],.32,.16),
+ };
++// Only repeated simulation/lottery cues are limited. Successful commands stay responsive.
++const intervals:Partial<Record<CanonicalCue,number>>={hit_soft:.095,goose:.14,orange_lost:.08,orange_gain:.08,sprinkler:.2,boss_spawn:.35,treasure:.08,lottery_tick:.035};
++type Voice={source:AudioScheduledSourceNode;gain:GainNode;filter?:BiquadFilterNode;end:number;music:boolean;loop?:boolean};
++type AssetKey=SoundCue|`bgm_${MusicMode}`;
++const assetKeys=new Set<string>([...Object.keys(cues),...Object.keys(aliases),'bgm_menu','bgm_battle','bgm_boss']);
++// No absolute URLs, traversal, encoded separators, query strings or protocol-relative files.
++const safeFile=(value:unknown):value is string=>typeof value==='string'&&/^(?:[a-zA-Z0-9_-]+\/)*[a-zA-Z0-9_-]+\.(?:mp3|ogg|wav|m4a|aac)$/i.test(value);
+ 
+-/** A gesture-unlocked, entirely local synthesizer. Core and storage never own audio. */
++/** Gesture-unlocked audio graph: two master buses, one scheduler and optional decoded overrides. */
+ export class SoundManager {
+   private settings:GameSettings;
+   private context:AudioContext|null=null;
+   private music:GainNode|null=null;
+   private effects:GainNode|null=null;
+   private unlocking:Promise<void>|null=null;
+   private unlocked=false;
+   private disposed=false;
+   private ducked=false;
++  private mode:MusicMode='menu';
++  private playingMode:MusicMode|null=null;
++  private playingBuffer:AudioBuffer|null=null;
++  private modeBus:GainNode|null=null;
++  private readonly modeBuses=new Map<MusicMode,GainNode>();
+   private timer:ReturnType<typeof setInterval>|null=null;
+   private melodyStep=0;
+   private nextBeat=0;
+-  private readonly voices=new Map<OscillatorNode,GainNode>();
++  private noise:AudioBuffer|null=null;
++  private readonly voices=new Set<Voice>();
+   private readonly seen=new Map<string,Set<number>>();
++  private readonly lastPlayed=new Map<CanonicalCue,number>();
++  private readonly buffers=new Map<AssetKey,AudioBuffer>();
++  private assetsStarted=false;
++  private readonly pending=typeof AbortController!=='undefined'?new AbortController():null;
+   private readonly visibility=()=>this.applyVolumes(true);
+   constructor(settings:Partial<GameSettings>={}) {
+     this.settings={musicVolume:volume(settings.musicVolume,.5),soundVolume:volume(settings.soundVolume,.75),showDamageNumbers:settings.showDamageNumbers??true};
+     if(typeof document!=='undefined')document.addEventListener('visibilitychange',this.visibility);
+   }
+   unlock():Promise<void> {
+     if(this.disposed)return Promise.resolve();
+     if(this.unlocking)return this.unlocking;
+@@ -48,80 +73,181 @@ export class SoundManager {
+     try {
+       if(!this.context){
+         const Host=globalThis.AudioContext||(globalThis as unknown as {webkitAudioContext?:typeof AudioContext}).webkitAudioContext;
+         if(!Host)return;
+         this.context=new Host();
+       }
+       const context=this.context;
+       await context.resume();
+-      if(this.disposed||context.state==='closed')return;
+-      if(context.state!=='running')return;
+-      // A tab or device can suspend an already unlocked context. Resume its
+-      // existing graph and scheduler; recreating them would layer the music.
+-      if(this.unlocked){this.applyVolumes();return;}
++      if(this.disposed||context.state!=='running')return;
++      if(this.unlocked){
++        this.applyVolumes();
++        if(this.playingMode!==this.mode||(this.buffers.get(`bgm_${this.mode}`)??null)!==this.playingBuffer)this.startMode();else this.scheduleMusic();
++        return;
++      }
+       this.music=context.createGain();this.effects=context.createGain();
+       this.music.connect(context.destination);this.effects.connect(context.destination);
+-      this.unlocked=true;this.applyVolumes();this.nextBeat=context.currentTime+.025;this.scheduleMusic();
+-      if(this.timer===null)this.timer=setInterval(()=>this.scheduleMusic(),450);
++      this.unlocked=true;this.applyVolumes();this.startMode();
++      if(this.timer===null)this.timer=setInterval(()=>this.scheduleMusic(),100);
++      if(!this.assetsStarted){this.assetsStarted=true;void this.loadAssets(context);}
+     }catch{ /* Browser policy, missing hardware and failed resume are silent fallbacks. */ }
+   }
+   setSettings(settings:GameSettings):void {
+-    this.settings={musicVolume:volume(settings.musicVolume,defaults.musicVolume),soundVolume:volume(settings.soundVolume,defaults.soundVolume),showDamageNumbers:settings.showDamageNumbers};this.applyVolumes();
++    const enabling=this.settings.soundVolume===0&&volume(settings.soundVolume,defaults.soundVolume)>0;
++    this.settings={musicVolume:volume(settings.musicVolume,defaults.musicVolume),soundVolume:volume(settings.soundVolume,defaults.soundVolume),showDamageNumbers:settings.showDamageNumbers};
++    if(enabling)this.lastPlayed.clear();this.applyVolumes();
+   }
+   setDucked(ducked:boolean):void {if(this.ducked===ducked)return;this.ducked=ducked;this.applyVolumes(true);}
++  setMode(mode:MusicMode):void {
++    if(this.disposed||this.mode===mode||!['menu','battle','boss'].includes(mode))return;
++    this.mode=mode;if(this.unlocked)this.startMode();
++  }
+   private applyVolumes(soft=false):void {
+     const c=this.context;if(!c||!this.music||!this.effects)return;
+     const hidden=typeof document!=='undefined'&&document.hidden;
+     try{
+       const gain=this.music.gain,value=this.settings.musicVolume*.12*((this.ducked||hidden)? .15 : 1);
+       gain.cancelScheduledValues(c.currentTime);
+-      if(soft)gain.setTargetAtTime(value,c.currentTime,.16);else gain.setValueAtTime(value,c.currentTime);
++      if(soft&&value>0)gain.setTargetAtTime(value,c.currentTime,.16);else gain.setValueAtTime(value,c.currentTime);
+       this.effects.gain.setValueAtTime(this.settings.soundVolume*.5,c.currentTime);
+     }catch{ /* A closing host may reject parameter writes. */ }
+   }
++  private startMode():void {
++    const c=this.context;if(!c||this.disposed||!this.music||c.state!=='running')return;
++    const now=c.currentTime;
++    this.playingMode=this.mode;this.playingBuffer=null;
++    // Reuse at most three arrangement buses, even under rapid UI mode changes.
++    for(const bus of this.modeBuses.values()){
++      bus.gain.cancelScheduledValues(now);bus.gain.setValueAtTime(bus.gain.value,now);bus.gain.linearRampToValueAtTime(0,now+.22);
++    }
++    for(const voice of this.voices)if(voice.music){
++      // Per-voice fades let a mode's cached bus be reused safely during rapid switches.
++      voice.gain.gain.cancelScheduledValues(now);voice.gain.gain.setValueAtTime(Math.max(.0001,voice.gain.gain.value),now);voice.gain.gain.linearRampToValueAtTime(0,now+.2);
++      try{voice.source.stop(now+.22);}catch{/* already ended */}voice.end=Math.min(voice.end,now+.23);
++    }
++    let bus=this.modeBuses.get(this.mode);
++    if(!bus){bus=c.createGain();bus.connect(this.music);this.modeBuses.set(this.mode,bus);}
++    bus.gain.cancelScheduledValues(now);bus.gain.setValueAtTime(0,now);bus.gain.linearRampToValueAtTime(1,now+.22);this.modeBus=bus;
++    this.melodyStep=0;this.nextBeat=now+.025;
++    const buffer=this.buffers.get(`bgm_${this.mode}`);
++    if(buffer&&this.bufferVoice(buffer,bus,now+.015,true,true)){this.playingBuffer=buffer;return;}
++    this.scheduleMusic();
++  }
+   private scheduleMusic():void {
+-    const c=this.context;if(!this.unlocked||this.disposed||!c||c.state!=='running'||!this.music)return;
+-    // C/D/E/G/A only: a slow 16-beat wooden-key phrase, one scheduler per manager.
+-    const melody=[523.251,659.255,783.991,880,783.991,659.255,587.33,523.251,659.255,783.991,1046.502,880,783.991,659.255,587.33,523.251];
+-    const at=Math.max(c.currentTime+.015,this.nextBeat);this.nextBeat=at+.45;
+-    this.tone({frequency:melody[this.melodyStep++%melody.length],delay:0,duration:.34,volume:.32,type:this.melodyStep%2?'sine':'triangle'},this.music,at);
++    const c=this.context;if(!this.unlocked||this.disposed||!c||c.state!=='running'||!this.modeBus)return;
++    this.reap(c.currentTime);
++    if(this.buffers.has(`bgm_${this.mode}`)&&[...this.voices].some(v=>v.music&&v.loop&&v.end===Infinity))return;
++    // Skip missed beats after suspension; never allocate a catch-up burst.
++    if(this.nextBeat<c.currentTime)this.nextBeat=c.currentTime+.015;
++    let scheduled=0;
++    while(this.nextBeat<c.currentTime+.18&&scheduled++<3){
++      for(const note of musicStep(this.mode,this.melodyStep++))this.tone(note,this.modeBus,this.nextBeat,true);
++      this.nextBeat+=30/tempos[this.mode];
++    }
++  }
++  private reap(now:number):void {for(const voice of this.voices)if(voice.end<now)this.release(voice);}
++  private release(voice:Voice):void {
++    voice.source.onended=null;
++    for(const node of [voice.source,voice.filter,voice.gain])try{node?.disconnect();}catch{/* host closing */}
++    this.voices.delete(voice);
++  }
++  private register(source:AudioScheduledSourceNode,gain:GainNode,at:number,duration:number,music:boolean,filter?:BiquadFilterNode,loop=false):void {
++    const voice:Voice={source,gain,filter,end:loop?Infinity:at+duration+.02,music,loop};
++    // A restricted host may reject start(); failed sources must never enter the live set.
++    source.start(at);if(!loop)source.stop(at+duration+.015);
++    this.voices.add(voice);source.onended=()=>this.release(voice);
+   }
+-  private tone(note:Note,bus:GainNode,at:number):void {
++  private tone(note:Note,bus:GainNode,at:number,music=false):void {
+     const c=this.context;if(!c||this.disposed)return;
+-    let oscillator:OscillatorNode|undefined,envelope:GainNode|undefined;
++    this.reap(c.currentTime);if(this.voices.size>=96)return;
++    let source:AudioScheduledSourceNode|undefined,envelope:GainNode|undefined,filter:BiquadFilterNode|undefined;
+     try{
+-      oscillator=c.createOscillator();envelope=c.createGain();
+-      oscillator.type=note.type||'sine';oscillator.frequency.setValueAtTime(note.frequency,at);
+-      if(note.slide)oscillator.frequency.exponentialRampToValueAtTime(note.slide,at+note.duration*.9);
+-      envelope.gain.setValueAtTime(.0001,at);envelope.gain.linearRampToValueAtTime(note.volume,at+.008);envelope.gain.exponentialRampToValueAtTime(.0001,at+note.duration);
+-      oscillator.connect(envelope);envelope.connect(bus);this.voices.set(oscillator,envelope);
+-      const voice=oscillator,output=envelope;
+-      voice.onended=()=>{voice.disconnect();output.disconnect();this.voices.delete(voice);};
+-      voice.start(at);voice.stop(at+note.duration+.015);
+-    }catch{try{oscillator?.disconnect();envelope?.disconnect();}catch{/* already closed */}}
++      if(note.noise&&typeof c.createBuffer==='function'&&typeof c.createBufferSource==='function'){
++        if(!this.noise){
++          this.noise=c.createBuffer(1,Math.max(1,Math.floor(c.sampleRate*.2)),c.sampleRate);
++          const data=this.noise.getChannelData(0);for(let i=0;i<data.length;i++)data[i]=Math.random()*2-1;
++        }
++        const noise=c.createBufferSource();noise.buffer=this.noise;source=noise;
++      }else{
++        const oscillator=c.createOscillator();source=oscillator;oscillator.type=note.type|| (note.noise?'triangle':'sine');oscillator.frequency.setValueAtTime(note.frequency,at);
++        if(note.slide)oscillator.frequency.exponentialRampToValueAtTime(note.slide,at+note.duration*.9);
++      }
++      envelope=c.createGain();
++      envelope.gain.setValueAtTime(.0001,at);envelope.gain.linearRampToValueAtTime(note.volume,at+(note.attack??.008));envelope.gain.exponentialRampToValueAtTime(.0001,at+note.duration);
++      if(note.cutoff&&typeof c.createBiquadFilter==='function'){
++        filter=c.createBiquadFilter();filter.type=note.noise?'highpass':'lowpass';filter.frequency.setValueAtTime(note.cutoff,at);filter.Q.setValueAtTime(.5,at);
++        source.connect(filter);filter.connect(envelope);
++      }else source.connect(envelope);
++      envelope.connect(bus);this.register(source,envelope,at,note.duration,music,filter);
++    }catch{
++      try{source?.stop();}catch{/* not started */}
++      for(const node of [source,envelope,filter])try{node?.disconnect();}catch{/* already closed */}
++    }
++  }
++  private bufferVoice(buffer:AudioBuffer,bus:GainNode,at:number,music:boolean,loop=false):boolean {
++    const c=this.context;if(!c||this.disposed||typeof c.createBufferSource!=='function')return false;
++    this.reap(c.currentTime);if(this.voices.size>=96)return false;
++    let source:AudioBufferSourceNode|undefined,gain:GainNode|undefined;
++    try{
++      source=c.createBufferSource();source.buffer=buffer;source.loop=loop;gain=c.createGain();gain.gain.setValueAtTime(1,at);
++      source.connect(gain);gain.connect(bus);this.register(source,gain,at,buffer.duration,music,undefined,loop);return true;
++    }catch{
++      try{source?.stop();}catch{/* not started */}
++      try{source?.disconnect();gain?.disconnect();}catch{/* closing */}return false;
++    }
+   }
+   play(cue:SoundCue):void {
+     const c=this.context;if(!this.unlocked||this.disposed||!c||c.state!=='running'||!this.effects||this.settings.soundVolume===0)return;
+-    for(const note of cues[cue]||[])this.tone(note,this.effects,c.currentTime+.005+note.delay);
++    const canonical=aliases[cue]??cue as CanonicalCue;if(!Object.hasOwn(cues,canonical))return;
++    const last=this.lastPlayed.get(canonical),interval=intervals[canonical]??0;
++    if(last!==undefined&&c.currentTime-last+1e-9<interval)return;
++    this.lastPlayed.set(canonical,c.currentTime);
++    const buffer=this.buffers.get(cue)??this.buffers.get(canonical);
++    if(buffer&&this.bufferVoice(buffer,this.effects,c.currentTime+.005,false))return;
++    for(const note of cues[canonical])this.tone(note,this.effects,c.currentTime+.005+note.delay);
+   }
+   consumeBattle(state:BattleState):void {
+     if(this.disposed)return;
+     let ids=this.seen.get(state.id);if(!ids){ids=new Set();this.seen.set(state.id,ids);if(this.seen.size>8)this.seen.delete(this.seen.keys().next().value!);}
+     for(const event of state.events){
+       if(ids.has(event.id))continue;ids.add(event.id);
+-      if(event.type==='dash')this.play('goose');
+-      else if(event.type==='orange'&&(event.value??0)<0)this.play('orange');
++      if(event.effect==='boss_spawn')this.play('boss_spawn');
++      else if(event.effect==='treasure')this.play('treasure');
++      else if(event.type==='damage')this.play('hit_soft');
++      else if(event.type==='dash')this.play('goose');
++      else if(event.type==='orange'){
++        if((event.value??0)<0)this.play('orange_lost');else if((event.value??0)>0)this.play('orange_gain');
++      }
+       else if(event.type==='sprinkler')this.play('sprinkler');
+-      else if(event.type==='purge'&&event.effect!=='legendary')this.play('upgrade');
++      else if(event.type==='purge'&&event.effect!=='legendary'&&event.effect!=='sprinkler')this.play('merge_upgrade');
+     }
+   }
++  private async loadAssets(context:AudioContext):Promise<void> {
++    if(typeof fetch!=='function')return;
++    const base=`${import.meta.env.BASE_URL||'./'}audio/`,options=this.pending?{signal:this.pending.signal}:undefined;
++    try{
++      const response=await fetch(`${base}manifest.json`,options);if(this.disposed||!response.ok)return;
++      const manifest:unknown=await response.json();if(this.disposed||!manifest||typeof manifest!=='object'||Array.isArray(manifest))return;
++      if(typeof context.decodeAudioData!=='function'||typeof context.createBufferSource!=='function')return;
++      await Promise.allSettled(Object.entries(manifest).filter(([key,file])=>assetKeys.has(key)&&safeFile(file)).map(async([key,file])=>{
++        try{
++          if(this.disposed)return;const asset=await fetch(`${base}${file}`,options);if(this.disposed||!asset.ok)return;
++          const data=await asset.arrayBuffer();if(this.disposed)return;
++          const buffer=await context.decodeAudioData(data);if(this.disposed||this.context!==context)return;
++          this.buffers.set(key as AssetKey,buffer);
++          if(key===`bgm_${this.mode}`)this.startMode();
++        }catch{/* Missing files, rejected fetch, codec failure and aborted loads keep builtin sound. */}
++      }));
++    }catch{/* An absent/invalid manifest is optional, never a gameplay failure. */}
++  }
+   dispose():void {
+-    if(this.disposed)return;this.disposed=true;this.unlocked=false;
++    if(this.disposed)return;this.disposed=true;this.unlocked=false;this.pending?.abort();
+     if(this.timer!==null){clearInterval(this.timer);this.timer=null;}
+     if(typeof document!=='undefined')document.removeEventListener('visibilitychange',this.visibility);
+-    for(const [oscillator,gain] of this.voices){try{oscillator.onended=null;oscillator.stop();oscillator.disconnect();gain.disconnect();}catch{/* already ended */}}
+-    this.voices.clear();this.seen.clear();
+-    try{this.music?.disconnect();this.effects?.disconnect();}catch{/* host closing */}
++    for(const voice of this.voices){try{voice.source.stop();}catch{/* already ended */}this.release(voice);}
++    this.voices.clear();this.seen.clear();this.buffers.clear();this.lastPlayed.clear();this.noise=null;
++    for(const bus of [this.music,this.effects,...this.modeBuses.values()])try{bus?.disconnect();}catch{/* host closing */}
++    this.modeBuses.clear();this.modeBus=null;this.playingBuffer=null;this.playingMode=null;
+     if(this.context){try{void this.context.close().catch(()=>{});}catch{/* unavailable host */}}
+     this.context=null;this.music=null;this.effects=null;
+   }
+ }
+
+## src/ui/MusicTracks.ts
+diff --git "D:\\rea_game\\games\\capybara-defense\\.runtime\\p1-review-baseline\\__empty__" "D:\\rea_game\\games\\capybara-defense\\src\\ui\\MusicTracks.ts"
+index e69de29..72b59c7 100644
+--- "D:\\rea_game\\games\\capybara-defense\\.runtime\\p1-review-baseline\\__empty__"
++++ "D:\\rea_game\\games\\capybara-defense\\src\\ui\\MusicTracks.ts"
+@@ -0,0 +1,25 @@
++export type MusicMode='menu'|'battle'|'boss';
++export type Note={frequency:number;delay:number;duration:number;volume:number;type?:OscillatorType;slide?:number;cutoff?:number;attack?:number;noise?:boolean};
++export const tempos:Record<MusicMode,number>={menu:84,battle:108,boss:124};
++const hz=(midi:number)=>440*2**((midi-69)/12);
++const note=(midi:number,duration:number,volume:number,type:OscillatorType='sine',cutoff=2200,attack=.012):Note=>({frequency:hz(midi),delay:0,duration,volume,type,cutoff,attack});
++
++/** One eighth-note of each arrangement, with independent lead, bass/pad and percussion. */
++export function musicStep(mode:MusicMode,step:number):Note[] {
++  const eighth=30/tempos[mode],bar=Math.floor(step/8)%4,index=step%8;
++  if(mode==='menu'){
++    // Cmaj9 – Am9 – Fmaj9 – G6/9. The sevenths/ninths also live in the slow pad.
++    const chords=[[48,52,55,59,62],[45,48,52,55,59],[41,45,48,52,55],[43,47,50,52,57]];
++    const chord=chords[bar],out=[note(chord[[0,2,1,3,2,4,3,1][index]]+24,eighth*1.7,.23)];
++    if(index===0)out.push(...chord.map(midi=>note(midi,eighth*8.6,.055,'triangle',850,.23)));
++    return out;
++  }
++  const roots=[48,45,41,43],root=roots[bar];
++  const melody=mode==='battle'?[12,16,19,21,19,16,14,16]:[12,19,16,19,22,21,19,16];
++  const out=[note(root+melody[index],eighth*(mode==='boss'?.75:1.15),mode==='boss'?.21:.24,'sine',mode==='boss'?2300:1900)];
++  if(index%2===0)out.push(note(root-12+(index===6?7:0),eighth*.8,.26,'triangle',700,.008));
++  // One shared short white-noise buffer is filtered differently for each pulse.
++  out.push({frequency:1700,delay:0,duration:mode==='boss'?.07:.045,volume:index%2?.045:.075,noise:true,cutoff:mode==='boss'?2400:1500,attack:.005});
++  if(mode==='boss'&&index%4===0)out.push({frequency:115,slide:43,delay:0,duration:.17,volume:.28,type:'sine',cutoff:450,attack:.006});
++  return out;
++}
+
+## public/audio/manifest.json
+diff --git "D:\\rea_game\\games\\capybara-defense\\.runtime\\p1-review-baseline\\__empty__" "D:\\rea_game\\games\\capybara-defense\\public\\audio\\manifest.json"
+index e69de29..0967ef4 100644
+--- "D:\\rea_game\\games\\capybara-defense\\.runtime\\p1-review-baseline\\__empty__"
++++ "D:\\rea_game\\games\\capybara-defense\\public\\audio\\manifest.json"
+@@ -0,0 +1 @@
++{}
+
+## public/audio/README.md
+diff --git "D:\\rea_game\\games\\capybara-defense\\.runtime\\p1-review-baseline\\__empty__" "D:\\rea_game\\games\\capybara-defense\\public\\audio\\README.md"
+index e69de29..4fdda83 100644
+--- "D:\\rea_game\\games\\capybara-defense\\.runtime\\p1-review-baseline\\__empty__"
++++ "D:\\rea_game\\games\\capybara-defense\\public\\audio\\README.md"
+@@ -0,0 +1,30 @@
++# Optional audio overrides
++
++The shipped empty `manifest.json` uses the offline, multi-track WebAudio arrangements.
++No audio files are requested unless declared. Add licensed audio beneath this directory
++and map supported keys to relative paths, for example:
++
++```json
++{"bgm_menu":"music/menu.ogg","bgm_battle":"garden.mp3","hit_soft":"hits/bubble.wav"}
++```
++
++Music keys: `bgm_menu` (84 BPM), `bgm_battle` (108 BPM), `bgm_boss` (124 BPM).
++Music files loop; export seamless loops. A successfully decoded override takes priority;
++missing files, invalid manifests and unsupported codecs quietly retain builtin audio.
++Keep the manifest synchronized with files: declaring a missing file can produce a browser
++network 404, while the standard empty installation requests only the existing manifest.
++
++Cue keys: `ui_click`, `summon`, `shovel`, `treasure`, `merge_upgrade`, `merge_hero`,
++`hit_soft`, `boss_spawn`, `orange_lost`, `orange_gain`, `sprinkler`, `goose`,
++`lottery_tick`, `lottery_win`, `victory`, `defeat`. Legacy `dig`, `upgrade`,
++`legendary`, `orange` are accepted; prefer canonical names so every alias uses the same
++override. If both are declared, a requested legacy cue's exact override wins.
++
++Allowed file extensions: `.mp3`, `.ogg`, `.wav`, `.m4a`, `.aac` (browser codec support
++varies). Filenames/directory segments may contain ASCII letters, digits, `_` and `-`.
++Absolute URLs, `..`, percent escapes, backslashes, query strings and fragments are rejected.
++Paths resolve relative to `audio/` under Vite's base, including subdirectory deployments.
++
++Overrides are decoded into the same AudioContext as synthesis. Music and cues share
++their respective volume sliders; overlays/hidden tabs duck music only. Hit cues remain
++globally limited to one per 95 ms. Disposal aborts loads and stops every source/loop.
+
+## tests/p1-sound.test.ts
+diff --git "D:\\rea_game\\games\\capybara-defense\\.runtime\\p1-review-baseline\\__empty__" "D:\\rea_game\\games\\capybara-defense\\tests\\p1-sound.test.ts"
+index e69de29..b687a5d 100644
+--- "D:\\rea_game\\games\\capybara-defense\\.runtime\\p1-review-baseline\\__empty__"
++++ "D:\\rea_game\\games\\capybara-defense\\tests\\p1-sound.test.ts"
+@@ -0,0 +1,192 @@
++import {afterEach,beforeEach,describe,expect,it,vi} from 'vitest';
++import {SoundManager,type SoundCue} from '../src/ui/SoundManager';
++import {BattleEngine} from '../src/core/BattleEngine';
++
++// Only the browser boundary is doubled; assertions inspect the real manager's graph.
++class Param {
++  value=1;events:{value:number;time:number;kind:string}[]=[];
++  setValueAtTime(value:number,time:number){this.value=value;this.events.push({value,time,kind:'set'});}
++  linearRampToValueAtTime(value:number,time:number){this.value=value;this.events.push({value,time,kind:'linear'});}
++  exponentialRampToValueAtTime(value:number,time:number){this.value=value;this.events.push({value,time,kind:'exp'});}
++  setTargetAtTime(value:number,time:number){this.value=value;this.events.push({value,time,kind:'target'});}
++  cancelScheduledValues(){}
++}
++class Node {
++  target?:Node;disconnected=false;
++  connect(target:Node){this.target=target;return target;}
++  disconnect(){this.disconnected=true;}
++}
++class Gain extends Node {gain=new Param();}
++class Filter extends Node {type='lowpass';frequency=new Param();Q=new Param();}
++class Source extends Node {
++  onended:(()=>void)|null=null;started:number[]=[];stopped:number[]=[];
++  start(at=0){this.started.push(at);}
++  stop(at=0){this.stopped.push(at);}
++}
++class Osc extends Source {type='sine';frequency=new Param();}
++class BufferSource extends Source {buffer:unknown;loop=false;}
++class Host {
++  static instances:Host[]=[];currentTime=0;state='suspended';destination=new Node();sampleRate=8000;
++  gains:Gain[]=[];oscillators:Osc[]=[];filters:Filter[]=[];sources:BufferSource[]=[];closed=false;decoded:unknown[]=[];
++  constructor(){Host.instances.push(this);}
++  createGain(){const g=new Gain();this.gains.push(g);return g;}
++  createOscillator(){const o=new Osc();this.oscillators.push(o);return o;}
++  createBiquadFilter(){const f=new Filter();this.filters.push(f);return f;}
++  createBuffer(_channels:number,length:number,_rate:number){return {duration:length/8000,getChannelData:()=>new Float32Array(length)};}
++  createBufferSource(){const s=new BufferSource();this.sources.push(s);return s;}
++  async decodeAudioData(bytes:ArrayBuffer){const buffer={duration:2,bytes};this.decoded.push(buffer);return buffer;}
++  async resume(){this.state='running';}
++  async close(){this.closed=true;this.state='closed';}
++}
++const settings={musicVolume:.5,soundVolume:.75,showDamageNumbers:true};
++const managers:SoundManager[]=[];
++function manager(){const m=new SoundManager(settings);managers.push(m);return m;}
++function advance(h:Host,seconds:number){for(let t=0;t<seconds-.00001;t+=.05){h.currentTime+=.05;vi.advanceTimersByTime(50);}}
++function busOf(node:Node):Node {let out=node;while(out.target&&!(out.target instanceof Node&&out.target.target===undefined))out=out.target;return out;}
++async function flush(){for(let i=0;i<15;i++)await Promise.resolve();}
++function serve(manifest:unknown,fail=false){
++  const requests:string[]=[];
++  vi.stubGlobal('fetch',async(input:string)=>{requests.push(String(input));return {ok:!fail,json:async()=>manifest,arrayBuffer:async()=>new ArrayBuffer(8)};});
++  return requests;
++}
++beforeEach(()=>{vi.useFakeTimers();vi.stubGlobal('AudioContext',Host);serve({});});
++afterEach(()=>{for(const m of managers)m.dispose();managers.length=0;Host.instances=[];vi.restoreAllMocks();vi.unstubAllGlobals();vi.useRealTimers();});
++
++describe('P1 arrangements and lifecycle',()=>{
++  it.each([['menu',60/84/2],['battle',60/108/2],['boss',60/124/2]] as const)('%s schedules overlapping instruments at its eighth-note tempo',async(mode,step)=>{
++    const m=manager();m.setMode(mode);await m.unlock();const h=Host.instances[0];advance(h,1.5);
++    const lead=h.oscillators.filter(o=>o.frequency.events[0]?.value>=250&&o.type==='sine');
++    expect(lead.length).toBeGreaterThan(3);
++    expect(lead[1].started[0]-lead[0].started[0]).toBeCloseTo(step,5);
++    expect(new Set(h.oscillators.map(o=>o.type)).size).toBeGreaterThan(1);
++    expect(h.oscillators.some(o=>o.frequency.events[0].value<250)).toBe(true);
++    expect(h.filters.length).toBeGreaterThan(0);
++    if(mode==='menu'){
++      expect(h.oscillators.filter(o=>o.started[0]===lead[0].started[0]).length).toBeGreaterThanOrEqual(4);
++      expect(h.oscillators.some(o=>Math.round(69+12*Math.log2(o.frequency.events[0].value/440))%12===11)).toBe(true);
++      expect(h.oscillators.some(o=>o.stopped[0]-o.started[0]>1)).toBe(true);
++    }else expect(h.sources.some(s=>!s.loop&&s.stopped[0]-s.started[0]<.2)).toBe(true);
++    for(const o of h.oscillators){
++      const envelope=o.target instanceof Filter?o.target.target as Gain:o.target as Gain;
++      expect(envelope.gain.events.some(e=>e.kind==='linear'&&e.time>o.started[0])).toBe(true);
++      expect(envelope.gain.events.at(-1)?.value).toBeLessThan(.001);
++    }
++  });
++  it('crossfades mode switches on one context and one scheduler, including suspended resume',async()=>{
++    const m=manager();await m.unlock();const h=Host.instances[0];
++    for(let i=0;i<30;i++)m.setMode(i%2?'battle':'boss');
++    expect(Host.instances).toHaveLength(1);expect(vi.getTimerCount()).toBe(1);
++    expect(h.gains.some(g=>g.gain.events.some(e=>e.kind==='linear'&&e.value===0))).toBe(true);
++    h.state='suspended';const before=h.oscillators.length;advance(h,.5);expect(h.oscillators).toHaveLength(before);
++    await m.unlock();expect(vi.getTimerCount()).toBe(1);expect(Host.instances).toHaveLength(1);
++    m.dispose();expect(h.closed).toBe(true);expect(vi.getTimerCount()).toBe(0);
++    expect([...h.oscillators,...h.sources].every(o=>o.stopped.length>0&&o.disconnected)).toBe(true);
++  });
++  it('adopts a mode requested during suspension when the gesture resumes audio',async()=>{
++    const m=manager();await m.unlock();const h=Host.instances[0];h.state='suspended';m.setMode('battle');
++    const before=h.oscillators.length;await m.unlock();advance(h,.6);
++    expect(h.oscillators[1].stopped.length).toBeGreaterThan(1);
++    const notes=h.oscillators.slice(before),bass=notes.find(o=>o.type==='triangle'&&o.frequency.events[0].value<200);
++    expect(bass).toBeDefined();expect(h.sources.some(s=>!s.loop)).toBe(true);
++    const lead=notes.filter(o=>o.type==='sine'&&o.frequency.events[0].value>=250);
++    expect(lead[1].started[0]-lead[0].started[0]).toBeCloseTo(30/108,5);
++  });
++  it('mute creates no SFX nodes and the first hit after enabling is audible',async()=>{
++    const m=manager();await m.unlock();const h=Host.instances[0];m.setSettings({...settings,soundVolume:0});
++    const before=h.oscillators.length;for(let i=0;i<20;i++)m.play('hit_soft' as SoundCue);expect(h.oscillators).toHaveLength(before);
++    m.setSettings(settings);m.play('hit_soft' as SoundCue);expect(h.oscillators.length).toBeGreaterThan(before);
++    expect(h.gains.filter(g=>g.target===h.destination)[1].gain.value).toBeCloseTo(.375);
++  });
++  it('globally throttles hits at 95ms while distinct command cues stay responsive',async()=>{
++    const m=manager();await m.unlock();const h=Host.instances[0],before=h.oscillators.length;
++    m.play('hit_soft' as SoundCue);const one=h.oscillators.length-before;expect(one).toBeGreaterThan(0);
++    for(let i=0;i<200;i++)m.play('hit_soft' as SoundCue);h.currentTime=.094;m.play('hit_soft' as SoundCue);expect(h.oscillators).toHaveLength(before+one);
++    h.currentTime=.095;m.play('hit_soft' as SoundCue);expect(h.oscillators).toHaveLength(before+2*one);
++    const n=h.oscillators.length;m.play('summon');m.play('summon');expect(h.oscillators.length-n).toBeGreaterThanOrEqual(4);
++  });
++  it('ducks music for overlays and hidden tabs without touching SFX gain',async()=>{
++    const listeners=new Map<string,()=>void>();const doc={hidden:false,addEventListener:(k:string,fn:()=>void)=>listeners.set(k,fn),removeEventListener:(k:string)=>listeners.delete(k)};
++    vi.stubGlobal('document',doc);const m=manager();await m.unlock();const h=Host.instances[0],[music,effects]=h.gains.filter(g=>g.target===h.destination);
++    m.setDucked(true);expect(music.gain.value).toBeCloseTo(.009);expect(effects.gain.value).toBeCloseTo(.375);
++    const count=music.gain.events.length;for(let i=0;i<60;i++)m.setDucked(true);expect(music.gain.events).toHaveLength(count);
++    m.setDucked(false);doc.hidden=true;listeners.get('visibilitychange')!();expect(music.gain.value).toBeCloseTo(.009);
++    m.setSettings({...settings,musicVolume:0});expect(music.gain.value).toBe(0);m.dispose();expect(listeners.size).toBe(0);
++  });
++  it('handles no host and hosts missing optional filters and buffers',async()=>{
++    vi.stubGlobal('AudioContext',undefined);const absent=manager();absent.setMode('boss');await expect(absent.unlock()).resolves.toBeUndefined();expect(()=>absent.play('boss_spawn' as SoundCue)).not.toThrow();
++    class Minimal extends Host {createBiquadFilter=undefined as never;createBuffer=undefined as never;createBufferSource=undefined as never;}
++    vi.stubGlobal('AudioContext',Minimal);const m=manager();m.setMode('battle');await m.unlock();const h=Host.instances[0];advance(h,1);expect(h.oscillators.length).toBeGreaterThan(4);
++  });
++  it('deduplicates per battle/id and routes core-owned cues without command purge duplicates',async()=>{
++    const m=manager();await m.unlock();const h=Host.instances[0],state=new BattleEngine({ai:false}).state;
++    const base={side:'player' as const,col:0,row:9,age:0,duration:1};
++    for(const [type,effect,value] of [['damage',undefined,5],['bubble','boss_spawn',undefined],['weapon','treasure',undefined],['orange',undefined,1]] as const){
++      state.events=[{...base,id:1,type,effect,value}];state.id=String(type);const before=h.oscillators.length;m.consumeBattle(state);expect(h.oscillators.length).toBeGreaterThan(before);const after=h.oscillators.length;m.consumeBattle(state);expect(h.oscillators).toHaveLength(after);
++    }
++    const before=h.oscillators.length;state.id='purges';state.events=[{...base,id:1,type:'purge',effect:'sprinkler'},{...base,id:2,type:'purge',effect:'legendary'}];m.consumeBattle(state);expect(h.oscillators).toHaveLength(before);
++    state.events.push({...base,id:3,type:'purge'});m.consumeBattle(state);expect(h.oscillators.length).toBeGreaterThan(before);
++  });
++  it.each(['ui_click','shovel','treasure','merge_upgrade','merge_hero','hit_soft','boss_spawn','orange_lost','orange_gain'] as SoundCue[])('plays canonical %s with a soft finite envelope',async cue=>{
++    const m=manager();await m.unlock();const h=Host.instances[0],before=h.oscillators.length;m.play(cue);
++    const notes=h.oscillators.slice(before);expect(notes.length).toBeGreaterThan(0);
++    for(const o of notes){expect(o.frequency.events.every(e=>Number.isFinite(e.value)&&e.value>0)).toBe(true);expect(o.stopped[0]-o.started[0]).toBeGreaterThan(0);expect(o.stopped[0]-o.started[0]).toBeLessThan(2);}
++  });
++  it('bounds live voice allocation under a command burst and frees expired envelopes',async()=>{
++    const m=manager();await m.unlock();const h=Host.instances[0];for(let i=0;i<1000;i++)m.play('legendary');
++    expect(h.oscillators.filter(o=>!o.disconnected).length).toBeLessThanOrEqual(96);
++    advance(h,2);const before=h.oscillators.length;m.play('legendary');expect(h.oscillators.length).toBeGreaterThan(before);
++    expect(h.oscillators.filter(o=>!o.disconnected).length).toBeLessThan(20);
++  });
++});
++
++describe('P1 optional decoded audio',()=>{
++  it('requests only the empty manifest and keeps builtin arrangements',async()=>{
++    const requests=serve({});const m=manager();await m.unlock();await flush();expect(requests).toHaveLength(1);expect(requests[0]).toMatch(/audio\/manifest\.json$/);expect(Host.instances[0].oscillators.length).toBeGreaterThan(1);
++  });
++  it.each([null,[],{bgm_menu:'../outside.mp3',hit_soft:'https://bad.test/a.wav'},{bgm_menu:'/absolute.mp3',summon:'a%2fb.mp3'},{unknown:'no.mp3'}].map(manifest=>({manifest})))('ignores invalid or unsafe manifest entries $manifest',async({manifest})=>{
++    const requests=serve(manifest);const m=manager();await m.unlock();await flush();expect(requests).toHaveLength(1);expect(Host.instances[0].oscillators.length).toBeGreaterThan(1);
++  });
++  it('uses decoded external music and cues through shared volume/duck buses and stops on mode/dispose',async()=>{
++    const requests=serve({bgm_menu:'music/menu.ogg',hit_soft:'hit.wav'});const m=manager();await m.unlock();await flush();const h=Host.instances[0];
++    expect(requests.some(u=>u.endsWith('/audio/music/menu.ogg'))).toBe(true);expect(h.decoded).toHaveLength(2);
++    const loop=h.sources.find(s=>s.loop)!;expect(loop).toBeDefined();expect(loop.buffer).toBe(h.decoded[0]);
++    const musicBus=busOf(loop) as Gain;m.setDucked(true);expect(musicBus.gain.value).toBeCloseTo(.009);
++    const before=h.oscillators.length;m.play('hit_soft' as SoundCue);expect(h.oscillators).toHaveLength(before);
++    const cue=h.sources.find(s=>!s.loop&&s.buffer===h.decoded[1])!;expect(cue).toBeDefined();const effectBus=busOf(cue) as Gain;
++    m.setSettings({...settings,soundVolume:0,musicVolume:0});expect(musicBus.gain.value).toBe(0);expect(effectBus.gain.value).toBe(0);
++    advance(h,.5);expect(h.oscillators).toHaveLength(before);m.setMode('battle');expect(loop.stopped.length).toBeGreaterThan(0);
++    m.dispose();expect(h.sources.every(s=>s.disconnected)).toBe(true);
++  });
++  it.each(['fetch','decode'])('falls back quietly when external %s fails',async failure=>{
++    const requests=serve({bgm_menu:'missing.mp3',summon:'missing.wav'});if(failure==='fetch')vi.stubGlobal('fetch',async(input:string)=>{requests.push(String(input));if(String(input).endsWith('manifest.json'))return {ok:true,json:async()=>({bgm_menu:'missing.mp3',summon:'missing.wav'})};throw new Error('offline');});
++    else vi.spyOn(Host.prototype,'decodeAudioData').mockRejectedValueOnce(new Error('codec')).mockRejectedValueOnce(new Error('codec'));
++    const m=manager();await expect(m.unlock()).resolves.toBeUndefined();await flush();const h=Host.instances[0],before=h.oscillators.length;m.play('summon');expect(h.oscillators.length).toBeGreaterThan(before);expect(h.sources.some(s=>s.loop)).toBe(false);
++    vi.restoreAllMocks();
++  });
++  it('does not resurrect audio when a pending manifest completes after dispose',async()=>{
++    let finish!:(v:unknown)=>void;vi.stubGlobal('fetch',()=>new Promise(resolve=>{finish=resolve;}));const m=manager();await m.unlock();const h=Host.instances[0];m.dispose();const count=h.sources.length;
++    finish({ok:true,json:async()=>({bgm_menu:'late.mp3'})});await flush();expect(h.sources).toHaveLength(count);expect(vi.getTimerCount()).toBe(0);expect(h.closed).toBe(true);
++  });
++  it('does not resurrect voices when decode completes after disposal',async()=>{
++    serve({bgm_menu:'late.mp3'});let finish!:(buffer:{duration:number;bytes:ArrayBuffer})=>void;
++    vi.spyOn(Host.prototype,'decodeAudioData').mockImplementation(()=>new Promise(resolve=>{finish=resolve;}));
++    const m=manager();await m.unlock();await flush();const h=Host.instances[0];expect(finish).toBeTypeOf('function');m.dispose();finish({duration:2,bytes:new ArrayBuffer(8)});await flush();
++    expect(h.sources).toHaveLength(0);expect(vi.getTimerCount()).toBe(0);vi.restoreAllMocks();
++  });
++  it('adopts a decoded override that arrives while the context is suspended',async()=>{
++    serve({bgm_menu:'late.mp3'});let finish!:(buffer:{duration:number;bytes:ArrayBuffer})=>void;
++    vi.spyOn(Host.prototype,'decodeAudioData').mockImplementation(()=>new Promise(resolve=>{finish=resolve;}));
++    const m=manager();await m.unlock();await flush();const h=Host.instances[0];h.state='suspended';finish({duration:2,bytes:new ArrayBuffer(8)});await flush();
++    expect(h.sources).toHaveLength(0);await m.unlock();expect(h.sources.some(s=>s.loop)).toBe(true);vi.restoreAllMocks();
++  });
++  it('keeps builtin scheduling when a decoded buffer source fails to start',async()=>{
++    class NoPlayback extends Host {createBufferSource(){const s=super.createBufferSource();s.start=()=>{throw new Error('restricted playback');};return s;}}
++    vi.stubGlobal('AudioContext',NoPlayback);serve({bgm_menu:'valid.mp3'});const m=manager();await m.unlock();await flush();const h=Host.instances[0],before=h.oscillators.length;
++    advance(h,1);expect(h.oscillators.length).toBeGreaterThan(before);expect(h.sources.every(s=>s.disconnected)).toBe(true);
++  });
++  it('throttles a treasure reported by both bubble and weapon effects to one chime',async()=>{
++    const m=manager();await m.unlock();const h=Host.instances[0],state=new BattleEngine({ai:false}).state;
++    const base={side:'player' as const,col:0,row:9,age:0,duration:1,effect:'treasure'};
++    state.events=[{...base,id:1,type:'bubble'},{...base,id:2,type:'weapon'}];const before=h.oscillators.length;m.consumeBattle(state);expect(h.oscillators.length-before).toBe(4);
++  });
++});
+
+## tests/m3-sound.test.ts
+diff --git "D:\\rea_game\\games\\capybara-defense\\.runtime\\p1-review-baseline\\tests\\m3-sound.test.ts" "D:\\rea_game\\games\\capybara-defense\\tests\\m3-sound.test.ts"
+index 50a9496..4ff3e6e 100644
+--- "D:\\rea_game\\games\\capybara-defense\\.runtime\\p1-review-baseline\\tests\\m3-sound.test.ts"
++++ "D:\\rea_game\\games\\capybara-defense\\tests\\m3-sound.test.ts"
+@@ -17,17 +17,17 @@ describe('M3 safe sound lifecycle',()=>{
+   });
+   it('captures constructor and resume failures without starting music or leaking contexts',async()=>{
+     class Rejected extends Host {async resume(){throw new Error('blocked');}}
+     vi.stubGlobal('AudioContext',Rejected);vi.useFakeTimers();const m=manager();await expect(m.unlock()).resolves.toBeUndefined();m.play('dig');expect(Host.instances[0].oscillators).toHaveLength(0);m.dispose();expect(Host.instances[0].closed).toBe(true);
+   });
+   it('silently handles a failing constructor and permits a later gesture retry',async()=>{
+     class Broken {constructor(){throw new Error('no device');}}
+     vi.stubGlobal('AudioContext',Broken);vi.useFakeTimers();const m=manager();await expect(m.unlock()).resolves.toBeUndefined();m.play('summon');
+-    vi.stubGlobal('AudioContext',Host);await m.unlock();expect(Host.instances[0].oscillators).toHaveLength(1);
++    vi.stubGlobal('AudioContext',Host);await m.unlock();expect(Host.instances[0].oscillators.length).toBeGreaterThanOrEqual(4);
+   });
+   it('does not start a scheduler when disposed while resume is pending',async()=>{
+     let finish!:()=>void;class Pending extends Host {async resume(){await new Promise<void>(resolve=>{finish=resolve;});this.state='running';}}
+     vi.stubGlobal('AudioContext',Pending);vi.useFakeTimers();const m=manager(),unlock=m.unlock();m.dispose();finish();await unlock;vi.advanceTimersByTime(1000);
+     expect(Host.instances[0].oscillators).toHaveLength(0);expect(Host.instances[0].closed).toBe(true);
+   });
+   it('does not restart the soft duck envelope on every animation frame',async()=>{
+     vi.stubGlobal('AudioContext',Host);vi.useFakeTimers();const m=manager();await m.unlock();const h=Host.instances[0];m.setDucked(true);
+@@ -38,32 +38,32 @@ describe('M3 safe sound lifecycle',()=>{
+   it('resumes a suspended host on the next gesture without duplicating buses or the music loop',async()=>{
+     vi.stubGlobal('AudioContext',Host);vi.useFakeTimers();const m=manager();await m.unlock();
+     const h=Host.instances[0],buses=h.gains.filter(g=>g.target===h.destination),before=h.oscillators.length;
+     h.state='suspended';vi.advanceTimersByTime(450);m.play('goose');expect(h.oscillators).toHaveLength(before);
+     const first=m.unlock(),second=m.unlock();expect(first).toBe(second);await Promise.all([first,second]);
+     expect(h.state).toBe('running');expect(Host.instances).toHaveLength(1);
+     expect(h.gains.filter(g=>g.target===h.destination)).toEqual(buses);expect(vi.getTimerCount()).toBe(1);
+     m.play('goose');expect(h.oscillators).toHaveLength(before+2);
+-    vi.advanceTimersByTime(450);expect(h.oscillators).toHaveLength(before+3);
++    h.currentTime=.45;vi.advanceTimersByTime(450);expect(h.oscillators).toHaveLength(before+3);
+   });
+   it('silently retries a rejected reactivation on a later gesture',async()=>{
+     vi.stubGlobal('AudioContext',Host);vi.useFakeTimers();const m=manager();await m.unlock();
+     const h=Host.instances[0],before=h.oscillators.length;h.state='suspended';
+     const resume=vi.spyOn(h,'resume').mockRejectedValueOnce(new Error('gesture temporarily denied'));
+     await expect(m.unlock()).resolves.toBeUndefined();m.play('dig');expect(h.oscillators).toHaveLength(before);
+     await m.unlock();expect(resume).toHaveBeenCalledTimes(2);expect(h.state).toBe('running');
+     m.play('dig');expect(h.oscillators).toHaveLength(before+2);expect(vi.getTimerCount()).toBe(1);
+   });
+-  it('creates no context before unlock, starts one pentatonic loop, and releases it',async()=>{
++  it('creates no context before unlock, starts one warm diatonic arrangement, and releases it',async()=>{
+     vi.stubGlobal('AudioContext',Host);vi.useFakeTimers();const m=manager();m.play('summon');expect(Host.instances).toHaveLength(0);
+     await m.unlock();await m.unlock();vi.advanceTimersByTime(4000);
+     const h=Host.instances[0];expect(Host.instances).toHaveLength(1);expect(h.oscillators.length).toBeGreaterThan(5);
+     const pitchClasses=h.oscillators.map(o=>Math.round(69+12*Math.log2(o.frequency.events[0].value/440))%12);
+-    expect(pitchClasses.every(p=>[0,2,4,7,9].includes(p))).toBe(true);
++    expect(pitchClasses.every(p=>[0,2,4,5,7,9,11].includes(p))).toBe(true);expect(pitchClasses).toContain(11);
+     expect(h.oscillators.every(o=>o.type==='sine'||o.type==='triangle')).toBe(true);
+     m.dispose();const count=h.oscillators.length;vi.advanceTimersByTime(5000);expect(h.oscillators).toHaveLength(count);expect(h.closed).toBe(true);expect(h.gains.every(g=>g.disconnected)).toBe(true);
+   });
+   it('applies volume zero immediately and softly ducks only music',async()=>{
+     vi.stubGlobal('AudioContext',Host);vi.useFakeTimers();const m=manager();await m.unlock();const h=Host.instances[0];
+     m.setDucked(true);expect(h.gains.some(g=>g.gain.events.some(e=>e.kind==='target'&&e.value>0&&e.value<.1))).toBe(true);
+     m.setSettings({...settings,musicVolume:0,soundVolume:0});m.play('summon');
+     expect(h.gains.filter(g=>g.target===h.destination).every(g=>g.gain.value===0)).toBe(true);
+@@ -72,13 +72,13 @@ describe('M3 safe sound lifecycle',()=>{
+     vi.stubGlobal('AudioContext',Host);vi.useFakeTimers();const m=manager();await m.unlock();const h=Host.instances[0],before=h.oscillators.length;m.play(cue);
+     const notes=h.oscillators.slice(before);expect(notes.length).toBeGreaterThan(0);
+     for(const o of notes){expect(o.frequency.events.every(e=>Number.isFinite(e.value)&&e.value>0)).toBe(true);expect(o.stopped[0]-o.started[0]).toBeGreaterThan(0);expect(o.stopped[0]-o.started[0]).toBeLessThan(3);const gain=o.target as Gain;expect(gain.gain.events.some(e=>e.value>0.01)).toBe(true);expect(gain.gain.events.at(-1)!.value).toBeLessThan(.001);}
+   });
+   it('consumes actual battle event identities once and leaves command-owned cues to UI',async()=>{
+     vi.stubGlobal('AudioContext',Host);vi.useFakeTimers();const m=manager();await m.unlock();const h=Host.instances[0],engine=new BattleEngine({ai:false}),state=engine.state;
+     const base={side:'player' as const,col:0,row:9,age:0,duration:1};
+     state.events=[{...base,id:1,type:'orange',value:1},{...base,id:2,type:'purge',effect:'legendary'},{...base,id:3,type:'orange',value:-1},{...base,id:4,type:'dash'},{...base,id:5,type:'sprinkler'},{...base,id:6,type:'purge'}];
+-    const before=h.oscillators.length;m.consumeBattle(state);const after=h.oscillators.length;expect(after-before).toBe(14);m.consumeBattle(state);expect(h.oscillators).toHaveLength(after);
+-    state.events=state.events.slice(0,2);state.id='another-battle';m.consumeBattle(state);expect(h.oscillators).toHaveLength(after);
+-    state.events=[{...base,id:3,type:'orange',value:-1}];m.consumeBattle(state);expect(h.oscillators.length).toBeGreaterThan(after);
++    const before=h.oscillators.length;m.consumeBattle(state);const after=h.oscillators.length;expect(after-before).toBe(15);m.consumeBattle(state);expect(h.oscillators).toHaveLength(after);
++    h.currentTime=.1;state.events=state.events.slice(0,2);state.id='another-battle';m.consumeBattle(state);expect(h.oscillators).toHaveLength(after+2);
++    state.events=[{...base,id:3,type:'orange',value:-1}];m.consumeBattle(state);expect(h.oscillators).toHaveLength(after+4);
+   });
+ });

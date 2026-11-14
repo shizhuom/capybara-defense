@@ -1,0 +1,688 @@
+{
+  "evidence_id": "ev_7105e1ea0cb22f4026885d34199ae98fc020ca85939838537d8fa3aa54d90aeb",
+  "subject": null,
+  "provider": {
+    "id": "rea-playwright-browser-scenario",
+    "name": "REA Playwright browser scenario capture provider",
+    "version": "1"
+  },
+  "analysis_profile": null,
+  "predicate_type": "rea.browser-scenario-capture",
+  "operation": "capture_browser_scenario",
+  "parameters": {
+    "browser": {
+      "mode": "launch",
+      "executable_path": "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",
+      "headless": true
+    },
+    "start_url": {
+      "url": "http://127.0.0.1:4174/game/",
+      "query": []
+    },
+    "environment": {
+      "viewport": {
+        "width": 1280,
+        "height": 720,
+        "device_scale_factor": 1
+      },
+      "locale": "en-US",
+      "timezone": "UTC",
+      "color_scheme": "light",
+      "reduced_motion": "reduce",
+      "service_workers": "block"
+    },
+    "actions": [
+      {
+        "step_id": "inspect-start-and-timers",
+        "action": "wait_for_timeout",
+        "duration_ms": 7500
+      }
+    ],
+    "storage": {
+      "cookies": [],
+      "local_storage": [],
+      "session_storage": []
+    },
+    "secrets": [],
+    "capture": {
+      "after_each_step": [],
+      "at_end": [
+        "url"
+      ],
+      "events": [
+        "console",
+        "page-errors"
+      ],
+      "network": {
+        "request_body": false,
+        "response_body": false,
+        "header_values": false
+      },
+      "limits": {
+        "max_events": 10000,
+        "max_event_allocation_bytes": 4194304,
+        "max_total_event_allocation_bytes": 16777216,
+        "max_network_transactions": 1024,
+        "max_network_body_bytes": 65536,
+        "max_network_body_allocation_bytes": 1048576,
+        "max_network_header_allocation_bytes": 1048576,
+        "max_network_metadata_allocation_bytes": 1048576
+      }
+    },
+    "scenario_sha256": "6fef431687a802689b7ed4fbcc44c5db13d2d94b87f91f99298c3351fdf63c62"
+  },
+  "raw_result": null,
+  "normalized_result": {
+    "browser": {
+      "mode": "launch",
+      "process_ownership": "provider-owned",
+      "cleanup": "terminated-owned-process",
+      "product": "Chromium",
+      "version": "157.0.8103.51"
+    },
+    "scenario": {
+      "start_origin": "http://127.0.0.1:4174",
+      "action_count": 1,
+      "secret_references": [],
+      "network_content": {
+        "request_body": false,
+        "response_body": false,
+        "header_values": false
+      },
+      "event_families": [
+        "console",
+        "page-errors"
+      ],
+      "limits": {
+        "max_events": 10000,
+        "max_event_allocation_bytes": 4194304,
+        "max_total_event_allocation_bytes": 16777216,
+        "max_network_transactions": 1024,
+        "max_network_body_bytes": 65536,
+        "max_network_body_allocation_bytes": 1048576,
+        "max_network_header_allocation_bytes": 1048576,
+        "max_network_metadata_allocation_bytes": 1048576
+      }
+    },
+    "duration_ms": 8223,
+    "steps": [
+      {
+        "step_index": 0,
+        "step_id": "scenario_start",
+        "action": "goto_start",
+        "elapsed_ms": 501,
+        "before_url": {
+          "url": "about:blank",
+          "origin": null,
+          "query_parameter_names": [],
+          "redacted": false
+        },
+        "after_url": {
+          "url": "http://127.0.0.1:4174/game/",
+          "origin": "http://127.0.0.1:4174",
+          "query_parameter_names": [],
+          "redacted": false
+        },
+        "event_sequence_start": 1,
+        "event_sequence_end": 2,
+        "artifacts": {
+          "screenshot": {
+            "state": "not_requested"
+          },
+          "dom": {
+            "state": "not_requested"
+          },
+          "accessibility": {
+            "state": "not_requested"
+          },
+          "url": {
+            "state": "not_requested"
+          },
+          "history": {
+            "state": "not_requested"
+          },
+          "storage": {
+            "state": "not_requested"
+          }
+        },
+        "completeness": {
+          "status": "complete",
+          "equality_eligible": true,
+          "missing_sections": [],
+          "truncated_sections": []
+        },
+        "status": "completed",
+        "error": null
+      },
+      {
+        "step_index": 1,
+        "step_id": "inspect-start-and-timers",
+        "action": "wait_for_timeout",
+        "elapsed_ms": 7500,
+        "before_url": {
+          "url": "http://127.0.0.1:4174/game/",
+          "origin": "http://127.0.0.1:4174",
+          "query_parameter_names": [],
+          "redacted": false
+        },
+        "after_url": {
+          "url": "http://127.0.0.1:4174/game/",
+          "origin": "http://127.0.0.1:4174",
+          "query_parameter_names": [],
+          "redacted": false
+        },
+        "event_sequence_start": 3,
+        "event_sequence_end": 33,
+        "artifacts": {
+          "screenshot": {
+            "state": "not_requested"
+          },
+          "dom": {
+            "state": "not_requested"
+          },
+          "accessibility": {
+            "state": "not_requested"
+          },
+          "url": {
+            "state": "captured",
+            "value": {
+              "url": "http://127.0.0.1:4174/game/",
+              "origin": "http://127.0.0.1:4174",
+              "query_parameter_names": [],
+              "redacted": false
+            }
+          },
+          "history": {
+            "state": "not_requested"
+          },
+          "storage": {
+            "state": "not_requested"
+          }
+        },
+        "completeness": {
+          "status": "complete",
+          "equality_eligible": true,
+          "missing_sections": [],
+          "truncated_sections": []
+        },
+        "status": "completed",
+        "error": null
+      }
+    ],
+    "events": {
+      "retained": 33,
+      "dropped": 0,
+      "items": [
+        {
+          "sequence": 1,
+          "step_index": 0,
+          "kind": "console",
+          "level": "info",
+          "text": "[study-runner] Browser renderer; recovered game bundle and assets.",
+          "url": {
+            "url": "http://127.0.0.1:4174/game/compat.js",
+            "origin": "http://127.0.0.1:4174",
+            "query_parameter_names": [],
+            "redacted": false
+          }
+        },
+        {
+          "sequence": 2,
+          "step_index": 0,
+          "kind": "console",
+          "level": "log",
+          "text": "武器注册文件已加载，所有武器类已注册到WeaponFactory",
+          "url": {
+            "url": "http://127.0.0.1:4174/game/js/bundle.js",
+            "origin": "http://127.0.0.1:4174",
+            "query_parameter_names": [],
+            "redacted": false
+          }
+        },
+        {
+          "sequence": 3,
+          "step_index": 1,
+          "kind": "console",
+          "level": "error",
+          "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+          "url": {
+            "url": "http://127.0.0.1:4174/favicon.ico",
+            "origin": "http://127.0.0.1:4174",
+            "query_parameter_names": [],
+            "redacted": false
+          }
+        },
+        {
+          "sequence": 4,
+          "step_index": 1,
+          "kind": "console",
+          "level": "log",
+          "text": "langType zh",
+          "url": {
+            "url": "http://127.0.0.1:4174/game/js/bundle.js",
+            "origin": "http://127.0.0.1:4174",
+            "query_parameter_names": [],
+            "redacted": false
+          }
+        },
+        {
+          "sequence": 5,
+          "step_index": 1,
+          "kind": "console",
+          "level": "log",
+          "text": "启动主流程",
+          "url": {
+            "url": "http://127.0.0.1:4174/game/js/bundle.js",
+            "origin": "http://127.0.0.1:4174",
+            "query_parameter_names": [],
+            "redacted": false
+          }
+        },
+        {
+          "sequence": 6,
+          "step_index": 1,
+          "kind": "console",
+          "level": "log",
+          "text": "[LoadScene] startLoadFlow1",
+          "url": {
+            "url": "http://127.0.0.1:4174/game/js/bundle.js",
+            "origin": "http://127.0.0.1:4174",
+            "query_parameter_names": [],
+            "redacted": false
+          }
+        },
+        {
+          "sequence": 7,
+          "step_index": 1,
+          "kind": "console",
+          "level": "log",
+          "text": "[PlatMgr] runLoadScenePreloadTasks _0x10ff4f",
+          "url": {
+            "url": "http://127.0.0.1:4174/game/js/bundle.js",
+            "origin": "http://127.0.0.1:4174",
+            "query_parameter_names": [],
+            "redacted": false
+          }
+        },
+        {
+          "sequence": 8,
+          "step_index": 1,
+          "kind": "console",
+          "level": "log",
+          "text": "[LoadScene] startLoadFlow2",
+          "url": {
+            "url": "http://127.0.0.1:4174/game/js/bundle.js",
+            "origin": "http://127.0.0.1:4174",
+            "query_parameter_names": [],
+            "redacted": false
+          }
+        },
+        {
+          "sequence": 9,
+          "step_index": 1,
+          "kind": "console",
+          "level": "log",
+          "text": "this._data._saveTime 1794553420745",
+          "url": {
+            "url": "http://127.0.0.1:4174/game/js/bundle.js",
+            "origin": "http://127.0.0.1:4174",
+            "query_parameter_names": [],
+            "redacted": false
+          }
+        },
+        {
+          "sequence": 10,
+          "step_index": 1,
+          "kind": "console",
+          "level": "log",
+          "text": "Date.now() 1794553421305",
+          "url": {
+            "url": "http://127.0.0.1:4174/game/js/bundle.js",
+            "origin": "http://127.0.0.1:4174",
+            "query_parameter_names": [],
+            "redacted": false
+          }
+        },
+        {
+          "sequence": 11,
+          "step_index": 1,
+          "kind": "console",
+          "level": "log",
+          "text": "打印测试 Map(54)",
+          "url": {
+            "url": "http://127.0.0.1:4174/game/js/bundle.js",
+            "origin": "http://127.0.0.1:4174",
+            "query_parameter_names": [],
+            "redacted": false
+          }
+        },
+        {
+          "sequence": 12,
+          "step_index": 1,
+          "kind": "console",
+          "level": "log",
+          "text": "打印武器数据 Map(44)",
+          "url": {
+            "url": "http://127.0.0.1:4174/game/js/bundle.js",
+            "origin": "http://127.0.0.1:4174",
+            "query_parameter_names": [],
+            "redacted": false
+          }
+        },
+        {
+          "sequence": 13,
+          "step_index": 1,
+          "kind": "console",
+          "level": "log",
+          "text": "打印不同品质不同种类的武器 [Array(5), Array(5), Array(5), Array(5), Array(5)]",
+          "url": {
+            "url": "http://127.0.0.1:4174/game/js/bundle.js",
+            "origin": "http://127.0.0.1:4174",
+            "query_parameter_names": [],
+            "redacted": false
+          }
+        },
+        {
+          "sequence": 14,
+          "step_index": 1,
+          "kind": "console",
+          "level": "warning",
+          "text": "[Server] 未登录，跳过云端存档同步",
+          "url": {
+            "url": "http://127.0.0.1:4174/game/js/bundle.js",
+            "origin": "http://127.0.0.1:4174",
+            "query_parameter_names": [],
+            "redacted": false
+          }
+        },
+        {
+          "sequence": 15,
+          "step_index": 1,
+          "kind": "console",
+          "level": "log",
+          "text": "当前玩家天数 8",
+          "url": {
+            "url": "http://127.0.0.1:4174/game/js/bundle.js",
+            "origin": "http://127.0.0.1:4174",
+            "query_parameter_names": [],
+            "redacted": false
+          }
+        },
+        {
+          "sequence": 16,
+          "step_index": 1,
+          "kind": "console",
+          "level": "info",
+          "text": "[测试模式] 已载入 44 种武器、16 个头像、25 类道具和 4 张地图。排行榜使用示例数据，奖励由本地模式模拟。",
+          "url": {
+            "url": "http://127.0.0.1:4174/test-mode/runtime.js",
+            "origin": "http://127.0.0.1:4174",
+            "query_parameter_names": [],
+            "redacted": false
+          }
+        },
+        {
+          "sequence": 17,
+          "step_index": 1,
+          "kind": "console",
+          "level": "log",
+          "text": "REFERENCE_BALANCE_METHODS {\"gameStart\":\"[\\\"\\\\u0073\\\\u0074\\\\u0061\\\\u0072\\\\u0074\\\\u0047\\\\u0061\\\\u006d\\\\u0065\\\"](){function _0x2d6043(_0x18eebc,_0x2e246f,_0x523031,_0x66a0cf,_0xa87c00){return _0x1c1c(_0xa87c00-0x2ce,_0x66a0cf);}const _0x1aece3={\\\"\\\\u0071\\\\u0062\\\\u0078\\\\u0079\\\\u0055\\\":_0x2d6043(0x21f1,0x1f54,0x1efe,\\\"X1l1\\\".split(\\\"\\\").reverse().join(\\\"\\\"),0x3917)};return _0x20c237['instance']()[\\\"\\\\u0048\\\\u006e\\\"]({'fail':_0xf69423=>{console[\\\"\\\\u0077\\\\u0061\\\\u0072\\\\u006e\\\"](_0x1aece3['qbxyU'],_0xf69423);}}),_0x1f6ae6[\\\"\\\\u0069\\\\u006e\\\\u0073\\\\u0074\\\\u0061\\\\u006e\\\\u0063\\\\u0065\\\"]()['startGame'](),_0x9b490a[\\\"\\\\u0069\\\\u006e\\\\u0073\\\\u0074\\\\u0061\\\\u006e\\\\u0063\\\\u0065\\\"]()[\\\"\\\\u0054\\\\u006c\\\"](),_0x17d2eb['instance']()['startGame'](),_0x222d72[\\\"\\\\u0069\\\\u006e\\\\u0073\\\\u0074\\\\u0061\\\\u006e\\\\u0063\\\\u0065\\\"]()[\\\"\\\\u0073\\\\u0074\\\\u0061\\\\u0072\\\\u0074\\\\u0047\\\\u0061\\\\u006d\\\\u0065\\\"](),_0x526be7['instance']()[\\\"\\\\u0073\\\\u0074\\\\u0061\\\\u0072\\\\u0074\\\\u0047\\\\u0061\\\\u006d\\\\u0065\\\"](),_0x37b3fd[\\\"\\\\u0069\\\\u006e\\\\u0073\\\\u0074\\\\u0061\\\\u006e\\\\u0063\\\\u0065\\\"]()['startGame'](),_0x1568dd[\\\"\\\\u0069\\\\u006e\\\\u0073\\\\u0074\\\\u0061\\\\u006e\\\\u0063\\\\u0065\\\"]()['startGame'](),_0xc5cede[\\\"\\\\u0069\\\\u006e\\\\u0073\\\\u0074\\\\u0061\\\\u006e\\\\u0063\\\\u0065\\\"]()[\\\"\\\\u0073\\\\u0074\\\\u0061\\\\u0072\\\\u0074\\\\u0047\\\\u0061\\\\u006d\\\\u0065\\\"](),_0x24d34a['instance']()[\\\"\\\\u0073\\\\u0074\\\\u0061\\\\u0072\\\\u0074\\\\u0047\\\\u0061\\\\u006d\\\\u0065\\\"](),_0x4299f3[\\\"\\\\u0069\\\\u006e\\\\u0073\\\\u0074\\\\u0061\\\\u006e\\\\u0063\\\\u0065\\\"]()[\\\"\\\\u0073\\\\u0074\\\\u0061\\\\u0072\\\\u0074\\\\u0047\\\\u0061\\\\u006d\\\\u0065\\\"](),new Promise(_0x5b25a3=>{function _0x3c9124(_0x5406aa,_0x315458,_0xf0fdaf,_0xf5d11c,_0x485d87){return _0x1c1c(_0xf0fdaf-0x11a,_0x315458);}_0x505fa6['instance']()[\\\"\\\\u0057\\\\u0072\\\"](_0x3c9124(-0x280,\\\"\\\\u0070\\\\u002a\\\\u006b\\\\u0040\\\",0xcb5,0x839,0x2abb),!(0x3bce0^0x3bce1),null,_0xc8e973=>{_0x13edf5[\\\"\\\\u0069\\\\u006e\\\\u0073\\\\u0074\\\\u0061\\\\u006e\\\\u0063\\\\u0065\\\"]()[\\\"\\\\u0073\\\\u0074\\\\u0061\\\\u0072\\\\u0074\\\\u0047\\\\u0061\\\\u006d\\\\u0065\\\"](),_0x19a15c[\\\"\\\\u0069\\\\u006e\\\\u0073\\\\u0074\\\\u0061\\\\u006e\\\\u0063\\\\u0065\\\"]()[\\\"\\\\u0073\\\\u0074\\\\u0061\\\\u0072\\\\u0074\\\\u0047\\\\u0061\\\\u006d\\\\u0065\\\"](),_0x593d46['instance']()[\\\"\\\\u0073\\\\u0074\\\\u0061\\\\u0072\\\\u0074\\\\u0047\\\\u0061\\\\u006d\\\\u0065\\\"](),_0x5b25a3(_0xc8e973);});});}\",\"mainStart\":\"[\\\"\\\\u0073\\\\u0074\\\\u0061\\\\u0072\\\\u0074\\\\u0047\\\\u0061\\\\u006d\\\\u0065\\\"](){const _0x9d1da5={\\\"\\\\u0059\\\\u0048\\\\u006e\\\\u004f\\\\u0056\\\":function(_0x5d7b18,_0x331ece){return _0x4bc2b2[\\\"\\\\u0075\\\\u0066\\\\u005a\\\\u006f\\\\u0045\\\"](_0x5d7b18,_0x331ece);}};return _0x4406c8(this,null,function*(){if(!_0x5e8b03[\\\"\\\\u0069\\\\u006e\\\\u0073\\\\u0074\\\\u0061\\\\u006e\\\\u0063\\\\u0065\\\"]()[\\\"\\\\u005a\\\\u0048\\\"]())return _0x2bc30f[\\\"\\\\u0069\\\\u006e\\\\u0073\\\\u0074\\\\u0061\\\\u006e\\\\u0063\\\\u0065\\\"]()['showTip'](_0xa92bb6(-0x2da,0xb68,0x1249,0x2198,0x46b)),Promise[\\\"\\\\u0072\\\\u0065\\\\u006a\\\\u0065\\\\u0063\\\\u0074\\\"](_0x61de93(0x35b3,0x3b40,0x37b9,\\\"\\\\u0040\\\\u0076\\\\u0042\\\\u0048\\\",0x4a6b));function _0xa92bb6(_0x3fd006,_0x17f122,_0x46bcab,_0x720204,_0x5a65cb){return _0x3843(_0x5a65cb- -0x2ac,_0x17f122);}function _0x8f5796(_0x164118,_0x4af0f5,_0x68664c,_0x3eadee,_0xbb1bec){return _0x3843(_0x164118- -0x3c4,_0xbb1bec);}function _0x4c748b(_0x163521,_0x40daa2,_0x24c7d1,_0x25daca,_0x2529f6){return _0x1c1c(_0x24c7d1- -0x335,_0x163521);}function _0x61de93(_0x4d041f,_0x375236,_0x5f0407,_0x2ecf9c,_0x12b32d){return _0x1c1c(_0x4d041f- -0x22a,_0x2ecf9c);}function _0x46830c(_0x4a546e,_0x525b2c,_0x235312,_0x46e599,_0x51d90c){return _0x3843(_0x46e599-0x1a9,_0x51d90c);}_0x9d1da5['YHnOV'](Date['now']()-this['KQ'],this['ZQ'])||(_0x5e8b03['instance']()[\\\"\\\\u004b\\\\u0048\\\"](),this['KQ']=Date[\\\"\\\\u006e\\\\u006f\\\\u0077\\\"](),yield this['XZ'](),_0x222d72[\\\"\\\\u0069\\\\u006e\\\\u0073\\\\u0074\\\\u0061\\\\u006e\\\\u0063\\\\u0065\\\"]()['Yu'](),_0x203c39[\\\"\\\\u0069\\\\u006e\\\\u0073\\\\u0074\\\\u0061\\\\u006e\\\\u0063\\\\u0065\\\"]()['GB'](),_0x505fa6[\\\"\\\\u0069\\\\u006e\\\\u0073\\\\u0074\\\\u0061\\\\u006e\\\\u0063\\\\u0065\\\"]()['Wr'](_0x61de93(0x51e,0x25be,0x18dd,\\\"U(JT\\\".split(\\\"\\\").reverse().join(\\\"\\\"),-0x18a3)),Laya[\\\"\\\\u0054\\\\u0077\\\\u0065\\\\u0065\\\\u006e\\\"][\\\"\\\\u006b\\\\u0069\\\\u006c\\\\u006c\\\\u0041\\\\u006c\\\\u006c\\\"](this[\\\"\\\\u0073\\\\u0068\\\\u006f\\\\u0070\\\\u0057\\\\u0061\\\\u006c\\\\u006b\\\"]),this['shopWalk'][\\\"\\\\u0076\\\\u0069\\\\u0073\\\\u0069\\\\u0062\\\\u006c\\\\u0065\\\"]=!(0x5d6d6^0x5d6d7),this[\\\"\\\\u0073\\\\u0068\\\\u006f\\\\u0070\\\\u0057\\\\u0061\\\\u006c\\\\u006b\\\"][\\\"\\\\u0078\\\"]=0x99c4b^0x99d0b,_0xc5cede[\\\"\\\\u0069\\\\u006e\\\\u0073\\\\u0074\\\\u0061\\\\u006e\\\\u0063\\\\u0065\\\"]()[\\\"\\\\u0073\\\\u0067\\\"](_0x46830c(0x3cd7,0x2a51,0xe9c,0x2b69,0x2c93),this[\\\"\\\\u0047\\\\u005a\\\"]),this['shopWalk']['skin']=_0xa92bb6(0x58a7,0x4b90,0x2c5c,0x2d61,0x3a18));});}\",\"dataTy\":\"[\\\"yT\\\".split(\\\"\\\").reverse().join(\\\"\\\")](_0x452a6c,_0xbae945){var _0x24e9cc,_0x7d41f8;_0x4bc2b2['iwcqU'](_0x452a6c,this[\\\"\\\\u0065\\\\u006e\\\\u0065\\\\u006d\\\\u0079\\\"][\\\"\\\\u0061\\\\u0065\\\"][\\\"\\\\u006c\\\\u0065\\\\u006e\\\\u0067\\\\u0074\\\\u0068\\\"])&&(_0x452a6c=this['map'][\\\"\\\\u0074\\\\u0061\\\"]);let _0x4f8cc0=this[\\\"\\\\u006e\\\\u0075\\\"][\\\"\\\\u0068\\\\u0068\\\"];if(_0x4f8cc0=Math['max'](_0x4bc2b2['zDtNa'](0x4758e,0x4758f),_0x4f8cc0),this[\\\"\\\\u006e\\\\u0075\\\"][\\\"\\\\u0065\\\\u0068\\\"]&&_0x4f8cc0>this[\\\"\\\\u006e\\\\u0075\\\"][\\\"\\\\u0061\\\\u0068\\\"])this[\\\"\\\\u0070\\\\u0079\\\"][\\\"\\\\u006e\\\\u0065\\\"]=this[\\\"\\\\u0065\\\\u006e\\\\u0065\\\\u006d\\\\u0079\\\"][\\\"\\\\u0061\\\\u0065\\\"][_0x452a6c][\\\"\\\\u006e\\\\u0065\\\"][0xecbc5^0xecbc5]*Math[\\\"\\\\u0070\\\\u006f\\\\u0077\\\"](1.5,_0x4bc2b2['EXJhc'](_0x4f8cc0,0xea94e^0xea94f));else{const _0x12cdc7=this[\\\"\\\\u0065\\\\u006e\\\\u0065\\\\u006d\\\\u0079\\\"][\\\"\\\\u0061\\\\u0065\\\"][_0x452a6c]['ne'],_0x3e5796=this['nu'][\\\"\\\\u006e\\\\u0068\\\"],_0x1aa462=Math['min'](_0x4f8cc0,_0x12cdc7[\\\"\\\\u006c\\\\u0065\\\\u006e\\\\u0067\\\\u0074\\\\u0068\\\"])-(0xe811a^0xe811b),_0x32a62c=Math['max'](0x4810a^0x4810a,Math[\\\"\\\\u006d\\\\u0069\\\\u006e\\\"](_0x4bc2b2['aOCeA'](_0x4f8cc0,0x524a7^0x524a6),_0x3e5796['length']-(0x572a6^0x572a7)));this['player']['round']<(0x63814^0x6381e)&&_0x4bc2b2['vEflh'](_0x4f8cc0,0x81bec^0x81be6)?this[\\\"\\\\u0070\\\\u0079\\\"]['ne']=_0x12cdc7[_0x1aa462]*(null!=(_0x24e9cc=_0x3e5796[_0x32a62c])?_0x24e9cc:0x8dd93^0x8dd92)*this[\\\"\\\\u0065\\\\u006e\\\\u0065\\\\u006d\\\\u0079\\\"]['ee'][this[\\\"\\\\u0070\\\\u006c\\\\u0061\\\\u0079\\\\u0065\\\\u0072\\\"][\\\"\\\\u0072\\\\u006f\\\\u0075\\\\u006e\\\\u0064\\\"]]:this['py'][\\\"\\\\u006e\\\\u0065\\\"]=_0x12cdc7[_0x1aa462]*(null!=(_0x7d41f8=_0x3e5796[_0x32a62c])?_0x7d41f8:_0x4bc2b2['sndon'](0xd035d,0xd035c)),_0x4bc2b2['yQhOY'](_0x4f8cc0,_0x4bc2b2[\\\"\\\\u0047\\\\u0051\\\\u0052\\\\u004c\\\\u0053\\\"](0x513b7,0x513bd))&&(this['py'][\\\"\\\\u006e\\\\u0065\\\"]+=this[\\\"\\\\u0070\\\\u0079\\\"]['ne']*this['rank'][\\\"\\\\u0074\\\\u0072\\\"][\\\"\\\\u0067\\\\u0065\\\\u0074\\\"](this[\\\"\\\\u0072\\\\u0061\\\\u006e\\\\u006b\\\"]['fu'][\\\"\\\\u0069\\\\u0064\\\"])[\\\"\\\\u0061\\\\u0064\\\\u0064\\\\u0048\\\\u0070\\\"]);}return this['py']['speed']=this['enemy'][\\\"\\\\u0061\\\\u0065\\\"][_0x452a6c]['speed'],this['py'];}\"}",
+          "url": {
+            "url": "http://127.0.0.1:4174/reference-balance-probe.js",
+            "origin": "http://127.0.0.1:4174",
+            "query_parameter_names": [],
+            "redacted": false
+          }
+        },
+        {
+          "sequence": 18,
+          "step_index": 1,
+          "kind": "console",
+          "level": "log",
+          "text": "打印ai数据 皇帝 37",
+          "url": {
+            "url": "http://127.0.0.1:4174/game/js/bundle.js",
+            "origin": "http://127.0.0.1:4174",
+            "query_parameter_names": [],
+            "redacted": false
+          }
+        },
+        {
+          "sequence": 19,
+          "step_index": 1,
+          "kind": "console",
+          "level": "error",
+          "text": "本局对手强度预估 1",
+          "url": {
+            "url": "http://127.0.0.1:4174/game/js/bundle.js",
+            "origin": "http://127.0.0.1:4174",
+            "query_parameter_names": [],
+            "redacted": false
+          }
+        },
+        {
+          "sequence": 20,
+          "step_index": 1,
+          "kind": "console",
+          "level": "log",
+          "text": "打印ai道具 0 0 []",
+          "url": {
+            "url": "http://127.0.0.1:4174/game/js/bundle.js",
+            "origin": "http://127.0.0.1:4174",
+            "query_parameter_names": [],
+            "redacted": false
+          }
+        },
+        {
+          "sequence": 21,
+          "step_index": 1,
+          "kind": "console",
+          "level": "log",
+          "text": "REFERENCE_BALANCE_BATTLE {\"nu\":{\"hh\":0,\"eh\":false,\"ah\":20,\"nh\":[],\"rh\":20,\"oh\":10,\"uh\":10,\"ph\":false,\"yh\":\"无\",\"fh\":3,\"gh\":3,\"_gold\":0,\"props\":null,\"dh\":true,\"Lh\":1,\"mh\":1,\"wh\":3,\"kh\":3,\"Sh\":0,\"xh\":{\"id\":53,\"rank\":\"皇帝\",\"level\":37,\"bh\":[{\"general\":\"赵云\",\"Mc\":19},{\"general\":\"黄盖\",\"Mc\":41},{\"general\":\"黄忠\",\"Mc\":7},{\"general\":\"张翼\",\"Mc\":40},{\"general\":\"关兴\",\"Mc\":30},{\"general\":\"张苞\",\"Mc\":18},{\"general\":\"刘备\",\"Mc\":42},{\"general\":\"关羽\",\"Mc\":29},{\"general\":\"张飞\",\"Mc\":18},{\"general\":\"关平\",\"Mc\":30}],\"Mh\":1,\"win\":599,\"lose\":-593,\"Ph\":87.60981011908635},\"Ah\":{\"Eh\":false,\"num\":0,\"range\":0,\"pos\":{\"x\":0,\"y\":0}},\"Bh\":{\"Eh\":false,\"num\":0,\"range\":0,\"pos\":{\"x\":0,\"y\":0}},\"Dh\":false,\"Ih\":false,\"Th\":false,\"Rh\":false,\"delayTime\":10000,\"Ch\":false,\"Uh\":false,\"Fh\":false,\"Oh\":false,\"Yh\":false,\"Gh\":[],\"Xh\":[],\"jh\":[],\"Hh\":[],\"zh\":{},\"Wh\":{},\"Nh\":false},\"scene\":null,\"sceneMethods\":null,\"handlers\":[{\"delay\":1,\"repeat\":true,\"method\":\"update\",\"caller\":\"_0x3da3aa\",\"source\":\"[\\\"\\\\u0075\\\\u0070\\\\u0064\\\\u0061\\\\u0074\\\\u0065\\\"](){if(this[\\\"\\\\u006d\\\\u006e\\\"])return;const _0x14e2a0=Laya[\\\"\\\\u0074\\\\u0069\\\\u006d\\\\u0065\\\\u0072\\\"][\\\"\\\\u0063\\\\u0075\\\\u0072\\\\u0072\\\\u0054\\\\u0069\\\\u006d\\\\u0065\\\\u0072\\\"];let _0x1c1069=_0x4bc2b2[\\\"\\\\u0051\\\\u0078\\\\u006f\\\\u0046\\\\u004e\\\"](_0x14e2a0,this[\\\"\\\\u005f\\\\u006e\\\"]);if(!_0x4bc2b2[\\\"\\\\u0067\\\\u0048\\\\u004b\\\\u0041\\\\u005a\\\"](_0x1c1069,_0x4bc2b2['RdEqj'](0x8bd4c,0x8bd4c))){for(_0x1c1069=Math[\\\"\\\\u006d\\\\u0069\\\\u006e\\\"](_0x1c1069,_0x3da3aa['bn']),this['delta']=_0x1c1069;_0x4bc2b2['GcsSP'](_0x1c1069,0x3986d^0x3986d);){const _0x1a13e9=Math['min'](_0x3da3aa['Mn'],_0x1c1069);for(let _0xac25ee of this['vn'])_0xac25ee[_0x4bc2b2['JjtqU'](0xb7522,0xb7523)]['Sn'][\\\"\\\\u0063\\\\u0061\\\\u006c\\\\u006c\\\"](_0xac25ee[0x2cd0c^0x2cd0d][\\\"\\\\u0063\\\\u0061\\\\u006c\\\\u006c\\\\u0065\\\\u0072\\\"],_0x1a13e9);this[\\\"\\\\u0077\\\\u006e\\\"]+=_0x1a13e9,_0x1c1069-=_0x1a13e9;}this[\\\"\\\\u005f\\\\u006e\\\"]=_0x14e2a0;}}\"},{\"delay\":500,\"repeat\":true,\"method\":\"\",\"caller\":\"_0x595739\",\"source\":\"()=>{this[\\\"\\\\u0055\\\\u0051\\\"]=(this[\\\"\\\\u0055\\\\u0051\\\"]+(0xbc421^0xbc420))%(0x77ed8^0x77edc),this[\\\"\\\\u004f\\\\u0051\\\"]();}\"}]}",
+          "url": {
+            "url": "http://127.0.0.1:4174/reference-balance-probe.js",
+            "origin": "http://127.0.0.1:4174",
+            "query_parameter_names": [],
+            "redacted": false
+          }
+        },
+        {
+          "sequence": 22,
+          "step_index": 1,
+          "kind": "console",
+          "level": "log",
+          "text": "当前对局的敌人出兵策略 [1, 1, 1.5, 1, 1.8, 2, 1, 1, 2, 1, 1, 1.3, 1, 1, 1.4, 1, 1, 1.5, 1, 1]",
+          "url": {
+            "url": "http://127.0.0.1:4174/game/js/bundle.js",
+            "origin": "http://127.0.0.1:4174",
+            "query_parameter_names": [],
+            "redacted": false
+          }
+        },
+        {
+          "sequence": 23,
+          "step_index": 1,
+          "kind": "console",
+          "level": "log",
+          "text": "设置格子",
+          "url": {
+            "url": "http://127.0.0.1:4174/game/js/bundle.js",
+            "origin": "http://127.0.0.1:4174",
+            "query_parameter_names": [],
+            "redacted": false
+          }
+        },
+        {
+          "sequence": 24,
+          "step_index": 1,
+          "kind": "console",
+          "level": "log",
+          "text": "毛笔",
+          "url": {
+            "url": "http://127.0.0.1:4174/game/js/bundle.js",
+            "origin": "http://127.0.0.1:4174",
+            "query_parameter_names": [],
+            "redacted": false
+          }
+        },
+        {
+          "sequence": 25,
+          "step_index": 1,
+          "kind": "console",
+          "level": "log",
+          "text": "展示道具 true",
+          "url": {
+            "url": "http://127.0.0.1:4174/game/js/bundle.js",
+            "origin": "http://127.0.0.1:4174",
+            "query_parameter_names": [],
+            "redacted": false
+          }
+        },
+        {
+          "sequence": 26,
+          "step_index": 1,
+          "kind": "console",
+          "level": "log",
+          "text": "神兵符",
+          "url": {
+            "url": "http://127.0.0.1:4174/game/js/bundle.js",
+            "origin": "http://127.0.0.1:4174",
+            "query_parameter_names": [],
+            "redacted": false
+          }
+        },
+        {
+          "sequence": 27,
+          "step_index": 1,
+          "kind": "console",
+          "level": "log",
+          "text": "展示道具 true",
+          "url": {
+            "url": "http://127.0.0.1:4174/game/js/bundle.js",
+            "origin": "http://127.0.0.1:4174",
+            "query_parameter_names": [],
+            "redacted": false
+          }
+        },
+        {
+          "sequence": 28,
+          "step_index": 1,
+          "kind": "console",
+          "level": "log",
+          "text": "展示道具 true",
+          "url": {
+            "url": "http://127.0.0.1:4174/game/js/bundle.js",
+            "origin": "http://127.0.0.1:4174",
+            "query_parameter_names": [],
+            "redacted": false
+          }
+        },
+        {
+          "sequence": 29,
+          "step_index": 1,
+          "kind": "console",
+          "level": "log",
+          "text": "展示道具 true",
+          "url": {
+            "url": "http://127.0.0.1:4174/game/js/bundle.js",
+            "origin": "http://127.0.0.1:4174",
+            "query_parameter_names": [],
+            "redacted": false
+          }
+        },
+        {
+          "sequence": 30,
+          "step_index": 1,
+          "kind": "console",
+          "level": "log",
+          "text": "展示道具 true",
+          "url": {
+            "url": "http://127.0.0.1:4174/game/js/bundle.js",
+            "origin": "http://127.0.0.1:4174",
+            "query_parameter_names": [],
+            "redacted": false
+          }
+        },
+        {
+          "sequence": 31,
+          "step_index": 1,
+          "kind": "console",
+          "level": "log",
+          "text": "展示道具 true",
+          "url": {
+            "url": "http://127.0.0.1:4174/game/js/bundle.js",
+            "origin": "http://127.0.0.1:4174",
+            "query_parameter_names": [],
+            "redacted": false
+          }
+        },
+        {
+          "sequence": 32,
+          "step_index": 1,
+          "kind": "console",
+          "level": "log",
+          "text": "展示道具 true",
+          "url": {
+            "url": "http://127.0.0.1:4174/game/js/bundle.js",
+            "origin": "http://127.0.0.1:4174",
+            "query_parameter_names": [],
+            "redacted": false
+          }
+        },
+        {
+          "sequence": 33,
+          "step_index": 1,
+          "kind": "console",
+          "level": "log",
+          "text": "展示道具 true",
+          "url": {
+            "url": "http://127.0.0.1:4174/game/js/bundle.js",
+            "origin": "http://127.0.0.1:4174",
+            "query_parameter_names": [],
+            "redacted": false
+          }
+        }
+      ],
+      "omissions": {
+        "by_kind": [],
+        "network_transactions": [],
+        "network_transaction_range": null
+      }
+    },
+    "completeness": {
+      "status": "complete",
+      "equality_eligible": true,
+      "missing_sections": [],
+      "truncated_sections": []
+    },
+    "limitations": [
+      "Event sequence records provider receipt order; simultaneous browser causality is not inferred.",
+      "Network content is retained only when selected; Playwright response-body bytes are API results and are not guaranteed to match wire bytes.",
+      "Request bytes are limited to what Playwright exposes; not_exposed does not establish body absence or multipart file coverage.",
+      "Network content reads settle within 5 seconds each and the observer does not request bodies from unfinished responses.",
+      "Playwright scenario events do not expose request initiator stacks; receipt order does not prove causality.",
+      "Storage values are hashed only after declared-secret redaction."
+    ]
+  },
+  "confidence": "observed",
+  "authority": "controlled-replay",
+  "environment": {
+    "id": "Chromium@157.0.8103.51",
+    "platform": "unknown",
+    "architecture": "unknown",
+    "isolation": "process"
+  },
+  "limitations": [
+    "Artifact identity is unavailable for this observation.",
+    "Event sequence records provider receipt order; simultaneous browser causality is not inferred.",
+    "Network content is retained only when selected; Playwright response-body bytes are API results and are not guaranteed to match wire bytes.",
+    "Request bytes are limited to what Playwright exposes; not_exposed does not establish body absence or multipart file coverage.",
+    "Network content reads settle within 5 seconds each and the observer does not request bodies from unfinished responses.",
+    "Playwright scenario events do not expose request initiator stacks; receipt order does not prove causality.",
+    "Storage values are hashed only after declared-secret redaction.",
+    "Browser host platform and architecture were not observed."
+  ],
+  "relationship_coverage": null,
+  "locations": [],
+  "evidence_links": []
+}

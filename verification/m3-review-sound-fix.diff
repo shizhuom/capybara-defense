@@ -1,0 +1,872 @@
+M3 review against m2-before-m3.zip; generated 2026-11-13T13:40:27.6232573-08:00
+diff --git "a/D:\\rea_game\\games\\capybara-defense\\.runtime\\m3-review-base\\src\\ui\\SoundManager.ts" "b/D:\\rea_game\\games\\capybara-defense\\src\\ui\\SoundManager.ts"
+index e69de29..42694a7 100644
+--- "a/D:\\rea_game\\games\\capybara-defense\\.runtime\\m3-review-base\\src\\ui\\SoundManager.ts"
++++ "b/D:\\rea_game\\games\\capybara-defense\\src\\ui\\SoundManager.ts"
+@@ -0,0 +1,127 @@
++import type {BattleState,GameSettings} from '../core/types';
++export type SoundCue='summon'|'dig'|'upgrade'|'legendary'|'goose'|'orange'|'sprinkler'|'lottery_tick'|'lottery_win'|'victory'|'defeat';
++type Note={frequency:number;delay:number;duration:number;volume:number;type?:OscillatorType;slide?:number};
++const defaults:GameSettings={musicVolume:.5,soundVolume:.75,showDamageNumbers:true};
++const volume=(n:unknown,fallback:number)=>typeof n==='number'&&Number.isFinite(n)?Math.max(0,Math.min(1,n)):fallback;
++const arpeggio=(frequencies:number[],duration=.18,step=.09):Note[]=>frequencies.map((frequency,i)=>({frequency,delay:i*step,duration,volume:.24,type:'sine'}));
++const cues:Record<SoundCue,Note[]>={
++  summon:[{frequency:1174.66,delay:0,duration:.3,volume:.2},{frequency:1760,delay:.07,duration:.35,volume:.13}],
++  dig:[{frequency:160,slide:55,delay:0,duration:.12,volume:.32,type:'triangle'},{frequency:310,slide:95,delay:.06,duration:.09,volume:.16,type:'triangle'}],
++  upgrade:arpeggio([523.25,659.25,783.99],.2,.065),
++  legendary:[...arpeggio([523.25,659.25,783.99,1046.5],.7,0),...arpeggio([1318.51,1567.98,2093],.28,.11)],
++  goose:[{frequency:520,slide:230,delay:0,duration:.18,volume:.2,type:'triangle'},{frequency:620,slide:260,delay:.2,duration:.22,volume:.22,type:'triangle'}],
++  orange:[{frequency:420,slide:80,delay:0,duration:.26,volume:.24},{frequency:150,slide:310,delay:.16,duration:.15,volume:.18}],
++  sprinkler:Array.from({length:7},(_,i)=>({frequency:400+i*170,slide:180+i*50,delay:i*.065,duration:.15,volume:.09,type:'triangle'})),
++  lottery_tick:[{frequency:1046.5,delay:0,duration:.055,volume:.15}],
++  lottery_win:arpeggio([523.25,659.25,783.99,1046.5,1318.51],.35,.075),
++  victory:[...arpeggio([523.25,659.25,783.99,1046.5],.4,.12),...arpeggio([523.25,659.25,783.99],.75,.0).map(n=>({...n,delay:.5,volume:.14}))],
++  defeat:arpeggio([392,349.23,293.66,261.63],.32,.16),
++};
++
++/** A gesture-unlocked, entirely local synthesizer. Core and storage never own audio. */
++export class SoundManager {
++  private settings:GameSettings;
++  private context:AudioContext|null=null;
++  private music:GainNode|null=null;
++  private effects:GainNode|null=null;
++  private unlocking:Promise<void>|null=null;
++  private unlocked=false;
++  private disposed=false;
++  private ducked=false;
++  private timer:ReturnType<typeof setInterval>|null=null;
++  private melodyStep=0;
++  private nextBeat=0;
++  private readonly voices=new Map<OscillatorNode,GainNode>();
++  private readonly seen=new Map<string,Set<number>>();
++  private readonly visibility=()=>this.applyVolumes(true);
++  constructor(settings:Partial<GameSettings>={}) {
++    this.settings={musicVolume:volume(settings.musicVolume,.5),soundVolume:volume(settings.soundVolume,.75),showDamageNumbers:settings.showDamageNumbers??true};
++    if(typeof document!=='undefined')document.addEventListener('visibilitychange',this.visibility);
++  }
++  unlock():Promise<void> {
++    if(this.disposed)return Promise.resolve();
++    if(this.unlocking)return this.unlocking;
++    if(this.unlocked&&this.context?.state==='running')return Promise.resolve();
++    this.unlocking=this.open().finally(()=>{this.unlocking=null;});return this.unlocking;
++  }
++  private async open():Promise<void> {
++    try {
++      if(!this.context){
++        const Host=globalThis.AudioContext||(globalThis as unknown as {webkitAudioContext?:typeof AudioContext}).webkitAudioContext;
++        if(!Host)return;
++        this.context=new Host();
++      }
++      const context=this.context;
++      await context.resume();
++      if(this.disposed||context.state==='closed')return;
++      if(context.state!=='running')return;
++      // A tab or device can suspend an already unlocked context. Resume its
++      // existing graph and scheduler; recreating them would layer the music.
++      if(this.unlocked){this.applyVolumes();return;}
++      this.music=context.createGain();this.effects=context.createGain();
++      this.music.connect(context.destination);this.effects.connect(context.destination);
++      this.unlocked=true;this.applyVolumes();this.nextBeat=context.currentTime+.025;this.scheduleMusic();
++      if(this.timer===null)this.timer=setInterval(()=>this.scheduleMusic(),450);
++    }catch{ /* Browser policy, missing hardware and failed resume are silent fallbacks. */ }
++  }
++  setSettings(settings:GameSettings):void {
++    this.settings={musicVolume:volume(settings.musicVolume,defaults.musicVolume),soundVolume:volume(settings.soundVolume,defaults.soundVolume),showDamageNumbers:settings.showDamageNumbers};this.applyVolumes();
++  }
++  setDucked(ducked:boolean):void {if(this.ducked===ducked)return;this.ducked=ducked;this.applyVolumes(true);}
++  private applyVolumes(soft=false):void {
++    const c=this.context;if(!c||!this.music||!this.effects)return;
++    const hidden=typeof document!=='undefined'&&document.hidden;
++    try{
++      const gain=this.music.gain,value=this.settings.musicVolume*.12*((this.ducked||hidden)? .15 : 1);
++      gain.cancelScheduledValues(c.currentTime);
++      if(soft)gain.setTargetAtTime(value,c.currentTime,.16);else gain.setValueAtTime(value,c.currentTime);
++      this.effects.gain.setValueAtTime(this.settings.soundVolume*.5,c.currentTime);
++    }catch{ /* A closing host may reject parameter writes. */ }
++  }
++  private scheduleMusic():void {
++    const c=this.context;if(!this.unlocked||this.disposed||!c||c.state!=='running'||!this.music)return;
++    // C/D/E/G/A only: a slow 16-beat wooden-key phrase, one scheduler per manager.
++    const melody=[523.251,659.255,783.991,880,783.991,659.255,587.33,523.251,659.255,783.991,1046.502,880,783.991,659.255,587.33,523.251];
++    const at=Math.max(c.currentTime+.015,this.nextBeat);this.nextBeat=at+.45;
++    this.tone({frequency:melody[this.melodyStep++%melody.length],delay:0,duration:.34,volume:.32,type:this.melodyStep%2?'sine':'triangle'},this.music,at);
++  }
++  private tone(note:Note,bus:GainNode,at:number):void {
++    const c=this.context;if(!c||this.disposed)return;
++    let oscillator:OscillatorNode|undefined,envelope:GainNode|undefined;
++    try{
++      oscillator=c.createOscillator();envelope=c.createGain();
++      oscillator.type=note.type||'sine';oscillator.frequency.setValueAtTime(note.frequency,at);
++      if(note.slide)oscillator.frequency.exponentialRampToValueAtTime(note.slide,at+note.duration*.9);
++      envelope.gain.setValueAtTime(.0001,at);envelope.gain.linearRampToValueAtTime(note.volume,at+.008);envelope.gain.exponentialRampToValueAtTime(.0001,at+note.duration);
++      oscillator.connect(envelope);envelope.connect(bus);this.voices.set(oscillator,envelope);
++      const voice=oscillator,output=envelope;
++      voice.onended=()=>{voice.disconnect();output.disconnect();this.voices.delete(voice);};
++      voice.start(at);voice.stop(at+note.duration+.015);
++    }catch{try{oscillator?.disconnect();envelope?.disconnect();}catch{/* already closed */}}
++  }
++  play(cue:SoundCue):void {
++    const c=this.context;if(!this.unlocked||this.disposed||!c||c.state!=='running'||!this.effects||this.settings.soundVolume===0)return;
++    for(const note of cues[cue]||[])this.tone(note,this.effects,c.currentTime+.005+note.delay);
++  }
++  consumeBattle(state:BattleState):void {
++    if(this.disposed)return;
++    let ids=this.seen.get(state.id);if(!ids){ids=new Set();this.seen.set(state.id,ids);if(this.seen.size>8)this.seen.delete(this.seen.keys().next().value!);}
++    for(const event of state.events){
++      if(ids.has(event.id))continue;ids.add(event.id);
++      if(event.type==='dash')this.play('goose');
++      else if(event.type==='orange'&&(event.value??0)<0)this.play('orange');
++      else if(event.type==='sprinkler')this.play('sprinkler');
++      else if(event.type==='purge'&&event.effect!=='legendary')this.play('upgrade');
++    }
++  }
++  dispose():void {
++    if(this.disposed)return;this.disposed=true;this.unlocked=false;
++    if(this.timer!==null){clearInterval(this.timer);this.timer=null;}
++    if(typeof document!=='undefined')document.removeEventListener('visibilitychange',this.visibility);
++    for(const [oscillator,gain] of this.voices){try{oscillator.onended=null;oscillator.stop();oscillator.disconnect();gain.disconnect();}catch{/* already ended */}}
++    this.voices.clear();this.seen.clear();
++    try{this.music?.disconnect();this.effects?.disconnect();}catch{/* host closing */}
++    if(this.context){try{void this.context.close().catch(()=>{});}catch{/* unavailable host */}}
++    this.context=null;this.music=null;this.effects=null;
++  }
++}
+
+diff --git "a/D:\\rea_game\\games\\capybara-defense\\.runtime\\m3-review-base\\tests\\m3-sound.test.ts" "b/D:\\rea_game\\games\\capybara-defense\\tests\\m3-sound.test.ts"
+index e69de29..50a9496 100644
+--- "a/D:\\rea_game\\games\\capybara-defense\\.runtime\\m3-review-base\\tests\\m3-sound.test.ts"
++++ "b/D:\\rea_game\\games\\capybara-defense\\tests\\m3-sound.test.ts"
+@@ -0,0 +1,84 @@
++import {afterEach,describe,expect,it,vi} from 'vitest';
++import {SoundManager,type SoundCue} from '../src/ui/SoundManager';
++import {BattleEngine} from '../src/core/BattleEngine';
++
++// A recording WebAudio host: real manager schedules actual oscillator nodes and envelopes.
++class Param {value=1;events:{value:number;time:number;kind:string}[]=[];setValueAtTime(value:number,time:number){this.value=value;this.events.push({value,time,kind:'set'});}exponentialRampToValueAtTime(value:number,time:number){this.value=value;this.events.push({value,time,kind:'exp'});}linearRampToValueAtTime(value:number,time:number){this.value=value;this.events.push({value,time,kind:'linear'});}setTargetAtTime(value:number,time:number){this.value=value;this.events.push({value,time,kind:'target'});}cancelScheduledValues(){} }
++class Gain {gain=new Param();target:unknown;disconnected=false;connect(target:unknown){this.target=target;}disconnect(){this.disconnected=true;}}
++class Osc {frequency=new Param();type='sine';target:unknown;onended:(()=>void)|null=null;started:number[]=[];stopped:number[]=[];connect(target:unknown){this.target=target;}disconnect(){}start(time:number){this.started.push(time);}stop(time=0){this.stopped.push(time);}}
++class Host {static instances:Host[]=[];currentTime=0;state='suspended';destination={};gains:Gain[]=[];oscillators:Osc[]=[];closed=false;constructor(){Host.instances.push(this);}createGain(){const g=new Gain();this.gains.push(g);return g;}createOscillator(){const o=new Osc();this.oscillators.push(o);return o;}async resume(){this.state='running';}async close(){this.closed=true;this.state='closed';}}
++const settings={musicVolume:.5,soundVolume:.75,showDamageNumbers:true};
++const managers:SoundManager[]=[];
++function manager(){const m=new SoundManager(settings);managers.push(m);return m;}
++afterEach(()=>{managers.forEach(m=>m.dispose());managers.length=0;vi.unstubAllGlobals();vi.useRealTimers();Host.instances=[];});
++describe('M3 safe sound lifecycle',()=>{
++  it('stays silent until a gesture and safely supports hosts without AudioContext',async()=>{
++    vi.stubGlobal('AudioContext',undefined);const m=manager();expect(()=>m.play('summon')).not.toThrow();await expect(m.unlock()).resolves.toBeUndefined();m.consumeBattle(new BattleEngine({ai:false}).state);m.dispose();
++  });
++  it('captures constructor and resume failures without starting music or leaking contexts',async()=>{
++    class Rejected extends Host {async resume(){throw new Error('blocked');}}
++    vi.stubGlobal('AudioContext',Rejected);vi.useFakeTimers();const m=manager();await expect(m.unlock()).resolves.toBeUndefined();m.play('dig');expect(Host.instances[0].oscillators).toHaveLength(0);m.dispose();expect(Host.instances[0].closed).toBe(true);
++  });
++  it('silently handles a failing constructor and permits a later gesture retry',async()=>{
++    class Broken {constructor(){throw new Error('no device');}}
++    vi.stubGlobal('AudioContext',Broken);vi.useFakeTimers();const m=manager();await expect(m.unlock()).resolves.toBeUndefined();m.play('summon');
++    vi.stubGlobal('AudioContext',Host);await m.unlock();expect(Host.instances[0].oscillators).toHaveLength(1);
++  });
++  it('does not start a scheduler when disposed while resume is pending',async()=>{
++    let finish!:()=>void;class Pending extends Host {async resume(){await new Promise<void>(resolve=>{finish=resolve;});this.state='running';}}
++    vi.stubGlobal('AudioContext',Pending);vi.useFakeTimers();const m=manager(),unlock=m.unlock();m.dispose();finish();await unlock;vi.advanceTimersByTime(1000);
++    expect(Host.instances[0].oscillators).toHaveLength(0);expect(Host.instances[0].closed).toBe(true);
++  });
++  it('does not restart the soft duck envelope on every animation frame',async()=>{
++    vi.stubGlobal('AudioContext',Host);vi.useFakeTimers();const m=manager();await m.unlock();const h=Host.instances[0];m.setDucked(true);
++    const music=h.gains.find(g=>g.gain.events.some(e=>e.kind==='target'))!,writes=music.gain.events.length;
++    for(let i=0;i<60;i++)m.setDucked(true);
++    expect(music.gain.events).toHaveLength(writes);
++  });
++  it('resumes a suspended host on the next gesture without duplicating buses or the music loop',async()=>{
++    vi.stubGlobal('AudioContext',Host);vi.useFakeTimers();const m=manager();await m.unlock();
++    const h=Host.instances[0],buses=h.gains.filter(g=>g.target===h.destination),before=h.oscillators.length;
++    h.state='suspended';vi.advanceTimersByTime(450);m.play('goose');expect(h.oscillators).toHaveLength(before);
++    const first=m.unlock(),second=m.unlock();expect(first).toBe(second);await Promise.all([first,second]);
++    expect(h.state).toBe('running');expect(Host.instances).toHaveLength(1);
++    expect(h.gains.filter(g=>g.target===h.destination)).toEqual(buses);expect(vi.getTimerCount()).toBe(1);
++    m.play('goose');expect(h.oscillators).toHaveLength(before+2);
++    vi.advanceTimersByTime(450);expect(h.oscillators).toHaveLength(before+3);
++  });
++  it('silently retries a rejected reactivation on a later gesture',async()=>{
++    vi.stubGlobal('AudioContext',Host);vi.useFakeTimers();const m=manager();await m.unlock();
++    const h=Host.instances[0],before=h.oscillators.length;h.state='suspended';
++    const resume=vi.spyOn(h,'resume').mockRejectedValueOnce(new Error('gesture temporarily denied'));
++    await expect(m.unlock()).resolves.toBeUndefined();m.play('dig');expect(h.oscillators).toHaveLength(before);
++    await m.unlock();expect(resume).toHaveBeenCalledTimes(2);expect(h.state).toBe('running');
++    m.play('dig');expect(h.oscillators).toHaveLength(before+2);expect(vi.getTimerCount()).toBe(1);
++  });
++  it('creates no context before unlock, starts one pentatonic loop, and releases it',async()=>{
++    vi.stubGlobal('AudioContext',Host);vi.useFakeTimers();const m=manager();m.play('summon');expect(Host.instances).toHaveLength(0);
++    await m.unlock();await m.unlock();vi.advanceTimersByTime(4000);
++    const h=Host.instances[0];expect(Host.instances).toHaveLength(1);expect(h.oscillators.length).toBeGreaterThan(5);
++    const pitchClasses=h.oscillators.map(o=>Math.round(69+12*Math.log2(o.frequency.events[0].value/440))%12);
++    expect(pitchClasses.every(p=>[0,2,4,7,9].includes(p))).toBe(true);
++    expect(h.oscillators.every(o=>o.type==='sine'||o.type==='triangle')).toBe(true);
++    m.dispose();const count=h.oscillators.length;vi.advanceTimersByTime(5000);expect(h.oscillators).toHaveLength(count);expect(h.closed).toBe(true);expect(h.gains.every(g=>g.disconnected)).toBe(true);
++  });
++  it('applies volume zero immediately and softly ducks only music',async()=>{
++    vi.stubGlobal('AudioContext',Host);vi.useFakeTimers();const m=manager();await m.unlock();const h=Host.instances[0];
++    m.setDucked(true);expect(h.gains.some(g=>g.gain.events.some(e=>e.kind==='target'&&e.value>0&&e.value<.1))).toBe(true);
++    m.setSettings({...settings,musicVolume:0,soundVolume:0});m.play('summon');
++    expect(h.gains.filter(g=>g.target===h.destination).every(g=>g.gain.value===0)).toBe(true);
++  });
++  it.each(['summon','dig','upgrade','legendary','goose','orange','sprinkler','lottery_tick','lottery_win','victory','defeat'] as SoundCue[])('synthesizes %s with finite frequencies, audible envelope and bounded stop',async cue=>{
++    vi.stubGlobal('AudioContext',Host);vi.useFakeTimers();const m=manager();await m.unlock();const h=Host.instances[0],before=h.oscillators.length;m.play(cue);
++    const notes=h.oscillators.slice(before);expect(notes.length).toBeGreaterThan(0);
++    for(const o of notes){expect(o.frequency.events.every(e=>Number.isFinite(e.value)&&e.value>0)).toBe(true);expect(o.stopped[0]-o.started[0]).toBeGreaterThan(0);expect(o.stopped[0]-o.started[0]).toBeLessThan(3);const gain=o.target as Gain;expect(gain.gain.events.some(e=>e.value>0.01)).toBe(true);expect(gain.gain.events.at(-1)!.value).toBeLessThan(.001);}
++  });
++  it('consumes actual battle event identities once and leaves command-owned cues to UI',async()=>{
++    vi.stubGlobal('AudioContext',Host);vi.useFakeTimers();const m=manager();await m.unlock();const h=Host.instances[0],engine=new BattleEngine({ai:false}),state=engine.state;
++    const base={side:'player' as const,col:0,row:9,age:0,duration:1};
++    state.events=[{...base,id:1,type:'orange',value:1},{...base,id:2,type:'purge',effect:'legendary'},{...base,id:3,type:'orange',value:-1},{...base,id:4,type:'dash'},{...base,id:5,type:'sprinkler'},{...base,id:6,type:'purge'}];
++    const before=h.oscillators.length;m.consumeBattle(state);const after=h.oscillators.length;expect(after-before).toBe(14);m.consumeBattle(state);expect(h.oscillators).toHaveLength(after);
++    state.events=state.events.slice(0,2);state.id='another-battle';m.consumeBattle(state);expect(h.oscillators).toHaveLength(after);
++    state.events=[{...base,id:3,type:'orange',value:-1}];m.consumeBattle(state);expect(h.oscillators.length).toBeGreaterThan(after);
++  });
++});
+
+diff --git "a/D:\\rea_game\\games\\capybara-defense\\.runtime\\m3-review-base\\src\\ui\\GameApp.ts" "b/D:\\rea_game\\games\\capybara-defense\\src\\ui\\GameApp.ts"
+index ad80ddf..70dcbc2 100644
+--- "a/D:\\rea_game\\games\\capybara-defense\\.runtime\\m3-review-base\\src\\ui\\GameApp.ts"
++++ "b/D:\\rea_game\\games\\capybara-defense\\src\\ui\\GameApp.ts"
+@@ -1,256 +1,297 @@
+ import { BattleEngine } from '../core/BattleEngine';
+-import type { BattleState, CommandResult, Interaction, Unit, UnitLocation } from '../core/types';
++import type { BattleState, CommandResult, Interaction, MapId, Profile, Unit, UnitLocation } from '../core/types';
+ import { UNITS, BEE_PRODUCTION, ECONOMY, SHOVEL_PRODUCTION } from '../config/units';
+ import { HEROES } from '../config/heroes';
+ import { RECIPES } from '../config/recipes';
+ import { BOSS_IDS } from '../config/enemies';
+-import { STAGE } from '../config/maps';
++import { MAP_IDS, STAGE } from '../config/maps';
+ import { FIRST_WAVE_PREPARATION, WAVES, WAVE_DURATION } from '../config/waves';
+ import { StickerRenderer } from '../render/StickerRenderer';
+ import { getLanguage, onLanguageChange, setLanguage, t } from '../i18n/i18n';
+ import { awardBattle, emptyProfile, loadProfile, resetOwnStorage, saveProfile, enableTestProfile, restoreNormalProfile, isTestProfile } from './storage';
+ import { MetaScreens, propSlots, type MetaScreen } from './MetaScreens';
+ import { PROPS } from '../config/props';
+ import { setPropSlots } from '../core/MetaProgression';
+ import './m2.css';
++import './m3.css';
++import { RANKS, getRank } from '../config/ranks';
++import { recordMergedHeroes, resolveMap } from '../core/PlayerProgression';
++import { ProfileScreens, rankCard, mapOptions, type ProfileScreen } from './ProfileScreens';
++import { SoundManager } from './SoundManager';
+ import { capyIllustration, capyLogo, escapeHtml as esc, UNIT_ICONS } from './art';
+ 
+ type Hit = { kind: 'cell'; col: number; row: number } | { kind: 'bench'; slot: number } | { kind: 'shovel' };
+-type DialogKind = 'pause' | 'recipes' | 'result' | MetaScreen;
++type DialogKind = 'pause' | 'recipes' | 'result' | MetaScreen | ProfileScreen;
+ type Drag = { pointerId: number; start: { x: number; y: number }; point: { x: number; y: number }; id?: number; shovel: boolean; moved: boolean };
+ const tr = (key: string, vars?: Record<string, string | number>) => esc(t(key, vars));
+ const unitName = (kind: string) => t(`${HEROES[kind] ? 'hero' : 'unit'}.${kind}`);
+ const clock = (seconds: number) => `${Math.floor(seconds / 60)}:${String(Math.floor(seconds % 60)).padStart(2, '0')}`;
+ const icon = (kind: string) => `<span aria-hidden="true" class="pet-icon">${UNIT_ICONS[kind] ?? '🍊'}</span>`;
+ 
+ export class GameApp {
+   engine: BattleEngine | null = null;
+   profile = loadProfile();
+   private canvas: HTMLCanvasElement;
+   private renderer: StickerRenderer;
+   private dialog: HTMLDialogElement;
+   private dialogKind: DialogKind | null = null;
+   private resumeAfterRecipe = false;
+   private speed: 1 | 2 = 1;
+   private selectedId?: number;
+   private shovelSelected = false;
+   private selectedProp?: string;
+   private propDrag?: { pointerId: number; startX: number; startY: number; moved: boolean; id: string; button: HTMLElement; point?: { x: number; y: number } };
+   private suppressPropClick = false;
+   private newWeapons: string[] = [];
+   private meta: MetaScreens;
++  private profileScreens: ProfileScreens;
++  private sound = new SoundManager(this.profile.settings);
++  private devMapOverride?: MapId;
++  private retainedPage = false;
++  private overlayReturn: { dialog: DialogKind | null; resume: boolean } | null = null;
++  private newAvatars: string[] = [];
++  private resultStars = 0;
++  private previousRank = 0;
++  private mergedStamp = '';
+   private quickStamp = '';
+   private battlePropsStamp = '';
+   private drag?: Drag;
+   private completedId = '';
+   private savedResult = true;
+   private lastFrame = performance.now();
+   private lastRefresh = 0;
+   private inspectorStamp = '';
+   private keyboardStamp = '';
+   private toast?: { key: string; vars: Record<string, string | number>; error: boolean; until: number };
+ 
+   constructor(private root: HTMLElement) {
+-    this.meta = new MetaScreens(() => this.profile, profile => { this.profile = profile; this.quickStamp = ''; this.renderMenu(); }, () => { if (this.dialogKind === 'armory' || this.dialogKind === 'market') this.renderDialog(); }, (key, error, vars) => this.notify(key, error, vars));
++    this.meta = new MetaScreens(() => this.profile, profile => {
++      this.profile = profile; this.sound.setSettings(profile.settings); this.quickStamp = ''; this.renderMenu();
++    }, () => { if (this.dialogKind === 'armory' || this.dialogKind === 'market') this.renderDialog(); }, (key, error, vars) => this.notify(key, error, vars), cue => this.sound.play(cue));
++    this.profileScreens = new ProfileScreens(() => this.profile, profile => this.persistProfile(profile), () => this.refresh(true), key => this.notify(key));
+     this.root.innerHTML = this.shell();
+     this.canvas = this.element<HTMLCanvasElement>('battle-canvas');
+     this.dialog = this.element<HTMLDialogElement>('game-dialog');
+     this.renderer = new StickerRenderer(this.canvas);
+     this.bindEvents();
+     onLanguageChange(() => this.refresh(true));
+     const narrow = matchMedia('(max-width: 1050px)');
+     this.element<HTMLDetailsElement>('dev-tools').open = !narrow.matches;
+     narrow.addEventListener('change', () => { this.element<HTMLDetailsElement>('dev-tools').open = !narrow.matches; });
+     this.refresh(true);
+     requestAnimationFrame(this.frame);
+   }
+ 
+   private element<T extends HTMLElement = HTMLElement>(id: string): T {
+     return this.root.querySelector<T>(`#${id}`)!;
+   }
+ 
+   private shell(): string {
+     return `<div class="page-shell">
+       <header class="masthead">
+         <a class="brand" href="#" data-action="brand" aria-label="${tr('app.title')}"><span class="brand-mark">${capyLogo}</span><span><strong data-i18n="app.title"></strong><small data-i18n="app.subtitle"></small></span></a>
+-        <div class="header-actions"><span class="edition" data-i18n="app.edition"></span><div class="language-switch" role="group" data-label="app.language"><button type="button" data-action="zh-CN">中</button><button type="button" data-action="en">EN</button></div></div>
++        <div class="header-actions"><span class="edition" data-i18n="app.edition"></span><button type="button" class="icon-button settings-button" data-action="settings" data-label="m3.settings">⚙</button><div class="language-switch" role="group" data-label="app.language"><button type="button" data-action="zh-CN">中</button><button type="button" data-action="en">EN</button></div></div>
+       </header>
+       <main class="game-layout">
+         <aside class="sandbox-column">
+           <details id="dev-tools" class="paper-card dev-panel" open>
+             <summary><span class="eyebrow" data-i18n="dev.tag"></span><span class="dev-heading"><span aria-hidden="true">✳</span> <span data-i18n="dev.title"></span><span class="collapse-chevron" aria-hidden="true">⌄</span></span></summary>
+             <div class="dev-content"><p class="muted" data-i18n="dev.subtitle"></p><div class="live-strip"><i></i><span id="dev-state"></span><b id="dev-wave"></b></div>
+               <button type="button" class="button food-button" data-action="food" data-battle><span aria-hidden="true">🥫</span><span data-i18n="dev.addFood"></span></button>
+               <p class="control-caption" data-i18n="dev.addFoodNote"></p>
+               <div class="control-group"><label for="dev-unit" data-i18n="dev.unitLabel"></label><select id="dev-unit" data-battle></select><button type="button" class="button button-light" data-action="grant" data-battle data-i18n="dev.grant"></button></div>
+               <div class="control-group"><label for="dev-boss" data-i18n="dev.bossLabel"></label><select id="dev-boss" data-battle></select><button type="button" class="button button-peach" data-action="boss" data-battle data-i18n="dev.boss"></button><p class="control-caption" data-i18n="dev.bossNote"></p></div>
+               <div class="control-group"><span class="field-label" data-i18n="dev.oranges"></span><div class="button-row"><button type="button" class="button button-light" data-action="orange-minus" data-battle data-i18n="dev.orangeRemove"></button><button type="button" class="button button-light" data-action="orange-plus" data-battle data-i18n="dev.orangeAdd"></button></div></div>
+               <button type="button" class="button button-light" data-action="skip" data-battle><span aria-hidden="true">↠</span> <span data-i18n="dev.skip"></span></button>
+               <div class="speed-control"><span data-i18n="dev.speed"></span><div class="segmented"><button type="button" data-action="speed-1" data-battle>1×</button><button type="button" data-action="speed-2" data-battle>2×</button></div></div>
+               <div class="dev-live" id="dev-live"></div><p class="control-caption" id="dev-tip"></p>
+-              <section class="m2-dev"><strong id="profile-mode"></strong><button type="button" class="button button-peach" data-action="test-enable" data-i18n="m2.testEnable"></button><button type="button" class="button button-light" data-action="test-restore" data-i18n="m2.testRestore"></button><p data-i18n="m2.nextBattle"></p><div id="quick-loadout"></div></section>
++              <section class="m2-dev"><strong id="profile-mode"></strong><button type="button" class="button button-peach" data-action="test-enable" data-i18n="m2.testEnable"></button><button type="button" class="button button-light" data-action="test-restore" data-i18n="m2.testRestore"></button><label for="dev-rank" data-i18n="m3.devRank"></label><select id="dev-rank"></select><label for="dev-map" data-i18n="m3.devMap"></label><select id="dev-map"></select><p data-i18n="m2.nextBattle"></p><div id="quick-loadout"></div></section>
+               <div class="reset-control"><button type="button" class="text-button" data-action="reset" data-i18n="dev.reset"></button><p class="control-caption" data-i18n="dev.resetNote"></p></div>
+             </div>
+           </details>
+           <div class="side-note"><span aria-hidden="true">✿</span><p data-i18n="guide.survival"></p></div>
+         </aside>
+         <section class="center-column">
+           <div class="stage menu-mode" id="stage">
+             <canvas id="battle-canvas" width="640" height="1386" tabindex="0" role="img"></canvas>
+             <section class="menu-screen" id="menu-screen"></section>
+             <div class="battle-hud" id="battle-hud" hidden>
+               <div class="hud-topline"><div><span class="map-eyebrow" data-i18n="hud.map"></span><strong id="hud-wave"></strong></div><button type="button" class="icon-button" data-action="pause" data-label="hud.pause" id="pause-button"><span aria-hidden="true">Ⅱ</span></button></div>
+               <div class="hud-resource-row"><div class="food-pill"><span aria-hidden="true">🥫</span><strong id="food-value">30</strong><span data-i18n="hud.food"></span></div><span class="time-chip" id="battle-clock"></span><button type="button" class="speed-pill" data-action="speed" data-label="hud.speedLabel" id="hud-speed">1×</button></div>
+             </div>
+             <div class="battle-actions" id="battle-actions" hidden><button type="button" class="recipe-shortcut icon-button" data-action="recipes" data-label="recipe.open"><span aria-hidden="true">✦</span></button><button type="button" class="summon-button" data-action="summon" id="summon-button"><span aria-hidden="true" class="bell">♧</span><span class="summon-copy"><strong id="summon-title"></strong><small id="summon-note"></small><small id="summon-shortage" hidden></small></span><span aria-hidden="true">＋</span></button></div>
+             <div id="battle-props" hidden></div><div id="sealed-hint" class="sealed-hint" hidden></div>
+           </div>
+           <p class="stage-caption" data-i18n="guide.controls"></p>
+         </section>
+         <aside class="journal-column">
+           <section class="paper-card guide-card"><span class="eyebrow" data-i18n="menu.new"></span><h2 data-i18n="guide.title"></h2><ol class="how-to"><li><b>01</b><div><h3 data-i18n="guide.step1"></h3><p data-i18n="guide.step1Body"></p></div></li><li><b>02</b><div><h3 data-i18n="guide.step2"></h3><p data-i18n="guide.step2Body"></p></div></li><li><b>03</b><div><h3 data-i18n="guide.step3"></h3><p data-i18n="guide.step3Body"></p></div></li></ol><div class="tiny-recipe"><span>🐼</span><b>+</b><span>🎋</span><b>=</b><span class="legend-sticker">🐼<i>✦</i></span></div><button type="button" class="text-button recipe-link" data-action="recipes" data-i18n="recipe.open"></button></section>
+           <section class="paper-card inspect-card"><h2 data-i18n="inspect.title"></h2><div id="inspector"></div></section>
+           <div class="tip-note"><span aria-hidden="true">☂</span><p data-i18n="guide.tip"></p></div>
+           <details class="paper-card keyboard-card"><summary data-i18n="keyboard.title"></summary><p class="muted" data-i18n="keyboard.help"></p><div id="keyboard-controls"></div></details>
+         </aside>
+       </main>
+       <footer class="page-footer"><span aria-hidden="true">✿</span> <span data-i18n="app.footer"></span></footer>
+       <div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
+       <dialog id="game-dialog" class="game-dialog"></dialog>
+     </div>`;
+   }
+ 
+   start(): void {
+     this.closeDialog(false);
+-    this.engine = new BattleEngine({ loadouts: { player: structuredClone(this.profile) } });
++    this.overlayReturn = null;
++    this.engine = new BattleEngine({ mapId: this.devMapOverride ?? resolveMap(this.profile), rankIndex: getRank(this.profile.stars).index, loadouts: { player: structuredClone(this.profile) } });
+     this.engine.start();
+     this.speed = 1;
+     this.completedId = '';
+     this.newWeapons = [];
++    this.newAvatars = []; this.mergedStamp = '';
+     this.battlePropsStamp = '';
+     this.clearSelection();
+     this.lastFrame = performance.now();
+     this.refresh(true);
+     this.canvas.focus({ preventScroll: true });
+   }
+ 
+   private menu(): void {
+     this.closeDialog(false);
++    this.overlayReturn = null;
+     this.engine = null;
+     this.clearSelection();
+     this.refresh(true);
+     this.root.querySelector<HTMLButtonElement>('[data-action="start"]')?.focus({ preventScroll: true });
+   }
+ 
+   private frame = (now: number): void => {
+     const dt = Math.min(Math.max((now - this.lastFrame) / 1000, 0), 0.06);
+     this.lastFrame = now;
+     if (this.engine) {
+       this.engine.tick(dt * this.speed);
+       const state = this.engine.state;
++      this.sound.consumeBattle(state);
++      this.sound.setDucked(this.retainedPage || document.hidden || state.phase !== 'playing');
++      const merged = state.mergedHeroes.player;
++      const mergedStamp = merged.join(',');
++      if (mergedStamp !== this.mergedStamp) {
++        this.mergedStamp = mergedStamp;
++        const next = recordMergedHeroes(this.profile, merged);
++        if (JSON.stringify(next) !== JSON.stringify(this.profile)) this.persistProfile(next);
++      }
+       if (this.selectedId && !state.units.some(unit => unit.id === this.selectedId && unit.side === 'player')) this.selectedId = undefined;
+       if (state.phase === 'finished' && this.completedId !== state.id) this.finish(state);
+-      const interaction: Interaction = { selectedId: this.selectedId, shovel: this.shovelSelected, propId: this.selectedProp };
++      const interaction: Interaction = { selectedId: this.selectedId, shovel: this.shovelSelected, propId: this.selectedProp, showDamageNumbers: this.profile.settings.showDamageNumbers };
+       if (this.drag?.moved) {
+         interaction.draggingId = this.drag.id;
+         interaction.pointer = this.drag.point;
+         interaction.shovel = this.drag.shovel;
+         const hit = this.renderer.hitTest(this.drag.point.x, this.drag.point.y);
+         if (hit?.kind === 'cell') interaction.hover = { col: hit.col, row: hit.row };
+       }
+       if (this.propDrag?.moved && this.propDrag.point) {
+         interaction.pointer = this.propDrag.point;
+         const hit = this.renderer.hitTest(interaction.pointer.x, interaction.pointer.y);
+         if (hit?.kind === 'cell') interaction.hover = { col: hit.col, row: hit.row };
+       }
+       this.renderer.draw(state, state.time, interaction);
+-    }
++    } else this.sound.setDucked(this.retainedPage || document.hidden);
+     if (now - this.lastRefresh > 120) { this.refresh(); this.lastRefresh = now; }
+     requestAnimationFrame(this.frame);
+   };
+ 
+   private finish(state: BattleState): void {
+     this.completedId = state.id;
+     this.clearSelection();
+     if (state.result) {
++      const before = this.profile;
++      this.previousRank = getRank(before.stars).index;
+       const award = awardBattle(this.profile, state.id, state.result);
+-      this.profile = award.profile;
+-      this.newWeapons = award.newWeapons;
+-      if (award.awarded) this.savedResult = saveProfile(this.profile);
++      this.savedResult = !award.awarded || saveProfile(award.profile);
++      if (this.savedResult) {
++        this.profile = award.profile;
++        this.newWeapons = award.newWeapons;
++        this.newAvatars = this.profile.unlockedAvatars.filter(id => !before.unlockedAvatars.includes(id));
++      }
++      this.resultStars = this.profile.stars - before.stars;
++      this.sound.play(state.result.winner === 'player' ? 'victory' : 'defeat');
+     }
+     this.showDialog('result');
+     this.refresh(true);
+   }
+ 
+   private refresh(force = false): void {
+     const state = this.engine?.state;
+     const active = state?.phase === 'playing';
+     if (force) {
+       document.documentElement.lang = getLanguage();
+       document.title = t('app.title');
+       const guideVars = { cost: ECONOMY.summonCost, count: ECONOMY.summonCount };
+       this.root.querySelectorAll<HTMLElement>('[data-i18n]').forEach(el => { el.textContent = t(el.dataset.i18n!, guideVars); });
+       this.root.querySelectorAll<HTMLElement>('[data-label]').forEach(el => { el.setAttribute('aria-label', t(el.dataset.label!)); });
+       this.root.querySelectorAll<HTMLButtonElement>('.language-switch button').forEach(button => {
+         const selected = button.dataset.action === getLanguage();
+         button.classList.toggle('selected', selected);
+         button.setAttribute('aria-pressed', String(selected));
+       });
+       this.canvas.setAttribute('aria-label', `${t('hud.map')}. ${t('guide.controls')} ${t('keyboard.help')}`);
+       this.updateSelect('dev-unit', Object.keys(UNITS), id => unitName(id));
+       this.updateSelect('dev-boss', BOSS_IDS, id => t(`boss.${id}`));
++      this.updateSelect('dev-rank', RANKS.map(rank => String(rank.index)), id => `${id} · ${t(`rank.${id}`)}`);
++      this.element<HTMLSelectElement>('dev-rank').value = String(getRank(this.profile.stars).index);
++      this.element('dev-map').innerHTML = `<option value="auto">${tr('m3.autoMap', { map: t(`map.${resolveMap(this.profile)}`) })}</option>${MAP_IDS.map(id => `<option value="${id}">${tr(`map.${id}`)}</option>`).join('')}`;
++      this.element<HTMLSelectElement>('dev-map').value = this.devMapOverride ?? 'auto';
+       this.renderMenu();
+       this.inspectorStamp = '';
+       this.keyboardStamp = '';
+       if (this.dialogKind) this.renderDialog();
+     }
+     this.element('stage').classList.toggle('menu-mode', !state);
+     this.element('menu-screen').hidden = !!state;
+     this.element('battle-hud').hidden = !state;
+     this.element('battle-actions').hidden = !state;
+     this.canvas.hidden = !state;
+     this.element('battle-props').hidden = !state;
+     this.element('profile-mode').textContent = t(isTestProfile() ? 'm2.testMode' : 'm2.normalMode');
+     this.element('profile-mode').classList.toggle('test-mode', isTestProfile());
+     if (!this.drag && !this.propDrag) {
+       const quickStamp = JSON.stringify([getLanguage(), this.profile.ownedProps, this.profile.equippedActiveProps, this.profile.equippedPassiveProps]);
+       if (quickStamp !== this.quickStamp) { this.element('quick-loadout').innerHTML = propSlots(this.profile, true); this.quickStamp = quickStamp; }
+       this.renderBattleProps();
+     }
+     const selected = state?.units.find(unit => unit.id === this.selectedId);
+     const sealed = !!selected?.statuses.SEALED;
+     this.element('sealed-hint').hidden = !sealed;
+     this.element('sealed-hint').textContent = t('m2.sealed');
+     this.root.querySelectorAll<HTMLButtonElement | HTMLSelectElement>('[data-battle]').forEach(el => { el.disabled = !active; });
+     this.element('dev-state').textContent = t(`hud.${!state ? 'preparing' : state.phase === 'ready' ? 'preparing' : state.phase}`);
+     this.element('dev-wave').textContent = state ? `${Math.max(1, state.wave)} / ${WAVES.length}` : '✿';
+     this.element('dev-tip').textContent = !state ? t('dev.startFirst')
+       : state.wave === 1 && state.spawned === 0 && state.waveTime < FIRST_WAVE_PREPARATION
+         ? t('hud.preparation', { time: Math.ceil(FIRST_WAVE_PREPARATION - state.waveTime) })
+         : t(state.wave === WAVES.length ? 'hud.lastWave' : 'hud.nextWave', { time: Math.floor(state.waveTime), duration: WAVE_DURATION });
+     this.element('dev-live').textContent = state ? `${t('dev.units', { count: state.units.filter(unit => unit.side === 'player' && unit.location.zone === 'board').length })} · ${t('dev.enemies', { count: state.enemies.filter(enemy => enemy.side === 'player').length })}` : '';
+     this.root.querySelectorAll<HTMLButtonElement>('[data-action^="speed-"]').forEach(button => { button.classList.toggle('selected', button.dataset.action === `speed-${this.speed}`); });
+     this.element('hud-speed').textContent = `${this.speed}×`;
+     this.element<HTMLButtonElement>('hud-speed').disabled = !active;
+     this.element<HTMLButtonElement>('pause-button').disabled = state?.phase !== 'playing';
+     if (state) {
++      this.root.querySelector<HTMLElement>('.map-eyebrow')!.textContent = t(`map.${state.mapId}`);
+       const player = state.sides.player;
+       const remaining = state.units.filter(unit => unit.side === 'player' && unit.location.zone === 'bench').length;
+       const shortage = Math.max(0, Math.ceil(ECONOMY.summonCost - player.food));
+       const summonTitle = t(remaining > 0 ? 'hud.redraw' : 'hud.summon');
+       const summonNote = t(remaining > 0 ? 'hud.redrawCost' : 'hud.cost', { remaining, cost: ECONOMY.summonCost, count: ECONOMY.summonCount });
+       this.element('hud-wave').textContent = t('hud.wave', { wave: Math.max(1, state.wave), total: WAVES.length });
+       this.element('food-value').textContent = String(Math.floor(player.food));
+       this.element('battle-clock').textContent = clock(state.time);
+       this.element('battle-clock').setAttribute('aria-label', `${t('hud.time')} ${clock(state.time)}`);
+       this.element('summon-title').textContent = summonTitle;
+       this.element('summon-note').textContent = summonNote;
+       this.element('summon-shortage').hidden = shortage === 0;
+       this.element('summon-shortage').textContent = t('hud.noFood', { count: shortage });
+       // An occupied bench can be replaced. Low-food clicks explain that the current pack is retained.
+       this.element<HTMLButtonElement>('summon-button').disabled = !active;
+       this.element('summon-button').classList.toggle('unaffordable', shortage > 0);
+       this.element('summon-button').setAttribute('aria-label', `${summonTitle}. ${summonNote}${shortage ? `. ${t('hud.noFood', { count: shortage })}` : ''}`);
+     }
+     // Keep the canvas fixed in the viewport while a pointer is captured. Replacing
+     // a tall hero inspector with the short shovel card can otherwise clamp page
+@@ -261,40 +302,42 @@ export class GameApp {
+     }
+     const toast = this.element('toast');
+     toast.hidden = !this.toast || performance.now() > this.toast.until;
+     if (this.toast) {
+       const message = t(this.toast.key, this.toast.vars);
+       if (toast.textContent !== message) toast.textContent = message;
+       toast.classList.toggle('toast-error', this.toast.error);
+     }
+   }
+ 
+   private updateSelect(id: string, ids: readonly string[], label: (id: string) => string): void {
+     const select = this.element<HTMLSelectElement>(id);
+     const previous = select.value;
+     select.innerHTML = ids.map(value => `<option value="${esc(value)}">${esc(label(value))}</option>`).join('');
+     if (ids.includes(previous)) select.value = previous;
+   }
+ 
+   private renderMenu(): void {
+     this.element('menu-screen').innerHTML = `<div class="menu-top"><span class="menu-chip"><i></i>${tr('menu.eyebrow')}</span><span class="doodle-star" aria-hidden="true">✳</span></div><h1>${tr('menu.title').replace(/\n/g, '<br>')}</h1><p class="menu-subtitle">${tr('menu.subtitle').replace(/\n/g, '<br>')}</p><div class="hero-illustration">${capyIllustration}<span class="illustration-caption">${tr('render.keepCalm')} ✦</span></div><button type="button" class="button start-button" data-action="start"><span>${tr('menu.start')}</span><span aria-hidden="true">↗</span></button><p class="duration">${tr('menu.duration', { waves: WAVES.length, preparation: FIRST_WAVE_PREPARATION })}</p><div class="menu-stats"><span><strong>${this.profile.coins}</strong><small>${tr('profile.coins')}</small></span><span><strong>${this.profile.wins}</strong><small>${tr('profile.wins')}</small></span><span><strong>${Object.values(this.profile.weaponFragments).reduce((sum, amount) => sum + amount, 0)}</strong><small>${tr('profile.fragments')}</small></span></div><p class="profile-history">${tr('menu.record', { count: this.profile.matches })}</p><button type="button" class="text-button menu-recipe-link" data-action="recipes">${tr('menu.recipes')} <span aria-hidden="true">→</span></button>`;
+     this.element('menu-screen').querySelector('.menu-stats')!.insertAdjacentHTML('beforebegin', `<div class="meta-menu"><button type="button" class="button button-light" data-action="armory">⚔ ${tr('m2.armory')} <small>${this.profile.unlockedWeapons.length}/36</small></button><button type="button" class="button button-peach" data-action="market">🦝 ${tr('m2.market')} ${this.profile.freeLotteryTickets ? `<b class="ticket-badge">🎟 ${this.profile.freeLotteryTickets}</b>` : ''}</button></div>`);
++    this.element('menu-screen').querySelector('.start-button')!.insertAdjacentHTML('beforebegin', `${rankCard(this.profile)}<label class="map-select" for="menu-map"><span>${tr('m3.map')}</span><select id="menu-map" data-map>${mapOptions(this.profile)}</select><small>${tr('m3.mapRule')}</small></label>`);
++    this.element('menu-screen').querySelector('.meta-menu')!.insertAdjacentHTML('beforeend', `<button type="button" class="button button-light" data-action="leaderboard">♛ ${tr('m3.leaderboard')}</button>`);
+   }
+ 
+   private renderBattleProps(): void {
+     const player = this.engine?.state.sides.player;
+     if (!player) return;
+     const active = this.canInteract();
+     const stamp = JSON.stringify([getLanguage(), active, player.loadout, player.sprinklerUsed, this.selectedProp, Object.entries(player.propCooldowns).map(([id, time]) => [id, Math.ceil(time)])]);
+     if (stamp === this.battlePropsStamp) return;
+     this.battlePropsStamp = stamp;
+     const slots = Array.from({ length: 2 }, (_, slot) => {
+       const id = player.loadout.equippedActiveProps[slot]; const prop = PROPS[id];
+       const cooldown = Math.ceil(player.propCooldowns[id] ?? 0);
+       const name = prop ? t(`prop.${id}`) : t('m2.emptySlot');
+       const status = cooldown ? t('m2.cooldown', { time: cooldown }) : t('m2.ready');
+       return `<button type="button" class="battle-prop prop-${slot} ${id === this.selectedProp ? 'selected' : ''}" data-action="prop:${id ?? ''}" ${prop ? `data-prop-drag="${id}"` : ''} aria-label="${esc(name)}${prop ? `. ${esc(status)}. ${tr(`prop.${id}.desc`)}` : ''}" title="${prop ? tr(`prop.${id}.desc`) : esc(name)}"${!prop || !active || cooldown ? ' disabled' : ''}><span>${prop ? esc(prop.icon) : '+'}</span><small>${esc(name)}</small>${cooldown ? `<b>${cooldown}s</b>` : ''}</button>`;
+     }).join('');
+     this.element('battle-props').innerHTML = `<button type="button" class="sprinkler-button" data-action="sprinkler" title="${tr('m2.sprinklerDesc')}" aria-label="${tr('m2.sprinkler')}. ${tr(player.sprinklerUsed ? 'm2.sprinklerUsed' : 'm2.sprinklerReady')}"${!active || player.sprinklerUsed ? ' disabled' : ''}><span>🚿</span><small>${tr('m2.sprinkler')}</small><b>${player.sprinklerUsed ? '0' : '1'}</b></button>${slots}<div class="passive-icons">${player.loadout.equippedPassiveProps.map(id => `<span title="${tr(`prop.${id}`)}: ${tr(`prop.${id}.desc`)}" aria-label="${tr(`prop.${id}`)}">${esc(PROPS[id].icon)}</span>`).join('')}</div>${this.selectedProp ? `<p class="prop-target-hint" role="status">${tr(PROPS[this.selectedProp].target === 'road' ? 'm2.targetRoad' : 'm2.targetUnit')}</p>` : ''}`;
+   }
+ 
+   private renderInspector(): void {
+@@ -359,78 +402,117 @@ export class GameApp {
+     if (oldFocus) container.querySelector<HTMLButtonElement>(`[data-target="${oldFocus}"]`)?.focus({ preventScroll: true });
+   }
+ 
+   private lootMarkup(loot: string[]): string {
+     if (!loot.length) return `<p class="loot-empty">${tr('loot.none')}</p>`;
+     const counts = new Map<string, number>();
+     loot.forEach(id => counts.set(id, (counts.get(id) ?? 0) + 1));
+     return `<ul class="loot-list">${[...counts].map(([id, count]) => `<li><span aria-hidden="true">✦</span><span>${tr(`fragment.${id}`)}</span><b>×${count}</b></li>`).join('')}</ul>`;
+   }
+ 
+   private showDialog(kind: DialogKind): void {
+     this.dialogKind = kind;
+     this.renderDialog();
+     if (!this.dialog.open) this.dialog.showModal();
+   }
+ 
+   private renderDialog(): void {
+     const kind = this.dialogKind;
+     this.dialog.classList.toggle('recipe-dialog', kind === 'recipes');
+     this.dialog.classList.toggle('meta-dialog', kind === 'armory' || kind === 'market');
++    this.dialog.classList.toggle('profile-dialog', kind === 'profile' || kind === 'leaderboard');
+     this.dialog.setAttribute('aria-labelledby', 'dialog-title');
+-    if (kind === 'armory' || kind === 'market') {
++    if (kind === 'profile' || kind === 'leaderboard' || kind === 'settings') {
++      this.dialog.innerHTML = this.profileScreens.markup(kind);
++    } else if (kind === 'armory' || kind === 'market') {
+       this.dialog.innerHTML = this.meta.markup(kind);
+     } else if (kind === 'pause' && this.engine) {
+       this.dialog.innerHTML = `<div class="dialog-decoration" aria-hidden="true">♨</div><span class="eyebrow">${tr('pause.eyebrow')}</span><h2 id="dialog-title">${tr('pause.title')}</h2><p class="dialog-subtitle">${tr('pause.subtitle')}</p><h3>${tr('pause.loot')}</h3><div class="loot-columns"><section><h4>${tr('loot.you')}</h4>${this.lootMarkup(this.engine.state.sides.player.loot)}</section><section><h4>${tr('loot.ai')}</h4>${this.lootMarkup(this.engine.state.sides.ai.loot)}</section></div><p class="dialog-rule">${tr('pause.rule')}</p><button type="button" class="button button-teal" data-action="resume" autofocus>${tr('pause.keep')}</button><button type="button" class="text-button surrender-button" data-action="surrender">${tr('pause.surrender')}</button>`;
+     } else if (kind === 'recipes') {
+       const rows = (start: number, end: number) => RECIPES.slice(start, end).map(recipe => `<article class="recipe-card"><div class="recipe-equation">${recipe.parts.map(part => `<span title="${esc(unitName(part))}">${icon(part)}<small>${esc(unitName(part))}</small></span>`).join('<b>＋</b>')}<b>→</b></div><h4>${tr(`hero.${recipe.hero}`)}</h4><p><strong>${tr(`skill.${recipe.hero}`)}</strong> · ${tr(`skill.${recipe.hero}.desc`, { charge: HEROES[recipe.hero].charge })}</p></article>`).join('');
+       this.dialog.innerHTML = `<button type="button" class="dialog-close icon-button" data-action="close-recipes" aria-label="${tr('recipe.close')}">×</button><span class="eyebrow">✦ 8 + 4 ✦</span><h2 id="dialog-title">${tr('recipe.title')}</h2><p class="dialog-subtitle">${tr('recipe.subtitle')}</p><p class="recipe-note">${tr('recipe.note')}</p><h3>${tr('recipe.cross')}</h3><div class="recipe-grid">${rows(0, 8)}</div><h3>${tr('recipe.unique')}</h3><div class="recipe-grid">${rows(8, 12)}</div><p class="doge-note">🐕 + 🧙 · ${tr('recipe.doge')}</p><button type="button" class="button button-teal" data-action="close-recipes">${tr('recipe.close')}</button>`;
+     } else if (kind === 'result' && this.engine?.state.result) {
+       const result = this.engine.state.result;
+       const won = result.winner === 'player';
+       this.dialog.innerHTML = `<div class="result-sticker" aria-hidden="true">${won ? '🍊' : '☁'}</div><span class="eyebrow">${tr('result.time', { time: clock(result.elapsed) })}</span><h2 id="dialog-title">${tr(won ? 'result.win' : 'result.loss')}</h2><p class="dialog-subtitle">${tr(won ? 'result.winSub' : 'result.lossSub')}</p><p class="result-reason">${tr(`result.reason.${result.reason}`)}</p><div class="result-rewards"><span><b>+${won ? result.coins : 0}</b><small>${tr('profile.coins')}</small></span><span><b>+${won ? result.loot.length : 0}</b><small>${tr('profile.fragments')}</small></span></div><h3>${tr('result.pool')}</h3>${this.lootMarkup(result.loot)}<p class="save-note">${tr(this.savedResult ? 'result.awarded' : 'result.memory')}</p><button type="button" class="button button-teal" data-action="start" autofocus>${tr('result.again')}</button><button type="button" class="text-button back-menu" data-action="menu">${tr('result.menu')}</button>`;
+     }
++    if (kind === 'pause') this.dialog.insertAdjacentHTML('beforeend', `<div class="meta-tabs"><button type="button" data-action="profile">${tr('m3.profile')}</button><button type="button" data-action="settings">${tr('m3.settings')}</button></div>`);
+     if (kind === 'result' && this.engine?.state.result?.winner === 'player') this.dialog.insertAdjacentHTML('beforeend', `<p class="ticket-reward">🎟 ${tr('m2.freeTicket')}</p>${this.newWeapons.length ? `<section class="unlock-reward"><h3>✦ ${tr('m2.newWeapons')}</h3>${this.newWeapons.map(id => `<p>${tr(`weapon.${id}`)}</p>`).join('')}</section>` : ''}`);
++    if (kind === 'result' && this.engine?.state.result) {
++      const rank = getRank(this.profile.stars), won = this.engine.state.result.winner === 'player';
++      this.dialog.querySelector('.result-rewards')?.insertAdjacentHTML('afterend', `<section class="rank-result" role="status"><strong>${tr('m3.starChange', { change: this.resultStars > 0 ? `+${this.resultStars}` : this.resultStars, stars: this.profile.stars })}</strong>${!won && this.resultStars === 0 ? `<p>${tr(this.previousRank < 10 ? 'm3.protected' : 'm3.floorProtected')}</p>` : ''}${won && this.resultStars > 1 ? `<p>${tr('m3.streakBonus')}</p>` : ''}${rank.index > this.previousRank ? `<h3>${tr('m3.promotion', { rank: t(`rank.${rank.index}`) })}</h3>` : ''}${this.newAvatars.length ? `<h3>${tr('m3.newAvatars')}</h3>${this.newAvatars.map(id => `<p>${tr(`avatar.${id}`)}</p>`).join('')}` : ''}</section>`);
++    }
+     if (kind) this.dialog.insertAdjacentHTML('afterbegin', `<div class="language-switch dialog-language" role="group" aria-label="${tr('app.language')}"><button type="button" data-action="zh-CN" class="${getLanguage() === 'zh-CN' ? 'selected' : ''}" aria-pressed="${getLanguage() === 'zh-CN'}">中</button><button type="button" data-action="en" class="${getLanguage() === 'en' ? 'selected' : ''}" aria-pressed="${getLanguage() === 'en'}">EN</button></div>`);
+   }
+ 
+   private closeDialog(resume: boolean): void {
+     if (this.dialog.open) this.dialog.close();
+     this.dialogKind = null;
+     if (resume && this.engine?.state.phase === 'paused') this.engine.pause(false);
++    this.sound.setDucked(this.retainedPage || document.hidden || !!this.engine && this.engine.state.phase !== 'playing');
++  }
++
++  private persistProfile(profile: Profile): boolean {
++    if (!saveProfile(profile)) { this.notify('hint.storage', true); return false; }
++    const unlocked = profile.unlockedAvatars.some(id => !this.profile.unlockedAvatars.includes(id));
++    this.profile = profile;
++    this.sound.setSettings(profile.settings);
++    this.quickStamp = '';
++    this.renderMenu();
++    if (unlocked) this.notify('m3.newAvatars');
++    return true;
++  }
++
++  private openProfileScreen(screen: ProfileScreen): void {
++    if (!this.overlayReturn) {
++      this.overlayReturn = { dialog: this.dialogKind, resume: this.canInteract() };
++      if (this.canInteract()) this.engine!.pause(true);
++    }
++    this.cancelDrag(); this.cancelPropDrag();
++    this.showDialog(screen); this.refresh();
++  }
++
++  private closeProfileScreen(): void {
++    const previous = this.overlayReturn;
++    this.overlayReturn = null;
++    if (previous?.dialog) this.showDialog(previous.dialog);
++    else this.closeDialog(previous?.resume ?? false);
++    this.refresh();
+   }
+ 
+   private pause(): void {
+     if (this.engine?.state.phase !== 'playing') return;
+     this.engine.pause(true);
+     this.cancelDrag();
+     this.cancelPropDrag();
+     this.showDialog('pause');
+     this.refresh();
+   }
+ 
+   private notify(key: string, error = false, vars: Record<string, string | number> = {}): void {
+     this.toast = { key, vars, error, until: performance.now() + (error ? 4200 : 2600) };
+     this.refresh();
+   }
+ 
+   private apply(result: CommandResult): void {
++    if (result.ok && (result.key === 'hint.dig' || result.key === 'hint.repaired')) this.sound.play('dig');
++    if (result.ok && result.key === 'hint.merged' && result.unitId && this.engine?.state.units.some(unit => unit.id === result.unitId && !!HEROES[unit.kind] && unit.level === 1)) this.sound.play('legendary');
+     if (result.ok && result.unitId) {
+       this.selectedId = result.unitId;
+       this.shovelSelected = false;
+     }
+     this.notify(result.key, !result.ok);
+   }
+ 
+   private canInteract(): boolean { return this.engine?.state.phase === 'playing'; }
+ 
+   private clearSelection(): void { this.selectedId = undefined; this.shovelSelected = false; this.selectedProp = undefined; this.cancelDrag(); this.cancelPropDrag(); }
+ 
+   private unitAt(hit: Hit): Unit | undefined {
+     return this.engine?.state.units.find(unit => unit.side === 'player' && (hit.kind === 'bench'
+       ? unit.location.zone === 'bench' && unit.location.slot === hit.slot
+       : hit.kind === 'cell' && unit.location.zone === 'board' && unit.location.col === hit.col && unit.location.row === hit.row));
+   }
+ 
+   private activate(hit: Hit): void {
+     if (!this.canInteract() || !this.engine) return;
+     if (this.selectedProp) {
+@@ -465,43 +547,54 @@ export class GameApp {
+     this.refresh();
+   }
+ 
+   private point(event: PointerEvent): { x: number; y: number } {
+     const bounds = this.canvas.getBoundingClientRect();
+     return { x: (event.clientX - bounds.left) / bounds.width * STAGE.width, y: (event.clientY - bounds.top) / bounds.height * STAGE.height };
+   }
+ 
+   private cancelDrag(): void {
+     const previous = this.drag;
+     this.drag = undefined;
+     if (previous && this.canvas?.hasPointerCapture(previous.pointerId)) this.canvas.releasePointerCapture(previous.pointerId);
+   }
+ 
+   private cancelPropDrag(): void {
+     const drag = this.propDrag; this.propDrag = undefined;
+     if (drag?.button.hasPointerCapture(drag.pointerId)) drag.button.releasePointerCapture(drag.pointerId);
+   }
+ 
+   private bindEvents(): void {
++    this.root.addEventListener('pointerdown', () => { void this.sound.unlock().catch(() => undefined); }, { passive: true });
++    this.root.addEventListener('keydown', () => { void this.sound.unlock().catch(() => undefined); });
++    this.root.addEventListener('input', event => {
++      if (event.target instanceof HTMLInputElement && event.target.type === 'range') this.profileScreens.change(event.target);
++    });
+     this.root.addEventListener('change', event => {
+       const element = event.target;
+       if (!(element instanceof HTMLInputElement || element instanceof HTMLSelectElement)) return;
++      if (element.id === 'dev-map') {
++        this.devMapOverride = MAP_IDS.includes(element.value as MapId) ? element.value as MapId : undefined;
++        this.refresh(true); return;
++      }
++      if (element.dataset.map !== undefined) this.devMapOverride = undefined;
++      if (this.profileScreens.change(element)) return;
+       if (this.meta.change(element)) return;
+       if (element.dataset.propSlot) {
+         const collect = (type: string) => [...this.root.querySelectorAll<HTMLSelectElement>(`[data-prop-slot^="${type}:"]`)].map(select => select.value).filter(Boolean);
+         const result = setPropSlots(this.profile, collect('active'), collect('passive'));
+         if (result.ok && saveProfile(result.profile)) this.profile = result.profile;
+         else this.notify(result.ok ? 'hint.storage' : result.key, true);
+         this.quickStamp = ''; this.refresh();
+       }
+     });
+     this.root.addEventListener('pointerdown', event => {
+       const button = (event.target as HTMLElement).closest<HTMLElement>('[data-prop-drag]');
+       if (!button || !event.isPrimary || event.button !== 0 || (button as HTMLButtonElement).disabled || !this.canInteract()) return;
+       const id = button.dataset.propDrag!;
+       this.propDrag = { pointerId: event.pointerId, startX: event.clientX, startY: event.clientY, moved: false, id, button };
+       button.setPointerCapture(event.pointerId);
+     });
+     this.root.addEventListener('pointermove', event => {
+       const drag = this.propDrag; if (!drag || drag.pointerId !== event.pointerId) return;
+       if (Math.hypot(event.clientX - drag.startX, event.clientY - drag.startY) > 5) {
+         event.preventDefault(); drag.moved = true; drag.point = this.point(event); this.selectedProp = drag.id; this.selectedId = undefined; this.shovelSelected = false;
+@@ -558,96 +651,112 @@ export class GameApp {
+       const drag = this.drag;
+       if (!drag || drag.pointerId !== event.pointerId) return;
+       const point = this.point(event);
+       const hit = this.renderer.hitTest(point.x, point.y);
+       this.cancelDrag();
+       if (!this.canInteract() || !hit) { this.refresh(); return; }
+       if (drag.moved) {
+         this.selectedId = drag.id;
+         this.shovelSelected = drag.shovel;
+         if (hit.kind !== 'shovel') this.activate(hit);
+       } else this.activate(hit);
+       this.refresh();
+     });
+     this.canvas.addEventListener('pointercancel', () => { this.cancelDrag(); this.refresh(); });
+     this.canvas.addEventListener('lostpointercapture', () => { this.drag = undefined; });
+     this.dialog.addEventListener('cancel', event => {
+       event.preventDefault();
+       if (this.dialogKind === 'pause') this.action('resume');
+       else if (this.dialogKind === 'recipes') this.action('close-recipes');
+       else if (this.dialogKind === 'armory' || this.dialogKind === 'market') this.action('close-meta');
++      else if (this.dialogKind === 'profile' || this.dialogKind === 'leaderboard' || this.dialogKind === 'settings') this.action('close-profile');
+       else this.menu();
+     });
+     document.addEventListener('keydown', event => {
+       if (event.target instanceof HTMLInputElement || event.target instanceof HTMLSelectElement || event.target instanceof HTMLTextAreaElement) return;
+       if (event.key === 'Escape' && !this.dialog.open) { this.clearSelection(); this.refresh(); }
+       if (event.key.toLowerCase() === 'p' && !event.repeat && !this.dialog.open) this.pause();
+       if (event.code === 'Space' && event.target === this.canvas && this.canInteract()) { event.preventDefault(); this.action('summon'); }
+     });
+-    document.addEventListener('visibilitychange', () => { if (document.hidden) this.pause(); });
++    document.addEventListener('visibilitychange', () => { this.sound.setDucked(this.retainedPage || document.hidden || !!this.engine && this.engine.state.phase !== 'playing'); if (document.hidden) this.pause(); });
++    window.addEventListener('pagehide', event => {
++      if (event.persisted) { this.retainedPage = true; this.sound.setDucked(true); }
++      else this.sound.dispose();
++    });
++    window.addEventListener('pageshow', () => {
++      this.retainedPage = false;
++      this.sound.setDucked(document.hidden || !!this.engine && this.engine.state.phase !== 'playing');
++    });
+   }
+ 
+   private action(action: string): void {
+     if (action === 'zh-CN' || action === 'en') { setLanguage(action); return; }
++    if (this.profileScreens.action(action)) return;
++    if (action === 'profile' || action === 'leaderboard' || action === 'settings' || action === 'brand') { this.openProfileScreen(action === 'brand' ? 'profile' : action); return; }
++    if (action === 'close-profile') { this.closeProfileScreen(); return; }
+     if (this.meta.action(action)) return;
+     if (action === 'armory' || action === 'market') { this.meta.open(action); this.showDialog(action); return; }
+     if (action === 'close-meta') { this.closeDialog(false); this.refresh(true); return; }
+     if (action === 'test-enable' || action === 'test-restore') {
++      if (action === 'test-restore') this.devMapOverride = undefined;
+       this.meta.reset();
+       this.profile = action === 'test-enable' ? enableTestProfile() : restoreNormalProfile();
++      this.sound.setSettings(this.profile.settings);
+       this.quickStamp = ''; this.refresh(true);
+       const success = action === 'test-enable' ? isTestProfile() && this.profile.unlockedWeapons.length === 36 : !isTestProfile();
+       this.notify(success ? action === 'test-enable' ? 'm2.testReady' : 'm2.testRestored' : 'hint.storage', !success); return;
+     }
+     if (action.startsWith('prop:')) {
+       if (this.suppressPropClick || !this.canInteract() || !this.engine) return;
+       const id = action.slice(5); const prop = PROPS[id]; if (!prop) return;
+       if (prop.target === 'self') { this.selectedProp = undefined; this.apply(this.engine.useProp(id)); }
+       else { this.selectedProp = this.selectedProp === id ? undefined : id; this.selectedId = undefined; this.shovelSelected = false; }
+       this.refresh(); return;
+     }
+     if (action === 'sprinkler') { if (this.canInteract()) this.apply(this.engine!.useSprinkler()); return; }
+-    if (action === 'brand') { if (this.canInteract()) this.pause(); return; }
+     if (action === 'start') { this.start(); return; }
+     if (action === 'menu') { this.menu(); return; }
+     if (action === 'clear') { this.clearSelection(); this.refresh(); return; }
+     if (action === 'pause') { this.pause(); return; }
+     if (action === 'resume') { this.closeDialog(true); this.refresh(); this.canvas.focus({ preventScroll: true }); return; }
+     if (action === 'recipes') {
+       this.resumeAfterRecipe = this.canInteract();
+       if (this.resumeAfterRecipe) this.engine!.pause(true);
+       this.cancelDrag();
+       this.showDialog('recipes');
+       this.refresh();
+       return;
+     }
+     if (action === 'close-recipes') { this.closeDialog(this.resumeAfterRecipe); this.resumeAfterRecipe = false; this.refresh(); return; }
+     if (action === 'surrender') {
+       if (this.engine?.state.phase === 'paused') { this.closeDialog(false); this.engine.surrender(); if (this.engine.state.result) this.finish(this.engine.state); }
+       return;
+     }
+     if (action === 'reset') {
+-      this.meta.reset();
+       const success = resetOwnStorage();
++      if (!success) { this.notify('hint.storage', true); return; }
++      this.meta.reset();
++      this.devMapOverride = undefined;
+       this.profile = emptyProfile();
++      this.sound.setSettings(this.profile.settings);
+       this.menu();
+       setLanguage('zh-CN');
+       this.notify(success ? 'hint.reset' : 'hint.storage', !success);
+       return;
+     }
+     if (!this.canInteract() || !this.engine) return;
+     if (action === 'summon') {
+       const result = this.engine.summon();
+-      if (result.ok) this.cancelDrag();
++      if (result.ok) { this.cancelDrag(); this.sound.play('summon'); }
+       this.apply(result);
+     }
+     else if (action === 'food') { this.engine.addFood(500); this.notify('hint.foodAdded'); }
+     else if (action === 'grant') this.apply(this.engine.grant(this.element<HTMLSelectElement>('dev-unit').value));
+     else if (action === 'boss') this.apply(this.engine.spawnBoss(this.element<HTMLSelectElement>('dev-boss').value));
+     else if (action === 'orange-plus' || action === 'orange-minus') { this.engine.adjustOranges(action === 'orange-plus' ? 1 : -1); this.notify(action === 'orange-plus' ? 'hint.orangeAdded' : 'hint.orangeLost'); }
+     else if (action === 'skip') { this.engine.skipWave(); this.notify('hint.waveSkipped'); }
+     else if (action === 'speed') this.speed = this.speed === 1 ? 2 : 1;
+     else if (action === 'speed-1') this.speed = 1;
+     else if (action === 'speed-2') this.speed = 2;
+     this.refresh();
+   }
+ }

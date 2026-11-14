@@ -1,0 +1,14 @@
+{
+  "observedAt": "2026-11-14T00:52:25.475Z",
+  "note": "Two readonly design files changed outside this implementation during the task; current P1 specification was fully reread. All agent mutations stayed in the game directory.",
+  "files": [
+    {
+      "path": "design/codex_p1_polish_spec.md",
+      "sha256": "C64A3896C57D820C6ADD41FBD06737D12E7FEC69E3B796C815570AE3EE36E7A3"
+    },
+    {
+      "path": "design/codex_prompt_p1_polish.md",
+      "sha256": "210262EC114CC19ADCC7E9C6F2588EEAA9197A8CE48D15268E605EAC7BF6A3AB"
+    }
+  ]
+}

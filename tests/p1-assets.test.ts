@@ -1,0 +1,109 @@
+import {afterEach,describe,expect,it,vi} from 'vitest';
+import {mkdir,readFile,writeFile,rm,symlink,unlink,lstat} from 'node:fs/promises';
+import path from 'node:path';
+import * as registry from '../src/render/AssetRegistry';
+import {avatarSticker,weaponSticker} from '../src/render/M3Art';
+import {PROPS} from '../src/config/props';
+import {WEAPONS} from '../src/config/weapons';
+
+afterEach(()=>{vi.unstubAllGlobals();vi.restoreAllMocks();});
+function imageEnvironment(ids:unknown,fail:string[]=[]){
+  const requested:string[]=[];
+  vi.stubGlobal('fetch',vi.fn(async()=>({ok:true,json:async()=>ids})));
+  vi.stubGlobal('Image',class {
+    complete=false;naturalWidth=0;naturalHeight=256;onload?:()=>void;onerror?:()=>void;
+    set src(value:string){requested.push(value);queueMicrotask(()=>{this.complete=true;this.naturalWidth=fail.some(id=>value.endsWith(`/${id}.png`))?0:256;(this.naturalWidth?this.onload:this.onerror)?.();});}
+  });return requested;
+}
+describe('P1 loaded-only asset registry',()=>{
+  it('uses safe unique ids, a relative base, successful images only and readiness callbacks',async()=>{
+    const requests=imageEnvironment(['hamster','hamster','map_sunny_backyard','bad/name','A','x"','rat'],['rat']);
+    const assets=new registry.AssetRegistry('./nested/sprites/');
+    const ready=vi.fn();const unsubscribe=assets.onReady(ready);
+    expect(assets.get('hamster')).toBeUndefined();expect(assets.url('hamster')).toBeUndefined();
+    await assets.ready;
+    expect(requests).toEqual(['./nested/sprites/hamster.png','./nested/sprites/map_sunny_backyard.png','./nested/sprites/rat.png']);
+    expect(assets.url('hamster')).toBe('./nested/sprites/hamster.png');expect(assets.has('rat')).toBe(false);
+    expect(ready).toHaveBeenCalledTimes(1);unsubscribe();
+    const late=vi.fn();assets.onReady(late);await Promise.resolve();expect(late).toHaveBeenCalledTimes(1);
+  });
+  it('resolves safely without DOM and handles a failed manifest',async()=>{
+    vi.stubGlobal('Image',undefined);const assets=new registry.AssetRegistry();await assets.ready;expect(assets.has('capybara')).toBe(false);
+    imageEnvironment([]);vi.stubGlobal('fetch',vi.fn(async()=>{throw Error('offline');}));await expect(new registry.AssetRegistry().ready).resolves.toBeUndefined();
+    expect(typeof registry.onAssetsReady).toBe('function');expect(registry.spriteUrl('../x')).toBeUndefined();
+  });
+});
+describe('P1 HTML stickers',()=>{
+  it('identifies every Boss and summoned mob without external art, and supplies tool scene geometry',async()=>{
+    const {unitSticker,sceneSticker}=await import('../src/ui/stickers');
+    const kinds=['rat','roach','crab','killer_bee','charmed_rat','husky_wrecker','mega_roomba','dr_clippers','box_kraken','sad_rain_frog','king_skunk','diva_kitty','buff_roo','hornet_queen','screaming_marmot','trash_coon','dj_rat_king'];
+    const shapes=kinds.map(id=>unitSticker(id,44));
+    for(let i=0;i<shapes.length;i++){expect(shapes[i]).toContain(`<svg`);expect(shapes[i]).toContain(`data-sticker="${kinds[i]}"`);expect(shapes[i]).not.toMatch(/<text|[\u{1F300}-\u{1FAFF}]/u);}
+    expect(new Set(shapes.map(svg=>svg.replace(/(?:aria-label|data-sticker|fill|stroke)="[^"]*"/g,''))).size).toBe(kinds.length);
+    expect(sceneSticker('sprinkler','wrong',32)).toContain('<svg');expect(sceneSticker('shovel','wrong',32)).toContain('<svg');
+    vi.spyOn(registry.assets,'get').mockImplementation(id=>id==='husky_wrecker'?({complete:true,naturalWidth:256} as HTMLImageElement):undefined);
+    expect(unitSticker('husky_wrecker')).toContain('sprites/husky_wrecker.png');
+  });
+  it('draws distinct cream-board geometry for all 20 props, with safe ids and sizes',async()=>{
+    const {propSticker,unitSticker,sceneSticker}=await import('../src/ui/stickers');
+    const shapes=Object.keys(PROPS).map(id=>propSticker(id,72));
+    expect(shapes).toHaveLength(20);
+    for(const svg of shapes){expect(svg).toContain('width="72"');expect(svg).toContain('#fff9eb');expect(svg).not.toMatch(/<text|<script|[\u{1F300}-\u{1FAFF}]/u);}
+    expect(new Set(shapes.map(svg=>svg.replace(/(?:aria-label|data-sticker|fill|stroke)="[^"]*"/g,''))).size).toBe(20);
+    expect(propSticker('<script>',NaN)).toContain('width="48"');expect(unitSticker('" onerror="x')).not.toContain('onerror');
+    expect(sceneSticker('menu_banner','<svg data-fallback="cover"/>')).toContain('data-fallback="cover"');
+  });
+  it('uses loaded PNGs across units, props, scenes, all weapons and avatars',async()=>{
+    const {propSticker,unitSticker,sceneSticker}=await import('../src/ui/stickers');
+    vi.spyOn(registry.assets,'get').mockImplementation(id=>/^[a-z][a-z0-9_]*$/.test(id)?({complete:true,naturalWidth:256} as HTMLImageElement):undefined);
+    expect(propSticker('washer')).toContain('sprites/prop_washer.png');expect(unitSticker('kungfu_po')).toContain('sprites/kungfu_po.png');
+    for(const id of ['menu_banner','logo_capy','sprinkler','shovel'] as const)expect(sceneSticker(id,'fallback')).toContain(`sprites/${id}.png`);
+    for(const id of Object.keys(WEAPONS))expect(weaponSticker(id)).toContain(`sprites/weapon_${id}.png`);
+    for(const id of ['capybara','hamster','squirrel','bee','cat_swordsman','doge_agent','goose_bully','kungfu_panda','rooster_star','frog_king','market_coon','salted_fish','bamboo_master','sakura_capy','corgi_crown','zen_capy'])expect(avatarSticker(id)).toContain(`sprites/avatar_${id}.png`);
+    vi.mocked(registry.assets.get).mockImplementation(id=>id==='m01_swatter'?({complete:true,naturalWidth:256} as HTMLImageElement):undefined);
+    expect(weaponSticker('m01_swatter')).toContain('sprites/m01_swatter.png');
+  });
+});
+describe('P1 asset synchronization',()=>{
+  it.each(['png','manifest','directory','ancestor'] as const)('rejects a linked %s target before changing any linked files',async kind=>{
+    const fixture=path.resolve(`.runtime/p1-assets-link-${kind}`),sourceDir=path.join(fixture,'source'),targetDir=path.join(fixture,'target'),protectedDir=path.join(fixture,'protected');
+    expect(fixture.startsWith(path.resolve('.')+path.sep)).toBe(true);
+    let linkPath:string|undefined;
+    try{
+      await mkdir(sourceDir,{recursive:true});await mkdir(protectedDir,{recursive:true});
+      await writeFile(path.join(sourceDir,'apple.png'),'new art');
+      await writeFile(path.join(protectedDir,'apple.png'),'keep png');
+      await writeFile(path.join(protectedDir,'manifest.json'),'keep manifest');
+      if(kind==='directory'||kind==='ancestor'){
+        linkPath=targetDir;await symlink(protectedDir,linkPath,'junction');
+      }else{
+        await mkdir(targetDir);linkPath=path.join(targetDir,kind==='png'?'apple.png':'manifest.json');
+        await symlink(path.join(protectedDir,kind==='png'?'apple.png':'manifest.json'),linkPath,'file');
+      }
+      expect((await lstat(linkPath)).isSymbolicLink()).toBe(true);
+      const modulePath='../scripts/sync-assets.mjs';const {syncAssets}=await import(modulePath);
+      await expect(syncAssets({sourceDir,targetDir:kind==='ancestor'?path.join(targetDir,'nested'):targetDir})).rejects.toThrow(/link|junction|outside/i);
+      expect(await readFile(path.join(protectedDir,'apple.png'),'utf8')).toBe('keep png');
+      expect(await readFile(path.join(protectedDir,'manifest.json'),'utf8')).toBe('keep manifest');
+    }finally{
+      // Remove the exact link first; every resolved fixture reference is inside the game.
+      if(linkPath)await unlink(linkPath).catch(error=>{if(error.code!=='ENOENT')throw error;});
+      await rm(fixture,{recursive:true,force:true});
+    }
+  });
+  it('copies safe lowercase PNG names, keeps destination art and produces stable sorted manifests without source',async()=>{
+    const fixture=path.resolve('.runtime/p1-assets-fixture'),sourceDir=path.join(fixture,'source'),targetDir=path.join(fixture,'target');
+    expect(fixture.startsWith(path.resolve('.')+path.sep)).toBe(true);
+    try{
+      await mkdir(sourceDir,{recursive:true});await mkdir(targetDir,{recursive:true});
+      await Promise.all(['zebra.png','apple.png','BAD.png','bad-name.png','a.PNG'].map(id=>writeFile(path.join(sourceDir,id),'fixture')));
+      await writeFile(path.join(targetDir,'kept.png'),'existing');
+      const modulePath='../scripts/sync-assets.mjs';const {syncAssets}=await import(modulePath);
+      await syncAssets({sourceDir,targetDir});const first=await readFile(path.join(targetDir,'manifest.json'),'utf8');
+      expect(JSON.parse(first)).toEqual(['apple','kept','zebra']);expect(await readFile(path.join(targetDir,'apple.png'),'utf8')).toBe('fixture');
+      await syncAssets({sourceDir,targetDir});expect(await readFile(path.join(targetDir,'manifest.json'),'utf8')).toBe(first);
+      await syncAssets({sourceDir:path.join(fixture,'absent'),targetDir});expect(await readFile(path.join(targetDir,'manifest.json'),'utf8')).toBe(first);
+      const empty=path.join(fixture,'empty');await mkdir(empty);await syncAssets({sourceDir:empty,targetDir});expect(await readFile(path.join(targetDir,'manifest.json'),'utf8')).toBe(first);
+    }finally{await rm(fixture,{recursive:true,force:true});}
+  });
+});

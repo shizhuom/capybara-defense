@@ -1,0 +1,480 @@
+{
+  "evidence_id": "ev_37c20e120ec7b28c05ade3898b2bc74d7e556e495a9222921be113a442b7a59e",
+  "subject": null,
+  "provider": {
+    "id": "rea-playwright-browser-scenario",
+    "name": "REA Playwright browser scenario capture provider",
+    "version": "1"
+  },
+  "analysis_profile": null,
+  "predicate_type": "rea.browser-scenario-capture",
+  "operation": "capture_browser_scenario",
+  "parameters": {
+    "browser": {
+      "mode": "launch",
+      "executable_path": "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",
+      "headless": true
+    },
+    "start_url": {
+      "url": "http://127.0.0.1:4174/game/",
+      "query": []
+    },
+    "environment": {
+      "viewport": {
+        "width": 1280,
+        "height": 720,
+        "device_scale_factor": 1
+      },
+      "locale": "en-US",
+      "timezone": "UTC",
+      "color_scheme": "light",
+      "reduced_motion": "reduce",
+      "service_workers": "block"
+    },
+    "actions": [
+      {
+        "step_id": "inspect-runtime-config",
+        "action": "wait_for_timeout",
+        "duration_ms": 6500
+      }
+    ],
+    "storage": {
+      "cookies": [],
+      "local_storage": [],
+      "session_storage": []
+    },
+    "secrets": [],
+    "capture": {
+      "after_each_step": [],
+      "at_end": [
+        "url"
+      ],
+      "events": [
+        "console",
+        "page-errors"
+      ],
+      "network": {
+        "request_body": false,
+        "response_body": false,
+        "header_values": false
+      },
+      "limits": {
+        "max_events": 10000,
+        "max_event_allocation_bytes": 4194304,
+        "max_total_event_allocation_bytes": 16777216,
+        "max_network_transactions": 1024,
+        "max_network_body_bytes": 65536,
+        "max_network_body_allocation_bytes": 1048576,
+        "max_network_header_allocation_bytes": 1048576,
+        "max_network_metadata_allocation_bytes": 1048576
+      }
+    },
+    "scenario_sha256": "da75e6eb015a5e17e8f41a3836386f0187717f686b8752a5a61b235f37b1f5bf"
+  },
+  "raw_result": null,
+  "normalized_result": {
+    "browser": {
+      "mode": "launch",
+      "process_ownership": "provider-owned",
+      "cleanup": "terminated-owned-process",
+      "product": "Chromium",
+      "version": "157.0.8103.51"
+    },
+    "scenario": {
+      "start_origin": "http://127.0.0.1:4174",
+      "action_count": 1,
+      "secret_references": [],
+      "network_content": {
+        "request_body": false,
+        "response_body": false,
+        "header_values": false
+      },
+      "event_families": [
+        "console",
+        "page-errors"
+      ],
+      "limits": {
+        "max_events": 10000,
+        "max_event_allocation_bytes": 4194304,
+        "max_total_event_allocation_bytes": 16777216,
+        "max_network_transactions": 1024,
+        "max_network_body_bytes": 65536,
+        "max_network_body_allocation_bytes": 1048576,
+        "max_network_header_allocation_bytes": 1048576,
+        "max_network_metadata_allocation_bytes": 1048576
+      }
+    },
+    "duration_ms": 7620,
+    "steps": [
+      {
+        "step_index": 0,
+        "step_id": "scenario_start",
+        "action": "goto_start",
+        "elapsed_ms": 909,
+        "before_url": {
+          "url": "about:blank",
+          "origin": null,
+          "query_parameter_names": [],
+          "redacted": false
+        },
+        "after_url": {
+          "url": "http://127.0.0.1:4174/game/",
+          "origin": "http://127.0.0.1:4174",
+          "query_parameter_names": [],
+          "redacted": false
+        },
+        "event_sequence_start": 1,
+        "event_sequence_end": 2,
+        "artifacts": {
+          "screenshot": {
+            "state": "not_requested"
+          },
+          "dom": {
+            "state": "not_requested"
+          },
+          "accessibility": {
+            "state": "not_requested"
+          },
+          "url": {
+            "state": "not_requested"
+          },
+          "history": {
+            "state": "not_requested"
+          },
+          "storage": {
+            "state": "not_requested"
+          }
+        },
+        "completeness": {
+          "status": "complete",
+          "equality_eligible": true,
+          "missing_sections": [],
+          "truncated_sections": []
+        },
+        "status": "completed",
+        "error": null
+      },
+      {
+        "step_index": 1,
+        "step_id": "inspect-runtime-config",
+        "action": "wait_for_timeout",
+        "elapsed_ms": 6502,
+        "before_url": {
+          "url": "http://127.0.0.1:4174/game/",
+          "origin": "http://127.0.0.1:4174",
+          "query_parameter_names": [],
+          "redacted": false
+        },
+        "after_url": {
+          "url": "http://127.0.0.1:4174/game/",
+          "origin": "http://127.0.0.1:4174",
+          "query_parameter_names": [],
+          "redacted": false
+        },
+        "event_sequence_start": 3,
+        "event_sequence_end": 17,
+        "artifacts": {
+          "screenshot": {
+            "state": "not_requested"
+          },
+          "dom": {
+            "state": "not_requested"
+          },
+          "accessibility": {
+            "state": "not_requested"
+          },
+          "url": {
+            "state": "captured",
+            "value": {
+              "url": "http://127.0.0.1:4174/game/",
+              "origin": "http://127.0.0.1:4174",
+              "query_parameter_names": [],
+              "redacted": false
+            }
+          },
+          "history": {
+            "state": "not_requested"
+          },
+          "storage": {
+            "state": "not_requested"
+          }
+        },
+        "completeness": {
+          "status": "complete",
+          "equality_eligible": true,
+          "missing_sections": [],
+          "truncated_sections": []
+        },
+        "status": "completed",
+        "error": null
+      }
+    ],
+    "events": {
+      "retained": 17,
+      "dropped": 0,
+      "items": [
+        {
+          "sequence": 1,
+          "step_index": 0,
+          "kind": "console",
+          "level": "info",
+          "text": "[study-runner] Browser renderer; recovered game bundle and assets.",
+          "url": {
+            "url": "http://127.0.0.1:4174/game/compat.js",
+            "origin": "http://127.0.0.1:4174",
+            "query_parameter_names": [],
+            "redacted": false
+          }
+        },
+        {
+          "sequence": 2,
+          "step_index": 0,
+          "kind": "console",
+          "level": "log",
+          "text": "武器注册文件已加载，所有武器类已注册到WeaponFactory",
+          "url": {
+            "url": "http://127.0.0.1:4174/game/js/bundle.js",
+            "origin": "http://127.0.0.1:4174",
+            "query_parameter_names": [],
+            "redacted": false
+          }
+        },
+        {
+          "sequence": 3,
+          "step_index": 1,
+          "kind": "console",
+          "level": "log",
+          "text": "langType zh",
+          "url": {
+            "url": "http://127.0.0.1:4174/game/js/bundle.js",
+            "origin": "http://127.0.0.1:4174",
+            "query_parameter_names": [],
+            "redacted": false
+          }
+        },
+        {
+          "sequence": 4,
+          "step_index": 1,
+          "kind": "console",
+          "level": "log",
+          "text": "启动主流程",
+          "url": {
+            "url": "http://127.0.0.1:4174/game/js/bundle.js",
+            "origin": "http://127.0.0.1:4174",
+            "query_parameter_names": [],
+            "redacted": false
+          }
+        },
+        {
+          "sequence": 5,
+          "step_index": 1,
+          "kind": "console",
+          "level": "log",
+          "text": "[LoadScene] startLoadFlow1",
+          "url": {
+            "url": "http://127.0.0.1:4174/game/js/bundle.js",
+            "origin": "http://127.0.0.1:4174",
+            "query_parameter_names": [],
+            "redacted": false
+          }
+        },
+        {
+          "sequence": 6,
+          "step_index": 1,
+          "kind": "console",
+          "level": "log",
+          "text": "[PlatMgr] runLoadScenePreloadTasks _0x10ff4f",
+          "url": {
+            "url": "http://127.0.0.1:4174/game/js/bundle.js",
+            "origin": "http://127.0.0.1:4174",
+            "query_parameter_names": [],
+            "redacted": false
+          }
+        },
+        {
+          "sequence": 7,
+          "step_index": 1,
+          "kind": "console",
+          "level": "log",
+          "text": "[LoadScene] startLoadFlow2",
+          "url": {
+            "url": "http://127.0.0.1:4174/game/js/bundle.js",
+            "origin": "http://127.0.0.1:4174",
+            "query_parameter_names": [],
+            "redacted": false
+          }
+        },
+        {
+          "sequence": 8,
+          "step_index": 1,
+          "kind": "console",
+          "level": "error",
+          "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+          "url": {
+            "url": "http://127.0.0.1:4174/favicon.ico",
+            "origin": "http://127.0.0.1:4174",
+            "query_parameter_names": [],
+            "redacted": false
+          }
+        },
+        {
+          "sequence": 9,
+          "step_index": 1,
+          "kind": "console",
+          "level": "log",
+          "text": "this._data._saveTime 1794553359558",
+          "url": {
+            "url": "http://127.0.0.1:4174/game/js/bundle.js",
+            "origin": "http://127.0.0.1:4174",
+            "query_parameter_names": [],
+            "redacted": false
+          }
+        },
+        {
+          "sequence": 10,
+          "step_index": 1,
+          "kind": "console",
+          "level": "log",
+          "text": "Date.now() 1794553360101",
+          "url": {
+            "url": "http://127.0.0.1:4174/game/js/bundle.js",
+            "origin": "http://127.0.0.1:4174",
+            "query_parameter_names": [],
+            "redacted": false
+          }
+        },
+        {
+          "sequence": 11,
+          "step_index": 1,
+          "kind": "console",
+          "level": "log",
+          "text": "打印测试 Map(54)",
+          "url": {
+            "url": "http://127.0.0.1:4174/game/js/bundle.js",
+            "origin": "http://127.0.0.1:4174",
+            "query_parameter_names": [],
+            "redacted": false
+          }
+        },
+        {
+          "sequence": 12,
+          "step_index": 1,
+          "kind": "console",
+          "level": "log",
+          "text": "打印武器数据 Map(44)",
+          "url": {
+            "url": "http://127.0.0.1:4174/game/js/bundle.js",
+            "origin": "http://127.0.0.1:4174",
+            "query_parameter_names": [],
+            "redacted": false
+          }
+        },
+        {
+          "sequence": 13,
+          "step_index": 1,
+          "kind": "console",
+          "level": "log",
+          "text": "打印不同品质不同种类的武器 [Array(5), Array(5), Array(5), Array(5), Array(5)]",
+          "url": {
+            "url": "http://127.0.0.1:4174/game/js/bundle.js",
+            "origin": "http://127.0.0.1:4174",
+            "query_parameter_names": [],
+            "redacted": false
+          }
+        },
+        {
+          "sequence": 14,
+          "step_index": 1,
+          "kind": "console",
+          "level": "warning",
+          "text": "[Server] 未登录，跳过云端存档同步",
+          "url": {
+            "url": "http://127.0.0.1:4174/game/js/bundle.js",
+            "origin": "http://127.0.0.1:4174",
+            "query_parameter_names": [],
+            "redacted": false
+          }
+        },
+        {
+          "sequence": 15,
+          "step_index": 1,
+          "kind": "console",
+          "level": "log",
+          "text": "当前玩家天数 8",
+          "url": {
+            "url": "http://127.0.0.1:4174/game/js/bundle.js",
+            "origin": "http://127.0.0.1:4174",
+            "query_parameter_names": [],
+            "redacted": false
+          }
+        },
+        {
+          "sequence": 16,
+          "step_index": 1,
+          "kind": "console",
+          "level": "info",
+          "text": "[测试模式] 已载入 44 种武器、16 个头像、25 类道具和 4 张地图。排行榜使用示例数据，奖励由本地模式模拟。",
+          "url": {
+            "url": "http://127.0.0.1:4174/test-mode/runtime.js",
+            "origin": "http://127.0.0.1:4174",
+            "query_parameter_names": [],
+            "redacted": false
+          }
+        },
+        {
+          "sequence": 17,
+          "step_index": 1,
+          "kind": "console",
+          "level": "log",
+          "text": "REFERENCE_BALANCE_VALUES {\"enemy\":{\"he\":[10,11,12,13,15,16,18,19,21,24,26,29,31,35,38,42,46,51,56,61],\"ee\":[0.6,0.6,0.6,0.6,0.7,0.7,0.7,0.8,0.8,0.8],\"ae\":[{\"ne\":[10,16,26,41,61,92,138,200,291,421,611,886,1285,1863,2701,3917,5680,8235,11941,17315],\"speed\":50},{\"ne\":[10,16,26,41,61,92,138,200,291,421,611,886,1285,1863,2701,3917,5680,8235,11941,17315],\"speed\":50},{\"ne\":[10,16,26,41,61,92,138,200,291,421,611,886,1285,1863,2701,3917,5680,8235,11941,17315],\"speed\":50},{\"ne\":[10,16,26,41,61,92,138,200,291,421,611,886,1285,1863,2701,3917,5680,8235,11941,17315],\"speed\":50}],\"re\":0,\"oe\":[3,6,9,12,15,18],\"le\":[0.1,0.2,0.3,0.5,0.9,1],\"ce\":[{\"ne\":7,\"speed\":10,\"ue\":2,\"pe\":8,\"skillName\":\"摄魂\",\"skillIntro\":\"使我方小兵陷入混乱，无法攻击\",\"color\":\"#ed462f\"},{\"ne\":10,\"speed\":10,\"ue\":3,\"pe\":8,\"skillName\":\"招魂\",\"skillIntro\":\"做法复活死亡的小兵\",\"color\":\"#32ee3a\"},{\"ne\":14,\"speed\":10,\"ue\":2,\"pe\":10,\"skillName\":\"鼓舞\",\"skillIntro\":\"激励身边单位，大幅提升血量和移速\",\"color\":\"#27c8ff\"},{\"ne\":7,\"speed\":10,\"ue\":10,\"pe\":10,\"skillName\":\"拆迁\",\"skillIntro\":\"将空白地块转化为不可用\",\"color\":\"#f16fe1\"},{\"ne\":10,\"speed\":10,\"ue\":10,\"pe\":3,\"skillName\":\"巫山云雨\",\"skillIntro\":\"战场下雨，降低所有单位攻速，升级可驱除\",\"color\":\"#68b4ff\"},{\"ne\":14,\"speed\":10,\"ue\":10,\"pe\":10,\"skillName\":\"裙下之臣\",\"skillIntro\":\"将最低等级的小兵纳入麾下\",\"color\":\"#d9207a\"},{\"ne\":7,\"speed\":10,\"ue\":0,\"pe\":8,\"skillName\":\"铁骑号令\",\"skillIntro\":\"召唤西凉骑兵\",\"color\":\"#4db678\"},{\"ne\":10,\"speed\":10,\"ue\":2.5,\"pe\":10,\"skillName\":\"方天画戟\",\"skillIntro\":\"挥动武器，大幅降低小兵等级并禁止合成\",\"color\":\"#fb4c54\"},{\"ne\":14,\"speed\":10,\"ue\":1.5,\"pe\":10,\"skillName\":\"饕餮\",\"skillIntro\":\"吞噬范围内小兵，获得血量加成并膨胀\",\"color\":\"#7447a6\"},{\"ne\":7,\"speed\":10,\"ue\":2,\"pe\":15,\"skillName\":\"彻底疯狂\",\"skillIntro\":\"冲阵击倒小兵，使其无法动弹，升级解除\",\"color\":\"#fb2500\"},{\"ne\":10,\"speed\":10,\"ue\":2,\"pe\":8,\"skillName\":\"噬目\",\"skillIntro\":\"视野变暗，难以看清局势\",\"color\":\"#21b2ff\"},{\"ne\":14,\"speed\":10,\"ue\":10,\"pe\":15,\"skillName\":\"一代枭雄\",\"skillIntro\":\"封印最高等级小兵，升级解除\",\"color\":\"#010b97\"}],\"ye\":[5,2,3],\"fe\":[[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],[1.1,1.2,1.3,1.2,1.3,1.7,2,1,1.5,1,1,1,1,1,1,1,1,1,1,1],[1,1,1.5,1,1.8,2,1,1,2,1,1,1.3,1,1,1.4,1,1,1.5,1,1]],\"ge\":[1,1.2,1.4,1.6,1.8]},\"nu\":{\"hh\":0,\"eh\":false,\"ah\":20,\"nh\":[],\"rh\":20,\"oh\":10,\"uh\":10,\"ph\":false,\"yh\":\"无\",\"fh\":3,\"gh\":3,\"_gold\":0,\"props\":null,\"dh\":true,\"Lh\":0,\"mh\":1,\"wh\":3,\"kh\":3,\"Sh\":0,\"xh\":{\"id\":0,\"rank\":\"军士.壹\",\"level\":0,\"bh\":[],\"Mh\":0,\"win\":0,\"lose\":0,\"Ph\":0},\"Ah\":{\"Eh\":false,\"num\":0,\"range\":0,\"pos\":{\"x\":0,\"y\":0}},\"Bh\":{\"Eh\":false,\"num\":0,\"range\":0,\"pos\":{\"x\":0,\"y\":0}},\"Dh\":false,\"Ih\":false,\"Th\":false,\"Rh\":false,\"delayTime\":10000,\"Ch\":false,\"Uh\":false,\"Fh\":false,\"Oh\":false,\"Yh\":false,\"Gh\":[],\"Xh\":[],\"jh\":[],\"Hh\":[],\"zh\":{},\"Wh\":{},\"Nh\":false},\"Yc\":{\"op\":[],\"lp\":[\"刀\",\"弓\",\"枪\",\"骑\"],\"cp\":[\"赵\",\"云\",\"张\",\"飞\",\"马\",\"超\",\"关\",\"羽\",\"平\",\"兴\",\"黄\",\"忠\",\"苞\",\"翼\",\"盖\",\"祖\",\"甄\",\"宓\",\"刘\",\"备\"],\"up\":0,\"pp\":0,\"yp\":[0,0.5,0.4,0.3,0.25],\"fp\":[0,0.5,0.4,0.3,0.25],\"gp\":[1,1.5,2.0999999999999996,2.7299999999999995,3.4124999999999996],\"dp\":[1,1.5,2.0999999999999996,2.7299999999999995,3.4124999999999996],\"Lp\":[[\"赵\",\"云\"],[\"张\",\"飞\"],[\"马\",\"超\"],[\"关\",\"羽\"],[\"黄\",\"忠\"],[\"关\",\"平\"],[\"关\",\"兴\"],[\"张\",\"苞\"],[\"张\",\"翼\"],[\"黄\",\"盖\"],[\"刘\",\"备\"],[\"黄\",\"祖\"]],\"familyName\":[\"赵\",\"张\",\"马\",\"关\",\"黄\",\"刘\"],\"mp\":[\"云\",\"飞\",\"超\",\"羽\",\"忠\",\"平\",\"兴\",\"苞\",\"翼\",\"盖\",\"祖\",\"备\"],\"wp\":[\"刀\",\"弓\",\"枪\",\"骑\"],\"Gc\":[\"赵云\",\"张飞\",\"马超\",\"关羽\",\"黄忠\",\"关平\",\"关兴\",\"张苞\",\"张翼\",\"黄盖\",\"刘备\",\"黄祖\"],\"Xc\":[{\"general\":\"赵云\",\"type\":1},{\"general\":\"张飞\",\"type\":1},{\"general\":\"马超\",\"type\":1},{\"general\":\"关羽\",\"type\":2},{\"general\":\"黄忠\",\"type\":0},{\"general\":\"关平\",\"type\":2},{\"general\":\"关兴\",\"type\":2},{\"general\":\"张苞\",\"type\":1},{\"general\":\"张翼\",\"type\":3},{\"general\":\"黄盖\",\"type\":3},{\"general\":\"刘备\",\"type\":3},{\"general\":\"黄祖\",\"type\":0}],\"_p\":[{\"kp\":1.5,\"Sp\":3,\"xp\":0.8,\"Mp\":\"单体\",\"Pp\":\"nearest\"},{\"kp\":3.5,\"Sp\":2,\"xp\":0.8,\"Mp\":\"单体\",\"Pp\":\"closest_end\"},{\"kp\":2.5,\"Sp\":2,\"xp\":0.8,\"Mp\":\"贯穿\",\"Pp\":\"nearest\"},{\"kp\":2,\"Sp\":2,\"xp\":0.8,\"Mp\":\"范围\",\"Pp\":\"nearest\"}],\"Ap\":[{\"kp\":2.5,\"Sp\":2,\"xp\":0.8,\"Ep\":3.5,\"Bp\":true,\"Mp\":\"快攻贯穿\",\"Pp\":\"closest_end\"},{\"kp\":2.5,\"Sp\":10,\"xp\":1,\"Ep\":3.5,\"Bp\":true,\"Mp\":\"范围\",\"Pp\":\"nearest\"},{\"kp\":2.5,\"Sp\":10,\"xp\":1,\"Ep\":3.5,\"Bp\":true,\"Mp\":\"单体\",\"Pp\":\"nearest\"},{\"kp\":2.5,\"Sp\":20,\"xp\":1,\"Ep\":3.5,\"Bp\":true,\"Mp\":\"单体\",\"Pp\":\"nearest\"},{\"kp\":4.5,\"Sp\":6,\"xp\":0.8,\"Ep\":5.5,\"Bp\":true,\"Mp\":\"贯穿\",\"Pp\":\"nearest\"},{\"kp\":2.5,\"Sp\":3,\"xp\":1,\"Ep\":3.5,\"Bp\":false,\"Mp\":\"范围\",\"Pp\":\"nearest\"},{\"kp\":2.5,\"Sp\":7,\"xp\":1,\"Ep\":3.5,\"Bp\":false,\"Mp\":\"单体\",\"Pp\":\"closest_end\"},{\"kp\":2.5,\"Sp\":7,\"xp\":1,\"Ep\":3.5,\"Bp\":false,\"Mp\":\"单体\",\"Pp\":\"closest_end\"},{\"kp\":2.5,\"Sp\":7,\"xp\":1,\"Ep\":3.5,\"Bp\":false,\"Mp\":\"单体\",\"Pp\":\"closest_end\"},{\"kp\":2.5,\"Sp\":8,\"xp\":1,\"Ep\":3.5,\"Bp\":false,\"Mp\":\"单体\",\"Pp\":\"nearest\"},{\"kp\":2.5,\"Sp\":10,\"xp\":0.8,\"Ep\":3.5,\"Bp\":true,\"Mp\":\"单体\",\"Pp\":\"nearest\"},{\"kp\":3.5,\"Sp\":6,\"xp\":0.8,\"Ep\":3.5,\"Bp\":false,\"Mp\":\"单体\",\"Pp\":\"closest_end\"},{\"kp\":4.5,\"Sp\":2,\"xp\":0.8,\"Ep\":5.5,\"Bp\":true,\"Mp\":\"单体\",\"Pp\":\"closest_end\"}],\"Dp\":false,\"Ip\":{\"kp\":2.5,\"Sp\":6,\"xp\":0.8,\"Ep\":3.5,\"Bp\":false},\"Tp\":[0,8,23],\"Rp\":[0,10,35,75,130],\"Cp\":[0,0.3,0.2,0.15,0.1],\"Fp\":[0,0.5,0.4,0.3,0.2],\"Op\":[1,1.3,1.56,1.7939999999999998,1.9734],\"Yp\":[1,1.5,2.0999999999999996,2.7299999999999995,3.2759999999999994],\"Gp\":[[\"刀\",[1,2,3,4,5]],[\"弓\",[1,2,3,4,5]],[\"枪\",[1,2,3,4,5]],[\"骑\",[1,2,3,4,5]],[\"赵\",[7]],[\"云\",[7]],[\"关\",[8]],[\"羽\",[7]],[\"兴\",[4]],[\"平\",[4]],[\"张\",[8]],[\"飞\",[7]],[\"苞\",[4]],[\"翼\",[4]],[\"黄\",[6]],[\"忠\",[6]],[\"盖\",[5]],[\"祖\",[4]],[\"马\",[6]],[\"超\",[6]],[\"刘\",[7]],[\"备\",[6]],[\"农\",[1,2,3,4,5]]],\"Xp\":[[\"赵云\",14],[\"关羽\",15],[\"关平\",12],[\"关兴\",12],[\"马超\",13],[\"张飞\",15],[\"张苞\",12],[\"张翼\",12],[\"黄忠\",13],[\"黄盖\",12],[\"黄祖\",12],[\"刘备\",13]],\"jp\":[[\"赵\",[\"云\"]],[\"关\",[\"羽\",\"平\",\"兴\"]],[\"马\",[\"超\"]],[\"张\",[\"飞\",\"苞\",\"翼\"]],[\"黄\",[\"忠\",\"盖\",\"祖\"]],[\"刘\",[\"备\"]]],\"Hp\":[[\"赵\",{\"text\":[[\"云\"]],\"value\":[14]}],[\"云\",{\"text\":[[\"赵\"]],\"value\":[14]}],[\"张\",{\"text\":[[\"飞\"],[\"苞\"],[\"翼\"]],\"value\":[15,12,12]}],[\"飞\",{\"text\":[[\"张\"]],\"value\":[15]}],[\"马\",{\"text\":[[\"超\"]],\"value\":[13]}],[\"超\",{\"text\":[[\"马\"]],\"value\":[13]}],[\"关\",{\"text\":[[\"羽\"],[\"平\"],[\"兴\"]],\"value\":[15,12,12]}],[\"羽\",{\"text\":[[\"关\"]],\"value\":[15]}],[\"平\",{\"text\":[[\"关\"]],\"value\":[12]}],[\"兴\",{\"text\":[[\"关\"]],\"value\":[12]}],[\"黄\",{\"text\":[[\"忠\"],[\"盖\"],[\"祖\"]],\"value\":[13,12,12]}],[\"忠\",{\"text\":[[\"黄\"]],\"value\":[13]}],[\"苞\",{\"text\":[[\"张\"]],\"value\":[12]}],[\"翼\",{\"text\":[[\"张\"]],\"value\":[12]}],[\"盖\",{\"text\":[[\"黄\"]],\"value\":[12]}],[\"祖\",{\"text\":[[\"黄\"]],\"value\":[12]}],[\"甄\",{\"text\":[],\"value\":[]}],[\"宓\",{\"text\":[],\"value\":[]}],[\"刘\",{\"text\":[[\"备\"]],\"value\":[13]}],[\"备\",{\"text\":[[\"刘\"]],\"value\":[13]}]]},\"te\":{\"te\":[\"刀\",\"刀\",\"刀\",\"刀\",\"刀\",\"刀\",\"刀\",\"刀\",\"刀\",\"刀\",\"刀\",\"刀\",\"刀\",\"刀\",\"刀\",\"刀\",\"刀\",\"刀\",\"刀\",\"刀\",\"刀\",\"弓\",\"弓\",\"弓\",\"弓\",\"弓\",\"弓\",\"弓\",\"弓\",\"弓\",\"弓\",\"弓\",\"弓\",\"弓\",\"弓\",\"弓\",\"弓\",\"弓\",\"弓\",\"弓\",\"枪\",\"枪\",\"枪\",\"枪\",\"枪\",\"枪\",\"枪\",\"枪\",\"枪\",\"枪\",\"枪\",\"枪\",\"枪\",\"枪\",\"枪\",\"枪\",\"枪\",\"枪\",\"骑\",\"骑\",\"骑\",\"骑\",\"骑\",\"骑\",\"骑\",\"骑\",\"骑\",\"骑\",\"骑\",\"骑\",\"骑\",\"骑\",\"骑\",\"骑\",\"骑\",\"铲\",\"铲\",\"铲\",\"铲\",\"铲\",\"铲\",\"铲\",\"铲\",\"铲\",\"铲\",\"铲\",\"刘\",\"赵\",\"赵\",\"云\",\"关\",\"羽\",\"平\",\"兴\",\"马\",\"马\",\"超\",\"张\",\"张\",\"飞\",\"苞\",\"翼\",\"黄\",\"黄\",\"忠\",\"盖\",\"祖\",\"备\"],\"se\":[\"刀\",\"刀\",\"刀\",\"刀\",\"刀\",\"刀\",\"刀\",\"刀\",\"刀\",\"刀\",\"刀\",\"刀\",\"刀\",\"刀\",\"刀\",\"刀\",\"刀\",\"刀\",\"刀\",\"刀\",\"刀\",\"弓\",\"弓\",\"弓\",\"弓\",\"弓\",\"弓\",\"弓\",\"弓\",\"弓\",\"弓\",\"弓\",\"弓\",\"弓\",\"弓\",\"弓\",\"弓\",\"弓\",\"弓\",\"弓\",\"枪\",\"枪\",\"枪\",\"枪\",\"枪\",\"枪\",\"枪\",\"枪\",\"枪\",\"枪\",\"枪\",\"枪\",\"枪\",\"枪\",\"枪\",\"枪\",\"枪\",\"枪\",\"骑\",\"骑\",\"骑\",\"骑\",\"骑\",\"骑\",\"骑\",\"骑\",\"骑\",\"骑\",\"骑\",\"骑\",\"骑\",\"骑\",\"骑\",\"骑\",\"骑\",\"铲\",\"铲\",\"铲\",\"铲\",\"铲\",\"铲\",\"铲\",\"铲\",\"铲\",\"铲\",\"铲\",\"刘\",\"赵\",\"赵\",\"云\",\"关\",\"羽\",\"平\",\"兴\",\"马\",\"马\",\"超\",\"张\",\"张\",\"飞\",\"苞\",\"翼\",\"黄\",\"黄\",\"忠\",\"盖\",\"祖\",\"备\"],\"ie\":[\"刀\",\"刀\",\"刀\",\"刀\",\"刀\",\"刀\",\"刀\",\"刀\",\"刀\",\"刀\",\"刀\",\"刀\",\"刀\",\"刀\",\"刀\",\"刀\",\"刀\",\"刀\",\"刀\",\"刀\",\"刀\",\"弓\",\"弓\",\"弓\",\"弓\",\"弓\",\"弓\",\"弓\",\"弓\",\"弓\",\"弓\",\"弓\",\"弓\",\"弓\",\"弓\",\"弓\",\"弓\",\"弓\",\"弓\",\"弓\",\"枪\",\"枪\",\"枪\",\"枪\",\"枪\",\"枪\",\"枪\",\"枪\",\"枪\",\"枪\",\"枪\",\"枪\",\"枪\",\"枪\",\"枪\",\"枪\",\"枪\",\"枪\",\"骑\",\"骑\",\"骑\",\"骑\",\"骑\",\"骑\",\"骑\",\"骑\",\"骑\",\"骑\",\"骑\",\"骑\",\"骑\",\"骑\",\"骑\",\"骑\",\"骑\",\"铲\",\"铲\",\"铲\",\"铲\",\"铲\",\"铲\",\"铲\",\"铲\",\"铲\",\"铲\",\"铲\",\"刘\",\"赵\",\"赵\",\"云\",\"关\",\"羽\",\"平\",\"兴\",\"马\",\"马\",\"超\",\"张\",\"张\",\"飞\",\"苞\",\"翼\",\"黄\",\"黄\",\"忠\",\"盖\",\"祖\",\"备\"]},\"props\":{\"Oa\":1,\"Ya\":0,\"Ga\":[{\"name\":\"shovel\",\"txt\":\"铲子\",\"intro\":\"{type}一把可以开荒的铲子\",\"Xa\":999,\"cd\":0,\"rarity\":3},{\"name\":\"bulldozer\",\"txt\":\"推土车\",\"intro\":\"{type}将敌人向后推,阿斗安全无忧\",\"Xa\":999,\"cd\":0,\"rarity\":3},{\"name\":\"writingBrush\",\"txt\":\"毛笔\",\"intro\":\"{type}可以逆天改字\",\"Xa\":50,\"cd\":30000,\"rarity\":2,\"ja\":10,\"Ha\":12},{\"name\":\"trainingSpell\",\"txt\":\"练兵符\",\"intro\":\"{type}拖到单位上有概率升一级或降一级\",\"Xa\":60,\"cd\":65000,\"rarity\":2,\"ja\":8,\"Ha\":8},{\"name\":\"upLvlSpell\",\"txt\":\"神兵符\",\"intro\":\"{type}拖到单位上升一级\",\"Xa\":90,\"cd\":55000,\"rarity\":3,\"ja\":5,\"Ha\":3},{\"name\":\"lifePill\",\"txt\":\"包子\",\"intro\":\"{type}55%概率给阿斗续一条命，45%概率减少一条命\",\"Xa\":50,\"cd\":90000,\"rarity\":1,\"ja\":10,\"Ha\":12},{\"name\":\"longRange\",\"txt\":\"御敌千里\",\"intro\":\"{type}使远程单位攻击范围翻倍，全局生效\",\"Xa\":30,\"cd\":60000,\"rarity\":0,\"ja\":20,\"Ha\":25},{\"name\":\"inkstone\",\"txt\":\"砚台\",\"intro\":\"{type}打翻砚台，泼出墨汁，使敌方部队攻速缓慢，持续5秒\",\"Xa\":30,\"cd\":90000,\"rarity\":0,\"ja\":20,\"Ha\":25},{\"name\":\"trap\",\"txt\":\"陷阱\",\"intro\":\"{type}敌人掉下去一时会爬不出来\",\"Xa\":35,\"cd\":50000,\"rarity\":0,\"ja\":15,\"Ha\":20},{\"name\":\"landmine\",\"txt\":\"地雷\",\"intro\":\"{type}可炸死敌人\",\"Xa\":50,\"cd\":55000,\"rarity\":1,\"ja\":10,\"Ha\":12},{\"name\":\"attSpeedSpell\",\"txt\":\"攻速符\",\"intro\":\"{type}单位攻速+40%，全局生效\",\"Xa\":80,\"cd\":90000,\"rarity\":2,\"ja\":6,\"Ha\":4},{\"name\":\"exorcismSpell\",\"txt\":\"降妖符\",\"intro\":\"{type}boss施法有50%失败率，并反噬boss自身血量\",\"Xa\":80,\"cd\":-1,\"rarity\":2,\"ja\":6,\"Ha\":4},{\"name\":\"farmer\",\"txt\":\"农民\",\"intro\":\"{type}可以刷出农民，每20秒+1金币，升级生产速度翻倍\",\"Xa\":90,\"cd\":-1,\"rarity\":2,\"ja\":5,\"Ha\":3},{\"name\":\"recruit\",\"txt\":\"招贤榜\",\"intro\":\"{type}武将刷出概率x2\",\"Xa\":90,\"cd\":-1,\"rarity\":2,\"ja\":8,\"Ha\":8},{\"name\":\"allAttSpeedSpell\",\"txt\":\"攻速符(全体)\",\"intro\":\"{type}双方所有单位攻速+10%，全局生效\",\"Xa\":60,\"cd\":-1,\"rarity\":1,\"ja\":8,\"Ha\":8},{\"name\":\"goingHandInHand\",\"txt\":\"齐头并进\",\"intro\":\"{type}我方单位攻速+50%，对方单位攻速+30%，全局生效\",\"Xa\":90,\"cd\":-1,\"rarity\":2,\"ja\":5,\"Ha\":3},{\"name\":\"xuMingPill\",\"txt\":\"续命丹\",\"intro\":\"{type}我方阿斗+5条命，对方阿斗+3条命\",\"Xa\":50,\"cd\":-1,\"rarity\":0,\"ja\":10,\"Ha\":12},{\"name\":\"daBuPill\",\"txt\":\"大补丸\",\"intro\":\"{type}我方阿斗+3条命\",\"Xa\":40,\"cd\":-1,\"rarity\":0,\"ja\":12,\"Ha\":15},{\"name\":\"silt\",\"txt\":\"淤泥\",\"intro\":\"{type}道路泥泞，我方敌人移速-10%，全局生效\",\"Xa\":40,\"cd\":-1,\"rarity\":0,\"ja\":12,\"Ha\":15},{\"name\":\"superShovel\",\"txt\":\"洛阳铲\",\"intro\":\"{type}每60秒生成一个铲子\",\"Xa\":120,\"cd\":-1,\"rarity\":3,\"ja\":3,\"Ha\":1},{\"name\":\"meteor\",\"txt\":\"陨石\",\"intro\":\"{type}当敌人接近阿斗时，会落下陨石消灭敌人\",\"Xa\":150,\"cd\":-1,\"rarity\":3,\"ja\":2,\"Ha\":1},{\"name\":\"trashCan\",\"txt\":\"垃圾桶\",\"intro\":\"{type}1馒头回收无用文字\",\"Xa\":150,\"cd\":0,\"rarity\":3,\"ja\":2,\"Ha\":1},{\"name\":\"promotionOrder\",\"txt\":\"升职令\",\"intro\":\"{type}刷出的兵有{level}%概率升到2级\",\"Xa\":100,\"cd\":-1,\"rarity\":1,\"ja\":8,\"Ha\":5,\"za\":[1,2,3],\"Wa\":[5,10,15],\"Na\":[1,2,3],\"$a\":[100,100,150],\"qa\":[8,5,3],\"Va\":[5,3,2]},{\"name\":\"marchPill\",\"txt\":\"行军丹\",\"intro\":\"{type}体力+10\",\"Xa\":40,\"cd\":0,\"rarity\":0,\"ja\":12,\"Ha\":15},{\"name\":\"goldSeeker\",\"txt\":\"摸金校尉\",\"intro\":\"{type}让所有铲子变成金铲子，铲出宝箱\",\"Xa\":150,\"cd\":-1,\"rarity\":3,\"ja\":2,\"Ha\":1}],\"Qa\":[2,3,4,5,6,7,8,9,10,21],\"Za\":[11,12,13,14,15,16,17,18,19,20,22,24],\"Ka\":[],\"Ja\":[2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24],\"tn\":6,\"hn\":2,\"en\":6,\"an\":[[0,0],[0,0],[0,0],[0,1],[0,1],[1,3],[1,3],[1,3],[1,3],[1,3],[2,4],[2,4],[2,4],[2,4],[2,4],[2,5],[2,5],[2,5],[2,5],[2,5],[3,6],[3,6],[3,6],[3,6],[3,6],[5,8],[5,8],[5,8],[5,8],[5,8]],\"nn\":[[0,0],[0,0],[0,1],[0,1],[0,1],[1,4],[1,4],[1,4],[1,4],[1,4],[2,4],[2,4],[2,4],[2,4],[2,4],[3,5],[3,5],[3,5],[3,5],[3,5],[4,7],[4,7],[4,7],[4,7],[4,7],[6,8],[6,8],[6,8],[6,8],[6,8]],\"rn\":[\"稀有\",\"卓越\",\"史诗\",\"传说\"],\"ln\":[\"#95e45a\",\"#2dddff\",\"#D955FF\",\"#E99431\"],\"cn\":[0.1,0.1,0.1,0.1]},\"gameMethods\":[\"constructor\",\"init\",\"addEventListener\",\"mz\",\"wz\",\"startGame\",\"vz\",\"gameOver\",\"test\",\"kz\"],\"propsMethods\":[\"constructor\",\"init\",\"xB\",\"getPropsType\",\"DB\",\"IB\",\"TB\",\"XP\",\"jP\",\"RB\",\"CB\",\"UB\",\"FB\",\"MB\",\"bB\",\"OB\",\"YB\",\"PB\",\"BB\",\"AB\",\"EB\",\"GB\",\"addProps\",\"XB\",\"Oy\",\"nB\",\"jB\",\"gameOver\"],\"mainMethods\":[\"constructor\",\"onAwake\",\"onOpened\",\"onClosed\",\"kZ\",\"LZ\",\"tq\",\"Oz\",\"wq\",\"bZ\",\"MZ\",\"_Z\",\"Oa\",\"startGame\",\"SZ\",\"xZ\",\"PZ\",\"vZ\",\"wZ\",\"mZ\",\"XZ\",\"jZ\",\"NZ\",\"$Z\",\"VZ\",\"BZ\",\"EZ\",\"QZ\",\"ZZ\",\"DZ\",\"IZ\",\"KZ\",\"FZ\",\"hK\",\"JZ\",\"rK\",\"TZ\",\"lK\",\"OZ\",\"AZ\",\"RZ\",\"CZ\",\"cK\",\"UZ\",\"fK\",\"uK\",\"pK\",\"gK\",\"yK\"]}",
+          "url": {
+            "url": "http://127.0.0.1:4174/reference-balance-probe.js",
+            "origin": "http://127.0.0.1:4174",
+            "query_parameter_names": [],
+            "redacted": false
+          }
+        }
+      ],
+      "omissions": {
+        "by_kind": [],
+        "network_transactions": [],
+        "network_transaction_range": null
+      }
+    },
+    "completeness": {
+      "status": "complete",
+      "equality_eligible": true,
+      "missing_sections": [],
+      "truncated_sections": []
+    },
+    "limitations": [
+      "Event sequence records provider receipt order; simultaneous browser causality is not inferred.",
+      "Network content is retained only when selected; Playwright response-body bytes are API results and are not guaranteed to match wire bytes.",
+      "Request bytes are limited to what Playwright exposes; not_exposed does not establish body absence or multipart file coverage.",
+      "Network content reads settle within 5 seconds each and the observer does not request bodies from unfinished responses.",
+      "Playwright scenario events do not expose request initiator stacks; receipt order does not prove causality.",
+      "Storage values are hashed only after declared-secret redaction."
+    ]
+  },
+  "confidence": "observed",
+  "authority": "controlled-replay",
+  "environment": {
+    "id": "Chromium@157.0.8103.51",
+    "platform": "unknown",
+    "architecture": "unknown",
+    "isolation": "process"
+  },
+  "limitations": [
+    "Artifact identity is unavailable for this observation.",
+    "Event sequence records provider receipt order; simultaneous browser causality is not inferred.",
+    "Network content is retained only when selected; Playwright response-body bytes are API results and are not guaranteed to match wire bytes.",
+    "Request bytes are limited to what Playwright exposes; not_exposed does not establish body absence or multipart file coverage.",
+    "Network content reads settle within 5 seconds each and the observer does not request bodies from unfinished responses.",
+    "Playwright scenario events do not expose request initiator stacks; receipt order does not prove causality.",
+    "Storage values are hashed only after declared-secret redaction.",
+    "Browser host platform and architecture were not observed."
+  ],
+  "relationship_coverage": null,
+  "locations": [],
+  "evidence_links": []
+}

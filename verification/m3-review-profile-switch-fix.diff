@@ -1,0 +1,85 @@
+diff --git "a/D:\\rea_game\\games\\capybara-defense\\.runtime\\m3-profile-switch-before\\GameApp.ts" "b/D:\\rea_game\\games\\capybara-defense\\src\\ui\\GameApp.ts"
+index 98e63d0..e7aa51c 100644
+--- "a/D:\\rea_game\\games\\capybara-defense\\.runtime\\m3-profile-switch-before\\GameApp.ts"
++++ "b/D:\\rea_game\\games\\capybara-defense\\src\\ui\\GameApp.ts"
+@@ -670,67 +670,76 @@ export class GameApp {
+       else if (this.dialogKind === 'armory' || this.dialogKind === 'market') this.action('close-meta');
+       else if (this.dialogKind === 'profile' || this.dialogKind === 'leaderboard' || this.dialogKind === 'settings') this.action('close-profile');
+       else this.menu();
+     });
+     document.addEventListener('keydown', event => {
+       if (event.target instanceof HTMLInputElement || event.target instanceof HTMLSelectElement || event.target instanceof HTMLTextAreaElement) return;
+       if (event.key === 'Escape' && !this.dialog.open) { this.clearSelection(); this.refresh(); }
+       if (event.key.toLowerCase() === 'p' && !event.repeat && !this.dialog.open) this.pause();
+       if (event.code === 'Space' && event.target === this.canvas && this.canInteract()) { event.preventDefault(); this.action('summon'); }
+     });
+     document.addEventListener('visibilitychange', () => { this.sound.setDucked(this.retainedPage || document.hidden || !!this.engine && this.engine.state.phase !== 'playing'); if (document.hidden) this.pause(); });
+     window.addEventListener('pagehide', event => {
+       if (event.persisted) { this.retainedPage = true; this.sound.setDucked(true); }
+       else this.sound.dispose();
+     });
+     window.addEventListener('pageshow', () => {
+       this.retainedPage = false;
+       this.sound.setDucked(document.hidden || !!this.engine && this.engine.state.phase !== 'playing');
+     });
+   }
+ 
+   private action(action: string): void {
+     if (action === 'zh-CN' || action === 'en') { setLanguage(action); return; }
+     if (this.profileScreens.action(action)) return;
+     if (action === 'profile' || action === 'leaderboard' || action === 'settings' || action === 'brand') { this.openProfileScreen(action === 'brand' ? 'profile' : action); return; }
+     if (action === 'close-profile') { this.closeProfileScreen(); return; }
+     if (this.meta.action(action)) return;
+     if (action === 'armory' || action === 'market') { this.meta.open(action); this.showDialog(action); return; }
+     if (action === 'close-meta') { this.closeDialog(false); this.refresh(true); return; }
+     if (action === 'test-enable' || action === 'test-restore') {
++      const wasTestProfile = isTestProfile();
++      const profile = action === 'test-enable' ? enableTestProfile() : restoreNormalProfile();
++      const nowTestProfile = isTestProfile();
++      const success = action === 'test-enable' ? nowTestProfile && profile.unlockedWeapons.length === 36 : !nowTestProfile;
++      if (!success) { this.notify('hint.storage', true); return; }
+       if (action === 'test-restore') this.devMapOverride = undefined;
+       this.meta.reset();
+-      this.profile = action === 'test-enable' ? enableTestProfile() : restoreNormalProfile();
++      this.profile = profile;
+       this.sound.setSettings(this.profile.settings);
+-      this.quickStamp = ''; this.refresh(true);
+-      const success = action === 'test-enable' ? isTestProfile() && this.profile.unlockedWeapons.length === 36 : !isTestProfile();
+-      this.notify(success ? action === 'test-enable' ? 'm2.testReady' : 'm2.testRestored' : 'hint.storage', !success); return;
++      this.quickStamp = '';
++      // A battle owns a snapshot of its profile's test/normal identity. Discard it
++      // only after the profile transaction succeeds, before another frame can
++      // record heroes or settle its rewards against a different identity.
++      if (wasTestProfile !== nowTestProfile) this.menu();
++      else this.refresh(true);
++      this.notify(action === 'test-enable' ? 'm2.testReady' : 'm2.testRestored'); return;
+     }
+     if (action.startsWith('prop:')) {
+       if (this.suppressPropClick || !this.canInteract() || !this.engine) return;
+       const id = action.slice(5); const prop = PROPS[id]; if (!prop) return;
+       if (prop.target === 'self') { this.selectedProp = undefined; this.apply(this.engine.useProp(id)); }
+       else { this.selectedProp = this.selectedProp === id ? undefined : id; this.selectedId = undefined; this.shovelSelected = false; }
+       this.refresh(); return;
+     }
+     if (action === 'sprinkler') { if (this.canInteract()) this.apply(this.engine!.useSprinkler()); return; }
+     if (action === 'start') { this.start(); return; }
+     if (action === 'menu') { this.menu(); return; }
+     if (action === 'clear') { this.clearSelection(); this.refresh(); return; }
+     if (action === 'pause') { this.pause(); return; }
+     if (action === 'resume') { this.closeDialog(true); this.refresh(); this.canvas.focus({ preventScroll: true }); return; }
+     if (action === 'recipes') {
+       this.resumeAfterRecipe = this.canInteract();
+       if (this.resumeAfterRecipe) this.engine!.pause(true);
+       this.cancelDrag();
+       this.showDialog('recipes');
+       this.refresh();
+       return;
+     }
+     if (action === 'close-recipes') { this.closeDialog(this.resumeAfterRecipe); this.resumeAfterRecipe = false; this.refresh(); return; }
+     if (action === 'surrender') {
+       if (this.engine?.state.phase === 'paused') { this.closeDialog(false); this.engine.surrender(); if (this.engine.state.result) this.finish(this.engine.state); }
+       return;
+     }
+     if (action === 'reset') {
+       const success = resetOwnStorage();
+       if (!success) { this.notify('hint.storage', true); return; }

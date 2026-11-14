@@ -1,0 +1,20 @@
+import fs from 'node:fs';import path from 'node:path';import crypto from 'node:crypto';import {spawnSync} from 'node:child_process';import {fileURLToPath} from 'node:url';
+const game=path.resolve(path.dirname(fileURLToPath(import.meta.url)),'..'),repo=path.resolve(game,'../..');
+const hash=file=>crypto.createHash('sha256').update(fs.readFileSync(file)).digest('hex').toUpperCase();
+const before=JSON.parse(fs.readFileSync(path.join(game,'verification/p1-protected-before.json'),'utf8'));
+const observed=JSON.parse(fs.readFileSync(path.join(game,'verification/p1-design-update-observed.json'),'utf8'));
+const accepted=new Map(observed.files.map(f=>[f.path,f.sha256])),changes=[],unexpected=[];
+for(const item of before){const file=path.join(repo,item.path),sha=fs.existsSync(file)?hash(file):null;if(sha===item.sha256)continue;
+ const change={path:item.path,before:item.sha256,current:sha,externallyUpdated:accepted.get(item.path)===sha};changes.push(change);if(!change.externallyUpdated)unexpected.push(change);
+}
+const walk=dir=>fs.readdirSync(dir,{withFileTypes:true}).flatMap(entry=>entry.isDirectory()?walk(path.join(dir,entry.name)):[path.join(dir,entry.name)]);
+const protectedPaths=new Set(before.map(item=>item.path.replaceAll('\\','/'))),addedDesign=walk(path.join(repo,'design')).map(file=>path.relative(repo,file).replaceAll('\\','/')).filter(file=>!protectedPaths.has(file));
+const ids=JSON.parse(fs.readFileSync(path.join(game,'public/sprites/manifest.json'),'utf8'));
+const mismatchedSprites=ids.filter(id=>hash(path.join(repo,'design/assets/sprites',id+'.png'))!==hash(path.join(game,'public/sprites',id+'.png')));
+const git=spawnSync('git',['-c',`safe.directory=${repo.replaceAll('\\','/')}`,'diff','--name-only'],{cwd:repo,env:{...process.env,GIT_OPTIONAL_LOCKS:'0'},encoding:'utf8'});
+if(git.status!==0)throw Error(git.stderr);
+const trackedChanges=git.stdout.trim().split(/\r?\n/).filter(Boolean);
+const report={checkedAt:new Date().toISOString(),initialProtectedFiles:before.length,unchanged:before.length-changes.length,changes,unexpected,addedDesign,sourcePngs:ids.length,mismatchedSprites,trackedChanges,passed:!unexpected.length&&!mismatchedSprites.length&&!trackedChanges.length};
+fs.writeFileSync(path.join(game,'verification/p1-isolation-report.json'),JSON.stringify(report,null,2));
+console.log(JSON.stringify({passed:report.passed,checked:before.length,unchanged:report.unchanged,externalDesignUpdates:changes.map(c=>c.path),addedReadonlyDesignFiles:addedDesign.length,spritesEqual:ids.length-mismatchedSprites.length,trackedChanges}));
+if(!report.passed)process.exitCode=1;

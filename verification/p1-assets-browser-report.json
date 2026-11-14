@@ -1,0 +1,9 @@
+{
+  "checks": [
+    "Empty sprite manifest uses all20 distinct cream SVG props and procedural board, without PNG requests",
+    "Late arrival of133 external PNGs refreshes an active lottery without a second fee/reward or reset",
+    "Real touch drag places a pet with scrollY0; gesture-unlocked WebAudio follows battle→boss→browsing→boss→battle",
+    "Additional browser Console/pageerror:0"
+  ],
+  "errors": []
+}

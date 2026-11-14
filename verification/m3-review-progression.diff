@@ -1,0 +1,681 @@
+M3 review against m2-before-m3.zip; generated 2026-11-13T13:28:18.0875959-08:00
+diff --git "a/D:\\rea_game\\games\\capybara-defense\\.runtime\\m3-review-base\\src\\config\\ranks.ts" "b/D:\\rea_game\\games\\capybara-defense\\src\\config\\ranks.ts"
+index e69de29..49c309a 100644
+--- "a/D:\\rea_game\\games\\capybara-defense\\.runtime\\m3-review-base\\src\\config\\ranks.ts"
++++ "b/D:\\rea_game\\games\\capybara-defense\\src\\config\\ranks.ts"
+@@ -0,0 +1,33 @@
++import type { MapId } from '../core/types';
++
++export interface RankDefinition {
++  index:number; name:{'zh-CN':string;en:string}; minStars:number;
++  hpMultiplier:number; winCoins:number; fragmentMultiplier:number; mapId:MapId;
++}
++const maps:MapId[]=['sunny_backyard','sakura_onsen','midnight_kitchen','cat_tower_maze'];
++const tiers = [
++  {zh:'见习铲屎官',en:'Rookie Keeper',hp:[1,1.08],coins:35},
++  {zh:'溜狗达人',en:'Dog Walker',hp:[1.1,1.18],coins:45},
++  {zh:'猫咖店长',en:'Cat Cafe Boss',hp:[1.2,1.3],coins:55},
++  {zh:'温泉馆主',en:'Onsen Master',hp:[1.32,1.42],coins:65},
++  {zh:'宠物营养师',en:'Chef Keeper',hp:[1.45,1.55],coins:75},
++  {zh:'训宠宗师',en:'Pet Grandmaster',hp:[1.58,1.7],coins:85},
++  {zh:'萌宠统帅',en:'Critter Marshal',hp:[1.72,1.85],coins:95},
++  {zh:'皇家园长',en:'Royal Warden',hp:[1.88,2],coins:110},
++  {zh:'后院霸主',en:'Backyard Overlord',hp:[2.05,2.2],coins:125},
++  {zh:'森林君王',en:'Forest Monarch',hp:[2.25,2.45],coins:140},
++];
++export const RANKS:RankDefinition[]=Array.from({length:54},(_,index)=>{
++  const god=index>=50; const tier=tiers[Math.min(9,Math.floor(index/5))];const sub=index%5;
++  const roman=['I','II','III','IV','V'][sub];
++  return {index,name:god?{'zh-CN':'水豚真神',en:'Capybara God'}:{'zh-CN':`${tier.zh} ${roman}`,en:`${tier.en} ${roman}`},
++    minStars:god?[100,125,150,180][index-50]:index*2,
++    hpMultiplier:god?[2.5,2.6,2.7,2.8][index-50]:Number((tier.hp[0]+(tier.hp[1]-tier.hp[0])*sub/4).toFixed(4)),
++    winCoins:god?160:tier.coins,fragmentMultiplier:god?2.2:index>=45?1.8:index>=40?1.5:1,
++    mapId:index>=40?maps[(index-40)%4]:maps[Math.min(3,Math.floor(index/10))]};
++});
++export function getRank(stars:number):RankDefinition {
++  const total=Number.isFinite(stars)?Math.max(0,stars):0;
++  for(let index=RANKS.length-1;index>0;index--) if(total>=RANKS[index].minStars) return RANKS[index];
++  return RANKS[0];
++}
+
+diff --git "a/D:\\rea_game\\games\\capybara-defense\\.runtime\\m3-review-base\\src\\config\\avatars.ts" "b/D:\\rea_game\\games\\capybara-defense\\src\\config\\avatars.ts"
+index e69de29..3eb668f 100644
+--- "a/D:\\rea_game\\games\\capybara-defense\\.runtime\\m3-review-base\\src\\config\\avatars.ts"
++++ "b/D:\\rea_game\\games\\capybara-defense\\src\\config\\avatars.ts"
+@@ -0,0 +1,21 @@
++export interface AvatarDefinition {id:string;name:{'zh-CN':string;en:string};description:{'zh-CN':string;en:string}}
++const rows = [
++  ['capybara','泡澡本豚','Bathing Capybara','初始免费头像。','Available from the start.'],
++  ['hamster','瓜子仓鼠','Seed Hamster','初始免费头像。','Available from the start.'],
++  ['squirrel','松果松鼠','Acorn Squirrel','初始免费头像。','Available from the start.'],
++  ['bee','勤劳蜜蜂','Worker Bee','初始免费头像。','Available from the start.'],
++  ['cat_swordsman','橘猫剑客','Orange Cat Swordsman','赢得第 1 场胜利。','Win your first battle.'],
++  ['doge_agent','墨镜旺财','Doge Agent','达成 3 连胜。','Reach a streak of 3 wins.'],
++  ['goose_bully','叼刀恶霸鹅','Knife Goose Bully','达成 5 连胜。','Reach a streak of 5 wins.'],
++  ['kungfu_panda','功夫滚滚','Kung Fu Panda','合成过功夫阿宝。','Merge Kung-Fu Po at least once.'],
++  ['rooster_star','篮球鸡神','Basketball Rooster','合成过铁山靠鸡神。',"Merge Ballin’ Rooster at least once."],
++  ['frog_king','皇冠蛙王','Crowned Frog King','合成过孤寡蛙王。','Merge Pepe King at least once.'],
++  ['market_coon','黑市浣熊','Market Raccoon','拥有 6 种不同道具。','Own 6 different props.'],
++  ['salted_fish','尚方咸鱼','Salted Excalibur','解锁 12 把不同神兵。','Unlock 12 different weapons.'],
++  ['bamboo_master','神竹宗师','Bamboo Grandmaster','拥有任意 1 把橙品神兵。','Own at least 1 orange weapon.'],
++  ['sakura_capy','樱花水豚','Sakura Capybara','达到猫咖店长（段位 10）。','Reach Cat Cafe Boss (rank 10).'],
++  ['corgi_crown','黄金柯基','Golden Corgi','达到萌宠统帅（段位 30）。','Reach Critter Marshal (rank 30).'],
++  ['zen_capy','佛系真神豚','Zen Capybara God','达到水豚真神（段位 50）。','Reach Capybara God (rank 50).'],
++];
++export const AVATARS:Record<string,AvatarDefinition>=Object.fromEntries(rows.map(([id,zh,en,zhDesc,enDesc])=>[id,{id,name:{'zh-CN':zh,en},description:{'zh-CN':zhDesc,en:enDesc}}]));
++export const DEFAULT_AVATARS=Object.keys(AVATARS).slice(0,4);
+
+diff --git "a/D:\\rea_game\\games\\capybara-defense\\.runtime\\m3-review-base\\src\\core\\PlayerProgression.ts" "b/D:\\rea_game\\games\\capybara-defense\\src\\core\\PlayerProgression.ts"
+index e69de29..91dbd76 100644
+--- "a/D:\\rea_game\\games\\capybara-defense\\.runtime\\m3-review-base\\src\\core\\PlayerProgression.ts"
++++ "b/D:\\rea_game\\games\\capybara-defense\\src\\core\\PlayerProgression.ts"
+@@ -0,0 +1,85 @@
++import { AVATARS, DEFAULT_AVATARS } from '../config/avatars';
++import { HEROES } from '../config/heroes';
++import { PROPS } from '../config/props';
++import { RANKS, getRank } from '../config/ranks';
++import { WEAPONS } from '../config/weapons';
++import type { GameSettings, MapId, Profile } from './types';
++
++export const DEFAULT_SETTINGS:GameSettings={musicVolume:.5,soundVolume:.75,showDamageNumbers:true};
++const own=(object:object,id:string)=>Object.hasOwn(object,id);
++const unique=(ids:string[])=>[...new Set(ids)];
++const maps:MapId[]=['sunny_backyard','sakura_onsen','midnight_kitchen','cat_tower_maze'];
++const volume=(value:unknown,fallback:number)=>typeof value==='number'&&Number.isFinite(value)?Math.max(0,Math.min(1,value)):fallback;
++
++/** Awards are monotonic: historical evidence or an already granted avatar both suffice. */
++export function unlockAchievements(profile:Profile):Profile {
++  const best=Math.max(profile.winStreak,profile.bestWinStreak);
++  const highest=Math.max(profile.stars,profile.highestStars);
++  const weapons=unique(profile.unlockedWeapons.filter(id=>own(WEAPONS,id)));
++  const props=Object.keys(profile.ownedProps).filter(id=>own(PROPS,id)&&profile.ownedProps[id]>0);
++  const conditions:Record<string,boolean>={cat_swordsman:profile.wins>=1,doge_agent:best>=3,goose_bully:best>=5,
++    kungfu_panda:profile.mergedHeroes.includes('kungfu_po'),rooster_star:profile.mergedHeroes.includes('ballin_rooster'),frog_king:profile.mergedHeroes.includes('pepe_king'),
++    market_coon:props.length>=6,salted_fish:weapons.length>=12,bamboo_master:weapons.some(id=>WEAPONS[id].rarity===4),
++    sakura_capy:highest>=20,corgi_crown:highest>=60,zen_capy:highest>=100};
++  const earned=new Set([...DEFAULT_AVATARS,...profile.unlockedAvatars.filter(id=>own(AVATARS,id)),...Object.keys(conditions).filter(id=>conditions[id])]);
++  const unlockedAvatars=Object.keys(AVATARS).filter(id=>earned.has(id));
++  return {...profile,unlockedAvatars,avatarId:earned.has(profile.avatarId)?profile.avatarId:'capybara'};
++}
++export function recordMergedHeroes(profile:Profile,heroIds:string[]):Profile {
++  return unlockAchievements({...profile,mergedHeroes:unique([...profile.mergedHeroes,...heroIds].filter(id=>own(HEROES,id)))});
++}
++export function getUnlockedMaps(profile:Profile):MapId[] {
++  const rank=getRank(Math.max(profile.stars,profile.highestStars)).index;
++  return maps.slice(0,Math.min(4,Math.floor(rank/10)+1));
++}
++export function resolveMap(profile:Profile):MapId {
++  return profile.selectedMap!=='auto'&&getUnlockedMaps(profile).includes(profile.selectedMap)?profile.selectedMap:getRank(profile.stars).mapId;
++}
++export function selectMap(profile:Profile,id:'auto'|MapId):Profile {
++  if(id!=='auto'&&!getUnlockedMaps(profile).includes(id)) return profile;
++  return {...profile,selectedMap:id};
++}
++export function selectAvatar(profile:Profile,id:string):Profile {
++  if(!own(AVATARS,id)||!profile.unlockedAvatars.includes(id)) return profile;
++  return {...profile,avatarId:id};
++}
++export function updateSettings(profile:Profile,patch:Partial<GameSettings>):Profile {
++  const values={...profile.settings,...patch};
++  return {...profile,settings:{musicVolume:volume(values.musicVolume,DEFAULT_SETTINGS.musicVolume),soundVolume:volume(values.soundVolume,DEFAULT_SETTINGS.soundVolume),
++    showDamageNumbers:typeof values.showDamageNumbers==='boolean'?values.showDamageNumbers:DEFAULT_SETTINGS.showDamageNumbers}};
++}
++export function setRank(profile:Profile,index:number):Profile {
++  if(!Number.isInteger(index)||index<0||index>=RANKS.length) return profile;
++  let p=unlockAchievements({...profile,stars:RANKS[index].minStars,highestStars:Math.max(profile.highestStars,RANKS[index].minStars)});
++  if(p.selectedMap!=='auto'&&!getUnlockedMaps(p).includes(p.selectedMap)) p={...p,selectedMap:'auto'};
++  return p;
++}
++export function applyBattleProgress(profile:Profile,won:boolean,mergedHeroes:string[]=[]):Profile {
++  const winStreak=won?profile.winStreak+1:0;
++  const stars=won?profile.stars+(winStreak>=3?2:1):getRank(profile.stars).index<10?profile.stars:Math.max(20,profile.stars-1);
++  return recordMergedHeroes({...profile,stars,highestStars:Math.max(profile.highestStars,stars),winStreak,bestWinStreak:Math.max(profile.bestWinStreak,winStreak)},mergedHeroes);
++}
++
++export interface LeaderboardEntry {id:string;name:{'zh-CN':string;en:string};stars:number;avatarId:string;wins:number;matches:number;isPlayer:boolean}
++const npcRows:Array<[string,string,number,string,number,number]>=[
++  ['隔壁二哈主人','The Husky Next Door',6,'hamster',6,12],
++  ['瓜子不离手','Seed Snack Captain',12,'hamster',11,19],
++  ['早八遛狗人','Morning Dog Walker',18,'doge_agent',16,25],
++  ['猫咖打工喵','Cafe Cat Keeper',24,'cat_swordsman',21,33],
++  ['温泉泡泡糖','Onsen Bubblegum',32,'sakura_capy',28,42],
++  ['厨房摸鱼王','Kitchen Daydreamer',40,'salted_fish',35,51],
++  ['鹅村扛把子','Village Goose Boss',50,'goose_bully',42,60],
++  ['熊猫不熬夜','Early Bedtime Panda',60,'kungfu_panda',51,70],
++  ['篮球练习生','Basketball Trainee',72,'rooster_star',60,81],
++  ['皇冠小短腿','Crowned Short Legs',84,'corgi_crown',69,92],
++  ['黑市常客','Market Regular',96,'market_coon',79,103],
++  ['孤寡不孤单','Never Lonely Frog',110,'frog_king',91,116],
++  ['竹林扫地僧','Bamboo Sweeper',130,'bamboo_master',106,131],
++  ['后院退休园长','Retired Garden Warden',150,'capybara',121,148],
++  ['情绪稳定祖师爷','Grandmaster of Calm',168,'zen_capy',137,163],
++];
++export function getLeaderboard(profile:Profile):LeaderboardEntry[] {
++  const entries:LeaderboardEntry[]=npcRows.map(([zh,en,stars,avatarId,wins,matches],index)=>({id:`npc_${String(index+1).padStart(2,'0')}`,name:{'zh-CN':zh,en},stars,avatarId,wins,matches,isPlayer:false}));
++  entries.push({id:'player',name:{'zh-CN':'我',en:'You'},stars:profile.stars,avatarId:profile.avatarId,wins:profile.wins,matches:profile.matches,isPlayer:true});
++  return entries.sort((a,b)=>b.stars-a.stars||b.wins-a.wins||a.id.localeCompare(b.id));
++}
+
+diff --git "a/D:\\rea_game\\games\\capybara-defense\\.runtime\\m3-review-base\\src\\core\\MetaProgression.ts" "b/D:\\rea_game\\games\\capybara-defense\\src\\core\\MetaProgression.ts"
+index a94b9ad..cae5b3b 100644
+--- "a/D:\\rea_game\\games\\capybara-defense\\.runtime\\m3-review-base\\src\\core\\MetaProgression.ts"
++++ "b/D:\\rea_game\\games\\capybara-defense\\src\\core\\MetaProgression.ts"
+@@ -1,80 +1,95 @@
+ import { FRAGMENTS } from '../config/enemies';
+ import { HERO_FAMILIES, RARITY_RULES, WEAPONS, rollWeapon } from '../config/weapons';
+ import { PROPS } from '../config/props';
++import { HEROES } from '../config/heroes';
++import { AVATARS, DEFAULT_AVATARS } from '../config/avatars';
++import { DEFAULT_SETTINGS, getUnlockedMaps, unlockAchievements, updateSettings } from './PlayerProgression';
+ import type { Profile } from './types';
+ 
+ export interface MetaResult { profile:Profile; ok:boolean; key:string; amount?:number; newWeapons?:string[] }
+ export interface LotteryPrize { type:'prop'|'coins'|'fragment'; id?:string; amount:number }
+ const has = (object:object,key:string) => Object.hasOwn(object,key);
+ const object = (value:unknown):Record<string,unknown> => value && typeof value==='object' && !Array.isArray(value) ? value as Record<string,unknown> : {};
+ const count = (value:unknown):number => typeof value==='number' && Number.isSafeInteger(value) && value>=0 ? value : 0;
+ const strings = (value:unknown):string[] => Array.isArray(value) ? value.filter((id):id is string=>typeof id==='string') : [];
+ const unique = (ids:string[]) => [...new Set(ids)];
+ const sample = (random:()=>number) => Math.max(0,Math.min(.999999999999,Number(random())||0));
+ const choose = <T>(pool:T[],random:()=>number):T => pool[Math.floor(sample(random)*pool.length)];
+ const copy = (profile:Profile):Profile => ({...profile,fragments:[...profile.fragments],awardedBattles:[...profile.awardedBattles],
+   weaponFragments:{...profile.weaponFragments},unlockedWeapons:[...profile.unlockedWeapons],equippedWeapons:{...profile.equippedWeapons},
+   ownedProps:{...profile.ownedProps},equippedActiveProps:[...profile.equippedActiveProps],equippedPassiveProps:[...profile.equippedPassiveProps],
++  unlockedAvatars:[...profile.unlockedAvatars],mergedHeroes:[...profile.mergedHeroes],settings:{...profile.settings},
+   shop:profile.shop ? {...profile.shop,offers:[...profile.shop.offers]} : null});
+ const fail = (profile:Profile,key:string):MetaResult => ({profile:copy(profile),ok:false,key});
+-const success = (profile:Profile,key:string,amount?:number):MetaResult => ({profile,ok:true,key,...(amount===undefined?{}:{amount})});
++const success = (profile:Profile,key:string,amount?:number):MetaResult => ({profile:unlockAchievements(profile),ok:true,key,...(amount===undefined?{}:{amount})});
+ 
+ export function createProfile():Profile {
+   return {coins:0,wins:0,matches:0,fragments:[],awardedBattles:[],schemaVersion:2,
+-    weaponFragments:{},unlockedWeapons:[],equippedWeapons:{},ownedProps:{},equippedActiveProps:[],equippedPassiveProps:[],freeLotteryTickets:0,shop:null};
++    weaponFragments:{},unlockedWeapons:[],equippedWeapons:{},ownedProps:{},equippedActiveProps:[],equippedPassiveProps:[],freeLotteryTickets:0,shop:null,
++    stars:0,highestStars:0,winStreak:0,bestWinStreak:0,selectedMap:'auto',avatarId:'capybara',unlockedAvatars:[...DEFAULT_AVATARS],mergedHeroes:[],settings:{...DEFAULT_SETTINGS}};
+ }
+ export function normalizeProfile(raw:unknown):Profile {
+   const data=object(raw);const p=createProfile();
+   p.coins=count(data.coins);p.matches=count(data.matches);p.wins=Math.min(count(data.wins),p.matches);
++  // Only absence migrates from wins: explicit zero and malformed stars never replay progress.
++  p.stars=has(data,'stars')?count(data.stars):p.wins;
++  p.highestStars=Math.max(p.stars,count(data.highestStars));
++  p.winStreak=count(data.winStreak);p.bestWinStreak=Math.max(p.winStreak,count(data.bestWinStreak));
++  p.unlockedAvatars=unique([...DEFAULT_AVATARS,...strings(data.unlockedAvatars).filter(id=>has(AVATARS,id))]);
++  p.avatarId=typeof data.avatarId==='string'?data.avatarId:'capybara';
++  p.mergedHeroes=unique(strings(data.mergedHeroes).filter(id=>has(HEROES,id)));
++  p.settings=updateSettings(p,object(data.settings)).settings;
++  const selectedMap=data.selectedMap;
++  if(selectedMap==='auto'||getUnlockedMaps(p).some(id=>id===selectedMap)) p.selectedMap=selectedMap as Profile['selectedMap'];
+   const validLegacy=new Set<string>(FRAGMENTS);
+   p.fragments=strings(data.fragments).filter(id=>validLegacy.has(id));
+   p.awardedBattles=unique(strings(data.awardedBattles).filter(id=>id.length>0&&id.length<200));
+   p.weaponFragments=Object.fromEntries(Object.entries(object(data.weaponFragments)).filter(([id,n])=>has(WEAPONS,id)&&count(n)>0).map(([id,n])=>[id,count(n)]));
+   // A schema marker makes conversion idempotent while preserving the old list as history.
+   if(data.schemaVersion!==2&&p.fragments.length) p.weaponFragments.m01_swatter=(p.weaponFragments.m01_swatter??0)+p.fragments.length;
+   p.unlockedWeapons=unique(strings(data.unlockedWeapons).filter(id=>has(WEAPONS,id)));
+   for(const weapon of Object.values(WEAPONS)) {
+     if((p.weaponFragments[weapon.id]??0)>=RARITY_RULES[weapon.rarity].fragments&&!p.unlockedWeapons.includes(weapon.id)) p.unlockedWeapons.push(weapon.id);
+   }
+   const used=new Set<string>();
+   for(const [hero,id] of Object.entries(object(data.equippedWeapons))) {
+     if(typeof id==='string'&&has(HERO_FAMILIES,hero)&&has(WEAPONS,id)&&p.unlockedWeapons.includes(id)&&WEAPONS[id].family===HERO_FAMILIES[hero]&&!used.has(id)) {
+       p.equippedWeapons[hero]=id;used.add(id);
+     }
+   }
+   p.ownedProps=Object.fromEntries(Object.entries(object(data.ownedProps)).filter(([id,n])=>has(PROPS,id)&&count(n)>0).map(([id,n])=>[id,Math.min(count(n),PROPS[id].maxLevel)]));
+   const slots=(value:unknown,type:'active'|'passive',max:number)=>unique(strings(value)).filter(id=>has(PROPS,id)&&PROPS[id].type===type&&(p.ownedProps[id]??0)>0).slice(0,max);
+   p.equippedActiveProps=slots(data.equippedActiveProps,'active',2);p.equippedPassiveProps=slots(data.equippedPassiveProps,'passive',6);
+   p.freeLotteryTickets=count(data.freeLotteryTickets);
+   const shop=object(data.shop);
+   if(typeof shop.day==='string'&&/^\d{4}-\d{2}-\d{2}$/.test(shop.day)) p.shop={day:shop.day,offers:unique(strings(shop.offers).filter(id=>has(PROPS,id))).slice(0,3)};
+-  return p;
++  return unlockAchievements(p);
+ }
+ export function grantWeaponFragments(profile:Profile,ids:string[]):{profile:Profile;newWeapons:string[]} {
+   const p=copy(profile);const newWeapons:string[]=[];
+   for(const id of ids) {
+     if(!has(WEAPONS,id)) continue;
+     p.weaponFragments[id]=(p.weaponFragments[id]??0)+1;
+     if(!p.unlockedWeapons.includes(id)&&p.weaponFragments[id]>=RARITY_RULES[WEAPONS[id].rarity].fragments) {p.unlockedWeapons.push(id);newWeapons.push(id);}
+   }
+-  return {profile:p,newWeapons};
++  return {profile:unlockAchievements(p),newWeapons};
+ }
+ export function equipWeapon(profile:Profile,heroId:string,weaponId:string|null):MetaResult {
+   if(!has(HERO_FAMILIES,heroId)) return fail(profile,'meta.invalidHero');
+   if(weaponId===null) {const p=copy(profile);delete p.equippedWeapons[heroId];return success(p,'meta.unequipped');}
+   if(!has(WEAPONS,weaponId)) return fail(profile,'meta.invalidWeapon');
+   if(!profile.unlockedWeapons.includes(weaponId)) return fail(profile,'meta.weaponLocked');
+   if(WEAPONS[weaponId].family!==HERO_FAMILIES[heroId]) return fail(profile,'meta.wrongFamily');
+   const p=copy(profile);
+   for(const [hero,id] of Object.entries(p.equippedWeapons)) if(id===weaponId) delete p.equippedWeapons[hero];
+   p.equippedWeapons[heroId]=weaponId;return success(p,'meta.equipped');
+ }
+ export function recycleFragments(profile:Profile,rarities:number[]):MetaResult {
+   const p=copy(profile);let amount=0;
+   for(const id of p.unlockedWeapons) {
+     const weapon=WEAPONS[id];if(!weapon||!rarities.includes(weapon.rarity)) continue;
+     const rule=RARITY_RULES[weapon.rarity];const surplus=Math.max(0,(p.weaponFragments[id]??0)-rule.fragments);
+     if(surplus) {amount+=surplus*rule.recycle;p.weaponFragments[id]-=surplus;}
+   }
+   if(!amount) return fail(profile,'meta.noFragments');
+   p.coins+=amount;return success(p,'meta.recycled',amount);
+@@ -83,42 +98,42 @@ export function setPropSlots(profile:Profile,active:string[],passive:string[]):M
+   const valid=(ids:string[],type:'active'|'passive',max:number)=>ids.length<=max&&unique(ids).length===ids.length&&ids.every(id=>has(PROPS,id)&&PROPS[id].type===type&&(profile.ownedProps[id]??0)>0);
+   if(!valid(active,'active',2)||!valid(passive,'passive',6)) return fail(profile,'meta.invalidSlots');
+   const p=copy(profile);p.equippedActiveProps=[...active];p.equippedPassiveProps=[...passive];return success(p,'meta.equipped');
+ }
+ export function equipProp(profile:Profile,id:string):MetaResult {
+   if(!has(PROPS,id)) return fail(profile,'meta.invalidProp');
+   if(!(profile.ownedProps[id]>0)) return fail(profile,'meta.propNotOwned');
+   const key=PROPS[id].type==='active'?'equippedActiveProps':'equippedPassiveProps';const max=PROPS[id].type==='active'?2:6;
+   const p=copy(profile);const equipped=p[key].includes(id);
+   if(equipped) p[key]=p[key].filter(item=>item!==id);
+   else if(p[key].length>=max) return fail(profile,'meta.slotsFull');
+   else p[key].push(id);
+   return success(p,equipped?'meta.unequipped':'meta.equipped');
+ }
+ function shopOffers(profile:Profile,random:()=>number):string[] {
+   const pool=Object.values(PROPS).filter(p=>(profile.ownedProps[p.id]??0)<p.maxLevel).map(p=>p.id);const offers:string[]=[];
+   while(pool.length&&offers.length<3) {const index=Math.floor(sample(random)*pool.length);offers.push(pool.splice(index,1)[0]);}
+   return offers;
+ }
+ export function ensureDailyShop(profile:Profile,day:string,random:()=>number):Profile {
+-  const p=copy(profile);if(p.shop?.day===day) return p;
+-  p.shop={day,offers:shopOffers(p,random)};return p;
++  const p=copy(profile);if(p.shop?.day===day) return unlockAchievements(p);
++  p.shop={day,offers:shopOffers(p,random)};return unlockAchievements(p);
+ }
+ export function refreshShop(profile:Profile,day:string,random:()=>number):MetaResult {
+   if(profile.coins<20) return fail(profile,'meta.insufficientCoins');
+   if(!Object.values(PROPS).some(p=>(profile.ownedProps[p.id]??0)<p.maxLevel)) return fail(profile,'meta.shopEmpty');
+   const p=copy(profile);p.coins-=20;p.shop={day,offers:shopOffers(p,random)};return success(p,'meta.shopRefreshed',-20);
+ }
+ /** Replace one newly capped item without rerolling the other shelf slots. */
+ function replaceCappedShopOffer(profile:Profile,id:string):void {
+   const shop=profile.shop;
+   if(!shop||(profile.ownedProps[id]??0)<PROPS[id].maxLevel||!shop.offers.includes(id)) return;
+   const replacement=Object.values(PROPS).find(prop=>(profile.ownedProps[prop.id]??0)<prop.maxLevel&&!shop.offers.includes(prop.id));
+   shop.offers=shop.offers.flatMap(offer=>offer===id ? (replacement ? [replacement.id] : []) : [offer]);
+ }
+ export function buyProp(profile:Profile,id:string):MetaResult {
+   if(!has(PROPS,id)) return fail(profile,'meta.invalidProp');
+   const definition=PROPS[id];const level=profile.ownedProps[id]??0;
+   if(level>=definition.maxLevel) return fail(profile,'meta.propMaxLevel');
+   if(!profile.shop?.offers.includes(id)) return fail(profile,'meta.propNotOffered');
+   if(profile.coins<definition.price) return fail(profile,'meta.insufficientCoins');
+   const p=copy(profile);p.coins-=definition.price;p.ownedProps[id]=level+1;
+@@ -132,30 +147,32 @@ export function createLotteryPrizes(_profile:Profile,random:()=>number):LotteryP
+     {type:'fragment',id:rollWeapon(random,[3]),amount:1},{type:'fragment',id:rollWeapon(random,[4]),amount:1});
+   return prizes;
+ }
+ export function spinLottery(profile:Profile,prizes:LotteryPrize[],random:()=>number):MetaResult&{prize?:LotteryPrize;index?:number} {
+   const valid=(prize:LotteryPrize)=>prize&&Number.isSafeInteger(prize.amount)&&prize.amount>0&&
+     (prize.type==='coins'?[40,80,160].includes(prize.amount):prize.type==='prop'?typeof prize.id==='string'&&has(PROPS,prize.id)&&prize.amount===1:
+       prize.type==='fragment'&&typeof prize.id==='string'&&has(WEAPONS,prize.id)&&WEAPONS[prize.id].rarity>=3&&prize.amount===1);
+   if(prizes.length!==8||!prizes.every(valid)) return fail(profile,'meta.invalidPrizes');
+   if(profile.freeLotteryTickets<=0&&profile.coins<80) return fail(profile,'meta.insufficientCoins');
+   let p=copy(profile);if(p.freeLotteryTickets>0) p.freeLotteryTickets--;else p.coins-=80;
+   const index=Math.floor(sample(random)*prizes.length);const prize={...prizes[index]};let newWeapons:string[]=[];
+   if(prize.type==='coins') p.coins+=prize.amount;
+   else if(prize.type==='prop') {
+     const id=prize.id!;if((p.ownedProps[id]??0)>=PROPS[id].maxLevel) p.coins+=PROPS[id].price;
+     else {p.ownedProps[id]=(p.ownedProps[id]??0)+1;replaceCappedShopOffer(p,id);}
+   } else {const granted=grantWeaponFragments(p,[prize.id!]);p=granted.profile;newWeapons=granted.newWeapons;}
+   return {...success(p,'meta.lotteryWon'),prize,index,newWeapons};
+ }
+ export function unlockAllProfile(profile:Profile):Profile {
+   const p=copy(profile);p.coins=9999;p.unlockedWeapons=Object.keys(WEAPONS);
++  p.stars=Math.max(180,p.stars);p.highestStars=Math.max(p.highestStars,p.stars);
++  p.unlockedAvatars=Object.keys(AVATARS);p.mergedHeroes=Object.keys(HEROES);
+   p.equippedWeapons={};
+   for(const weapon of Object.values(WEAPONS)) {
+     p.weaponFragments[weapon.id]=Math.max(p.weaponFragments[weapon.id]??0,RARITY_RULES[weapon.rarity].fragments);
+     if(weapon.signatureHero) p.equippedWeapons[weapon.signatureHero]=weapon.id;
+   }
+   p.ownedProps=Object.fromEntries(Object.values(PROPS).map(prop=>[prop.id,prop.maxLevel]));
+   p.equippedActiveProps=['washer','clay'];p.equippedPassiveProps=['gold_doge','auto_shovel','giant_orange_cat','vip_poster','extra_oranges','promo_badge'];
+   if(p.shop) p.shop.offers=[];
+-  return p;
++  return unlockAchievements(p);
+ }
+
+diff --git "a/D:\\rea_game\\games\\capybara-defense\\.runtime\\m3-review-base\\src\\ui\\storage.ts" "b/D:\\rea_game\\games\\capybara-defense\\src\\ui\\storage.ts"
+index b9d3ac0..aade0f1 100644
+--- "a/D:\\rea_game\\games\\capybara-defense\\.runtime\\m3-review-base\\src\\ui\\storage.ts"
++++ "b/D:\\rea_game\\games\\capybara-defense\\src\\ui\\storage.ts"
+@@ -1,22 +1,23 @@
+ import { FRAGMENTS } from '../config/enemies';
+ import { createProfile, grantWeaponFragments, normalizeProfile, unlockAllProfile } from '../core/MetaProgression';
++import { applyBattleProgress } from '../core/PlayerProgression';
+ import type { BattleResult, Profile } from '../core/types';
+ 
+ export const STORAGE_PREFIX = 'capybara_defense_v1:';
+ const validFragments = new Set<string>(FRAGMENTS);
+ 
+ export function browserStorage(): Storage | undefined {
+   try { return typeof window === 'undefined' ? undefined : window.localStorage; }
+   catch { return undefined; }
+ }
+ 
+ export function readSetting(key: string, storage = browserStorage()): string | null {
+   try { return storage?.getItem(`${STORAGE_PREFIX}${key}`) ?? null; }
+   catch { return null; }
+ }
+ 
+ export function writeSetting(key: string, value: string, storage = browserStorage()): boolean {
+   try {
+     if (!storage) return false;
+     storage.setItem(`${STORAGE_PREFIX}${key}`, value);
+     return true;
+@@ -34,48 +35,48 @@ export function loadProfile(storage = browserStorage()): Profile {
+   try {
+     const raw: unknown = JSON.parse(readSetting('profile', storage) ?? 'null');
+     return normalizeProfile(raw);
+   } catch { return emptyProfile(); }
+ }
+ 
+ export function saveProfile(profile: Profile, storage = browserStorage()): boolean {
+   return writeSetting('profile', JSON.stringify(profile), storage);
+ }
+ 
+ /** A receipt and its rewards are saved together, so revisiting a result cannot pay twice. */
+ export function awardBattle(profile: Profile, battleId: string, result: BattleResult): { profile: Profile; awarded: boolean; newWeapons:string[] } {
+   if (!battleId || profile.awardedBattles.includes(battleId)) return { profile, awarded: false, newWeapons:[] };
+   const won = result.winner === 'player';
+   const p=normalizeProfile(profile);
+   const legacy=won ? result.loot.filter(id=>validFragments.has(id)) : [];
+   const granted=grantWeaponFragments(p,won ? [...result.loot,...legacy.map(()=>'m01_swatter')] : []);
+   return {
+     awarded: true,
+     newWeapons:granted.newWeapons,
+-    profile: {
++    profile: applyBattleProgress({
+       ...granted.profile,
+       coins: profile.coins + (won ? counter(result.coins) : 0),
+       wins: profile.wins + (won ? 1 : 0), matches: profile.matches + 1,
+       fragments: [...p.fragments, ...legacy],
+       awardedBattles: [...profile.awardedBattles, battleId],
+       freeLotteryTickets:p.freeLotteryTickets+(won?1:0),
+-    },
++    },won,result.mergedHeroes),
+   };
+ }
+ 
+ export function isTestProfile(storage = browserStorage()):boolean {
+   return readSetting('normalProfileBackup',storage)!==null;
+ }
+ 
+ /** Persist the backup first; repeated activation must never replace it with a test save. */
+ export function enableTestProfile(storage = browserStorage()):Profile {
+   const profile=loadProfile(storage);
+   const alreadyActive=isTestProfile(storage);
+   if(!alreadyActive&&!writeSetting('normalProfileBackup',JSON.stringify(profile),storage)) return profile;
+   const full=unlockAllProfile(profile);
+   if(!saveProfile(full,storage)) {
+     // This attempt never activated: its new backup must not later undo normal play.
+     // A prior active test session still needs its original backup for restoration.
+     if(!alreadyActive) {
+       try {storage?.removeItem(`${STORAGE_PREFIX}normalProfileBackup`);} catch { /* Storage may be disabled. */ }
+     }
+     return profile;
+
+diff --git "a/D:\\rea_game\\games\\capybara-defense\\.runtime\\m3-review-base\\tests\\m3-progression.test.ts" "b/D:\\rea_game\\games\\capybara-defense\\tests\\m3-progression.test.ts"
+index e69de29..9b84f5a 100644
+--- "a/D:\\rea_game\\games\\capybara-defense\\.runtime\\m3-review-base\\tests\\m3-progression.test.ts"
++++ "b/D:\\rea_game\\games\\capybara-defense\\tests\\m3-progression.test.ts"
+@@ -0,0 +1,207 @@
++import { describe, expect, it } from 'vitest';
++import { createProfile, normalizeProfile, grantWeaponFragments, buyProp, spinLottery, createLotteryPrizes, unlockAllProfile } from '../src/core/MetaProgression';
++import { awardBattle, enableTestProfile, restoreNormalProfile, loadProfile, saveProfile, isTestProfile, STORAGE_PREFIX } from '../src/ui/storage';
++import { HEROES } from '../src/config/heroes';
++import { WEAPONS } from '../src/config/weapons';
++import { PROPS } from '../src/config/props';
++import type { Profile } from '../src/core/types';
++
++const ranks = () => import('../src/config/ranks').catch(() => undefined);
++const players = () => import('../src/core/PlayerProgression').catch(() => undefined);
++async function progression() {
++  const module = await players();
++  expect(module, 'M3 player progression exists').toBeDefined();
++  if (!module) throw Error('M3 player progression missing');
++  return module;
++}
++function memoryStorage(): Storage {
++  const values = new Map<string, string>();
++  return { get length() { return values.size; }, key: i => [...values.keys()][i] ?? null,
++    getItem: k => values.get(k) ?? null, setItem: (k, v) => { values.set(k, v); },
++    removeItem: k => { values.delete(k); }, clear: () => values.clear() };
++}
++const result = { winner: 'player' as const, reason: 'waves' as const, loot: [], playerLoot: [], aiLoot: [], coins: 35, elapsed: 280 };
++const avatarIds = ['capybara','hamster','squirrel','bee','cat_swordsman','doge_agent','goose_bully','kungfu_panda','rooster_star','frog_king','market_coon','salted_fish','bamboo_master','sakura_capy','corgi_crown','zen_capy'];
++
++describe('M3 ranks', () => {
++  // Each literal threshold catches an off-by-one promotion or an incorrectly ordered tier.
++  it.each([0,2,4,6,8,10,12,14,16,18,20,22,24,26,28,30,32,34,36,38,40,42,44,46,48,50,52,54,56,58,60,62,64,66,68,70,72,74,76,78,80,82,84,86,88,90,92,94,96,98,100,125,150,180].map((stars,index)=>({stars,index})))('promotes exactly at $stars stars to rank $index', async ({stars,index}) => {
++    const m = await ranks(); expect(m).toBeDefined(); if (!m) return;
++    expect(m.getRank(stars).index).toBe(index);
++    expect(m.getRank(stars).minStars).toBe(stars);
++    if (stars > 0) expect(m.getRank(stars - 1).index).toBe(index - 1);
++  });
++  it('derives the specified HP, rewards and fragment chances for every tier', async () => {
++    const m = await ranks(); expect(m).toBeDefined(); if (!m) return;
++    expect(m.RANKS).toHaveLength(54);
++    const groups = [[1,1.08,35,1],[1.1,1.18,45,1],[1.2,1.3,55,1],[1.32,1.42,65,1],[1.45,1.55,75,1],[1.58,1.7,85,1],[1.72,1.85,95,1],[1.88,2,110,1],[2.05,2.2,125,1.5],[2.25,2.45,140,1.8]];
++    groups.forEach(([lo,hi,coins,fragments],g)=>m.RANKS.slice(g*5,g*5+5).forEach((rank,i)=>{
++      expect(rank.hpMultiplier).toBeCloseTo(lo+(hi-lo)*i/4,4);
++      expect(rank.winCoins).toBe(coins); expect(rank.fragmentMultiplier).toBe(fragments);
++      expect(rank.name.en).toContain(['I','II','III','IV','V'][i]);
++    }));
++    expect(m.RANKS.slice(50).map(r=>[r.hpMultiplier,r.winCoins,r.fragmentMultiplier])).toEqual([[2.5,160,2.2],[2.6,160,2.2],[2.7,160,2.2],[2.8,160,2.2]]);
++    expect(m.getRank(-10).index).toBe(0); expect(m.getRank(NaN).index).toBe(0); expect(m.getRank(10000).index).toBe(53);
++    expect(m.RANKS.slice(40).map(r=>r.mapId)).toEqual(['sunny_backyard','sakura_onsen','midnight_kitchen','cat_tower_maze','sunny_backyard','sakura_onsen','midnight_kitchen','cat_tower_maze','sunny_backyard','sakura_onsen','midnight_kitchen','cat_tower_maze','sunny_backyard','sakura_onsen']);
++  });
++});
++
++describe('M3 profile migration', () => {
++  it('adds defaults while preserving legal M1/M2 counters and repeated normalization', () => {
++    const legacy = {coins:371,wins:4,matches:7,fragments:['bamboo_blade'],awardedBattles:['old']};
++    const p = normalizeProfile(legacy);
++    expect(p).toMatchObject({...legacy,stars:4,highestStars:4,winStreak:0,bestWinStreak:0,selectedMap:'auto',avatarId:'capybara',mergedHeroes:[],settings:{musicVolume:.5,soundVolume:.75,showDamageNumbers:true}});
++    expect(p.unlockedAvatars).toEqual([...avatarIds.slice(0,4),'cat_swordsman']);
++    expect(normalizeProfile(p)).toEqual(p);
++    const m2 = normalizeProfile({...legacy,schemaVersion:2,stars:0});
++    expect(m2.stars).toBe(0); expect(m2.weaponFragments).toEqual({}); expect(normalizeProfile(m2)).toEqual(m2);
++    expect(normalizeProfile({wins:100,matches:3}).stars).toBe(3);
++    expect(normalizeProfile({...legacy,stars:'bad'}).stars).toBe(0);
++  });
++  it('sanitizes invalid choices, streaks, hero history and settings without treating zero as absent', () => {
++    const p = normalizeProfile({stars:20,highestStars:2,winStreak:5,bestWinStreak:2,avatarId:'fake',unlockedAvatars:['fake','hamster','hamster'],selectedMap:'cat_tower_maze',mergedHeroes:['kungfu_po','fake','kungfu_po'],settings:{musicVolume:0,soundVolume:2,showDamageNumbers:false}});
++    expect(p).toMatchObject({highestStars:20,bestWinStreak:5,avatarId:'capybara',selectedMap:'auto',mergedHeroes:['kungfu_po'],settings:{musicVolume:0,soundVolume:1,showDamageNumbers:false}});
++    expect(p.unlockedAvatars).toContain('kungfu_panda');
++    const bad=normalizeProfile({stars:-1,highestStars:Infinity,winStreak:-2,bestWinStreak:'5',settings:{musicVolume:-2,soundVolume:NaN,showDamageNumbers:0}});
++    expect(bad).toMatchObject({stars:0,highestStars:0,winStreak:0,bestWinStreak:0,settings:{musicVolume:0,soundVolume:.75,showDamageNumbers:true}});
++    expect(normalizeProfile(p)).toEqual(p);
++  });
++});
++
++describe('M3 stars and permanent maps', () => {
++  it.each([{stars:19,want:19},{stars:20,want:20},{stars:21,want:20},{stars:22,want:21}])('protects losses at $stars stars', async ({stars,want})=>{
++    const m=await progression(); const p=m.applyBattleProgress({...createProfile(),stars,highestStars:stars,winStreak:5,bestWinStreak:5},false);
++    expect(p).toMatchObject({stars:want,highestStars:stars,winStreak:0,bestWinStreak:5,coins:0,wins:0,matches:0});
++  });
++  it('awards +1, +1, then +2 stars from the third win and retains best streak after a loss', async()=>{
++    const m=await progression(); let p=createProfile();
++    for (const stars of [1,2,4,6,8]) { p=m.applyBattleProgress(p,true); expect(p.stars).toBe(stars); }
++    expect(p).toMatchObject({winStreak:5,bestWinStreak:5,highestStars:8});
++    expect(p.unlockedAvatars).toEqual(expect.arrayContaining(['doge_agent','goose_bully']));
++    p=m.applyBattleProgress(p,false); p=m.applyBattleProgress(p,true);
++    expect(p).toMatchObject({winStreak:1,bestWinStreak:5,stars:9});
++  });
++  it('unlocks four maps at rank 0/10/20/30 and preserves manual choice after demotion', async()=>{
++    const m=await progression(); let p=createProfile();
++    expect(m.getUnlockedMaps(p)).toEqual(['sunny_backyard']);
++    for(const [index,id] of [[10,'sakura_onsen'],[20,'midnight_kitchen'],[30,'cat_tower_maze']] as const) {
++      p=m.setRank(p,index); expect(m.resolveMap(p)).toBe(id); expect(m.getUnlockedMaps(p)).toContain(id);
++    }
++    p=m.selectMap(p,'cat_tower_maze'); p=m.setRank(p,0);
++    expect(p).toMatchObject({stars:0,highestStars:60,selectedMap:'cat_tower_maze'});
++    expect(m.resolveMap(p)).toBe('cat_tower_maze'); expect(m.getUnlockedMaps(p)).toHaveLength(4);
++    expect(m.resolveMap(m.selectMap(p,'auto'))).toBe('sunny_backyard');
++    expect(m.selectMap(createProfile(),'cat_tower_maze')).toEqual(createProfile());
++    expect(m.selectMap(createProfile(),'fake' as never)).toEqual(createProfile());
++    expect(m.setRank(p,54)).toEqual(p); expect(m.setRank(p,NaN)).toEqual(p);
++  });
++  it('retains the highest-tier map and earned avatar after a real rank-boundary loss',async()=>{
++    const m=await progression();let p=m.selectMap(m.setRank(createProfile(),30),'cat_tower_maze');
++    p=m.applyBattleProgress(p,false);
++    expect(p).toMatchObject({stars:59,highestStars:60,selectedMap:'cat_tower_maze'});
++    expect(m.getUnlockedMaps(p)).toHaveLength(4);expect(m.resolveMap(p)).toBe('cat_tower_maze');
++    expect(p.unlockedAvatars).toContain('corgi_crown');expect(normalizeProfile(p)).toEqual(p);
++  });
++  it('settles stars, hero history, first-win achievement and the receipt exactly once across reload',()=>{
++    const storage=memoryStorage(); const first=awardBattle(createProfile(),'m3-once',{...result,mergedHeroes:['kungfu_po']});
++    expect(first.profile).toMatchObject({stars:1,highestStars:1,winStreak:1,bestWinStreak:1,wins:1,matches:1,coins:35,mergedHeroes:['kungfu_po']});
++    expect(first.profile.unlockedAvatars).toEqual(expect.arrayContaining(['cat_swordsman','kungfu_panda']));
++    saveProfile(first.profile,storage); expect(awardBattle(loadProfile(storage),'m3-once',result)).toMatchObject({awarded:false,profile:first.profile});
++  });
++});
++
++describe('M3 avatars and local leaderboard',()=>{
++  const cases: Array<{id:string;patch:Partial<Profile>}> = [
++    ...avatarIds.slice(0,4).map(id=>({id,patch:{}})),
++    {id:'cat_swordsman',patch:{wins:1,matches:1}}, {id:'doge_agent',patch:{bestWinStreak:3}}, {id:'goose_bully',patch:{bestWinStreak:5}},
++    {id:'kungfu_panda',patch:{mergedHeroes:['kungfu_po']}}, {id:'rooster_star',patch:{mergedHeroes:['ballin_rooster']}}, {id:'frog_king',patch:{mergedHeroes:['pepe_king']}},
++    {id:'market_coon',patch:{ownedProps:{washer:1,clay:1,milk_bottle:1,whistle:1,expired_can:1,catnip:1}}},
++    {id:'salted_fish',patch:{unlockedWeapons:Object.keys(WEAPONS).slice(0,12)}}, {id:'bamboo_master',patch:{unlockedWeapons:['m09_cat_blade']}},
++    {id:'sakura_capy',patch:{highestStars:20}}, {id:'corgi_crown',patch:{highestStars:60}}, {id:'zen_capy',patch:{highestStars:100}},
++  ];
++  it.each(cases)('unlocks $id from its real achievement condition',async({id,patch})=>{
++    const m=await progression();const p={...createProfile(),...patch};const before=JSON.stringify(p);
++    expect(m.unlockAchievements(p).unlockedAvatars).toContain(id);expect(JSON.stringify(p)).toBe(before);
++  });
++  it.each([
++    {id:'cat_swordsman',patch:{wins:0,matches:10}},
++    {id:'doge_agent',patch:{bestWinStreak:2}}, {id:'goose_bully',patch:{bestWinStreak:4}},
++    {id:'kungfu_panda',patch:{mergedHeroes:['zen_master']}}, {id:'rooster_star',patch:{mergedHeroes:['ronin_goose']}}, {id:'frog_king',patch:{mergedHeroes:['purrcerer']}},
++    {id:'market_coon',patch:{ownedProps:{washer:1,clay:1,milk_bottle:1,whistle:1,promo_badge:3,fake:1}}},
++    {id:'salted_fish',patch:{unlockedWeapons:[...Object.keys(WEAPONS).slice(0,11),'m01_swatter','fake']}},
++    {id:'bamboo_master',patch:{unlockedWeapons:['m07_rolling_pin']}},
++    {id:'sakura_capy',patch:{highestStars:19}}, {id:'corgi_crown',patch:{highestStars:59}}, {id:'zen_capy',patch:{highestStars:99}},
++  ] satisfies Array<{id:string;patch:Partial<Profile>}>)('keeps $id locked below its own requirement',async({id,patch})=>{
++    const m=await progression();expect(m.unlockAchievements({...createProfile(),...patch}).unlockedAvatars).not.toContain(id);
++  });
++  it('does not grant achievements below thresholds and never revokes earned avatars',async()=>{
++    const m=await progression(); const p=m.unlockAchievements({...createProfile(),bestWinStreak:2,highestStars:19,ownedProps:{washer:1},unlockedWeapons:Object.keys(WEAPONS).slice(0,8)});
++    expect(p.unlockedAvatars).toEqual(avatarIds.slice(0,4));
++    const earned=m.unlockAchievements({...p,highestStars:100,bestWinStreak:5});
++    expect(m.unlockAchievements({...earned,highestStars:0,bestWinStreak:0}).unlockedAvatars).toEqual(earned.unlockedAvatars);
++    expect(m.selectAvatar(p,'goose_bully')).toEqual(p);expect(m.selectAvatar(p,'fake')).toEqual(p);
++    expect(m.selectAvatar(p,'bee').avatarId).toBe('bee');
++  });
++  it('records only real merged heroes once without mutating input',async()=>{
++    const m=await progression(); const original=createProfile();const p=m.recordMergedHeroes(original,['kungfu_po','kungfu_po','ballin_rooster','pepe_king','fake']);
++    expect(p.mergedHeroes).toEqual(['kungfu_po','ballin_rooster','pepe_king']);expect(original.mergedHeroes).toEqual([]);
++    expect(m.recordMergedHeroes(p,['kungfu_po'])).toEqual(p);
++    expect(p.unlockedAvatars).toEqual(expect.arrayContaining(['kungfu_panda','rooster_star','frog_king']));
++  });
++  it('evaluates prop purchases, lottery payouts and fragment unlock achievements immediately',()=>{
++    const five={washer:1,clay:1,milk_bottle:1,whistle:1,expired_can:1};
++    const p={...createProfile(),coins:1000,ownedProps:five,shop:{day:'2026-11-13',offers:['catnip']}};
++    expect(buyProp(p,'catnip').profile.unlockedAvatars).toContain('market_coon');
++    const prizes=createLotteryPrizes(p,()=>0);prizes[0]={type:'prop',id:'catnip',amount:1};
++    expect(spinLottery(p,prizes,()=>0).profile.unlockedAvatars).toContain('market_coon');
++    expect(grantWeaponFragments(createProfile(),Array(5).fill('m09_cat_blade')).profile.unlockedAvatars).toContain('bamboo_master');
++    const eleven={...createProfile(),unlockedWeapons:Object.keys(WEAPONS).slice(0,11)};
++    expect(grantWeaponFragments(eleven,Array(5).fill('m12_iron_wok')).profile.unlockedAvatars).toContain('salted_fish');
++  });
++  it('provides 16 bilingual avatars with transparent requirements',async()=>{
++    const catalog=await import('../src/config/avatars').catch(()=>undefined);expect(catalog).toBeDefined();if(!catalog)return;
++    expect(Object.keys(catalog.AVATARS)).toEqual(avatarIds);
++    for(const avatar of Object.values(catalog.AVATARS)) for(const language of ['zh-CN','en'] as const) {
++      expect(avatar.name[language].length).toBeGreaterThan(1);expect(avatar.description[language].length).toBeGreaterThan(4);
++    }
++  });
++  it('keeps 15 deterministic bilingual NPCs and sorts the player by stars, wins, then id',async()=>{
++    const m=await progression();const p={...createProfile(),stars:168,wins:999,matches:1000,avatarId:'bee'};
++    const rows=m.getLeaderboard(p);expect(rows).toHaveLength(16);expect(new Set(rows.map(r=>r.id)).size).toBe(16);
++    expect(rows[0]).toMatchObject({isPlayer:true,name:{'zh-CN':'我',en:'You'},stars:168,wins:999,matches:1000,avatarId:'bee'});
++    const npcs=rows.filter(r=>!r.isPlayer);expect(Math.min(...npcs.map(r=>r.stars))).toBe(6);expect(Math.max(...npcs.map(r=>r.stars))).toBe(168);
++    for(const row of npcs){expect(row.name.en.length).toBeGreaterThan(2);expect(row.name['zh-CN'].length).toBeGreaterThan(1);expect(row.matches).toBeGreaterThanOrEqual(row.wins);expect(avatarIds).toContain(row.avatarId);}
++    expect(m.getLeaderboard(p)).toEqual(rows);
++    const tied=m.getLeaderboard({...p,stars:npcs[0].stars,wins:npcs[0].wins});
++    expect(tied).toEqual([...tied].sort((a,b)=>b.stars-a.stars||b.wins-a.wins||a.id.localeCompare(b.id)));
++  });
++  it('updates valid settings immediately, clamps volume, and defaults malformed values',async()=>{
++    const m=await progression();const p=createProfile();const settings=m.updateSettings(p,{musicVolume:0,soundVolume:-1,showDamageNumbers:false});
++    expect(settings.settings).toEqual({musicVolume:0,soundVolume:0,showDamageNumbers:false});
++    expect(p.settings).toEqual({musicVolume:.5,soundVolume:.75,showDamageNumbers:true});
++    expect(m.updateSettings(settings,{musicVolume:Infinity,soundVolume:2,showDamageNumbers:1 as never}).settings).toEqual({musicVolume:.5,soundVolume:1,showDamageNumbers:true});
++  });
++});
++
++describe('M3 full-profile isolation',()=>{
++  it('includes all maps, avatars and heroes while preserving settings and ordinary backup',async()=>{
++    const m=await progression();const storage=memoryStorage();const ordinary=normalizeProfile({...createProfile(),coins:371,stars:22,highestStars:60,winStreak:2,bestWinStreak:7,avatarId:'bee',selectedMap:'midnight_kitchen',settings:{musicVolume:0,soundVolume:.2,showDamageNumbers:false}});
++    saveProfile(ordinary,storage);const full=enableTestProfile(storage);
++    expect(full.stars).toBeGreaterThanOrEqual(180);expect(full.highestStars).toBeGreaterThanOrEqual(full.stars);
++    expect(full.unlockedAvatars).toEqual(avatarIds);expect(full.mergedHeroes).toEqual(Object.keys(HEROES));expect(full.settings).toEqual(ordinary.settings);
++    expect(full.unlockedWeapons).toHaveLength(36);expect(Object.keys(full.ownedProps)).toHaveLength(Object.keys(PROPS).length);expect(m.getUnlockedMaps(full)).toHaveLength(4);
++    saveProfile({...full,stars:200},storage);enableTestProfile(storage);expect(restoreNormalProfile(storage)).toEqual(ordinary);expect(loadProfile(storage)).toEqual(ordinary);expect(isTestProfile(storage)).toBe(false);
++    const high=unlockAllProfile({...ordinary,stars:220,highestStars:230});expect(high).toMatchObject({stars:220,highestStars:230});
++  });
++  it.each(['backup','full','restore'])('protects ordinary M3 progression if the %s write fails',async(phase)=>{
++    const storage=memoryStorage();const ordinary=normalizeProfile({...createProfile(),coins:298,stars:21,highestStars:60,avatarId:'hamster'});saveProfile(ordinary,storage);
++    if(phase==='restore') enableTestProfile(storage);
++    const set=storage.setItem;storage.setItem=(key,value)=>{
++      if((phase==='backup'&&key.endsWith('normalProfileBackup'))||(phase==='full'&&key.endsWith(':profile')&&JSON.parse(value).coins===9999)||(phase==='restore'&&key.endsWith(':profile'))) throw Error('quota');
++      set(key,value);
++    };
++    if(phase==='restore') {const active=loadProfile(storage);expect(restoreNormalProfile(storage)).toEqual(active);expect(isTestProfile(storage)).toBe(true);}
++    else {expect(enableTestProfile(storage)).toEqual(ordinary);expect(loadProfile(storage)).toEqual(ordinary);expect(isTestProfile(storage)).toBe(false);expect(storage.getItem(`${STORAGE_PREFIX}normalProfileBackup`)).toBeNull();}
++    storage.setItem=set;expect(restoreNormalProfile(storage)).toEqual(ordinary);
++  });
++});
+
+diff --git "a/D:\\rea_game\\games\\capybara-defense\\.runtime\\m3-review-base\\tests\\ui.test.ts" "b/D:\\rea_game\\games\\capybara-defense\\tests\\ui.test.ts"
+index e385e63..8d71361 100644
+--- "a/D:\\rea_game\\games\\capybara-defense\\.runtime\\m3-review-base\\tests\\ui.test.ts"
++++ "b/D:\\rea_game\\games\\capybara-defense\\tests\\ui.test.ts"
+@@ -27,40 +27,41 @@ const victory: BattleResult = {
+ 
+ describe('isolated profile persistence', () => {
+   it('returns a usable empty profile when JSON is corrupt or storage is blocked', () => {
+     const storage = memoryStorage();
+     storage.setItem(`${STORAGE_PREFIX}profile`, '{broken');
+     expect(loadProfile(storage)).toEqual(emptyProfile());
+     const blocked = { getItem() { throw new Error('denied'); } } as unknown as Storage;
+     expect(loadProfile(blocked)).toEqual(emptyProfile());
+   });
+ 
+   it('validates numeric counters, known fragments and battle receipts on load', () => {
+     const storage = memoryStorage();
+     storage.setItem(`${STORAGE_PREFIX}profile`, JSON.stringify({
+       coins: -5, matches: 3, wins: 100, fragments: ['orange_wand', null, 'fake_fragment'],
+       awardedBattles: ['battle-1', 'battle-1', 100, ''],
+     }));
+     expect(loadProfile(storage)).toEqual({
+       ...emptyProfile(),
+       coins: 0, matches: 3, wins: 3, fragments: ['orange_wand'], awardedBattles: ['battle-1'],
+       weaponFragments:{m01_swatter:1},unlockedWeapons:['m01_swatter'],
++      stars:3,highestStars:3,unlockedAvatars:['capybara','hamster','squirrel','bee','cat_swordsman'],
+     });
+   });
+ 
+   it('awards a finished battle once, including after a save and reload', () => {
+     const storage = memoryStorage();
+     const first = awardBattle(emptyProfile(), 'battle-once', victory);
+     expect(first.awarded).toBe(true);
+     expect(first.profile).toMatchObject({ coins: 120, wins: 1, matches: 1, fragments: ['bamboo_blade', 'orange_wand'] });
+     expect(saveProfile(first.profile, storage)).toBe(true);
+     const duplicate = awardBattle(loadProfile(storage), 'battle-once', victory);
+     expect(duplicate.awarded).toBe(false);
+     expect(duplicate.profile).toEqual(first.profile);
+   });
+ 
+   it('records a loss without giving the losing player the winner’s coins or loot', () => {
+     const lost = awardBattle(emptyProfile(), 'loss', { ...victory, winner: 'ai' });
+     expect(lost.profile).toMatchObject({ coins: 0, wins: 0, matches: 1, fragments: [] });
+   });
+ 
+   it('deletes only this game’s keys, preserving unrelated saves', () => {

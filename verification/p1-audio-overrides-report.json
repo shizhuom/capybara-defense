@@ -1,0 +1,15 @@
+{
+  "passed": true,
+  "errors": [],
+  "requests": [
+    "http://127.0.0.1:4175/audio/manifest.json",
+    "http://127.0.0.1:4175/audio/p1_qa_override.wav",
+    "http://127.0.0.1:4175/audio/p1_qa_override.wav"
+  ],
+  "checks": [
+    "Real WAV decoded for external BGM and SFX on shared context",
+    "Missing declared audio filtered before request: zero404",
+    "Both external buses obey volume sliders immediately",
+    "Source manifest restored and temporary WAV removed in finally"
+  ]
+}

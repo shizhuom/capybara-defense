@@ -1,0 +1,216 @@
+{
+  "label": "red",
+  "production": true,
+  "success": false,
+  "cases": [
+    {
+      "name": "Playing test restore discards old battle and restores exact backup without delayed or new-battle leakage",
+      "passed": false,
+      "error": "AssertionError [ERR_ASSERTION]: restored normal profile must not retain playing test engine\n    at file:///D:/rea_game/games/capybara-defense/scripts/m3-profile-switch-qa.mjs:60:12\n    at async caseRun (file:///D:/rea_game/games/capybara-defense/scripts/m3-profile-switch-qa.mjs:44:9)\n    at async file:///D:/rea_game/games/capybara-defense/scripts/m3-profile-switch-qa.mjs:50:3",
+      "evidence": {
+        "returnedToMenu": false,
+        "backupRemoved": true,
+        "afterRestore": {
+          "coins": 123,
+          "wins": 0,
+          "matches": 0,
+          "fragments": [],
+          "awardedBattles": [],
+          "schemaVersion": 2,
+          "weaponFragments": {},
+          "unlockedWeapons": [],
+          "equippedWeapons": {},
+          "ownedProps": {},
+          "equippedActiveProps": [],
+          "equippedPassiveProps": [],
+          "freeLotteryTickets": 0,
+          "shop": null,
+          "stars": 0,
+          "highestStars": 0,
+          "winStreak": 0,
+          "bestWinStreak": 0,
+          "selectedMap": "auto",
+          "avatarId": "capybara",
+          "unlockedAvatars": [
+            "capybara",
+            "hamster",
+            "squirrel",
+            "bee"
+          ],
+          "mergedHeroes": [],
+          "settings": {
+            "musicVolume": 0.5,
+            "soundVolume": 0.75,
+            "showDamageNumbers": true
+          }
+        },
+        "afterFrames": {
+          "coins": 123,
+          "wins": 0,
+          "matches": 0,
+          "fragments": [],
+          "awardedBattles": [],
+          "schemaVersion": 2,
+          "weaponFragments": {},
+          "unlockedWeapons": [],
+          "equippedWeapons": {},
+          "ownedProps": {},
+          "equippedActiveProps": [],
+          "equippedPassiveProps": [],
+          "freeLotteryTickets": 0,
+          "shop": null,
+          "stars": 0,
+          "highestStars": 0,
+          "winStreak": 0,
+          "bestWinStreak": 0,
+          "selectedMap": "auto",
+          "avatarId": "capybara",
+          "unlockedAvatars": [
+            "capybara",
+            "hamster",
+            "squirrel",
+            "bee"
+          ],
+          "mergedHeroes": [],
+          "settings": {
+            "musicVolume": 0.5,
+            "soundVolume": 0.75,
+            "showDamageNumbers": true
+          }
+        },
+        "afterOldBattleSettlement": {
+          "coins": 123,
+          "wins": 0,
+          "matches": 1,
+          "fragments": [],
+          "awardedBattles": [
+            "1794606788013-1"
+          ],
+          "schemaVersion": 2,
+          "weaponFragments": {},
+          "unlockedWeapons": [],
+          "equippedWeapons": {},
+          "ownedProps": {},
+          "equippedActiveProps": [],
+          "equippedPassiveProps": [],
+          "freeLotteryTickets": 0,
+          "shop": null,
+          "stars": 0,
+          "highestStars": 0,
+          "winStreak": 0,
+          "bestWinStreak": 0,
+          "selectedMap": "auto",
+          "avatarId": "capybara",
+          "unlockedAvatars": [
+            "capybara",
+            "hamster",
+            "squirrel",
+            "bee",
+            "kungfu_panda"
+          ],
+          "mergedHeroes": [
+            "kungfu_po"
+          ],
+          "settings": {
+            "musicVolume": 0.5,
+            "soundVolume": 0.75,
+            "showDamageNumbers": true
+          }
+        }
+      }
+    },
+    {
+      "name": "Playing normal enable discards old battle; repeated enable preserves active test battle and original backup",
+      "passed": false,
+      "error": "AssertionError [ERR_ASSERTION]: enabling test profile must discard playing normal engine\n    at file:///D:/rea_game/games/capybara-defense/scripts/m3-profile-switch-qa.mjs:75:12\n    at async caseRun (file:///D:/rea_game/games/capybara-defense/scripts/m3-profile-switch-qa.mjs:44:9)\n    at async file:///D:/rea_game/games/capybara-defense/scripts/m3-profile-switch-qa.mjs:71:3",
+      "evidence": {
+        "returnedToMenu": false,
+        "backup": {
+          "coins": 123,
+          "wins": 0,
+          "matches": 0,
+          "fragments": [],
+          "awardedBattles": [],
+          "schemaVersion": 2,
+          "weaponFragments": {},
+          "unlockedWeapons": [],
+          "equippedWeapons": {},
+          "ownedProps": {},
+          "equippedActiveProps": [],
+          "equippedPassiveProps": [],
+          "freeLotteryTickets": 0,
+          "shop": null,
+          "stars": 0,
+          "highestStars": 0,
+          "winStreak": 0,
+          "bestWinStreak": 0,
+          "selectedMap": "auto",
+          "avatarId": "capybara",
+          "unlockedAvatars": [
+            "capybara",
+            "hamster",
+            "squirrel",
+            "bee"
+          ],
+          "mergedHeroes": [],
+          "settings": {
+            "musicVolume": 0.5,
+            "soundVolume": 0.75,
+            "showDamageNumbers": true
+          }
+        }
+      }
+    },
+    {
+      "name": "Normal restore without backup retains the current ordinary battle",
+      "passed": true,
+      "evidence": {
+        "normalSettlement": {
+          "coins": 123,
+          "wins": 0,
+          "matches": 1,
+          "fragments": [],
+          "awardedBattles": [
+            "1794606790465-1"
+          ],
+          "schemaVersion": 2,
+          "weaponFragments": {},
+          "unlockedWeapons": [],
+          "equippedWeapons": {},
+          "ownedProps": {},
+          "equippedActiveProps": [],
+          "equippedPassiveProps": [],
+          "freeLotteryTickets": 0,
+          "shop": null,
+          "stars": 0,
+          "highestStars": 0,
+          "winStreak": 0,
+          "bestWinStreak": 0,
+          "selectedMap": "auto",
+          "avatarId": "capybara",
+          "unlockedAvatars": [
+            "capybara",
+            "hamster",
+            "squirrel",
+            "bee"
+          ],
+          "mergedHeroes": [],
+          "settings": {
+            "musicVolume": 0.5,
+            "soundVolume": 0.75,
+            "showDamageNumbers": true
+          }
+        }
+      }
+    },
+    {
+      "name": "Restore profile write failure preserves active test battle, backup, test save and test controls",
+      "passed": false,
+      "error": "AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:\n\nfalse !== true\n\n    at file:///D:/rea_game/games/capybara-defense/scripts/m3-profile-switch-qa.mjs:103:47\n    at async caseRun (file:///D:/rea_game/games/capybara-defense/scripts/m3-profile-switch-qa.mjs:44:9)\n    at async file:///D:/rea_game/games/capybara-defense/scripts/m3-profile-switch-qa.mjs:93:3",
+      "evidence": {
+        "failedRestorePreservedAll": true
+      }
+    }
+  ],
+  "errors": []
+}

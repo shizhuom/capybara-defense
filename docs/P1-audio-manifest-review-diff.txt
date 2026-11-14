@@ -1,0 +1,249 @@
+# P1 audio manifest integration supplement
+diff --git "D:\\rea_game\\games\\capybara-defense\\.runtime\\p1-review-baseline\\__empty__" "D:\\rea_game\\games\\capybara-defense\\scripts\\audio-manifest.ts"
+index e69de29..a50b3e5 100644
+--- "D:\\rea_game\\games\\capybara-defense\\.runtime\\p1-review-baseline\\__empty__"
++++ "D:\\rea_game\\games\\capybara-defense\\scripts\\audio-manifest.ts"
+@@ -0,0 +1,77 @@
++import {mkdir,readFile,realpath,stat,writeFile} from 'node:fs/promises';
++import {dirname,isAbsolute,join,relative,resolve} from 'node:path';
++import type {Plugin,ResolvedConfig} from 'vite';
++
++const gameRoot=resolve(import.meta.dirname,'..');
++const keys=new Set(['bgm_menu','bgm_battle','bgm_boss','ui_click','summon','shovel','treasure','merge_upgrade','merge_hero','hit_soft','boss_spawn','orange_lost','orange_gain','sprinkler','goose','lottery_tick','lottery_win','victory','defeat','dig','upgrade','legendary','orange']);
++// Keep this exact path/extension rule aligned with SoundManager's browser-side validator.
++const safeFile=(value:unknown):value is string=>typeof value==='string'&&/^(?:[a-zA-Z0-9_-]+\/)*[a-zA-Z0-9_-]+\.(?:mp3|ogg|wav|m4a|aac)$/i.test(value);
++const within=(base:string,target:string)=>{const child=relative(base,target);return child===''||(!child.startsWith(`..${process.platform==='win32'?'\\':'/'}`)&&child!=='..'&&!isAbsolute(child));};
++
++/** Check both lexical paths and existing ancestors so symlinks cannot escape the game. */
++async function assertGamePath(target:string):Promise<string> {
++  if(!within(gameRoot,resolve(target)))throw new Error('Audio manifest output must stay within the game directory');
++  const actualGame=await realpath(gameRoot);let ancestor=resolve(target);
++  for(;;){
++    try{
++      const actual=await realpath(ancestor);
++      if(!within(actualGame,actual))throw new Error('Audio manifest output resolves outside the game directory');
++      return actual;
++    }catch(error){
++      if((error as NodeJS.ErrnoException).code!=='ENOENT')throw error;
++      const parent=dirname(ancestor);if(parent===ancestor)throw error;ancestor=parent;
++    }
++  }
++}
++
++async function availableManifest(audioDir:string):Promise<Record<string,string>> {
++  try{
++    const actualDir=await realpath(audioDir),actualGame=await realpath(gameRoot);
++    if(!within(actualGame,actualDir))return {};
++    const value:unknown=JSON.parse(await readFile(join(audioDir,'manifest.json'),'utf8'));
++    if(!value||typeof value!=='object'||Array.isArray(value))return {};
++    const entries=await Promise.all(Object.entries(value).filter(([key,file])=>keys.has(key)&&safeFile(file)).map(async([key,file])=>{
++      try{
++        const path=join(audioDir,file),actual=await realpath(path);
++        if(!within(actualDir,actual)||!(await stat(path)).isFile())return null;
++        return [key,file] as const;
++      }catch{return null;}
++    }));
++    return Object.fromEntries(entries.filter((entry):entry is readonly[string,string]=>entry!==null));
++  }catch{return {};}
++}
++
++/** Remove unavailable optional audio before the browser receives its manifest. */
++export function audioManifestPlugin():Plugin {
++  let config:ResolvedConfig;
++  const assertOutput=async(target:string)=>{
++    const actual=await assertGamePath(target);
++    for(const source of [join(gameRoot,'public'),...(config.publicDir?[config.publicDir]:[])]){
++      const actualSource=await realpath(source).catch(()=>resolve(source));
++      if(within(resolve(source),resolve(target))||within(actualSource,actual))throw new Error('Audio build output must not overwrite public source files');
++    }
++  };
++  return {
++    name:'capybara-audio-manifest',
++    configResolved(resolved){config=resolved;},
++    configureServer(server){
++      server.middlewares.use(async(req,res,next)=>{
++        const path=req.url?.split('?')[0];
++        const basePath=config.base.startsWith('/')?config.base:'/';
++        if(path!=='/audio/manifest.json'&&path!==`${basePath}audio/manifest.json`){next();return;}
++        const manifest=config.publicDir?await availableManifest(join(config.publicDir,'audio')):{};
++        res.statusCode=200;res.setHeader('Content-Type','application/json; charset=utf-8');res.setHeader('Cache-Control','no-store');
++        res.end(JSON.stringify(manifest));
++      });
++    },
++    async closeBundle(){
++      if(config.command!=='build')return;
++      const audioDir=resolve(config.root,config.build.outDir,'audio'),manifestPath=join(audioDir,'manifest.json');
++      await assertOutput(audioDir);await assertOutput(manifestPath);
++      const manifest=await availableManifest(audioDir);
++      await mkdir(audioDir,{recursive:true});
++      await assertOutput(audioDir);await assertOutput(manifestPath);
++      await writeFile(manifestPath,`${JSON.stringify(manifest,null,2)}\n`,'utf8');
++    },
++  };
++}
+diff --git "D:\\rea_game\\games\\capybara-defense\\.runtime\\p1-review-baseline\\__empty__" "D:\\rea_game\\games\\capybara-defense\\tests\\p1-audio-manifest.test.ts"
+index e69de29..fd76bc1 100644
+--- "D:\\rea_game\\games\\capybara-defense\\.runtime\\p1-review-baseline\\__empty__"
++++ "D:\\rea_game\\games\\capybara-defense\\tests\\p1-audio-manifest.test.ts"
+@@ -0,0 +1,105 @@
++import {afterEach,describe,expect,it} from 'vitest';
++import {mkdtemp,mkdir,readFile,writeFile,rm} from 'node:fs/promises';
++import {resolve,join,relative,isAbsolute} from 'node:path';
++import {resolveConfig,type Plugin,type ResolvedConfig} from 'vite';
++import {audioManifestPlugin} from '../scripts/audio-manifest';
++
++const gameRoot=resolve(import.meta.dirname,'..'),fixtures:string[]=[];
++type Reply={statusCode:number;headers:Record<string,string>;body:string;next:boolean};
++type Middleware=(req:{url?:string},res:{statusCode:number;setHeader:(k:string,v:string)=>void;end:(body:string)=>void},next:()=>void)=>unknown;
++async function fixture(manifest:string|object={},outDir='release'){
++  const runtime=join(gameRoot,'.runtime');await mkdir(runtime,{recursive:true});
++  const root=await mkdtemp(join(runtime,'p1-audio-manifest-'));fixtures.push(root);
++  await mkdir(join(root,'public/audio'),{recursive:true});await mkdir(join(root,outDir,'audio'),{recursive:true});
++  const text=typeof manifest==='string'?manifest:JSON.stringify(manifest);
++  await writeFile(join(root,'public/audio/manifest.json'),text);
++  await writeFile(join(root,outDir,'audio/manifest.json'),text);
++  const plugin=audioManifestPlugin();
++  const config=await resolveConfig({configFile:false,root,base:'./',publicDir:'public',build:{outDir}},'build');
++  await (plugin.configResolved as (config:ResolvedConfig)=>unknown)(config);
++  return {root,plugin,config,outDir};
++}
++async function files(root:string,paths:string[]){for(const file of paths){await mkdir(resolve(root,file,'..'),{recursive:true});await writeFile(join(root,file),'audio fixture');}}
++async function middleware(plugin:Plugin){
++  let handler!:Middleware;
++  await (plugin.configureServer as (server:unknown)=>unknown)({middlewares:{use:(fn:Middleware)=>{handler=fn;}}});
++  return handler;
++}
++async function request(handler:Middleware,url:string):Promise<Reply>{
++  return new Promise((done,reject)=>{
++    const reply:Reply={statusCode:0,headers:{},body:'',next:false};
++    const response={statusCode:200,setHeader:(key:string,value:string)=>{reply.headers[key.toLowerCase()]=value;},end:(body:string)=>{reply.statusCode=response.statusCode;reply.body=body;done(reply);}};
++    Promise.resolve(handler({url},response,()=>{reply.next=true;done(reply);})).catch(reject);
++  });
++}
++async function close(plugin:Plugin){await (plugin.closeBundle as ()=>unknown)();}
++afterEach(async()=>{
++  for(const root of fixtures){const child=relative(join(gameRoot,'.runtime'),root);if(child.startsWith('..')||isAbsolute(child))throw new Error('unsafe fixture cleanup');await rm(root,{recursive:true,force:true});}
++  fixtures.length=0;
++});
++
++describe('P1 zero-404 audio manifest filtering',()=>{
++  it('serves only declared safe existing audio files with HTTP 200 and leaves public unchanged',async()=>{
++    const original={bgm_menu:'music/chill.ogg',hit_soft:'hit.wav',bgm_boss:'missing.mp3',summon:'missing.wav',unknown:'hit.wav'};
++    const {root,plugin}=await fixture(original);await files(root,['public/audio/music/chill.ogg','public/audio/hit.wav']);
++    const reply=await request(await middleware(plugin),'/audio/manifest.json?fresh=1');
++    expect(reply.statusCode).toBe(200);expect(JSON.parse(reply.body)).toEqual({bgm_menu:'music/chill.ogg',hit_soft:'hit.wav'});
++    expect(reply.headers['content-type']).toContain('application/json');expect(reply.headers['cache-control']).toBe('no-store');
++    expect(JSON.parse(await readFile(join(root,'public/audio/manifest.json'),'utf8'))).toEqual(original);
++  });
++  it.each(['{broken','null','[]','"string"'])('returns HTTP 200 empty object for invalid manifest %s',async manifest=>{
++    const {root,plugin,outDir}=await fixture(manifest);const reply=await request(await middleware(plugin),'/audio/manifest.json');
++    expect(reply.statusCode).toBe(200);expect(JSON.parse(reply.body)).toEqual({});
++    await close(plugin);expect(JSON.parse(await readFile(join(root,outDir,'audio/manifest.json'),'utf8'))).toEqual({});
++    expect(await readFile(join(root,'public/audio/manifest.json'),'utf8')).toBe(manifest);
++  });
++  it('rejects unsafe paths even when the corresponding file could exist',async()=>{
++    const manifest={bgm_menu:'../escape.mp3',bgm_battle:'/absolute.mp3',bgm_boss:'https://host/boss.mp3',hit_soft:'hit.wav?query',summon:'a%2fb.wav',shovel:'a\\b.wav',treasure:'folder/../hit.wav',merge_hero:'//host/a.wav',orange:'hit.flac',dig:5,upgrade:'folder'};
++    const {root,plugin}=await fixture(manifest);await files(root,['public/audio/hit.wav','public/escape.mp3','public/audio/folder/keep.wav']);
++    const reply=await request(await middleware(plugin),'/audio/manifest.json');expect(JSON.parse(reply.body)).toEqual({});
++  });
++  it('does not intercept unrelated requests',async()=>{
++    const {plugin}=await fixture();const handle=await middleware(plugin);
++    for(const url of ['/audio/hit.wav','/sprites/manifest.json','/audio/manifest.json.extra','/other/audio/manifest.json'])expect((await request(handle,url)).next).toBe(true);
++  });
++  it('reads fresh public changes without restart and never requests files itself',async()=>{
++    const {root,plugin}=await fixture({bgm_menu:'later.mp3'}),handle=await middleware(plugin);
++    expect(JSON.parse((await request(handle,'/audio/manifest.json')).body)).toEqual({});
++    await files(root,['public/audio/later.mp3']);expect(JSON.parse((await request(handle,'/audio/manifest.json')).body)).toEqual({bgm_menu:'later.mp3'});
++  });
++  it('filters build output using resolved root/outDir and writes only that output manifest',async()=>{
++    const original={bgm_menu:'menu.MP3',dig:'fx/dig.wav',bgm_boss:'missing.ogg'};
++    const {root,plugin,outDir}=await fixture(original,'nested/output');
++    await files(root,['public/audio/menu.MP3','nested/output/audio/menu.MP3','nested/output/audio/fx/dig.wav']);
++    await close(plugin);
++    expect(JSON.parse(await readFile(join(root,outDir,'audio/manifest.json'),'utf8'))).toEqual({bgm_menu:'menu.MP3',dig:'fx/dig.wav'});
++    expect(JSON.parse(await readFile(join(root,'public/audio/manifest.json'),'utf8'))).toEqual(original);
++    expect(await readFile(join(root,outDir,'audio/menu.MP3'),'utf8')).toBe('audio fixture');
++  });
++  it('keeps empty/missing manifests safe in dev and build',async()=>{
++    const {root,plugin,outDir}=await fixture();await rm(join(root,'public/audio/manifest.json'));await rm(join(root,outDir,'audio/manifest.json'));
++    expect(JSON.parse((await request(await middleware(plugin),'/audio/manifest.json')).body)).toEqual({});
++    await close(plugin);expect(JSON.parse(await readFile(join(root,outDir,'audio/manifest.json'),'utf8'))).toEqual({});
++  });
++  it('does not write when resolved output points beyond the game directory',async()=>{
++    const {root,plugin,config}=await fixture();
++    // Deliberately use a path outside the allowed game without touching that location.
++    await (plugin.configResolved as (config:ResolvedConfig)=>unknown)({...config,build:{...config.build,outDir:resolve(gameRoot,'..','audio-outside-forbidden')}});
++    await expect(close(plugin)).rejects.toThrow(/outside|within|game/i);
++    expect(await readFile(join(root,'public/audio/manifest.json'),'utf8')).toBe('{}');
++  });
++  it('honors resolved base, custom publicDir and an absolute in-game outDir',async()=>{
++    const {root,plugin,config,outDir}=await fixture({bgm_menu:'menu.mp3'});
++    const customPublic=join(root,'custom-public');await files(root,['custom-public/audio/menu.mp3',`${outDir}/audio/menu.mp3`]);
++    await writeFile(join(customPublic,'audio/manifest.json'),'{"bgm_menu":"menu.mp3"}');
++    await (plugin.configResolved as (config:ResolvedConfig)=>unknown)({...config,base:'/garden/',publicDir:customPublic,build:{...config.build,outDir:join(root,outDir)}});
++    expect(JSON.parse((await request(await middleware(plugin),'/garden/audio/manifest.json')).body)).toEqual({bgm_menu:'menu.mp3'});
++    await close(plugin);expect(JSON.parse(await readFile(join(root,outDir,'audio/manifest.json'),'utf8'))).toEqual({bgm_menu:'menu.mp3'});
++  });
++  it('refuses an output directory that would overwrite the public source manifest',async()=>{
++    const original={bgm_menu:'missing.mp3'}, {root,plugin,config}=await fixture(original);
++    await (plugin.configResolved as (config:ResolvedConfig)=>unknown)({...config,build:{...config.build,outDir:'public'}});
++    await expect(close(plugin)).rejects.toThrow(/public|source/i);
++    expect(JSON.parse(await readFile(join(root,'public/audio/manifest.json'),'utf8'))).toEqual(original);
++  });
++});
+diff --git "D:\\rea_game\\games\\capybara-defense\\.runtime\\p1-review-baseline\\__empty__" "D:\\rea_game\\games\\capybara-defense\\public\\audio\\README.md"
+index e69de29..c52a52f 100644
+--- "D:\\rea_game\\games\\capybara-defense\\.runtime\\p1-review-baseline\\__empty__"
++++ "D:\\rea_game\\games\\capybara-defense\\public\\audio\\README.md"
+@@ -0,0 +1,36 @@
++# Optional audio overrides
++
++The shipped empty `manifest.json` uses the offline, multi-track WebAudio arrangements.
++No audio files are requested unless declared. Add licensed audio beneath this directory
++and map supported keys to relative paths, for example:
++
++```json
++{"bgm_menu":"music/menu.ogg","bgm_battle":"garden.mp3","hit_soft":"hits/bubble.wav"}
++```
++
++Music keys: `bgm_menu` (84 BPM), `bgm_battle` (108 BPM), `bgm_boss` (124 BPM).
++Music files loop; export seamless loops. A successfully decoded override takes priority;
++missing files, invalid manifests and unsupported codecs quietly retain builtin audio.
++The Vite `audioManifestPlugin()` filters the dev manifest before serving it: only known
++keys with safe relative paths to existing files are returned, always as JSON with HTTP
++200. Invalid JSON and missing manifests become `{}`. The public source is never edited.
++At build completion the plugin filters `dist/audio/manifest.json` (or the configured
++in-game output directory) against the copied files. Deploy the complete build output:
++ordinary static hosts then receive no declarations for missing tracks, avoiding 404s.
++The default empty installation requests only the existing manifest. Rebuild after changing
++production audio files; deleting files after publishing requires republishing the manifest.
++
++Cue keys: `ui_click`, `summon`, `shovel`, `treasure`, `merge_upgrade`, `merge_hero`,
++`hit_soft`, `boss_spawn`, `orange_lost`, `orange_gain`, `sprinkler`, `goose`,
++`lottery_tick`, `lottery_win`, `victory`, `defeat`. Legacy `dig`, `upgrade`,
++`legendary`, `orange` are accepted; prefer canonical names so every alias uses the same
++override. If both are declared, a requested legacy cue's exact override wins.
++
++Allowed file extensions: `.mp3`, `.ogg`, `.wav`, `.m4a`, `.aac` (browser codec support
++varies). Filenames/directory segments may contain ASCII letters, digits, `_` and `-`.
++Absolute URLs, `..`, percent escapes, backslashes, query strings and fragments are rejected.
++Paths resolve relative to `audio/` under Vite's base, including subdirectory deployments.
++
++Overrides are decoded into the same AudioContext as synthesis. Music and cues share
++their respective volume sliders; overlays/hidden tabs duck music only. Hit cues remain
++globally limited to one per 95 ms. Disposal aborts loads and stops every source/loop.
+diff --git "D:\\rea_game\\games\\capybara-defense\\.runtime\\p1-review-baseline\\vite.config.ts" "D:\\rea_game\\games\\capybara-defense\\vite.config.ts"
+index 329d653..637ed4f 100644
+--- "D:\\rea_game\\games\\capybara-defense\\.runtime\\p1-review-baseline\\vite.config.ts"
++++ "D:\\rea_game\\games\\capybara-defense\\vite.config.ts"
+@@ -1,6 +1,9 @@
+ import { defineConfig } from 'vitest/config';
++import { audioManifestPlugin } from './scripts/audio-manifest.ts';
+ export default defineConfig({
+-  server: { host: '127.0.0.1', port: 4175, strictPort: true },
++  base: './',
++  plugins: [audioManifestPlugin()],
++  server: { host: '127.0.0.1', port: 4175, strictPort: true, watch: { ignored: ['**/.runtime/**', '**/verification/**', '**/backups/**'] } },
+   preview: { host: '127.0.0.1', port: 4175, strictPort: true },
+   test: { environment: 'node', include: ['tests/**/*.test.ts'] },
+ });

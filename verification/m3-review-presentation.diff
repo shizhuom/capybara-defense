@@ -1,0 +1,856 @@
+M3 review against m2-before-m3.zip; generated 2026-11-13T13:32:19.4418874-08:00
+diff --git "a/D:\\rea_game\\games\\capybara-defense\\.runtime\\m3-review-base\\src\\render\\StickerRenderer.ts" "b/D:\\rea_game\\games\\capybara-defense\\src\\render\\StickerRenderer.ts"
+index 7858caf..2c18356 100644
+--- "a/D:\\rea_game\\games\\capybara-defense\\.runtime\\m3-review-base\\src\\render\\StickerRenderer.ts"
++++ "b/D:\\rea_game\\games\\capybara-defense\\src\\render\\StickerRenderer.ts"
+@@ -1,30 +1,31 @@
+ import type { BattleLoadout, BattleState, Enemy, Interaction, Side, Unit, VisualEvent } from '../core/types';
+ import {combatRange,combatCharge} from '../core/CombatRules';
+-import { PATHS, STAGE } from '../config/maps';
++import { getMap, STAGE } from '../config/maps';
+ import { UNITS } from '../config/units';
+ import { HEROES } from '../config/heroes';
+ import { MergeSystem } from '../core/MergeSystem';
+ import { t } from '../i18n/i18n';
+ import { AssetRegistry } from './AssetRegistry';
+ import { drawCapybaraArt, drawEnemyArt, drawOrange, drawShovelArt, drawUnitArt, ellipse, INK, line, PAPER, polygon, round, star } from './StickerArt';
+ import { drawGlueTrap, drawM2Event, drawPropCursor, drawSealed, drawWasher, drawWet } from './M2Effects';
++import {boneShield,confusionSpiral,drawM3Event,drawThemeEdges} from './M3Effects';
+ 
+ export type HitTarget = { kind: 'cell'; col: number; row: number } | { kind: 'bench'; slot: number } | { kind: 'shovel' };
+ type Position = { x: number; y: number };
+ type OrangeMotion = Position & { add: boolean; age: number; index: number; direction: number; targetY: number };
+ 
+ const FONT = '"Trebuchet MS", "Microsoft YaHei", "PingFang SC", sans-serif';
+ const TEAL = '#5f9b8c';
+ const CORAL = '#d28e78';
+ const cellCenter = (col:number,row:number):Position => ({x:STAGE.boardX+(col+.5)*STAGE.cell,y:STAGE.boardY+(row+.5)*STAGE.cell});
+ const clamp = (v:number,min:number,max:number) => Math.max(min,Math.min(max,v));
+ 
+ /** Immediate-mode Canvas renderer; game rules and pointer dispatch remain in core/UI. */
+ export class StickerRenderer {
+   private readonly c: CanvasRenderingContext2D;
+   readonly assets = new AssetRegistry();
+   private pixelRatio = 0;
+   private lastSeconds = 0;
+   private battleId = '';
+   private readonly unitPositions = new Map<number, Position>();
+   private previousOranges: Record<Side,number> | null = null;
+@@ -46,145 +47,146 @@ export class StickerRenderer {
+       for(let slot=0;slot<5;slot++) {
+         const left=benchX+slot*benchStep;
+         if(x>=left && x<left+benchSize) return {kind:'bench',slot};
+       }
+     }
+     if(Math.hypot(x-shovelX,y-shovelY)<=40) return {kind:'shovel'};
+     return null;
+   }
+ 
+   draw(state:BattleState,seconds:number,interaction:Interaction={}):void {
+     this.resize();
+     const dt=clamp(seconds-this.lastSeconds,0,.1); this.lastSeconds=seconds;
+     if(this.battleId!==state.id) {
+       this.battleId=state.id; this.unitPositions.clear(); this.previousOranges=null; this.orangeMotions=[];
+     }
+     this.observeOranges(state,dt);
+     const c=this.c;
+     c.setTransform(this.pixelRatio,0,0,this.pixelRatio,0,0);
+     c.clearRect(0,0,STAGE.width,STAGE.height);
+     c.lineCap='round';c.lineJoin='round';c.textBaseline='middle';
+-    this.drawPaper(seconds);
++    this.drawPaper(state,seconds);
+     this.drawBoard(state,seconds);
+     this.drawTraps(state);
+     this.drawBanners(state,seconds);
+     this.drawInteractionUnderlay(state,interaction,seconds);
+     this.drawGuardians(state,seconds);
+ 
+     const liveIds=new Set(state.units.map(unit=>unit.id));
+     for(const id of this.unitPositions.keys()) if(!liveIds.has(id)) this.unitPositions.delete(id);
+     for(const unit of [...state.units].filter(unit=>unit.location.zone==='board').sort((a,b)=>this.position(a).y-this.position(b).y)) {
+       const target=this.position(unit), previous=this.unitPositions.get(unit.id)||target;
+       const ease=1-Math.exp(-dt*16);
+       const point={x:previous.x+(target.x-previous.x)*ease,y:previous.y+(target.y-previous.y)*ease};
+       this.unitPositions.set(unit.id,point);
+       this.drawUnit(unit,point,seconds,interaction.draggingId===unit.id ? .23 : 1,false,state.sides[unit.side].loadout);
+     }
+     for(const enemy of [...state.enemies].sort((a,b)=>a.row-b.row)) this.drawEnemy(enemy,seconds);
+-    this.drawEvents(state,seconds);
++    this.drawEvents(state,seconds,false,interaction.showDamageNumbers!==false);
+     this.drawOrangeMotions();
+     this.drawFog(state,seconds);
+     this.drawNests(state,interaction,seconds);
+     this.drawTools(state,interaction,seconds);
+-    this.drawEvents(state,seconds,true);
++    this.drawEvents(state,seconds,true,interaction.showDamageNumbers!==false);
+     this.drawDrag(state,interaction,seconds);
+   }
+ 
+   private resize():void {
+     const ratio=clamp(typeof window==='undefined'?1:window.devicePixelRatio||1,1,2.5);
+     if(this.pixelRatio===ratio && this.canvas.width===Math.round(STAGE.width*ratio) && this.canvas.height===Math.round(STAGE.height*ratio)) return;
+     this.pixelRatio=ratio;
+     this.canvas.width=Math.round(STAGE.width*ratio);this.canvas.height=Math.round(STAGE.height*ratio);
+   }
+ 
+   private label(text:string,x:number,y:number,size=16,color=INK,align:CanvasTextAlign='left',weight=700,maxWidth?:number):void {
+     const c=this.c;c.font=`${weight} ${size}px ${FONT}`;c.textAlign=align;c.fillStyle=color;
+     if(maxWidth) c.fillText(text,x,y,maxWidth); else c.fillText(text,x,y);
+   }
+ 
+-  private drawPaper(seconds:number):void {
+-    const c=this.c;
+-    c.fillStyle='#f8f1de';c.fillRect(0,0,STAGE.width,STAGE.height);
+-    const g=c.createLinearGradient(0,0,0,STAGE.height);g.addColorStop(0,'#fbf4e5');g.addColorStop(.7,'#f5efdc');g.addColorStop(1,'#eee8d4');c.fillStyle=g;c.fillRect(0,0,STAGE.width,STAGE.height);
++  private drawPaper(state:BattleState,seconds:number):void {
++    const c=this.c,theme=getMap(state.mapId).theme;
++    c.fillStyle=theme.paper;c.fillRect(0,0,STAGE.width,STAGE.height);
++    const g=c.createLinearGradient(0,0,0,STAGE.height);g.addColorStop(0,theme.paper);g.addColorStop(.7,theme.paper);g.addColorStop(1,theme.open);c.fillStyle=g;c.fillRect(0,0,STAGE.width,STAGE.height);
+     c.fillStyle='rgba(148,126,88,.11)';
+     for(let y=12;y<STAGE.height;y+=21) for(let x=8;x<640;x+=23) {
+       const seed=(x*17+y*13)%11; c.fillRect(x+seed,y+seed%4,seed%3===0?1.5:1,1);
+     }
+     // Quiet garden doodles around the board, never on top of the interaction grid.
+     c.save();c.globalAlpha=.55;
+     this.flower(610,189,9,'#eab8a2');this.flower(24,1064,9,'#e5bb9a');this.flower(602,1218,7,'#e2c879');
+     line(c,[[19,206],[16,196],[24,202]],'#a7b79a',2);line(c,[[614,1076],[619,1066],[620,1081]],'#9eb59a',2);
+     c.restore();
++    drawThemeEdges(c,state.mapId,seconds,theme.accent);
+     // The low footer scallop visually grounds the UI's summon button.
+     c.save();c.globalAlpha=.3;
+     for(let x=0;x<670;x+=30) ellipse(c,x,1379+Math.sin(x*.03+seconds*.3)*1.5,20,13,'#c1d1b2','#c1d1b2',0);
+     c.restore();
+   }
+ 
+   private flower(x:number,y:number,size:number,color:string):void {
+     const c=this.c;
+     for(let i=0;i<5;i++){const a=i*Math.PI*2/5;ellipse(c,x+Math.cos(a)*size*.6,y+Math.sin(a)*size*.6,size*.5,size*.5,color,color,0);}
+     ellipse(c,x,y,size*.32,size*.32,'#f4d482','#f4d482',0);
+   }
+ 
+   private drawBoard(state:BattleState,seconds:number):void {
+-    const c=this.c,{boardX:x,boardY:y,cell}=STAGE;
++    const c=this.c,{boardX:x,boardY:y,cell}=STAGE,map=getMap(state.mapId),theme=map.theme;
+     c.save();c.shadowColor='rgba(93,87,62,.16)';c.shadowBlur=0;c.shadowOffsetY=7;
+     round(c,x-9,y-9,cell*8+18,cell*10+18,24,'#fffaf0',INK,2.6);c.restore();
+     c.save();c.beginPath();c.roundRect(x,y,cell*8,cell*10,17);c.clip();
+     for(let row=0;row<10;row++) for(let col=0;col<8;col++) {
+       const tile=state.grid[row][col],tx=x+col*cell,ty=y+row*cell;
+       const grass=tile==='G'||tile==='B';
+-      c.fillStyle=grass?((row+col)%2?'#bbcf9d':'#c5d6a8'):tile==='O'?'#fff8e8':tile==='C'?'#a8c8b1':'#e5c9a1';
++      c.fillStyle=grass?theme.grass[(row+col)%2]:tile==='O'?theme.open:tile==='C'?theme.water:theme.road;
+       c.fillRect(tx,ty,cell,cell);
+       if(tile==='G') {
+         // Tiny tufts reveal diggable grass without competing with the pets.
+         for(let i=0;i<3;i++) {
+           const ox=13+(col*13+row*7+i*23)%49,oy=16+(row*17+col*11+i*19)%41;
+           line(c,[[tx+ox-4,ty+oy+2],[tx+ox-2,ty+oy-4],[tx+ox+1,ty+oy+1],[tx+ox+5,ty+oy-2]],'#94b17c',1.4);
+         }
+         if((row*8+col)%9===2) this.flower(tx+52,ty+52,4,'#f6eed0');
+       } else if(tile==='O') {
+         c.fillStyle='rgba(218,148,119,.095)';
+         for(let i=9;i<cell;i+=18){c.fillRect(tx+i,ty,5,cell);c.fillRect(tx,ty+i,cell,5);}
+         c.save();c.strokeStyle='#d8cbb1';c.lineWidth=1;c.setLineDash([3,4]);c.strokeRect(tx+5,ty+5,cell-10,cell-10);c.restore();
+         round(c,tx+2,ty+2,cell-4,cell-4,5,'rgba(255,255,255,0)','#eee1c6',1);
+       } else if(tile==='R') {
+         ellipse(c,tx+16+(col*7)%30,ty+18+(row*9)%28,2,1.4,'#c5ac87','#c5ac87',0);
+         ellipse(c,tx+51,ty+55,2.5,1.2,'#d0b58f','#d0b58f',0);
+       } else if(tile==='B') {
+         c.save();c.translate(tx+36,ty+39);c.rotate(-.12);
+         round(c,-25,-16,49,31,7,'#ae9c7f',INK,2.3);round(c,-28,-3,9,22,4,'#978a70',INK,2);round(c,19,-3,10,22,4,'#978a70',INK,2);
+         line(c,[[-17,-10],[-6,-2],[-13,9],[3,16]],'#665c48',2.3);line(c,[[11,-11],[6,-3],[16,5]],'#665c48',2.3);
+         polygon(c,[[-3,-10],[3,-8],[0,-2],[7,1]],'#e2d2b1',INK,1);c.restore();
+         ellipse(c,tx+13,ty+54,3,2,'#e1d4ba',INK,0);ellipse(c,tx+57,ty+18,3,2,'#e1d4ba',INK,0);
+       } else if(tile==='S') {
+         c.save();c.translate(tx+36,ty+37);
+         ellipse(c,0,11,30,17,'#bd9d77',INK,1.8);ellipse(c,0,5,25,21,'#6e6955',INK,2.8);ellipse(c,0,11,21,11,'#555443',INK,0);
+         line(c,[[-23,9],[-22,-5],[-10,-17],[9,-18],[24,-5],[24,10]],'#9a9271',7);
+         ellipse(c,-5,5,2,2,'#f3d495',INK,0);ellipse(c,5,5,2,2,'#f3d495',INK,0);
+         c.restore();
+       }
+       if(grass){c.strokeStyle='rgba(105,135,87,.13)';c.lineWidth=1;c.strokeRect(tx+.5,ty+.5,cell-1,cell-1);}
+     }
+     for(const side of ['ai','player'] as const) {
+-      const path=PATHS[side];
++      const path=map.paths[side];
+       for(let i=1;i<path.length-1;i++) {
+         if(i%2===0) continue;
+         const a=cellCenter(path[i].col,path[i].row), b=cellCenter(path[i+1].col,path[i+1].row);
+         c.save();c.translate(a.x,a.y);c.rotate(Math.atan2(b.y-a.y,b.x-a.x));
+         c.globalAlpha=.32+.04*Math.sin(seconds*2-i);line(c,[[-4,-5],[2,0],[-4,5]],'#9d825d',2.5);c.restore();
+       }
+     }
+     // A low stone wall sits exactly on the boundary; neither route crosses it.
+     c.save();c.translate(x,y+cell*5);
+     line(c,[[0,1],[576,1]],'#9b9c83',13);
+     for(let i=0;i<16;i++) round(c,i*37-9,-6,35,12,4,i%3?'#d4d6b9':'#e1dfc3','#a5ad91',1.3);
+     c.restore();c.restore();
+     round(c,x,y,cell*8,cell*10,17,'rgba(255,255,255,0)','#8d9d7d',1.7);
+   }
+ 
+   private drawBanners(state:BattleState,seconds:number):void {
+     const c=this.c;
+     // Offset the rival ribbon to leave room for their orange tower.
+     round(c,177,193,282,34,14,'#edd7bf',INK,1.7);
+     ellipse(c,200,210,8,8,'#d39e89',INK,1.3);line(c,[[196,210],[200,214],[205,207]],PAPER,1.8);
+@@ -250,70 +252,69 @@ export class StickerRenderer {
+     if(unit.buffTime>0){star(c,-30,-24+Math.sin(seconds*4)*2,5,'#efcf72',1);star(c,31,10,3.5,'#f9e19b',1);}
+     c.restore();
+     if(unit.animation>.1){c.save();c.globalAlpha*=Math.min(.2,unit.animation*.16);ellipse(c,0,-3,20,22,'#fffce5','#fffce5',0);c.restore();}
+     if(!drag) {
+       const badgeColor=hero?'#f1cc7d':'#fff7e3';
+       round(c,14,-31,22,18,6,badgeColor,INK,1.6);this.label(String(unit.level),25,-21,12,INK,'center',800);
+       if(hero){
+         round(c,-24,30,48,6,3,'#ded6c3',INK,1);const fill=clamp(unit.energy/requiredCharge,0,1);
+         if(fill>0)round(c,-23,31,46*fill,4,2,hero.color,hero.color,0);
+       }
+       this.drawStatus(unit,seconds);
+     }
+     c.restore();
+   }
+ 
+   private drawStatus(unit:Unit,seconds:number):void {
+     const c=this.c;
+     if(unit.washing&&unit.washing>0)drawWasher(c,seconds,unit.washing);
+     if(unit.statuses.SEALED)drawSealed(c,seconds);
+     if(unit.statuses.WET)drawWet(c,seconds);
+-    if(unit.statuses.KNOCKDOWN||unit.statuses.CONFUSED) {
+-      const confused=!!unit.statuses.CONFUSED;
+-      for(let i=0;i<3;i++){const a=seconds*2+i*Math.PI*2/3;star(c,Math.cos(a)*24,-31+Math.sin(a)*5,4,confused?'#c2a3ce':'#edcd77',1);}
+-      if(confused)this.label('?',-25,-17,16,'#907ca3','center',900);
+-    }
++    if(unit.statuses.KNOCKDOWN)for(let i=0;i<3;i++){const a=seconds*2+i*Math.PI*2/3;star(c,Math.cos(a)*24,-31+Math.sin(a)*5,4,'#edcd77',1);}
++    if(unit.statuses.CONFUSED)confusionSpiral(c,seconds);
+     if(unit.statuses.MERGE_LOCK) {
+       ellipse(c,-25,17,11,11,'#e6b6a5',INK,1.7);
+       ellipse(c,-29,19,2.5,2.5,'#f8ede0',INK,1.2);ellipse(c,-22,19,2.5,2.5,'#f8ede0',INK,1.2);
+       line(c,[[-28,17],[-22,10]],INK,1.5);line(c,[[-23,17],[-29,10]],INK,1.5);
+     }
+   }
+ 
+   private drawEnemy(enemy:Enemy,seconds:number):void {
+     const c=this.c,p=cellCenter(enemy.col,enemy.row),size=(enemy.boss ? .84 : .61)*clamp(enemy.size||1,.6,1.65);
+     const bounce=Math.sin(seconds*(enemy.kind==='roach'?14:7)+enemy.id)*2;
+     c.save();c.translate(p.x,p.y);
+     ellipse(c,0,20,enemy.boss?27:18,5,'rgba(80,70,51,.19)','',0);
+     c.save();c.translate(0,bounce);c.rotate(enemy.stun>0?Math.sin(seconds*15)*.04:Math.sin(seconds*5+enemy.id)*.035);c.scale(size,size);
+     const override=this.assets.get(enemy.kind);
+     if(enemy.hitFlash>0)c.filter='brightness(0) invert(1)';
+     if(override)this.drawImage(override,79,79,0,-4);else drawEnemyArt(c,enemy.kind,seconds);
++    if(enemy.boneShield)boneShield(c);
+     c.restore();
+     const width=enemy.boss?45:29,y=-32*size-8;
+     round(c,-width/2,y,width,6,3,'#d9bea4',INK,1);
+     const hp=clamp(enemy.hp/enemy.maxHp,0,1);
+     if(hp>0)round(c,-width/2+1,y+1,(width-2)*hp,4,2,enemy.boss?'#d98a77':'#9eae7b','',0);
+     if(enemy.boss){star(c,-width/2-8,y+3,5,'#e2b46e',1.2);}
+     if(enemy.stun>0){for(let i=0;i<2;i++)star(c,Math.sin(seconds*5+i*3)*17,y-7,3.5,'#f7d37b',1);}
+     if(enemy.burn>0){polygon(c,[[-5,20],[-9,12],[-3,14],[0,5],[4,13],[8,10],[6,21]],'#edb15c','#d98964',1.3);}
+     if(enemy.poison>0){ellipse(c,19,3,4,4,'#99b483',INK,1);ellipse(c,24,-5,2.4,2.4,'#a5bb8c',INK,1);}
++    if((enemy.hasteTime||0)>0){line(c,[[-25,9],[-32,9]],'#b69bc6',2.5);line(c,[[-23,16],[-35,16]],'#b69bc6',2);star(c,22,-15,4,'#c4a3cf',1);}
+     c.restore();
+   }
+ 
+   private drawInteractionUnderlay(state:BattleState,interaction:Interaction,seconds:number):void {
+     const c=this.c,drag=state.units.find(unit=>unit.id===interaction.draggingId),selected=state.units.find(unit=>unit.id===interaction.selectedId);
+     if(interaction.propId){this.drawPropTargets(state,interaction,seconds);return;}
+     if(selected?.location.zone==='board'&&!drag&&!interaction.shovel) {
+       const p=this.position(selected),range=combatRange(selected,state.sides[selected.side].loadout);
+       c.save();c.beginPath();c.rect(STAGE.boardX,STAGE.boardY+5*STAGE.cell,STAGE.cell*8,STAGE.cell*5);c.clip();
+       if(range>0){c.fillStyle='rgba(92,153,138,.09)';c.strokeStyle='rgba(82,137,121,.58)';c.lineWidth=1.8;c.setLineDash([5,6]);c.beginPath();c.arc(p.x,p.y,range*STAGE.cell,0,Math.PI*2);c.fill();c.stroke();}
+       c.restore();round(c,p.x-32,p.y-32,64,64,12,'rgba(255,248,221,.16)',TEAL,3);
+     }
+     if(drag||interaction.shovel) {
+       for(let row=5;row<10;row++)for(let col=0;col<8;col++){
+         const tile=state.grid[row][col],valid=interaction.shovel?(tile==='G'&&state.sides.player.shovels>=1)||(tile==='B'&&state.sides.player.shovels>=2):tile==='O';
+         if(valid){const p=cellCenter(col,row);round(c,p.x-32,p.y-32,64,64,10,'rgba(255,253,222,.16)',interaction.shovel?'#c9a25a':'#7aa18c',1.5);}
+       }
+     }
+     const hover=interaction.hover||(interaction.pointer?this.hitTest(interaction.pointer.x,interaction.pointer.y):null);
+     const point=hover&&'col'in hover&&'row'in hover?hover:null;
+@@ -411,44 +412,46 @@ export class StickerRenderer {
+     ellipse(c,x,y,39,39,interaction.shovel?'#f1d48a':'#e4e7ce',INK,2.2);c.restore();
+     c.save();c.translate(x,y-2);c.scale(.72,.72);drawShovelArt(c,!!interaction.shovel,state.sides.player.loadout?.equippedPassiveProps.includes('gold_doge'));c.restore();
+     if(interaction.shovel){c.save();c.setLineDash([3,6]);ellipse(c,x,y,44,44,'rgba(255,255,255,0)',TEAL,2);c.restore();}
+     round(c,x+13,y+19,35,22,9,state.sides.player.shovels?'#fff6da':'#e4d4c2',INK,1.7);
+     this.label(`×${state.sides.player.shovels}`,x+30,y+31,13,INK,'center',800);
+     void seconds;
+   }
+ 
+   private drawDrag(state:BattleState,interaction:Interaction,seconds:number):void {
+     if(!interaction.pointer)return;
+     const c=this.c,p=interaction.pointer;
+     if(interaction.propId){c.save();c.translate(p.x,p.y-23);c.globalAlpha=.92;drawPropCursor(c,interaction.propId,seconds);c.restore();return;}
+     if(interaction.shovel){c.save();c.translate(p.x,p.y-12);c.globalAlpha=.9;drawShovelArt(c,true,state.sides.player.loadout?.equippedPassiveProps.includes('gold_doge'));c.restore();return;}
+     const drag=state.units.find(unit=>unit.id===interaction.draggingId);
+     if(!drag)return;
+     c.save();c.shadowColor='rgba(76,66,43,.18)';c.shadowBlur=15;c.shadowOffsetY=8;
+     this.drawUnit(drag,{x:p.x,y:p.y-20},seconds,.96,true,state.sides[drag.side].loadout);c.restore();
+     ellipse(c,p.x,p.y+18,3,3,TEAL,PAPER,1.5);
+   }
+ 
+-  private drawEvents(state:BattleState,seconds:number,foreground=false):void {
++  private drawEvents(state:BattleState,seconds:number,foreground=false,showDamageNumbers=true):void {
+     for(const event of state.events) {
+       const isForeground=event.type==='bubble'||event.type==='purge';
+       if(isForeground!==foreground)continue;
++      if(event.type==='damage'&&!showDamageNumbers)continue;
++      if(drawM3Event(this.c,event))continue;
+       if(drawM2Event(this.c,event))continue;
+       const eventUnit=isForeground?state.units.find(unit=>unit.id===event.unitId):undefined;
+       const p=clamp(event.age/event.duration,0,1),from=eventUnit?this.position(eventUnit):cellCenter(event.col,event.row),c=this.c;
+       if(event.type==='orange')continue; // Count observation also covers debug additions/removals.
+       c.save();
+       if(event.type==='projectile') {
+         const target=cellCenter(event.targetCol??event.col,event.targetRow??event.row);
+         const x=from.x+(target.x-from.x)*p,y=from.y+(target.y-from.y)*p-Math.sin(p*Math.PI)*13;
+         const unit=state.units.find(unit=>unit.id===event.unitId),kind=unit?.kind||'';
+         c.strokeStyle=event.color||'#d2b578';c.lineWidth=4;c.globalAlpha=.45;
+         c.beginPath();c.moveTo(x-(target.x-from.x)*.1,y-(target.y-from.y)*.1);c.lineTo(x,y);c.stroke();c.globalAlpha=1;
+         c.translate(x,y);c.rotate(Math.atan2(target.y-from.y,target.x-from.x));
+         if(kind==='ballin_rooster'){ellipse(c,0,0,7,7,'#eda267',INK,1.3);line(c,[[-5,0],[5,0]],INK,1);line(c,[[0,-5],[0,5]],INK,1);}
+         else if(kind==='bamboo_mafia'){round(c,-7,-4,14,8,3,'#a7b67c',INK,1.5);polygon(c,[[-7,-3],[-13,0],[-7,3]],'#f1b870',INK,0);}
+         else if(kind==='squirrel'){ellipse(c,0,0,5,6,'#b99061',INK,1.3);round(c,-6,-5,12,4,2,'#8d7554',INK,1.2);}
+         else if(kind==='zen_master'){ellipse(c,0,0,9,9,PAPER,INK,1.2);c.beginPath();c.arc(0,0,8,-Math.PI/2,Math.PI/2);c.fillStyle=INK;c.fill();}
+         else if(kind==='pepe_king'||kind==='purrcerer'){ellipse(c,0,0,6,6,event.color||'#b99dd0',PAPER,2);star(c,-8,0,3,'#eddb99',0);}
+         else {ellipse(c,0,0,4.5,3,event.color||'#e5bd73',PAPER,1.4);}
+       } else if(event.type==='damage') {
+         c.globalAlpha=1-p;const value=event.value??0;
+
+diff --git "a/D:\\rea_game\\games\\capybara-defense\\.runtime\\m3-review-base\\src\\render\\StickerArt.ts" "b/D:\\rea_game\\games\\capybara-defense\\src\\render\\StickerArt.ts"
+index 6919ea7..dd17cd7 100644
+--- "a/D:\\rea_game\\games\\capybara-defense\\.runtime\\m3-review-base\\src\\render\\StickerArt.ts"
++++ "b/D:\\rea_game\\games\\capybara-defense\\src\\render\\StickerArt.ts"
+@@ -240,40 +240,87 @@ export function drawCapybaraArt(c:C,time:number,oranges:number,fallen=false):voi
+   c.beginPath();c.moveTo(-31,23);c.quadraticCurveTo(0,35,31,23);c.strokeStyle='#7a8b7e';c.lineWidth=5;c.stroke();
+   c.beginPath();c.moveTo(-27,37);c.quadraticCurveTo(0,46,27,37);c.strokeStyle='#7a8b7e';c.lineWidth=4;c.stroke();
+   ellipse(c,-7,18,5,2,'#ccead8',INK,0); ellipse(c,22,15,4,2,'#ccead8',INK,0);
+   if(!fallen) {
+     const count=Math.max(0,Math.floor(oranges));
+     for(let i=0;i<count;i++) {
+       const sway=Math.sin(time*1.5-i*.38)*(1.5+i*.8);
+       drawOrange(c,sway,-44-i*16,10,Math.sin(time*1.2-i*.4)*.07*(i+1));
+     }
+   }
+   c.restore();
+   if(!fallen) {
+     c.save();c.globalAlpha=.35;c.strokeStyle='#fffdf6';c.lineWidth=3;
+     for(let i=0;i<2;i++){const y=-33-((time*10+i*17)%35);c.beginPath();c.moveTo(-32+i*64,y);c.bezierCurveTo(-39+i*64,y-5,-25+i*64,y-10,-32+i*64,y-16);c.stroke();} c.restore();
+   }
+ }
+ 
+ export function drawEnemyArt(c:C,kind:string,time:number):void {
+   c.save(); c.lineJoin='round';c.lineCap='round';
+   switch(kind) {
++    case 'killer_bee':
++      c.save();c.rotate(Math.sin(time*22)*.12);ellipse(c,-15,-12,13,18,'#dfe8d9','#fffdf5',6);ellipse(c,15,-12,13,18,'#dfe8d9','#fffdf5',6);c.restore();
++      polygon(c,[[-7,21],[0,36],[8,21]],'#a7855e',INK,2);outlineOval(c,0,3,19,25,'#d8b35d');
++      line(c,[[-17,10],[17,10]],INK,6);line(c,[[-12,23],[12,23]],INK,5);eyes(c,0,-5,7);line(c,[[-13,-13],[-4,-10]],INK,2.5);line(c,[[4,-10],[13,-13]],INK,2.5);
++      line(c,[[-7,-20],[-14,-31]],INK,2);line(c,[[7,-20],[14,-31]],INK,2);break;
++    case 'charmed_rat':
++      drawEnemyArt(c,'rat',time);
++      for(const x of [-9,9]){polygon(c,[[x-5,-5],[x-2,-8],[x,-5],[x+3,-8],[x+6,-5],[x,3]],'#db91a8',INK,1);}
++      c.save();c.rotate(Math.sin(time*5)*.1);polygon(c,[[-7,-28],[-11,-35],[-5,-40],[0,-35],[5,-40],[11,-35],[7,-28],[0,-22]],'#e3a0b7',PAPER,3);c.restore();break;
++    case 'diva_kitty':
++      // Persian fur cloud, pointed ears, pink bow and a feather fan.
++      polygon(c,[[-28,-5],[-28,-31],[-13,-20],[12,-20],[28,-32],[29,-3]],'#eee2d1',PAPER,8);
++      for(const [x,y] of [[-23,8],[-17,23],[0,27],[18,23],[25,8]])ellipse(c,x,y,12,11,'#eee2d1',PAPER,4);
++      outlineOval(c,0,-1,26,25,'#eee2d1');ellipse(c,0,11,17,10,'#f8ebd6',INK,0);
++      line(c,[[-16,-7],[-9,-4],[-3,-8]],INK,2.5);ellipse(c,10,-6,3,5,'#9caf94',INK,1.5);line(c,[[12,-11],[16,-15]],INK,1.4);
++      polygon(c,[[-3,3],[3,3],[0,7]],'#d7939f',INK,1);line(c,[[0,7],[0,11],[5,13]],INK,1.5);
++      polygon(c,[[-2,22],[-17,16],[-16,30],[0,25],[16,30],[17,16],[2,22]],'#dda1b6',INK,1.8);ellipse(c,0,23,4,4,'#e7bccb',INK,1);
++      c.save();c.translate(29,11);c.rotate(-.35);for(let i=0;i<4;i++){c.rotate(.2);ellipse(c,0,-9,4,16,'#d9b6c6',INK,1);}c.restore();break;
++    case 'buff_roo':
++      // Long ears, huge red boxing gloves and a heavy, planted tail.
++      c.save();c.rotate(-.2);ellipse(c,-12,-35,7,22,'#b98c60',PAPER,7);ellipse(c,11,-35,7,22,'#b98c60',PAPER,7);c.restore();
++      polygon(c,[[13,16],[37,34],[11,29]],'#b98c60',PAPER,5);outlineOval(c,0,11,25,26,'#c2986b');ellipse(c,0,15,14,18,'#e4c69c',INK,1.6);ellipse(c,0,-13,18,19,'#c2986b');
++      ellipse(c,7,-6,14,9,'#d9b388',INK,1.6);eyes(c,0,-17,7);line(c,[[-12,-24],[-5,-21]],INK,2);line(c,[[5,-21],[12,-24]],INK,2);
++      for(const d of [-1,1]){ellipse(c,d*26,0,15,17,'#c77d70',PAPER,5);ellipse(c,d*26,0,15,17,'#c77d70',INK,2.4);round(c,d*26-10,12,20,9,3,'#e1a08b',INK,1.5);ellipse(c,d*15,31,12,7,'#a9815b',INK,2);}
++      line(c,[[-7,14],[0,17],[7,14]],'#ba946c',2);break;
++    case 'hornet_queen':
++      for(const d of [-1,1]){ellipse(c,d*22,-3,16,24,'#dce5cc',PAPER,6);line(c,[[d*12,-15],[d*32,8]],'#a5b59c',1.6);}
++      polygon(c,[[-9,27],[0,43],[9,27]],'#937d4f',INK,2);outlineOval(c,0,8,23,29,'#d9b75f');
++      line(c,[[-22,9],[22,9]],INK,8);line(c,[[-17,26],[17,26]],INK,7);ellipse(c,0,-16,21,17,'#e0c475');eyes(c,0,-16,9);
++      line(c,[[-16,-25],[-5,-21]],INK,2.3);line(c,[[5,-21],[16,-25]],INK,2.3);crown(c,-34);
++      c.save();c.translate(24,4);c.rotate(-.3);polygon(c,[[-10,-4],[12,-14],[12,10],[-10,4]],'#e1c16e',INK,2);ellipse(c,12,-2,5,12,'#baa15f',INK,1.6);c.restore();break;
++    case 'screaming_marmot':
++      outlineOval(c,0,6,26,32,'#b79877');ellipse(c,-21,-20,8,8,'#b79877');ellipse(c,21,-20,8,8,'#b79877');ellipse(c,0,-8,25,23,'#b79877');
++      line(c,[[-17,-17],[-8,-20],[-3,-16]],INK,2);line(c,[[3,-16],[8,-20],[17,-17]],INK,2);
++      ellipse(c,0,4,13,19,'#674f4b',PAPER,3);ellipse(c,0,13,8,7,'#d99d92',INK,1);round(c,-5,-13,10,9,1,PAPER,INK,1);
++      ellipse(c,-22,9,7,12,'#c6a787',INK,2);ellipse(c,22,9,7,12,'#c6a787',INK,2);ellipse(c,-13,34,11,6,'#a48767',INK,2);ellipse(c,13,34,11,6,'#a48767',INK,2);break;
++    case 'trash_coon':
++      animal(c,'raccoon',time);polygon(c,[[-22,-12],[-36,29],[-15,24],[0,33],[20,25],[30,30],[21,-12]],'#8d9c80',PAPER,5);
++      animal(c,'raccoon',time);round(c,-28,7,23,29,4,'#829d8a',INK,2);ellipse(c,-16,7,15,5,'#bac7a7',INK,1.8);
++      line(c,[[20,32],[26,-10]],'#92815e',4);ellipse(c,26,-17,11,10,'#e9dfbf',INK,2);ellipse(c,22,-18,2.5,3,'#65715f',INK,0);ellipse(c,30,-18,2.5,3,'#65715f',INK,0);line(c,[[24,-11],[24,-7],[29,-7],[29,-11]],'#e9dfbf',3);
++      polygon(c,[[-27,-23],[0,-44],[27,-23]],'#889b7b',INK,2);star(c,0,-30,5,'#c8d0a3',1);break;
++    case 'dj_rat_king':
++      // Rat face, chunky headphones, sunglasses and two speaker towers.
++      drawEnemyArt(c,'rat',time);crown(c,-28);shades(c,-3);
++      for(const d of [-1,1]){round(c,d*28-9,-3,18,39,4,'#81738e',PAPER,5);round(c,d*28-9,-3,18,39,4,'#81738e',INK,2);ellipse(c,d*28,22,6,7,'#c1a7cf',INK,1.5);ellipse(c,d*28,7,4,4,'#afc6b2',INK,1.2);}
++      c.beginPath();c.arc(0,-8,25,Math.PI,Math.PI*2);c.strokeStyle='#687974';c.lineWidth=6;c.stroke();round(c,-28,-13,8,18,3,'#b4bf9c',INK,1.5);round(c,20,-13,8,18,3,'#b4bf9c',INK,1.5);
++      line(c,[[-13,27],[13,27]],'#e2c46c',3);ellipse(c,0,29,4,5,'#ead37b',INK,1);break;
+     case 'rat':
+       c.beginPath();c.moveTo(-16,12);c.bezierCurveTo(-38,25,-39,0,-27,3);c.strokeStyle='#fffdf5';c.lineWidth=8;c.stroke();c.strokeStyle='#cd9f9e';c.lineWidth=4;c.stroke();
+       ellipse(c,-14,-15,10,11,'#b5a4b7','#fffdf5',6);ellipse(c,14,-15,10,11,'#b5a4b7','#fffdf5',6);ellipse(c,-14,-15,10,11,'#b5a4b7');ellipse(c,14,-15,10,11,'#b5a4b7');ellipse(c,-14,-15,5,6,'#e4b3b2',INK,0);ellipse(c,14,-15,5,6,'#e4b3b2',INK,0);
+       outlineOval(c,0,4,21,20,'#b5a4b7');ellipse(c,0,10,13,10,'#e7c9bf',INK,0);eyes(c,0,-2,8);ellipse(c,0,7,3,2,'#9a737c',INK,0);round(c,-3,12,6,6,1,PAPER,INK,1);line(c,[[-12,9],[-23,6]],INK,1);line(c,[[12,9],[23,6]],INK,1);break;
+     case 'roach':
+       [-1,1].forEach(d=>{for(let i=0;i<3;i++)line(c,[[d*12,-7+i*11],[d*25,-12+i*13],[d*29,-8+i*14]],INK,2.6);});
+       outlineOval(c,0,3,17,26,'#af8063');line(c,[[0,-17],[0,27]],'#795d4b',2);ellipse(c,0,-17,15,10,'#bd9170');eyes(c,0,-18,6);line(c,[[-7,-24],[-15,-36]],INK,2);line(c,[[7,-24],[18,-36]],INK,2);line(c,[[-10,0],[-3,8]],'#d2aa80',2);line(c,[[10,0],[3,8]],'#d2aa80',2);break;
+     case 'crab':
+       [-1,1].forEach(d=>{line(c,[[d*13,13],[d*27,22]],INK,3);line(c,[[d*13,6],[d*30,10]],INK,3);ellipse(c,d*25,-7,10,12,'#e99a85','#fffdf6',6);ellipse(c,d*25,-7,10,12,'#e99a85');polygon(c,[[d*21,-17],[d*25,-7],[d*31,-17]],'#fff7de',INK,1.8);});
+       outlineOval(c,0,7,24,17,'#e8957d');line(c,[[-9,-5],[-11,-14]],INK,3);line(c,[[9,-5],[11,-14]],INK,3);ellipse(c,-11,-15,4,5,PAPER,INK,2);ellipse(c,11,-15,4,5,PAPER,INK,2);eyes(c,0,-15,11);smile(c,0,8);break;
+     case 'husky_wrecker':
+       polygon(c,[[-26,-5],[-27,-36],[-7,-22],[9,-22],[27,-36],[27,-5]],'#91a3af','#fffdf6',8);polygon(c,[[-26,-5],[-27,-36],[-7,-22],[9,-22],[27,-36],[27,-5]],'#91a3af');
+       outlineOval(c,0,4,27,28,'#91a3af');polygon(c,[[-21,-8],[-7,-2],[0,-19],[7,-2],[21,-8],[16,20],[-16,20]],'#f2eee0',INK,0);ellipse(c,-11,-3,5,6,'#a2cad8',INK,1.5);ellipse(c,11,-3,5,6,'#d8b175',INK,1.5);eyes(c,0,-3,11);ellipse(c,0,9,5,3,INK,INK,0);line(c,[[-8,15],[0,19],[10,13]],INK,2);polygon(c,[[4,16],[10,14],[7,25]],'#e8a093',INK,1.5);break;
+     case 'mega_roomba':
+       ellipse(c,0,13,32,20,'#78898b','#fffdf6',8);ellipse(c,0,13,32,20,'#78898b');ellipse(c,0,2,33,21,'#bccac4');ellipse(c,0,-1,24,12,'#dce3d8',INK,1.8);round(c,-16,10,32,7,3,'#57666b',INK,1.7);line(c,[[-9,12],[-4,12]],'#eaa18a',2);line(c,[[5,12],[10,12]],'#eaa18a',2);round(c,-5,-11,10,8,3,'#e5a590',INK,1.8);[-1,1].forEach(d=>line(c,[[d*27,21],[d*39,26],[d*34,17]],'#8b9e90',3));break;
+     case 'dr_clippers':
+       c.save();c.rotate(-.14);round(c,-17,-17,34,47,9,'#b7a0bd','#fffdf6',8);round(c,-17,-17,34,47,9,'#b7a0bd');round(c,-23,-27,46,17,3,'#c9d4d0',INK,2.4);for(let i=-18;i<=18;i+=6)line(c,[[i,-28],[i,-18]],'#687e7d',2.5);round(c,-10,13,20,7,3,'#887991',INK,2);eyes(c,0,-1,7);line(c,[[-12,-7],[-5,-4]],INK,2);line(c,[[5,-4],[12,-7]],INK,2);line(c,[[-4,8],[4,8]],INK,2);c.restore();line(c,[[4,31],[12,39],[27,34]],'#877894',3);break;
+     case 'box_kraken':
+       for(let i=0;i<5;i++){const x=-24+i*12;c.beginPath();c.moveTo(x,12);c.quadraticCurveTo(x+Math.sin(time*3+i)*8,37,x-7,30);c.strokeStyle='#fffdf6';c.lineWidth=12;c.stroke();c.strokeStyle='#b69cad';c.lineWidth=7;c.stroke();}
+       round(c,-29,-22,58,44,5,'#d9b586','#fffdf6',8);round(c,-29,-22,58,44,5,'#d9b586');polygon(c,[[-29,-22],[-9,-30],[0,-15],[-23,-9]],'#e8cda0');polygon(c,[[29,-22],[8,-30],[0,-15],[25,-9]],'#ead2a6');line(c,[[0,-15],[0,20]],'#bb9266',2);eyes(c,0,3,13);line(c,[[-17,-5],[-9,-1]],INK,2);line(c,[[9,-1],[17,-5]],INK,2);round(c,8,11,12,7,1,'#f8eacc',INK,1);break;
+
+diff --git "a/D:\\rea_game\\games\\capybara-defense\\.runtime\\m3-review-base\\src\\render\\M3Art.ts" "b/D:\\rea_game\\games\\capybara-defense\\src\\render\\M3Art.ts"
+index e69de29..0d833d8 100644
+--- "a/D:\\rea_game\\games\\capybara-defense\\.runtime\\m3-review-base\\src\\render\\M3Art.ts"
++++ "b/D:\\rea_game\\games\\capybara-defense\\src\\render\\M3Art.ts"
+@@ -0,0 +1,81 @@
++/** Inline, offline SVG stickers. Only fixed local geometry enters the markup. */
++const ink='#514739',paper='#fff9eb';
++const p=(d:string,fill='none',stroke=ink,width=2.4)=>`<path d="${d}" fill="${fill}" stroke="${stroke}" stroke-width="${width}"/>`;
++const e=(x:number,y:number,rx:number,ry:number,fill:string,stroke=ink,width=2.4)=>`<ellipse cx="${x}" cy="${y}" rx="${rx}" ry="${ry}" fill="${fill}" stroke="${stroke}" stroke-width="${width}"/>`;
++const r=(x:number,y:number,w:number,h:number,fill:string,rad=4)=>`<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="${rad}" fill="${fill}" stroke="${ink}" stroke-width="2.4"/>`;
++const sparkle=p('M0 -7 L2 -2 7 0 2 2 0 7 -2 2 -7 0 -2 -2Z','#f3ce71');
++const eyes=e(-9,-2,1.9,2.4,ink,ink,0)+e(9,-2,1.9,2.4,ink,ink,0)+p('M-4 8 Q0 12 4 8');
++const crown=p('M-20 -18 L-23 -35 -10 -27 0 -39 10 -27 23 -35 20 -18Z','#efc85c')+e(0,-24,3,3,'#da8d8b');
++const shades=r(-23,-9,20,12,'#596476')+r(3,-9,20,12,'#596476')+p('M-3 -4 H3 M-18 -5 L-10 -7 M8 -5 L16 -7','none','#d1e1dd',1.7);
++const bamboo=p('M-5 31 L-5 -32 Q0 -36 5 -32 L5 31Z','#a4ba7a')+p('M-5 -18 H5 M-5 0 H5 M-5 18 H5','none','#6f8b57')+p('M5 -12 Q23 -28 24 -15 Q12 -9 5 -12Z','#88a36a');
++const fish=p('M-24 2 Q-7 -17 20 -4 L33 -15 30 3 35 15 20 9 Q-9 27 -24 2Z','#a8c9c2')+e(-13,0,2,2,ink)+p('M-5 -4 L5 3 -5 10 M1 -5 L11 2 1 9','none','#708f8b',1.4);
++function head(kind:string,color:string):string {
++  const pointed=['cat','dog','corgi'].includes(kind);
++  const ears=pointed?p('M-23 -8 L-25 -32 -8 -20 M8 -20 L25 -32 23 -8',color):e(-19,-19,8,9,color)+e(19,-19,8,9,color);
++  const face=e(0,1,25,23,color)+e(-17,8,4,2,'#e5a191',ink,0)+e(17,8,4,2,'#e5a191',ink,0)+eyes;
++  return ears+face;
++}
++const capy=head('capy','#c9a67a')+e(9,8,18,11,'#d9bd93')+p('M-17 -3 L-8 -1 M4 -3 L13 -1 M7 13 H15')+e(21,5,2,2,ink);
++const portraits:Record<string,string>={
++  capybara:e(0,22,31,12,'#acd7cd')+capy+e(0,-30,9,8,'#f6a854')+p('M1 -37 Q11 -44 14 -37 Q9 -32 1 -37Z','#8daf78')+p('M-31 24 Q-28 40 0 41 Q28 40 31 24Z','#bb966b')+p('M-18 29 V37 M0 30 V40 M18 29 V37'),
++  hamster:head('hamster','#e7b77e')+e(-10,9,11,8,'#fff0cf',ink,0)+e(10,9,11,8,'#fff0cf',ink,0)+p('M-4 7 H4 V14 H-4Z',paper)+e(17,24,9,13,'#ac8152')+p('M17 14 V34','none','#e7ca99'),
++  squirrel:e(-23,16,13,23,'#c58c6a')+p('M-26 0 Q-42 19 -24 31','none','#e8bd95',4)+head('squirrel','#c9926c')+p('M10 26 V12 L3 3 M10 12 L21 1','none','#89664b',4)+e(22,25,6,7,'#a77a52')+r(15,18,14,4,'#805e45'),
++  bee:e(-19,-8,12,20,'#e3f0e5')+e(19,-8,12,20,'#e3f0e5')+e(0,6,20,25,'#f4d568')+p('M-19 9 H19 M-14 24 H14','none',ink,7)+eyes+p('M-7 -17 L-12 -29 M7 -17 L12 -29')+e(-12,-29,3,3,ink)+e(12,-29,3,3,ink),
++  cat_swordsman:head('cat','#edb580')+p('M-29 -19 L0 -37 29 -19Z','#b9c388')+p('M-16 -26 L-8 -20 M0 -31 V-20 M16 -26 L8 -20','none','#849563',1.3)+p('M15 34 L34 0 36 -8 27 -4 8 28Z','#d3dfd8')+p('M8 19 L25 29','none','#c9a45d',4),
++  doge_agent:head('dog','#dba469')+shades+p('M-24 24 L-9 17 0 31 9 17 24 24 23 39 -23 39Z','#788a83')+p('M-5 21 H5 L3 31 0 37 -3 31Z','#e6c18a'),
++  goose_bully:p('M-22 25 Q-33 12 -21 0 L-4 4 -4 -21 Q-4 -34 11 -34 Q29 -34 25 -18 L10 -11 11 18 Q10 35 -22 25Z',paper)+p('M24 -25 L37 -19 24 -14Z','#edab5e')+e(13,-24,2,2,ink)+p('M-7 -21 L20 -20','none','#cc8778',4)+r(22,10,7,24,'#a67c58')+r(17,-9,21,23,'#c8d5d0'),
++  kungfu_panda:head('panda',paper)+e(-10,-2,7,9,'#5e665d')+e(10,-2,7,9,'#5e665d')+e(-10,-3,2,3,paper,ink,0)+e(10,-3,2,3,paper,ink,0)+p('M-28 -20 L0 -37 28 -20Z','#b6bf84')+p('M-28 28 L28 20','none','#9baa6c',7)+p('M-15 22 V27 M3 20 V26','none','#eadc9c',2),
++  rooster_star:p('M-20 15 L-34 2 -32 24 -19 29Z','#82919a')+e(0,6,23,27,'#efcb84')+e(-9,-22,6,10,'#d97d6e')+e(1,-25,6,10,'#d97d6e')+e(10,-21,5,8,'#d97d6e')+eyes+p('M-5 3 L6 3 0 10Z','#eaa65a')+p('M-13 12 L-9 30 H9 L13 12','none','#6c7879',4)+e(23,24,13,13,'#e99b5e')+p('M10 24 H36 M23 11 V37 M15 14 Q31 24 15 34','none',ink,1.5),
++  frog_king:e(0,10,26,21,'#94b77a')+e(-16,-12,11,12,'#94b77a')+e(16,-12,11,12,'#94b77a')+e(-16,-12,6,7,paper)+e(16,-12,6,7,paper)+e(-15,-11,2,3,ink)+e(15,-11,2,3,ink)+p('M-18 12 Q0 22 18 12')+crown,
++  market_coon:p('M-18 18 Q-42 0 -31 -13 Q-18 -15 -17 8Z','#adb1a3')+p('M-31 -9 L-19 -2 M-33 0 L-19 8','none','#69756a',5)+head('coon','#a5ada0')+p('M-24 -3 L-17 -10 0 -4 17 -10 24 -3 16 4 0 0 -16 4Z','#667368')+e(-10,-3,2,3,paper,ink,0)+e(10,-3,2,3,paper,ink,0)+r(-15,21,35,16,'#ad8a61')+p('M-10 26 H13 M-8 32 H8','none','#e5c886',2),
++  salted_fish:`<g transform="rotate(-35)">${fish}</g>`+p('M-11 22 L-3 31 M-16 28 L3 9','none','#af8d5c',5)+`<g transform="translate(23 -24)">${sparkle}</g>`,
++  bamboo_master:head('panda',paper)+e(-10,-2,7,8,'#677163')+e(10,-2,7,8,'#677163')+e(-10,-2,2,3,paper,ink,0)+e(10,-2,2,3,paper,ink,0)+`<g transform="translate(25 0) rotate(15)">${bamboo}</g>`+p('M-25 -22 L-3 -42 23 -22Z','#a5b775'),
++  sakura_capy:capy+p('M-31 28 Q0 16 31 28 L26 40 -26 40Z','#e9b9bd')+`<g transform="translate(-20 -25)">${e(0,-6,5,7,'#efbdc7')+e(-6,0,7,5,'#efbdc7')+e(6,0,7,5,'#efbdc7')+e(0,6,5,7,'#efbdc7')+e(0,0,3,3,'#f2d18c')}</g>`+p('M24 -24 Q36 -35 29 -42','none','#b7a6b3',2),
++  corgi_crown:head('corgi','#e0aa63')+p('M0 -18 L-9 11 Q0 19 9 11Z','#fff0cd',ink,0)+e(-10,9,8,6,'#fff0cd',ink,0)+e(10,9,8,6,'#fff0cd',ink,0)+crown+p('M-24 27 H24 L20 38 H-20Z','#a1c2ae')+e(-13,39,4,4,'#7b8b80')+e(13,39,4,4,'#7b8b80'),
++  zen_capy:e(0,0,35,35,'#f4db93','#b69b60',2)+capy+p('M-23 24 Q0 41 23 24','none','#b5bea0',7)+`<g transform="translate(-29 -26) scale(.7)">${sparkle}</g><g transform="translate(29 -25)">${sparkle}</g>`+p('M-18 32 H18','none','#8fa487',3),
++};
++const handle=p('M0 10 V34','none','#ae855c',7);
++const weapons:Record<string,string>={
++  m01_swatter:handle+p('M-14 -30 Q0 -38 14 -30 L14 5 Q0 13 -14 5Z','#d3c6b1')+p('M-7 -29 V5 M0 -31 V8 M7 -29 V5 M-13 -19 H13 M-13 -10 H13 M-13 -1 H13','none','#948b7b',1.3),
++  m02_slipper:p('M-17 25 Q-31 -1 -12 -27 Q2 -40 18 -24 L24 8 Q21 34 0 35Z','#db9e8b')+p('M-18 0 L1 -15 19 0 M1 -15 L1 9','none','#f5d7b5',6),
++  m03_scratcher:p('M-4 33 V-10 L-17 -17 -16 -29 -12 -31 -9 -20 -7 -34 -2 -35 0 -21 3 -35 8 -33 7 -20 12 -30 17 -28 14 -9 4 -3 V33Z','#c9aa76'),
++  m04_baguette:p('M-20 25 Q-32 15 -20 -5 L7 -31 Q18 -40 26 -28 Q30 -18 15 -3 L-5 25 Q-13 35 -20 25Z','#d7ac6e')+p('M-17 12 L-5 18 M-7 0 L5 6 M4 -12 L16 -6 M13 -24 L23 -18','none','#f9dc9e',4),
++  m05_duster:handle+p('M-3 10 Q-28 0 -24 -19 Q-16 -35 -2 -23 Q9 -42 22 -27 Q34 -13 8 11Z','#b795ad')+p('M0 9 L-12 -23 M0 9 L12 -26 M-1 8 L-23 -8 M1 7 L25 -13','none','#e9d0c8',2),
++  m06_stool:p('M-21 -9 L17 31 M21 -9 L-17 31','none','#947c65',7)+r(-26,-21,52,15,'#c4ae84')+p('M-17 -15 H17','none','#eed7a9',2),
++  m07_rolling_pin:p('M-28 -5 H-18 M18 -5 H28','none','#a47b50',8)+r(-20,-15,40,21,'#cba36b',7)+p('M-13 -10 H12','none','#f0d1a0',3),
++  m08_durian:handle+p('M-20 8 L-27 -1 -23 -9 -30 -17 -18 -22 -15 -33 -5 -29 3 -37 11 -29 22 -30 23 -19 32 -12 24 -3 25 8 13 9 5 17 -5 11Z','#b2bd78')+p('M-13 -16 L-7 -9 -1 -18 7 -11 15 -20 M-12 -1 L-4 5 4 -4 14 2','none','#748858',2),
++  m09_cat_blade:p('M-27 -29 L-7 -20 17 21 10 27 -15 -10Z','#d8bd8a')+p('M27 -29 L7 -20 -17 21 -10 27 15 -10Z','#dec59a')+p('M-18 -15 L-11 -15 M-11 -4 H-4 M18 -15 H11 M11 -4 H4','none','#9f8056',2)+p('M-23 17 L-7 29 M7 29 L23 17','none','#8c7255',5),
++  m10_bamboo_staff:bamboo+`<g transform="translate(-16 -15) scale(.65)">${sparkle}</g>`+p('M-5 18 Q-30 12 -25 25 Q-14 28 -5 18Z','#8fa867'),
++  m11_salted_fish:`<g transform="rotate(-38)">${fish}</g>`+p('M-15 24 L-2 35 M-14 32 L-1 16','none','#b39161',6)+`<g transform="translate(20 -23)">${sparkle}</g>`,
++  m12_iron_wok:p('M-8 -15 V-31 H8 V-15','none','#89958d',7)+p('M-30 -14 Q0 -22 30 -14 Q29 21 0 27 Q-29 21 -30 -14Z','#6e8078')+e(0,-12,30,11,'#a6b4a7')+p('M-18 -11 Q0 -19 18 -11','none','#e0e7d4',3),
++  r01_rubber_band:p('M-20 29 V3 L-9 -2 V-27 Q-7 -35 -3 -27 L1 -4 17 -22 Q22 -25 25 -21 L14 -2 27 -10 Q34 -12 31 -5 L16 10 10 30Z','#dfbb91')+p('M-9 -21 L21 -19 13 5 -9 -21Z','none','#c68b87',3),
++  r02_duck_squirt:e(-5,6,23,17,'#f2ce65')+e(11,-12,15,17,'#f2ce65')+p('M22 -14 L35 -10 22 -4Z','#e79a57')+e(15,-17,2,2,ink)+p('M-24 2 L-31 -8 -30 13Z','#f2ce65')+r(-13,17,13,16,'#9cbda7')+p('M-11 2 Q2 -3 5 8','none','#d5a550',2),
++  r03_bubble_gun:r(-28,-8,46,23,'#b2c9bf')+r(-16,12,12,20,'#8da89e')+e(20,2,9,14,'#d4dfd3')+e(20,2,4,7,'#758d85')+e(32,-18,7,7,'#d4efeb','#8ab6b6',1.6)+e(14,-27,5,5,'#d4efeb','#8ab6b6',1.6),
++  r04_tennis_launcher:r(-24,-10,45,32,'#91b29a')+p('M-24 -10 L-14 -27 H13 L21 -10Z','#c6d6b7')+e(-14,26,7,7,'#687c70')+e(15,26,7,7,'#687c70')+e(5,-10,14,10,'#6c8370')+e(25,-27,9,9,'#d0d879')+p('M21 -34 Q18 -27 24 -19','none',paper,1.8),
++  r05_hair_dryer:p('M-8 9 L-4 32 9 30 4 7Z','#a7b8bd')+p('M-21 -17 Q3 -34 23 -17 L29 -14 V2 L19 6 Q-3 18 -22 3Z','#c6d3ce')+e(-21,-7,10,14,'#899e9c')+p('M-25 -13 L-17 -2 M-26 -5 L-19 5 M28 -8 Q40 -13 37 -23','none','#edb27b',2),
++  r06_pressure_washer:p('M-24 6 L13 -15 30 -9 32 -4 1 11 -2 31 -14 29 -11 12Z','#99b7ab')+p('M-10 0 L16 -10','none','#e0ddab',4)+p('M-18 25 Q-39 30 -31 2','none','#768d88',4)+p('M31 -5 L40 -9 M30 0 L40 2','none','#9acbd0',3),
++  r07_popcorn_cannon:r(-24,-22,42,47,'#d9ab7c')+r(-28,-27,50,10,'#d3bf91')+r(-27,25,48,9,'#8fa69d')+p('M-17 -15 V20 M-5 -15 V20 M7 -15 V20','none','#fbebc0',6)+e(15,-26,8,7,'#f4e1ad')+e(3,-32,7,7,'#f4e1ad')+e(-10,-28,6,6,'#f4e1ad'),
++  r08_coin_slingshot:p('M0 32 V8 L-22 -21 M0 8 L23 -22','none','#a28658',9)+p('M-22 -21 Q0 -4 23 -22','none','#d49587',3)+e(0,-15,9,10,'#e6c361')+p('M0 -21 V-9','none','#ad8c46',2),
++  r09_bamboo_bazooka:p('M-29 11 L13 -25 Q26 -28 31 -14 L-12 23Z','#9ab57b')+e(22,-20,11,7,'#5f7657')+p('M-17 7 L-7 19 M-3 -7 L7 5 M10 -21 L20 -9','none','#dee1a0',3)+p('M-29 11 L-38 8 -34 24 -23 20Z','#efb56d')+r(-2,19,9,14,'#7c956b'),
++  r10_acorn_minigun:r(-27,-13,32,29,'#a0b4a2')+p('M0 -12 L29 -18 32 -6 2 0 M1 0 L31 -6 33 6 2 12 M0 11 L30 6 31 18 1 23Z','#b29168')+r(-18,14,11,19,'#7c9685')+e(29,-10,4,5,'#647d6d')+e(30,2,4,5,'#647d6d')+e(29,14,4,5,'#647d6d'),
++  r11_sniper_laser:p('M-32 -3 H23 V8 H-6 L-16 28 H-27 L-20 8 H-32Z','#8ca79c')+r(-7,-16,24,11,'#b6c9bc')+e(18,-11,4,7,'#687e76')+p('M23 1 H37','none','#e2a195',2)+e(36,1,3,3,'#eaa18a',ink,0)+p('M-2 17 L7 29 M-2 17 L-10 31','none','#738a7d',3),
++  r12_junk_mortar:p('M-17 20 L-4 4 M-17 20 L18 28','none','#bd9d56',8)+p('M-12 8 L1 -30 Q4 -38 22 -30 Q35 -23 30 -17 L8 17Z','#d6ba70')+e(15,-28,16,8,'#8d8461')+e(-19,27,9,9,'#b99e62')+e(20,29,9,9,'#b99e62')+p('M3 -8 L19 -2','none','#f5e2a1',4),
++  w01_teaser:p('M-13 32 L8 -16 Q16 -36 29 -23','none','#ae8f66',4)+p('M27 -22 Q8 -33 1 -14 Q3 5 19 -3 Q35 -8 27 -22Z','#c5a2c9')+p('M9 -4 L25 -24 M14 -13 L4 -14 M18 -17 L26 -11','none','#f4dbe1',1.4),
++  w02_balloon:e(0,-8,21,27,'#d6b0c9')+p('M-5 18 L0 24 5 18Z','#c08fae')+p('M0 24 Q-12 29 0 35 Q10 39 -3 42','none','#9d8395',2)+p('M-12 -21 Q-19 -14 -15 -4','none','#f8dfe5',4)+p('M28 -12 L34 -20 29 -20 35 -28','none','#e2bf65',2),
++  w03_bug_zapper:handle+e(0,-13,20,23,'#a4c9bf')+e(0,-13,14,17,'#d9e3cf')+p('M-7 -26 V1 M0 -29 V4 M7 -26 V1 M-13 -20 H13 M-14 -11 H14 M-11 -2 H11','none','#839b8c',1.2)+p('M7 -23 L-4 -9 H4 L-5 4','none','#f1d078',3),
++  w04_yarn_orb:e(0,0,25,25,'#b5a0cd')+p('M-20 -11 Q5 4 22 -8 M-24 0 Q0 16 23 4 M-18 15 Q0 22 20 13 M-10 -23 Q-1 -7 18 18 M2 -24 Q3 -9 24 2','none','#e3c9e3',2)+p('M-20 16 Q-37 31 -18 35 L-1 29','none','#a08bb5',3),
++  w05_disco_ball:p('M0 -38 V-25','none','#8a8c91',3)+e(0,0,26,26,'#b9b6cf')+p('M-19 -18 L19 18 M-26 -3 L3 26 M-3 -26 L26 3 M19 -18 L-18 19 M26 -3 L-3 26 M3 -26 L-26 3','none','#f5e6d4',2)+`<g transform="translate(30 -25) scale(.6)">${sparkle}</g>`,
++  w06_yarn_storm:e(-12,8,18,18,'#d6b0b8')+e(13,10,18,18,'#a1bda7')+e(1,-12,18,18,'#b7a3cd')+p('M-26 3 Q-11 17 2 6 M-25 13 Q-11 25 0 18 M1 3 Q15 16 29 9 M0 15 Q13 27 29 20 M-13 -18 Q1 -3 17 -14 M-15 -9 Q0 3 17 -5','none','#f8e2c4',2)+p('M-20 -25 Q0 -42 22 -23','none','#c9a5cf',2),
++  w07_cat_scratch_meteor:p('M-25 6 L5 -31 20 -38 12 -14 33 -28 21 0Z','#edbd76')+p('M-24 9 Q-25 -7 -9 -7 Q9 -9 14 9 Q12 30 -9 29 Q-26 29 -24 9Z','#cfb88d')+e(-24,-8,7,9,'#cfb88d')+e(-7,-17,7,9,'#cfb88d')+e(10,-9,7,9,'#cfb88d')+p('M-18 7 L-13 22 M-9 4 L-4 22 M1 7 L5 20','none','#9d805c',2),
++  w08_fortune_fish:p('M-30 9 Q-23 -19 5 -19 Q31 -17 31 9 Q8 31 -18 24Z','#b69782')+p('M-29 10 Q2 -1 30 9','none','#715c55',4)+e(-10,0,3,3,'#f3d987')+p('M10 -17 L29 -34','none','#987d64',5)+e(31,-35,7,7,'#d8b883')+p('M-4 21 Q6 7 18 17','none','#ddcaa7',2),
++  w09_yin_yang_burner:p('M-22 1 L-15 28 H15 L22 1Z','#b2bda5')+e(0,0,27,9,'#d4d9b9')+p('M-12 29 L-17 35 M12 29 L17 35','none','#83937c',4)+e(0,-14,15,15,paper)+p('M0 -29 A15 15 0 0 1 0 1 A7.5 7.5 0 0 1 0 -14 A7.5 7.5 0 0 0 0 -29Z','#65766b')+e(0,-22,2,2,paper,ink,0)+e(0,-6,2,2,'#65766b',ink,0)+p('M-23 -19 Q-36 -29 -24 -36 M24 -18 Q36 -29 24 -36','none','#bca6ca',2),
++  w10_cosmic_vacuum:r(-27,0,35,28,'#a598ba')+e(-18,30,6,6,'#6b697e')+e(3,30,6,6,'#6b697e')+p('M-8 0 Q-25 -25 1 -26 L24 -24','none','#857793',8)+p('M19 -33 L33 -34 36 -15 21 -14Z','#b4a6c8')+e(29,-24,8,11,'#6d5c84')+p('M28 -30 Q18 -12 32 -22','none','#dbbfdf',2)+p('M-17 10 H-5','none','#e1c88d',3),
++  w11_golden_hoop_ball:e(0,4,24,24,'#e9a25d')+p('M-24 4 H24 M0 -20 V28 M-16 -14 Q10 4 -16 22 M16 -14 Q-10 4 16 22','none','#8c704b',1.8)+e(0,4,33,12,'none','#e7c15f',4)+p('M-22 -16 L-27 -30 -8 -22 1 -37 10 -22 25 -28 21 -14','none','#eebc70',4),
++  w12_rain_crown_scepter:p('M0 0 V35','none','#c8ae67',7)+p('M-18 -25 L-23 -38 -8 -31 0 -43 8 -31 23 -38 18 -25Z','#efd077')+p('M-20 -22 L13 -27 26 -12 13 4 -20 -4Z','#a4b997')+e(15,-12,11,16,'#ccdab6')+e(16,-12,6,10,'#6c8e72')+p('M-31 -12 Q-34 -24 -25 -23 M30 -5 Q40 -10 33 -20','none','#90b5c3',2)+e(0,25,4,4,'#d0a2b1'),
++};
++function svg(id:string,art:string,size:number,fallback:number):string {
++  const n=Number.isFinite(size)&&size>0?Math.min(512,Math.max(16,Math.round(size))):fallback;
++  return `<svg viewBox="-48 -48 96 96" width="${n}" height="${n}" role="img" aria-label="${id}" data-sticker="${id}"><g stroke-linecap="round" stroke-linejoin="round"><path d="M-39 -26 Q-42 -42 -19 -40 L19 -41 Q42 -39 40 -18 L41 22 Q38 43 17 41 L-22 42 Q-43 38 -40 18Z" fill="${paper}" stroke="#fffdf6" stroke-width="5"/>${art}</g></svg>`;
++}
++export function avatarSticker(id:string,size=64):string {const key=Object.hasOwn(portraits,id)?id:'capybara';return svg(key,portraits[key],size,64);}
++export function weaponSticker(id:string,size=48):string {const key=Object.hasOwn(weapons,id)?id:'m01_swatter';return svg(key,weapons[key],size,48);}
+
+diff --git "a/D:\\rea_game\\games\\capybara-defense\\.runtime\\m3-review-base\\src\\render\\M3Effects.ts" "b/D:\\rea_game\\games\\capybara-defense\\src\\render\\M3Effects.ts"
+index e69de29..2f2c6d3 100644
+--- "a/D:\\rea_game\\games\\capybara-defense\\.runtime\\m3-review-base\\src\\render\\M3Effects.ts"
++++ "b/D:\\rea_game\\games\\capybara-defense\\src\\render\\M3Effects.ts"
+@@ -0,0 +1,67 @@
++import type {MapId,VisualEvent} from '../core/types';
++import {STAGE} from '../config/maps';
++import {ellipse,INK,line,PAPER,polygon,round,star} from './StickerArt';
++type C=CanvasRenderingContext2D;
++export function heart(c:C,x:number,y:number,size:number,color='#df9cae'):void {
++  c.save();c.translate(x,y);c.scale(size/12,size/12);c.beginPath();c.moveTo(0,10);c.bezierCurveTo(-24,-4,-10,-20,0,-8);c.bezierCurveTo(10,-20,24,-4,0,10);c.closePath();c.fillStyle=color;c.fill();c.strokeStyle=INK;c.lineWidth=1.8;c.stroke();c.restore();
++}
++export function confusionSpiral(c:C,seconds:number):void {
++  c.save();c.translate(0,-40);c.rotate(seconds*1.7);c.strokeStyle='#9a7db4';c.lineWidth=2.5;c.beginPath();
++  for(let i=0;i<=44;i++){const a=i*.32,r=1+i*.25,x=Math.cos(a)*r,y=Math.sin(a)*r*.65;if(i)c.lineTo(x,y);else c.moveTo(x,y);}c.stroke();c.restore();
++  line(c,[[-28,-20],[-33,-26],[-30,-31]],'#b29ac5',2);line(c,[[28,-23],[33,-29],[30,-34]],'#b29ac5',2);
++}
++export function boneShield(c:C):void {
++  c.save();c.translate(20,9);polygon(c,[[-13,-17],[13,-17],[11,5],[0,15],[-11,5]],'#9daba2',PAPER,4);polygon(c,[[-13,-17],[13,-17],[11,5],[0,15],[-11,5]],'#9daba2',INK,1.8);
++  c.rotate(-.45);line(c,[[0,-11],[0,6]],'#f4e7c8',5);
++  for(const y of [-11,6])for(const x of [-2,2])ellipse(c,x,y,3,3,'#f4e7c8',INK,.8);c.restore();
++}
++/** Edge decorations stay outside the hit-tested board rectangle. */
++export function drawThemeEdges(c:C,id:MapId,time:number,accent:string):void {
++  for(const [x,y,flip] of [[17,280,1],[623,927,-1],[18,938,1],[621,281,-1]]){
++    c.save();c.translate(x,y);c.scale(flip*.7,.7);c.rotate(Math.sin(time*.4)*.035);
++    if(id==='sakura_onsen'){
++      line(c,[[-12,35],[0,4],[8,-28]],'#9c7b69',4);
++      for(const [px,py] of [[0,3],[7,-23],[-7,24]]){for(let i=0;i<5;i++){const a=i*Math.PI*2/5;ellipse(c,px+Math.cos(a)*7,py+Math.sin(a)*7,5,6,'#edbbc7',INK,.8);}ellipse(c,px,py,3,3,'#f2d18b',INK,.6);}
++    }else if(id==='midnight_kitchen'){
++      round(c,-11,-20,22,36,5,'#ebdcc3',INK,2);line(c,[[-11,-25],[11,-25]],'#ab8063',5);line(c,[[2,16],[2,36]],'#a1ada4',4);ellipse(c,2,39,7,10,'#c3d0c5',INK,1.8);line(c,[[-6,-7],[6,-7]],'#bba58a',2);
++    }else if(id==='cat_tower_maze'){
++      line(c,[[0,-34],[0,32]],'#c7a87e',12);for(let y=-30;y<28;y+=6)line(c,[[-5,y],[5,y+3]],'#a88c69',1.2);
++      round(c,-17,-3,34,9,3,'#d5bea0',INK,1.7);line(c,[[15,3],[20,23]],INK,1);ellipse(c,20,29,7,7,accent,INK,1.6);line(c,[[14,27],[25,30]],'#f6dfc1',1);
++    }else{
++      line(c,[[0,30],[0,0]],'#8da174',3);for(let i=0;i<5;i++){const a=i*Math.PI*2/5;ellipse(c,Math.cos(a)*9,Math.sin(a)*9,6,7,accent,INK,1);}ellipse(c,0,0,5,5,'#f3d17d',INK,1);polygon(c,[[0,20],[-14,13],[-9,25]],'#9eb484',INK,1.2);
++    }
++    c.restore();
++  }
++}
++/** Every target was captured by the engine: no live unit lookup or guessed random target. */
++export function drawM3Event(c:C,event:VisualEvent):boolean {
++  if(event.type!=='boss_skill')return false;
++  const p=Math.max(0,Math.min(1,event.age/Math.max(.001,event.duration))),pixel=(col:number,row:number)=>({x:STAGE.boardX+(col+.5)*STAGE.cell,y:STAGE.boardY+(row+.5)*STAGE.cell});
++  const source=pixel(event.col,event.row),targets=event.points?.length?event.points:[{col:event.col,row:event.row}];
++  c.save();c.globalAlpha*=Math.min(1,(1-p)*4);
++  // Source tells the player who cast the effect, even after that boss is defeated.
++  c.save();c.translate(source.x,source.y);
++  if(event.effect==='buff_roo'){for(let i=0;i<3;i++)ellipse(c,0,15,15+p*(60+i*25),5+p*(30+i*9),'rgba(0,0,0,0)','#dcaa73',3-i*.5);}
++  else if(event.effect==='screaming_marmot'){for(let i=0;i<3;i++)ellipse(c,0,-3,18+p*(75+i*23),18+p*(55+i*18),'rgba(0,0,0,0)','#b6a0cf',2.8);}
++  else if(event.effect==='hornet_queen'){polygon(c,[[-5,-7],[22,-21],[22,4],[-5,-1]],'#e7c162',INK,2);line(c,[[28,-18],[36,-24]],'#e7c162',2);line(c,[[29,-8],[41,-8]],'#e7c162',2);}
++  else if(event.effect==='trash_coon'){ellipse(c,0,0,25+p*45,10+p*15,'rgba(0,0,0,0)','#9bb89a',3);for(let i=0;i<3;i++){const x=(i-1)*19;line(c,[[x,3],[x,-12-p*29]],'#adc6a0',4);star(c,x,-14-p*29,5,'#dce2b4',1);}}
++  else if(event.effect==='dj_rat_king'){for(let i=0;i<3;i++)ellipse(c,0,0,25+p*(80+i*35),25+p*(80+i*35),'rgba(0,0,0,0)',i%2?'#aad3b8':'#d3a8ce',3);}
++  else heart(c,0,-30,12+p*4);
++  c.restore();
++  for(const [index,point] of targets.entries()){
++    const target=pixel(point.col,point.row);
++    if(event.effect==='diva_kitty'){const travel=Math.min(1,p*1.6);heart(c,source.x+(target.x-source.x)*travel,source.y+(target.y-source.y)*travel-Math.sin(travel*Math.PI)*30,10);}
++    c.save();c.translate(target.x,target.y);
++    switch(event.effect){
++      case 'diva_kitty':heart(c,0,-17-Math.sin(p*Math.PI)*13,8+p*4);ellipse(c,0,18,17+p*15,6,'rgba(0,0,0,0)','#e2a1b2',2);break;
++      case 'buff_roo':for(let i=0;i<4;i++){const a=i*Math.PI/2+p;star(c,Math.cos(a)*(15+p*30),Math.sin(a)*(10+p*22),6,'#edc277',1);}line(c,[[-24,19],[-9,11],[0,24],[10,13],[26,20]],'#a78867',2);break;
++      case 'hornet_queen':line(c,[[-30-p*18,-8],[-6,-8]],'#dbb359',3);line(c,[[-25-p*18,5],[-3,5]],'#dbb359',2);polygon(c,[[6,-4],[17,0],[6,4]],'#f0d379',INK,1);break;
++      case 'screaming_marmot':confusionSpiral(c,event.age+index);break;
++      case 'trash_coon':ellipse(c,0,14,23,8,'rgba(0,0,0,0)','#a6b896',2);line(c,[[-10,-7],[10,7]],'#f4e7c8',5);for(const [x,y] of [[-10,-7],[10,7]]){ellipse(c,x-2,y,3,3,'#f4e7c8',INK,1);ellipse(c,x+2,y,3,3,'#f4e7c8',INK,1);}break;
++      case 'dj_rat_king':line(c,[[-7,-16],[-7,-4],[7,-4],[7,-16]],'#91ba91',4);line(c,[[0,-22],[0,3]],'#91ba91',4);for(const x of [-15,15]){line(c,[[x,16],[x,2]],'#d0a2ca',2);ellipse(c,x-4,16,4,3,'#d0a2ca',INK,1);}break;
++      default:star(c,0,0,12,'#ecd39b',1);
++    }
++    c.restore();
++  }
++  c.restore();return true;
++}
+
+diff --git "a/D:\\rea_game\\games\\capybara-defense\\.runtime\\m3-review-base\\src\\ui\\SoundManager.ts" "b/D:\\rea_game\\games\\capybara-defense\\src\\ui\\SoundManager.ts"
+index e69de29..4ab22e7 100644
+--- "a/D:\\rea_game\\games\\capybara-defense\\.runtime\\m3-review-base\\src\\ui\\SoundManager.ts"
++++ "b/D:\\rea_game\\games\\capybara-defense\\src\\ui\\SoundManager.ts"
+@@ -0,0 +1,123 @@
++import type {BattleState,GameSettings} from '../core/types';
++export type SoundCue='summon'|'dig'|'upgrade'|'legendary'|'goose'|'orange'|'sprinkler'|'lottery_tick'|'lottery_win'|'victory'|'defeat';
++type Note={frequency:number;delay:number;duration:number;volume:number;type?:OscillatorType;slide?:number};
++const defaults:GameSettings={musicVolume:.5,soundVolume:.75,showDamageNumbers:true};
++const volume=(n:unknown,fallback:number)=>typeof n==='number'&&Number.isFinite(n)?Math.max(0,Math.min(1,n)):fallback;
++const arpeggio=(frequencies:number[],duration=.18,step=.09):Note[]=>frequencies.map((frequency,i)=>({frequency,delay:i*step,duration,volume:.24,type:'sine'}));
++const cues:Record<SoundCue,Note[]>={
++  summon:[{frequency:1174.66,delay:0,duration:.3,volume:.2},{frequency:1760,delay:.07,duration:.35,volume:.13}],
++  dig:[{frequency:160,slide:55,delay:0,duration:.12,volume:.32,type:'triangle'},{frequency:310,slide:95,delay:.06,duration:.09,volume:.16,type:'triangle'}],
++  upgrade:arpeggio([523.25,659.25,783.99],.2,.065),
++  legendary:[...arpeggio([523.25,659.25,783.99,1046.5],.7,0),...arpeggio([1318.51,1567.98,2093],.28,.11)],
++  goose:[{frequency:520,slide:230,delay:0,duration:.18,volume:.2,type:'triangle'},{frequency:620,slide:260,delay:.2,duration:.22,volume:.22,type:'triangle'}],
++  orange:[{frequency:420,slide:80,delay:0,duration:.26,volume:.24},{frequency:150,slide:310,delay:.16,duration:.15,volume:.18}],
++  sprinkler:Array.from({length:7},(_,i)=>({frequency:400+i*170,slide:180+i*50,delay:i*.065,duration:.15,volume:.09,type:'triangle'})),
++  lottery_tick:[{frequency:1046.5,delay:0,duration:.055,volume:.15}],
++  lottery_win:arpeggio([523.25,659.25,783.99,1046.5,1318.51],.35,.075),
++  victory:[...arpeggio([523.25,659.25,783.99,1046.5],.4,.12),...arpeggio([523.25,659.25,783.99],.75,.0).map(n=>({...n,delay:.5,volume:.14}))],
++  defeat:arpeggio([392,349.23,293.66,261.63],.32,.16),
++};
++
++/** A gesture-unlocked, entirely local synthesizer. Core and storage never own audio. */
++export class SoundManager {
++  private settings:GameSettings;
++  private context:AudioContext|null=null;
++  private music:GainNode|null=null;
++  private effects:GainNode|null=null;
++  private unlocking:Promise<void>|null=null;
++  private unlocked=false;
++  private disposed=false;
++  private ducked=false;
++  private timer:ReturnType<typeof setInterval>|null=null;
++  private melodyStep=0;
++  private nextBeat=0;
++  private readonly voices=new Map<OscillatorNode,GainNode>();
++  private readonly seen=new Map<string,Set<number>>();
++  private readonly visibility=()=>this.applyVolumes(true);
++  constructor(settings:Partial<GameSettings>={}) {
++    this.settings={musicVolume:volume(settings.musicVolume,.5),soundVolume:volume(settings.soundVolume,.75),showDamageNumbers:settings.showDamageNumbers??true};
++    if(typeof document!=='undefined')document.addEventListener('visibilitychange',this.visibility);
++  }
++  unlock():Promise<void> {
++    if(this.disposed||this.unlocked)return Promise.resolve();
++    if(this.unlocking)return this.unlocking;
++    this.unlocking=this.open().finally(()=>{this.unlocking=null;});return this.unlocking;
++  }
++  private async open():Promise<void> {
++    try {
++      if(!this.context){
++        const Host=globalThis.AudioContext||(globalThis as unknown as {webkitAudioContext?:typeof AudioContext}).webkitAudioContext;
++        if(!Host)return;
++        this.context=new Host();
++      }
++      const context=this.context;
++      await context.resume();
++      if(this.disposed||context.state==='closed')return;
++      if(context.state!=='running')return;
++      this.music=context.createGain();this.effects=context.createGain();
++      this.music.connect(context.destination);this.effects.connect(context.destination);
++      this.unlocked=true;this.applyVolumes();this.nextBeat=context.currentTime+.025;this.scheduleMusic();
++      if(this.timer===null)this.timer=setInterval(()=>this.scheduleMusic(),450);
++    }catch{ /* Browser policy, missing hardware and failed resume are silent fallbacks. */ }
++  }
++  setSettings(settings:GameSettings):void {
++    this.settings={musicVolume:volume(settings.musicVolume,defaults.musicVolume),soundVolume:volume(settings.soundVolume,defaults.soundVolume),showDamageNumbers:settings.showDamageNumbers};this.applyVolumes();
++  }
++  setDucked(ducked:boolean):void {if(this.ducked===ducked)return;this.ducked=ducked;this.applyVolumes(true);}
++  private applyVolumes(soft=false):void {
++    const c=this.context;if(!c||!this.music||!this.effects)return;
++    const hidden=typeof document!=='undefined'&&document.hidden;
++    try{
++      const gain=this.music.gain,value=this.settings.musicVolume*.12*((this.ducked||hidden)? .15 : 1);
++      gain.cancelScheduledValues(c.currentTime);
++      if(soft)gain.setTargetAtTime(value,c.currentTime,.16);else gain.setValueAtTime(value,c.currentTime);
++      this.effects.gain.setValueAtTime(this.settings.soundVolume*.5,c.currentTime);
++    }catch{ /* A closing host may reject parameter writes. */ }
++  }
++  private scheduleMusic():void {
++    const c=this.context;if(!this.unlocked||this.disposed||!c||c.state!=='running'||!this.music)return;
++    // C/D/E/G/A only: a slow 16-beat wooden-key phrase, one scheduler per manager.
++    const melody=[523.251,659.255,783.991,880,783.991,659.255,587.33,523.251,659.255,783.991,1046.502,880,783.991,659.255,587.33,523.251];
++    const at=Math.max(c.currentTime+.015,this.nextBeat);this.nextBeat=at+.45;
++    this.tone({frequency:melody[this.melodyStep++%melody.length],delay:0,duration:.34,volume:.32,type:this.melodyStep%2?'sine':'triangle'},this.music,at);
++  }
++  private tone(note:Note,bus:GainNode,at:number):void {
++    const c=this.context;if(!c||this.disposed)return;
++    let oscillator:OscillatorNode|undefined,envelope:GainNode|undefined;
++    try{
++      oscillator=c.createOscillator();envelope=c.createGain();
++      oscillator.type=note.type||'sine';oscillator.frequency.setValueAtTime(note.frequency,at);
++      if(note.slide)oscillator.frequency.exponentialRampToValueAtTime(note.slide,at+note.duration*.9);
++      envelope.gain.setValueAtTime(.0001,at);envelope.gain.linearRampToValueAtTime(note.volume,at+.008);envelope.gain.exponentialRampToValueAtTime(.0001,at+note.duration);
++      oscillator.connect(envelope);envelope.connect(bus);this.voices.set(oscillator,envelope);
++      const voice=oscillator,output=envelope;
++      voice.onended=()=>{voice.disconnect();output.disconnect();this.voices.delete(voice);};
++      voice.start(at);voice.stop(at+note.duration+.015);
++    }catch{try{oscillator?.disconnect();envelope?.disconnect();}catch{/* already closed */}}
++  }
++  play(cue:SoundCue):void {
++    const c=this.context;if(!this.unlocked||this.disposed||!c||c.state!=='running'||!this.effects||this.settings.soundVolume===0)return;
++    for(const note of cues[cue]||[])this.tone(note,this.effects,c.currentTime+.005+note.delay);
++  }
++  consumeBattle(state:BattleState):void {
++    if(this.disposed)return;
++    let ids=this.seen.get(state.id);if(!ids){ids=new Set();this.seen.set(state.id,ids);if(this.seen.size>8)this.seen.delete(this.seen.keys().next().value!);}
++    for(const event of state.events){
++      if(ids.has(event.id))continue;ids.add(event.id);
++      if(event.type==='dash')this.play('goose');
++      else if(event.type==='orange'&&(event.value??0)<0)this.play('orange');
++      else if(event.type==='sprinkler')this.play('sprinkler');
++      else if(event.type==='purge'&&event.effect!=='legendary')this.play('upgrade');
++    }
++  }
++  dispose():void {
++    if(this.disposed)return;this.disposed=true;this.unlocked=false;
++    if(this.timer!==null){clearInterval(this.timer);this.timer=null;}
++    if(typeof document!=='undefined')document.removeEventListener('visibilitychange',this.visibility);
++    for(const [oscillator,gain] of this.voices){try{oscillator.onended=null;oscillator.stop();oscillator.disconnect();gain.disconnect();}catch{/* already ended */}}
++    this.voices.clear();this.seen.clear();
++    try{this.music?.disconnect();this.effects?.disconnect();}catch{/* host closing */}
++    if(this.context){try{void this.context.close().catch(()=>{});}catch{/* unavailable host */}}
++    this.context=null;this.music=null;this.effects=null;
++  }
++}
+
+diff --git "a/D:\\rea_game\\games\\capybara-defense\\.runtime\\m3-review-base\\tests\\m3-render.test.ts" "b/D:\\rea_game\\games\\capybara-defense\\tests\\m3-render.test.ts"
+index e69de29..ef035b4 100644
+--- "a/D:\\rea_game\\games\\capybara-defense\\.runtime\\m3-review-base\\tests\\m3-render.test.ts"
++++ "b/D:\\rea_game\\games\\capybara-defense\\tests\\m3-render.test.ts"
+@@ -0,0 +1,78 @@
++import {describe,expect,it} from 'vitest';
++import {BattleEngine} from '../src/core/BattleEngine';
++import {StickerRenderer} from '../src/render/StickerRenderer';
++import {drawEnemyArt} from '../src/render/StickerArt';
++import {drawM3Event} from '../src/render/M3Effects';
++import {avatarSticker,weaponSticker} from '../src/render/M3Art';
++import {WEAPONS} from '../src/config/weapons';
++import {MAPS} from '../src/config/maps';
++import type {VisualEvent} from '../src/core/types';
++
++type Call={name:string;args:unknown[];fill:unknown;stroke:unknown};
++function surface(){
++  const calls:Call[]=[],values:Record<string,unknown>={globalAlpha:1};
++  const context=new Proxy(values,{get(target,key:string){
++    if(key in target)return target[key];
++    if(key==='measureText')return (s:string)=>({width:s.length*8});
++    if(key==='createLinearGradient'||key==='createRadialGradient')return ()=>({addColorStop(){}});
++    return (...args:unknown[])=>calls.push({name:key,args,fill:target.fillStyle,stroke:target.strokeStyle});
++  },set(target,key:string,value){target[key]=value;return true;}}) as unknown as CanvasRenderingContext2D;
++  return {calls,context,renderer:new StickerRenderer({width:0,height:0,getContext:()=>context} as unknown as HTMLCanvasElement)};
++}
++const avatarIds=['capybara','hamster','squirrel','bee','cat_swordsman','doge_agent','goose_bully','kungfu_panda','rooster_star','frog_king','market_coon','salted_fish','bamboo_master','sakura_capy','corgi_crown','zen_capy'];
++describe('M3 vector sticker output',()=>{
++  it('gives every avatar and weapon a distinct geometry, with no scripts, links, emoji or text placeholders',()=>{
++    for(const [ids,draw] of [[avatarIds,avatarSticker],[Object.keys(WEAPONS),weaponSticker]] as const){
++      const shapes=ids.map(id=>draw(id,72));
++      for(const svg of shapes){expect(svg).toContain('viewBox=');expect(svg).toContain('width="72"');expect(svg).toMatch(/<(path|ellipse|polygon)/);expect(svg).not.toMatch(/<text|<script|href=|https?:|onload=|[\u{1F300}-\u{1FAFF}]/u);}
++      // Strip identifying metadata and paint so changing only a label/color cannot pass.
++      expect(new Set(shapes.map(svg=>svg.replace(/(?:aria-label|data-sticker|fill|stroke)="[^"]*"/g,''))).size).toBe(ids.length);
++    }
++  });
++  it('normalizes unsafe ids and invalid sizes into a safe usable fallback',()=>{
++    expect(avatarSticker('<script>',NaN)).not.toContain('<script>');
++    expect(weaponSticker('" onload="alert(1)',-20)).toContain('width="48"');
++  });
++});
++describe('M3 canvas integration',()=>{
++  it.each(['sunny_backyard','sakura_onsen','midnight_kitchen','cat_tower_maze'] as const)('draws %s palette and follows its own route',id=>{
++    const state=new BattleEngine({ai:false,autoWaves:false}).state;state.mapId=id;state.grid=MAPS[id].grid;
++    const {renderer,calls}=surface();renderer.draw(state,.2);
++    expect(calls.some(c=>c.name==='fillRect'&&c.fill===MAPS[id].theme.road)).toBe(true);
++    const a=MAPS[id].paths.ai[1],b=MAPS[id].paths.ai[2],rotation=Math.atan2(b.row-a.row,b.col-a.col);
++    expect(calls.some((c,i)=>c.name==='translate'&&c.args[0]===68+a.col*72&&c.args[1]===276+a.row*72&&calls[i+1]?.name==='rotate'&&calls[i+1].args[0]===rotation)).toBe(true);
++  });
++  it('hides only damage text, retaining projectile and skill geometry',()=>{
++    const state=new BattleEngine({ai:false,autoWaves:false}).state;
++    state.events=[{id:1,type:'damage',side:'player',col:2,row:7,value:987,age:.2,duration:1},{id:2,type:'projectile',side:'player',col:2,row:7,targetCol:3,targetRow:7,age:.2,duration:1}];
++    const hidden=surface();hidden.renderer.draw(state,.2,{showDamageNumbers:false});
++    expect(hidden.calls.some(c=>c.name==='fillText'&&c.args[0]==='−987')).toBe(false);
++    expect(hidden.calls.some(c=>c.name==='translate'&&c.args[0]===226.4)).toBe(true);
++    const shown=surface();shown.renderer.draw(state,.2);
++    expect(shown.calls.some(c=>c.name==='fillText'&&c.args[0]==='−987')).toBe(true);
++  });
++  it('renders confusion as a spiral rather than another knockdown star ring',()=>{
++    const state=new BattleEngine({ai:false,autoWaves:false});state.grant('hamster');state.state.units[0].statuses.CONFUSED=5;
++    const {renderer,calls}=surface();renderer.draw(state.state,.2);
++    expect(calls.filter(c=>c.name==='lineTo'&&c.stroke==='#9a7db4').length).toBeGreaterThan(15);
++  });
++  it.each(['diva_kitty','buff_roo','hornet_queen','screaming_marmot','trash_coon','dj_rat_king'])('draws a recognizable %s silhouette and captured skill targets',kind=>{
++    const own=surface(),fallback=surface();drawEnemyArt(own.context,kind,.3);drawEnemyArt(fallback.context,'unknown',.3);
++    expect(own.calls).not.toEqual(fallback.calls);
++    const state=new BattleEngine({ai:false,autoWaves:false}).state;
++    state.events=[{id:4,type:'boss_skill',side:'player',col:2,row:7,points:[{col:4,row:8}],effect:kind,age:.4,duration:1} as VisualEvent];
++    const {renderer,calls}=surface();renderer.draw(state,.4);
++    expect(calls.some(c=>c.name==='translate'&&c.args[0]===356&&c.args[1]===852)).toBe(true);
++  });
++  it('gives killer bees, charmed rats and bone shields visible identifying marks',()=>{
++    const bee=surface(),rat=surface(),normal=surface();drawEnemyArt(bee.context,'killer_bee',0);drawEnemyArt(rat.context,'charmed_rat',0);drawEnemyArt(normal.context,'rat',0);
++    expect(bee.calls).not.toEqual(normal.calls);expect(rat.calls).not.toEqual(normal.calls);
++    const engine=new BattleEngine({ai:false,autoWaves:false});engine.spawnEnemy('rat','player');engine.state.enemies[0].boneShield=true;
++    const s=surface();s.renderer.draw(engine.state,0);expect(s.calls.some(c=>c.name==='fill'&&c.fill==='#f4e7c8')).toBe(true);
++  });
++  it('uses transparent Canvas fills for shockwave rings',()=>{
++    const {context,calls}=surface();drawM3Event(context,{id:3,type:'boss_skill',effect:'buff_roo',side:'player',col:2,row:7,age:.3,duration:1,points:[{col:3,row:7}]});
++    // Canvas rejects the SVG-only color "none" and otherwise inherits an opaque fill.
++    expect(calls.filter(c=>c.name==='fill').every(c=>c.fill!=='none')).toBe(true);
++  });
++});
+
+diff --git "a/D:\\rea_game\\games\\capybara-defense\\.runtime\\m3-review-base\\tests\\m3-sound.test.ts" "b/D:\\rea_game\\games\\capybara-defense\\tests\\m3-sound.test.ts"
+index e69de29..baa8e09 100644
+--- "a/D:\\rea_game\\games\\capybara-defense\\.runtime\\m3-review-base\\tests\\m3-sound.test.ts"
++++ "b/D:\\rea_game\\games\\capybara-defense\\tests\\m3-sound.test.ts"
+@@ -0,0 +1,66 @@
++import {afterEach,describe,expect,it,vi} from 'vitest';
++import {SoundManager,type SoundCue} from '../src/ui/SoundManager';
++import {BattleEngine} from '../src/core/BattleEngine';
++
++// A recording WebAudio host: real manager schedules actual oscillator nodes and envelopes.
++class Param {value=1;events:{value:number;time:number;kind:string}[]=[];setValueAtTime(value:number,time:number){this.value=value;this.events.push({value,time,kind:'set'});}exponentialRampToValueAtTime(value:number,time:number){this.value=value;this.events.push({value,time,kind:'exp'});}linearRampToValueAtTime(value:number,time:number){this.value=value;this.events.push({value,time,kind:'linear'});}setTargetAtTime(value:number,time:number){this.value=value;this.events.push({value,time,kind:'target'});}cancelScheduledValues(){} }
++class Gain {gain=new Param();target:unknown;disconnected=false;connect(target:unknown){this.target=target;}disconnect(){this.disconnected=true;}}
++class Osc {frequency=new Param();type='sine';target:unknown;onended:(()=>void)|null=null;started:number[]=[];stopped:number[]=[];connect(target:unknown){this.target=target;}disconnect(){}start(time:number){this.started.push(time);}stop(time=0){this.stopped.push(time);}}
++class Host {static instances:Host[]=[];currentTime=0;state='suspended';destination={};gains:Gain[]=[];oscillators:Osc[]=[];closed=false;constructor(){Host.instances.push(this);}createGain(){const g=new Gain();this.gains.push(g);return g;}createOscillator(){const o=new Osc();this.oscillators.push(o);return o;}async resume(){this.state='running';}async close(){this.closed=true;this.state='closed';}}
++const settings={musicVolume:.5,soundVolume:.75,showDamageNumbers:true};
++const managers:SoundManager[]=[];
++function manager(){const m=new SoundManager(settings);managers.push(m);return m;}
++afterEach(()=>{managers.forEach(m=>m.dispose());managers.length=0;vi.unstubAllGlobals();vi.useRealTimers();Host.instances=[];});
++describe('M3 safe sound lifecycle',()=>{
++  it('stays silent until a gesture and safely supports hosts without AudioContext',async()=>{
++    vi.stubGlobal('AudioContext',undefined);const m=manager();expect(()=>m.play('summon')).not.toThrow();await expect(m.unlock()).resolves.toBeUndefined();m.consumeBattle(new BattleEngine({ai:false}).state);m.dispose();
++  });
++  it('captures constructor and resume failures without starting music or leaking contexts',async()=>{
++    class Rejected extends Host {async resume(){throw new Error('blocked');}}
++    vi.stubGlobal('AudioContext',Rejected);vi.useFakeTimers();const m=manager();await expect(m.unlock()).resolves.toBeUndefined();m.play('dig');expect(Host.instances[0].oscillators).toHaveLength(0);m.dispose();expect(Host.instances[0].closed).toBe(true);
++  });
++  it('silently handles a failing constructor and permits a later gesture retry',async()=>{
++    class Broken {constructor(){throw new Error('no device');}}
++    vi.stubGlobal('AudioContext',Broken);vi.useFakeTimers();const m=manager();await expect(m.unlock()).resolves.toBeUndefined();m.play('summon');
++    vi.stubGlobal('AudioContext',Host);await m.unlock();expect(Host.instances[0].oscillators).toHaveLength(1);
++  });
++  it('does not start a scheduler when disposed while resume is pending',async()=>{
++    let finish!:()=>void;class Pending extends Host {async resume(){await new Promise<void>(resolve=>{finish=resolve;});this.state='running';}}
++    vi.stubGlobal('AudioContext',Pending);vi.useFakeTimers();const m=manager(),unlock=m.unlock();m.dispose();finish();await unlock;vi.advanceTimersByTime(1000);
++    expect(Host.instances[0].oscillators).toHaveLength(0);expect(Host.instances[0].closed).toBe(true);
++  });
++  it('does not restart the soft duck envelope on every animation frame',async()=>{
++    vi.stubGlobal('AudioContext',Host);vi.useFakeTimers();const m=manager();await m.unlock();const h=Host.instances[0];m.setDucked(true);
++    const music=h.gains.find(g=>g.gain.events.some(e=>e.kind==='target'))!,writes=music.gain.events.length;
++    for(let i=0;i<60;i++)m.setDucked(true);
++    expect(music.gain.events).toHaveLength(writes);
++  });
++  it('creates no context before unlock, starts one pentatonic loop, and releases it',async()=>{
++    vi.stubGlobal('AudioContext',Host);vi.useFakeTimers();const m=manager();m.play('summon');expect(Host.instances).toHaveLength(0);
++    await m.unlock();await m.unlock();vi.advanceTimersByTime(4000);
++    const h=Host.instances[0];expect(Host.instances).toHaveLength(1);expect(h.oscillators.length).toBeGreaterThan(5);
++    const pitchClasses=h.oscillators.map(o=>Math.round(69+12*Math.log2(o.frequency.events[0].value/440))%12);
++    expect(pitchClasses.every(p=>[0,2,4,7,9].includes(p))).toBe(true);
++    expect(h.oscillators.every(o=>o.type==='sine'||o.type==='triangle')).toBe(true);
++    m.dispose();const count=h.oscillators.length;vi.advanceTimersByTime(5000);expect(h.oscillators).toHaveLength(count);expect(h.closed).toBe(true);expect(h.gains.every(g=>g.disconnected)).toBe(true);
++  });
++  it('applies volume zero immediately and softly ducks only music',async()=>{
++    vi.stubGlobal('AudioContext',Host);vi.useFakeTimers();const m=manager();await m.unlock();const h=Host.instances[0];
++    m.setDucked(true);expect(h.gains.some(g=>g.gain.events.some(e=>e.kind==='target'&&e.value>0&&e.value<.1))).toBe(true);
++    m.setSettings({...settings,musicVolume:0,soundVolume:0});m.play('summon');
++    expect(h.gains.filter(g=>g.target===h.destination).every(g=>g.gain.value===0)).toBe(true);
++  });
++  it.each(['summon','dig','upgrade','legendary','goose','orange','sprinkler','lottery_tick','lottery_win','victory','defeat'] as SoundCue[])('synthesizes %s with finite frequencies, audible envelope and bounded stop',async cue=>{
++    vi.stubGlobal('AudioContext',Host);vi.useFakeTimers();const m=manager();await m.unlock();const h=Host.instances[0],before=h.oscillators.length;m.play(cue);
++    const notes=h.oscillators.slice(before);expect(notes.length).toBeGreaterThan(0);
++    for(const o of notes){expect(o.frequency.events.every(e=>Number.isFinite(e.value)&&e.value>0)).toBe(true);expect(o.stopped[0]-o.started[0]).toBeGreaterThan(0);expect(o.stopped[0]-o.started[0]).toBeLessThan(3);const gain=o.target as Gain;expect(gain.gain.events.some(e=>e.value>0.01)).toBe(true);expect(gain.gain.events.at(-1)!.value).toBeLessThan(.001);}
++  });
++  it('consumes actual battle event identities once and leaves command-owned cues to UI',async()=>{
++    vi.stubGlobal('AudioContext',Host);vi.useFakeTimers();const m=manager();await m.unlock();const h=Host.instances[0],engine=new BattleEngine({ai:false}),state=engine.state;
++    const base={side:'player' as const,col:0,row:9,age:0,duration:1};
++    state.events=[{...base,id:1,type:'orange',value:1},{...base,id:2,type:'purge',effect:'legendary'},{...base,id:3,type:'orange',value:-1},{...base,id:4,type:'dash'},{...base,id:5,type:'sprinkler'},{...base,id:6,type:'purge'}];
++    const before=h.oscillators.length;m.consumeBattle(state);const after=h.oscillators.length;expect(after-before).toBe(14);m.consumeBattle(state);expect(h.oscillators).toHaveLength(after);
++    state.events=state.events.slice(0,2);state.id='another-battle';m.consumeBattle(state);expect(h.oscillators).toHaveLength(after);
++    state.events=[{...base,id:3,type:'orange',value:-1}];m.consumeBattle(state);expect(h.oscillators.length).toBeGreaterThan(after);
++  });
++});

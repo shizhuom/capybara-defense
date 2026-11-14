@@ -1,0 +1,198 @@
+# P1 UI Round1 minimal diff
+diff --git "D:\\rea_game\\games\\capybara-defense\\.runtime\\p1-ui-before-fix\\src\\ui\\Compendium.ts" "D:\\rea_game\\games\\capybara-defense\\src\\ui\\Compendium.ts"
+index 9f4b443..1fa6f21 100644
+--- "D:\\rea_game\\games\\capybara-defense\\.runtime\\p1-ui-before-fix\\src\\ui\\Compendium.ts"
++++ "D:\\rea_game\\games\\capybara-defense\\src\\ui\\Compendium.ts"
+@@ -21,14 +21,14 @@ export class Compendium {
+   }
+   markup(profile:Profile):string {
+     const header=`<button type="button" class="dialog-close icon-button" data-action="close-recipes" aria-label="${tr('recipe.close')}">×</button><span class="eyebrow">✦ ${tr('p1.bookEyebrow')} ✦</span><h2 id="dialog-title">${tr('p1.encyclopedia')}</h2><p class="dialog-subtitle">${tr('p1.bookSubtitle')}</p><div class="encyclopedia-tabs" role="tablist" aria-label="${tr('p1.encyclopedia')}">${COMPENDIUM_TABS.map(tab=>`<button type="button" role="tab" id="book-tab-${tab}" aria-selected="${tab===this.tab}" aria-controls="book-content" data-action="book:${tab}">${tr(`p1.${tab}`)} <b>${counts[tab]}</b></button>`).join('')}</div>`;
+     let cards='';
+     if(this.tab==='heroes') cards=RECIPES.map(recipe=>{
+       const hero=HEROES[recipe.hero],collected=profile.mergedHeroes.includes(hero.id);
+       return `<article class="recipe-card encyclopedia-card${collected?' collected':''}" data-entry="${hero.id}"><div class="book-heading">${unitSticker(hero.id,62)}<div><small>${tr(`m2.family.${HERO_FAMILIES[hero.id]}`)}</small><h4>${tr(`hero.${hero.id}`)}</h4><b class="collection-state">${tr(collected?'p1.collected':'p1.notCollected')}</b></div></div><div class="recipe-equation">${recipe.parts.map(part=>`<span>${unitSticker(part,38)}<small>${tr(`unit.${part}`)}</small></span>`).join('<b>＋</b>')}</div><p class="book-stats">${tr('p1.heroStats',{damage:hero.damage,rate:hero.rate,range:hero.range})}</p><p><strong>${tr(`skill.${hero.id}`)}</strong> · ${tr(`skill.${hero.id}.desc`,{charge:hero.charge})}</p></article>`;
+     }).join('');
+-    if(this.tab==='bosses') cards=BOSS_IDS.map(id=>`<article class="encyclopedia-card boss-card" data-entry="${id}"><div class="book-heading">${unitSticker(id,62)}<h4>${tr(`boss.${id}`)}</h4></div><p class="book-stats">${tr('p1.bossStats',{hp:ENEMIES[id].hp,interval:ENEMIES[id].interval})}</p><p>${tr(`p1.boss.${id}.mechanic`)}</p><aside><b>${tr('p1.counter')}</b><p>${tr(`p1.boss.${id}.tip`)}</p></aside></article>`).join('');
+-    if(this.tab==='weapons') cards=Object.values(WEAPONS).map(weapon=>`<article class="encyclopedia-card rarity-${weapon.rarity}" data-entry="${weapon.id}"><div class="book-heading">${weaponSticker(weapon.id,62)}<div><small>${tr(`m2.rarity.${weapon.rarity}`)} · ${tr(`m2.family.${weapon.family}`)}</small><h4>${tr(`weapon.${weapon.id}`)}</h4></div></div><p class="book-stats">${tr('p1.unlock',{count:RARITY_RULES[weapon.rarity].fragments})} · ${tr('m2.damage',{value:Math.round(RARITY_RULES[weapon.rarity].damageBonus*100)})}</p><p>${tr(`weapon.${weapon.id}.desc`)}</p>${weapon.signatureHero?`<aside>${tr('m2.signature',{hero:t(`hero.${weapon.signatureHero}`)})}</aside>`:''}</article>`).join('');
++    if(this.tab==='bosses') cards=BOSS_IDS.map(id=>`<article class="encyclopedia-card boss-card" data-entry="${id}"><div class="book-heading">${unitSticker(id,62)}<h4>${tr(`boss.${id}`)}</h4></div><p class="book-stats">${tr('p1.bossStats',{hp:ENEMIES[id].hp,armor:Math.round(ENEMIES[id].armor*100),interval:ENEMIES[id].interval})}</p><p>${tr(`p1.boss.${id}.mechanic`)}</p><aside><b>${tr('p1.counter')}</b><p>${tr(`p1.boss.${id}.tip`)}</p></aside></article>`).join('');
++    if(this.tab==='weapons') cards=Object.values(WEAPONS).map(weapon=>`<article class="encyclopedia-card rarity-${weapon.rarity}" data-entry="${weapon.id}"><div class="book-heading">${weaponSticker(weapon.id,62)}<div><small>${tr(`m2.rarity.${weapon.rarity}`)} · ${tr(`m2.family.${weapon.family}`)}</small><h4>${tr(`weapon.${weapon.id}`)}</h4><b class="collection-state">${tr(profile.unlockedWeapons.includes(weapon.id)?'p1.unlocked':'p1.locked')}</b></div></div><p class="book-stats">${tr('p1.unlock',{count:RARITY_RULES[weapon.rarity].fragments})} · ${tr('m2.damage',{value:Math.round(RARITY_RULES[weapon.rarity].damageBonus*100)})}</p><p>${tr(`weapon.${weapon.id}.desc`)}</p>${weapon.signatureHero?`<aside>${tr('m2.signature',{hero:t(`hero.${weapon.signatureHero}`)})}</aside>`:''}</article>`).join('');
+     if(this.tab==='props') cards=Object.values(PROPS).map(prop=>`<article class="encyclopedia-card rarity-${prop.rarity}" data-entry="${prop.id}"><div class="book-heading">${propSticker(prop.id,62)}<div><small>${tr(`m2.${prop.type}`)} · ${tr('p1.price',{price:prop.price})}</small><h4>${tr(`prop.${prop.id}`)}</h4></div></div><p class="book-stats">${tr(prop.type==='active'?'p1.cooldown':'p1.auto',{time:prop.cooldown})}</p><p>${tr(`prop.${prop.id}.desc`)}</p></article>`).join('');
+     return header+`<section id="book-content" role="tabpanel" aria-labelledby="book-tab-${this.tab}">${this.tab==='heroes'?`<p class="recipe-note">${tr('recipe.note')}</p>`:''}<div class="encyclopedia-grid">${cards}</div>${this.tab==='heroes'?`<p class="doge-note">${tr('recipe.doge')}</p>`:''}</section>`;
+   }
+ }
+diff --git "D:\\rea_game\\games\\capybara-defense\\.runtime\\p1-ui-before-fix\\src\\ui\\GameApp.ts" "D:\\rea_game\\games\\capybara-defense\\src\\ui\\GameApp.ts"
+index d4f4cd0..c9c80af 100644
+--- "D:\\rea_game\\games\\capybara-defense\\.runtime\\p1-ui-before-fix\\src\\ui\\GameApp.ts"
++++ "D:\\rea_game\\games\\capybara-defense\\src\\ui\\GameApp.ts"
+@@ -588,17 +588,17 @@ export class GameApp {
+     if (result.ok && result.key === 'hint.merged' && result.unitId && this.engine?.state.units.some(unit => unit.id === result.unitId && !!HEROES[unit.kind] && unit.level === 1)) this.sound.play('merge_hero');
+     if (result.ok && result.unitId) {
+       this.selectedId = result.unitId;
+       this.shovelSelected = false;
+     }
+     this.notify(result.key, !result.ok);
+     if(result.ok){
+       if(result.key==='hint.dig'||result.key==='hint.repaired')this.progressTutorial('dig');
+-      if(result.key==='hint.deployed')this.progressTutorial('deploy');
++      if(result.key==='hint.deployed'&&this.engine?.state.units.some(unit=>unit.id===result.unitId&&unit.side==='player'&&unit.location.zone==='board'))this.progressTutorial('deploy');
+       if(result.key==='hint.merged'||result.key==='hint.fed')this.progressTutorial('merge');
+     }
+   }
+ 
+   private canInteract(): boolean { return this.engine?.state.phase === 'playing'; }
+ 
+   private clearSelection(): void { this.selectedId = undefined; this.shovelSelected = false; this.selectedProp = undefined; this.cancelDrag(); this.cancelPropDrag(); }
+ 
+diff --git "D:\\rea_game\\games\\capybara-defense\\.runtime\\p1-ui-before-fix\\src\\i18n\\p1.ts" "D:\\rea_game\\games\\capybara-defense\\src\\i18n\\p1.ts"
+index cd48d32..6fd9c36 100644
+--- "D:\\rea_game\\games\\capybara-defense\\.runtime\\p1-ui-before-fix\\src\\i18n\\p1.ts"
++++ "D:\\rea_game\\games\\capybara-defense\\src\\i18n\\p1.ts"
+@@ -1,24 +1,25 @@
+ const phrases:Record<string,[string,string]> = {
+-  'p1.developer':['后院测试台','Developer Sandbox'],
++  'p1.developer':['开发者沙盒面板','Developer Sandbox'],
+   'p1.merge':['✦ 合成!','✦ Merge!'],
+   'p1.encyclopedia':['温泉图鉴百科','Onsen Field Guide'],
+   'p1.bookEyebrow':['温泉小笔记','CHILL NOTES'],
+   'recipe.open':['温泉图鉴百科','Onsen Field Guide'],
+   'menu.recipes':['打开温泉图鉴百科','Open the field guide'],
+   'p1.bookSubtitle':['配对、克制与奇思妙想，都在这里。','Every recipe, counter and curious collectible.'],
+   'p1.heroes':['英雄配方','Hero recipes'], 'p1.bosses':['捣蛋首领','Boss counters'],
+   'p1.weapons':['奇葩神兵','Oddball weapons'], 'p1.props':['黑市道具','Market props'],
+   'p1.collected':['已合成','Merged'], 'p1.notCollected':['待发现','Undiscovered'],
+   'p1.heroStats':['普攻 {damage} · 每秒 {rate} 次 · 射程 {range} 格','Attack {damage} · {rate}/s · Range {range} tiles'],
+-  'p1.bossStats':['基础生命 {hp} · 技能间隔 {interval} 秒','Base HP {hp} · Ability every {interval}s'],
++  'p1.bossStats':['基础生命 {hp} · 护甲 {armor}% · 技能间隔 {interval} 秒','Base HP {hp} · Armor {armor}% · Ability every {interval}s'],
+   'p1.counter':['克制小贴士','Counter tip'], 'p1.price':['价格 {price} 金币','Price: {price} coins'],
+   'p1.cooldown':['冷却 {time} 秒','Cooldown: {time}s'], 'p1.auto':['局内自动生效','Automatic in battle'],
+   'p1.unlock':['收集 {count} 枚碎片解锁','Unlock with {count} fragments'],
++  'p1.unlocked':['已解锁','Unlocked'], 'p1.locked':['未解锁','Locked'],
+   'p1.bossSoon':['技能将至！','Skill incoming!'], 'p1.bossCooldown':['技能 {time}s','Skill {time}s'],
+   'p1.bossHP':['首领生命 {hp} / {max}','Boss health {hp} / {max}'],
+   'p1.prepare':['准备布阵 · {time}s','Prepare · {time}s'], 'p1.waveProgress':['本波进度','Wave progress'],
+   'p1.opponent':['本局对手','Your opponent'],
+   'p1.tutorialSkip':['跳过','Skip'], 'p1.tutorialAck':['明白啦 · 领取奖励','Got it · Claim reward'],
+   'p1.tutorialReplay':['重新体验新手引导','Replay the tutorial'],
+   'p1.tutorialReplayReady':['下次开局将展示引导','The tutorial will appear in your next battle'],
+   'p1.tutorialReward':['引导完成！获得 20 金币','Tutorial complete! +20 coins'],
+diff --git "D:\\rea_game\\games\\capybara-defense\\.runtime\\p1-ui-before-fix\\tests\\p1-ui.test.ts" "D:\\rea_game\\games\\capybara-defense\\tests\\p1-ui.test.ts"
+index db4edd0..6b1fc6c 100644
+--- "D:\\rea_game\\games\\capybara-defense\\.runtime\\p1-ui-before-fix\\tests\\p1-ui.test.ts"
++++ "D:\\rea_game\\games\\capybara-defense\\tests\\p1-ui.test.ts"
+@@ -1,19 +1,27 @@
+ import { afterEach, describe, expect, it } from 'vitest';
+ import { BattleEngine } from '../src/core/BattleEngine';
+ import { createProfile } from '../src/core/MetaProgression';
+ import { getBossHUD, getWaveHUD, getMusicMode, isDeveloperMode } from '../src/ui/BattleHUD';
+ import { Compendium } from '../src/ui/Compendium';
+ import { p1En, p1Zh } from '../src/i18n/p1';
+-import { setLanguage } from '../src/i18n/i18n';
+-import { BOSS_IDS } from '../src/config/enemies';
++import { setLanguage, t } from '../src/i18n/i18n';
++import { BOSS_IDS, ENEMIES } from '../src/config/enemies';
++import { RARITY_RULES, WEAPONS } from '../src/config/weapons';
++import { GameApp } from '../src/ui/GameApp';
++import type { CommandResult } from '../src/core/types';
++import type { TutorialStep } from '../src/core/Tutorial';
+ 
+ afterEach(() => setLanguage('zh-CN'));
+ describe('P1 player presentation selectors', () => {
++  it('uses the specified developer sandbox label in both languages', () => {
++    setLanguage('zh-CN'); expect(t('p1.developer')).toBe('开发者沙盒面板');
++    setLanguage('en'); expect(t('p1.developer')).toBe('Developer Sandbox');
++  });
+   it('uses chill music for browsing, battle music for play and boss music only while active', () => {
+     const engine=new BattleEngine({ai:false,autoWaves:false});engine.start();
+     expect(getMusicMode()).toBe('menu');expect(getMusicMode(engine.state)).toBe('battle');
+     const boss=engine.spawnEnemy('king_skunk','player');expect(getMusicMode(engine.state)).toBe('boss');
+     expect(getMusicMode(engine.state,true)).toBe('menu');
+     engine.pause(true);expect(getMusicMode(engine.state)).toBe('menu');engine.pause(false);
+     boss.hp=0;expect(getMusicMode(engine.state)).toBe('battle');
+     engine.state.phase='finished';expect(getMusicMode(engine.state)).toBe('menu');
+@@ -44,16 +52,40 @@ describe('P1 player presentation selectors', () => {
+     engine.state.waveTime=22;
+     expect(getWaveHUD(engine.state).kind).toBe('wave');
+     engine.spawnEnemy('box_kraken','player');
+     expect(getWaveHUD(engine.state).kind).toBe('boss');
+     engine.state.waveTime=1000; expect(getWaveHUD(engine.state).fraction).toBeLessThanOrEqual(1);
+   });
+ });
+ describe('P1 bilingual encyclopedia', () => {
++  it.each(['zh-CN','en'] as const)('shows each weapon current unlock state and its fragment requirement in %s', lang => {
++    setLanguage(lang);
++    const book=new Compendium(), profile=createProfile(); book.tab='weapons';
++    const ids=Object.keys(WEAPONS), unlocked=lang==='en'?'Unlocked':'已解锁', locked=lang==='en'?'Locked':'未解锁';
++    for(const unlockedIds of [[],[ids[1]],ids]) {
++      profile.unlockedWeapons=[...unlockedIds];
++      const html=book.markup(profile);
++      for(const weapon of Object.values(WEAPONS)) {
++        const card=html.match(new RegExp(`<article[^>]*data-entry="${weapon.id}"[\\s\\S]*?</article>`))?.[0];
++        expect(card).toContain(`<b class="collection-state">${unlockedIds.includes(weapon.id)?unlocked:locked}</b>`);
++        const count=RARITY_RULES[weapon.rarity].fragments;
++        expect(card).toContain(lang==='en'?`Unlock with ${count} fragments`:`收集 ${count} 枚碎片解锁`);
++      }
++    }
++  });
++  it.each(['zh-CN','en'] as const)('shows configured armor percentages for all twelve bosses in %s', lang => {
++    setLanguage(lang);
++    const book=new Compendium(); book.tab='bosses';
++    const html=book.markup(createProfile());
++    for(const id of BOSS_IDS) {
++      const card=html.match(new RegExp(`<article[^>]*data-entry="${id}"[\\s\\S]*?</article>`))?.[0];
++      expect(card).toContain(`${lang==='en'?'Armor':'护甲'} ${Math.round(ENEMIES[id].armor*100)}%`);
++    }
++  });
+   it.each(['heroes','bosses','weapons','props'] as const)('renders every %s card with resolved bilingual text', tab => {
+     const counts={heroes:12,bosses:12,weapons:36,props:20};
+     const book=new Compendium(); book.tab=tab;
+     for(const lang of ['zh-CN','en'] as const) {
+       setLanguage(lang); const html=book.markup(createProfile());
+       expect((html.match(/data-entry=/g)??[])).toHaveLength(counts[tab]);
+       expect(html).not.toMatch(/(?:p1|hero|boss|weapon|prop)\.[a-z_]+(?:\.desc)?(?=[<\s])/);
+       if(lang==='en') expect(html.replace(/<[^>]*>/g,'')).not.toMatch(/[\u3400-\u9fff]/);
+@@ -68,8 +100,45 @@ describe('P1 bilingual encyclopedia', () => {
+   it('covers all new phrases and all twelve counter tips in both languages', () => {
+     expect(Object.keys(p1Zh).sort()).toEqual(Object.keys(p1En).sort());
+     for(const id of BOSS_IDS) {
+       expect(p1Zh[`p1.boss.${id}.tip`]?.length).toBeGreaterThan(10);
+       expect(p1En[`p1.boss.${id}.mechanic`]?.length).toBeGreaterThan(10);
+     }
+   });
+ });
++
++describe('P1 tutorial command integration', () => {
++  // Exercise the real command handler and tutorial progression without mounting the DOM or audio.
++  function appFor(engine:BattleEngine) {
++    const app=Object.create(GameApp.prototype) as {
++      engine:BattleEngine; tutorialStep:TutorialStep; apply(result:CommandResult):void;
++      refresh():void; notify():void; sound:{play():void};
++    };
++    Object.assign(app,{engine,tutorialStep:2,refresh:()=>{},notify:()=>{},sound:{play:()=>{}}});
++    return app;
++  }
++  it('keeps step 2 after a bench merge and empty-bench move, then advances after a real board deployment', () => {
++    const engine=new BattleEngine({seed:74,ai:false,autoWaves:false}); engine.start();
++    const app=appFor(engine);
++    const first=engine.grant('hamster').unitId!, second=engine.grant('hamster').unitId!, third=engine.grant('squirrel').unitId!;
++    app.apply(engine.move(first,{zone:'bench',slot:1}));
++    expect(engine.state.units.some(unit=>unit.id===second&&unit.level===2)).toBe(true);
++    expect(app.tutorialStep).toBe(2);
++    const benchMove=engine.move(third,{zone:'bench',slot:0});
++    expect(benchMove).toMatchObject({ok:true,key:'hint.deployed'});
++    app.apply(benchMove); expect(app.tutorialStep).toBe(2);
++    const blocked=engine.move(third,{zone:'board',col:0,row:0});
++    expect(blocked.ok).toBe(false); app.apply(blocked); expect(app.tutorialStep).toBe(2);
++    const deployed=engine.move(third,{zone:'board',col:2,row:7});
++    expect(deployed).toMatchObject({ok:true,key:'hint.deployed'});
++    app.apply(deployed); expect(app.tutorialStep).toBe(3);
++  });
++  it('advances step 2 only after digging succeeds', () => {
++    const engine=new BattleEngine({seed:75,ai:false,autoWaves:false}); engine.start();
++    const app=appFor(engine); engine.state.sides.player.shovels=0;
++    const failed=engine.dig(0,5); expect(failed.ok).toBe(false);
++    app.apply(failed); expect(app.tutorialStep).toBe(2);
++    engine.state.sides.player.shovels=1;
++    const dug=engine.dig(0,5); expect(dug).toMatchObject({ok:true,key:'hint.dig'});
++    app.apply(dug); expect(engine.state.grid[5][0]).toBe('O'); expect(app.tutorialStep).toBe(3);
++  });
++});

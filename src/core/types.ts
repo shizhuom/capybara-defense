@@ -1,0 +1,55 @@
+export type Side = 'player' | 'ai';
+export type MapId = 'sunny_backyard' | 'sakura_onsen' | 'midnight_kitchen' | 'cat_tower_maze';
+export interface GameSettings { musicVolume:number; soundVolume:number; showDamageNumbers:boolean; developerMode?:boolean }
+export interface OpponentIdentity {id:string;name:{'zh-CN':string;en:string};avatarId:string;rankIndex:number}
+export type Tile = 'C' | 'G' | 'O' | 'S' | 'R' | 'B';
+export type Status = 'SEALED' | 'WET' | 'KNOCKDOWN' | 'CONFUSED' | 'MERGE_LOCK';
+export interface Point { col: number; row: number }
+export type UnitLocation = { zone: 'board'; col: number; row: number } | { zone: 'bench'; slot: number };
+export interface Unit {
+  id: number; kind: string; side: Side; level: number; location: UnitLocation;
+  statuses: Partial<Record<Status, number>>; energy: number; cooldown: number;
+  production: number; buffTime: number; empowered: number; animation: number;
+  washing?: number; haste?: number; hasteTime?: number; powerTime?: number;
+}
+export interface Enemy {
+  id: number; kind: string; side: Side; boss: boolean; hp: number; maxHp: number;
+  progress: number; col: number; row: number; speed: number; armor: number; size: number;
+  abilityCooldown: number; stun: number; slow: number; slowFactor: number;
+  burn: number; burnDps: number; poison: number; poisonDps: number; stolenBy: number[]; hitFlash: number;
+  bleed?: number; bleedDps?: number; armorBreak?: number; hasteTime?:number; boneShield?:boolean;
+}
+export interface BattleLoadout {
+  equippedWeapons: Record<string,string>; ownedProps: Record<string,number>;
+  equippedActiveProps: string[]; equippedPassiveProps: string[];
+}
+export interface SideState {
+  food: number; oranges: number; shovels: number; shovelTimer:number; kills: number; damage: number; loot: string[]; fog: number;
+  loadout:BattleLoadout; propCooldowns:Record<string,number>; sprinklerUsed:boolean; giantCatUses:number; catnipTime:number;
+}
+export interface Trap extends Point { id:number; side:Side; charges:number; hitIds:number[] }
+export interface VisualEvent {
+  id: number; type: 'projectile' | 'burst' | 'bubble' | 'damage' | 'purge' | 'orange' | 'dash' | 'bounce' | 'sprinkler' | 'giant_cat' | 'weapon' | 'boss_skill';
+  side: Side; col: number; row: number; targetCol?: number; targetRow?: number;
+  textKey?: string; value?: number; color?: string; age: number; duration: number; unitId?: number;
+  points?:Point[]; effect?:string;
+}
+export interface BattleResult { winner: Side; reason: 'oranges' | 'waves' | 'surrender'; loot: string[]; playerLoot: string[]; aiLoot: string[]; coins: number; elapsed: number; rankIndex?:number; mergedHeroes?:string[] }
+export interface BattleState {
+  opponent?:OpponentIdentity;
+  id: string; phase: 'ready' | 'playing' | 'paused' | 'finished'; time: number;
+  wave: number; waveTime: number; nextSpawn: number; spawned: number;
+  mapId:MapId; rankIndex:number; mergedHeroes:Record<Side,string[]>;
+  grid: Tile[][]; sides: Record<Side, SideState>; units: Unit[]; enemies: Enemy[];
+  events: VisualEvent[]; traps:Trap[]; result: BattleResult | null;
+}
+export interface CommandResult { ok: boolean; key: string; unitId?: number }
+export interface Profile extends BattleLoadout {
+  tutorialCompleted?:boolean; tutorialRewardClaimed?:boolean;
+  coins:number; wins:number; matches:number; fragments:string[]; awardedBattles:string[];
+  schemaVersion:2; weaponFragments:Record<string,number>; unlockedWeapons:string[]; freeLotteryTickets:number;
+  shop:{day:string;offers:string[]}|null;
+  stars:number; highestStars:number; winStreak:number; bestWinStreak:number;
+  selectedMap:'auto'|MapId; avatarId:string; unlockedAvatars:string[]; mergedHeroes:string[]; settings:GameSettings;
+}
+export interface Interaction { draggingId?: number; pointer?: { x: number; y: number }; shovel?: boolean; hover?: Point; selectedId?: number; propId?:string; showDamageNumbers?:boolean }
