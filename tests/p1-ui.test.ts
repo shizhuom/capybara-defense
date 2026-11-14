@@ -82,7 +82,7 @@ describe('P1 bilingual encyclopedia', () => {
     }
   });
   it.each(['heroes','bosses','weapons','props'] as const)('renders every %s card with resolved bilingual text', tab => {
-    const counts={heroes:12,bosses:12,weapons:36,props:20};
+    const counts={heroes:12,bosses:17,weapons:36,props:20};
     const book=new Compendium(); book.tab=tab;
     for(const lang of ['zh-CN','en'] as const) {
       setLanguage(lang); const html=book.markup(createProfile());
@@ -92,7 +92,7 @@ describe('P1 bilingual encyclopedia', () => {
     }
   });
   it('marks only actually merged heroes as collected', () => {
-    const book=new Compendium(), profile=createProfile(); profile.mergedHeroes=['kungfu_po'];
+    const book=new Compendium(), profile=createProfile(); book.select('heroes'); profile.mergedHeroes=['kungfu_po'];
     const html=book.markup(profile);
     expect((html.match(/class="recipe-card encyclopedia-card collected"/g)??[])).toHaveLength(1);
     expect(html).toContain('data-entry="kungfu_po"');

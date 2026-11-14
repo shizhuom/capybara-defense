@@ -35,6 +35,7 @@ const enemies:Record<string,string>={
   dj_rat_king:rat+crown+r(-38,10,18,27,'#9d91aa')+r(20,10,18,27,'#9d91aa')+e(-29,25,6,6,'#d3c0d4')+e(29,25,6,6,'#d3c0d4')+p('M-29 8 V-12 Q0 -39 29 -12 V8','none','#91859b',5),
 };
 const tools:Record<string,string>={
+  ui_compendium_book:p('M0 -25 Q-20 -38 -35 -27 V29 Q-18 18 0 32 Q18 18 35 29 V-27 Q20 -38 0 -25Z','#e8c987')+p('M0 -25 V32 M-28 -19 Q-16 -25 -6 -18 M6 -18 Q17 -25 28 -19 M-28 -8 Q-16 -14 -6 -7 M6 -7 Q17 -14 28 -8 M-28 3 Q-16 -3 -6 4 M6 4 Q17 -3 28 3','none','#8b704c',2)+p('M20 -30 V-9 L25 -14 30 -9 V-29Z','#83ac91'),
   shovel:p('M0 -7 V-29 M-10 -29 V-39 H10 V-29Z','none','#b39a79',6)+p('M-15 -7 H15 L12 18 0 33 -12 18Z','#bbc8b9')+p('M0 0 V23','none','#e3e5cd',3),
   sprinkler:r(-28,-6,47,29,'#e9c977')+r(-15,-25,25,22,'#b4d5cf')+p('M9 -19 H27 L34 -11','none','#c8a157',5)+e(-17,24,8,8,'#798b80')+e(15,24,8,8,'#798b80')+p('M26 -3 L38 -8 M26 3 H42 M26 9 L38 15','none','#94c8d0',3),
 };
@@ -79,7 +80,7 @@ export function unitSticker(kind:string,size=40):string {
   if(['hamster','squirrel','bee'].includes(key))return avatarSticker(key,n);
   return `<span role="img" aria-label="${key}" data-sticker="${key}" style="display:inline-grid;place-items:center;width:${n}px;height:${n}px;font-size:${Math.round(n*.63)}px">${escapeHtml(UNIT_ICONS[key])}</span>`;
 }
-export function sceneSticker(id:'menu_banner'|'logo_capy'|'sprinkler'|'shovel',fallback:string,size?:number):string {
+export function sceneSticker(id:'menu_banner'|'logo_capy'|'sprinkler'|'shovel'|'ui_compendium_book',fallback:string,size?:number):string {
   const n=sizeOf(size??(id==='menu_banner'?400:64),64);
   return image(id,n)||(Object.hasOwn(tools,id)?geometry(id,tools[id],n):fallback);
 }
