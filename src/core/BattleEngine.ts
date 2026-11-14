@@ -9,6 +9,7 @@ import {applyNewBossMechanic} from './BossMechanics';
 import {rollWeapon} from '../config/weapons';
 import { FIRST_WAVE_PREPARATION, WAVES, WAVE_DURATION,bossesForWave,waveEnemyCount,minionForWave } from '../config/waves';
 import { MergeSystem } from './MergeSystem';
+import {CombatRecords} from './CombatRecords';
 import type {OpponentTuning} from '../config/opponents';
 import { Random } from './Random';
 import {copyLoadout,PropSystem,type PropTarget} from './PropSystem';
@@ -28,6 +29,7 @@ export class BattleEngine {
   private pendingBosses:{kind:string;at:number}[]=[];
   private waveBossSchedule:readonly (readonly string[])[];
   private lockedBenchUnit?:Unit;
+  private combatRecords=new CombatRecords();
   private effectOwners=new WeakMap<Enemy,Partial<Record<'burn'|'poison'|'bleed',Unit>>>();
   constructor(public options:EngineOptions={}) {
     const seed=options.seed??Math.floor(Math.random()*0xffffffff);
@@ -175,6 +177,7 @@ export class BattleEngine {
     if(occupant){
       const outcome=MergeSystem.combine(source,occupant);
       if(outcome.unit){
+        this.combatRecords.merge(source,occupant,outcome.unit);
         this.state.units=this.state.units.filter(u=>u.id!==source.id&&u.id!==occupant.id);
         this.state.units.push(outcome.unit);
         this.validateBenchLock();
@@ -383,6 +386,7 @@ export class BattleEngine {
       this.event({type:'hit',side:enemy.side,col:enemy.col,row:enemy.row,effect:'vfx_hit_burst',duration:.18});
     }
     this.state.sides[enemy.side].damage+=actual;
+    if(unit)this.combatRecords.hit(unit,actual,enemy.hp<=0);
     if(amount>=3)this.event({type:'damage',side:enemy.side,col:enemy.col,row:enemy.row,value:Math.round(damage),color:critical?'#f16941':'#fff7da',duration:.65});
     if(enemy.hp<=0){
       const owner=this.state.sides[enemy.side];owner.kills++;
@@ -510,6 +514,6 @@ export class BattleEngine {
   private finish(winner:Side,reason:'oranges'|'waves'|'surrender'):void {
     if(this.state.result)return;
     const playerLoot=[...this.state.sides.player.loot],aiLoot:string[]=[];
-    this.state.result={winner,reason,loot:winner==='player'?[...playerLoot]:[],playerLoot,aiLoot,coins:winner==='player'?RANKS[this.state.rankIndex].winCoins+Math.min(45,Math.floor(this.state.sides.player.food*.5)):0,elapsed:this.state.time,rankIndex:this.state.rankIndex,mergedHeroes:[...this.state.mergedHeroes.player]};this.state.phase='finished';
+    this.state.result={winner,reason,loot:winner==='player'?[...playerLoot]:[],playerLoot,aiLoot,coins:winner==='player'?RANKS[this.state.rankIndex].winCoins+Math.min(45,Math.floor(this.state.sides.player.food*.5)):0,elapsed:this.state.time,rankIndex:this.state.rankIndex,mergedHeroes:[...this.state.mergedHeroes.player],mvp:this.combatRecords.mvp(this.state.units)};this.state.phase='finished';
   }
 }

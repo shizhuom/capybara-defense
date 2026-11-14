@@ -43,7 +43,8 @@ export interface VisualEvent {
   points?:Point[]; effect?:string;
   readonly presentation?:Readonly<AttackPresentation>;
 }
-export interface BattleResult { winner: Side; reason: 'oranges' | 'waves' | 'surrender'; loot: string[]; playerLoot: string[]; aiLoot: string[]; coins: number; elapsed: number; rankIndex?:number; mergedHeroes?:string[] }
+export interface BattleMVP {kind:string;level:number;damage:number;kills:number}
+export interface BattleResult { winner: Side; reason: 'oranges' | 'waves' | 'surrender'; loot: string[]; playerLoot: string[]; aiLoot: string[]; coins: number; elapsed: number; rankIndex?:number; mergedHeroes?:string[];mvp?:BattleMVP }
 export interface BattleState {
   opponent?:OpponentIdentity;
   id: string; phase: 'ready' | 'playing' | 'paused' | 'finished'; time: number;

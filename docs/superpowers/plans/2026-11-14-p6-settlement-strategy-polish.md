@@ -44,9 +44,9 @@ Files: core/CombatRecords.ts (new), BattleEngine.ts, types.ts; tests/p6-mvp.test
 
 Interfaces: `BattleMVP {kind:string;level:number;damage:number;kills:number}` optional on BattleResult. CombatRecords records effective health damage and kill ownership, merges source/target records into result identity, and resolves aliases for delayed DoT ownership. No display fields added to Unit.
 
-- [ ] Write failing real-engine tests for clamped damage, armor/DoT/weapon kills, source+target inheritance through basic upgrade/hero creation/feed, post-merge DoT, dead/recycled contributors and empty battles.
-- [ ] Record before weapon hook recursion; merge before replacing units; resolve the highest damage then kills then stable id. Refresh live metadata at settlement; no MVP if no unit contributed damage.
-- [ ] Run focused/full tests and typecheck; commit.
+- [x] Write failing real-engine tests for clamped damage, armor/DoT/weapon kills, source+target inheritance through basic upgrade/hero creation/feed, post-merge DoT, dead/recycled contributors and empty battles.
+- [x] Record before weapon hook recursion; merge before replacing units; resolve the highest damage then kills then stable id. Refresh live metadata at settlement; no MVP if no unit contributed damage.
+- [x] Run focused/full tests and typecheck; commit.
 
 ## Task 3: Assets, settlement ledgers and subpage polish
 
