@@ -34,13 +34,13 @@ describe('M3 ranks', () => {
   it('derives the specified HP, rewards and fragment chances for every tier', async () => {
     const m = await ranks(); expect(m).toBeDefined(); if (!m) return;
     expect(m.RANKS).toHaveLength(54);
-    const groups = [[1,1.08,35,1],[1.1,1.18,45,1],[1.2,1.3,55,1],[1.32,1.42,65,1],[1.45,1.55,75,1],[1.58,1.7,85,1],[1.72,1.85,95,1],[1.88,2,110,1],[2.05,2.2,125,1.5],[2.25,2.45,140,1.8]];
-    groups.forEach(([lo,hi,coins,fragments],g)=>m.RANKS.slice(g*5,g*5+5).forEach((rank,i)=>{
-      expect(rank.hpMultiplier).toBeCloseTo(lo+(hi-lo)*i/4,4);
-      expect(rank.winCoins).toBe(coins); expect(rank.fragmentMultiplier).toBe(fragments);
-      expect(rank.name.en).toContain(['I','II','III','IV','V'][i]);
-    }));
-    expect(m.RANKS.slice(50).map(r=>[r.hpMultiplier,r.winCoins,r.fragmentMultiplier])).toEqual([[2.5,160,2.2],[2.6,160,2.2],[2.7,160,2.2],[2.8,160,2.2]]);
+    m.RANKS.forEach((rank,i)=>{
+      expect(rank.winCoins).toBe(Math.round(60+160*i/53));
+      expect(rank.fragmentMultiplier).toBe(i>=50?2.2:i>=45?1.8:i>=40?1.5:1);
+      if(i>0)expect(rank.hpMultiplier).toBeGreaterThan(m.RANKS[i-1].hpMultiplier);
+      if(i<50)expect(rank.name.en).toContain(['I','II','III','IV','V'][i%5]);
+    });
+    expect(m.RANKS[53]).toMatchObject({hpMultiplier:6.2,winCoins:220,fragmentMultiplier:2.2});
     expect(m.getRank(-10).index).toBe(0); expect(m.getRank(NaN).index).toBe(0); expect(m.getRank(10000).index).toBe(53);
     expect(m.RANKS.slice(40).map(r=>r.mapId)).toEqual(['sunny_backyard','sakura_onsen','midnight_kitchen','cat_tower_maze','sunny_backyard','sakura_onsen','midnight_kitchen','cat_tower_maze','sunny_backyard','sakura_onsen','midnight_kitchen','cat_tower_maze','sunny_backyard','sakura_onsen']);
   });

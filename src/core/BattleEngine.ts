@@ -4,10 +4,10 @@ import { HEROES } from '../config/heroes';
 import { ENEMIES } from '../config/enemies';
 import {getMap,GRID_ROWS,GRID_COLS,STAGE} from '../config/maps';
 import {COMBAT_STYLES} from '../config/combat';
-import {RANKS} from '../config/ranks';
+import {RANKS,getRankDifficulty} from '../config/ranks';
 import {applyNewBossMechanic} from './BossMechanics';
 import {rollWeapon} from '../config/weapons';
-import { FIRST_WAVE_PREPARATION, WAVES, WAVE_DURATION,bossForWave } from '../config/waves';
+import { FIRST_WAVE_PREPARATION, WAVES, WAVE_DURATION,bossesForWave,waveEnemyCount,minionForWave } from '../config/waves';
 import { MergeSystem } from './MergeSystem';
 import type {OpponentTuning} from '../config/opponents';
 import { Random } from './Random';
@@ -15,7 +15,7 @@ import {copyLoadout,PropSystem,type PropTarget} from './PropSystem';
 import {WeaponSystem} from './WeaponSystem';
 import {getBaseUnitStats,getBeeProduction,type UnitStats} from './UnitStats';
 import type { BattleLoadout,BattleState, CommandResult, Enemy, Point, Side, Unit, UnitLocation, VisualEvent,SideState,MapId } from './types';
-export interface EngineOptions { seed?:number; autoWaves?:boolean; ai?:boolean; loadouts?:Partial<Record<Side,Partial<BattleLoadout>>>; mapId?:MapId; rankIndex?:number; aiOverrides?:Partial<OpponentTuning> }
+export interface EngineOptions { seed?:number; autoWaves?:boolean; ai?:boolean; loadouts?:Partial<Record<Side,Partial<BattleLoadout>>>; mapId?:MapId; rankIndex?:number; aiOverrides?:Partial<OpponentTuning>; tutorialGuided?:boolean }
 let battleSequence=0;
 export class BattleEngine {
   state:BattleState;
@@ -24,6 +24,8 @@ export class BattleEngine {
   private props:PropSystem;
   private weapons:WeaponSystem;
   private enemyEverSpawned=false;
+  private tutorialHold=false;
+  private pendingBosses:{kind:string;at:number}[]=[];
   private effectOwners=new WeakMap<Enemy,Partial<Record<'burn'|'poison'|'bleed',Unit>>>();
   constructor(public options:EngineOptions={}) {
     const seed=options.seed??Math.floor(Math.random()*0xffffffff);
@@ -50,6 +52,14 @@ export class BattleEngine {
     this.state.phase=value?'paused':'playing';
     if(!value&&this.state.sides.player.oranges<=0)this.finish('ai','oranges');
   }
+  setTutorialHold(active:boolean):void {
+    if(!active&&this.tutorialHold&&this.state.wave===1&&this.state.spawned===0){
+      this.state.nextSpawn=Math.max(8,this.state.nextSpawn);
+      this.state.waveTime=Math.min(this.state.waveTime,FIRST_WAVE_PREPARATION-this.state.nextSpawn);
+    }
+    this.tutorialHold=active;
+  }
+  currentWaveTargetCount():number {return waveEnemyCount(Math.max(1,this.state.wave),this.state.rankIndex);}
   useProp(id:string,target:PropTarget={},side:Side='player'):CommandResult{return side==='player'?this.props.use(id,target,side):{ok:false,key:'hint.invalid'};}
   useSprinkler(side:Side='player'):CommandResult{return side==='player'?this.props.sprinkler(side):{ok:false,key:'hint.invalid'};}
   getShovelRules(side:Side='player'):{interval:number;maxStored:number}{return this.props.shovelRules(side);}
@@ -88,13 +98,14 @@ export class BattleEngine {
     const cost=getSummonCost(this.state.sides[side].summons);
     if(this.state.sides[side].food<cost)return{ok:false,key:'hint.noFood'};
     const discarded=this.state.units.some(u=>u.side===side&&u.location.zone==='bench');
+    const teachingPack=this.options.tutorialGuided&&this.state.sides[side].summons===0?['hamster','hamster','panda','hat_bamboo','squirrel']:undefined;
     // Validate the price before discarding. A pack replaces this bench atomically.
     this.state.units=this.state.units.filter(u=>u.side!==side||u.location.zone!=='bench');
     this.state.sides[side].food-=cost;this.state.sides[side].summons++;
     let firstId:number|undefined,shovels=0;
     for(let i=0;i<ECONOMY.summonCount;i++){
-      const result=this.grant(this.props.draw(side,shovels<2),side);firstId??=result.unitId;
-      const unit=this.state.units.find(u=>u.id===result.unitId);if(unit){if(unit.kind==='shovel')shovels++;this.props.promoteDraw(unit);}
+      const result=this.grant(teachingPack?.[i]??this.props.draw(side,shovels<2),side);firstId??=result.unitId;
+      const unit=this.state.units.find(u=>u.id===result.unitId);if(unit){if(unit.kind==='shovel')shovels++;if(!teachingPack)this.props.promoteDraw(unit);}
     }
     return{ok:true,key:discarded?'hint.redrawn':'hint.summoned',unitId:firstId};
   }
@@ -171,9 +182,10 @@ export class BattleEngine {
   }
   spawnEnemy(kind:string,side:Side,scale=1):Enemy {
     const config=ENEMIES[kind];if(!config)throw new Error('Unknown enemy');
-    scale*=RANKS[this.state.rankIndex].hpMultiplier*(this.props.has('player','shared_oranges')?1.15:1);
+    const difficulty=getRankDifficulty(this.state.rankIndex,this.options);
+    scale*=difficulty.hpMultiplier*(this.props.has('player','shared_oranges')?1.15:1);
     const p=GridSystem.pathPosition(side,0,this.state.mapId);
-    const enemy:Enemy={id:side==='player'?this.sequence++:0,kind,side,boss:config.boss,hp:config.hp*scale,maxHp:config.hp*scale,progress:0,col:p.col,row:p.row,speed:config.speed*(this.props.has('player','hyper_party')?1.12:1),armor:config.armor,size:1,abilityCooldown:config.interval,stun:0,slow:0,slowFactor:1,burn:0,burnDps:0,poison:0,poisonDps:0,stolenBy:[],hitFlash:0};
+    const enemy:Enemy={id:side==='player'?this.sequence++:0,kind,side,boss:config.boss,hp:config.hp*scale,maxHp:config.hp*scale,progress:0,col:p.col,row:p.row,speed:config.speed*difficulty.speedMultiplier*(this.props.has('player','hyper_party')?1.12:1),armor:Math.min(.8,config.armor+((config.armor>0||config.boss)?difficulty.armorBonus:0)),size:1,abilityCooldown:config.interval*difficulty.bossCooldownScale,stun:0,slow:0,slowFactor:1,burn:0,burnDps:0,poison:0,poisonDps:0,stolenBy:[],hitFlash:0};
     if(side!=='player')return enemy;
     this.enemyEverSpawned=true;
     this.state.enemies.push(enemy);
@@ -260,7 +272,7 @@ export class BattleEngine {
       enemy.armorBreak=Math.max(0,(enemy.armorBreak??0)-dt);
       if(enemy.hp<=0)continue;
       enemy.stun=Math.max(0,enemy.stun-dt);enemy.slow=Math.max(0,enemy.slow-dt);
-      if(enemy.boss){enemy.abilityCooldown-=dt;if(enemy.abilityCooldown<=0){this.bossAbility(enemy);enemy.abilityCooldown=ENEMIES[enemy.kind].interval;}}
+      if(enemy.boss){enemy.abilityCooldown-=dt;if(enemy.abilityCooldown<=0){this.bossAbility(enemy);enemy.abilityCooldown=ENEMIES[enemy.kind].interval*getRankDifficulty(this.state.rankIndex).bossCooldownScale;}}
       if(enemy.hp<=0)continue;
       const hasteDuration=Math.min(dt,Math.max(0,enemy.hasteTime??0));enemy.hasteTime=Math.max(0,(enemy.hasteTime??0)-dt);
       if(enemy.stun<=0)enemy.progress+=enemy.speed*(dt+.3*hasteDuration)*(enemy.slow>0?enemy.slowFactor:1)*(this.props.has(enemy.side,'banana_peel')?.88:1);
@@ -273,7 +285,7 @@ export class BattleEngine {
       }
     }
     this.state.enemies=this.state.enemies.filter(e=>e.hp>0);
-    if(this.options.autoWaves!==false&&this.state.wave===10&&this.state.spawned>=WAVES[9].count&&this.state.enemies.length===0&&this.state.phase==='playing')this.finishByScore();
+    if(this.options.autoWaves!==false&&this.state.wave===10&&this.state.spawned>=this.currentWaveTargetCount()&&!this.pendingBosses.length&&this.state.enemies.length===0&&this.state.phase==='playing')this.finishByScore();
   }
   private beginWave(wave:number):void {
     this.state.wave=wave;this.state.waveTime=0;this.state.nextSpawn=wave===1?FIRST_WAVE_PREPARATION:1;this.state.spawned=0;
@@ -281,18 +293,22 @@ export class BattleEngine {
       if(wave>1)this.state.sides[side].food+=ECONOMY.waveIncome;
     }
     this.event({type:'bubble',side:'player',col:3.5,row:4.5,textKey:'hint.wave',value:wave,duration:1.8});
-    const boss=bossForWave(this.state.mapId,this.state.rankIndex,wave,()=>this.random.next());if(boss)this.spawnBoss(boss);
+    const bosses=bossesForWave(this.state.mapId,this.state.rankIndex,wave,()=>this.random.next());
+    this.pendingBosses=bosses.slice(1).map(kind=>({kind,at:5}));if(bosses[0])this.spawnBoss(bosses[0]);
   }
   private updateWaves(dt:number):void {
     if(!this.state.wave)return;
+    if(this.tutorialHold&&this.state.wave===1&&this.state.spawned===0)return;
     this.state.waveTime+=dt;this.state.nextSpawn-=dt;
     const config=WAVES[this.state.wave-1];
-    if(this.state.spawned<config.count&&this.state.nextSpawn<=0){
-      const index=this.state.spawned,kind=this.state.wave<3?'rat':index%5===4?'crab':index%3===1?'roach':'rat';
+    for(const boss of this.pendingBosses.filter(b=>this.state.waveTime+1e-8>=b.at))this.spawnBoss(boss.kind);
+    this.pendingBosses=this.pendingBosses.filter(b=>this.state.waveTime+1e-8<b.at);
+    if(this.state.spawned<this.currentWaveTargetCount()&&this.state.nextSpawn<=0){
+      const kind=minionForWave(this.state.wave,this.state.spawned,this.state.rankIndex);
       for(const side of ['player'] as Side[])this.spawnEnemy(kind,side,config.hpScale);
-      this.state.spawned++;this.state.nextSpawn=config.interval;
+      this.state.spawned++;this.state.nextSpawn=config.interval*getRankDifficulty(this.state.rankIndex).intervalScale;
     }
-    if(this.state.wave<10&&this.state.waveTime+1e-8>=WAVE_DURATION)this.beginWave(this.state.wave+1);
+    if(this.state.wave<10&&this.state.waveTime+1e-8>=WAVE_DURATION&&this.state.spawned>=this.currentWaveTargetCount()&&!this.pendingBosses.length)this.beginWave(this.state.wave+1);
   }
   getUnitStats(unit:Unit):UnitStats {
     const base=getBaseUnitStats(unit.kind,unit.level);

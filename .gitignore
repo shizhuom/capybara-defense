@@ -7,3 +7,4 @@ verification/*.webm
 verification/browser-profile/
 .superpowers/
 verification/p4-protected-before.json
+verification/p5-protected-before.json

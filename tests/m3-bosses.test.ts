@@ -1,4 +1,4 @@
-import {afterEach,describe,expect,it,vi} from 'vitest';
+﻿import {afterEach,describe,expect,it,vi} from 'vitest';
 import {BattleEngine} from '../src/core/BattleEngine';
 import {GridSystem} from '../src/core/GridSystem';
 import {Random} from '../src/core/Random';
@@ -87,10 +87,10 @@ describe('M3 complete boss roster and real mechanisms',()=>{
     }}expect(seen).toEqual(new Set(BOSS_IDS));
   });
   it('rank snapshots scale all enemies and victory base coins while preserving food bonus',()=>{
-    const low=game(),high=game(false,53);expect(low.spawnEnemy('rat','player').hp).toBe(28);expect(high.spawnEnemy('rat','player').hp).toBeCloseTo(78.4);
-    expect(high.spawnEnemy('hornet_queen','player').hp).toBeCloseTo(7728);
+    const low=game(),high=game(false,53);expect(low.spawnEnemy('rat','player').hp).toBe(28);expect(high.spawnEnemy('rat','player').hp).toBeCloseTo(173.6);
+    expect(high.spawnEnemy('hornet_queen','player').hp).toBeCloseTo(17112);
     low.state.sides.player.food=17;high.state.sides.player.food=17;low.state.wave=10;high.state.wave=10;low.skipWave();high.skipWave();
-    expect(low.state.result?.coins).toBe(43);expect(high.state.result?.coins).toBe(168);expect(high.state.result?.rankIndex).toBe(53);
+    expect(low.state.result?.coins).toBe(68);expect(high.state.result?.coins).toBe(228);expect(high.state.result?.rankIndex).toBe(53);
   });
   it('high ranks shift real boss and treasure fragment rarity toward purple/orange',()=>{
     const e=game(false,50);expect(e.rollWeaponFragment).toBeTypeOf('function');
@@ -104,3 +104,4 @@ describe('M3 complete boss roster and real mechanisms',()=>{
     e.state.units=[];e.surrender();expect(e.state.result?.mergedHeroes).toEqual(['kungfu_po']);expect(e.state.mergedHeroes.ai).toEqual([]);
   });
 });
+
