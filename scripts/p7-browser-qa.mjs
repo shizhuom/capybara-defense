@@ -28,6 +28,12 @@ async function fit(p,label){
  }
  for(const s of m.scroll)assert.ok(s.sw<=s.w+2,label+' horizontal overflow '+JSON.stringify(s));
  assert.equal(await p.locator('#game-dialog .dialog-language,#game-dialog [data-action="zh-CN"],#game-dialog [data-action="en"]').count(),0);
+ const clippedTabs=await p.locator('.encyclopedia-tabs button').evaluateAll(buttons=>buttons.flatMap(button=>{
+  const b=button.getBoundingClientRect();return [...button.children].flatMap(child=>{
+   const range=document.createRange();range.selectNodeContents(child);const r=child.tagName==='SPAN'?range.getBoundingClientRect():child.getBoundingClientRect();
+   return r.left<b.left-1||r.right>b.right+1||r.top<b.top-1||r.bottom>b.bottom+1?[button.textContent.trim()]:[];
+  });
+ }));assert.deepEqual(clippedTabs,[],label+' tab text and stickers remain inside their own buttons');
  const tiny=await p.locator('#game-dialog').evaluate(d=>[...d.querySelectorAll('*')].filter(e=>e.getClientRects().length&&!e.closest('[aria-hidden="true"],svg,.equip-hero')&&[...e.childNodes].some(n=>n.nodeType===3&&/[a-zA-Z\d\u3400-\u9fff]/.test(n.textContent))&&parseFloat(getComputedStyle(e).fontSize)<13.5).map(e=>({tag:e.tagName,cls:e.className,text:e.textContent.trim().slice(0,70),font:getComputedStyle(e).fontSize})));
  if(label.startsWith('desktop'))assert.deepEqual(tiny,[],label+' readable typography');
  assert.doesNotMatch(m.text,/(?:p[1-7]|m[23]|hero|weapon|prop|unit)\.[a-z_]+/);
@@ -36,8 +42,24 @@ async function fit(p,label){
  await p.locator('.ledger-body').evaluate(e=>e.scrollTop=0);measurements.push({label,...m});
 }
 async function canvasLog(p){await p.evaluate(()=>{
- window.__p7texts=[];const proto=CanvasRenderingContext2D.prototype;if(!window.__p7originalText){window.__p7originalText=proto.fillText;proto.fillText=function(...args){window.__p7texts.push(String(args[0]));if(window.__p7texts.length>5000)window.__p7texts.splice(0,1000);return window.__p7originalText.apply(this,args);};}
+ window.__p7texts=[];window.__p7pills=[];const proto=CanvasRenderingContext2D.prototype;if(!window.__p7originalText){
+  const clear=proto.clearRect;proto.clearRect=function(...args){window.__p7pills=[];return clear.apply(this,args);};
+  window.__p7originalText=proto.fillText;proto.fillText=function(...args){
+   const text=String(args[0]);window.__p7texts.push(text);if(window.__p7texts.length>5000)window.__p7texts.splice(0,1000);
+   if(text.startsWith('→ ')||text.startsWith('▲')){const hero=text.startsWith('→ ');window.__p7pills.push({text,x:args[1]-(hero?36:11),y:args[2]-16,w:Math.min(290,this.measureText(text).width+(hero?46:22)),h:32});}
+   return window.__p7originalText.apply(this,args);
+  };
+ }
  });}
+async function mergePillBounds(p,label){
+ const data=await p.evaluate(()=>{
+  const canvas=document.querySelector('#battle-canvas').getBoundingClientRect();
+  return {pills:window.__p7pills,obstacles:[...document.querySelectorAll('.resource-dock,.control-dock,.wave-progress>span,#boss-banner,#live-unit-card')].flatMap(e=>{const r=e.getBoundingClientRect();return !e.hidden&&r.width&&r.height?[{x:(r.left-canvas.left)/canvas.width*1280,y:(r.top-canvas.top)/canvas.height*720,w:r.width/canvas.width*1280,h:r.height/canvas.height*720}]:[];})};
+ });
+ const overlap=(a,b)=>a.x<b.x+b.w&&a.x+a.w>b.x&&a.y<b.y+b.h&&a.y+a.h>b.y;
+ assert.equal(data.pills.length,3,label+' all adjacent/top-row outcomes');
+ data.pills.forEach((r,i)=>{assert.ok(r.x>=8&&r.y>=8&&r.x+r.w<=1272&&r.y+r.h<=712);for(const o of [...data.obstacles,...data.pills.slice(0,i)])assert.equal(overlap(r,o),false,label+' label must avoid HUD/cards/other labels '+JSON.stringify({r,o}));});
+}
 async function fixture(p,kind='hero'){
  await p.evaluate(kind=>{const e=window.__CAPY_DEBUG__.engine;e.state.units=[];e.state.enemies=[];e.state.waveTime=0;e.state.spawned=0;e.state.sides.player.food=80;e.state.sides.player.lockedBenchSlot=null;
   const add=(name,col,row)=>{const id=e.grant(name).unitId;if(col!==undefined){e.state.grid[row][col]='O';e.move(id,{zone:'board',col,row});}return id;};
@@ -87,6 +109,11 @@ try{
   await action(p,'inspect-book:hat_bamboo','#stage');assert.equal(await p.locator('.compendium-detail-sheet').getAttribute('data-entry'),'hat_bamboo');await action(p,'compendium-hero:puss_in_hat');assert.equal(await p.locator('.compendium-detail-sheet').getAttribute('data-entry'),'puss_in_hat');await action(p,'close-recipes');
   await tap(p,1200,710);await tap(p,298,656);await tap(p,432,228);assert.ok(await p.evaluate(()=>window.__CAPY_DEBUG__.engine.state.units.some(u=>u.kind==='kungfu_po'&&u.location.zone==='board')));
   await fixture(p,'upgrade');await tap(p,298,656);assert.ok(await p.evaluate(()=>window.__p7texts.includes('▲ 升至 Lv.2')));if(label==='desktop')await shot(p,'p7-battle-upgrade-highlight.png');
+  await fixture(p);await p.evaluate(()=>{
+   const e=window.__CAPY_DEBUG__.engine;for(const[kind,col]of [['panda',2],['cat',8]]){e.state.grid[0][col]='O';e.move(e.state.units.find(u=>u.kind===kind).id,{zone:'board',col,row:0});}
+   const id=e.grant('panda').unitId;e.state.grid[0][3]='O';e.move(id,{zone:'board',col:3,row:0});
+  });await tap(p,298,656,true);await mergePillBounds(p,label+' press');await shot(p,`p7-${label}-top-row-highlights.png`);
+  await p.mouse.up();await settle(p);await mergePillBounds(p,label+' selected');
   await action(p,'pause','#stage');await fit(p,label+'-pause');await shot(p,`p7-${label}-pause.png`);await action(p,'surrender');await p.locator('.result-loss').waitFor();await fit(p,label+'-result');await shot(p,`p7-${label}-result.png`);await action(p,'menu');
   await action(p,'start');await p.evaluate(()=>{
    const e=window.__CAPY_DEBUG__.engine;e.state.sides.player.oranges=50;const id=e.grant('kungfu_po').unitId;e.move(id,{zone:'board',col:2,row:1});const unit=e.state.units.find(u=>u.id===id);

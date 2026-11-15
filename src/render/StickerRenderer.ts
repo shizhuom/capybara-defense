@@ -14,6 +14,7 @@ import {boneShield,confusionSpiral,drawM3Event} from './M3Effects';
 import {bodyPose,drawHeldWeapon} from './HeldWeaponRenderer';
 import {drawCombatEvent} from './CombatEffects';
 import {drawSplashScene} from './SplashScene';
+import {placeMergeCallout} from './MergeCalloutLayout';
 
 export type HitTarget = { kind: 'cell'; col: number; row: number } | { kind: 'bench'; slot: number } | { kind:'bench-lock';slot:number } | { kind: 'shovel' };
 type Position = { x: number; y: number };
@@ -400,6 +401,7 @@ export class StickerRenderer {
   private drawActiveMergeHighlights(state:BattleState,interaction:Interaction,seconds:number):void {
     const source=this.mergeSource(state,interaction);if(!source)return;
     const c=this.c,used:Array<{x:number;y:number;w:number;h:number}>=[];
+    const obstacles=interaction.mergeAvoidRects??[{x:0,y:0,w:STAGE.width,h:90}];
     for(const target of getMergeTargets(state,source.id)){
       const unit=state.units.find(u=>u.id===target.unitId)!;
       const p=(unit.location.zone==='board'?this.unitPositions.get(unit.id):undefined)??this.position(unit),hero=target.kind==='hero'&&!target.feedHero;
@@ -413,13 +415,10 @@ export class StickerRenderer {
       const label=hero?`→ ${t('hero.'+target.heroId)}`:t(target.feedHero?'p7.feed':'p7.upgrade',{level:target.nextLevel??unit.level+1});
       c.font=`900 15px ${FONT}`;
       const width=Math.min(290,c.measureText(label).width+(hero?46:22)),height=32;
-      const x=clamp(p.x-width/2,8,STAGE.width-width-8);
-      let y=clamp(p.y-82-Math.sin(seconds*2)*2,8,STAGE.height-height-8);
-      // Adjacent partners can have long translated names; stagger their pills instead of stacking text.
-      while(used.some(r=>x<r.x+r.w+4&&x+width+4>r.x&&y<r.y+r.h+4&&y+height+4>r.y)){
-        if(y-height-5>=8)y-=height+5;else {y=Math.max(...used.map(r=>r.y+r.h))+5;break;}
-      }
-      y=clamp(y,8,STAGE.height-height-8);used.push({x,y,w:width,h:height});
+      const placed=placeMergeCallout(p,width,height,obstacles,used),{x,y}=placed;used.push(placed);
+      // A short tether preserves association when a top-row label moves below or sideways.
+      const end={x:clamp(p.x,x,x+width),y:clamp(p.y,y,y+height)},dx=end.x-p.x,dy=end.y-p.y,d=Math.hypot(dx,dy);
+      if(d>radius+2)line(c,[[p.x+dx/d*(radius+2),p.y+dy/d*(radius+2)],[end.x,end.y]],ink,2);
       round(c,x,y,width,height,12,light,ink,2.2);
       if(hero&&target.heroId){
         const image=this.assets.get(target.heroId);

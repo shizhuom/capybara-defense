@@ -229,6 +229,13 @@ export class GameApp {
         const hit = this.renderer.hitTest(interaction.pointer.x, interaction.pointer.y);
         if (hit?.kind === 'cell') interaction.hover = { col: hit.col, row: hit.row };
       }
+      if(!interaction.shovel&&!interaction.propId&&(interaction.draggingId||interaction.previewSourceId||interaction.selectedId)){
+        const bounds=this.canvas.getBoundingClientRect();
+        if(bounds.width&&bounds.height)interaction.mergeAvoidRects=[...this.root.querySelectorAll<HTMLElement>('.resource-dock,.control-dock,.wave-progress>span,#boss-banner,#live-unit-card')].flatMap(element=>{
+          if(element.hidden)return[];const r=element.getBoundingClientRect();
+          return r.width&&r.height?[{x:(r.left-bounds.left)/bounds.width*STAGE.width,y:(r.top-bounds.top)/bounds.height*STAGE.height,w:r.width/bounds.width*STAGE.width,h:r.height/bounds.height*STAGE.height}]:[];
+        });
+      }
       this.renderer.draw(state, state.time, interaction);
     } else { this.renderer.drawPreview(this.devMapOverride ?? resolveMap(this.profile), now / 1000, ECONOMY.initialOranges + (this.profile.equippedPassiveProps.includes('extra_oranges') ? 2 : 0) + (this.profile.equippedPassiveProps.includes('shared_oranges') ? 4 : 0)); this.sound.setMode('menu'); this.sound.setDucked(this.retainedPage || document.hidden); }
     if (now - this.lastRefresh > 120) { this.refresh(); this.lastRefresh = now; }

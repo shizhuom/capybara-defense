@@ -79,6 +79,23 @@ function canvasSurface(){
  return {calls,renderer:new StickerRenderer({getContext:()=>c,width:0,height:0} as unknown as HTMLCanvasElement)};
 }
 describe('P7 multi-target synthesis perception',()=>{
+ it('keeps top-row and adjacent outcome pills clear of HUD, unit cards and one another',()=>{
+  const {engine,panda,cat,hat,grant}=mergeScene();
+  panda.location={zone:'board',col:2,row:0};cat.location={zone:'board',col:8,row:0};
+  const next=grant('panda');next.location={zone:'board',col:3,row:0};
+  for(const u of [panda,cat,next])if(u.location.zone==='board')engine.state.grid[u.location.row][u.location.col]='O';
+  const obstacles=[{x:0,y:0,w:1280,h:90},{x:950,y:80,w:316,h:330}];
+  const {renderer,calls}=canvasSurface();
+  renderer.draw(engine.state,0,{selectedId:hat.id,mergeAvoidRects:obstacles} as Interaction);
+  const pills=calls.filter(c=>c.name==='fillText'&&String(c.args[0]).startsWith('→ ')).map(c=>({x:c.args[1]-36,y:c.args[2]-16,w:String(c.args[0]).length*10+46,h:32}));
+  const overlap=(a:typeof pills[number],b:typeof pills[number])=>a.x<b.x+b.w&&a.x+a.w>b.x&&a.y<b.y+b.h&&a.y+a.h>b.y;
+  expect(pills).toHaveLength(3);
+  for(const [i,pill] of pills.entries()){
+   expect(pill.x).toBeGreaterThanOrEqual(8);expect(pill.x+pill.w).toBeLessThanOrEqual(1272);
+   expect(pill.y).toBeGreaterThanOrEqual(8);expect(pill.y+pill.h).toBeLessThanOrEqual(712);
+   for(const obstacle of [...obstacles,...pills.slice(0,i)])expect(overlap(pill,obstacle)).toBe(false);
+  }
+ });
  it('marks both board partners and reports each resulting hero without changing legacy bench hints',()=>{
   const {engine,panda,cat,hat}=mergeScene();
   expect(mergeTargets.getBoardMergeHints(engine.state)).toEqual([{unitId:panda.id,col:2,row:1,kind:'hero'},{unitId:cat.id,col:3,row:1,kind:'hero'}]);
