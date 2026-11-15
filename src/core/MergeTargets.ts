@@ -1,6 +1,7 @@
 import type {BattleState} from './types';
 import {MergeSystem} from './MergeSystem';
 import {HEROES} from '../config/heroes';
+import {RECIPES} from '../config/recipes';
 
 export interface MergeTarget {unitId:number;kind:'upgrade'|'hero';heroId?:string;nextLevel?:number;feedHero?:boolean}
 export function getMergeTargets(state:BattleState,sourceId:number):MergeTarget[] {
@@ -34,4 +35,29 @@ export function getBenchMergeHints(state:BattleState):Array<{unitId:number;slot:
     const hero=targets.some(target=>target.kind==='hero'&&!HEROES[unit.kind]&&!HEROES[state.units.find(u=>u.id===target.unitId)!.kind]);
     return [{unitId:unit.id,slot:unit.location.slot,kind:hero?'hero' as const:'upgrade' as const}];
   });
+}
+
+export interface PassiveMergeCallout {
+  unitId:number;zone:'board'|'bench';kind:'hero'|'upgrade';heroId?:string;nextLevel?:number;partnerIds:number[];
+}
+/** A new hero takes priority; feeding an existing hero is an upgrade, not a new recipe. */
+export function getPassiveMergeCallouts(state:BattleState):PassiveMergeCallout[] {
+  return state.units.flatMap(unit=>{
+    if(unit.side!=='player'||unit.kind==='shovel')return [];
+    const targets=getMergeTargets(state,unit.id),best=targets.find(t=>t.kind==='hero'&&!t.feedHero)??targets[0];
+    if(!best)return [];
+    const hero=best.kind==='hero'&&!best.feedHero;
+    return [{unitId:unit.id,zone:unit.location.zone,kind:hero?'hero' as const:'upgrade' as const,
+      ...(best.heroId?{heroId:best.heroId}:{}),nextLevel:best.nextLevel,
+      partnerIds:targets.filter(t=>hero?t.kind==='hero'&&!t.feedHero&&t.heroId===best.heroId:t.feedHero||t.kind==='upgrade').map(t=>t.unitId)}];
+  });
+}
+
+/** Stable recipe order; multiple copies of a recipe do not crowd out other hero names. */
+export function getHeroMergeOptions(state:BattleState):Array<{heroId:string;sourceId:number;targetId:number}> {
+  const pairs=new Map<string,{heroId:string;sourceId:number;targetId:number}>();
+  for(const source of state.units.filter(u=>u.side==='player').sort((a,b)=>a.id-b.id))for(const target of getMergeTargets(state,source.id)){
+    if(target.kind==='hero'&&!target.feedHero&&target.heroId&&!pairs.has(target.heroId))pairs.set(target.heroId,{heroId:target.heroId,sourceId:source.id,targetId:target.unitId});
+  }
+  return RECIPES.flatMap(r=>pairs.has(r.hero)?[pairs.get(r.hero)!]:[]);
 }

@@ -8,7 +8,7 @@ import { BOSS_IDS } from '../config/enemies';
 import { MAP_IDS, STAGE } from '../config/maps';
 import { FIRST_WAVE_PREPARATION, WAVES, WAVE_DURATION } from '../config/waves';
 import { StickerRenderer, type HitTarget } from '../render/StickerRenderer';
-import { getBenchMergeHints } from '../core/MergeTargets';
+import { getHeroMergeOptions } from '../core/MergeTargets';
 import { waveStrategyMarkup, wavePreviewTip } from './WaveStrategyView';
 import { getLanguage, onLanguageChange, setLanguage, t } from '../i18n/i18n';
 import { awardBattle, emptyProfile, loadProfile, resetOwnStorage, saveProfile, enableTestProfile, restoreNormalProfile, isTestProfile } from './storage';
@@ -61,6 +61,7 @@ export class GameApp {
   private ledgerStamp='';
   private speed: 1 | 2 = 1;
   private selectedId?: number;
+  private mergeLocatorHero?: string;
   private shovelSelected = false;
   private selectedProp?: string;
   private propDrag?: { pointerId: number; startX: number; startY: number; moved: boolean; id: string; button: HTMLElement; point?: { x: number; y: number } };
@@ -148,7 +149,7 @@ export class GameApp {
               <div class="control-dock"><button type="button" class="guide-button" data-action="recipes"><span aria-hidden="true">${sceneSticker('ui_compendium_book','',34)}</span><span data-i18n="p3.guide"></span></button><button type="button" data-action="battle-shop"><span aria-hidden="true">${sceneSticker('ui_shop_bag','',34)}</span><span data-i18n="p3.shop"></span></button><button type="button" class="speed-pill" data-action="speed" data-label="hud.speedLabel" id="hud-speed">1×</button><button type="button" data-action="pause" data-label="hud.pause" id="pause-button">Ⅱ</button></div>
             </div>
             <div id="boss-banner" class="boss-banner" hidden></div>
-            <div class="battle-actions" id="battle-actions" hidden><span class="redraw-hero-badge" id="redraw-hero-badge" hidden></span><button type="button" class="summon-button" data-action="summon" id="summon-button"><span aria-hidden="true" class="bell">${sceneSticker('ui_bell_summon','',46)}</span><span aria-hidden="true">${sceneSticker('ui_fish_food','',28)}</span><strong id="summon-cost">10</strong><b class="refresh-badge" id="summon-refresh-count" aria-hidden="true">↻5</b></button></div>
+            <div class="battle-actions" id="battle-actions" hidden><button type="button" class="redraw-hero-badge" id="redraw-hero-badge" data-action="focus-hero-merge" hidden></button><button type="button" class="summon-button" data-action="summon" id="summon-button"><span aria-hidden="true" class="bell">${sceneSticker('ui_bell_summon','',46)}</span><span aria-hidden="true">${sceneSticker('ui_fish_food','',28)}</span><strong id="summon-cost">10</strong><b class="refresh-badge" id="summon-refresh-count" aria-hidden="true">↻5</b></button></div>
             <div id="live-card-host"></div>
             <div id="battle-props" hidden></div><div id="sealed-hint" class="sealed-hint" hidden></div>
             <div id="tutorial-overlay" hidden></div>
@@ -350,9 +351,7 @@ export class GameApp {
       this.element('summon-button').setAttribute('aria-label', `${summonTitle}. ${summonNote}${shortage ? `. ${t('hud.noFood', { count: shortage })}` : ''}`);
       this.element('summon-refresh-count').textContent=`↻${refreshCount}`;
       this.element('summon-refresh-count').setAttribute('title',t('p6.refreshSlots',{count:refreshCount}));
-      const heroBadge=this.element('redraw-hero-badge');
-      heroBadge.hidden=!getBenchMergeHints(state).some(hint=>hint.kind==='hero'&&hint.slot!==player.lockedBenchSlot)||!!this.drag?.moved||!!this.propDrag?.moved||!!this.selectedProp;
-      heroBadge.textContent=`✦ ${t('p6.redrawHero')}`;
+      this.renderHeroMergeAlert(state);
     }
     // Keep the canvas fixed in the viewport while a pointer is captured. Replacing
     // a tall hero inspector with the short shovel card can otherwise clamp page
@@ -739,12 +738,20 @@ export class GameApp {
     this.refresh();
   }
 
+  private renderHeroMergeAlert(state:BattleState):void {
+    const options=getHeroMergeOptions(state),badge=this.element('redraw-hero-badge');
+    badge.hidden=!options.length||!!this.drag||!!this.propDrag||!!this.selectedProp||this.shovelSelected||state.phase!=='playing';
+    const choice=options.find(o=>o.heroId===this.mergeLocatorHero)??options[0];
+    badge.textContent=choice?t(options.length>1?'p8.heroAlerts':'p8.heroAlert',{hero:t('hero.'+choice.heroId),count:options.length,others:options.length-1}):'';
+    badge.setAttribute('aria-label',badge.textContent);
+  }
+
   private apply(result: CommandResult): void {
     const dug = result.key === 'hint.dig' || result.key === 'hint.repaired' || result.key === 'hint.repairProgress';
     if (result.ok && dug) this.sound.play('shovel');
     if (result.ok && result.key === 'hint.merged' && result.unitId && this.engine?.state.units.some(unit => unit.id === result.unitId && !!HEROES[unit.kind] && unit.level === 1)) this.sound.play('merge_hero');
     if (result.ok && result.unitId) {
-      this.selectedId = result.unitId;
+      this.selectedId = result.key==='hint.deployed'?undefined:result.unitId;
       this.shovelSelected = false;
     }
     if (result.ok && this.selectedId && !this.engine?.state.units.some(unit => unit.id === this.selectedId && unit.side === 'player')) this.selectedId = undefined;
@@ -753,9 +760,6 @@ export class GameApp {
     if(result.ok){
       if(dug)this.progressTutorial('dig');
       if(result.key==='hint.deployed'&&this.engine?.state.units.some(unit=>unit.id===result.unitId&&unit.side==='player'&&unit.location.zone==='board')){
-        // The next teaching tap selects the wearable; keeping Panda selected would
-        // perform a legitimate reverse merge onto the bench instead of this pad.
-        if(this.tutorialStep===4)this.selectedId=undefined;
         this.progressTutorial('deploy');
       }
       if((result.key==='hint.merged'||result.key==='hint.fed')&&(this.tutorialStep!==4||this.engine?.state.units.some(unit=>unit.id===result.unitId&&!!HEROES[unit.kind])))this.progressTutorial('merge');
@@ -1102,12 +1106,16 @@ export class GameApp {
       return;
     }
     if (!this.canInteract() || !this.engine) return;
+    if(action==='focus-hero-merge'){
+      const options=getHeroMergeOptions(this.engine.state);
+      if(options.length){const index=options.findIndex(o=>o.heroId===this.mergeLocatorHero),choice=options[(index+1)%options.length];this.clearSelection();this.selectedId=choice.sourceId;this.mergeLocatorHero=choice.heroId;}
+      this.refresh();return;
+    }
     if (action === 'summon') {
       const result = this.engine.summon();
       if (result.ok) { this.cancelDrag(); this.sound.play('summon'); this.progressTutorial('summon'); }
       this.apply(result);
-      // The placement lesson asks the player to select a pet themselves.
-      if(result.ok&&this.tutorialStep===2)this.clearSelection();
+      if(result.ok)this.clearSelection();
     }
     else if (action === 'food') { this.engine.addFood(500); this.notify('hint.foodAdded'); }
     else if (action === 'grant') this.apply(this.engine.grant(this.element<HTMLSelectElement>('dev-unit').value));
