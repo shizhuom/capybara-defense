@@ -17,8 +17,13 @@ export async function auditDialogText(page){
   }
   const issues=[],runs=[],walker=document.createTreeWalker(dialog,NodeFilter.SHOW_TEXT);
   while(walker.nextNode()){
-   const node=walker.currentNode,text=node.textContent.trim(),e=node.parentElement;
-   if(!text||!e||e.closest('svg,[aria-hidden="true"],.equip-hero,script,style'))continue;
+   const node=walker.currentNode,text=node.textContent.trim(),parent=node.parentElement;
+   // Collapsed native selects paint their selected option using the select's
+   // own style/bounds; option nodes themselves have no layout rectangles.
+   const e=parent?.tagName==='OPTION'?(parent.selected?parent.closest('select'):null):parent;
+   if(!text||!e||e.closest('svg,[aria-hidden="true"],script,style'))continue;
+   const equipment=e.closest('.equip-hero');
+   if(equipment&&style(equipment).clipPath==='inset(50%)')continue;
    if(!e.getClientRects().length)continue;
    let opacity=1,hidden=false;for(let p=e;p;p=p.parentElement){const s=style(p);opacity*=Number(s.opacity);if(s.visibility==='hidden'||s.display==='none')hidden=true;}
    if(hidden||opacity===0)continue;

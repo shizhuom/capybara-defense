@@ -7,9 +7,10 @@
  font-weight:700;color:var(--ink);font-size:var(--copy);
 }
 #game-dialog :is(p,span,small,li,td,th,label,output,button,select,caption,aside,div,a,i,em,option) {
- font-weight:700!important;color:var(--ink)!important;
+ color:var(--ink)!important;
 }
-#game-dialog :where(h2,h3,h4,b,strong,th,.button,.ledger-tabs button,.portrait-name,.loot-tray li>span,.result-star-change small,.result-rewards small,.mvp-stats>span) { font-weight:800!important;color:var(--ink)!important; }
+#game-dialog :where(p,span,small,li,td,th,label,output,button,select,caption,aside,div,a,i,em,option) { font-weight:700!important; }
+#game-dialog :where(h2,h3,h4,b,strong,th,button,.button,.ledger-tabs button,.portrait-name,.loot-tray li>span,.result-star-change small,.result-rewards small,.mvp-stats>span) { font-weight:800!important;color:var(--ink)!important; }
 #game-dialog :where(h2,h3,.result-star-change>b,.result-rewards b,.mvp-stats b,.passport-stats b) { font-weight:900!important; }
 #game-dialog :is(small,.detail-family,.collection-state,.equip-status,.portrait-instruction,.settlement-note,.save-note,.result-reason,.settings-saved,.loot-empty,.meta-note) { color:var(--ink-secondary)!important; }
 #game-dialog :is(button:disabled,.locked,.locked-label,.avatar-card.locked,.weapon-card.locked) { opacity:1!important; }

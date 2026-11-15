@@ -24,19 +24,19 @@
 ### Task 1: Full-field metadata, selection lifecycle and locator
 **Files:** `src/core/MergeTargets.ts`, `src/ui/GameApp.ts`, `src/i18n/p8.ts`, `i18n.ts`, `tests/p8-bold-contrast-and-merge-alerts.test.ts`.
 **Interfaces:** `getPassiveMergeCallouts(state): PassiveMergeCallout[]` with unitId/zone/kind/heroId?/nextLevel?/partnerIds; new-hero preferred over feed/upgrade. `getHeroMergeOptions(state)` deduplicates new-hero pairs for a stable cycling locator.
-- [ ] Write/run failing tests for all 12 recipes across three zone combinations, upgrade/feed exclusions, summon/deploy selection clearing and board-only locator cycling. Expected: FAIL.
-- [ ] Implement shared metadata, unconditional successful summon clearing, deployed clearing, clickable localized full-field alert; preserve selected merge/feed outcomes.
-- [ ] Focused then full Vitest suite; expected all PASS. Commit.
+- [x] Write/run failing tests for all 12 recipes across three zone combinations, upgrade/feed exclusions, summon/deploy selection clearing and board-only locator cycling. Expected: FAIL.
+- [x] Implement shared metadata, unconditional successful summon clearing, deployed clearing, clickable localized full-field alert; preserve selected merge/feed outcomes.
+- [x] Focused then full Vitest suite; expected all PASS. Commit.
 
 ### Task 2: Persistent foreground merge badges
 **Files:** `src/render/StickerRenderer.ts`, `MergeCalloutLayout.ts` if placement extension needed, P8 tests.
-- [ ] Test 14+ units with each special pair and unrelated selected squirrel; check both hero icons/text render after board and bench sprites. Test unrelated passive groups coexist with active selection; drag/prop suppress passive sparkles. Expected: FAIL.
-- [ ] Active source only for held/dragging units or selected units with targets. Keep uncovered passive groups in idle mode. Draw synchronized gold/green rings, clear level/lock corners, 20px hero icons and bold dark MERGE!/upgrade pills after all unit/nest art.
-- [ ] Run focused P6/P7/P8 and full suite; expected all PASS. Commit.
+- [x] Test 14+ units with each special pair and unrelated selected squirrel; check both hero icons/text render after board and bench sprites. Test unrelated passive groups coexist with active selection; drag/prop suppress passive sparkles. Expected: FAIL.
+- [x] Active source only for held/dragging units or selected units with targets. Keep uncovered passive groups in idle mode. Draw synchronized gold/green rings, clear level/lock corners, 20px hero icons and bold dark MERGE!/upgrade pills after all unit/nest art.
+- [x] Run focused P6/P7/P8 and full suite; expected all PASS. Commit.
 
 ### Task 3: Bold contrast typography and final browser acceptance
 **Files:** `src/ui/p8.css` (last import in `src/main.ts`), `SettlementView.ts`, `scripts/p8-browser-qa.mjs`, browser style audit helper, `verification/p8-*`, game docs.
-- [ ] Run baseline browser assertions for all visible text weight>=700, effective contrast>=7, requested 1080p settlement labels>=21px/800. Expected: FAIL on P7.
-- [ ] Implement requested fluid dimensions/type scale, bright surfaces/dark ink, universal bold minimum, 44/46/76px settlement art and mobile overrides; preserve hidden native controls and menu-only language.
-- [ ] Chromium 1920×1080, 1280×720 and mobile: all eight pages, bilingual galleries/details, typography/contrast/overflow, crowded passive special recipes and locator; save the seven requested screenshots plus responsive evidence. Expected PASS, console/pageerror 0.
-- [ ] Run npm test/build, production smoke/save isolation and protected-file hashes. One fresh whole-branch review, one material-fix pass with regressions. Archive rulings and results, commit local P8 milestone; leave production on 4175.
+- [x] Run baseline browser assertions for all visible text weight>=700, effective contrast>=7, requested 1080p settlement labels>=21px/800. Expected: FAIL on P7.
+- [x] Implement requested fluid dimensions/type scale, bright surfaces/dark ink, universal bold minimum, 44/46/76px settlement art and mobile overrides; preserve hidden native controls and menu-only language.
+- [x] Chromium 1920×1080, 1280×720 and mobile: all eight pages, bilingual galleries/details, typography/contrast/overflow, crowded passive special recipes and locator; save the seven requested screenshots plus responsive evidence. Expected PASS, console/pageerror 0.
+- [x] Run npm test/build, production smoke/save isolation and protected-file hashes. One fresh whole-branch review, one material-fix pass with regressions. Archive rulings and results, commit local P8 milestone; keep the existing 4175 service with the verified production build at /dist/.
