@@ -121,7 +121,7 @@ export function artSticker(id:ArtStickerId,fallbackText:string):string {
   const width=title?960:520,height=title?320:220;
   const lines=title&&id.endsWith('_en')?['CAPYBARA!','CHILL DEFENSE']:[fallbackText];
   const letters=lines.map((text,row)=>{
-    const chars=Array.from(text),step=(width*.83)/Math.max(chars.length,1),size=Math.min(title?120:84,step*1.4);
+    const chars=Array.from(text),step=(width*.88)/Math.max(chars.length,1),size=Math.min(title?148:88,step*1.4);
     const spans=chars.map((char,i)=>{
       const phase=chars.length>1?i/(chars.length-1):.5;
       const x=width*.5+(i-(chars.length-1)/2)*step,y=(lines.length>1?145+row*103:height*.63)-Math.sin(phase*Math.PI)*(title?20:10);
@@ -129,5 +129,5 @@ export function artSticker(id:ArtStickerId,fallbackText:string):string {
     }).join('');
     return `<text text-anchor="middle" font-size="${size}" font-weight="900" font-family="Trebuchet MS, Microsoft YaHei, sans-serif" fill="#ffc568" stroke="#684020" stroke-width="${title?8:5}" paint-order="stroke fill" stroke-linejoin="round">${spans}</text>`;
   }).join('');
-  return `<svg viewBox="0 0 ${width} ${height}" role="img" aria-label="${label}" data-art-sticker="${id}"><g stroke-linecap="round" stroke-linejoin="round"><g transform="translate(${width/2} ${title?43:31}) scale(${title?1.6:1})">${orange(0,0)}</g>${letters}</g></svg>`;
+  return `<svg viewBox="0 0 ${width} ${height}" role="img" aria-label="${label}" data-art-sticker="${id}"><g stroke-linecap="round" stroke-linejoin="round"><g transform="translate(${title?160:width/2}, ${title?58:31}) scale(${title?1.6:1})">${orange(0,0)}</g>${letters}</g></svg>`;
 }
