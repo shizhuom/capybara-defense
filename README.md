@@ -1,4 +1,4 @@
-# 卡皮巴拉别慌！v1.0 · P6 温泉庆功卷轴与策略助手
+# 卡皮巴拉别慌！v1.0 · P7 大头照图鉴与合成聚光灯
 
 独立本地塔防小游戏。1280×720 横屏舞台内的整块 9×5 棋盘归玩家使用，沿四张蜿蜒地图布阵，守住卡皮巴拉头顶的橘子。撑过十波并清光害虫即获胜，带回本局收集的神兵碎片。
 
@@ -7,6 +7,8 @@
 保留 P4 的萌宠温泉聚会插画、动态蒸汽、四种地图气氛、中英文无框艺术字、异形木牌开始按钮和四角圆形入口。P5 加入六类手账子页面、五步保底合成教学、安全点选与多维段位难度。P6 补齐暂停与胜负结算卷轴、合成继承的 MVP 战绩、下波预告与提前迎战、可合闪星和单格锁宠，并修好手机教程与属性卡的避让。全部 **193** 张 PNG 随游戏本地提供，未解码时显示 Canvas / SVG 兜底；旧存档继续兼容。
 
 ## 启动与停止
+
+P7 放大中英文启动标题与全套手账字号。图鉴的五类收藏先展示大头照，点击后查看完整成长表、技能与配装，并支持上一位 / 下一位及返回焦点。语言切换只在主开始页。棋盘与窝内可合伙伴会被动发光；按住、选中或拖拽组件时，全部目标同时显示英雄结果或升星等级。
 
 双击 **Start-Capybara.cmd** 构建并启动，打开 **http://127.0.0.1:4175/**。双击 **Stop-Capybara.cmd** 停止本作服务。若当前已有服务，启动脚本会复用它；修改源码后请先停止再启动，以加载新构建。
 
@@ -21,7 +23,7 @@ npm test
 npm run typecheck
 npm run build
 npm run sync-assets   # 只读 design 原画，复制到本作 public/assets/sprites
-npm run test:browser  # Vite 下验证 P6 全流程及 P5/P4/P3 浏览器回归
+npm run test:browser  # Vite 下验证 P7 全流程及手机触控/教学回归
 ```
 
 没有 npm 缓存的电脑可执行 `npm ci --ignore-scripts`。开发服务与正式启动脚本不能同时占用 4175。
@@ -62,7 +64,7 @@ npm run test:browser  # Vite 下验证 P6 全流程及 P5/P4/P3 浏览器回归
 
 `public/assets/sprites/` 包含 **193** 张 PNG 与完整 ID 清单：保留全部场景、角色、行走帧、武器、特效、启动页及 P5 手账资源；新增胜利、惜败、暂停、MVP、开锁/闭锁、号角和合成闪星八枚贴纸。运行同步脚本只读取 `../../design/assets/sprites/`，不会改动原画；来源清单完整时按原字节复制。无外图时保留 Canvas/SVG 回退。
 
-`public/audio/manifest.json` 可覆盖三态音乐和音效；默认使用 WebAudio 程序化多声部。首次交互后启用音频，无 AudioContext 时静默降级。音量、飘字和语言均可在设置调整。
+`public/audio/manifest.json` 可覆盖三态音乐和音效；默认使用 WebAudio 程序化多声部。首次交互后启用音频，无 AudioContext 时静默降级。音量和飘字在设置调整；语言在主开始页切换。
 
 ```text
 src/config/       地图、数值、英雄/神兵/道具、持武与攻击风格表
@@ -75,7 +77,7 @@ scripts/          启停、同步、隔离核验及浏览器回归
 verification/     测试结果、实机截图与隔离证据
 ```
 
-`npm run test:browser` 使用本机 Chrome 和独立测试浏览器环境；可通过 `CAPY_CHROME` 指定浏览器。正式构建可运行 `node scripts/p6-production-qa.mjs` 和 `node scripts/p3-profile-switch-qa.mjs --label=p6` 验证。历史验收与旧坐标脚本仍留档，不作为当前布局标准。
+`npm run test:browser` 使用本机 Chrome 和独立测试浏览器环境；可通过 `CAPY_CHROME` 指定浏览器。正式构建可运行 `node scripts/p7-production-qa.mjs` 和 `node scripts/p3-profile-switch-qa.mjs --label=p7` 验证。历史验收与旧坐标脚本仍留档，不作为当前布局标准。
 
 P1 回退点在本目录独立 Git 仓库：提交 `319ea6c`，标签 **`v1.0-p1`**。可以从该标签创建新分支继续另一版本，避免覆盖当前进度。浏览器存档独立于 Git；回退代码前请另存存档。
 
@@ -88,5 +90,7 @@ P4 保存在 **`p4-start-splash`** 分支、标签 **`v1.0-p4`**：**780 项测�
 P5 保存在 **`p5-ledger-tutorial-difficulty`** 分支，版本点 **`v1.0-p5`**。**826 项测试通过**；子页面、五步教程与移动端截图见 [P5 交付验证](docs/P5-verification.md)。P4 标签继续保留，可从旧标签另建分支。
 
 P6 使用独立分支 **`p6-settlement-strategy-polish`**，标签 **`v1.0-p6`**，**879 项测试通过**。交付记录与截图见 [P6 交付验证](docs/P6-verification.md)。旧标签继续保留；不合并覆盖 P5。MVP 按实际扣除的敌人生命统计，合成后继承双方输出与击杀，持续伤害也归入最终英雄，纯道具伤害不会冒充单位输出。
+
+P7 使用 **`p7-readability-compendium`** 分支。验收证据和截图索引见 [P7 交付验证](docs/P7-verification.md)，P6 标签继续保留。
 
 所有修改限定本游戏目录。原三国基线、根脚本和 `design/` 只读；端口保持 4175。生产构建使用相对资源路径，可部署在 HTTP 子目录。

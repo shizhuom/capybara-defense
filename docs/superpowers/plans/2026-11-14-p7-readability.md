@@ -23,22 +23,22 @@
 ### Task 1: Portrait/detail compendium and menu-only language
 **Files:** `src/ui/Compendium.ts`, `GameApp.ts`, `LedgerView.ts`, `SettlementView.ts`, `src/i18n/p7.ts`, `i18n.ts`; P1/P3 legacy and P7 tests.
 **Interfaces:** `inspectEntry(id): boolean`, `closeDetail(): string|null`, `stepDetail(-1|1): boolean`, `openTo(id): void`. `select(tab)` resets detail; matrix hero selection stays in matrix.
-- [ ] Write/run failing tests for clean portrait counts 19/12/17/36/20, valid/unknown deep links, wrapping, back, exact detail values and menu-only languages.
-- [ ] Implement catalog ownership, galleries, full detail sheets and keyboard-focus actions; preserve legacy structural contracts.
-- [ ] Run focused tests then full suite; commit.
+- [x] Write/run failing tests for clean portrait counts 19/12/17/36/20, valid/unknown deep links, wrapping, back, exact detail values and menu-only languages.
+- [x] Implement catalog ownership, galleries, full detail sheets and keyboard-focus actions; preserve legacy structural contracts.
+- [x] Run focused tests then full suite; commit.
 
 ### Task 2: Larger art and all-page typography
 **Files:** two title PNGs, `stickers.ts`, `src/ui/p7.css`, `src/main.ts`, browser QA.
-- [ ] Copy only updated title assets and verify dimensions/manifests.
-- [ ] Apply exact requested title/menu sizes, 1180×720 ledger limits and per-page type scales; short landscape and portrait overrides retain usable scrolling.
-- [ ] Verify asset/SVG contracts and browser computed sizes; commit after suite.
+- [x] Copy only updated title assets and verify dimensions/manifests.
+- [x] Apply exact requested title/menu sizes, 1180×720 ledger limits and per-page type scales; short landscape and portrait overrides retain usable scrolling.
+- [x] Verify asset/SVG contracts and browser computed sizes; commit after suite.
 
 ### Task 3: Passive and immediate multi-target battle highlights
 **Files:** `MergeTargets.ts`, `types.ts`, `StickerRenderer.ts`, `GameApp.ts`, P7 tests.
 **Interfaces:** `MergeTarget {unitId,kind,heroId?,nextLevel?,feedHero?}` and `getBoardMergeHints(state)`; existing bench hints unchanged. `Interaction.previewSourceId` does not mutate selection.
-- [ ] Write/run failing tests for board panda+cat+bench hat, same-level upgrades, hero feeds, invalid states and foreground order.
-- [ ] Implement metadata, passive board rings, active pads/scale/alpha and foreground outcome pills after both sprite loops.
-- [ ] Verify pointer-down preview and existing P5/P6 input tests; run full suite and commit.
+- [x] Write/run failing tests for board panda+cat+bench hat, same-level upgrades, hero feeds, invalid states and foreground order.
+- [x] Implement metadata, passive board rings, active pads/scale/alpha and foreground outcome pills after both sprite loops.
+- [x] Verify pointer-down preview and existing P5/P6 input tests; run full suite and commit.
 
 ### Task 4: Browser acceptance, isolation, final review
 **Files:** `scripts/p7-browser-qa.mjs`, `verification/p7-*`, `docs/P7-verification.md`, game README.

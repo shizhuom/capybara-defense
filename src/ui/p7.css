@@ -24,13 +24,14 @@
 #game-dialog .ledger-tabs button { font-size:clamp(16px,1.45vw,19px);min-height:48px;padding:8px 14px; }
 #game-dialog .ledger-tabs button [data-sticker] { width:30px;height:30px;flex:none; }
 #game-dialog .encyclopedia-tabs.ledger-tabs { display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:6px;padding:8px 12px 0;overflow:visible; }
-#game-dialog .encyclopedia-tabs.ledger-tabs button { min-width:0;padding:8px 6px; }
+#game-dialog .encyclopedia-tabs.ledger-tabs button { min-width:0;padding:8px 6px;font-size:clamp(16px,1.45vw,19px); }
 #game-dialog .encyclopedia-tabs.ledger-tabs button>span { white-space:normal;overflow:visible; }
 .ledger-body h3 { font-size:20px; }
 .ledger-body h4 { font-size:21px; }
 .ledger-body p { font-size:16px;line-height:1.55; }
 .ledger-body small { font-size:14px; }
 .ledger-body :is(.button,.meta-note,.book-stats,.recipe-note,.doge-note) { font-size:16px; }
+.ledger-body .weapon-card>b,.ledger-body .locked-label,.ledger-body .unlock-gallery>div { font-size:14px; }
 .ledger-body .collection-state { font-size:14px;line-height:1.4; }
 
 /* A portrait wall deliberately omits numerical information until a portrait is opened. */
@@ -107,6 +108,7 @@
 .ledger-body .threat-banner strong { font-size:18px; }
 .ledger-body .threat-values { font-size:15px; }
 .ledger-body .threat-banner small { font-size:14px; }
+.ledger-body .rank-threat-banner p { font-size:14px; }
 .ledger-body .podium-card strong { font-size:18px; }
 .ledger-body .leaderboard-row { font-size:17px; }
 .ledger-body .leaderboard-row small,.you-here { font-size:14px; }
@@ -124,8 +126,8 @@
 .pause-status-strip>span { font-size:16px; }
 .ledger-body .loot-tray li { font-size:16px; }
 .ledger-body :is(.settlement-note,.save-note,.result-reason) { font-size:14px; }
-.settlement-actions button { font-size:18px; }
-.pause-actions>div>button { font-size:15px; }
+#game-dialog .settlement-actions button { font-size:18px; }
+#game-dialog .pause-actions>div>button { font-size:15px; }
 .result-mvp-card>strong { font-size:20px; }
 .result-mvp-card>span,.mvp-stats>span { font-size:14px; }
 .mvp-stats b { font-size:26px; }
@@ -139,6 +141,10 @@
  .special-recipes { grid-template-columns:1fr; }
 }
 @media(max-width:600px) and (orientation:portrait) {
+ .page-shell #menu-screen .profile-pill b,.page-shell #menu-screen .profile-pill strong { font-size:14px; }
+ .page-shell #menu-screen .language-switch button { font-size:14px; }
+ .page-shell #menu-screen .map-chips { width:max-content;max-width:calc(100% - 16px);overflow-x:auto;justify-content:flex-start; }
+ .page-shell #menu-screen .map-chips button { font-size:14px;flex:none; }
  #game-dialog .ledger-heading h2 { font-size:24px; }
  #game-dialog .ledger-close { width:38px;height:38px;min-width:38px; }
  #game-dialog .ledger-wallet>span { font-size:14px; }
@@ -156,7 +162,7 @@
  .ledger-body .podium-card { flex-direction:row;flex-wrap:wrap;align-items:center;justify-content:center; }
  .result-summary-grid { grid-template-columns:1fr; }
  .settlement-actions { padding:10px;gap:8px; }
- .settlement-actions button { font-size:16px; }
+ #game-dialog .settlement-actions button { font-size:16px; }
 }
 @media(max-height:500px) and (orientation:landscape) {
  #game-dialog.ledger-dialog,#game-dialog.pause-ledger,#game-dialog.result-ledger { height:94dvh;max-height:94dvh; }
@@ -198,8 +204,8 @@
  .ledger-body .capsule-setting small,.tutorial-replay-card small { font-size:13px; }
  .pause-status-strip>span,.ledger-body .loot-tray li { font-size:14px; }
  .settlement-actions { padding:6px 12px 9px;gap:6px; }
- .settlement-actions button { font-size:16px;padding:6px 10px; }
- .pause-actions>div>button { font-size:14px;padding:5px; }
+ #game-dialog .settlement-actions button { font-size:16px;padding:6px 10px; }
+ #game-dialog .pause-actions>div>button { font-size:14px;padding:5px; }
  .result-mvp-card>strong { font-size:17px; }
  .mvp-stats b { font-size:22px; }
 }
