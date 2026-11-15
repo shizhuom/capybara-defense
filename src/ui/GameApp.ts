@@ -216,6 +216,7 @@ export class GameApp {
       if (this.selectedId && !state.units.some(unit => unit.id === this.selectedId && unit.side === 'player')) this.selectedId = undefined;
       if (state.phase === 'finished' && this.completedId !== state.id) this.finish(state);
       const interaction: Interaction = { selectedId: this.selectedId, shovel: this.shovelSelected, propId: this.selectedProp, showDamageNumbers: this.profile.settings.showDamageNumbers,allowBenchLock:this.tutorialStep==='done' };
+      if(this.drag?.id&&!this.selectedProp&&!this.shovelSelected)interaction.previewSourceId=this.drag.id;
       if (this.drag?.moved) {
         interaction.draggingId = this.drag.id;
         interaction.pointer = this.drag.point;

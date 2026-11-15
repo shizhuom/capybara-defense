@@ -75,14 +75,14 @@ describe('P1 merge target queries',()=>{
   it('finds upgrades and excludes swaps, mismatched levels, maxed, locked, washing, self and opponent without mutation',async()=>{
     const e=arena(),source=pet(e,'hamster'),match=pet(e,'hamster'),swap=pet(e,'squirrel'),locked=pet(e,'hamster'),washed=pet(e,'hamster');
     locked.statuses.MERGE_LOCK=3;washed.washing=3;expect(e.grant('hamster','ai').ok).toBe(false);const before=JSON.stringify(e.state);
-    expect(await targets(e,source.id)).toEqual([{unitId:match.id,kind:'upgrade'}]);expect(JSON.stringify(e.state)).toBe(before);
+    expect(await targets(e,source.id)).toEqual([{unitId:match.id,kind:'upgrade',nextLevel:2}]);expect(JSON.stringify(e.state)).toBe(before);
     match.level=2;expect(await targets(e,source.id)).toEqual([]);match.level=source.level=5;expect(await targets(e,source.id)).toEqual([]);
     source.washing=1;expect(await targets(e,source.id)).toEqual([]);expect(await targets(e,999)).toEqual([]);expect(swap.kind).toBe('squirrel');
   });
   it.each(RECIPES)('recognizes both directions and feeding for $hero',async recipe=>{
     const e=arena(),a=pet(e,recipe.parts[0]),b=pet(e,recipe.parts[1]);
-    expect(await targets(e,a.id)).toEqual([{unitId:b.id,kind:'hero',heroId:recipe.hero}]);expect(await targets(e,b.id)).toEqual([{unitId:a.id,kind:'hero',heroId:recipe.hero}]);
-    b.kind=recipe.hero;expect(await targets(e,a.id)).toEqual([{unitId:b.id,kind:'hero',heroId:recipe.hero}]);expect(await targets(e,b.id)).toEqual([{unitId:a.id,kind:'hero',heroId:recipe.hero}]);
+    expect(await targets(e,a.id)).toEqual([{unitId:b.id,kind:'hero',heroId:recipe.hero,nextLevel:1}]);expect(await targets(e,b.id)).toEqual([{unitId:a.id,kind:'hero',heroId:recipe.hero,nextLevel:1}]);
+    b.kind=recipe.hero;expect(await targets(e,a.id)).toEqual([{unitId:b.id,kind:'hero',heroId:recipe.hero,nextLevel:2,feedHero:true}]);expect(await targets(e,b.id)).toEqual([{unitId:a.id,kind:'hero',heroId:recipe.hero,nextLevel:2,feedHero:true}]);
     b.level=5;expect(await targets(e,a.id)).toEqual([]);expect(await targets(e,b.id)).toEqual([]);
   });
 });

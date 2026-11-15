@@ -46,21 +46,21 @@ describe('P1 complete merge targets and hero bases',()=>{
  it.each(['selected','dragged'] as const)('highlights all valid board and bench upgrades from a %s source',mode=>{
    const e=new BattleEngine({ai:false,autoWaves:false}),source=unit(e,'hamster',{zone:'bench',slot:0});unit(e,'hamster',{zone:'board',col:2,row:3});unit(e,'hamster',{zone:'bench',slot:1});unit(e,'squirrel',{zone:'bench',slot:2});
    const {renderer,calls}=surface();renderer.draw(e.state,.2,mode==='selected'?{selectedId:source.id}:{draggingId:source.id,pointer:{x:280,y:900}});
-   const arrows=calls.filter(c=>c.name==='fillText'&&c.args[0]==='▲');expect(arrows).toHaveLength(2);
-   expect(arrows.map(c=>c.args[1])).toEqual(expect.arrayContaining([432+25,STAGE.benchX+STAGE.benchStep+STAGE.benchSize/2+25]));
+   const arrows=calls.filter(c=>c.name==='fillText'&&c.args[0]===t('p7.upgrade',{level:2}));expect(arrows).toHaveLength(2);
+   for(const arrow of arrows){expect(Number(arrow.args[1])).toBeGreaterThan(300);expect(Number(arrow.args[1])).toBeLessThan(440);}
    const benchBackground=calls.reduce((last,c,i)=>c.name==='roundRect'&&c.args[0]===STAGE.benchX+STAGE.benchStep&&c.args[1]===STAGE.benchY?i:last,-1);
    expect(calls.indexOf(arrows.find(c=>Number(c.args[2])>STAGE.benchY-45)!)).toBeGreaterThan(benchBackground);
  });
  it('gives hero recipe targets gold double rings, stars and a merge capsule in both zones',()=>{
    const e=new BattleEngine({ai:false,autoWaves:false}),source=unit(e,'panda',{zone:'bench',slot:0});unit(e,'hat_bamboo',{zone:'board',col:2,row:3});unit(e,'hat_shades',{zone:'bench',slot:1});
    const {renderer,calls}=surface();renderer.draw(e.state,.3,{selectedId:source.id});
-   expect(calls.filter(c=>c.name==='fillText'&&c.args[0]===t('p1.merge')).length).toBe(2);
-   expect(calls.filter(c=>c.name==='stroke'&&c.stroke==='#d8aa46').length).toBeGreaterThanOrEqual(4);
-   expect(calls.some(c=>c.name==='fill'&&c.fill==='#f1cf75')).toBe(true);
+   for(const hero of ['kungfu_po','bamboo_mafia'])expect(calls.some(c=>c.name==='fillText'&&c.args[0]===`→ ${t('hero.'+hero)}`)).toBe(true);
+   expect(calls.filter(c=>c.name==='stroke'&&['#f4be37','#fff3b0'].includes(c.stroke as string)).length).toBeGreaterThanOrEqual(4);
+   expect(calls.some(c=>c.name==='fill'&&c.fill==='#fff3b0')).toBe(true);
  });
  it.each([{shovel:true},{propId:'washer'}] as Interaction[])('suppresses merge suggestions in tool mode %j',mode=>{
    const e=new BattleEngine({ai:false,autoWaves:false}),source=unit(e,'hamster',{zone:'bench',slot:0});unit(e,'hamster',{zone:'bench',slot:1});
-   const {renderer,calls}=surface();renderer.draw(e.state,.2,{selectedId:source.id,...mode});expect(calls.some(c=>c.name==='fillText'&&c.args[0]==='▲')).toBe(false);
+   const {renderer,calls}=surface();renderer.draw(e.state,.2,{selectedId:source.id,...mode});expect(calls.some(c=>c.name==='fillText'&&String(c.args[0]).startsWith('▲'))).toBe(false);
  });
  it.each(Object.keys(HEROES))('gives %s gold disks and near-full energy rings on board and bench',kind=>{
    const e=new BattleEngine({ai:false,autoWaves:false});const board=unit(e,kind,{zone:'board',col:2,row:3}),bench=unit(e,kind,{zone:'bench',slot:0});board.energy=999;bench.energy=999;

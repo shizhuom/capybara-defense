@@ -5,7 +5,7 @@ import {EnemyMotion} from './EnemyMotion';
 import {SHOVEL_PRODUCTION,UNITS} from '../config/units';
 import { HEROES } from '../config/heroes';
 import { MergeSystem } from '../core/MergeSystem';
-import {getMergeTargets,getBenchMergeHints} from '../core/MergeTargets';
+import {getMergeTargets,getBenchMergeHints,getBoardMergeHints,type MergeTarget} from '../core/MergeTargets';
 import { t } from '../i18n/i18n';
 import { assets } from './AssetRegistry';
 import { drawCapybaraArt, drawEnemyArt, drawOrange, drawShovelArt, drawUnitArt, ellipse, INK, line, PAPER, polygon, round, star } from './StickerArt';
@@ -83,6 +83,8 @@ export class StickerRenderer {
     this.drawTraps(state);
     this.drawInteractionUnderlay(state,interaction,seconds);
     this.drawGuardian(state.mapId,state.sides.player.oranges,seconds);
+    const source=this.mergeSource(state,interaction),targets=new Map(source?getMergeTargets(state,source.id).map(t=>[t.unitId,t]):[]);
+    const passive=!source&&!interaction.shovel&&!interaction.propId?getBoardMergeHints(state):[];
 
     const liveIds=new Set(state.units.map(unit=>unit.id));
     for(const id of this.unitPositions.keys()) if(!liveIds.has(id)) this.unitPositions.delete(id);
@@ -91,7 +93,10 @@ export class StickerRenderer {
       const ease=1-Math.exp(-dt*16);
       const point={x:previous.x+(target.x-previous.x)*ease,y:previous.y+(target.y-previous.y)*ease};
       this.unitPositions.set(unit.id,point);
-      this.drawUnit(unit,point,seconds,interaction.draggingId===unit.id ? .23 : 1,false,state.sides[unit.side].loadout);
+      const opacity=interaction.draggingId===unit.id ? .23 : targets.size&&!targets.has(unit.id)&&source?.id!==unit.id ? .72 : 1;
+      this.drawUnit(unit,point,seconds,opacity,false,state.sides[unit.side].loadout,this.mergeScale(unit,targets.has(unit.id),interaction,seconds));
+      const hint=passive.find(h=>h.unitId===unit.id);
+      if(hint)this.drawBenchBadge('ui_merge_sparkle',point.x+37,point.y-36,hint.kind==='hero'?24:19);
     }
     const enemies=state.enemies.filter(enemy=>enemy.side==='player');
     const enemyIds=new Set(enemies.map(enemy=>enemy.id));this.enemyMotion.retain(enemyIds);
@@ -104,6 +109,7 @@ export class StickerRenderer {
     this.drawNests(state,interaction,seconds);
     this.drawTools(state,interaction,seconds);
     this.drawEvents(state,seconds,true,interaction.showDamageNumbers!==false);
+    this.drawActiveMergeHighlights(state,interaction,seconds);
     this.drawDrag(state,interaction,seconds);
   }
 
@@ -235,13 +241,13 @@ export class StickerRenderer {
     return{x:STAGE.benchX+unit.location.slot*STAGE.benchStep+STAGE.benchSize/2,y:STAGE.benchY+STAGE.benchSize/2+2};
   }
 
-  private drawUnit(unit:Unit,position:Position,seconds:number,opacity=1,drag=false,loadout:Partial<BattleLoadout>={}):void {
+  private drawUnit(unit:Unit,position:Position,seconds:number,opacity=1,drag=false,loadout:Partial<BattleLoadout>={},highlightScale=1):void {
     const c=this.c,hero=HEROES[unit.kind],onBench=unit.location.zone==='bench';
     const requiredCharge=hero?combatCharge(unit,loadout):1;
     const scale=(onBench ? .85 : .92)*(1+(unit.level-1)*.06);
     const pose=onBench?{x:0,y:0,scaleX:1,scaleY:1}:bodyPose(unit);
     const wave=Math.sin(seconds*2.7+unit.id*1.71);
-    c.save();c.globalAlpha=opacity;c.translate(position.x,position.y);
+    c.save();c.globalAlpha=opacity;c.translate(position.x,position.y);c.scale(highlightScale,highlightScale);
     if(unit.kind==='shovel'){this.drawShovel(false);if(!drag){round(c,16,-37,33,20,6,'#f2d68c',INK,1.4);this.label(t('render.dig'),32,-27,14,INK,'center',800);}c.restore();return;}
     ellipse(c,0,25,(hero?25:22)*scale,6,'rgba(72,79,53,.14)','',0);
     c.save();if(!onBench)c.scale(1.2,1.2);
@@ -323,11 +329,15 @@ export class StickerRenderer {
   }
 
   private drawInteractionUnderlay(state:BattleState,interaction:Interaction,seconds:number):void {
-    const c=this.c,drag=state.units.find(unit=>unit.id===interaction.draggingId),selected=state.units.find(unit=>unit.id===interaction.selectedId);
+    const c=this.c,drag=state.units.find(unit=>unit.id===interaction.draggingId),selected=state.units.find(unit=>unit.id===(interaction.previewSourceId??interaction.selectedId));
     const source=drag??selected,benchTool=source?.kind==='shovel'&&source.location.zone==='bench';
     const digging=!!interaction.shovel||benchTool,canDig=benchTool||state.sides.player.shovels>=1;
     if(interaction.propId){this.drawPropTargets(state,interaction,seconds);return;}
-    this.drawMergeTargets(state,interaction,seconds,'board');
+    if(!source&&!interaction.shovel)for(const hint of getBoardMergeHints(state)){
+      const p=cellCenter(hint.col,hint.row),hero=hint.kind==='hero',pulse=(1+Math.sin(seconds*3+hint.unitId))/2;
+      c.save();c.globalAlpha=.5+pulse*.24;c.shadowBlur=12;c.shadowColor=hero?'#f4be37':'#38b86d';
+      ellipse(c,p.x,p.y+6,48+pulse*3,42+pulse*3,'transparent',hero?'#e7b33e':'#4bb780',2.5);c.restore();
+    }
     if(selected?.location.zone==='board'&&!drag&&!interaction.shovel) {
       const p=this.position(selected),range=combatRange(selected,state.sides[selected.side].loadout);
       c.save();c.beginPath();c.rect(STAGE.boardX,STAGE.boardY,STAGE.cell*STAGE.cols,STAGE.cell*STAGE.rows);c.clip();
@@ -337,7 +347,8 @@ export class StickerRenderer {
     if(drag||digging) {
       for(let row=0;row<STAGE.rows;row++)for(let col=0;col<STAGE.cols;col++){
         const tile=state.grid[row][col],valid=digging?canDig&&(tile==='G'||tile==='B'):tile==='O';
-        if(valid){const p=cellCenter(col,row);round(c,p.x-40,p.y-40,80,80,10,'rgba(255,253,222,.16)',digging?'#c9a25a':'#7aa18c',1.5);}
+        const occupied=state.units.some(u=>u.location.zone==='board'&&u.location.col===col&&u.location.row===row);
+        if(valid&&(digging||!occupied)){const p=cellCenter(col,row);c.save();if(!digging)c.setLineDash([5,8]);round(c,p.x-40,p.y-40,80,80,10,'rgba(255,253,222,.08)',digging?'#c9a25a':'rgba(122,161,140,.45)',1.5);c.restore();}
       }
     }
     const hover=interaction.hover||(interaction.pointer?this.hitTest(interaction.pointer.x,interaction.pointer.y):null);
@@ -352,7 +363,7 @@ export class StickerRenderer {
       if(valid&&merging){star(c,p.x+25,p.y-25,7,'#f1cf75',1.6);star(c,p.x-24,p.y+24,5,'#f1cf75',1.3);}
       else if(!valid){line(c,[[p.x-6,p.y-6],[p.x+6,p.y+6]],CORAL,2.7);line(c,[[p.x+6,p.y-6],[p.x-6,p.y+6]],CORAL,2.7);}
     }
-    void seconds;
+    this.drawMergeTargets(state,interaction,seconds,'board');
   }
 
   private drawTraps(state:BattleState):void {
@@ -364,23 +375,58 @@ export class StickerRenderer {
   }
 
   private drawMergeTargets(state:BattleState,interaction:Interaction,seconds:number,zone:'board'|'bench',onlyId?:number):void {
-    if(interaction.shovel||interaction.propId)return;
-    const source=state.units.find(unit=>unit.id===(interaction.draggingId??interaction.selectedId));
-    if(!source||source.side!=='player'||source.kind==='shovel')return;
+    const source=this.mergeSource(state,interaction);if(!source)return;
     for(const target of getMergeTargets(state,source.id)){
       const unit=state.units.find(unit=>unit.id===target.unitId);
       if(!unit||unit.location.zone!==zone||(onlyId!==undefined&&unit.id!==onlyId))continue;
-      const c=this.c,p=this.position(unit),pulse=(Math.sin(seconds*4+unit.id)+1)/2,hero=target.kind==='hero';
-      c.save();c.globalAlpha=.72+pulse*.25;
-      ellipse(c,p.x,p.y+23,31+pulse*3,12+pulse*2,'rgba(255,255,255,0)',hero?'#d8aa46':'#62ac80',2.7);
-      if(hero){
-        ellipse(c,p.x,p.y+23,36+pulse*3,16+pulse*2,'rgba(255,255,255,0)','#d8aa46',1.8);
-        for(let i=0;i<3;i++){const a=seconds*.8+i*Math.PI*2/3;star(c,p.x+Math.cos(a)*36,p.y+23+Math.sin(a)*15,4,'#f1cf75',1);}
-        const y=p.y-48-Math.sin(seconds*2)*2;
-        round(c,p.x-33,y-9,66,18,8,'rgba(249,223,153,.92)','#c4a159',1.2);
-        this.label(t('p1.merge'),p.x,y+1,11,'#86612c','center',800,61);
-      }else this.label('▲',p.x+25,p.y-39-Math.sin(seconds*3)*2,15,'#62ac80','center',900);
-      c.restore();
+      const c=this.c,p=this.position(unit),pulse=(Math.sin(seconds*4+unit.id)+1)/2,hero=target.kind==='hero'&&!target.feedHero;
+      c.save();c.shadowBlur=14+pulse*8;c.shadowColor=hero?'#f4be37':'#38b86d';
+      round(c,p.x-45,p.y-45,90,90,17,hero?'rgba(255,224,102,.44)':'rgba(142,242,178,.38)',hero?'#df9118':'#2c9d59',hero?4:3.5);c.restore();
+    }
+  }
+
+  private mergeSource(state:BattleState,interaction:Interaction):Unit|undefined {
+    if(interaction.shovel||interaction.propId)return;
+    return state.units.find(u=>u.id===(interaction.draggingId??interaction.previewSourceId??interaction.selectedId)&&u.side==='player');
+  }
+  private mergeScale(unit:Unit,isTarget:boolean,interaction:Interaction,seconds:number):number {
+    if(!isTarget)return 1;
+    const hit=interaction.pointer?this.hitTest(interaction.pointer.x,interaction.pointer.y):null;
+    const loc=unit.location,hover=loc.zone==='board'?interaction.hover??(hit?.kind==='cell'?hit:null):null;
+    const hot=loc.zone==='board'?hover?.col===loc.col&&hover?.row===loc.row:hit?.kind==='bench'&&hit.slot===loc.slot;
+    return hot&&interaction.draggingId!==undefined?1.12:1+.07*(1+Math.sin(seconds*4+unit.id))/2;
+  }
+  /** Foreground layer: never hide the outcome behind the pet or the nest background. */
+  private drawActiveMergeHighlights(state:BattleState,interaction:Interaction,seconds:number):void {
+    const source=this.mergeSource(state,interaction);if(!source)return;
+    const c=this.c,used:Array<{x:number;y:number;w:number;h:number}>=[];
+    for(const target of getMergeTargets(state,source.id)){
+      const unit=state.units.find(u=>u.id===target.unitId)!;
+      const p=(unit.location.zone==='board'?this.unitPositions.get(unit.id):undefined)??this.position(unit),hero=target.kind==='hero'&&!target.feedHero;
+      const pulse=(1+Math.sin(seconds*4+unit.id))/2,radius=49+pulse*5;
+      const ink=hero?'#78501e':'#235d40',bright=hero?'#f4be37':'#38b86d',light=hero?'#fff3b0':'#c8fbe0';
+      c.save();c.shadowColor=bright;c.shadowBlur=14+pulse*8;
+      ellipse(c,p.x,p.y,radius,radius*.93,'transparent',bright,3.8);
+      ellipse(c,p.x,p.y,radius+4,radius*.93+4,'transparent',light,1.8);
+      for(let i=0;i<3;i++){const a=seconds*.9+i*Math.PI*2/3;star(c,p.x+Math.cos(a)*(radius+4),p.y+Math.sin(a)*(radius+1),5.5,light,1);}
+      c.shadowBlur=0;
+      const label=hero?`→ ${t('hero.'+target.heroId)}`:t(target.feedHero?'p7.feed':'p7.upgrade',{level:target.nextLevel??unit.level+1});
+      c.font=`900 15px ${FONT}`;
+      const width=Math.min(290,c.measureText(label).width+(hero?46:22)),height=32;
+      const x=clamp(p.x-width/2,8,STAGE.width-width-8);
+      let y=clamp(p.y-82-Math.sin(seconds*2)*2,8,STAGE.height-height-8);
+      // Adjacent partners can have long translated names; stagger their pills instead of stacking text.
+      while(used.some(r=>x<r.x+r.w+4&&x+width+4>r.x&&y<r.y+r.h+4&&y+height+4>r.y)){
+        if(y-height-5>=8)y-=height+5;else {y=Math.max(...used.map(r=>r.y+r.h))+5;break;}
+      }
+      y=clamp(y,8,STAGE.height-height-8);used.push({x,y,w:width,h:height});
+      round(c,x,y,width,height,12,light,ink,2.2);
+      if(hero&&target.heroId){
+        const image=this.assets.get(target.heroId);
+        if(image)c.drawImage(image,x+5,y+3,26,26);
+        else{c.save();c.translate(x+18,y+16);c.scale(.33,.33);drawUnitArt(c,target.heroId,seconds);c.restore();}
+      }
+      this.label(label,x+(hero?36:11),y+height/2,15,ink,'left',900,width-(hero?43:22));c.restore();
     }
   }
 
@@ -420,7 +466,8 @@ export class StickerRenderer {
 
   private drawNests(state:BattleState,interaction:Interaction,seconds:number):void {
     const c=this.c;
-    const hints=interaction.draggingId!==undefined||interaction.propId||interaction.pointer?[]:getBenchMergeHints(state);
+    const active=this.mergeSource(state,interaction),targets=new Map<number,MergeTarget>(active?getMergeTargets(state,active.id).map(t=>[t.unitId,t]):[]);
+    const hints=active||interaction.shovel||interaction.propId||interaction.pointer?[]:getBenchMergeHints(state);
     for(let slot=0;slot<5;slot++){
       const x=STAGE.benchX+slot*STAGE.benchStep,y=STAGE.benchY,w=STAGE.benchSize;
       const unit=state.units.find(unit=>unit.side==='player'&&unit.location.zone==='bench'&&unit.location.slot===slot);
@@ -436,9 +483,9 @@ export class StickerRenderer {
       const locked=!!unit&&state.sides.player.lockedBenchSlot===slot;
       const hint=hints.find(h=>h.slot===slot);
       if(locked){round(c,x+1,y+1,w-2,w-2,18,'rgba(239,186,72,.08)','#bf8c2c',3);round(c,x+5,y+5,w-10,w-10,14,'transparent','#efc45d',1.5);}
-      if(hint?.kind==='hero'){c.save();c.globalAlpha=.65+Math.sin(seconds*3.5)*.25;round(c,x-1,y-1,w+2,w+2,20,'rgba(255,227,135,.08)','#e2b049',3.5);c.restore();}
+      if(hint){c.save();c.globalAlpha=.65+Math.sin(seconds*3.5)*.25;round(c,x-1,y-1,w+2,w+2,20,'rgba(255,227,135,.08)',hint.kind==='hero'?'#e2b049':'#4bb780',hint.kind==='hero'?3.5:2.5);c.restore();}
       if(unit)this.drawMergeTargets(state,interaction,seconds,'bench',unit.id);
-      if(unit)this.drawUnit(unit,this.position(unit),seconds,interaction.draggingId===unit.id ? .2 : 1,false,state.sides[unit.side].loadout);
+      if(unit)this.drawUnit(unit,this.position(unit),seconds,interaction.draggingId===unit.id ? .2 : targets.size&&!targets.has(unit.id)&&active?.id!==unit.id ? .72 : 1,false,state.sides[unit.side].loadout,this.mergeScale(unit,targets.has(unit.id),interaction,seconds));
       else {
         c.save();c.globalAlpha=.42;c.translate(x+w/2,y+w/2+1);ellipse(c,0,7,11,9,'#bbaa8c','',0);
         [[-11,-4],[-4,-10],[5,-10],[13,-3]].forEach(([px,py])=>ellipse(c,px,py,4,5,'#bbaa8c','',0));c.restore();
