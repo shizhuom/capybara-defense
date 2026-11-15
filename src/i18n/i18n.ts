@@ -2,6 +2,7 @@ import {p5Zh,p5En} from './p5';
 import {p6Zh,p6En} from './p6';
 import {p7Zh,p7En} from './p7';
 import {p8Zh,p8En} from './p8';
+import {p9Zh,p9En} from './p9';
 import { en } from './en';
 import { zhCN } from './zh-CN';
 import { m2Zh, m2En } from './m2';
@@ -36,6 +37,6 @@ export function t(key: string, vars: Record<string, string | number> = {}): stri
   const latest = language === 'en' ? m3En : m3Zh;
   const polish = language === 'en' ? p1En : p1Zh;
   const landscape = language === 'en' ? p3En : p3Zh;
-  const phrase = (language === 'en' ? p8En : p8Zh)[key] ?? (language === 'en' ? p7En : p7Zh)[key] ?? (language === 'en' ? p6En : p6Zh)[key] ?? (language === 'en' ? p5En : p5Zh)[key] ?? landscape[key] ?? polish[key] ?? latest[key] ?? extra[key] ?? dictionary[key] ?? p3Zh[key] ?? p1Zh[key] ?? m3Zh[key] ?? m2Zh[key] ?? fallback[key] ?? key;
+  const phrase = (language === 'en' ? p9En : p9Zh)[key] ?? (language === 'en' ? p8En : p8Zh)[key] ?? (language === 'en' ? p7En : p7Zh)[key] ?? (language === 'en' ? p6En : p6Zh)[key] ?? (language === 'en' ? p5En : p5Zh)[key] ?? landscape[key] ?? polish[key] ?? latest[key] ?? extra[key] ?? dictionary[key] ?? p3Zh[key] ?? p1Zh[key] ?? m3Zh[key] ?? m2Zh[key] ?? fallback[key] ?? key;
   return phrase.replace(/\{(\w+)\}/g, (match, name: string) => String(vars[name] ?? match));
 }

@@ -3,6 +3,7 @@ import { HEROES } from '../config/heroes';
 import { PROPS } from '../config/props';
 import { RANKS, getRank } from '../config/ranks';
 import { WEAPONS } from '../config/weapons';
+import {getMap} from '../config/maps';
 import type { GameSettings, MapId, Profile } from './types';
 
 export const DEFAULT_SETTINGS:GameSettings={musicVolume:.5,soundVolume:.75,showDamageNumbers:true,developerMode:false};
@@ -34,6 +35,13 @@ export function getUnlockedMaps(profile:Profile):MapId[] {
 }
 export function resolveMap(profile:Profile):MapId {
   return profile.selectedMap!=='auto'&&getUnlockedMaps(profile).includes(profile.selectedMap)?profile.selectedMap:getRank(profile.stars).mapId;
+}
+/** Called only at battle start: previews stay deterministic and never consume random draws. */
+export function pickBattleMap(profile:Profile,random:()=>number=Math.random) {
+  const pool=getUnlockedMaps(profile);
+  if(profile.selectedMap!=='auto'&&pool.includes(profile.selectedMap))return getMap(profile.selectedMap);
+  const value=random(),index=Math.floor((Number.isFinite(value)?Math.max(0,Math.min(.999999999,value)):0)*pool.length);
+  return getMap(pool[index]);
 }
 export function selectMap(profile:Profile,id:'auto'|MapId):Profile {
   if(id!=='auto'&&!getUnlockedMaps(profile).includes(id)) return profile;

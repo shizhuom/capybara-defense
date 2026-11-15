@@ -67,6 +67,17 @@ Object.assign(tools,{
   ui_ticket_gacha:p('M-37 -22 H37 V-7 Q23 0 37 7 V22 H-37 V7 Q-23 0 -37 -7Z','#edc393')+p('M-18 -20 V20','none','#b78b60',2)+p('M9 -13 L13 -4 23 -3 16 4 18 14 9 9 0 14 2 4 -5 -3 5 -4Z','#c78571'),
   ui_skull_threat:p('M-26 6 Q-38 -25 -13 -34 Q13 -42 28 -17 Q36 2 21 15 V31 H-20 V15Z','#f8ecd2')+e(-13,-3,8,10,'#7a6553')+e(13,-3,8,10,'#7a6553')+p('M0 6 L-5 15 H5Z','#7a6553')+p('M-11 25 V33 M0 25 V33 M11 25 V33'),
 });
+export const P9_SCENE_IDS=['npc_shop_raccoon','npc_blacksmith_capy','ui_gacha_machine','ui_trunk_crate','ui_battle_clash_crest','ui_crossed_blades','ui_alert_siren','ui_unlock_chest'] as const;
+Object.assign(tools,{
+ npc_shop_raccoon:coon+r(-32,22,64,19,'#8eb09a')+p('M-34 -23 H34 L25 -39 H-23Z','#d0a66d'),
+ npc_blacksmith_capy:head('#d5b58e')+r(-23,19,46,21,'#a9b6b3')+p('M24 18 L37 -20 M25 -25 L43 -17','none','#8f6446',9),
+ ui_trunk_crate:r(-36,-23,72,55,'#c7995f')+p('M-34 -7 H34 M-34 10 H34 M-24 -23 V32 M24 -23 V32','none','#755030',5)+r(-7,-6,14,15,'#eac35e'),
+ ui_gacha_machine:r(-29,-34,58,70,'#be7b55')+e(0,-9,23,23,'#d8e9dd')+e(-9,-14,8,8,'#eab56a')+e(9,-4,8,8,'#a8c3af')+e(-5,7,8,8,'#d7a8bc')+r(-15,22,30,9,'#67462d')+e(20,22,7,7,'#e7c575'),
+ ui_crossed_blades:p('M-32 -35 L-23 -34 31 24 24 31 -34 -23Z','#d3e0df')+p('M32 -35 L23 -34 -31 24 -24 31 34 -23Z','#f3e4b9')+p('M-36 16 L-16 36 M16 36 L36 16','none','#b87e3c',7),
+ ui_battle_clash_crest:p('M0 -40 L32 -25 29 15 Q16 34 0 42 Q-16 34 -29 15 L-32 -25Z','#d6a549')+head('#e3c39a'),
+ ui_alert_siren:r(-32,19,64,15,'#c8b59b')+p('M-22 18 V-5 Q-22 -31 0 -31 Q22 -31 22 -5 V18Z','#d66f55')+p('M-34 -29 L-26 -21 M0 -45 V-36 M34 -29 L26 -21','none','#e6af4e',5)+p('M0 -18 V2 M0 9 V11','none','#fff8dd',6),
+ ui_unlock_chest:r(-35,0,70,34,'#ce9751')+p('M-35 0 L-30 -25 Q0 -39 30 -25 L35 0Z','#edc96a')+r(-7,-6,14,17,'#fff0aa')+p('M0 -43 V-37 M-31 -36 L-25 -31 M31 -36 L25 -31','none','#eac35c',4),
+});
 const props:Record<string,string>={
   washer:r(-29,-30,58,62,'#b6c9c1')+r(-24,-25,48,11,'#f5e4bb')+e(0,10,20,20,'#f8f2d9')+e(0,10,13,13,'#a1c7cb')+p('M-10 9 Q0 0 10 11 Q0 21 -10 9Z','#d6b1be'),
   clay:e(0,12,28,17,'#cbb0cc')+p('M-22 3 Q-25 -18 -9 -17 Q-3 -35 13 -22 Q29 -15 23 6Z','#dcbdd0')+e(-8,-4,3,4,'#f5dfad')+p('M3 11 Q15 -2 20 8','none','#a681aa',4),
@@ -108,7 +119,7 @@ export function unitSticker(kind:string,size=40):string {
   if(['hamster','squirrel','bee'].includes(key))return avatarSticker(key,n);
   return `<span role="img" aria-label="${key}" data-sticker="${key}" style="display:inline-grid;place-items:center;width:${n}px;height:${n}px;font-size:${Math.round(n*.63)}px">${escapeHtml(UNIT_ICONS[key])}</span>`;
 }
-export function sceneSticker(id:'menu_banner'|'logo_capy'|'sprinkler'|'shovel'|'ui_compendium_book'|'ui_fish_food'|'ui_bell_summon'|'ui_shop_bag'|'orange'|'ui_trophy_rank'|'ui_map_sign'|'ui_header_compendium'|'ui_header_armory'|'ui_header_market'|'ui_header_rank'|'ui_header_profile'|'ui_header_settings'|'ui_tutorial_pointer'|'ui_tutorial_capy'|'ui_coin_gold'|'ui_star_rank'|'ui_ticket_gacha'|'ui_skull_threat'|'ui_result_victory'|'ui_result_defeat'|'ui_header_pause'|'ui_mvp_crown'|'ui_lock_closed'|'ui_lock_open'|'ui_wave_horn'|'ui_merge_sparkle',fallback:string,size?:number):string {
+export function sceneSticker(id:typeof P9_SCENE_IDS[number]|'menu_banner'|'logo_capy'|'sprinkler'|'shovel'|'ui_compendium_book'|'ui_fish_food'|'ui_bell_summon'|'ui_shop_bag'|'orange'|'ui_trophy_rank'|'ui_map_sign'|'ui_header_compendium'|'ui_header_armory'|'ui_header_market'|'ui_header_rank'|'ui_header_profile'|'ui_header_settings'|'ui_tutorial_pointer'|'ui_tutorial_capy'|'ui_coin_gold'|'ui_star_rank'|'ui_ticket_gacha'|'ui_skull_threat'|'ui_result_victory'|'ui_result_defeat'|'ui_header_pause'|'ui_mvp_crown'|'ui_lock_closed'|'ui_lock_open'|'ui_wave_horn'|'ui_merge_sparkle',fallback:string,size?:number):string {
   const n=sizeOf(size??(id==='menu_banner'?400:64),64);
   return image(id,n)||(Object.hasOwn(tools,id)?geometry(id,tools[id],n):fallback);
 }

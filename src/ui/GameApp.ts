@@ -27,12 +27,15 @@ import { liveUnitCardMarkup } from './LiveUnitCard';
 import { getBeeProduction } from '../core/UnitStats';
 import { courtyardMarkup } from './CourtyardView';
 import { RANKS, getRank } from '../config/ranks';
-import { recordMergedHeroes, resolveMap, updateSettings, selectMap } from '../core/PlayerProgression';
+import { recordMergedHeroes, resolveMap, pickBattleMap, updateSettings, selectMap } from '../core/PlayerProgression';
+import {newlyUnlocked} from '../config/progression';
+import {bindAudioGestures} from './AudioGestures';
+import {transitionMarkup,enemyAlertMarkup} from './BattlePresentation';
 import { ProfileScreens, type ProfileScreen } from './ProfileScreens';
 import { SoundManager } from './SoundManager';
 import { capyLogo, escapeHtml as esc } from './art';
 import { onAssetsReady } from '../render/AssetRegistry';
-import { propSticker, sceneSticker, unitSticker } from './stickers';
+import { propSticker, sceneSticker, unitSticker, P9_SCENE_IDS } from './stickers';
 import { Compendium } from './Compendium';
 import { getBossHUD, getWaveHUD, getMusicMode, isDeveloperMode } from './BattleHUD';
 import { advanceTutorial, finishTutorial, replayTutorial, type TutorialAction, type TutorialStep } from '../core/Tutorial';
@@ -75,6 +78,11 @@ export class GameApp {
   private tutorialStamp = '';
   private bossStamp = '';
   private assetsDirty = false;
+  private transitionUntil=0;
+  private newRoster:{units:string[];heroes:string[]}={units:[],heroes:[]};
+  private alertSeen=new Set<number>();
+  private alertQueue:BattleState['events']=[];
+  private activeAlert?:{event:BattleState['events'][number];until:number};
   private devMapOverride?: MapId;
   private retainedPage = false;
   private overlayReturn: { dialog: DialogKind | null; resume: boolean } | null = null;
@@ -149,6 +157,8 @@ export class GameApp {
               <div class="control-dock"><button type="button" class="guide-button" data-action="recipes"><span aria-hidden="true">${sceneSticker('ui_compendium_book','',34)}</span><span data-i18n="p3.guide"></span></button><button type="button" data-action="battle-shop"><span aria-hidden="true">${sceneSticker('ui_shop_bag','',34)}</span><span data-i18n="p3.shop"></span></button><button type="button" class="speed-pill" data-action="speed" data-label="hud.speedLabel" id="hud-speed">1×</button><button type="button" data-action="pause" data-label="hud.pause" id="pause-button">Ⅱ</button></div>
             </div>
             <div id="boss-banner" class="boss-banner" hidden></div>
+            <div id="enemy-alert-banner" role="status" aria-live="polite" hidden></div>
+            <button type="button" id="battle-transition" data-action="skip-transition" hidden></button>
             <div class="battle-actions" id="battle-actions" hidden><button type="button" class="redraw-hero-badge" id="redraw-hero-badge" data-action="focus-hero-merge" hidden></button><button type="button" class="summon-button" data-action="summon" id="summon-button"><span aria-hidden="true" class="bell">${sceneSticker('ui_bell_summon','',46)}</span><span aria-hidden="true">${sceneSticker('ui_fish_food','',28)}</span><strong id="summon-cost">10</strong><b class="refresh-badge" id="summon-refresh-count" aria-hidden="true">↻5</b></button></div>
             <div id="live-card-host"></div>
             <div id="battle-props" hidden></div><div id="sealed-hint" class="sealed-hint" hidden></div>
@@ -169,10 +179,13 @@ export class GameApp {
     </div>`;
   }
 
-  start(): void {
+  /** Direct calls remain synchronous for headless logic tests; UI starts use the curtain. */
+  start(withTransition=false): void {
+    this.endTransition();
     this.closeDialog(false);
     this.overlayReturn = null; this.modalReturn = null;
-    this.engine = new BattleEngine({ tutorialGuided: !this.profile.tutorialCompleted, mapId: this.devMapOverride ?? resolveMap(this.profile), rankIndex: getRank(this.profile.stars).index, loadouts: { player: structuredClone(this.profile) } });
+    const guided=!this.profile.tutorialCompleted,bestStars=Math.max(this.profile.stars,this.profile.highestStars);
+    this.engine = new BattleEngine({ tutorialGuided:guided, progressionStars:isTestProfile()?undefined:bestStars,progressionHeroes:this.profile.mergedHeroes, mapId: this.devMapOverride ?? (guided?'sunny_backyard':pickBattleMap(this.profile).id), rankIndex: getRank(this.profile.stars).index, loadouts: { player: structuredClone(this.profile) } });
     this.engine.start();
     this.tutorialStep = this.profile.tutorialCompleted ? 'done' : 1;
     this.engine.setTutorialHold(this.tutorialStep!=='done');
@@ -181,14 +194,53 @@ export class GameApp {
     this.completedId = '';
     this.newWeapons = [];
     this.newAvatars = []; this.mergedStamp = '';
+    this.newRoster={units:[],heroes:[]};this.alertSeen=new Set();this.alertQueue=[];this.activeAlert=undefined;
+    this.element('enemy-alert-banner').hidden=true;
     this.battlePropsStamp = '';
     this.clearSelection();
     this.lastFrame = performance.now();
     this.refresh(true);
     this.canvas.focus({ preventScroll: true });
+    if(withTransition){
+      const curtain=this.element('battle-transition'),reduced=window.matchMedia?.('(prefers-reduced-motion: reduce)').matches??false;
+      this.transitionUntil=performance.now()+(reduced?250:1250);this.engine.setTransitionHold(true);
+      this.sound.setMusicPaused?.(true);this.sound.play('battle_start_clash');
+      curtain.innerHTML=transitionMarkup(this.engine.state,isTestProfile()?20:bestStars);curtain.hidden=false;curtain.classList.toggle('reduced-motion',reduced);
+      curtain.focus({preventScroll:true});
+    }
+  }
+  private endTransition():void {
+    if(!this.transitionUntil)return;
+    this.transitionUntil=0;this.engine?.setTransitionHold(false);this.sound.setMusicPaused?.(false);
+    this.element('battle-transition').hidden=true;
+    this.canvas.focus({preventScroll:true});
+  }
+  private renderEnemyAlerts(now:number):void {
+    const state=this.engine?.state;if(!state)return;
+    for(const event of state.events)if(event.enemyKind&&(event.effect==='elite_spawn'||event.effect==='boss_spawn')&&!this.alertSeen.has(event.id)){
+      this.alertSeen.add(event.id);
+      if(event.boss&&!this.activeAlert?.event.boss){this.alertQueue.unshift(event);this.activeAlert=undefined;}else this.alertQueue.push(event);
+    }
+    if(this.activeAlert&&now>=this.activeAlert.until)this.activeAlert=undefined;
+    if(!this.activeAlert&&this.alertQueue.length)this.activeAlert={event:this.alertQueue.shift()!,until:now+2600};
+    const el=this.element('enemy-alert-banner');el.hidden=!this.activeAlert||state.phase==='finished';
+    if(this.activeAlert){
+      const event=this.activeAlert.event;el.classList.toggle('boss-entry',!!event.boss);const html=enemyAlertMarkup(event);if(el.innerHTML!==html)el.innerHTML=html;
+      el.style.left='';el.style.width='';
+      const card=this.element('live-unit-card'),bounds=this.canvas.getBoundingClientRect();
+      if(card&&!card.hidden&&bounds.width){
+        const r=card.getBoundingClientRect(),a=el.getBoundingClientRect();
+        if(r.bottom>a.top&&r.top<a.bottom){
+          const intervals=[[bounds.left+12,Math.min(bounds.right-12,r.left-10)],[Math.max(bounds.left+12,r.right+10),bounds.right-12]];
+          const [left,right]=intervals.sort((a,b)=>(b[1]-b[0])-(a[1]-a[0]))[0],width=Math.min(bounds.width*.52,Math.max(0,right-left));
+          if(width>160){el.style.left=`${((left+(right-left-width)/2-bounds.left)/bounds.width)*100}%`;el.style.width=`${width/bounds.width*100}%`;}
+        }
+      }
+    }
   }
 
   private menu(): void {
+    this.endTransition();this.activeAlert=undefined;this.alertQueue=[];this.element('enemy-alert-banner').hidden=true;
     this.closeDialog(false);
     this.overlayReturn = null;
     this.engine = null;
@@ -199,12 +251,14 @@ export class GameApp {
   }
 
   private frame = (now: number): void => {
+    if(this.transitionUntil&&now>=this.transitionUntil)this.endTransition();
     const dt = Math.min(Math.max((now - this.lastFrame) / 1000, 0), 0.06);
     this.lastFrame = now;
     if (this.engine) {
       this.engine.tick(dt * this.speed);
       const state = this.engine.state;
-      this.sound.setMode(getMusicMode(state,!!this.dialogKind));
+      if(!this.transitionUntil)this.sound.setMode(getMusicMode(state,!!this.dialogKind));
+      this.renderEnemyAlerts(now);
       this.sound.consumeBattle(state);
       this.sound.setDucked(this.retainedPage || document.hidden || state.phase !== 'playing');
       const merged = state.mergedHeroes.player;
@@ -232,7 +286,7 @@ export class GameApp {
       }
       if(!interaction.shovel&&!interaction.propId&&state.units.length>1){
         const bounds=this.canvas.getBoundingClientRect();
-        if(bounds.width&&bounds.height)interaction.mergeAvoidRects=[...this.root.querySelectorAll<HTMLElement>('.resource-dock,.control-dock,.wave-progress>span,#boss-banner,#live-unit-card,#redraw-hero-badge')].flatMap(element=>{
+        if(bounds.width&&bounds.height)interaction.mergeAvoidRects=[...this.root.querySelectorAll<HTMLElement>('.resource-dock,.control-dock,.wave-progress>span,#boss-banner,#live-unit-card,#redraw-hero-badge,#enemy-alert-banner')].flatMap(element=>{
           if(element.hidden)return[];const r=element.getBoundingClientRect();
           return r.width&&r.height?[{x:(r.left-bounds.left)/bounds.width*STAGE.width,y:(r.top-bounds.top)/bounds.height*STAGE.height,w:r.width/bounds.width*STAGE.width,h:r.height/bounds.height*STAGE.height}]:[];
         });
@@ -254,6 +308,8 @@ export class GameApp {
       if (this.savedResult) {
         this.profile = award.profile;
         this.newWeapons = award.newWeapons;
+        this.newRoster=award.awarded&&state.result.winner==='player'?newlyUnlocked(Math.max(before.stars,before.highestStars),Math.max(this.profile.stars,this.profile.highestStars)):{units:[],heroes:[]};
+        if(this.newRoster.heroes.length)this.sound.play('hero_merge');
         this.newAvatars = this.profile.unlockedAvatars.filter(id => !before.unlockedAvatars.includes(id));
       }
       this.resultStars = this.profile.stars - before.stars;
@@ -270,7 +326,7 @@ export class GameApp {
       this.assetsDirty=false; force=true;
       this.quickStamp=''; this.battlePropsStamp=''; this.bossStamp='';this.tutorialStamp='';this.waveStrategyStamp='';this.liveStamp='';
       this.root.querySelector('.brand-mark')!.innerHTML=sceneSticker('logo_capy',capyLogo,54);
-      const ids=['ui_fish_food','ui_bell_summon','ui_compendium_book','ui_shop_bag','orange','ui_trophy_rank','ui_map_sign','ui_header_compendium','ui_header_armory','ui_header_market','ui_header_rank','ui_header_profile','ui_header_settings','ui_tutorial_pointer','ui_tutorial_capy','ui_coin_gold','ui_star_rank','ui_ticket_gacha','ui_skull_threat','ui_result_victory','ui_result_defeat','ui_header_pause','ui_mvp_crown','ui_lock_closed','ui_lock_open','ui_wave_horn','ui_merge_sparkle'] as const;
+      const ids=['ui_fish_food','ui_bell_summon','ui_compendium_book','ui_shop_bag','orange','ui_trophy_rank','ui_map_sign','ui_header_compendium','ui_header_armory','ui_header_market','ui_header_rank','ui_header_profile','ui_header_settings','ui_tutorial_pointer','ui_tutorial_capy','ui_coin_gold','ui_star_rank','ui_ticket_gacha','ui_skull_threat','ui_result_victory','ui_result_defeat','ui_header_pause','ui_mvp_crown','ui_lock_closed','ui_lock_open','ui_wave_horn','ui_merge_sparkle',...P9_SCENE_IDS] as const;
       for(const id of ids)this.root.querySelectorAll<HTMLElement>(`#stage [data-sticker="${id}"]`).forEach(el=>{el.outerHTML=sceneSticker(id,'',Number(el.getAttribute('width'))||34);});
     }
     const developer = isDeveloperMode(location.search,this.profile.settings);
@@ -484,7 +540,7 @@ export class GameApp {
       card.classList.toggle('dock-left',tutorialCardDock(spots,right,left)==='left');
     }
     const avoidRects:TutorialRect[]=[];
-    if(bounds.width&&bounds.height)for(const id of ['live-unit-card','boss-banner']){
+    if(bounds.width&&bounds.height)for(const id of ['live-unit-card','boss-banner','enemy-alert-banner']){
       const element=this.element(id);if(!element)continue;
       const rect=element.getBoundingClientRect();
       if(!element.hidden&&rect.width>0&&rect.height>0)avoidRects.push({x:(rect.left-bounds.left)/bounds.width*STAGE.width,y:(rect.top-bounds.top)/bounds.height*STAGE.height,w:rect.width/bounds.width*STAGE.width,h:rect.height/bounds.height*STAGE.height});
@@ -606,9 +662,10 @@ export class GameApp {
 
   private renderDialog(): void {
     const kind = this.dialogKind;
+    const focused=typeof document!=='undefined'&&typeof HTMLElement!=='undefined'&&document.activeElement instanceof HTMLElement&&this.dialog.contains(document.activeElement)?document.activeElement.dataset.action:undefined;
     const ledgerPage=!!kind&&['recipes','armory','market','profile','leaderboard','settings','pause','result'].includes(kind);
     const stamp=JSON.stringify([kind,kind==='recipes'?this.compendium.viewKey:kind==='market'?this.meta.tab:kind==='armory'?[this.meta.family,this.meta.orangeFirst]:null]);
-    const scrolls=['.ledger-body','.market-stall','.market-backpack'].map(selector=>({selector,top:stamp===this.ledgerStamp?this.dialog.querySelector<HTMLElement>(selector)?.scrollTop??0:0}));
+    const scrolls=['.ledger-body','.market-stall','.market-backpack','.p9-weapon-rack','.p9-anvil','.p9-merchant','.p9-speech','.p9-market-racks'].map(selector=>({selector,top:stamp===this.ledgerStamp?this.dialog.querySelector<HTMLElement>(selector)?.scrollTop??0:0}));
     this.ledgerStamp=stamp;
     this.dialog.classList.toggle('ledger-dialog',ledgerPage);
     this.dialog.classList.toggle('pause-ledger',kind==='pause');
@@ -629,7 +686,7 @@ export class GameApp {
     } else if (kind === 'recipes') {
       this.dialog.innerHTML=this.compendium.markup(this.profile);
     } else if (kind === 'result' && this.engine?.state.result) {
-      this.dialog.innerHTML=resultMarkup({state:this.engine.state,profile:this.profile,savedResult:this.savedResult,resultStars:this.resultStars,previousRank:this.previousRank,newWeapons:this.newWeapons,newAvatars:this.newAvatars});
+      this.dialog.innerHTML=resultMarkup({state:this.engine.state,profile:this.profile,savedResult:this.savedResult,resultStars:this.resultStars,previousRank:this.previousRank,newWeapons:this.newWeapons,newAvatars:this.newAvatars,newRoster:this.newRoster});
     }
     for(const {selector,top} of scrolls){
       const body=this.dialog.querySelector<HTMLElement>(selector);
@@ -639,6 +696,7 @@ export class GameApp {
         body.style.scrollBehavior='auto';body.scrollTop=top;body.style.scrollBehavior=behavior;
       }
     }
+    if(focused&&kind!=='recipes')this.dialog.querySelector<HTMLElement>(`[data-action="${CSS.escape(focused)}"]`)?.focus({preventScroll:true});
     this.focusCompendium();
   }
 
@@ -766,7 +824,7 @@ export class GameApp {
     }
   }
 
-  private canInteract(): boolean { return this.engine?.state.phase === 'playing'; }
+  private canInteract(): boolean { return !this.transitionUntil && this.engine?.state.phase === 'playing'; }
 
   private clearSelection(): void { this.selectedId = undefined; this.shovelSelected = false; this.selectedProp = undefined; this.cancelDrag(); this.cancelPropDrag(); }
 
@@ -851,6 +909,7 @@ export class GameApp {
   }
 
   private bindEvents(): void {
+    const unbindAudio=bindAudioGestures({unlock:()=>this.sound.unlock(),isUnlocked:()=>this.sound.isUnlocked?.()??false});
     this.root.addEventListener('pointerdown', event => {
       void this.sound.unlock().catch(() => undefined);
       const action=(event.target as HTMLElement).closest<HTMLElement>('[data-action]')?.dataset.action;
@@ -989,7 +1048,7 @@ export class GameApp {
     document.addEventListener('visibilitychange', () => { this.sound.setDucked(this.retainedPage || document.hidden || !!this.engine && this.engine.state.phase !== 'playing'); if (document.hidden) this.pause(); });
     window.addEventListener('pagehide', event => {
       if (event.persisted) { this.retainedPage = true; this.sound.setDucked(true); }
-      else this.sound.dispose();
+      else {unbindAudio();this.sound.dispose();}
     });
     window.addEventListener('pageshow', () => {
       this.retainedPage = false;
@@ -1038,7 +1097,7 @@ export class GameApp {
     if(action==='tutorial-skip'||action==='tutorial-ack'){this.progressTutorial(action==='tutorial-skip'?'skip':'acknowledge');return;}
     if(action==='tutorial-replay'){
       if(!this.persistProfile(replayTutorial(this.profile)))return;
-      this.start();return;
+      this.start(true);return;
     }
     if (this.profileScreens.action(action)) return;
     if (action === 'profile' || action === 'leaderboard' || action === 'settings' || action === 'brand') { this.openProfileScreen(action === 'brand' ? 'profile' : action); return; }
@@ -1082,7 +1141,8 @@ export class GameApp {
       this.refresh(); return;
     }
     if (action === 'sprinkler') { if (this.canInteract()) this.apply(this.engine!.useSprinkler()); return; }
-    if (action === 'start') { this.start(); return; }
+    if (action === 'skip-transition') {this.endTransition();return;}
+    if (action === 'start') { this.start(true); return; }
     if (action === 'menu') { this.menu(); return; }
     if (action === 'clear') { this.clearSelection(); this.refresh(); return; }
     if (action === 'pause') { this.pause(); return; }

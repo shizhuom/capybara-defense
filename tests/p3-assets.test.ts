@@ -8,8 +8,8 @@ const png = (id: string) => readFileSync(`public/assets/sprites/${id}.png`);
 
 describe('P3 shipped landscape artwork', () => {
   it('contains all shipped unique safe IDs with decodable PNG headers', () => {
-    expect(manifest).toHaveLength(193);
-    expect(new Set(manifest).size).toBe(193);
+    expect(manifest).toHaveLength(201);
+    expect(new Set(manifest).size).toBe(201);
     for (const id of manifest) {
       expect(id).toMatch(/^[a-z][a-z0-9_]*$/);
       const data = png(id);

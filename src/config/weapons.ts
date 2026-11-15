@@ -28,7 +28,7 @@ const melee: WeaponRow[] = [
   ['m08_durian','带刺榴莲锤','Spiky Durian','击杀后攻速 +45%，持续 2.5 秒。','Kills grant +45% attack speed for 2.5s.'],
   ['m09_cat_blade','猫抓板双刀','Cardboard Twin-Blades','击杀释放 4 片 80% 伤害猫爪飞刃。靴子剑客喵专属：十字跳斩强化 6 次，附加每秒 35% 伤害的 3 秒流血。','Kills launch 4 claw blades for 80% damage each. Puss in Hat awakening: 6 empowered cross slashes, inflicting bleed for 35% damage per second for 3s.','puss_in_hat'],
   ['m10_bamboo_staff','千年神竹棍','Dragon Bamboo','普攻 18% 概率在 1 格内召唤竹笋，造成 220% 伤害并晕 0.8 秒。功夫阿宝专属：肚皮震地范围 +30%，额外召唤一圈竹笋。','Basic attacks have an 18% chance to summon bamboo within 1 tile, dealing 220% damage and stunning for 0.8s. Kungfu Po awakening: belly quake radius +30% and an extra bamboo ring.','kungfu_po'],
-  ['m11_salted_fish','尚方宝咸鱼','Salted Excalibur','击杀释放 2 道 100% 伤害咸鱼剑气随机追敌。斩铁修勾专属：Bonk 斩杀线提升至 35%，且必放剑气。','Kills release 2 random fish sword waves for 100% damage each. Samurai Doge awakening: Bonk executes at 35% health and always releases sword waves.','samurai_doge'],
+  ['m11_salted_fish','尚方宝咸鱼','Salted Excalibur','击杀释放 2 道 100% 伤害咸鱼剑气随机追敌。斩铁修勾专属：重槌斩杀线提升至 35%，且必放剑气。','Kills release 2 random fish sword waves for 100% damage each. Samurai Doge awakening: Heavy-slam executes at 35% health and always releases sword waves.','samurai_doge'],
   ['m12_iron_wok','村霸大铁锅','Honk Iron Wok','普攻 15% 概率抛飞砸地，造成 300% 范围伤害。无名刀鹅专属：七进七出由 7 次升级为 10 次冲刺。','Basic attacks have a 15% chance to toss and slam for 300% area damage. Ronin Goose awakening: 7 dashes become 10.','ronin_goose'],
 ];
 const ranged: WeaponRow[] = [

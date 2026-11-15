@@ -37,10 +37,11 @@ export interface AttackPresentation {
   readonly empowered:boolean; readonly critical:boolean; readonly enhanced:boolean;
 }
 export interface VisualEvent {
-  id: number; type: 'slash' | 'hit' | 'death' | 'food' | 'projectile' | 'burst' | 'bubble' | 'damage' | 'purge' | 'orange' | 'dash' | 'bounce' | 'sprinkler' | 'giant_cat' | 'weapon' | 'boss_skill';
+  id: number; type: 'alert' | 'slash' | 'hit' | 'death' | 'food' | 'projectile' | 'burst' | 'bubble' | 'damage' | 'purge' | 'orange' | 'dash' | 'bounce' | 'sprinkler' | 'giant_cat' | 'weapon' | 'boss_skill';
   side: Side; col: number; row: number; targetCol?: number; targetRow?: number;
   textKey?: string; value?: number; color?: string; age: number; duration: number; unitId?: number;
   points?:Point[]; effect?:string;
+  enemyKind?:string; boss?:boolean; hitCue?:'hit_melee'|'hit_ranged'|'hit_magic'|'hit_heavy';
   readonly presentation?:Readonly<AttackPresentation>;
 }
 export interface BattleMVP {kind:string;level:number;damage:number;kills:number}

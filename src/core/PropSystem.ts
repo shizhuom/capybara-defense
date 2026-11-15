@@ -59,7 +59,7 @@ export class PropSystem {
     return(this.has(side,'hyper_party')?.38:0)+(this.engine.state.sides[side].catnipTime>0?.45:0);
   }
   draw(side:Side,allowShovel=true):string {
-    const pool=DRAW_POOL.filter(item=>allowShovel||item.id!=='shovel');
+    const pool=DRAW_POOL.filter(item=>(allowShovel||item.id!=='shovel')&&this.engine.isDrawUnlocked(item.id));
     const weights=pool.map(item=>item.weight*(item.category==='component'&&this.has(side,'vip_poster')?1.8:1));
     let value=this.random()*weights.reduce((a,b)=>a+b,0);
     return pool.find((_,i)=>(value-=weights[i])<0)?.id??pool.at(-1)!.id;
@@ -92,7 +92,8 @@ export class PropSystem {
       case 'clay':{
         const existing=state.units.filter(u=>u.side===side&&u.id!==unit!.id&&UNITS[u.kind]?.category==='component'&&!u.washing);
         const matches=[...new Set(existing.flatMap(u=>RECIPES.filter(recipe=>(recipe.parts as readonly string[]).includes(u.kind)).map(recipe=>recipe.parts.find(part=>part!==u.kind)!)))].filter(kind=>kind!==unit!.kind);
-        this.transform(unit!,matches.length?matches[Math.floor(this.random()*matches.length)]:this.randomComponent(unit!.kind));key='m2.transformed';break;
+        const allowed=matches.filter(kind=>this.engine.isDrawUnlocked(kind));
+        this.transform(unit!,allowed.length?allowed[Math.floor(this.random()*allowed.length)]:this.randomComponent(unit!.kind));key='m2.transformed';break;
       }
       case 'milk_bottle':this.upgrade(unit!,1);break;
       case 'whistle':this.upgrade(unit!,this.random()<.65?1:-1);key='m2.trained';break;
@@ -159,7 +160,7 @@ export class PropSystem {
     this.engine.event({type:'weapon',side,col,row,effect:'treasure',color:'#eabc4c',duration:.8});
   }
   private randomComponent(exclude:string):string {
-    const options=DRAW_POOL.filter(unit=>unit.category==='component'&&unit.id!==exclude);return options[Math.floor(this.random()*options.length)].id;
+    const options=DRAW_POOL.filter(unit=>unit.category==='component'&&unit.id!==exclude&&this.engine.isDrawUnlocked(unit.id));return options[Math.floor(this.random()*options.length)].id;
   }
   private transform(unit:Unit,kind:string):void {unit.kind=kind;unit.level=1;unit.energy=0;unit.cooldown=0;unit.animation=1;unit.statuses={};}
   private upgrade(unit:Unit,delta:number):void {

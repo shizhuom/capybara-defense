@@ -2,7 +2,7 @@ import {ledger} from './LedgerView';
 import type { Profile } from '../core/types';
 import { WEAPONS, HERO_FAMILIES, RARITY_RULES, type WeaponFamily } from '../config/weapons';
 import { PROPS,META_PRICES } from '../config/props';
-import { buyProp, createLotteryPrizes, ensureDailyShop, equipProp, equipWeapon, recycleFragments, refreshShop, spinLottery, type LotteryPrize, type MetaResult } from '../core/MetaProgression';
+import { buyProp, createLotteryPrizes, ensureDailyShop, equipProp, equipWeapon, recycleFragments, refreshShop, spinLottery, type LotteryPayment, type LotteryPrize, type MetaResult } from '../core/MetaProgression';
 import { t } from '../i18n/i18n';
 import { escapeHtml as esc } from './art';
 import { saveProfile } from './storage';
@@ -20,7 +20,7 @@ export function propSlots(profile: Profile, quick = false): string {
     const id = ids[index];
     const label = t('m2.slot', { type: t(`m2.${type}`), slot: index + 1 });
     if (quick) return `<label><span>${esc(label)}</span><select data-prop-slot="${type}:${index}" aria-label="${esc(label)}"><option value="">${tr('m2.emptySlot')}</option>${Object.values(PROPS).filter(item => item.type === type && profile.ownedProps[item.id]).map(item => `<option value="${item.id}"${id === item.id ? ' selected' : ''}>${tr(`prop.${item.id}`)}</option>`).join('')}</select></label>`;
-    return `<button type="button" class="prop-slot ${id ? 'filled' : ''}" ${id ? `data-action="meta-prop:${id}" title="${tr(`prop.${id}.desc`)}"` : 'disabled'} aria-label="${esc(label)}${id ? `: ${tr(`prop.${id}`)}` : ''}"><span>${id ? propSticker(id,36) : '+'}</span><small>${id ? tr(`prop.${id}`) : tr('m2.emptySlot')}</small></button>`;
+    return `<button type="button" class="prop-slot ${id ? 'filled' : ''}" ${id ? `data-action="meta-prop:${id}" title="${tr(`prop.${id}.desc`)}"` : 'disabled'} aria-label="${esc(label)}${id ? `: ${tr(`prop.${id}`)} · ${tr('m2.unequip')}` : ''}"><span>${id ? propSticker(id,36) : '+'}</span>${id?'<b class="slot-remove" aria-hidden="true">×</b>':''}<small>${id ? tr(`prop.${id}`) : tr('m2.emptySlot')}</small></button>`;
   }).join('')}</div></section>`).join('');
 }
 
@@ -29,6 +29,9 @@ export class MetaScreens {
   tab: 'shop' | 'lottery' = 'shop';
   rarities = new Set([0, 1, 2, 3, 4]);
   orangeFirst = false;
+  private selectedWeapon?: string;
+  private selectedProp?: string;
+  private merchantQuip = 0;
   private prizes: LotteryPrize[] = [];
   private spinning = false;
   private highlight = -1;
@@ -42,6 +45,7 @@ export class MetaScreens {
     clearTimeout(this.timer); this.timer = undefined;
     this.prizes = []; this.spinning = false; this.highlight = -1;
     this.prize = undefined; this.convertedCoins = undefined; this.newWeapons = [];
+    this.selectedWeapon = undefined; this.selectedProp = undefined; this.merchantQuip = 0;
   }
 
   open(screen: MetaScreen): void {
@@ -64,16 +68,19 @@ export class MetaScreens {
   action(action: string): boolean {
     if (!action.startsWith('meta-')) return false;
     const [command, id, hero] = action.split(':');
-    if (command === 'meta-family') this.family = id as WeaponFamily | 'all';
+    if (command === 'meta-family' && ['all','melee','ranged','magic'].includes(id)) { this.family = id as WeaponFamily | 'all'; this.selectedWeapon = undefined; }
     if (command === 'meta-sort') this.orangeFirst = id === 'orange';
     if (command === 'meta-tab') this.tab = id as 'shop' | 'lottery';
+    if (command === 'meta-weapon' && WEAPONS[id]) this.selectedWeapon = id;
+    if (command === 'meta-packet' && PROPS[id]) { this.selectedProp = id; this.prize = undefined; }
+    if (command === 'meta-merchant') { this.merchantQuip = (this.merchantQuip + 1) % 3; this.selectedProp = undefined; this.prize = undefined; }
     if (command === 'meta-buy') this.apply(buyProp(this.profile(), id));
     if (command === 'meta-prop') this.apply(equipProp(this.profile(), id));
-    if (command === 'meta-equip') this.apply(equipWeapon(this.profile(),hero,this.profile().equippedWeapons[hero]===id?null:id));
+    if (command === 'meta-equip' && this.apply(equipWeapon(this.profile(),hero,this.profile().equippedWeapons[hero]===id?null:id))) this.onSound?.('hit_heavy');
     if (command === 'meta-unequip') this.apply(equipWeapon(this.profile(), id, null));
     if (command === 'meta-refresh') this.apply(refreshShop(this.profile(), day(), Math.random));
     if (command === 'meta-recycle') this.apply(recycleFragments(this.profile(), [...this.rarities]));
-    if (command === 'meta-spin') this.spin();
+    if (command === 'meta-spin') this.spin(id === 'ticket' || id === 'coins' ? id : 'auto');
     this.render(); return true;
   }
   change(element: HTMLInputElement | HTMLSelectElement): boolean {
@@ -86,10 +93,10 @@ export class MetaScreens {
     if (element.dataset.hero) { this.apply(equipWeapon(this.profile(), element.dataset.hero, null)); return true; }
     return false;
   }
-  private spin(): void {
+  private spin(payment: LotteryPayment = 'auto'): void {
     if (this.spinning) return;
     const before = this.profile();
-    const result = spinLottery(this.profile(), this.prizes, Math.random);
+    const result = spinLottery(this.profile(), this.prizes, Math.random, payment);
     if (!result.ok) { this.notify(result.key, true); return; }
     // The complete transaction is persisted once, before any animation begins.
     if (!this.persist(result.profile)) return;
@@ -112,38 +119,46 @@ export class MetaScreens {
     return tr(prize.type === 'prop' ? 'm2.prizeProp' : 'm2.prizeFragment', { name: t(`${prize.type === 'prop' ? 'prop' : 'weapon'}.${prize.id}`), amount: prize.amount });
   }
   markup(screen: MetaScreen, inBattle = false): string {
-    const profile=this.profile();
-    if(screen==='armory')return ledger('armory',this.armory(profile),{profile});
-    const inventory=Object.values(PROPS).filter(prop=>profile.ownedProps[prop.id]).map(prop=>{
-      const equipped=[...profile.equippedActiveProps,...profile.equippedPassiveProps].includes(prop.id);
-      return `<button type="button" data-action="meta-prop:${prop.id}" class="inventory-prop ${equipped?'equipped':''}" aria-pressed="${equipped}" title="${tr(`prop.${prop.id}.desc`)}"><b>${propSticker(prop.id,42)} ${tr(`prop.${prop.id}`)}</b><small>${tr(`m2.${prop.type}`)} · ${tr('m2.level',{level:profile.ownedProps[prop.id],max:prop.maxLevel})}</small><strong>${tr(equipped?'m2.unequip':'m2.equip')}</strong></button>`;
-    }).join('')||`<p>${tr('m2.noProps')}</p>`;
-    return ledger('market',`<div class="market-split"><section class="market-stall"><div class="meta-tabs market-subtabs">${['shop','lottery'].map(tab=>`<button type="button" data-action="meta-tab:${tab}" aria-pressed="${this.tab===tab}" class="${this.tab===tab?'selected':''}">${tr(`m2.${tab}`)}</button>`).join('')}</div><h3 class="stall-awning market-awning"><span>${tr(this.tab==='shop'?'p5.shopAwning':'p5.lotteryAwning')}</span>${this.tab==='shop'?`<button type="button" class="shop-refresh" data-action="meta-refresh">${tr('p6.refresh')} ${sceneSticker('ui_coin_gold','',20)}${META_PRICES.shopRefresh}</button>`:''}</h3>${this.tab==='shop'?this.shop(profile):this.lottery()}</section><aside class="market-backpack"><section class="loadout-panel"><h3>${tr('p5.backpack')}</h3>${propSlots(profile)}${inBattle?'':`<p>${tr('m2.nextBattle')}</p>`}</section><h3>${tr('m2.inventory')}</h3><div class="inventory-grid">${inventory}</div></aside></div>`,{profile});
+    const profile = this.profile();
+    if (screen === 'armory') return ledger('armory', this.armory(profile), {profile});
+    return ledger('market', `<div class="p9-market"><section class="p9-loadout-tray" aria-label="${tr('m2.loadout')}">${propSlots(profile)}${inBattle?'':`<span class="p9-next-battle">${tr('m2.nextBattle')}</span>`}</section><div class="market-split p9-market-stage"><aside class="p9-merchant"><div class="p9-speech" aria-live="polite">${this.merchant(profile)}</div><button type="button" class="p9-npc-button" data-action="meta-merchant" aria-label="${tr('p9.merchant')}">${sceneSticker('npc_shop_raccoon','',180)}<strong>${tr('p9.merchant')}</strong></button></aside><section class="market-stall p9-market-racks"><div class="meta-tabs market-subtabs">${(['shop','lottery'] as const).map(tab=>`<button type="button" data-action="meta-tab:${tab}" aria-pressed="${this.tab===tab}" class="${this.tab===tab?'selected':''}">${tr(tab==='shop'?'p9.marketDaily':'p9.marketGacha')}</button>`).join('')}</div><div class="p9-shop-tab"${this.tab==='shop'?'':' hidden'}>${this.shop(profile)}</div><div class="p9-lottery-tab"${this.tab==='lottery'?'':' hidden'}>${this.lottery()}</div></section></div></div>`, {profile});
   }
   private armory(profile: Profile): string {
     const weapons = Object.values(WEAPONS).filter(weapon => this.family === 'all' || this.family === weapon.family);
-    if (this.orangeFirst) weapons.sort((a, b) => b.rarity - a.rarity);
-    return `<section class="hero-overview"><h3>${tr('m3.heroOverview')}</h3><div class="hero-loadout-grid hero-loadout-strip">${Object.keys(HERO_FAMILIES).map(hero => { const id = profile.equippedWeapons[hero]; return `<article class="${id?'stand-equipped':'stand-empty'}" data-loadout-hero="${hero}"><span class="hero-stand-art">${unitSticker(hero,34)}<i>${id ? weaponSticker(id,28) : '＋'}</i></span><div><strong>${tr(`hero.${hero}`)}</strong><small>${id ? tr(`weapon.${id}`) : tr('m3.emptyWeapon')}</small></div>${id?`<button type="button" class="stand-unequip" data-action="meta-unequip:${hero}" aria-label="${tr('m2.unequip')} ${tr(`hero.${hero}`)}">×</button>`:''}</article>`; }).join('')}</div></section><p>${tr('m2.collection', { count: profile.unlockedWeapons.length })}</p><p class="meta-rule">${tr('m2.weaponRule')}</p><div class="meta-tabs sort-tabs">${['default', 'orange'].map(sort => `<button type="button" data-action="meta-sort:${sort}" aria-pressed="${this.orangeFirst === (sort === 'orange')}" class="${this.orangeFirst === (sort === 'orange') ? 'selected' : ''}">${tr(sort === 'orange' ? 'm3.orangeSort' : 'm3.defaultSort')}</button>`).join('')}</div><div class="meta-tabs family-tabs">${['all', 'melee', 'ranged', 'magic'].map(family => `<button type="button" data-action="meta-family:${family}" aria-pressed="${family === this.family}" class="${family === this.family ? 'selected' : ''}">${tr(`m2.family.${family}`)}</button>`).join('')}</div><div class="weapon-grid">${weapons.map(weapon => {
-      const unlocked = profile.unlockedWeapons.includes(weapon.id);
-      const wearer = Object.keys(profile.equippedWeapons).find(hero => profile.equippedWeapons[hero] === weapon.id);
-      const rule = RARITY_RULES[weapon.rarity];
-      return `<article class="weapon-card rarity-${weapon.rarity} ${unlocked ? 'unlocked' : 'locked'}" data-weapon-id="${weapon.id}" data-weapon-rarity="${weapon.rarity}"><span class="weapon-sticker">${weaponSticker(weapon.id, 60)}</span><small>${tr(`m2.rarity.${weapon.rarity}`)} · ${tr(`m2.family.${weapon.family}`)}</small><h3>${tr(`weapon.${weapon.id}`)}</h3><b>${tr('m2.damage', { value: Math.round(rule.damageBonus * 100) })}</b><p>${tr(`weapon.${weapon.id}.desc`)}</p>${weapon.signatureHero ? `<p class="signature-note">✦ ${tr('m2.signature', { hero: t(`hero.${weapon.signatureHero}`) })}</p>` : ''}<div class="fragment-track"><i style="width:${Math.min(100, (profile.weaponFragments[weapon.id] ?? 0) / rule.fragments * 100)}%"></i></div><small>${tr('m2.progress', { count: profile.weaponFragments[weapon.id] ?? 0, total: rule.fragments })}</small>${unlocked ? `<div class="hero-equip-chips" aria-label="${tr('p5.equipTip')}">${Object.keys(HERO_FAMILIES).filter(hero=>HERO_FAMILIES[hero]===weapon.family).map(hero=>`<button type="button" class="hero-equip-chip ${wearer===hero?'equipped':''} ${weapon.signatureHero===hero?'signature':''}" data-action="meta-equip:${weapon.id}:${hero}" aria-pressed="${wearer===hero}" aria-label="${tr(wearer===hero?'m2.unequip':'m2.equip')} ${tr(`hero.${hero}`)}" title="${tr(`hero.${hero}`)}">${unitSticker(hero,34)}${weapon.signatureHero===hero?'<i>★</i>':''}${wearer===hero?'<b>✓</b>':''}</button>`).join('')}</div><label class="equip-hero sr-only"><span>${tr('m2.chooseHero')}</span><select data-weapon="${weapon.id}" aria-label="${tr('m2.equip')} ${tr(`weapon.${weapon.id}`)}"><option value="" disabled${wearer ? '' : ' selected'}>${tr('m2.chooseHero')}</option>${Object.keys(HERO_FAMILIES).filter(hero => HERO_FAMILIES[hero] === weapon.family).map(hero => `<option value="${hero}"${wearer === hero ? ' selected' : ''}>${tr(`hero.${hero}`)}</option>`).join('')}</select></label><p class="equip-status ${wearer?'is-equipped':''}">${tr(wearer?'p6.equipWorn':'p6.equipIdle',{hero:wearer?t(`hero.${wearer}`):''})}</p>` : `<strong class="locked-label">${tr('m2.locked')}</strong>`}</article>`;
-    }).join('')}</div><section class="recycle-panel"><h3>${tr('m2.recycle')}</h3><p>${tr('m2.recycleRule')}</p><div class="rarity-checks">${RARITY_RULES.map((rule, rarity) => `<label class="rarity-toggle rarity-${rarity}"><input type="checkbox" data-rarity="${rarity}"${this.rarities.has(rarity) ? ' checked' : ''}>${tr(`m2.rarity.${rarity}`)}<small>${tr('m2.recycleRate', { value: rule.recycle })}</small></label>`).join('')}</div><button type="button" class="button button-teal" data-action="meta-recycle">${tr('m2.recycle')}</button></section>`;
+    if (this.orangeFirst) weapons.sort((a,b)=>b.rarity-a.rarity);
+    const selected = weapons.find(weapon=>weapon.id===this.selectedWeapon) ?? weapons.find(weapon=>profile.unlockedWeapons.includes(weapon.id)) ?? weapons[0];
+    return `<div class="p9-armory"><div class="p9-armory-toolbar"><div class="meta-tabs family-tabs">${(['all','melee','ranged','magic'] as const).map(family=>`<button type="button" data-action="meta-family:${family}" aria-pressed="${family===this.family}" class="${family===this.family?'selected':''}">${tr(`m2.family.${family}`)} <b>${family==='all'?36:12}</b></button>`).join('')}</div><button type="button" class="p9-sort" data-action="meta-sort:${this.orangeFirst?'default':'orange'}" aria-pressed="${this.orangeFirst}">${tr('m3.orangeSort')}</button><span>${tr('m2.collection',{count:profile.unlockedWeapons.length})}</span></div><div class="p9-armory-stage"><section class="p9-weapon-rack" aria-label="${tr('p9.rack')}"><div class="weapon-grid p9-weapon-grid">${weapons.map(weapon=>{
+      const unlocked=profile.unlockedWeapons.includes(weapon.id),wearer=Object.keys(profile.equippedWeapons).find(hero=>profile.equippedWeapons[hero]===weapon.id),rule=RARITY_RULES[weapon.rarity],count=profile.weaponFragments[weapon.id]??0;
+      return `<button type="button" data-action="meta-weapon:${weapon.id}" class="weapon-card p9-weapon-packet rarity-${weapon.rarity} ${unlocked?'unlocked':'locked'}" data-weapon-id="${weapon.id}" data-weapon-rarity="${weapon.rarity}" aria-pressed="${selected?.id===weapon.id}" aria-label="${tr('p9.viewItem',{name:t(`weapon.${weapon.id}`)})}"><small class="p9-grade">${weapon.rarity+1}</small>${wearer?`<span class="p9-wearer" title="${tr(`hero.${wearer}`)}">${unitSticker(wearer,32)}</span>`:''}<span class="p9-packet-art">${weaponSticker(weapon.id,64)}</span><strong>${tr(`weapon.${weapon.id}`)}</strong>${unlocked?`<b>⚔ +${Math.round(rule.damageBonus*100)}%</b>`:`<span class="p9-packet-progress"><span class="fragment-track"><i style="width:${Math.min(100,count/rule.fragments*100)}%"></i></span><small>${count}/${rule.fragments}</small></span>`}</button>`;
+    }).join('')}</div></section><aside class="p9-anvil">${selected?this.weaponShowcase(profile,selected.id):''}</aside></div><details class="recycle-panel"><summary>${tr('m2.recycle')}</summary><p>${tr('m2.recycleRule')}</p><div class="rarity-checks">${RARITY_RULES.map((rule,rarity)=>`<label class="rarity-toggle rarity-${rarity}"><input type="checkbox" data-rarity="${rarity}"${this.rarities.has(rarity)?' checked':''}>${tr(`m2.rarity.${rarity}`)}<small>${tr('m2.recycleRate',{value:rule.recycle})}</small></label>`).join('')}</div><button type="button" class="button button-teal" data-action="meta-recycle">${tr('m2.recycle')}</button></details><details class="p9-loadout-overview"><summary>${tr('m3.heroOverview')}</summary><div class="hero-loadout-grid hero-loadout-strip">${Object.keys(HERO_FAMILIES).map(hero=>{const id=profile.equippedWeapons[hero];return `<article class="${id?'stand-equipped':'stand-empty'}" data-loadout-hero="${hero}">${unitSticker(hero,34)}<strong>${tr(`hero.${hero}`)}</strong><small>${id?tr(`weapon.${id}`):tr('m3.emptyWeapon')}</small>${id?`<button type="button" data-action="meta-unequip:${hero}" aria-label="${tr('m2.unequip')} ${tr(`hero.${hero}`)}">×</button>`:''}</article>`;}).join('')}</div></details></div>`;
+  }
+  private weaponShowcase(profile:Profile,id:string):string {
+    const weapon=WEAPONS[id],rule=RARITY_RULES[weapon.rarity],unlocked=profile.unlockedWeapons.includes(id),wearer=Object.keys(profile.equippedWeapons).find(hero=>profile.equippedWeapons[hero]===id),count=profile.weaponFragments[id]??0;
+    return `<div class="p9-blacksmith-heading">${sceneSticker('npc_blacksmith_capy','',128)}<strong>${tr('p9.blacksmith')}</strong></div><div class="p9-anvil-plinth">${weaponSticker(id,88)}</div><div class="p9-weapon-detail rarity-${weapon.rarity}"><span class="p9-detail-badges">${tr(`m2.rarity.${weapon.rarity}`)} · ${tr(`m2.family.${weapon.family}`)}</span><h3>${tr(`weapon.${id}`)}</h3><b class="p9-damage">${tr('m2.damage',{value:Math.round(rule.damageBonus*100)})}</b><p>${tr(`weapon.${id}.desc`)}</p>${weapon.signatureHero?`<p class="signature-note">★ ${tr('m2.signature',{hero:t(`hero.${weapon.signatureHero}`)})}</p>`:''}<div class="fragment-track"><i style="width:${Math.min(100,count/rule.fragments*100)}%"></i></div><small>${tr('m2.progress',{count,total:rule.fragments})}</small><p class="equip-status ${wearer?'is-equipped':''}">${tr(unlocked?(wearer?'p6.equipWorn':'p6.equipIdle'):'p9.fragmentUnlock',{hero:wearer?t(`hero.${wearer}`):''})}</p><div class="hero-equip-chips p9-hero-equip" aria-label="${tr('p5.equipTip')}">${Object.keys(HERO_FAMILIES).filter(hero=>HERO_FAMILIES[hero]===weapon.family).map(hero=>`<button type="button" class="hero-equip-chip ${wearer===hero?'equipped':''} ${weapon.signatureHero===hero?'signature':''}" data-action="meta-equip:${id}:${hero}" aria-pressed="${wearer===hero}" aria-label="${tr(wearer===hero?'m2.unequip':'m2.equip')} ${tr(`hero.${hero}`)}"${unlocked?'':' disabled'}>${unitSticker(hero,56)}<span>${tr(`hero.${hero}`)}</span>${weapon.signatureHero===hero?'<i aria-hidden="true">★</i>':''}${wearer===hero?'<b aria-hidden="true">✓</b>':''}</button>`).join('')}</div></div>`;
+  }
+  private merchant(profile:Profile):string {
+    if(this.prize) return `<section class="lottery-result" role="status"><h3>${tr('m2.prize')}</h3><p>${this.prizeText(this.prize)}</p>${this.convertedCoins!==undefined?`<p>${tr('m2.convertedCoins',{amount:this.convertedCoins})}</p>`:''}${this.newWeapons.length?`<h4>${tr('m2.newWeapons')}</h4>${this.newWeapons.map(id=>`<p>${tr(`weapon.${id}`)}</p>`).join('')}`:''}</section>`;
+    const prop=this.selectedProp?PROPS[this.selectedProp]:undefined;
+    if(!prop)return `<p class="p9-merchant-quip">${tr(`p9.merchant${this.merchantQuip}`)}</p>`;
+    const level=profile.ownedProps[prop.id]??0,equipped=[...profile.equippedActiveProps,...profile.equippedPassiveProps].includes(prop.id),offered=profile.shop?.offers.includes(prop.id);
+    return `<div class="p9-prop-detail">${propSticker(prop.id,72)}<h3>${tr(`prop.${prop.id}`)}</h3><p>${tr(`prop.${prop.id}.desc`)}</p><span class="p9-detail-badges">${tr(`m2.${prop.type}`)}${prop.cooldown?` · ${tr('m2.cooldown',{time:prop.cooldown})}`:''}</span><small>${tr('m2.level',{level,max:prop.maxLevel})}</small><div class="p9-merchant-actions">${level?`<button type="button" class="button button-teal" data-action="meta-prop:${prop.id}">${tr(equipped?'m2.unequip':'p9.equipSquad')}</button>`:''}${level<prop.maxLevel&&offered?`<button type="button" class="button button-teal" data-action="meta-buy:${prop.id}">${tr(level?'m2.upgrade':'m2.buy',{price:prop.price})}</button>`:''}${!level&&!offered?`<p>${tr('p9.outOfStock')}</p>`:''}</div></div>`;
   }
   private shop(profile: Profile): string {
-    return `<div class="shop-grid">${(profile.shop?.offers ?? []).map(id => {
-      const prop = PROPS[id]; if (!prop) return '';
-      const level = profile.ownedProps[id] ?? 0;
-      return `<article class="shop-card rarity-${prop.rarity}"><span class="shop-icon">${propSticker(prop.id,64)}</span><h3>${tr(`prop.${id}`)}</h3><small>${prop.type==='active'?'⚡':'🛡️'} ${tr(`m2.${prop.type}`)} · ${tr('m2.level', { level, max: prop.maxLevel })}</small><p>${tr(`prop.${id}.desc`)}</p><button type="button" class="button button-teal" data-action="meta-buy:${id}"${level >= prop.maxLevel ? ' disabled' : ''}>${tr(level >= prop.maxLevel ? 'm2.maxed' : level ? 'm2.upgrade' : 'm2.buy', { price: prop.price })}</button></article>`;
-    }).join('') || `<p>${tr('m2.shopEmpty')}</p>`}</div>`;
+    return `<h3 class="stall-awning market-awning"><span>${sceneSticker('ui_trunk_crate','',56)}${tr('p5.shopAwning')}</span><button type="button" class="shop-refresh" data-action="meta-refresh">${tr('p6.refresh')} ${sceneSticker('ui_coin_gold','',20)}${META_PRICES.shopRefresh}</button></h3><div class="shop-grid p9-daily-shelf">${(profile.shop?.offers??[]).map(id=>{
+      const prop=PROPS[id];if(!prop)return '';const level=profile.ownedProps[id]??0;
+      return `<article class="shop-card rarity-${prop.rarity}"><button type="button" data-action="meta-packet:${id}" class="p9-offer-select" aria-pressed="${this.selectedProp===id}">${propSticker(id,76)}<strong>${tr(`prop.${id}`)}</strong></button><button type="button" class="button p9-price" data-action="meta-buy:${id}"${level>=prop.maxLevel?' disabled':''}>${tr(level>=prop.maxLevel?'m2.maxed':level?'m2.upgrade':'m2.buy',{price:prop.price})}</button></article>`;
+    }).join('')||`<p>${tr('m2.shopEmpty')}</p>`}</div><h3>${tr('p9.packets')}</h3><div class="inventory-grid p9-prop-packets">${Object.values(PROPS).map(prop=>{
+      const level=profile.ownedProps[prop.id]??0,equipped=[...profile.equippedActiveProps,...profile.equippedPassiveProps].includes(prop.id);
+      return `<button type="button" class="inventory-prop p9-seed-packet rarity-${prop.rarity} ${equipped?'equipped':''} ${level?'owned':'unowned'}" data-action="meta-packet:${prop.id}" aria-pressed="${this.selectedProp===prop.id}" aria-label="${tr('p9.viewItem',{name:t(`prop.${prop.id}`)})}">${propSticker(prop.id,56)}<strong>${tr(`prop.${prop.id}`)}</strong><small>${equipped?`✓ ${tr('meta.equipped')}`:level?tr('m2.level',{level,max:prop.maxLevel}):tr('meta.propNotOwned')}</small></button>`;
+    }).join('')}</div>`;
   }
   private lottery(): string {
-    const positions = [0, 1, 2, 5, 8, 7, 6, 3];
-    const cells = Array.from({ length: 9 }, (_, position) => {
-      if (position === 4) return `<button type="button" class="lottery-center" data-action="meta-spin"${this.spinning ? ' disabled' : ''}><b>${tr(this.spinning ? 'm2.spinning' : 'm2.spin')}</b><span class="gacha-price">${this.profile().freeLotteryTickets>0?sceneSticker('ui_ticket_gacha','',30):sceneSticker('ui_coin_gold','',30)}<strong>${this.profile().freeLotteryTickets>0?1:META_PRICES.lottery}</strong></span><small>${tr('m2.spinCost')}</small></button>`;
-      const index = positions.indexOf(position); const prize = this.prizes[index];
-      return `<div class="lottery-cell ${index === this.highlight ? 'lit' : ''}" title="${prize?this.prizeText(prize):''}"><span>${prize?.type === 'prop' ? propSticker(prize.id!,48) : prize?.type === 'coins' ? sceneSticker('ui_coin_gold','',48) : prize?.id ? weaponSticker(prize.id,48) : '✦'}</span><small>${prize ? this.prizeText(prize) : ''}</small></div>`;
+    const profile=this.profile(),positions=[0,1,2,5,8,7,6,3];
+    const cells=Array.from({length:9},(_,position)=>{
+      if(position===4)return `<button type="button" class="lottery-center" data-action="meta-spin:coins"${this.spinning||profile.coins<META_PRICES.lottery?' disabled':''}><b>${tr(this.spinning?'m2.spinning':'m2.spin')}</b><span class="gacha-price">${sceneSticker('ui_coin_gold','',30)}<strong>${META_PRICES.lottery}</strong></span></button>`;
+      const index=positions.indexOf(position),prize=this.prizes[index];
+      return `<div class="lottery-cell ${index===this.highlight?'lit':''}" title="${prize?this.prizeText(prize):''}"><span>${prize?.type==='prop'?propSticker(prize.id!,64):prize?.type==='coins'?sceneSticker('ui_coin_gold','',64):prize?.id?weaponSticker(prize.id,64):'✦'}</span><small>${prize?this.prizeText(prize):''}</small></div>`;
     });
-    return `<div class="gacha-machine-frame"><div class="lottery-grid">${cells.join('')}</div></div><p class="meta-rule">${tr('m2.lotteryRule')}</p>${this.prize ? `<section class="lottery-result" role="status"><h3>${tr('m2.prize')}</h3><p>${this.prizeText(this.prize)}</p>${this.convertedCoins !== undefined ? `<p>${tr('m2.convertedCoins', { amount: this.convertedCoins })}</p>` : ''}${this.newWeapons.length ? `<h4>${tr('m2.newWeapons')}</h4>${this.newWeapons.map(id => `<p>${tr(`weapon.${id}`)}</p>`).join('')}` : ''}</section>` : ''}`;
+    return `<div class="p9-gacha-header">${sceneSticker('ui_gacha_machine','',180)}<div><h3>${tr('p9.marketGacha')}</h3><strong>${tr('m2.tickets',{count:profile.freeLotteryTickets})}</strong><p>${tr('m2.lotteryRule')}</p></div></div><div class="gacha-machine-frame"><div class="lottery-grid">${cells.join('')}</div></div><div class="p9-spin-payments"><button type="button" class="button button-teal" data-action="meta-spin:ticket"${this.spinning||profile.freeLotteryTickets<=0?' disabled':''}>${sceneSticker('ui_ticket_gacha','',28)}${tr('p9.ticketSpin')}</button><button type="button" class="button button-teal" data-action="meta-spin:coins"${this.spinning||profile.coins<META_PRICES.lottery?' disabled':''}>${sceneSticker('ui_coin_gold','',28)}${tr('p9.coinSpin')}</button></div>`;
   }
 }

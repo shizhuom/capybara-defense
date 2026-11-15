@@ -53,9 +53,9 @@ beforeEach(()=>{vi.useFakeTimers();vi.stubGlobal('AudioContext',Host);serve({});
 afterEach(()=>{for(const m of managers)m.dispose();managers.length=0;Host.instances=[];vi.restoreAllMocks();vi.unstubAllGlobals();vi.useRealTimers();});
 
 describe('P1 arrangements and lifecycle',()=>{
-  it.each([['menu',60/84/2],['battle',60/108/2],['boss',60/124/2]] as const)('%s schedules overlapping instruments at its eighth-note tempo',async(mode,step)=>{
+  it.each([['menu',30/116],['battle',30/124],['boss',30/138]] as const)('%s schedules overlapping instruments at its eighth-note tempo',async(mode,step)=>{
     const m=manager();m.setMode(mode);await m.unlock();const h=Host.instances[0];advance(h,1.5);
-    const lead=h.oscillators.filter(o=>o.frequency.events[0]?.value>=250&&o.type==='sine');
+    const lead=h.oscillators.filter(o=>o.type===(mode==='menu'?'triangle':'sawtooth')&&o.target instanceof Filter&&(o.target as Filter).frequency.value===(mode==='menu'?2800:mode==='battle'?1950:2850));
     expect(lead.length).toBeGreaterThan(3);
     expect(lead[1].started[0]-lead[0].started[0]).toBeCloseTo(step,5);
     expect(new Set(h.oscillators.map(o=>o.type)).size).toBeGreaterThan(1);
@@ -88,28 +88,28 @@ describe('P1 arrangements and lifecycle',()=>{
     expect(h.oscillators[1].stopped.length).toBeGreaterThan(1);
     const notes=h.oscillators.slice(before),bass=notes.find(o=>o.type==='triangle'&&o.frequency.events[0].value<200);
     expect(bass).toBeDefined();expect(h.sources.some(s=>!s.loop)).toBe(true);
-    const lead=notes.filter(o=>o.type==='sine'&&o.frequency.events[0].value>=250);
-    expect(lead[1].started[0]-lead[0].started[0]).toBeCloseTo(30/108,5);
+    const lead=notes.filter(o=>o.type==='sawtooth'&&o.target instanceof Filter&&(o.target as Filter).frequency.value===1950);
+    expect(lead[1].started[0]-lead[0].started[0]).toBeCloseTo(30/124,5);
   });
   it('mute creates no SFX nodes and the first hit after enabling is audible',async()=>{
     const m=manager();await m.unlock();const h=Host.instances[0];m.setSettings({...settings,soundVolume:0});
     const before=h.oscillators.length;for(let i=0;i<20;i++)m.play('hit_soft' as SoundCue);expect(h.oscillators).toHaveLength(before);
     m.setSettings(settings);m.play('hit_soft' as SoundCue);expect(h.oscillators.length).toBeGreaterThan(before);
-    expect(h.gains.filter(g=>g.target===h.destination)[1].gain.value).toBeCloseTo(.375);
+    expect(h.gains.filter(g=>g.target===h.destination)[1].gain.value).toBeCloseTo(.8625);
   });
-  it('globally throttles hits at 95ms while distinct command cues stay responsive',async()=>{
+  it('globally throttles hits at 45ms while distinct command cues stay responsive',async()=>{
     const m=manager();await m.unlock();const h=Host.instances[0],before=h.oscillators.length;
     m.play('hit_soft' as SoundCue);const one=h.oscillators.length-before;expect(one).toBeGreaterThan(0);
-    for(let i=0;i<200;i++)m.play('hit_soft' as SoundCue);h.currentTime=.094;m.play('hit_soft' as SoundCue);expect(h.oscillators).toHaveLength(before+one);
-    h.currentTime=.095;m.play('hit_soft' as SoundCue);expect(h.oscillators).toHaveLength(before+2*one);
+    for(let i=0;i<200;i++)m.play('hit_soft' as SoundCue);h.currentTime=.044;m.play('hit_soft' as SoundCue);expect(h.oscillators).toHaveLength(before+one);
+    h.currentTime=.045;m.play('hit_soft' as SoundCue);expect(h.oscillators).toHaveLength(before+2*one);
     const n=h.oscillators.length;m.play('summon');m.play('summon');expect(h.oscillators.length-n).toBeGreaterThanOrEqual(4);
   });
   it('ducks music for overlays and hidden tabs without touching SFX gain',async()=>{
     const listeners=new Map<string,()=>void>();const doc={hidden:false,addEventListener:(k:string,fn:()=>void)=>listeners.set(k,fn),removeEventListener:(k:string)=>listeners.delete(k)};
     vi.stubGlobal('document',doc);const m=manager();await m.unlock();const h=Host.instances[0],[music,effects]=h.gains.filter(g=>g.target===h.destination);
-    m.setDucked(true);expect(music.gain.value).toBeCloseTo(.009);expect(effects.gain.value).toBeCloseTo(.375);
+    m.setDucked(true);expect(music.gain.value).toBeCloseTo(.078);expect(effects.gain.value).toBeCloseTo(.8625);
     const count=music.gain.events.length;for(let i=0;i<60;i++)m.setDucked(true);expect(music.gain.events).toHaveLength(count);
-    m.setDucked(false);doc.hidden=true;listeners.get('visibilitychange')!();expect(music.gain.value).toBeCloseTo(.009);
+    m.setDucked(false);doc.hidden=true;listeners.get('visibilitychange')!();expect(music.gain.value).toBeCloseTo(.078);
     m.setSettings({...settings,musicVolume:0});expect(music.gain.value).toBe(0);m.dispose();expect(listeners.size).toBe(0);
   });
   it('handles no host and hosts missing optional filters and buffers',async()=>{
@@ -150,12 +150,18 @@ describe('P1 optional decoded audio',()=>{
     const requests=serve({bgm_menu:'music/menu.ogg',hit_soft:'hit.wav'});const m=manager();await m.unlock();await flush();const h=Host.instances[0];
     expect(requests.some(u=>u.endsWith('/audio/music/menu.ogg'))).toBe(true);expect(h.decoded).toHaveLength(2);
     const loop=h.sources.find(s=>s.loop)!;expect(loop).toBeDefined();expect(loop.buffer).toBe(h.decoded[0]);
-    const musicBus=busOf(loop) as Gain;m.setDucked(true);expect(musicBus.gain.value).toBeCloseTo(.009);
+    const musicBus=busOf(loop) as Gain;m.setDucked(true);expect(musicBus.gain.value).toBeCloseTo(.078);
     const before=h.oscillators.length;m.play('hit_soft' as SoundCue);expect(h.oscillators).toHaveLength(before);
     const cue=h.sources.find(s=>!s.loop&&s.buffer===h.decoded[1])!;expect(cue).toBeDefined();const effectBus=busOf(cue) as Gain;
     m.setSettings({...settings,soundVolume:0,musicVolume:0});expect(musicBus.gain.value).toBe(0);expect(effectBus.gain.value).toBe(0);
     advance(h,.5);expect(h.oscillators).toHaveLength(before);m.setMode('battle');expect(loop.stopped.length).toBeGreaterThan(0);
     m.dispose();expect(h.sources.every(s=>s.disconnected)).toBe(true);
+  });
+  it('stops a decoded music loop during the battle curtain and resumes the selected mode cleanly',async()=>{
+    serve({bgm_menu:'menu.ogg',bgm_battle:'battle.ogg'});const m=manager();await m.unlock();await flush();const h=Host.instances[0];
+    const menu=h.sources.find(s=>s.loop)!;m.setMusicPaused(true);expect(menu.stopped.length).toBeGreaterThan(0);expect(menu.disconnected).toBe(true);
+    const before=h.sources.length;m.setMode('battle');advance(h,2);expect(h.sources).toHaveLength(before);expect(vi.getTimerCount()).toBe(0);
+    m.setMusicPaused(false);expect(h.sources.filter(s=>s.loop&&!s.disconnected)).toHaveLength(1);expect(vi.getTimerCount()).toBe(1);
   });
   it.each(['fetch','decode'])('falls back quietly when external %s fails',async failure=>{
     const requests=serve({bgm_menu:'missing.mp3',summon:'missing.wav'});if(failure==='fetch')vi.stubGlobal('fetch',async(input:string)=>{requests.push(String(input));if(String(input).endsWith('manifest.json'))return {ok:true,json:async()=>({bgm_menu:'missing.mp3',summon:'missing.wav'})};throw new Error('offline');});
@@ -171,13 +177,13 @@ describe('P1 optional decoded audio',()=>{
     serve({bgm_menu:'late.mp3'});let finish!:(buffer:{duration:number;bytes:ArrayBuffer})=>void;
     vi.spyOn(Host.prototype,'decodeAudioData').mockImplementation(()=>new Promise(resolve=>{finish=resolve;}));
     const m=manager();await m.unlock();await flush();const h=Host.instances[0];expect(finish).toBeTypeOf('function');m.dispose();finish({duration:2,bytes:new ArrayBuffer(8)});await flush();
-    expect(h.sources).toHaveLength(0);expect(vi.getTimerCount()).toBe(0);vi.restoreAllMocks();
+    expect(h.sources.filter(s=>(s.buffer as {duration:number}).duration>1/h.sampleRate)).toHaveLength(0);expect(vi.getTimerCount()).toBe(0);vi.restoreAllMocks();
   });
   it('adopts a decoded override that arrives while the context is suspended',async()=>{
     serve({bgm_menu:'late.mp3'});let finish!:(buffer:{duration:number;bytes:ArrayBuffer})=>void;
     vi.spyOn(Host.prototype,'decodeAudioData').mockImplementation(()=>new Promise(resolve=>{finish=resolve;}));
     const m=manager();await m.unlock();await flush();const h=Host.instances[0];h.state='suspended';finish({duration:2,bytes:new ArrayBuffer(8)});await flush();
-    expect(h.sources).toHaveLength(0);await m.unlock();expect(h.sources.some(s=>s.loop)).toBe(true);vi.restoreAllMocks();
+    expect(h.sources.filter(s=>(s.buffer as {duration:number}).duration>1/h.sampleRate)).toHaveLength(0);await m.unlock();expect(h.sources.some(s=>s.loop)).toBe(true);vi.restoreAllMocks();
   });
   it('keeps builtin scheduling when a decoded buffer source fails to start',async()=>{
     class NoPlayback extends Host {createBufferSource(){const s=super.createBufferSource();s.start=()=>{throw new Error('restricted playback');};return s;}}

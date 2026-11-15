@@ -149,13 +149,16 @@ export function createLotteryPrizes(_profile:Profile,random:()=>number):LotteryP
     {type:'fragment',id:rollWeapon(random,[3]),amount:1},{type:'fragment',id:rollWeapon(random,[4]),amount:1});
   return prizes;
 }
-export function spinLottery(profile:Profile,prizes:LotteryPrize[],random:()=>number):MetaResult&{prize?:LotteryPrize;index?:number} {
+export type LotteryPayment = 'auto' | 'ticket' | 'coins';
+export function spinLottery(profile:Profile,prizes:LotteryPrize[],random:()=>number,payment:LotteryPayment='auto'):MetaResult&{prize?:LotteryPrize;index?:number} {
   const valid=(prize:LotteryPrize)=>prize&&Number.isSafeInteger(prize.amount)&&prize.amount>0&&
     (prize.type==='coins'?[40,80,160].includes(prize.amount):prize.type==='prop'?typeof prize.id==='string'&&has(PROPS,prize.id)&&prize.amount===1:
       prize.type==='fragment'&&typeof prize.id==='string'&&has(WEAPONS,prize.id)&&WEAPONS[prize.id].rarity>=3&&prize.amount===1);
   if(prizes.length!==8||!prizes.every(valid)) return fail(profile,'meta.invalidPrizes');
-  if(profile.freeLotteryTickets<=0&&profile.coins<META_PRICES.lottery) return fail(profile,'meta.insufficientCoins');
-  let p=copy(profile);if(p.freeLotteryTickets>0) p.freeLotteryTickets--;else p.coins-=META_PRICES.lottery;
+  const useTicket=payment==='ticket'||(payment==='auto'&&profile.freeLotteryTickets>0);
+  if(useTicket&&profile.freeLotteryTickets<=0) return fail(profile,'p9.noTickets');
+  if(!useTicket&&profile.coins<META_PRICES.lottery) return fail(profile,'meta.insufficientCoins');
+  let p=copy(profile);if(useTicket) p.freeLotteryTickets--;else p.coins-=META_PRICES.lottery;
   const index=Math.floor(sample(random)*prizes.length);const prize={...prizes[index]};let newWeapons:string[]=[];
   if(prize.type==='coins') p.coins+=prize.amount;
   else if(prize.type==='prop') {

@@ -81,7 +81,7 @@ describe('P1 bilingual encyclopedia', () => {
     const book=new Compendium(); book.tab='bosses';
     expect(book.markup(createProfile()).match(/data-entry=/g)).toHaveLength(17);
     for(const id of BOSS_IDS) {
-      book.inspectEntry(id);const html=book.markup(createProfile());
+      book.inspectEntry(id);const html=book.markup({...createProfile(),highestStars:20});
       const card=html.match(new RegExp(`<article[^>]*data-entry="${id}"[\\s\\S]*?</article>`))?.[0];
       expect(card).toContain(`${lang==='en'?'Armor':'护甲'} ${Math.round(ENEMIES[id].armor*100)}%`);
     }

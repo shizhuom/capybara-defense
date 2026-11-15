@@ -2,6 +2,7 @@ import './ui/styles.css';
 import { GameApp } from './ui/GameApp';
 import './ui/p7.css';
 import './ui/p8.css';
+import './ui/p9.css';
 
 const root = document.getElementById('app');
 if (!root) throw new Error('Missing #app mount point');

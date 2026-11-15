@@ -41,7 +41,7 @@ const bosses:Record<string,[string,string,string,string]> = {
   box_kraken:['纸箱封印最高等级单位，使其无法攻击。','Seals the highest-level unit in a cardboard box, stopping attacks.','拖配方散件或同名同级宠合成秒解；奶瓶和洒水车也能救场。','Feed a recipe part or merge a matching unit for instant release; a bottle or sprinkler helps too.'],
   sad_rain_frog:['乌云淋湿全场，使攻击速度下降。','Soaks the whole team under rain clouds, reducing attack speed.','合成或升级立刻脱离淋湿，留一份散件给关键英雄。','Merge or upgrade to dry off instantly; keep a spare part for your key hero.'],
   king_skunk:['释放臭气遮挡视野，干扰布阵判断。','Releases a stinking fog that obscures the battlefield.','提前记住配对与站位，尽快集火清除雾源。','Remember your pairs and placements, then focus fire to remove the source.'],
-  diva_kitty:['策反最低等级基础宠，把它变成迷弟耗子。','Charms the lowest-level basic pet into a hostile rat.','提前升级基础宠，使用英雄守住关键火力点。','Upgrade basic pets early and let heroes cover your key firing positions.'],
+  diva_kitty:['策反最低等级基础宠，把它变成迷糊小耗子。','Charms the lowest-level basic pet into a hostile rat.','提前升级基础宠，使用英雄守住关键火力点。','Upgrade basic pets early and let heroes cover your key firing positions.'],
   buff_roo:['重拳击倒附近最多 2 个单位，持续 9 秒。','Knocks down up to 2 nearby units for 9s.','拖散件升级扶起主力，远程单位离道路稍远。','Feed a part to lift your hero immediately; keep ranged pets away from the road.'],
   hornet_queen:['召唤 3 只高速杀人蜂向温泉冲刺。','Summons 3 fast killer bees that rush toward the hot spring.','弹射和范围攻击克制蜂群，必要时洒水击退。','Use bouncing and area attacks against the swarm, or rinse it back in an emergency.'],
   screaming_marmot:['咆哮使附近最多 2 个单位混乱停火 6.5 秒。','Its scream confuses up to 2 nearby units, stopping fire for 6.5s.','合成或奶瓶升级立即解控，分散输出避免一起停火。','Merge or use a growth bottle to clear confusion; spread damage dealers to keep firing.'],

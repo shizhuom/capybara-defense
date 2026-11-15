@@ -7,11 +7,11 @@ import {WEAPONS} from '../src/config/weapons';
 import {setLanguage,t} from '../src/i18n/i18n';
 import {p5Zh,p5En} from '../src/i18n/p5';
 afterEach(()=>{vi.unstubAllGlobals();setLanguage('zh-CN');});
-it('charges the P5 60-coin gacha price atomically and always uses a free ticket first',()=>{
- const p={...createProfile(),coins:60},prizes=createLotteryPrizes(p,()=>0);
- const paid=spinLottery(p,prizes,()=>0);expect(paid.ok).toBe(true);expect(paid.profile.coins).toBe(0);expect(p.coins).toBe(60);
- expect(spinLottery({...p,coins:59},prizes,()=>0).ok).toBe(false);
- const free=spinLottery({...p,freeLotteryTickets:1},prizes,()=>0);expect(free.profile.coins).toBe(60);expect(free.profile.freeLotteryTickets).toBe(0);
+it('charges the P9 120-coin gacha price atomically and retains ticket-first auto payment',()=>{
+ const p={...createProfile(),coins:120},prizes=createLotteryPrizes(p,()=>0);
+ const paid=spinLottery(p,prizes,()=>0);expect(paid.ok).toBe(true);expect(paid.profile.coins).toBe(0);expect(p.coins).toBe(120);
+ expect(spinLottery({...p,coins:119},prizes,()=>0).ok).toBe(false);
+ const free=spinLottery({...p,freeLotteryTickets:1},prizes,()=>0);expect(free.profile.coins).toBe(120);expect(free.profile.freeLotteryTickets).toBe(0);
 });
 it.each(['zh-CN','en'] as const)('provides a fixed header, tabs and inner body in every ledger page (%s)',lang=>{
  setLanguage(lang);const p=createProfile(),meta=new MetaScreens(()=>p,()=>{},()=>{},()=>{}),profile=new ProfileScreens(()=>p,()=>true,()=>{},()=>{});
@@ -24,11 +24,11 @@ it('rounds attack growth, rate and range, and labels the matrix corner and colle
  expect(html).not.toMatch(/60\.8|97\.28|155\.648/);expect(html).toContain('matrix-corner');expect(html).toContain('0/12');expect(html).toContain('0/36');
  book.openTo('panda');expect(book.markup(p)).toContain('0.67');
 });
-it('has exactly four matching hero equip chips, retains selects, and toggles equip atomically',()=>{
+it('has exactly four matching accessible hero equip chips and toggles equip atomically',()=>{
  let p={...createProfile(),unlockedWeapons:['m10_bamboo_staff']};
  const data=new Map();vi.stubGlobal('window',{localStorage:{getItem:(k:string)=>data.get(k)??null,setItem:(k:string,v:string)=>data.set(k,v)}});
  const meta=new MetaScreens(()=>p,next=>{p=next;},()=>{},()=>{});
- let html=meta.markup('armory');expect(html.match(/data-action="meta-equip:m10_bamboo_staff:/g)).toHaveLength(4);expect(html).toContain('select data-weapon="m10_bamboo_staff"');
+ let html=meta.markup('armory');expect(html.match(/data-action="meta-equip:m10_bamboo_staff:/g)).toHaveLength(4);expect(html).not.toContain('<select');expect(html).toContain('aria-label="穿戴 功夫阿宝"');
  meta.action('meta-equip:m10_bamboo_staff:kungfu_po');expect(p.equippedWeapons.kungfu_po).toBe('m10_bamboo_staff');
  html=meta.markup('armory');expect(html).toContain('hero-equip-chip equipped');meta.action('meta-equip:m10_bamboo_staff:kungfu_po');expect(p.equippedWeapons.kungfu_po).toBeUndefined();
  expect(html.match(/data-rarity=/g)).toHaveLength(5);expect(html.match(/data-loadout-hero=/g)).toHaveLength(12);

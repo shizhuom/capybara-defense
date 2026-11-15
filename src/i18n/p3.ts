@@ -1,5 +1,5 @@
 const phrases:Record<string,[string,string]>={
-  'p3.guide':['图鉴','Guide'], 'p3.shop':['商店','Shop'], 'p3.auto':['自动轮换','Auto'],
+  'p3.guide':['图鉴','Guide'], 'p3.shop':['商店','Shop'], 'p3.auto':['随机','Random'],
   'p3.armory':['神兵','Armory'], 'p3.rank':['段位','Rank'],
   'p3.map.sunny_backyard':['后院','Backyard'], 'p3.map.sakura_onsen':['樱花','Sakura'],
   'p3.map.midnight_kitchen':['厨房','Kitchen'], 'p3.map.cat_tower_maze':['猫塔','Cat tower'],

@@ -198,10 +198,10 @@ describe('M2 pure progression', () => {
     expect(prizes.filter(p=>p.type==='coins').map(p=>p.amount)).toEqual([40,80,160]);
     const first=m.spinLottery(p,prizes,()=>0);expect(first).toMatchObject({ok:true,index:0,profile:{coins:160,freeLotteryTickets:0,ownedProps:{washer:1}}});
     expect(p.freeLotteryTickets).toBe(1);expect(p.ownedProps).toEqual({});
-    const paid=m.spinLottery(first.profile,prizes,()=>0);expect(paid.profile.coins).toBe(190); // P5: 160 - 60 + capped washer's 90
+    const paid=m.spinLottery(first.profile,prizes,()=>0);expect(paid.profile.coins).toBe(130); // P9: 160 - 120 + capped washer's 90
     const frag=m.spinLottery({...p,weaponFragments:{m07_rolling_pin:3}},prizes,()=>.76);
     expect(frag.newWeapons).toEqual(['m07_rolling_pin']);expect(frag.profile.weaponFragments.m07_rolling_pin).toBe(4);
-    const poor={...m.createProfile(),coins:59};expect(m.spinLottery(poor,prizes,()=>0)).toMatchObject({ok:false,profile:poor});
+    const poor={...m.createProfile(),coins:119};expect(m.spinLottery(poor,prizes,()=>0)).toMatchObject({ok:false,profile:poor});
     expect(m.spinLottery(p,[],()=>0)).toMatchObject({ok:false,profile:p});
     expect(m.spinLottery(p,[...prizes.slice(0,7),{type:'coins',amount:-1}],()=>.99)).toMatchObject({ok:false,profile:p});
   });

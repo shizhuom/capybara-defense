@@ -3,7 +3,7 @@ import {dirname,isAbsolute,join,relative,resolve} from 'node:path';
 import type {Plugin,ResolvedConfig} from 'vite';
 
 const gameRoot=resolve(import.meta.dirname,'..');
-const keys=new Set(['bgm_menu','bgm_battle','bgm_boss','ui_click','summon','shovel','treasure','merge_upgrade','merge_hero','hit_soft','boss_spawn','orange_lost','orange_gain','sprinkler','goose','lottery_tick','lottery_win','victory','defeat','dig','upgrade','legendary','orange']);
+const keys=new Set(['battle_start_clash','hit_melee','hit_ranged','hit_magic','hit_heavy','death_rat','death_bug','death_crab','death_machine','death_frog','death_boss','elite_spawn','hero_merge','bgm_menu','bgm_battle','bgm_boss','ui_click','summon','shovel','treasure','merge_upgrade','merge_hero','hit_soft','boss_spawn','orange_lost','orange_gain','sprinkler','goose','lottery_tick','lottery_win','victory','defeat','dig','upgrade','legendary','orange']);
 // Keep this exact path/extension rule aligned with SoundManager's browser-side validator.
 const safeFile=(value:unknown):value is string=>typeof value==='string'&&/^(?:[a-zA-Z0-9_-]+\/)*[a-zA-Z0-9_-]+\.(?:mp3|ogg|wav|m4a|aac)$/i.test(value);
 const within=(base:string,target:string)=>{const child=relative(base,target);return child===''||(!child.startsWith(`..${process.platform==='win32'?'\\':'/'}`)&&child!=='..'&&!isAbsolute(child));};

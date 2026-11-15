@@ -78,7 +78,7 @@ describe('P5 safe selection and tutorial integration',()=>{
     app.activate({kind:'cell',col:1,row:0});expect(app.selectedProp).toBeUndefined();expect(engine.state.sides.player.propCooldowns.milk_bottle).toBeUndefined();expect(unit.level).toBe(1);
   });
   it('replays into a new guaranteed-pack battle, and opening Guide at step5 awards exactly once and releases hold',()=>{
-    const {app,engine}=harness();app.refresh=()=>{};app.profile.tutorialCompleted=true;app.action('tutorial-replay');
+    const {app,engine}=harness();app.refresh=()=>{};app.profile.tutorialCompleted=true;app.action('tutorial-replay');app.action('skip-transition');
     expect(app.engine).not.toBe(engine);expect(app.engine.options.tutorialGuided).toBe(true);app.engine.tick(30);expect(app.engine.state.spawned).toBe(0);
     app.action('summon');expect(app.selectedId).toBeUndefined();expect(app.engine.state.units.map((u:any)=>u.kind)).toEqual(['hamster','hamster','panda','hat_bamboo','squirrel']);
     app.compendium=new Compendium();app.tutorialStep=5;const coins=app.profile.coins;app.action('recipes');expect(app.tutorialStep).toBe('done');expect(app.profile.coins).toBe(coins+20);

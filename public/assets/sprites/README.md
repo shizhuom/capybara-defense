@@ -160,3 +160,7 @@ Every new HTML sticker has a distinct vector-only offline fallback. Menu wallets
 P6 ships 193 PNGs with the source manifest. Four 256×256 stickers: `ui_result_victory`, `ui_result_defeat`, `ui_header_pause`, `ui_mvp_crown`. Four 192×192 stickers: `ui_lock_closed`, `ui_lock_open`, `ui_wave_horn`, `ui_merge_sparkle`.
 
 These eight IDs have independent SVG fallbacks in `sceneSticker`; Canvas lock and merge badges also remain legible before image decoding. Settlement artwork refreshes with the rest of the asynchronous asset batch.
+
+## P9 v2 shop and battle presentation
+
+The current manifest contains **201** original PNGs. New scene IDs: `npc_shop_raccoon`, `npc_blacksmith_capy`, `ui_gacha_machine`, `ui_trunk_crate`, `ui_battle_clash_crest`, `ui_crossed_blades`, `ui_alert_siren`, and `ui_unlock_chest`. All eight have distinct inline SVG fallbacks and participate in asynchronous menu/dialog refresh. Merchant, weapon-rack, transition and unlock labels remain live bilingual HTML rather than baked text. The source design directory is strictly read-only.
