@@ -7,6 +7,7 @@ import { chromium } from 'playwright-core';
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const runtime = path.join(root, '.runtime', 'browser-tmp');
 const output = path.join(root, 'verification');
+const entry = process.env.CAPY_TEST_URL ?? 'http://127.0.0.1:4175/';
 fs.mkdirSync(runtime, { recursive: true }); fs.mkdirSync(output, { recursive: true });
 const label = process.argv.find(value => value.startsWith('--label='))?.slice(8) ?? 'p3';
 if (!/^[a-z][a-z0-9-]*$/.test(label)) throw Error('Use a lowercase label with optional digits or hyphens.');
@@ -34,7 +35,7 @@ async function setup() {
     localStorage.setItem('capybara_defense_v1:profile', JSON.stringify({ coins: 123, wins: 0, matches: 0, stars: 0, fragments: [], awardedBattles: [], tutorialCompleted: true }));
     localStorage.setItem('capybara_defense_v1:language', 'zh-CN');
   });
-  await page.goto('http://127.0.0.1:4175/?dev=1', { waitUntil: 'networkidle' });
+  await page.goto(new URL('?dev=1', entry).href, { waitUntil: 'networkidle' });
   assert.equal(await page.evaluate(() => typeof window.__CAPY_DEBUG__), 'undefined', 'Use actual production4175');
   await page.locator('#dev-tools > summary').click();
   await page.locator('.keyboard-card').evaluate(el => { el.open = true; });

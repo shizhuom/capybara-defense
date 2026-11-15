@@ -1,5 +1,5 @@
 {
-  "at": "2026-11-15T01:08:21.715Z",
+  "at": "2026-11-15T05:24:08.602Z",
   "checks": [
     "phone-landscape-zh-CN: readable contained menu and five tutorial steps with real touch summon/deploy/acknowledge",
     "phone-landscape-zh-CN: readable Boss status with non-overlapping resource and control docks",
@@ -181,9 +181,9 @@
         }
       ],
       "bubble": {
-        "left": 172.8125,
+        "left": 319.0625,
         "top": 113.734375,
-        "right": 400.296875,
+        "right": 546.546875,
         "bottom": 255.75
       },
       "stage": {
@@ -214,9 +214,9 @@
         }
       ],
       "bubble": {
-        "left": 432.8125,
+        "left": 319.0625,
         "top": 173.3125,
-        "right": 660.296875,
+        "right": 546.546875,
         "bottom": 303.96875
       },
       "stage": {
@@ -493,9 +493,9 @@
         }
       ],
       "bubble": {
-        "left": 172.8125,
+        "left": 319.0625,
         "top": 113.734375,
-        "right": 400.296875,
+        "right": 546.546875,
         "bottom": 272
       },
       "stage": {
@@ -526,9 +526,9 @@
         }
       ],
       "bubble": {
-        "left": 432.8125,
+        "left": 319.0625,
         "top": 162.515625,
-        "right": 660.296875,
+        "right": 546.546875,
         "bottom": 323.890625
       },
       "stage": {

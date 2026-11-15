@@ -3,7 +3,8 @@ import {BattleEngine} from '../src/core/BattleEngine';
 import {GameApp} from '../src/ui/GameApp';
 import {RECIPES} from '../src/config/recipes';
 import * as hints from '../src/core/MergeTargets';
-import {setLanguage} from '../src/i18n/i18n';
+import {setLanguage,t} from '../src/i18n/i18n';
+import {p8Zh,p8En} from '../src/i18n/p8';
 import type {Unit} from '../src/core/types';
 import {StickerRenderer} from '../src/render/StickerRenderer';
 import {assets} from '../src/render/AssetRegistry';
@@ -73,6 +74,10 @@ describe('P8 crowded-board foreground reminders',()=>{
  });
 });
 describe('P8 selection and hero locator',()=>{
+ it('provides symmetric bilingual labels and resolves every locator variable',()=>{
+  expect(Object.keys(p8Zh).sort()).toEqual(Object.keys(p8En).sort());
+  for(const language of ['zh-CN','en'] as const){setLanguage(language);for(const key of Object.keys(p8Zh)){const text=t(key,{hero:t('hero.ronin_goose'),count:2,others:1});expect(text).not.toBe(key);expect(text).not.toMatch(/\{\w+\}/);}}
+ });
  it('clears ordinary summon/deployment selection while preserving selected merge results',()=>{
   const e=battle(),{app}=appFor(e);app.selectedId=998;app.action('summon');expect(app.selectedId).toBeUndefined();
   e.state.units=[];const a=add(e,'hamster','bench');app.selectedId=a.id;app.activate({kind:'cell',col:2,row:1});expect(app.selectedId).toBeUndefined();

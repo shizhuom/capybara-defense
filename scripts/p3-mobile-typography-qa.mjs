@@ -12,7 +12,12 @@ const checks=[],errors=[],measurements=[];let failure=null;
 const overlap=(a,b)=>a.left<b.right-1&&a.right>b.left+1&&a.top<b.bottom-1&&a.bottom>b.top+1;
 const inside=(a,b)=>a.left>=b.left-1&&a.right<=b.right+1&&a.top>=b.top-1&&a.bottom<=b.bottom+1;
 const mark=text=>{checks.push(text);console.log('PASS '+text);};
-const box=(page,selector)=>page.locator(selector).boundingBox().then(b=>({left:b.x,top:b.y,right:b.x+b.width,bottom:b.y+b.height}));
+// Tutorial markup refreshes every frame. Sample existence and bounds atomically,
+// rather than resolving a node that can detach before boundingBox reads it.
+const box=async(page,selector)=>{
+ const handle=await page.waitForFunction(selector=>{const r=document.querySelector(selector)?.getBoundingClientRect();return r?.width&&r.height?{left:r.left,top:r.top,right:r.right,bottom:r.bottom}:null;},selector);
+ const result=await handle.jsonValue();await handle.dispose();return result;
+};
 async function fonts(page,selectors,min=12){
   const values=await page.evaluate(selectors=>selectors.flatMap(selector=>[...document.querySelectorAll(selector)].filter(el=>el.getClientRects().length).map(el=>({selector,size:parseFloat(getComputedStyle(el).fontSize),text:el.textContent?.trim().slice(0,55)}))),selectors);
   assert.ok(values.length>0,'Typography selectors resolve visible content');
