@@ -5,6 +5,9 @@ import {RECIPES} from '../src/config/recipes';
 import * as hints from '../src/core/MergeTargets';
 import {setLanguage} from '../src/i18n/i18n';
 import type {Unit} from '../src/core/types';
+import {StickerRenderer} from '../src/render/StickerRenderer';
+import {assets} from '../src/render/AssetRegistry';
+import type {Interaction} from '../src/core/types';
 
 afterEach(()=>{vi.restoreAllMocks();setLanguage('zh-CN');});
 function battle(){const e=new BattleEngine({seed:808,autoWaves:false});e.start();return e;}
@@ -41,6 +44,32 @@ describe('P8 full-field merge metadata',()=>{
   hero.statuses.MERGE_LOCK=5;expect(hints.getPassiveMergeCallouts(e.state)).toEqual([]);
   hero.statuses={};panda.washing=2;expect(hints.getPassiveMergeCallouts(e.state)).toEqual([]);
   panda.washing=0;add(e,'shovel','bench');expect(hints.getPassiveMergeCallouts(e.state)).toHaveLength(2);
+ });
+});
+
+function surface(){
+ const calls:{name:string;args:any[]}[]=[],values:Record<string,unknown>={globalAlpha:1};
+ const c=new Proxy(values,{get(v,k:string){if(k in v)return v[k];if(k==='measureText')return(s:string)=>({width:s.length*8});if(k.includes('Gradient'))return()=>({addColorStop(){}});return(...args:unknown[])=>calls.push({name:k,args});},set(v,k:string,value){v[k]=value;return true;}}) as unknown as CanvasRenderingContext2D;
+ return{calls,renderer:new StickerRenderer({getContext:()=>c,width:0,height:0} as unknown as HTMLCanvasElement)};
+}
+describe('P8 crowded-board foreground reminders',()=>{
+ it.each(RECIPES.slice(8).flatMap(r=>(['board','bench'] as const).map(zone=>({r,zone}))))('$r.hero remains prominent with 14 pets, unrelated selection and $zone partner',({r,zone})=>{
+  const e=battle();for(let i=0;i<13;i++)add(e,'hamster').level=5;
+  const single=add(e,'squirrel'),a=add(e,r.parts[0]),b=add(e,r.parts[1],zone);
+  const sprites=new Map(e.state.units.map(u=>[u.kind,{id:u.kind,naturalWidth:128,naturalHeight:128}]));sprites.set(r.hero,{id:r.hero,naturalWidth:128,naturalHeight:128});sprites.set('ui_merge_sparkle',{id:'ui_merge_sparkle',naturalWidth:128,naturalHeight:128});
+  vi.spyOn(assets,'get').mockImplementation(id=>sprites.get(id) as unknown as HTMLImageElement);
+  const{calls,renderer}=surface();renderer.draw(e.state,1,{selectedId:single.id});
+  const badges=calls.map((c,i)=>({c,i})).filter(({c})=>c.name==='fillText'&&c.args[0]==='可合!');expect(badges).toHaveLength(2);
+  const unitLast=Math.max(...calls.map((c,i)=>c.name==='drawImage'&&[single.kind,a.kind,b.kind,'hamster'].includes(c.args[0]?.id)?i:-1));
+  for(const {i}of badges)expect(i).toBeGreaterThan(unitLast);
+  expect(calls.filter(c=>c.name==='drawImage'&&c.args[0]?.id===r.hero)).toHaveLength(2);
+ });
+ it('retains unrelated passive pairs while a mergeable pet is selected, but suppresses them during held previews/tools',()=>{
+  const e=battle(),panda=add(e,'panda');add(e,'hat_bamboo','bench');add(e,'goose');add(e,'cleaver');add(e,'hamster');add(e,'hamster');
+  const idle=surface();idle.renderer.draw(e.state,1,{selectedId:panda.id});
+  expect(idle.calls.filter(c=>c.name==='fillText'&&c.args[0]==='可合!').length).toBeGreaterThanOrEqual(2);
+  expect(idle.calls.filter(c=>c.name==='fillText'&&c.args[0]==='▲升星')).toHaveLength(2);
+  for(const interaction of [{draggingId:panda.id},{previewSourceId:panda.id},{shovel:true},{propId:'washer'}] as Interaction[]){const s=surface();s.renderer.draw(e.state,1,interaction);expect(s.calls.some(c=>c.name==='fillText'&&['可合!','▲升星'].includes(c.args[0]))).toBe(false);}
  });
 });
 describe('P8 selection and hero locator',()=>{

@@ -230,9 +230,9 @@ export class GameApp {
         const hit = this.renderer.hitTest(interaction.pointer.x, interaction.pointer.y);
         if (hit?.kind === 'cell') interaction.hover = { col: hit.col, row: hit.row };
       }
-      if(!interaction.shovel&&!interaction.propId&&(interaction.draggingId||interaction.previewSourceId||interaction.selectedId)){
+      if(!interaction.shovel&&!interaction.propId&&state.units.length>1){
         const bounds=this.canvas.getBoundingClientRect();
-        if(bounds.width&&bounds.height)interaction.mergeAvoidRects=[...this.root.querySelectorAll<HTMLElement>('.resource-dock,.control-dock,.wave-progress>span,#boss-banner,#live-unit-card')].flatMap(element=>{
+        if(bounds.width&&bounds.height)interaction.mergeAvoidRects=[...this.root.querySelectorAll<HTMLElement>('.resource-dock,.control-dock,.wave-progress>span,#boss-banner,#live-unit-card,#redraw-hero-badge')].flatMap(element=>{
           if(element.hidden)return[];const r=element.getBoundingClientRect();
           return r.width&&r.height?[{x:(r.left-bounds.left)/bounds.width*STAGE.width,y:(r.top-bounds.top)/bounds.height*STAGE.height,w:r.width/bounds.width*STAGE.width,h:r.height/bounds.height*STAGE.height}]:[];
         });

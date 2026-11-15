@@ -5,10 +5,10 @@ const clamp=(v:number,min:number,max:number)=>Math.max(min,Math.min(max,v));
 const overlap=(a:StageRect,b:StageRect)=>Math.max(0,Math.min(a.x+a.w+4,b.x+b.w)-Math.max(a.x-4,b.x))*Math.max(0,Math.min(a.y+a.h+4,b.y+b.h)-Math.max(a.y-4,b.y));
 
 /** Prefer directly above/below the partner; HUD and previous labels are hard obstacles. */
-export function placeMergeCallout(p:{x:number;y:number},w:number,h:number,obstacles:readonly StageRect[],used:readonly StageRect[]):StageRect {
+export function placeMergeCallout(p:{x:number;y:number},w:number,h:number,obstacles:readonly StageRect[],used:readonly StageRect[],belowOffset?:number):StageRect {
  const rect=(x:number,y:number):StageRect=>({x:clamp(x,8,STAGE.width-w-8),y:clamp(y,8,STAGE.height-h-8),w,h});
  const blocked=(r:StageRect)=>[...obstacles,...used].some(o=>overlap(r,o)>0);
- const preferred=[rect(p.x-w/2,p.y-82),rect(p.x-w/2,p.y+58)];
+ const preferred=belowOffset===undefined?[rect(p.x-w/2,p.y-82),rect(p.x-w/2,p.y+58)]:[rect(p.x-w/2,p.y+belowOffset),rect(p.x-w/2,p.y-70)];
  for(const r of preferred)if(!blocked(r))return r;
  const candidates=[...preferred,rect(p.x-w-58,p.y-h/2),rect(p.x+58,p.y-h/2)];
  // Search the full safe stage if several neighboring partners need translated labels.

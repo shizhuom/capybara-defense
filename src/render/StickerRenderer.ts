@@ -1,11 +1,11 @@
-import type { BattleLoadout, BattleState, Enemy, Interaction, MapId, Side, Unit, VisualEvent } from '../core/types';
+import type { BattleLoadout, BattleState, Enemy, Interaction, MapId, Side, StageRect, Unit, VisualEvent } from '../core/types';
 import {combatRange,combatCharge} from '../core/CombatRules';
 import { getMap, STAGE } from '../config/maps';
 import {EnemyMotion} from './EnemyMotion';
 import {SHOVEL_PRODUCTION,UNITS} from '../config/units';
 import { HEROES } from '../config/heroes';
 import { MergeSystem } from '../core/MergeSystem';
-import {getMergeTargets,getBenchMergeHints,getBoardMergeHints,type MergeTarget} from '../core/MergeTargets';
+import {getMergeTargets,getBenchMergeHints,getPassiveMergeCallouts,type MergeTarget} from '../core/MergeTargets';
 import { t } from '../i18n/i18n';
 import { assets } from './AssetRegistry';
 import { drawCapybaraArt, drawEnemyArt, drawOrange, drawShovelArt, drawUnitArt, ellipse, INK, line, PAPER, polygon, round, star } from './StickerArt';
@@ -85,7 +85,6 @@ export class StickerRenderer {
     this.drawInteractionUnderlay(state,interaction,seconds);
     this.drawGuardian(state.mapId,state.sides.player.oranges,seconds);
     const source=this.mergeSource(state,interaction),targets=new Map(source?getMergeTargets(state,source.id).map(t=>[t.unitId,t]):[]);
-    const passive=!source&&!interaction.shovel&&!interaction.propId?getBoardMergeHints(state):[];
 
     const liveIds=new Set(state.units.map(unit=>unit.id));
     for(const id of this.unitPositions.keys()) if(!liveIds.has(id)) this.unitPositions.delete(id);
@@ -96,8 +95,6 @@ export class StickerRenderer {
       this.unitPositions.set(unit.id,point);
       const opacity=interaction.draggingId===unit.id ? .23 : targets.size&&!targets.has(unit.id)&&source?.id!==unit.id ? .72 : 1;
       this.drawUnit(unit,point,seconds,opacity,false,state.sides[unit.side].loadout,this.mergeScale(unit,targets.has(unit.id),interaction,seconds));
-      const hint=passive.find(h=>h.unitId===unit.id);
-      if(hint)this.drawBenchBadge('ui_merge_sparkle',point.x+37,point.y-36,hint.kind==='hero'?24:19);
     }
     const enemies=state.enemies.filter(enemy=>enemy.side==='player');
     const enemyIds=new Set(enemies.map(enemy=>enemy.id));this.enemyMotion.retain(enemyIds);
@@ -107,10 +104,11 @@ export class StickerRenderer {
     this.drawEvents(state,seconds,false,interaction.showDamageNumbers!==false);
     this.drawOrangeMotions();
     this.drawFog(state,seconds);
-    this.drawNests(state,interaction,seconds);
+    this.drawNests(state,interaction,seconds,true);
     this.drawTools(state,interaction,seconds);
     this.drawEvents(state,seconds,true,interaction.showDamageNumbers!==false);
-    this.drawActiveMergeHighlights(state,interaction,seconds);
+    const passiveRects=this.drawPassiveMergeOverlay(state,interaction,seconds);
+    this.drawActiveMergeHighlights(state,interaction,seconds,passiveRects);
     this.drawDrag(state,interaction,seconds);
   }
 
@@ -334,8 +332,8 @@ export class StickerRenderer {
     const source=drag??selected,benchTool=source?.kind==='shovel'&&source.location.zone==='bench';
     const digging=!!interaction.shovel||benchTool,canDig=benchTool||state.sides.player.shovels>=1;
     if(interaction.propId){this.drawPropTargets(state,interaction,seconds);return;}
-    if(!source&&!interaction.shovel)for(const hint of getBoardMergeHints(state)){
-      const p=cellCenter(hint.col,hint.row),hero=hint.kind==='hero',pulse=(1+Math.sin(seconds*3+hint.unitId))/2;
+    for(const hint of this.passiveCallouts(state,interaction).filter(h=>h.zone==='board')){
+      const p=this.position(state.units.find(u=>u.id===hint.unitId)!),hero=hint.kind==='hero',pulse=(1+Math.sin(seconds*3))/2;
       c.save();c.globalAlpha=.5+pulse*.24;c.shadowBlur=12;c.shadowColor=hero?'#f4be37':'#38b86d';
       ellipse(c,p.x,p.y+6,48+pulse*3,42+pulse*3,'transparent',hero?'#e7b33e':'#4bb780',2.5);c.restore();
     }
@@ -388,7 +386,35 @@ export class StickerRenderer {
 
   private mergeSource(state:BattleState,interaction:Interaction):Unit|undefined {
     if(interaction.shovel||interaction.propId)return;
-    return state.units.find(u=>u.id===(interaction.draggingId??interaction.previewSourceId??interaction.selectedId)&&u.side==='player');
+    const held=interaction.draggingId??interaction.previewSourceId;
+    const source=state.units.find(u=>u.id===(held??interaction.selectedId)&&u.side==='player');
+    return source&&(held!==undefined||getMergeTargets(state,source.id).length)?source:undefined;
+  }
+  private passiveCallouts(state:BattleState,interaction:Interaction){
+    if(interaction.draggingId!==undefined||interaction.previewSourceId!==undefined||interaction.shovel||interaction.propId)return [];
+    const source=this.mergeSource(state,interaction),covered=new Set(source?getMergeTargets(state,source.id).map(t=>t.unitId):[]);
+    return getPassiveMergeCallouts(state).filter(h=>!covered.has(h.unitId));
+  }
+  /** Same-phase partner badges stay above sprites and combat effects even with an unrelated selection. */
+  private drawPassiveMergeOverlay(state:BattleState,interaction:Interaction,seconds:number):StageRect[] {
+    const used:StageRect[]=[],c=this.c,pulse=(1+Math.sin(seconds*3))/2;
+    for(const hint of this.passiveCallouts(state,interaction)){
+      const unit=state.units.find(u=>u.id===hint.unitId)!,p=(unit.location.zone==='board'?this.unitPositions.get(unit.id):undefined)??this.position(unit);
+      const hero=hint.kind==='hero',radius=unit.location.zone==='board'?47+pulse*4:42+pulse*3;
+      c.save();c.shadowBlur=8+pulse*5;c.shadowColor=hero?'#ffaa00':'#1db964';
+      ellipse(c,p.x,p.y,radius,radius*.92,'transparent',hero?'#ffaa00':'#1db964',hero?3.5:3);
+      if(hero)ellipse(c,p.x,p.y,radius+4,radius*.92+4,'transparent','#fff5ad',1.8);
+      c.shadowBlur=0;
+      this.drawBenchBadge('ui_merge_sparkle',p.x+(unit.location.zone==='board'?-38:38),p.y+(unit.location.zone==='board'?-29:0),hero?26:20);
+      const label=t(hero?'p8.merge':'p8.upgrade');c.font=`900 13px ${FONT}`;
+      const width=c.measureText(label).width+(hero?34:18),height=24;
+      const rect=placeMergeCallout(p,width,height,interaction.mergeAvoidRects??[],used,34);used.push(rect);
+      round(c,rect.x,rect.y,width,height,9,hero?'#ffd84d':'#7ef2ad',hero?'#5c3408':'#145c32',2);
+      if(hero&&hint.heroId){const image=this.assets.get(hint.heroId);if(image)c.drawImage(image,rect.x+4,rect.y+2,20,20);else{c.save();c.translate(rect.x+14,rect.y+12);c.scale(.25,.25);drawUnitArt(c,hint.heroId,seconds);c.restore();}}
+      this.label(label,rect.x+(hero?28:9),rect.y+12,13,hero?'#1f1105':'#0a331b','left',900);
+      c.restore();
+    }
+    return used;
   }
   private mergeScale(unit:Unit,isTarget:boolean,interaction:Interaction,seconds:number):number {
     if(!isTarget)return 1;
@@ -398,9 +424,9 @@ export class StickerRenderer {
     return hot&&interaction.draggingId!==undefined?1.12:1+.07*(1+Math.sin(seconds*4+unit.id))/2;
   }
   /** Foreground layer: never hide the outcome behind the pet or the nest background. */
-  private drawActiveMergeHighlights(state:BattleState,interaction:Interaction,seconds:number):void {
+  private drawActiveMergeHighlights(state:BattleState,interaction:Interaction,seconds:number,used:StageRect[]=[]):void {
     const source=this.mergeSource(state,interaction);if(!source)return;
-    const c=this.c,used:Array<{x:number;y:number;w:number;h:number}>=[];
+    const c=this.c;
     const obstacles=interaction.mergeAvoidRects??[{x:0,y:0,w:STAGE.width,h:90}];
     for(const target of getMergeTargets(state,source.id)){
       const unit=state.units.find(u=>u.id===target.unitId)!;
@@ -463,10 +489,11 @@ export class StickerRenderer {
     }
   }
 
-  private drawNests(state:BattleState,interaction:Interaction,seconds:number):void {
+  private drawNests(state:BattleState,interaction:Interaction,seconds:number,deferPassiveBadges=false):void {
     const c=this.c;
     const active=this.mergeSource(state,interaction),targets=new Map<number,MergeTarget>(active?getMergeTargets(state,active.id).map(t=>[t.unitId,t]):[]);
-    const hints=active||interaction.shovel||interaction.propId||interaction.pointer?[]:getBenchMergeHints(state);
+    const uncovered=new Set(this.passiveCallouts(state,interaction).map(h=>h.unitId));
+    const hints=interaction.pointer?[]:getBenchMergeHints(state).filter(h=>uncovered.has(h.unitId));
     for(let slot=0;slot<5;slot++){
       const x=STAGE.benchX+slot*STAGE.benchStep,y=STAGE.benchY,w=STAGE.benchSize;
       const unit=state.units.find(unit=>unit.side==='player'&&unit.location.zone==='bench'&&unit.location.slot===slot);
@@ -493,7 +520,8 @@ export class StickerRenderer {
       if(unit&&interaction.allowBenchLock){
         c.save();c.globalAlpha=locked?1:.62;this.drawBenchBadge(locked?'ui_lock_closed':'ui_lock_open',x+13,y+13,24);c.restore();
       }
-      if(hint){
+      // Full-frame rendering lifts these badges above every nest and combat effect.
+      if(hint&&!deferPassiveBadges){
         const hero=hint.kind==='hero',size=hero?28:22;
         this.drawBenchBadge('ui_merge_sparkle',x+w-13,y+w-13+(hero?Math.sin(seconds*3.5)*2.5:0),size);
         if(hero){round(c,x+3,y+w-17,w-30,16,6,'#f4d582','#b88b33',1);this.label(t('p6.heroBadge'),x+(w-24)/2,y+w-9,11,'#68411b','center',800);}
