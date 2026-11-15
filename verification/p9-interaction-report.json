@@ -1,0 +1,11 @@
+{
+  "passed": true,
+  "checks": [
+    "Armory drawers and keyboard focus survive updates",
+    "Phone first shelf visible and English portrait bookmarks contained",
+    "Settings and armory during curtain freeze battle, keep focus, resume only after closing",
+    "Live unit cards on both margins remain clear of the enemy alert",
+    "First normal victory visibly celebrates the one-star roster tier"
+  ],
+  "errors": []
+}

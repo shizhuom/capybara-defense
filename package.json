@@ -1,6 +1,6 @@
 {
   "name": "capybara-chill-defense",
-  "version": "1.0.0",
+  "version": "2.0.0",
   "private": true,
   "type": "module",
   "engines": {
@@ -12,7 +12,7 @@
     "build": "tsc --noEmit && vite build",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
-    "test:browser": "node scripts/p8-emphasis-keyboard-qa.mjs && node scripts/p8-browser-qa.mjs && node scripts/p3-mobile-typography-qa.mjs",
+    "test:browser": "node scripts/p9-browser-qa.mjs && node scripts/p9-interaction-qa.mjs && node scripts/p9-audio-qa.mjs && node scripts/p3-mobile-typography-qa.mjs",
     "preview": "vite preview --host 127.0.0.1 --port 4175 --strictPort"
   },
   "devDependencies": {

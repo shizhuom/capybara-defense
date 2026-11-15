@@ -213,13 +213,16 @@ export class GameApp {
     if(!this.transitionUntil)return;
     this.transitionUntil=0;this.engine?.setTransitionHold(false);this.sound.setMusicPaused?.(false);
     this.element('battle-transition').hidden=true;
-    this.canvas.focus({preventScroll:true});
+    if(!this.dialog?.open)this.canvas.focus({preventScroll:true});
   }
   private renderEnemyAlerts(now:number):void {
     const state=this.engine?.state;if(!state)return;
     for(const event of state.events)if(event.enemyKind&&(event.effect==='elite_spawn'||event.effect==='boss_spawn')&&!this.alertSeen.has(event.id)){
       this.alertSeen.add(event.id);
-      if(event.boss&&!this.activeAlert?.event.boss){this.alertQueue.unshift(event);this.activeAlert=undefined;}else this.alertQueue.push(event);
+      if(event.boss&&!this.activeAlert?.event.boss){
+        if(this.activeAlert)this.alertQueue.unshift(this.activeAlert.event);
+        this.alertQueue.unshift(event);this.activeAlert=undefined;
+      }else this.alertQueue.push(event);
     }
     if(this.activeAlert&&now>=this.activeAlert.until)this.activeAlert=undefined;
     if(!this.activeAlert&&this.alertQueue.length)this.activeAlert={event:this.alertQueue.shift()!,until:now+2600};
@@ -662,7 +665,10 @@ export class GameApp {
 
   private renderDialog(): void {
     const kind = this.dialogKind;
-    const focused=typeof document!=='undefined'&&typeof HTMLElement!=='undefined'&&document.activeElement instanceof HTMLElement&&this.dialog.contains(document.activeElement)?document.activeElement.dataset.action:undefined;
+    const active=typeof document!=='undefined'&&typeof HTMLElement!=='undefined'&&document.activeElement instanceof HTMLElement&&this.dialog.contains(document.activeElement)?document.activeElement:undefined;
+    const focused=active?.dataset.action,rarityFocus=active?.dataset.rarity;
+    const heroFocus=active?.dataset.loadoutHero??(focused?.startsWith('meta-unequip:')?focused.split(':')[1]:undefined);
+    const disclosures=kind==='armory'?['.recycle-panel','.p9-loadout-overview'].map(selector=>({selector,open:!!this.dialog.querySelector<HTMLDetailsElement>(selector)?.open})):[];
     const ledgerPage=!!kind&&['recipes','armory','market','profile','leaderboard','settings','pause','result'].includes(kind);
     const stamp=JSON.stringify([kind,kind==='recipes'?this.compendium.viewKey:kind==='market'?this.meta.tab:kind==='armory'?[this.meta.family,this.meta.orangeFirst]:null]);
     const scrolls=['.ledger-body','.market-stall','.market-backpack','.p9-weapon-rack','.p9-anvil','.p9-merchant','.p9-speech','.p9-market-racks'].map(selector=>({selector,top:stamp===this.ledgerStamp?this.dialog.querySelector<HTMLElement>(selector)?.scrollTop??0:0}));
@@ -688,6 +694,7 @@ export class GameApp {
     } else if (kind === 'result' && this.engine?.state.result) {
       this.dialog.innerHTML=resultMarkup({state:this.engine.state,profile:this.profile,savedResult:this.savedResult,resultStars:this.resultStars,previousRank:this.previousRank,newWeapons:this.newWeapons,newAvatars:this.newAvatars,newRoster:this.newRoster});
     }
+    for(const {selector,open} of disclosures){const details=this.dialog.querySelector<HTMLDetailsElement>(selector);if(details)details.open=open;}
     for(const {selector,top} of scrolls){
       const body=this.dialog.querySelector<HTMLElement>(selector);
       if(body){
@@ -696,7 +703,11 @@ export class GameApp {
         body.style.scrollBehavior='auto';body.scrollTop=top;body.style.scrollBehavior=behavior;
       }
     }
-    if(focused&&kind!=='recipes')this.dialog.querySelector<HTMLElement>(`[data-action="${CSS.escape(focused)}"]`)?.focus({preventScroll:true});
+    if(kind!=='recipes'){
+      let target=focused?this.dialog.querySelector<HTMLElement>(`[data-action="${CSS.escape(focused)}"]`):rarityFocus!==undefined?this.dialog.querySelector<HTMLElement>(`[data-rarity="${CSS.escape(rarityFocus)}"]`):null;
+      if(!target&&heroFocus){target=this.dialog.querySelector<HTMLElement>(`[data-loadout-hero="${CSS.escape(heroFocus)}"]`);if(target)target.tabIndex=-1;}
+      target?.focus({preventScroll:true});
+    }
     this.focusCompendium();
   }
 
@@ -726,8 +737,9 @@ export class GameApp {
 
   private openModal(kind: 'recipes' | MetaScreen): void {
     if (!this.modalReturn) {
-      this.modalReturn = { dialog: this.dialogKind, resume: this.canInteract() };
-      if (this.canInteract()) this.engine!.pause(true);
+      const playing=this.engine?.state.phase==='playing';
+      this.modalReturn = { dialog: this.dialogKind, resume: playing };
+      if (playing) this.engine!.pause(true);
     }
     this.cancelDrag(); this.cancelPropDrag();
     this.showDialog(kind); this.refresh();
@@ -767,8 +779,9 @@ export class GameApp {
 
   private openProfileScreen(screen: ProfileScreen): void {
     if (!this.overlayReturn) {
-      this.overlayReturn = { dialog: this.dialogKind, resume: this.canInteract() };
-      if (this.canInteract()) this.engine!.pause(true);
+      const playing=this.engine?.state.phase==='playing';
+      this.overlayReturn = { dialog: this.dialogKind, resume: playing };
+      if (playing) this.engine!.pause(true);
     }
     this.cancelDrag(); this.cancelPropDrag();
     this.showDialog(screen); this.refresh();

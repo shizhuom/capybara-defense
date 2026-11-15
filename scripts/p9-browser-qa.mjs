@@ -49,9 +49,12 @@ try{
      await action(p,'meta-equip:m10_bamboo_staff:kungfu_po');assert.equal(await p.evaluate(()=>window.__CAPY_DEBUG__.profile.equippedWeapons.kungfu_po),'m10_bamboo_staff');
     }else if(name==='market'){
      await action(p,'meta-tab:shop');await action(p,'meta-packet:washer');await audit(p,`${label}-${lang}-market`);if(lang==='zh-CN')await shot(p,`p9-${label}-market-trunk-packets`);
+     const offer=await p.evaluate(async()=>{const a=window.__CAPY_DEBUG__,id=a.profile.shop.offers[0],{PROPS}=await import('/src/config/props.ts');return{id,price:PROPS[id].price,level:a.profile.ownedProps[id]??0,coins:a.profile.coins};});
+     await p.locator(`.p9-daily-shelf [data-action="meta-buy:${offer.id}"]`).click();assert.equal(await p.evaluate(()=>window.__CAPY_DEBUG__.profile.coins),offer.coins-offer.price);assert.equal(await p.evaluate(id=>window.__CAPY_DEBUG__.profile.ownedProps[id],offer.id),offer.level+1);
+     const coins=await p.evaluate(()=>window.__CAPY_DEBUG__.profile.coins);await action(p,'meta-refresh');assert.equal(await p.evaluate(()=>window.__CAPY_DEBUG__.profile.coins),coins-20);
      const before=await p.evaluate(()=>window.__CAPY_DEBUG__.profile.equippedActiveProps.includes('washer'));await action(p,'meta-prop:washer');assert.equal(await p.evaluate(()=>window.__CAPY_DEBUG__.profile.equippedActiveProps.includes('washer')),!before);
      await action(p,'meta-tab:lottery');await audit(p,`${label}-${lang}-gacha`);if(lang==='zh-CN')await shot(p,`p9-${label}-gacha-arcade`);
-     const ticket=await p.evaluate(()=>window.__CAPY_DEBUG__.profile.freeLotteryTickets);await action(p,ticket?'meta-spin:ticket':'meta-spin:coins');await p.locator('.lottery-result').waitFor();await audit(p,`${label}-${lang}-gacha-reveal`);
+     const ticket=await p.evaluate(()=>window.__CAPY_DEBUG__.profile.freeLotteryTickets);await action(p,lang==='en'?'meta-spin:coins':'meta-spin:ticket');await p.locator('.lottery-result').waitFor();assert.equal(await p.evaluate(()=>window.__CAPY_DEBUG__.profile.freeLotteryTickets),ticket-(lang==='en'?0:1));await audit(p,`${label}-${lang}-gacha-reveal`);
      await action(p,'meta-tab:shop');
     }else {await audit(p,`${label}-${lang}-${name}`);if(lang==='zh-CN')await shot(p,`p9-${label}-${name}`);}
     await action(p,close);

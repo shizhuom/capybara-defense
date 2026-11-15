@@ -42,6 +42,23 @@ describe('P9 gated encyclopedia and saved progress celebration',()=>{
  });
 });
 describe('P9 trusted gestures and presentation integration',()=>{
+ it('resumes an interrupted elite counter-tip after the urgent boss announcement',()=>{
+  const engine=new BattleEngine({autoWaves:false});engine.start();
+  const card={hidden:true},banner={hidden:true,innerHTML:'',style:{},classList:{toggle:vi.fn()}};
+  const app:any=Object.create(GameApp.prototype);Object.assign(app,{engine,alertSeen:new Set(),alertQueue:[],element:(id:string)=>id==='live-unit-card'?card:banner,canvas:{getBoundingClientRect:()=>({width:1280})}});
+  engine.spawnEnemy('crab','player');app.renderEnemyAlerts(0);expect(app.activeAlert.event.enemyKind).toBe('crab');
+  engine.spawnBoss('husky_wrecker');app.renderEnemyAlerts(100);expect(app.activeAlert.event.enemyKind).toBe('husky_wrecker');
+  app.renderEnemyAlerts(2701);expect(app.activeAlert?.event.enemyKind).toBe('crab');
+  app.renderEnemyAlerts(5400);expect(app.activeAlert).toBeUndefined();
+ });
+ it.each([['openProfileScreen','settings','closeProfileScreen'],['openModal','armory','closeModal']] as const)('pauses during the curtain when %s opens a dialog and restores play on close', (open,screen,close)=>{
+  const engine=new BattleEngine();engine.start();engine.setTransitionHold(true);
+  const app:any=Object.create(GameApp.prototype),dialog={open:false,close:vi.fn(()=>{dialog.open=false;})};
+  Object.assign(app,{engine,transitionUntil:1000,dialog,dialogKind:null,canvas:{focus:vi.fn()},element:()=>({hidden:false}),sound:{setMusicPaused:vi.fn(),setDucked:vi.fn()},cancelDrag:vi.fn(),cancelPropDrag:vi.fn(),refresh:vi.fn(),showDialog:(kind:string)=>{app.dialogKind=kind;dialog.open=true;}});
+  vi.stubGlobal('document',{hidden:false});app[open](screen);expect(engine.state.phase).toBe('paused');
+  app.endTransition();engine.tick(20);expect(engine.state.waveTime).toBe(0);expect(engine.state.spawned).toBe(0);expect(app.canvas.focus).not.toHaveBeenCalled();
+  app[close]();expect(engine.state.phase).toBe('playing');engine.tick(1);expect(engine.state.waveTime).toBe(1);
+ });
  it('calls unlock synchronously from non-passive gestures, guards running state and retries interruption',async()=>{
   const host=new EventTarget(),doc=Object.assign(new EventTarget(),{hidden:false}),listeners=vi.spyOn(host,'addEventListener');let unlocked=false;
   const sound={isUnlocked:()=>unlocked,unlock:vi.fn(()=>Promise.resolve())},unbind=bindAudioGestures(sound,host as Window,doc as Document);

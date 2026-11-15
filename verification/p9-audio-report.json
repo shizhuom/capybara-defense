@@ -1,0 +1,1200 @@
+{
+  "date": "2026-11-15T10:02:19.500Z",
+  "origin": "http://127.0.0.1:4175",
+  "kind": "Real headless Chromium AudioContext PCM, not physical iOS verification",
+  "checks": [
+    "Trusted click unlocks real AudioContext; both default buses feed configured compressor and makeup",
+    "All three distinct mode spectra, orchestral versus sawtooth/drum families, phone-band energy, audible RMS, no clipping, continuous 64-step wrap",
+    "Pause renders zero PCM; resume restores music",
+    "Native context.suspend followed by another trusted click resumes audible scheduling; interruption hardware remains device-only",
+    "Every typed impact, family death, clash and alert has independently rendered audible unclipped PCM with music paused",
+    "Rapid mode switches stay bounded; disposal disconnects every tracked manager-created node and voice"
+  ],
+  "errors": [],
+  "modes": [
+    {
+      "mode": "menu",
+      "peak": 0.33698832988739014,
+      "rms": 0.03242888562232419,
+      "clippedSamples": 0,
+      "samples": 158848,
+      "renderedSeconds": 3.3093333333333335,
+      "contextSeconds": 3.312,
+      "longestSilenceSeconds": 0.0630625,
+      "phoneBandEnergyRatio": 0.04144285950491135,
+      "spectralCentroidHz": 409.0464235328505,
+      "dominantHz": [
+        94,
+        492,
+        141,
+        117,
+        164,
+        516,
+        398,
+        469
+      ],
+      "minimumCompressorReductionDb": -2.738845109939575,
+      "voiceFamilies": {
+        "triangle": 33,
+        "sine": 3
+      },
+      "liveVoices": 6,
+      "wrap": {
+        "peak": 0.3453162908554077,
+        "rms": 0.038717132172258736,
+        "clippedSamples": 0,
+        "samples": 72064,
+        "renderedSeconds": 1.5013333333333334,
+        "contextSeconds": 1.5200000000000005,
+        "longestSilenceSeconds": 0.03129166666666667,
+        "phoneBandEnergyRatio": 0.02633113523623558,
+        "spectralCentroidHz": 361.9964982966992,
+        "dominantHz": [
+          141,
+          492,
+          117,
+          586,
+          164,
+          398,
+          94,
+          469
+        ],
+        "minimumCompressorReductionDb": -0.00023433484602719545,
+        "voiceFamilies": {
+          "triangle": 23,
+          "sine": 2
+        },
+        "liveVoices": 7,
+        "melodyStep": 67
+      }
+    },
+    {
+      "mode": "battle",
+      "peak": 0.32453426718711853,
+      "rms": 0.030404650745068592,
+      "clippedSamples": 0,
+      "samples": 158464,
+      "renderedSeconds": 3.3013333333333335,
+      "contextSeconds": 3.3306666666666676,
+      "longestSilenceSeconds": 0.077125,
+      "phoneBandEnergyRatio": 0.13701140499111986,
+      "spectralCentroidHz": 465.7145131103017,
+      "dominantHz": [
+        117,
+        141,
+        94,
+        164,
+        445,
+        422,
+        516,
+        469
+      ],
+      "minimumCompressorReductionDb": -0.00013451185077428818,
+      "voiceFamilies": {
+        "sawtooth": 15,
+        "triangle": 15,
+        "noise/buffer": 4,
+        "sine": 3
+      },
+      "liveVoices": 4,
+      "wrap": {
+        "peak": 0.27188560366630554,
+        "rms": 0.03182481978457953,
+        "clippedSamples": 0,
+        "samples": 72448,
+        "renderedSeconds": 1.5093333333333334,
+        "contextSeconds": 1.506666666666666,
+        "longestSilenceSeconds": 0.073625,
+        "phoneBandEnergyRatio": 0.1109463365447909,
+        "spectralCentroidHz": 447.4474241263435,
+        "dominantHz": [
+          117,
+          94,
+          141,
+          352,
+          328,
+          375,
+          305,
+          164
+        ],
+        "minimumCompressorReductionDb": -0.0001342038594884798,
+        "voiceFamilies": {
+          "sawtooth": 9,
+          "triangle": 9,
+          "noise/buffer": 2,
+          "sine": 2
+        },
+        "liveVoices": 5,
+        "melodyStep": 67
+      }
+    },
+    {
+      "mode": "boss",
+      "peak": 0.3557135760784149,
+      "rms": 0.041218335610420154,
+      "clippedSamples": 0,
+      "samples": 158464,
+      "renderedSeconds": 3.3013333333333335,
+      "contextSeconds": 3.3200000000000003,
+      "longestSilenceSeconds": 0.07277083333333334,
+      "phoneBandEnergyRatio": 0.07520252938697279,
+      "spectralCentroidHz": 336.1093451114906,
+      "dominantHz": [
+        141,
+        117,
+        164,
+        94,
+        188,
+        281,
+        305,
+        258
+      ],
+      "minimumCompressorReductionDb": -0.0001342038594884798,
+      "voiceFamilies": {
+        "sawtooth": 26,
+        "triangle": 26,
+        "sine": 8,
+        "noise/buffer": 4
+      },
+      "liveVoices": 9,
+      "wrap": {
+        "peak": 0.5187199711799622,
+        "rms": 0.04649481194580975,
+        "clippedSamples": 0,
+        "samples": 72192,
+        "renderedSeconds": 1.504,
+        "contextSeconds": 1.5120000000000005,
+        "longestSilenceSeconds": 0.05629166666666666,
+        "phoneBandEnergyRatio": 0.06106963690468639,
+        "spectralCentroidHz": 312.8059340394257,
+        "dominantHz": [
+          141,
+          117,
+          164,
+          94,
+          188,
+          258,
+          281,
+          516
+        ],
+        "minimumCompressorReductionDb": -0.0001342038594884798,
+        "voiceFamilies": {
+          "sawtooth": 16,
+          "triangle": 15,
+          "sine": 5,
+          "noise/buffer": 2
+        },
+        "liveVoices": 5,
+        "melodyStep": 67
+      }
+    }
+  ],
+  "cues": [
+    {
+      "cue": "battle_start_clash",
+      "peak": 0.5705685615539551,
+      "rms": 0.04235928761958236,
+      "clippedSamples": 0,
+      "samples": 52736,
+      "renderedSeconds": 1.0986666666666667,
+      "contextSeconds": 1.1093333333333355,
+      "longestSilenceSeconds": 0.23260416666666667,
+      "phoneBandEnergyRatio": 0.5522768999532084,
+      "spectralCentroidHz": 1651.8084939727896,
+      "dominantHz": [
+        1313,
+        141,
+        117,
+        1336,
+        3516,
+        1969,
+        2648,
+        2625
+      ],
+      "minimumCompressorReductionDb": -0.005214910954236984,
+      "voiceFamilies": {
+        "noise/buffer": 1,
+        "sawtooth": 1,
+        "triangle": 6
+      },
+      "liveVoices": 0
+    },
+    {
+      "cue": "hit_melee",
+      "peak": 0.23103715479373932,
+      "rms": 0.013374801338000744,
+      "clippedSamples": 0,
+      "samples": 41344,
+      "renderedSeconds": 0.8613333333333333,
+      "contextSeconds": 0.8613333333333344,
+      "longestSilenceSeconds": 0.7260416666666667,
+      "phoneBandEnergyRatio": 0.023612734653679676,
+      "spectralCentroidHz": 1000.3572497280769,
+      "dominantHz": [
+        609,
+        586,
+        633,
+        563,
+        656,
+        680,
+        539,
+        516
+      ],
+      "minimumCompressorReductionDb": -0.00044461770448833704,
+      "voiceFamilies": {
+        "triangle": 1,
+        "noise/buffer": 1
+      },
+      "liveVoices": 0
+    },
+    {
+      "cue": "hit_ranged",
+      "peak": 0.19016487896442413,
+      "rms": 0.012348138036849995,
+      "clippedSamples": 0,
+      "samples": 41216,
+      "renderedSeconds": 0.8586666666666667,
+      "contextSeconds": 0.8693333333333335,
+      "longestSilenceSeconds": 0.742625,
+      "phoneBandEnergyRatio": 0.8404225306858637,
+      "spectralCentroidHz": 990.5801046943254,
+      "dominantHz": [
+        867,
+        844,
+        891,
+        820,
+        914,
+        797,
+        938,
+        773
+      ],
+      "minimumCompressorReductionDb": -0.00015620455087628216,
+      "voiceFamilies": {
+        "triangle": 2
+      },
+      "liveVoices": 0
+    },
+    {
+      "cue": "hit_magic",
+      "peak": 0.21854770183563232,
+      "rms": 0.01750153860733067,
+      "clippedSamples": 0,
+      "samples": 41216,
+      "renderedSeconds": 0.8586666666666667,
+      "contextSeconds": 0.8586666666666645,
+      "longestSilenceSeconds": 0.6407083333333333,
+      "phoneBandEnergyRatio": 0.9795730992827731,
+      "spectralCentroidHz": 1536.5613256884076,
+      "dominantHz": [
+        1289,
+        1266,
+        1711,
+        1313,
+        1734,
+        1242,
+        1688,
+        1336
+      ],
+      "minimumCompressorReductionDb": -0.00013561567175202072,
+      "voiceFamilies": {
+        "triangle": 2,
+        "noise/buffer": 1
+      },
+      "liveVoices": 0
+    },
+    {
+      "cue": "hit_heavy",
+      "peak": 0.36317506432533264,
+      "rms": 0.02402323087492185,
+      "clippedSamples": 0,
+      "samples": 41344,
+      "renderedSeconds": 0.8613333333333333,
+      "contextSeconds": 0.8719999999999999,
+      "longestSilenceSeconds": 0.5853125,
+      "phoneBandEnergyRatio": 0.28041389205032174,
+      "spectralCentroidHz": 695.4854049312221,
+      "dominantHz": [
+        141,
+        164,
+        117,
+        188,
+        1500,
+        1477,
+        1523,
+        1453
+      ],
+      "minimumCompressorReductionDb": -0.0001342038594884798,
+      "voiceFamilies": {
+        "triangle": 2,
+        "noise/buffer": 1
+      },
+      "liveVoices": 0
+    },
+    {
+      "cue": "death_rat",
+      "peak": 0.1692180186510086,
+      "rms": 0.019144245652816663,
+      "clippedSamples": 0,
+      "samples": 41728,
+      "renderedSeconds": 0.8693333333333333,
+      "contextSeconds": 0.8613333333333344,
+      "longestSilenceSeconds": 0.43564583333333334,
+      "phoneBandEnergyRatio": 0.7899975329300866,
+      "spectralCentroidHz": 1041.3312539720062,
+      "dominantHz": [
+        1031,
+        1055,
+        1008,
+        1125,
+        1078,
+        1148,
+        680,
+        1102
+      ],
+      "minimumCompressorReductionDb": -0.0001342038594884798,
+      "voiceFamilies": {
+        "triangle": 2
+      },
+      "liveVoices": 0
+    },
+    {
+      "cue": "death_bug",
+      "peak": 0.17453746497631073,
+      "rms": 0.01498980695247757,
+      "clippedSamples": 0,
+      "samples": 41216,
+      "renderedSeconds": 0.8586666666666667,
+      "contextSeconds": 0.8693333333333335,
+      "longestSilenceSeconds": 0.5699375,
+      "phoneBandEnergyRatio": 0.5847893019564563,
+      "spectralCentroidHz": 1378.885113857753,
+      "dominantHz": [
+        563,
+        539,
+        586,
+        1594,
+        1570,
+        1617,
+        1547,
+        609
+      ],
+      "minimumCompressorReductionDb": -0.0001342038594884798,
+      "voiceFamilies": {
+        "sawtooth": 1,
+        "triangle": 1,
+        "noise/buffer": 1
+      },
+      "liveVoices": 0
+    },
+    {
+      "cue": "death_crab",
+      "peak": 0.3308626711368561,
+      "rms": 0.019642794473697447,
+      "clippedSamples": 0,
+      "samples": 41344,
+      "renderedSeconds": 0.8613333333333333,
+      "contextSeconds": 0.8613333333333344,
+      "longestSilenceSeconds": 0.5353333333333333,
+      "phoneBandEnergyRatio": 0.07321159040846796,
+      "spectralCentroidHz": 580.132724468707,
+      "dominantHz": [
+        516,
+        539,
+        773,
+        492,
+        797,
+        211,
+        750,
+        188
+      ],
+      "minimumCompressorReductionDb": -0.0001342038594884798,
+      "voiceFamilies": {
+        "triangle": 3
+      },
+      "liveVoices": 0
+    },
+    {
+      "cue": "death_machine",
+      "peak": 0.20059193670749664,
+      "rms": 0.020204237827409956,
+      "clippedSamples": 0,
+      "samples": 41216,
+      "renderedSeconds": 0.8586666666666667,
+      "contextSeconds": 0.8586666666666645,
+      "longestSilenceSeconds": 0.2926666666666667,
+      "phoneBandEnergyRatio": 0.5558521643490697,
+      "spectralCentroidHz": 1493.7943697983028,
+      "dominantHz": [
+        820,
+        797,
+        773,
+        844,
+        727,
+        703,
+        750,
+        680
+      ],
+      "minimumCompressorReductionDb": -0.0001342038594884798,
+      "voiceFamilies": {
+        "sawtooth": 1,
+        "noise/buffer": 1,
+        "triangle": 1
+      },
+      "liveVoices": 0
+    },
+    {
+      "cue": "death_frog",
+      "peak": 0.22299307584762573,
+      "rms": 0.020580374111885704,
+      "clippedSamples": 0,
+      "samples": 41216,
+      "renderedSeconds": 0.8586666666666667,
+      "contextSeconds": 0.8639999999999972,
+      "longestSilenceSeconds": 0.392625,
+      "phoneBandEnergyRatio": 0.2871694663118121,
+      "spectralCentroidHz": 639.7002468524117,
+      "dominantHz": [
+        305,
+        328,
+        281,
+        984,
+        961,
+        352,
+        633,
+        727
+      ],
+      "minimumCompressorReductionDb": -0.0001342038594884798,
+      "voiceFamilies": {
+        "sawtooth": 1,
+        "triangle": 2
+      },
+      "liveVoices": 0
+    },
+    {
+      "cue": "death_boss",
+      "peak": 0.4953864514827728,
+      "rms": 0.04473519833816605,
+      "clippedSamples": 0,
+      "samples": 52864,
+      "renderedSeconds": 1.1013333333333333,
+      "contextSeconds": 1.109333333333332,
+      "longestSilenceSeconds": 0.19541666666666666,
+      "phoneBandEnergyRatio": 0.5797522770898611,
+      "spectralCentroidHz": 912.8756159726076,
+      "dominantHz": [
+        117,
+        1758,
+        1219,
+        1242,
+        891,
+        141,
+        867,
+        94
+      ],
+      "minimumCompressorReductionDb": -0.0001342038594884798,
+      "voiceFamilies": {
+        "sawtooth": 1,
+        "triangle": 4
+      },
+      "liveVoices": 0
+    },
+    {
+      "cue": "elite_spawn",
+      "peak": 0.18857090175151825,
+      "rms": 0.02032760323896929,
+      "clippedSamples": 0,
+      "samples": 41344,
+      "renderedSeconds": 0.8613333333333333,
+      "contextSeconds": 0.8719999999999999,
+      "longestSilenceSeconds": 0.48541666666666666,
+      "phoneBandEnergyRatio": 0.9879579271639229,
+      "spectralCentroidHz": 1434.502202170793,
+      "dominantHz": [
+        1570,
+        1172,
+        1547,
+        1594,
+        1195,
+        1148,
+        1219,
+        1523
+      ],
+      "minimumCompressorReductionDb": -0.0001342038594884798,
+      "voiceFamilies": {
+        "triangle": 2
+      },
+      "liveVoices": 0
+    },
+    {
+      "cue": "boss_spawn",
+      "peak": 0.31316903233528137,
+      "rms": 0.04559352856214509,
+      "clippedSamples": 0,
+      "samples": 41728,
+      "renderedSeconds": 0.8693333333333333,
+      "contextSeconds": 0.8613333333333344,
+      "longestSilenceSeconds": 0.18529166666666666,
+      "phoneBandEnergyRatio": 0.04382870316794839,
+      "spectralCentroidHz": 356.40334325808743,
+      "dominantHz": [
+        117,
+        375,
+        94,
+        141,
+        188,
+        398,
+        773,
+        164
+      ],
+      "minimumCompressorReductionDb": -0.0001342038594884798,
+      "voiceFamilies": {
+        "sawtooth": 1,
+        "triangle": 5
+      },
+      "liveVoices": 0
+    },
+    {
+      "cue": "merge_hero",
+      "peak": 0.625152051448822,
+      "rms": 0.05359481354233289,
+      "clippedSamples": 0,
+      "samples": 41216,
+      "renderedSeconds": 0.8586666666666667,
+      "contextSeconds": 0.8693333333333335,
+      "longestSilenceSeconds": 0.0110625,
+      "phoneBandEnergyRatio": 0.2806510434000045,
+      "spectralCentroidHz": 784.9480779629272,
+      "dominantHz": [
+        656,
+        1055,
+        516,
+        773,
+        797,
+        1031,
+        539,
+        680
+      ],
+      "minimumCompressorReductionDb": -0.036159221082925797,
+      "voiceFamilies": {
+        "triangle": 4
+      },
+      "liveVoices": 4
+    }
+  ],
+  "media": [
+    {
+      "file": "p9-audio-menu.webm",
+      "bytes": 53426,
+      "mime": "audio/webm;codecs=opus"
+    },
+    {
+      "file": "p9-audio-battle.webm",
+      "bytes": 53426,
+      "mime": "audio/webm;codecs=opus"
+    },
+    {
+      "file": "p9-audio-boss.webm",
+      "bytes": 53426,
+      "mime": "audio/webm;codecs=opus"
+    },
+    {
+      "file": "p9-audio-sfx.webm",
+      "bytes": 147998,
+      "mime": "audio/webm;codecs=opus"
+    },
+    {
+      "file": "p9-audio-busy-default.webm",
+      "bytes": 44732,
+      "mime": "audio/webm;codecs=opus"
+    },
+    {
+      "file": "p9-audio-busy-maximum.webm",
+      "bytes": 44732,
+      "mime": "audio/webm;codecs=opus"
+    }
+  ],
+  "host": {
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/157.0.0.0 Safari/537.36",
+    "sampleRate": 48000,
+    "currentTime": 0.2906666666666667,
+    "state": "running",
+    "defaultSettings": {
+      "musicVolume": 0.5,
+      "soundVolume": 0.75,
+      "showDamageNumbers": true
+    },
+    "graph": {
+      "music": 0.32499998807907104,
+      "effects": 0.862500011920929,
+      "threshold": -10,
+      "knee": 12,
+      "ratio": 4,
+      "attack": 0.003000000026077032,
+      "release": 0.1599999964237213,
+      "makeup": 1.350000023841858
+    },
+    "trustedGestures": [
+      true
+    ]
+  },
+  "pause": {
+    "paused": {
+      "peak": 0,
+      "rms": 0,
+      "clippedSamples": 0,
+      "samples": 19200,
+      "renderedSeconds": 0.4,
+      "contextSeconds": 0.3999999999999986,
+      "longestSilenceSeconds": 0.4,
+      "phoneBandEnergyRatio": 0,
+      "spectralCentroidHz": 0,
+      "dominantHz": [
+        0,
+        23,
+        47,
+        70,
+        94,
+        117,
+        141,
+        164
+      ],
+      "minimumCompressorReductionDb": -0.0001342038594884798,
+      "voiceFamilies": {},
+      "liveVoices": 0
+    },
+    "resumed": {
+      "peak": 0.3392176926136017,
+      "rms": 0.035649624020277264,
+      "clippedSamples": 0,
+      "samples": 28800,
+      "renderedSeconds": 0.6,
+      "contextSeconds": 0.6000000000000014,
+      "longestSilenceSeconds": 0.0311875,
+      "phoneBandEnergyRatio": 0.06415105532978538,
+      "spectralCentroidHz": 324.9874288751082,
+      "dominantHz": [
+        141,
+        117,
+        164,
+        94,
+        516,
+        539,
+        398,
+        188
+      ],
+      "minimumCompressorReductionDb": -0.0001342038594884798,
+      "voiceFamilies": {
+        "sawtooth": 7,
+        "triangle": 6,
+        "sine": 2,
+        "noise/buffer": 1
+      },
+      "liveVoices": 9
+    }
+  },
+  "recovery": {
+    "unlocked": true,
+    "state": "running",
+    "gestures": [
+      true,
+      true
+    ],
+    "measurement": {
+      "peak": 0.30418768525123596,
+      "rms": 0.03505443006848462,
+      "clippedSamples": 0,
+      "samples": 33664,
+      "renderedSeconds": 0.7013333333333334,
+      "contextSeconds": 0.7119999999999997,
+      "longestSilenceSeconds": 0.06841666666666667,
+      "phoneBandEnergyRatio": 0.08292834326806982,
+      "spectralCentroidHz": 321.8953097508589,
+      "dominantHz": [
+        141,
+        117,
+        164,
+        94,
+        469,
+        492,
+        188,
+        445
+      ],
+      "minimumCompressorReductionDb": -0.0001342038594884798,
+      "voiceFamilies": {
+        "sawtooth": 9,
+        "triangle": 9,
+        "sine": 3,
+        "noise/buffer": 1
+      },
+      "liveVoices": 7
+    }
+  },
+  "cueIssues": [],
+  "maximumCues": [
+    {
+      "cue": "battle_start_clash",
+      "peak": 0.7433484792709351,
+      "rms": 0.05608700668569549,
+      "clippedSamples": 0,
+      "samples": 52736,
+      "renderedSeconds": 1.0986666666666667,
+      "contextSeconds": 1.0986666666666665,
+      "longestSilenceSeconds": 0.23258333333333334,
+      "phoneBandEnergyRatio": 0.5633201357757308,
+      "spectralCentroidHz": 1703.1841304566783,
+      "dominantHz": [
+        1313,
+        141,
+        117,
+        1336,
+        3516,
+        1969,
+        2648,
+        2625
+      ],
+      "minimumCompressorReductionDb": -0.21460074186325073,
+      "voiceFamilies": {
+        "noise/buffer": 1,
+        "sawtooth": 1,
+        "triangle": 6
+      },
+      "liveVoices": 0
+    },
+    {
+      "cue": "hit_melee",
+      "peak": 0.3080494999885559,
+      "rms": 0.01783306788179923,
+      "clippedSamples": 0,
+      "samples": 41344,
+      "renderedSeconds": 0.8613333333333333,
+      "contextSeconds": 0.86933333333333,
+      "longestSilenceSeconds": 0.7258333333333333,
+      "phoneBandEnergyRatio": 0.023612735123374057,
+      "spectralCentroidHz": 1000.3573241146029,
+      "dominantHz": [
+        609,
+        586,
+        633,
+        563,
+        656,
+        680,
+        539,
+        516
+      ],
+      "minimumCompressorReductionDb": -0.013796066865324974,
+      "voiceFamilies": {
+        "triangle": 1,
+        "noise/buffer": 1
+      },
+      "liveVoices": 0
+    },
+    {
+      "cue": "hit_ranged",
+      "peak": 0.2535531520843506,
+      "rms": 0.016438677293464064,
+      "clippedSamples": 0,
+      "samples": 41344,
+      "renderedSeconds": 0.8613333333333333,
+      "contextSeconds": 0.8719999999999999,
+      "longestSilenceSeconds": 0.7452916666666667,
+      "phoneBandEnergyRatio": 0.8401870732098579,
+      "spectralCentroidHz": 924.2072976086444,
+      "dominantHz": [
+        844,
+        867,
+        820,
+        891,
+        797,
+        914,
+        938,
+        773
+      ],
+      "minimumCompressorReductionDb": -0.001067919423803687,
+      "voiceFamilies": {
+        "triangle": 2
+      },
+      "liveVoices": 0
+    },
+    {
+      "cue": "hit_magic",
+      "peak": 0.28998884558677673,
+      "rms": 0.02333051431683888,
+      "clippedSamples": 0,
+      "samples": 41216,
+      "renderedSeconds": 0.8586666666666667,
+      "contextSeconds": 0.8693333333333371,
+      "longestSilenceSeconds": 0.6407291666666667,
+      "phoneBandEnergyRatio": 0.9795633662091936,
+      "spectralCentroidHz": 1536.686282409588,
+      "dominantHz": [
+        1289,
+        1266,
+        1711,
+        1313,
+        1734,
+        1242,
+        1688,
+        1336
+      ],
+      "minimumCompressorReductionDb": -0.00019897599122487009,
+      "voiceFamilies": {
+        "triangle": 2,
+        "noise/buffer": 1
+      },
+      "liveVoices": 0
+    },
+    {
+      "cue": "hit_heavy",
+      "peak": 0.8230172395706177,
+      "rms": 0.031680583460749555,
+      "clippedSamples": 0,
+      "samples": 41216,
+      "renderedSeconds": 0.8586666666666667,
+      "contextSeconds": 0.8586666666666645,
+      "longestSilenceSeconds": 0.582625,
+      "phoneBandEnergyRatio": 0.27852836780152845,
+      "spectralCentroidHz": 707.3156973399795,
+      "dominantHz": [
+        141,
+        164,
+        117,
+        188,
+        1500,
+        1477,
+        1523,
+        1453
+      ],
+      "minimumCompressorReductionDb": -0.3972514271736145,
+      "voiceFamilies": {
+        "triangle": 2,
+        "noise/buffer": 1
+      },
+      "liveVoices": 0
+    },
+    {
+      "cue": "death_rat",
+      "peak": 0.2273229956626892,
+      "rms": 0.025695310168724478,
+      "clippedSamples": 0,
+      "samples": 41344,
+      "renderedSeconds": 0.8613333333333333,
+      "contextSeconds": 0.8613333333333344,
+      "longestSilenceSeconds": 0.43552083333333336,
+      "phoneBandEnergyRatio": 0.7699696737750938,
+      "spectralCentroidHz": 1031.430866666476,
+      "dominantHz": [
+        1031,
+        1008,
+        1055,
+        1102,
+        1078,
+        1125,
+        656,
+        680
+      ],
+      "minimumCompressorReductionDb": -0.028231658041477203,
+      "voiceFamilies": {
+        "triangle": 2
+      },
+      "liveVoices": 0
+    },
+    {
+      "cue": "death_bug",
+      "peak": 0.8230172395706177,
+      "rms": 0.020141065940566586,
+      "clippedSamples": 0,
+      "samples": 41344,
+      "renderedSeconds": 0.8613333333333333,
+      "contextSeconds": 0.8719999999999999,
+      "longestSilenceSeconds": 0.5718125,
+      "phoneBandEnergyRatio": 0.5800272850476476,
+      "spectralCentroidHz": 1450.2324611718086,
+      "dominantHz": [
+        539,
+        563,
+        586,
+        516,
+        1570,
+        1547,
+        1594,
+        1617
+      ],
+      "minimumCompressorReductionDb": -0.3961988091468811,
+      "voiceFamilies": {
+        "sawtooth": 1,
+        "triangle": 1,
+        "noise/buffer": 1
+      },
+      "liveVoices": 0
+    },
+    {
+      "cue": "death_crab",
+      "peak": 0.4386649429798126,
+      "rms": 0.026231220122667785,
+      "clippedSamples": 0,
+      "samples": 41216,
+      "renderedSeconds": 0.8586666666666667,
+      "contextSeconds": 0.86933333333333,
+      "longestSilenceSeconds": 0.5326666666666666,
+      "phoneBandEnergyRatio": 0.06828335406068738,
+      "spectralCentroidHz": 571.4631394009486,
+      "dominantHz": [
+        516,
+        539,
+        773,
+        492,
+        797,
+        211,
+        750,
+        188
+      ],
+      "minimumCompressorReductionDb": -0.028231658041477203,
+      "voiceFamilies": {
+        "triangle": 3
+      },
+      "liveVoices": 0
+    },
+    {
+      "cue": "death_machine",
+      "peak": 0.2674558758735657,
+      "rms": 0.026939026477298164,
+      "clippedSamples": 0,
+      "samples": 41216,
+      "renderedSeconds": 0.8586666666666667,
+      "contextSeconds": 0.8693333333333371,
+      "longestSilenceSeconds": 0.2926666666666667,
+      "phoneBandEnergyRatio": 0.5668712695009522,
+      "spectralCentroidHz": 1511.686746725413,
+      "dominantHz": [
+        797,
+        820,
+        844,
+        773,
+        727,
+        703,
+        867,
+        750
+      ],
+      "minimumCompressorReductionDb": -0.0020704546477645636,
+      "voiceFamilies": {
+        "sawtooth": 1,
+        "noise/buffer": 1,
+        "triangle": 1
+      },
+      "liveVoices": 0
+    },
+    {
+      "cue": "death_frog",
+      "peak": 0.3077961802482605,
+      "rms": 0.027582806521305087,
+      "clippedSamples": 0,
+      "samples": 41344,
+      "renderedSeconds": 0.8613333333333333,
+      "contextSeconds": 0.86933333333333,
+      "longestSilenceSeconds": 0.39529166666666665,
+      "phoneBandEnergyRatio": 0.28663700297073835,
+      "spectralCentroidHz": 646.1543703447626,
+      "dominantHz": [
+        305,
+        328,
+        281,
+        984,
+        961,
+        352,
+        703,
+        727
+      ],
+      "minimumCompressorReductionDb": -0.0002664456842467189,
+      "voiceFamilies": {
+        "sawtooth": 1,
+        "triangle": 2
+      },
+      "liveVoices": 0
+    },
+    {
+      "cue": "death_boss",
+      "peak": 0.661462664604187,
+      "rms": 0.05951106644683297,
+      "clippedSamples": 0,
+      "samples": 52864,
+      "renderedSeconds": 1.1013333333333333,
+      "contextSeconds": 1.1013333333333364,
+      "longestSilenceSeconds": 0.19529166666666667,
+      "phoneBandEnergyRatio": 0.5800994159807753,
+      "spectralCentroidHz": 913.3753775541156,
+      "dominantHz": [
+        117,
+        1758,
+        1219,
+        1242,
+        891,
+        141,
+        867,
+        94
+      ],
+      "minimumCompressorReductionDb": -0.08038029819726944,
+      "voiceFamilies": {
+        "sawtooth": 1,
+        "triangle": 4
+      },
+      "liveVoices": 0
+    },
+    {
+      "cue": "elite_spawn",
+      "peak": 0.2500803768634796,
+      "rms": 0.02714540219680682,
+      "clippedSamples": 0,
+      "samples": 41216,
+      "renderedSeconds": 0.8586666666666667,
+      "contextSeconds": 0.86933333333333,
+      "longestSilenceSeconds": 0.48272916666666665,
+      "phoneBandEnergyRatio": 0.988102464071127,
+      "spectralCentroidHz": 1441.9187529555727,
+      "dominantHz": [
+        1570,
+        1172,
+        1547,
+        1594,
+        1195,
+        1148,
+        1219,
+        1125
+      ],
+      "minimumCompressorReductionDb": -0.005453848280012608,
+      "voiceFamilies": {
+        "triangle": 2
+      },
+      "liveVoices": 0
+    },
+    {
+      "cue": "boss_spawn",
+      "peak": 0.33036333322525024,
+      "rms": 0.05695710323217947,
+      "clippedSamples": 0,
+      "samples": 41344,
+      "renderedSeconds": 0.8613333333333333,
+      "contextSeconds": 0.8613333333333344,
+      "longestSilenceSeconds": 0.19022916666666667,
+      "phoneBandEnergyRatio": 0.04005548083172641,
+      "spectralCentroidHz": 343.26194374129335,
+      "dominantHz": [
+        117,
+        94,
+        141,
+        188,
+        375,
+        773,
+        164,
+        211
+      ],
+      "minimumCompressorReductionDb": -0.0005037261289544404,
+      "voiceFamilies": {
+        "sawtooth": 1,
+        "triangle": 5
+      },
+      "liveVoices": 0
+    },
+    {
+      "cue": "merge_hero",
+      "peak": 0.8050308227539062,
+      "rms": 0.0706489855397105,
+      "clippedSamples": 0,
+      "samples": 41344,
+      "renderedSeconds": 0.8613333333333333,
+      "contextSeconds": 0.8693333333333371,
+      "longestSilenceSeconds": 0.0110625,
+      "phoneBandEnergyRatio": 0.27973982524507446,
+      "spectralCentroidHz": 786.1318978755767,
+      "dominantHz": [
+        656,
+        1055,
+        516,
+        773,
+        797,
+        1031,
+        539,
+        680
+      ],
+      "minimumCompressorReductionDb": -0.3586069643497467,
+      "voiceFamilies": {
+        "triangle": 4
+      },
+      "liveVoices": 4
+    }
+  ],
+  "busy": [
+    {
+      "slider": 0.75,
+      "peak": 0.6663066148757935,
+      "rms": 0.04177366547186236,
+      "clippedSamples": 0,
+      "samples": 134912,
+      "renderedSeconds": 2.8106666666666666,
+      "contextSeconds": 2.808,
+      "longestSilenceSeconds": 0.015104166666666667,
+      "phoneBandEnergyRatio": 0.35119276791574616,
+      "spectralCentroidHz": 766.6665622742626,
+      "dominantHz": [
+        117,
+        94,
+        141,
+        1055,
+        773,
+        797,
+        516,
+        1031
+      ],
+      "minimumCompressorReductionDb": -0.08297821134328842,
+      "voiceFamilies": {
+        "sawtooth": 24,
+        "triangle": 136,
+        "sine": 3,
+        "noise/buffer": 23
+      },
+      "liveVoices": 37
+    },
+    {
+      "slider": 1,
+      "peak": 0.8220760226249695,
+      "rms": 0.07094553026629238,
+      "clippedSamples": 0,
+      "samples": 134400,
+      "renderedSeconds": 2.8,
+      "contextSeconds": 2.8213333333333352,
+      "longestSilenceSeconds": 0.011020833333333334,
+      "phoneBandEnergyRatio": 0.28220081055928414,
+      "spectralCentroidHz": 659.5378512861781,
+      "dominantHz": [
+        117,
+        94,
+        141,
+        164,
+        1055,
+        516,
+        445,
+        773
+      ],
+      "minimumCompressorReductionDb": -0.3961266279220581,
+      "voiceFamilies": {
+        "sawtooth": 24,
+        "triangle": 136,
+        "sine": 3,
+        "noise/buffer": 23
+      },
+      "liveVoices": 37
+    }
+  ],
+  "rapid": {
+    "liveVoices": 7,
+    "modeBuses": 3,
+    "connectedManagerNodes": 28
+  },
+  "disposal": {
+    "liveVoices": 0,
+    "connectedManagerNodes": 0,
+    "remainingNodeTypes": [],
+    "unlocked": false,
+    "contextState": "closed"
+  },
+  "passed": true
+}

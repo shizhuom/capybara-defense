@@ -2,7 +2,7 @@
 
 /* Icon-only ready tray; full item name/effect stays in accessible labels and the booth. */
 #game-dialog .p9-loadout-tray .prop-slot small { position:absolute;width:1px;height:1px;margin:-1px;padding:0;overflow:hidden;clip-path:inset(50%);white-space:nowrap; }
-#game-dialog.meta-dialog .ledger-header-end { display:flex;align-items:center;gap:12px; }
+#game-dialog.meta-dialog .ledger-header-end { display:flex;flex-direction:row;align-items:center;gap:12px; }
 #game-dialog.meta-dialog .ledger-header { padding-block:10px; }
 
 /* The scene, not a page navigation: geometry is relative to the 1280×720 stage. */
@@ -49,6 +49,15 @@
 #game-dialog .unlocked-roster { display:flex;flex-wrap:wrap;gap:12px; }
 #game-dialog .unlocked-roster>span { display:grid;justify-items:center;gap:5px;max-width:150px;text-align:center; }
 @media(max-height:500px) and (orientation:landscape) {
+ #game-dialog .p9-loadout-tray .prop-slot { flex-basis:42px;width:42px;min-height:42px;padding:2px; }
+ #game-dialog .p9-loadout-tray .prop-slot span>[data-sticker] { width:30px;height:30px; }
+ #game-dialog .p9-market .market-subtabs { margin-bottom:5px; }
+ #game-dialog .p9-market .market-subtabs button { padding:4px;min-height:32px; }
+ #game-dialog .p9-market .market-awning { padding:4px;margin:0 0 6px; }
+ #game-dialog .p9-market .market-awning>span>[data-sticker] { width:30px;height:30px; }
+ #game-dialog .p9-market .shop-refresh { padding:3px 5px; }
+ #game-dialog .p9-merchant { grid-template-rows:80px minmax(100px,1fr); }
+ #game-dialog .p9-npc-button>[data-sticker] { width:60px;height:60px; }
  #enemy-alert-banner { top:10.5%;padding:.4cqw .75cqw; }
  #enemy-alert-banner small { font-size:10px; }
  #game-dialog .star-unlock { padding:2px 5px; }
@@ -56,6 +65,8 @@
  #game-dialog .locked-entry-notice { padding:12px; }
 }
 @media(max-width:600px) and (orientation:portrait) {
+ #game-dialog .profile-navigation { display:grid;grid-template-columns:repeat(3,minmax(0,1fr)); }
+ #game-dialog .profile-navigation button { min-width:0;flex-wrap:wrap;white-space:normal;overflow-wrap:anywhere;gap:4px; }
  #game-dialog.meta-dialog .ledger-header-end { gap:4px; }
  #enemy-alert-banner { top:10%;left:4%;width:92%; }
  #enemy-alert-banner>:is(img,svg) { width:22px;height:22px; }

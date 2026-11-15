@@ -1,5 +1,5 @@
 {
-  "at": "2026-11-15T05:24:08.602Z",
+  "at": "2026-11-15T10:03:42.304Z",
   "checks": [
     "phone-landscape-zh-CN: readable contained menu and five tutorial steps with real touch summon/deploy/acknowledge",
     "phone-landscape-zh-CN: readable Boss status with non-overlapping resource and control docks",
@@ -40,7 +40,7 @@
         {
           "selector": ".map-chips button",
           "size": 14,
-          "text": "自动轮换"
+          "text": "随机"
         },
         {
           "selector": ".map-chips button",
@@ -352,7 +352,7 @@
         {
           "selector": ".map-chips button",
           "size": 14,
-          "text": "Auto"
+          "text": "Random"
         },
         {
           "selector": ".map-chips button",
@@ -664,7 +664,7 @@
         {
           "selector": ".map-chips button",
           "size": 14,
-          "text": "自动轮换"
+          "text": "随机"
         },
         {
           "selector": ".map-chips button",
@@ -976,7 +976,7 @@
         {
           "selector": ".map-chips button",
           "size": 14,
-          "text": "Auto"
+          "text": "Random"
         },
         {
           "selector": ".map-chips button",
