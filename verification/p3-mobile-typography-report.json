@@ -1,5 +1,5 @@
 {
-  "at": "2026-11-14T23:28:58.515Z",
+  "at": "2026-11-15T01:08:21.715Z",
   "checks": [
     "phone-landscape-zh-CN: readable contained menu and five tutorial steps with real touch summon/deploy/acknowledge",
     "phone-landscape-zh-CN: readable Boss status with non-overlapping resource and control docks",
@@ -19,72 +19,72 @@
       "sizes": [
         {
           "selector": ".profile-pill b",
-          "size": 12,
+          "size": 14,
           "text": "见习铲屎官 I"
         },
         {
           "selector": ".profile-pill strong",
-          "size": 12,
+          "size": 15,
           "text": "0　 0"
         },
         {
           "selector": ".menu-system .language-switch button",
-          "size": 12,
+          "size": 14,
           "text": "中"
         },
         {
           "selector": ".menu-system .language-switch button",
-          "size": 12,
+          "size": 14,
           "text": "EN"
         },
         {
           "selector": ".map-chips button",
-          "size": 12,
+          "size": 14,
           "text": "自动轮换"
         },
         {
           "selector": ".map-chips button",
-          "size": 12,
+          "size": 14,
           "text": "后院"
         },
         {
           "selector": ".map-chips button",
-          "size": 12,
+          "size": 14,
           "text": "樱花 🔒"
         },
         {
           "selector": ".map-chips button",
-          "size": 12,
+          "size": 14,
           "text": "厨房 🔒"
         },
         {
           "selector": ".map-chips button",
-          "size": 12,
+          "size": 14,
           "text": "猫塔 🔒"
         },
         {
           "selector": ".hub-dock b",
-          "size": 12,
+          "size": 15,
           "text": "图鉴"
         },
         {
           "selector": ".hub-dock b",
-          "size": 12,
+          "size": 15,
           "text": "神兵"
         },
         {
           "selector": ".hub-dock b",
-          "size": 12,
+          "size": 15,
           "text": "商店"
         },
         {
           "selector": ".hub-dock b",
-          "size": 12,
+          "size": 15,
           "text": "段位"
         },
         {
           "selector": ".hub-dock small",
-          "size": 12,
+          "size": 13,
           "text": "0/36"
         }
       ]
@@ -331,72 +331,72 @@
       "sizes": [
         {
           "selector": ".profile-pill b",
-          "size": 12,
+          "size": 14,
           "text": "Rookie Keeper I"
         },
         {
           "selector": ".profile-pill strong",
-          "size": 12,
+          "size": 15,
           "text": "0　 0"
         },
         {
           "selector": ".menu-system .language-switch button",
-          "size": 12,
+          "size": 14,
           "text": "中"
         },
         {
           "selector": ".menu-system .language-switch button",
-          "size": 12,
+          "size": 14,
           "text": "EN"
         },
         {
           "selector": ".map-chips button",
-          "size": 12,
+          "size": 14,
           "text": "Auto"
         },
         {
           "selector": ".map-chips button",
-          "size": 12,
+          "size": 14,
           "text": "Backyard"
         },
         {
           "selector": ".map-chips button",
-          "size": 12,
+          "size": 14,
           "text": "Sakura 🔒"
         },
         {
           "selector": ".map-chips button",
-          "size": 12,
+          "size": 14,
           "text": "Kitchen 🔒"
         },
         {
           "selector": ".map-chips button",
-          "size": 12,
+          "size": 14,
           "text": "Cat tower 🔒"
         },
         {
           "selector": ".hub-dock b",
-          "size": 12,
+          "size": 15,
           "text": "Guide"
         },
         {
           "selector": ".hub-dock b",
-          "size": 12,
+          "size": 15,
           "text": "Armory"
         },
         {
           "selector": ".hub-dock b",
-          "size": 12,
+          "size": 15,
           "text": "Shop"
         },
         {
           "selector": ".hub-dock b",
-          "size": 12,
+          "size": 15,
           "text": "Rank"
         },
         {
           "selector": ".hub-dock small",
-          "size": 12,
+          "size": 13,
           "text": "0/36"
         }
       ]
@@ -643,72 +643,72 @@
       "sizes": [
         {
           "selector": ".profile-pill b",
-          "size": 12,
+          "size": 14,
           "text": "见习铲屎官 I"
         },
         {
           "selector": ".profile-pill strong",
-          "size": 12,
+          "size": 14,
           "text": "0　 0"
         },
         {
           "selector": ".menu-system .language-switch button",
-          "size": 12,
+          "size": 14,
           "text": "中"
         },
         {
           "selector": ".menu-system .language-switch button",
-          "size": 12,
+          "size": 14,
           "text": "EN"
         },
         {
           "selector": ".map-chips button",
-          "size": 12,
+          "size": 14,
           "text": "自动轮换"
         },
         {
           "selector": ".map-chips button",
-          "size": 12,
+          "size": 14,
           "text": "后院"
         },
         {
           "selector": ".map-chips button",
-          "size": 12,
+          "size": 14,
           "text": "樱花 🔒"
         },
         {
           "selector": ".map-chips button",
-          "size": 12,
+          "size": 14,
           "text": "厨房 🔒"
         },
         {
           "selector": ".map-chips button",
-          "size": 12,
+          "size": 14,
           "text": "猫塔 🔒"
         },
         {
           "selector": ".hub-dock b",
-          "size": 12,
+          "size": 15,
           "text": "图鉴"
         },
         {
           "selector": ".hub-dock b",
-          "size": 12,
+          "size": 15,
           "text": "神兵"
         },
         {
           "selector": ".hub-dock b",
-          "size": 12,
+          "size": 15,
           "text": "商店"
         },
         {
           "selector": ".hub-dock b",
-          "size": 12,
+          "size": 15,
           "text": "段位"
         },
         {
           "selector": ".hub-dock small",
-          "size": 12,
+          "size": 13,
           "text": "0/36"
         }
       ]
@@ -955,72 +955,72 @@
       "sizes": [
         {
           "selector": ".profile-pill b",
-          "size": 12,
+          "size": 14,
           "text": "Rookie Keeper I"
         },
         {
           "selector": ".profile-pill strong",
-          "size": 12,
+          "size": 14,
           "text": "0　 0"
         },
         {
           "selector": ".menu-system .language-switch button",
-          "size": 12,
+          "size": 14,
           "text": "中"
         },
         {
           "selector": ".menu-system .language-switch button",
-          "size": 12,
+          "size": 14,
           "text": "EN"
         },
         {
           "selector": ".map-chips button",
-          "size": 12,
+          "size": 14,
           "text": "Auto"
         },
         {
           "selector": ".map-chips button",
-          "size": 12,
+          "size": 14,
           "text": "Backyard"
         },
         {
           "selector": ".map-chips button",
-          "size": 12,
+          "size": 14,
           "text": "Sakura 🔒"
         },
         {
           "selector": ".map-chips button",
-          "size": 12,
+          "size": 14,
           "text": "Kitchen 🔒"
         },
         {
           "selector": ".map-chips button",
-          "size": 12,
+          "size": 14,
           "text": "Cat tower 🔒"
         },
         {
           "selector": ".hub-dock b",
-          "size": 12,
+          "size": 15,
           "text": "Guide"
         },
         {
           "selector": ".hub-dock b",
-          "size": 12,
+          "size": 15,
           "text": "Armory"
         },
         {
           "selector": ".hub-dock b",
-          "size": 12,
+          "size": 15,
           "text": "Shop"
         },
         {
           "selector": ".hub-dock b",
-          "size": 12,
+          "size": 15,
           "text": "Rank"
         },
         {
           "selector": ".hub-dock small",
-          "size": 12,
+          "size": 13,
           "text": "0/36"
         }
       ]

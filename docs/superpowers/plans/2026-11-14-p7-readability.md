@@ -42,7 +42,7 @@
 
 ### Task 4: Browser acceptance, isolation, final review
 **Files:** `scripts/p7-browser-qa.mjs`, `verification/p7-*`, `docs/P7-verification.md`, game README.
-- [ ] Run full tests/typecheck/build; capture every requested desktop screenshot plus short landscape and portrait checks in both languages.
-- [ ] Inspect images, check clipping/console errors/focus/input flows and production assets; compare protected hashes.
-- [ ] One fresh whole-branch review; one material-fix pass with regression tests.
-- [ ] Archive evidence/decisions, commit and preserve a local P7 milestone. Leave production service on 4175.
+- [x] Run full tests/typecheck/build; capture every requested desktop screenshot plus short landscape and portrait checks in both languages.
+- [x] Inspect images, check clipping/console errors/focus/input flows and production assets; compare protected hashes.
+- [x] One fresh whole-branch review; one material-fix pass with regression tests.
+- [x] Archive evidence/decisions, commit and preserve a local P7 milestone. Leave production service on 4175.
