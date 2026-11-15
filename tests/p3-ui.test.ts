@@ -200,7 +200,8 @@ describe('P3 stage integration',()=>{
     expect(app.dialog.innerHTML).toContain('id="book-tab-pets"');
     app.action('close-recipes');expect(engine.state.phase).toBe('paused');expect(app.dialogKind).toBe('pause');
     app.action('resume');app.action('recipes');
-    app.action('compendium-hero:kungfu_po');expect(app.dialog.innerHTML).toContain('data-matrix-cell="panda:hat_bamboo"');
+    app.action('compendium-hero:kungfu_po');expect(app.dialog.innerHTML).toContain('data-compendium-kind="kungfu_po" data-compendium-focused="true"');
+    app.action('book:matrix');expect(app.dialog.innerHTML).toContain('data-matrix-cell="panda:hat_bamboo"');
     app.action('inspect-book:kungfu_po');app.action('close-recipes');expect(engine.state.phase).toBe('playing');
   });
   it('syncs successful prep transactions and preserves live loadout on failed saving or manual spawn',()=>{

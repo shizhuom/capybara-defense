@@ -5,7 +5,6 @@ import {WEAPONS} from '../config/weapons';
 import {t} from '../i18n/i18n';
 import {weaponSticker,avatarSticker} from '../render/M3Art';
 import {sceneSticker,unitSticker} from './stickers';
-import {languagePills} from './LedgerView';
 import {escapeHtml as esc} from './art';
 const tr=(key:string,vars?:Record<string,string|number>)=>esc(t(key,vars));
 const clock=(seconds:number)=>`${Math.floor(seconds/60)}:${String(Math.floor(seconds%60)).padStart(2,'0')}`;
@@ -16,7 +15,7 @@ export function lootMarkup(loot:readonly string[]):string {
 }
 function header(kind:'pause'|'win'|'loss',title:string,subtitle:string):string {
  const id=kind==='pause'?'ui_header_pause':kind==='win'?'ui_result_victory':'ui_result_defeat';
- return `<header class="ledger-header ${kind==='pause'?'pause-header':'result-'+kind+'-header'}"><div class="ledger-mascot">${sceneSticker(id,'',kind==='pause'?76:96)}</div><div class="ledger-heading"><h2 id="dialog-title">${title}</h2><p>${subtitle}</p></div><div class="ledger-header-end"><div class="compendium-toolbar">${languagePills()}<button type="button" class="ledger-close dialog-close" data-action="${kind==='pause'?'resume':'menu'}" aria-label="${tr(kind==='pause'?'p6.resume':'p6.menu')}">×</button></div></div></header>`;
+ return `<header class="ledger-header ${kind==='pause'?'pause-header':'result-'+kind+'-header'}"><div class="ledger-mascot">${sceneSticker(id,'',kind==='pause'?76:96)}</div><div class="ledger-heading"><h2 id="dialog-title">${title}</h2><p>${subtitle}</p></div><div class="ledger-header-end"><div class="compendium-toolbar"><button type="button" class="ledger-close dialog-close" data-action="${kind==='pause'?'resume':'menu'}" aria-label="${tr(kind==='pause'?'p6.resume':'p6.menu')}">×</button></div></div></header>`;
 }
 export function pauseMarkup(state:BattleState):string {
  return `<div class="ledger-shell pause-shell">${header('pause',tr('pause.title'),tr('pause.subtitle'))}<div class="ledger-body" tabindex="0"><div class="pause-status-strip"><span>${sceneSticker('ui_map_sign','',28)}${tr(`map.${state.mapId}`)}</span><span>🌊 ${state.wave} / 10</span><span title="${tr('p6.time')}">⏱ ${clock(state.time)}</span><span>${sceneSticker('orange','',28)}×${state.sides.player.oranges}</span></div><section><h3>${tr('pause.loot')}</h3>${lootMarkup(state.sides.player.loot)}</section><p class="settlement-note">${tr('pause.rule')}</p></div><footer class="settlement-actions pause-actions"><button type="button" class="button button-teal" data-action="resume" autofocus>▶ ${tr('p6.resume')}</button><div><button type="button" data-action="profile">🪪 ${tr('m3.profile')}</button><button type="button" data-action="settings">⚙ ${tr('m3.settings')}</button><button type="button" class="surrender-button" data-action="surrender">🏳 ${tr('p6.surrender')}</button></div></footer></div>`;

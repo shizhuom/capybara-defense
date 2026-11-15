@@ -29,7 +29,7 @@ describe('P3 visual compendium',()=>{
     book.openTo('hat_wizard');expect(book.tab).toBe('pets');
     expect(book.markup(createProfile())).toContain('data-compendium-kind="hat_wizard" data-compendium-focused="true"');
     book.openTo('shovel');const html=book.markup(createProfile());
-    expect(html.match(/data-entry=/g)).toHaveLength(19);expect(html).toContain('data-compendium-kind="shovel"');
+    expect(html.match(/data-entry=/g)).toHaveLength(1);expect(html).toContain('data-compendium-kind="shovel"');
     book.openTo('<invalid>');expect(book.tab).toBe('pets');expect(book.select('invalid')).toBe(false);
   });
   it.each(['zh-CN','en'] as const)('renders real catalogs, exact growth, one signature and two recommendations in %s',lang=>{
@@ -40,9 +40,13 @@ describe('P3 visual compendium',()=>{
       expect(html).not.toMatch(/(?:p3|p1|hero|boss|enemy|weapon|prop)\.[a-z_]+(?:\.desc)?(?=[<\s])/);
       if(lang==='en')expect(html.replace(/<[^>]*>/g,'')).not.toMatch(/[\u3400-\u9fff]/);
       if(tab==='heroes'){
-        expect(html.match(/data-weapon-role="signature"/g)).toHaveLength(12);
-        expect(html.match(/data-weapon-role="recommendation"/g)).toHaveLength(24);
-        expect(html).toContain('<td>249</td>');
+        expect(html).not.toContain('book-growth');
+        book.openTo('kungfu_po');const detail=book.markup(profile);
+        expect(detail.match(/data-weapon-role="signature"/g)).toHaveLength(1);
+        expect(detail.match(/data-weapon-role="recommendation"/g)).toHaveLength(2);
+        expect(detail).toContain('<td>249</td>');
+        expect(book.closeDetail()).toBe('kungfu_po');
+        expect(book.markup(profile).match(/data-entry=/g)).toHaveLength(12);
       }
     }
     book.openTo('hamster');expect(book.markup(profile)).toContain('<td>19</td>');expect(book.markup(profile)).toContain('1.4');

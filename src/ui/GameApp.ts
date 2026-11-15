@@ -600,7 +600,7 @@ export class GameApp {
   private renderDialog(): void {
     const kind = this.dialogKind;
     const ledgerPage=!!kind&&['recipes','armory','market','profile','leaderboard','settings','pause','result'].includes(kind);
-    const stamp=JSON.stringify([kind,kind==='recipes'?this.compendium.tab:kind==='market'?this.meta.tab:kind==='armory'?[this.meta.family,this.meta.orangeFirst]:null]);
+    const stamp=JSON.stringify([kind,kind==='recipes'?this.compendium.viewKey:kind==='market'?this.meta.tab:kind==='armory'?[this.meta.family,this.meta.orangeFirst]:null]);
     const scrolls=['.ledger-body','.market-stall','.market-backpack'].map(selector=>({selector,top:stamp===this.ledgerStamp?this.dialog.querySelector<HTMLElement>(selector)?.scrollTop??0:0}));
     this.ledgerStamp=stamp;
     this.dialog.classList.toggle('ledger-dialog',ledgerPage);
@@ -1001,6 +1001,25 @@ export class GameApp {
       if(this.compendium.select(tab)){
         this.renderDialog();this.dialog.scrollTop=0;
         this.dialog.querySelector<HTMLElement>(`#book-tab-${tab}`)?.focus({preventScroll:true});
+      }
+      return;
+    }
+    if(action.startsWith('compendium-entry:')){
+      if(this.compendium.inspectEntry(action.slice(17))){
+        this.renderDialog();
+        const body=this.dialog.querySelector<HTMLElement>('.ledger-body');if(body)body.scrollTop=0;
+        this.dialog.querySelector<HTMLElement>('[data-action="compendium-back"]')?.focus({preventScroll:true});
+      }
+      return;
+    }
+    if(action==='compendium-back'){
+      const previous=this.compendium.closeDetail();this.renderDialog();
+      if(previous)this.dialog.querySelector<HTMLElement>(`[data-action="compendium-entry:${previous}"]`)?.focus();
+      return;
+    }
+    if(action==='compendium-prev'||action==='compendium-next'){
+      if(this.compendium.stepDetail(action==='compendium-prev'?-1:1)){
+        this.renderDialog();this.dialog.querySelector<HTMLElement>(`[data-action="${action}"]`)?.focus({preventScroll:true});
       }
       return;
     }

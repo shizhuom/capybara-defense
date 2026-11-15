@@ -63,20 +63,25 @@ describe('P1 bilingual encyclopedia', () => {
     const ids=Object.keys(WEAPONS), unlocked=t('p5.collected'), locked=t('p5.locked');
     for(const unlockedIds of [[],[ids[1]],ids]) {
       profile.unlockedWeapons=[...unlockedIds];
+      book.select('weapons');
       const html=book.markup(profile);
+      expect(html.match(/data-entry=/g)).toHaveLength(36);
       for(const weapon of Object.values(WEAPONS)) {
         const card=html.match(new RegExp(`<article[^>]*data-entry="${weapon.id}"[\\s\\S]*?</article>`))?.[0];
         expect(card).toContain(`<b class="collection-state">${unlockedIds.includes(weapon.id)?unlocked:locked}</b>`);
         const count=RARITY_RULES[weapon.rarity].fragments;
-        expect(card).toContain(lang==='en'?`Unlock with ${count} fragments`:`收集 ${count} 枚碎片解锁`);
+        expect(card).not.toContain('book-stats');
+        book.inspectEntry(weapon.id);
+        expect(book.markup(profile)).toContain(lang==='en'?`Unlock with ${count} fragments`:`收集 ${count} 枚碎片解锁`);
       }
     }
   });
   it.each(['zh-CN','en'] as const)('shows configured armor percentages for all twelve bosses in %s', lang => {
     setLanguage(lang);
     const book=new Compendium(); book.tab='bosses';
-    const html=book.markup(createProfile());
+    expect(book.markup(createProfile()).match(/data-entry=/g)).toHaveLength(17);
     for(const id of BOSS_IDS) {
+      book.inspectEntry(id);const html=book.markup(createProfile());
       const card=html.match(new RegExp(`<article[^>]*data-entry="${id}"[\\s\\S]*?</article>`))?.[0];
       expect(card).toContain(`${lang==='en'?'Armor':'护甲'} ${Math.round(ENEMIES[id].armor*100)}%`);
     }
@@ -94,7 +99,7 @@ describe('P1 bilingual encyclopedia', () => {
   it('marks only actually merged heroes as collected', () => {
     const book=new Compendium(), profile=createProfile(); book.select('heroes'); profile.mergedHeroes=['kungfu_po'];
     const html=book.markup(profile);
-    expect((html.match(/class="recipe-card encyclopedia-card rarity-4 collected"/g)??[])).toHaveLength(1);
+    expect((html.match(/class="portrait-tile encyclopedia-card rarity-4 collected"/g)??[])).toHaveLength(1);
     expect(html).toContain('data-entry="kungfu_po"');
   });
   it('covers all new phrases and all twelve counter tips in both languages', () => {
