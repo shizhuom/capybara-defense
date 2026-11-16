@@ -1,0 +1,17 @@
+{
+  "at": "2026-11-16T03:02:24.993Z",
+  "passed": true,
+  "checks": [
+    "Transactions: equip/remove, filtered surplus recycle, buy/upgrade/refresh, slot caps, visible row keyboard focus, ticket/coin draw, close-during-spin, avatars/settings/reload, prep live loadout vs combat lock, tutorial replay"
+  ],
+  "layouts": [],
+  "screenshots": [
+    "p11-interaction-weapon-equipped.png",
+    "p11-interaction-backpack-keyboard.png",
+    "p11-interaction-lottery-result.png",
+    "p11-interaction-preparation-footer.png",
+    "p11-interaction-next-battle-footer.png",
+    "p11-pause-regression.png"
+  ],
+  "errors": []
+}

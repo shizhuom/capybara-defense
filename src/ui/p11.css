@@ -1,0 +1,257 @@
+/* Shared P11 folder shell. Pause and settlement deliberately retain their own styles. */
+#game-dialog:is(.recipe-dialog,.meta-dialog,.profile-dialog,.settings-dialog) {
+  --ink:#3E2822;--ink-secondary:#594039;--copy:15.5px;--label:14px;--card-title:20px;
+  width:min(92vw,680px);height:min(90dvh,830px);max-height:min(90dvh,830px);max-width:none;
+  padding:0;background:transparent!important;border:0!important;border-radius:0;box-shadow:none!important;overflow:visible;
+}
+#game-dialog:is(.recipe-dialog,.meta-dialog,.profile-dialog,.settings-dialog)::backdrop { background:rgba(28,25,23,.58); }
+#game-dialog:is(.recipe-dialog,.meta-dialog,.profile-dialog,.settings-dialog) .ledger-shell { overflow:visible;background:transparent;isolation:isolate; }
+#game-dialog:is(.recipe-dialog,.meta-dialog,.profile-dialog,.settings-dialog) .ledger-header {
+  position:relative;min-height:100px;padding:8px 96px 12px;justify-content:center;
+  background:transparent!important;border:0!important;box-shadow:none!important;
+}
+#game-dialog:is(.recipe-dialog,.meta-dialog,.profile-dialog,.settings-dialog) .ledger-heading { text-align:center; }
+#game-dialog:is(.recipe-dialog,.meta-dialog,.profile-dialog,.settings-dialog) #dialog-title {
+  margin:0;padding:0;font-size:clamp(28px,3vw,36px)!important;line-height:1.15;font-weight:900!important;
+  color:#FFFDF8!important;-webkit-text-stroke:5px #462E27;paint-order:stroke fill;
+  text-shadow:0 3px 0 #462E27,0 4px 10px rgba(0,0,0,.32);letter-spacing:.025em;
+}
+#game-dialog:is(.recipe-dialog,.meta-dialog,.profile-dialog,.settings-dialog) .ledger-heading>p { display:none; }
+#game-dialog:is(.recipe-dialog,.meta-dialog,.profile-dialog,.settings-dialog) .ledger-mascot {
+  position:absolute;left:22px;bottom:-3px;z-index:4;width:78px;height:78px;pointer-events:none;filter:none;
+}
+#game-dialog:is(.recipe-dialog,.meta-dialog,.profile-dialog,.settings-dialog) .ledger-mascot>[data-sticker] { display:block;width:78px;height:78px; }
+#game-dialog:is(.recipe-dialog,.meta-dialog,.profile-dialog,.settings-dialog) .ledger-header-end { position:absolute;right:12px;top:24px; }
+#game-dialog:is(.recipe-dialog,.meta-dialog,.profile-dialog,.settings-dialog) .compendium-toolbar .dialog-close {
+  width:40px;height:40px;min-width:40px;min-height:40px;border-radius:999px;
+  background:#F5EDE2;border:2.5px solid #4A322B;color:#4A322B!important;font-size:28px!important;box-shadow:0 2px 0 #462E2733;
+}
+#game-dialog:is(.recipe-dialog,.meta-dialog,.profile-dialog,.settings-dialog) .collection-badge {
+  display:inline-block;max-width:100%;margin-top:7px;padding:3px 10px;border:1.5px solid #6B5047;border-radius:999px;
+  background:#F4ECE1;color:#594039!important;font-size:12.5px!important;line-height:1.25;font-weight:800!important;
+}
+#game-dialog:is(.recipe-dialog,.meta-dialog,.profile-dialog,.settings-dialog) .ledger-tabs {
+  position:relative;inset:auto;z-index:3;display:grid;grid-auto-flow:column;grid-auto-columns:minmax(0,1fr);gap:5px;
+  margin:0 0 -2.5px;padding:0 10px;overflow:visible;background:transparent!important;border:0!important;
+}
+#game-dialog:is(.recipe-dialog,.meta-dialog,.profile-dialog,.settings-dialog) .ledger-tabs button {
+  position:relative;min-width:0;min-height:47px;gap:0;padding:9px 5px 8px;border:2.5px solid #593E36;border-radius:11px 11px 0 0;
+  background:#B9A094;color:#473029!important;font-size:15.5px!important;line-height:1.25;font-weight:900!important;box-shadow:none;transform:translateY(3px);
+}
+#game-dialog:is(.recipe-dialog,.meta-dialog,.profile-dialog,.settings-dialog) .ledger-tabs button>span { color:inherit!important;overflow-wrap:normal; }
+#game-dialog:is(.recipe-dialog,.meta-dialog,.profile-dialog,.settings-dialog) .ledger-tabs button:is([aria-selected="true"],[aria-pressed="true"]) {
+  z-index:1;background:#F4ECE1;border-color:#593E36;border-bottom-color:#F4ECE1!important;border-radius:12px 12px 0 0;
+  color:#3F2923!important;transform:none;box-shadow:none;
+}
+#game-dialog:is(.recipe-dialog,.meta-dialog,.profile-dialog,.settings-dialog) .ledger-tabs button:is([aria-selected="true"],[aria-pressed="true"])::after {
+  content:'';position:absolute;top:5px;right:5px;width:6px;height:6px;border-radius:50%;background:#D77768;box-shadow:0 0 0 1px #A45F52;
+}
+#game-dialog:is(.recipe-dialog,.meta-dialog,.profile-dialog,.settings-dialog) .ledger-tabs .tab-icon {
+  position:absolute;width:1px;height:1px;margin:-1px;padding:0;overflow:hidden;clip-path:inset(50%);white-space:nowrap;
+}
+#game-dialog:is(.recipe-dialog,.meta-dialog,.profile-dialog,.settings-dialog) .ledger-body {
+  position:relative;z-index:1;min-height:0;padding:17px 17px 20px;border:3px solid #593E36;border-radius:14px;
+  background:#C7B0A3;box-shadow:inset 0 0 0 5px #F4ECE1,0 10px 26px rgba(24,15,11,.36);
+  scrollbar-color:#806459 #E6D9CD;scrollbar-width:thin;scroll-padding:17px;overflow-x:hidden;
+}
+#game-dialog:is(.recipe-dialog,.meta-dialog,.profile-dialog,.settings-dialog) .ledger-body::after { content:none; }
+#game-dialog:is(.recipe-dialog,.meta-dialog,.profile-dialog,.settings-dialog) .p3-compendium,#game-dialog:is(.recipe-dialog,.meta-dialog,.profile-dialog,.settings-dialog) #book-content { min-width:0; }
+#game-dialog:is(.recipe-dialog,.meta-dialog,.profile-dialog,.settings-dialog) .portrait-grid,#game-dialog:is(.recipe-dialog,.meta-dialog,.profile-dialog,.settings-dialog) .storybook-recipe-list { display:flex;flex-direction:column;gap:12px; }
+
+/* The shell is shared; page content stays flat, with a single cream paper per row. */
+#game-dialog:is(.recipe-dialog,.meta-dialog,.profile-dialog,.settings-dialog) .storybook-heading-note { display:flex;align-items:center;justify-content:center;flex-wrap:wrap;gap:4px 7px; }
+#game-dialog:is(.recipe-dialog,.meta-dialog,.profile-dialog,.settings-dialog) .collection-badge { display:inline-flex;align-items:center;justify-content:center;gap:4px;text-shadow:none; }
+#game-dialog:is(.recipe-dialog,.meta-dialog,.profile-dialog,.settings-dialog) .collection-badge [data-sticker] { width:18px;height:18px;flex:none; }
+#game-dialog:is(.recipe-dialog,.meta-dialog,.profile-dialog,.settings-dialog) .storybook-switch { margin-top:7px;padding:3px 8px;border:1.5px solid #6B5047;border-radius:999px;background:#F4ECE1;font-size:12.5px;line-height:1.25;box-shadow:none; }
+#game-dialog:is(.recipe-dialog,.meta-dialog,.profile-dialog,.settings-dialog) .storybook-footer-tip { flex:none;padding:12px 6px 0;text-align:center; }
+#game-dialog:is(.recipe-dialog,.meta-dialog,.profile-dialog,.settings-dialog) .storybook-footer-tip p { margin:0;color:#FFFDF8!important;font-size:14.5px!important;line-height:1.4;font-weight:800!important;text-shadow:0 2px 4px #1E120E,0 0 5px #1E120E; }
+#game-dialog:is(.recipe-dialog,.meta-dialog,.profile-dialog,.settings-dialog) :is(button,summary,[tabindex]):focus-visible { outline:3px solid #5E7460;outline-offset:3px; }
+#game-dialog:is(.recipe-dialog,.meta-dialog,.profile-dialog,.settings-dialog) .ledger-body:focus-visible { outline-offset:-7px; }
+
+#game-dialog:is(.meta-dialog,.profile-dialog,.settings-dialog) :is(.storybook-list,.storybook-rank-list,.storybook-settings-list) { display:flex;flex-direction:column;gap:12px;margin:0;padding:0;list-style:none; }
+#game-dialog:is(.meta-dialog,.profile-dialog,.settings-dialog) .storybook-row-card { min-width:0;margin:0;padding:0;background:#FCF9F4;border:1.5px solid #E5DBD0;border-radius:12px;box-shadow:0 3px 0 #7a5f5224; }
+#game-dialog:is(.meta-dialog,.profile-dialog,.settings-dialog) .storybook-row-button { display:grid;grid-template-columns:82px minmax(0,1fr) 86px;align-items:center;gap:16px;width:100%;min-height:106px;margin:0;padding:12px 16px;border:0;border-radius:11px;background:transparent;box-shadow:none;text-align:left;white-space:normal; }
+#game-dialog:is(.meta-dialog,.profile-dialog,.settings-dialog) .storybook-row-button:not(:disabled):hover { background:#F7F0E6; }
+#game-dialog:is(.meta-dialog,.profile-dialog,.settings-dialog) .storybook-row-button:focus-visible { outline-offset:-4px; }
+#game-dialog:is(.meta-dialog,.profile-dialog,.settings-dialog) .storybook-frame { display:flex;align-items:center;justify-content:center;flex:none;width:82px;height:82px;min-width:0;overflow:hidden;border:2.5px solid #6B5047;border-radius:12px;background:#E9F0E2;box-shadow:inset 0 0 12px #FFFCF680;line-height:0; }
+#game-dialog:is(.meta-dialog,.profile-dialog,.settings-dialog) .storybook-frame [data-sticker] { width:68px;height:68px;object-fit:contain; }
+#game-dialog:is(.meta-dialog,.profile-dialog,.settings-dialog) .storybook-frame.tone-weapons { background:#E5EDF2; }
+#game-dialog:is(.meta-dialog,.profile-dialog,.settings-dialog) .storybook-frame.tone-props { background:#F1E9DF; }
+#game-dialog:is(.meta-dialog,.profile-dialog,.settings-dialog) .storybook-frame.tone-heroes { background:#F6ECD8; }
+#game-dialog:is(.meta-dialog,.profile-dialog,.settings-dialog) .unowned-art { opacity:.72;filter:saturate(.75); }
+#game-dialog:is(.meta-dialog,.profile-dialog,.settings-dialog) .storybook-copy { display:flex;flex-direction:column;min-width:0;gap:6px;text-align:left; }
+#game-dialog:is(.meta-dialog,.profile-dialog,.settings-dialog) .ledger-body .portrait-name { display:block;margin:0;color:#3E2822!important;font-size:20px!important;font-weight:900!important;line-height:1.25;overflow-wrap:break-word;text-align:left; }
+#game-dialog:is(.meta-dialog,.profile-dialog,.settings-dialog) .ledger-body .storybook-tagline { display:block;margin:0;color:#594039!important;font-size:15px!important;font-weight:700!important;line-height:1.5;overflow-wrap:break-word; }
+#game-dialog:is(.meta-dialog,.profile-dialog,.settings-dialog) .ledger-body .storybook-meta { display:block;margin:0;color:#594039!important;font-size:13px!important;line-height:1.35; }
+#game-dialog:is(.meta-dialog,.profile-dialog,.settings-dialog) :is(.storybook-status,.storybook-action-col) { display:flex;flex-direction:column;align-items:center;justify-content:center;gap:7px;min-width:0;text-align:center;line-height:1.3; }
+#game-dialog:is(.meta-dialog,.profile-dialog,.settings-dialog) .storybook-status :is(b,span,small),#game-dialog:is(.meta-dialog,.profile-dialog,.settings-dialog) .storybook-action-col { font-size:13.5px!important;color:#3D5A2B!important; }
+#game-dialog:is(.meta-dialog,.profile-dialog,.settings-dialog) .storybook-status [data-sticker] { flex:none; }
+#game-dialog:is(.meta-dialog,.profile-dialog,.settings-dialog) .slim-progress { display:block;overflow:hidden;width:100%;height:6px;margin:2px 0;background:#D9CEBD;border:0;border-radius:999px;box-shadow:none; }
+#game-dialog:is(.meta-dialog,.profile-dialog,.settings-dialog) .slim-progress>i { display:block;height:100%;background:#7E915F;border-radius:999px; }
+#game-dialog:is(.meta-dialog,.profile-dialog,.settings-dialog) .ledger-body :is(.storybook-pill,.storybook-pill-btn,.storybook-buy-btn,.storybook-equip-btn) { display:inline-flex;justify-content:center;align-items:center;gap:4px;max-width:100%;min-height:34px;margin:0;padding:6px 10px;border:1px solid #B79D85;border-radius:999px;background:#F0E1CA;box-shadow:none;font-size:14px!important;line-height:1.3;text-align:center; }
+#game-dialog:is(.meta-dialog,.profile-dialog,.settings-dialog) .ledger-body button.equipped { background:#E8ECCC;border-color:#899464;color:#3D5A2B!important; }
+#game-dialog:is(.meta-dialog,.profile-dialog,.settings-dialog) .ledger-body button:disabled { border-style:solid; }
+
+/* Weapon details reveal only the selected item and its four matching heroes. */
+#game-dialog.meta-dialog .compendium-detail-bar { display:flex;flex-wrap:wrap;justify-content:space-between;gap:8px;margin:0 0 14px; }
+#game-dialog.meta-dialog .compendium-detail-bar>div { display:flex;align-items:center;gap:8px;min-width:0; }
+#game-dialog.meta-dialog .ledger-body .compendium-detail-bar button { padding:7px 11px;min-height:39px;border:1.5px solid #6B5047;border-radius:999px;background:#F4ECE1;font-size:14px!important;box-shadow:none; }
+#game-dialog.meta-dialog :is(.storybook-detail-sheet,.storybook-recycle-card,.storybook-lottery-card) { margin:0;padding:20px;background:#FCF9F4!important;border:1.5px solid #E5DBD0!important;border-radius:12px;box-shadow:0 3px 0 #7a5f5224; }
+#game-dialog.meta-dialog .storybook-detail-sheet { display:flex;flex-direction:column;gap:18px; }
+#game-dialog.meta-dialog .storybook-detail-showcase { display:flex;flex-direction:column;align-items:center;gap:12px;text-align:center; }
+#game-dialog.meta-dialog .storybook-detail-showcase>.storybook-frame { width:136px;height:136px; }
+#game-dialog.meta-dialog .storybook-detail-showcase>.storybook-frame [data-sticker] { width:116px;height:116px; }
+#game-dialog.meta-dialog .ledger-body .storybook-detail-showcase h3 { margin:0;font-size:25px!important; }
+#game-dialog.meta-dialog .storybook-weapon-stats { display:flex;flex-wrap:wrap;justify-content:center;gap:8px; }
+#game-dialog.meta-dialog .storybook-damage { padding:4px 12px;background:#F6ECD8;border-radius:999px; }
+#game-dialog.meta-dialog .ledger-body :is(.storybook-detail-showcase p,.storybook-fragments) { margin:0;font-size:16px!important;line-height:1.5; }
+#game-dialog.meta-dialog .storybook-fragments { width:min(100%,320px); }
+#game-dialog.meta-dialog .ledger-body .storybook-equip-heading { margin:0;font-size:16px!important;text-align:center; }
+#game-dialog.meta-dialog .storybook-hero-equip { display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:9px; }
+#game-dialog.meta-dialog .ledger-body .storybook-hero-button { display:flex;flex-direction:column;align-items:center;justify-content:flex-start;gap:6px;min-width:0;padding:10px 5px;background:#F4ECE1;border:1.5px solid #C7B0A3;border-radius:12px;box-shadow:none;font-size:14px!important;line-height:1.3; }
+#game-dialog.meta-dialog .storybook-hero-button [data-sticker] { width:56px;height:56px; }
+#game-dialog.meta-dialog .storybook-hero-button [data-sticker="ui_storybook_check"] { width:24px;height:24px; }
+#game-dialog.meta-dialog .storybook-hero-button :is(small,b,span) { font-size:13px!important; }
+#game-dialog.meta-dialog .storybook-hero-button.equipped { background:#F6E4B6!important;border-color:#B48C4C!important; }
+#game-dialog.meta-dialog .storybook-recycle-options { display:flex;flex-direction:column;gap:0;margin:16px 0; }
+#game-dialog.meta-dialog .storybook-rarity-row { display:flex;align-items:center;gap:10px;min-height:46px;padding:8px 4px;border-bottom:1px solid #E5DBD0; }
+#game-dialog.meta-dialog .storybook-rarity-row input { accent-color:#6F8157;width:18px;height:18px; }
+#game-dialog.meta-dialog .storybook-rarity-row small { margin-left:auto; }
+#game-dialog.meta-dialog .ledger-body [data-action="meta-recycle"] { width:100%;padding:12px;border:1.5px solid #53613D;border-radius:999px;background:#D4DFBA;color:#304125!important;font-size:16px!important; }
+
+/* Market tabs have separate content; there is no permanent merchant/sidebar. */
+#game-dialog.meta-dialog .storybook-shop-heading { display:flex;align-items:center;justify-content:space-between;gap:10px;margin:0 0 14px; }
+#game-dialog.meta-dialog .ledger-body .storybook-whisper { display:flex;align-items:center;gap:7px;padding:0;min-width:0;border:0;background:none;box-shadow:none;text-align:left;font-size:14px!important; }
+#game-dialog.meta-dialog .storybook-whisper [data-sticker] { width:36px;height:36px;flex:none; }
+#game-dialog.meta-dialog .storybook-shop-heading>.storybook-pill-btn { flex:none; }
+#game-dialog.meta-dialog :is(.shop-row,.prop-row) { display:grid;grid-template-columns:82px minmax(0,1fr) 100px;align-items:center;gap:14px;padding:12px 14px; }
+#game-dialog.meta-dialog .prop-row { grid-template-columns:76px minmax(0,1fr) 92px; }
+#game-dialog.meta-dialog .prop-row>.storybook-frame { width:76px;height:76px; }
+#game-dialog.meta-dialog .prop-row>.storybook-frame [data-sticker] { width:62px;height:62px; }
+#game-dialog.meta-dialog .storybook-loadout-strip { display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:14px;padding:10px 12px;background:#F4ECE1;border-radius:12px; }
+#game-dialog.meta-dialog .storybook-loadout-strip .slot-group { display:flex;flex-wrap:wrap;gap:5px;margin:0;padding:0;min-width:0;border:0;background:none; }
+#game-dialog.meta-dialog .storybook-loadout-strip h4 { flex-basis:100%;margin:0 0 2px;font-size:13px!important; }
+#game-dialog.meta-dialog .storybook-loadout-strip .prop-slots { display:flex;gap:5px;min-width:0; }
+#game-dialog.meta-dialog .ledger-body .storybook-loadout-strip .prop-slot { position:relative;width:44px;height:44px;min-width:0;min-height:44px;padding:4px;border:1px solid #B79D85;border-radius:9px;background:#EBE0CE;box-shadow:none; }
+#game-dialog.meta-dialog .storybook-loadout-strip .prop-slot [data-sticker] { width:34px;height:34px; }
+#game-dialog.meta-dialog .storybook-loadout-strip .prop-slot :is(small,.slot-remove) { display:none; }
+#game-dialog.meta-dialog .storybook-lottery-heading { display:flex;align-items:center;gap:14px;margin-bottom:16px; }
+#game-dialog.meta-dialog .storybook-lottery-heading .storybook-frame { width:76px;height:76px; }
+#game-dialog.meta-dialog .ledger-body .storybook-lottery-heading h3 { margin:0 0 7px;font-size:22px!important; }
+#game-dialog.meta-dialog .ledger-body .storybook-lottery-heading p { margin:0;font-size:14px!important; }
+#game-dialog.meta-dialog .storybook-lottery-ring { display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;width:100%;max-width:430px;margin:14px auto;padding:0;border:0;background:none;box-shadow:none; }
+#game-dialog.meta-dialog .ledger-body .storybook-lottery-ring :is(.lottery-cell,.lottery-center) { display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;min-height:112px;aspect-ratio:auto;padding:8px;border:1px solid #E5DBD0;border-radius:12px;background:#F4ECE1!important;box-shadow:none; }
+#game-dialog.meta-dialog .storybook-lottery-ring .lottery-cell [data-sticker] { width:56px;height:56px; }
+#game-dialog.meta-dialog .ledger-body .storybook-lottery-ring .lottery-cell small { font-size:13px!important;line-height:1.25; }
+#game-dialog.meta-dialog .ledger-body .storybook-lottery-ring .lottery-center { border:2px solid #8C6E43;background:#E9D39D!important;font-size:20px!important; }
+#game-dialog.meta-dialog .storybook-lottery-ring .lottery-cell.lit { border-color:#977331;background:#FBE3A8!important;box-shadow:0 0 0 2px #D8B66D; }
+#game-dialog.meta-dialog .storybook-spin-payments { display:flex;justify-content:center;gap:10px; }
+#game-dialog.meta-dialog .ledger-body .storybook-spin-payments button { flex:1;padding:9px;border:1.5px solid #B79D85;border-radius:999px;background:#F0E1CA;font-size:14px!important;box-shadow:none; }
+#game-dialog.meta-dialog .lottery-result { margin:12px 0;padding:10px 12px;background:#F8E5B4;border:1px solid #C4A367;border-radius:10px;font-size:15px!important; }
+
+/* Rank and passport: every entry uses the same horizontal rhythm. */
+#game-dialog.profile-dialog :is(.my-rank-summary-card,.storybook-profile-summary) { display:grid;grid-template-columns:76px minmax(0,1fr) 68px;align-items:center;gap:14px;margin-bottom:15px;padding:13px;background:#FBF3E4;border-color:#D6B885; }
+#game-dialog.profile-dialog :is(.my-rank-summary-card,.storybook-profile-summary)>.storybook-frame { width:76px;height:76px; }
+#game-dialog.profile-dialog .storybook-rank-list .leaderboard-row { display:grid;grid-template-columns:96px minmax(0,1fr) 68px;align-items:center;gap:14px;padding:10px 14px; }
+#game-dialog.profile-dialog .leaderboard-row[data-player="true"] { background:#FCF5E6;border-color:#D6A95C; }
+#game-dialog.profile-dialog .leaderboard-row .storybook-frame { width:54px;height:54px;border-radius:11px; }
+#game-dialog.profile-dialog .leaderboard-row .storybook-frame [data-sticker] { width:44px;height:44px; }
+#game-dialog.profile-dialog .avatar-row .storybook-frame { width:72px;height:72px; }
+#game-dialog.profile-dialog .avatar-row .storybook-frame [data-sticker] { width:60px;height:60px; }
+#game-dialog.profile-dialog .avatar-row .storybook-row-button { grid-template-columns:72px minmax(0,1fr) 82px; }
+#game-dialog.profile-dialog .rank-portrait { display:flex;align-items:center;gap:8px;min-width:0; }
+#game-dialog.profile-dialog .place-number { flex:none;width:24px;text-align:center;font-size:19px; }
+#game-dialog.profile-dialog .rank-stars { display:flex;flex-direction:row;align-items:center;justify-content:flex-end;gap:2px; }
+#game-dialog.profile-dialog .rank-stars>b { font-size:18px!important; }
+#game-dialog.profile-dialog .ledger-body .you-here { display:inline-block;margin-left:4px;padding:1px 6px;border:0;border-radius:999px;background:#F6E4B6;color:#5C4033!important;font-size:12px!important;white-space:nowrap; }
+#game-dialog.profile-dialog .ledger-body .storybook-list-heading { margin:20px 0 12px;font-size:18px!important; }
+#game-dialog.profile-dialog .avatar-row.is-current { border-color:#B6A06D;background:#FCF5E6; }
+#game-dialog:is(.profile-dialog,.settings-dialog) .storybook-pill-label { padding:6px 9px;border:1px solid #B79D85;border-radius:999px;background:#F0E1CA; }
+
+/* Settings retain native keyboard-accessible controls, without inner frames. */
+#game-dialog.settings-dialog .setting-row { padding:14px 16px; }
+#game-dialog.settings-dialog .setting-row label { min-width:0; }
+#game-dialog.settings-dialog .storybook-volume-control { display:grid;grid-template-columns:64px minmax(0,1fr) 48px;align-items:center;gap:14px; }
+#game-dialog.settings-dialog .setting-icon { width:64px;height:64px;font-size:34px;line-height:1; }
+#game-dialog.settings-dialog .storybook-setting-toggle { display:flex;align-items:center;justify-content:space-between;gap:14px;padding:5px 0; }
+#game-dialog.settings-dialog .storybook-setting-toggle+.storybook-setting-toggle { margin-top:12px;padding-top:15px;border-top:1px solid #E5DBD0; }
+#game-dialog.settings-dialog .storybook-toggle { display:flex;flex:none; }
+#game-dialog.settings-dialog .storybook-toggle-track { display:none; }
+#game-dialog.settings-dialog .setting-tutorial-row { padding:0; }
+#game-dialog.settings-dialog .storybook-volume-control output { font-size:15px!important; }
+#game-dialog.settings-dialog .setting-row input[type="range"] { display:block;width:100%;min-width:0;height:12px;margin:12px 0 2px;border:1px solid #8C7464;border-radius:999px;appearance:none;background:linear-gradient(to right,#8A9D75 0 var(--range-fill,50%),#D8C6B6 var(--range-fill,50%) 100%); }
+#game-dialog.settings-dialog .setting-row input[type="range"]::-webkit-slider-thumb { appearance:none;width:23px;height:23px;border:2px solid #78604F;border-radius:50%;background:#F4ECE1;cursor:grab; }
+#game-dialog.settings-dialog .setting-row input[type="range"]::-moz-range-thumb { width:19px;height:19px;border:2px solid #78604F;border-radius:50%;background:#F4ECE1;cursor:grab; }
+#game-dialog.settings-dialog .setting-row input[type="checkbox"] { appearance:none;flex:none;width:44px;height:26px;margin:0;border:1.5px solid #8C7464;border-radius:999px;background:#D8C6B6;cursor:pointer; }
+#game-dialog.settings-dialog .setting-row input[type="checkbox"]::after { content:'';display:block;width:18px;height:18px;margin:2.5px;border-radius:50%;background:#FCF9F4;box-shadow:0 1px 2px #59403944;transition:transform .15s; }
+#game-dialog.settings-dialog .setting-row input[type="checkbox"]:checked { background:#92AA79; }
+#game-dialog.settings-dialog .setting-row input[type="checkbox"]:checked::after { transform:translateX(17px); }
+
+@media (max-height:500px) and (orientation:landscape) {
+ #game-dialog:is(.recipe-dialog,.meta-dialog,.profile-dialog,.settings-dialog) { width:min(90vw,660px);height:95dvh;max-height:95dvh; }
+ #game-dialog:is(.recipe-dialog,.meta-dialog,.profile-dialog,.settings-dialog) .ledger-header { min-height:65px;padding:3px 86px 6px; }
+ #game-dialog:is(.recipe-dialog,.meta-dialog,.profile-dialog,.settings-dialog) #dialog-title { font-size:28px!important;-webkit-text-stroke-width:4px; }
+ #game-dialog:is(.recipe-dialog,.meta-dialog,.profile-dialog,.settings-dialog) .ledger-mascot,#game-dialog:is(.recipe-dialog,.meta-dialog,.profile-dialog,.settings-dialog) .ledger-mascot>[data-sticker] { width:60px;height:60px; }
+ #game-dialog:is(.recipe-dialog,.meta-dialog,.profile-dialog,.settings-dialog) .ledger-header-end { top:10px; }
+ #game-dialog:is(.recipe-dialog,.meta-dialog,.profile-dialog,.settings-dialog) :is(.collection-badge,.storybook-switch) { margin-top:4px;padding:2px 8px;font-size:11.5px!important; }
+ #game-dialog:is(.recipe-dialog,.meta-dialog,.profile-dialog,.settings-dialog) .ledger-tabs button { min-height:35px;padding:5px 3px;font-size:14px!important; }
+ #game-dialog:is(.recipe-dialog,.meta-dialog,.profile-dialog,.settings-dialog) .ledger-body { padding:12px;scroll-padding:12px; }
+ #game-dialog:is(.recipe-dialog,.meta-dialog,.profile-dialog,.settings-dialog) .storybook-footer-tip { padding-top:6px; }
+ #game-dialog:is(.recipe-dialog,.meta-dialog,.profile-dialog,.settings-dialog) .storybook-footer-tip p { font-size:11.5px!important;line-height:1.3; }
+ #game-dialog:is(.meta-dialog,.profile-dialog,.settings-dialog) :is(.storybook-row-button,.shop-row,.prop-row) { grid-template-columns:68px minmax(0,1fr) 88px;gap:12px;min-height:88px;padding:9px 12px; }
+ #game-dialog:is(.meta-dialog,.profile-dialog,.settings-dialog) .storybook-frame { width:68px;height:68px; }
+ #game-dialog:is(.meta-dialog,.profile-dialog,.settings-dialog) .storybook-frame [data-sticker] { width:56px;height:56px; }
+ #game-dialog:is(.meta-dialog,.profile-dialog,.settings-dialog) .ledger-body .portrait-name { font-size:18px!important; }
+ #game-dialog:is(.meta-dialog,.profile-dialog,.settings-dialog) .ledger-body .storybook-tagline { font-size:14px!important; }
+ #game-dialog.meta-dialog :is(.storybook-detail-sheet,.storybook-recycle-card,.storybook-lottery-card) { padding:14px; }
+}
+@media (max-width:600px) and (orientation:portrait) {
+ #game-dialog:is(.recipe-dialog,.meta-dialog,.profile-dialog,.settings-dialog) { width:94vw;height:91dvh;max-height:91dvh; }
+ #game-dialog:is(.recipe-dialog,.meta-dialog,.profile-dialog,.settings-dialog) .ledger-header { min-height:94px;padding:7px 42px 12px 68px; }
+ #game-dialog:is(.recipe-dialog,.meta-dialog,.profile-dialog,.settings-dialog) #dialog-title { font-size:28px!important;-webkit-text-stroke-width:4px;letter-spacing:0; }
+ #game-dialog:is(.recipe-dialog,.meta-dialog,.profile-dialog,.settings-dialog) .ledger-mascot,#game-dialog:is(.recipe-dialog,.meta-dialog,.profile-dialog,.settings-dialog) .ledger-mascot>[data-sticker] { width:62px;height:62px; }
+ #game-dialog:is(.recipe-dialog,.meta-dialog,.profile-dialog,.settings-dialog) .ledger-mascot { left:8px;bottom:-3px; }
+ #game-dialog:is(.recipe-dialog,.meta-dialog,.profile-dialog,.settings-dialog) .ledger-header-end { right:2px;top:17px; }
+ #game-dialog:is(.recipe-dialog,.meta-dialog,.profile-dialog,.settings-dialog) .compendium-toolbar .dialog-close { width:36px;height:36px;min-width:36px;min-height:36px;font-size:26px!important; }
+ #game-dialog:is(.recipe-dialog,.meta-dialog,.profile-dialog,.settings-dialog) :is(.collection-badge,.storybook-switch) { padding:3px 6px;font-size:11px!important; }
+ #game-dialog:is(.recipe-dialog,.meta-dialog,.profile-dialog,.settings-dialog) .ledger-tabs { padding:0 5px;gap:3px; }
+ #game-dialog:is(.recipe-dialog,.meta-dialog,.profile-dialog,.settings-dialog) .ledger-tabs button { min-height:47px;padding:7px 2px 6px;font-size:12px!important;line-height:1.25; }
+ #game-dialog:is(.recipe-dialog,.meta-dialog,.profile-dialog,.settings-dialog) .ledger-tabs button>span { overflow-wrap:normal; }
+ #game-dialog:is(.recipe-dialog,.meta-dialog,.profile-dialog,.settings-dialog) .ledger-body { padding:12px 10px 15px;scroll-padding:12px; }
+ #game-dialog:is(.recipe-dialog,.meta-dialog,.profile-dialog,.settings-dialog) .storybook-footer-tip { padding:10px 3px 0; }
+ #game-dialog:is(.recipe-dialog,.meta-dialog,.profile-dialog,.settings-dialog) .storybook-footer-tip p { font-size:12px!important;line-height:1.4; }
+ #game-dialog:is(.meta-dialog,.profile-dialog,.settings-dialog) .storybook-row-button,#game-dialog.meta-dialog :is(.shop-row,.prop-row) { grid-template-columns:60px minmax(0,1fr) 64px;gap:8px;min-height:102px;padding:11px 9px; }
+ #game-dialog:is(.meta-dialog,.profile-dialog,.settings-dialog) .storybook-frame { width:60px;height:60px;border-width:2px;border-radius:10px; }
+ #game-dialog:is(.meta-dialog,.profile-dialog,.settings-dialog) .storybook-frame [data-sticker] { width:50px;height:50px; }
+ #game-dialog:is(.meta-dialog,.profile-dialog,.settings-dialog) .ledger-body .portrait-name { font-size:17px!important; }
+ #game-dialog:is(.meta-dialog,.profile-dialog,.settings-dialog) .ledger-body .storybook-tagline { font-size:13.5px!important; }
+ #game-dialog:is(.meta-dialog,.profile-dialog,.settings-dialog) .ledger-body :is(.storybook-meta,.storybook-status span,.storybook-status small,.storybook-status b) { font-size:12px!important; }
+ #game-dialog:is(.meta-dialog,.profile-dialog,.settings-dialog) .ledger-body :is(.storybook-pill,.storybook-pill-btn,.storybook-buy-btn,.storybook-equip-btn) { padding:6px;font-size:12.5px!important; }
+ #game-dialog.meta-dialog .storybook-shop-heading { flex-wrap:wrap;gap:10px; }
+ #game-dialog.meta-dialog .storybook-loadout-strip { flex-direction:column;align-items:flex-start;padding:9px; }
+ #game-dialog.meta-dialog .storybook-loadout-strip .prop-slot { width:39px;height:39px;min-height:39px;padding:2px; }
+ #game-dialog.meta-dialog .storybook-loadout-strip .prop-slot [data-sticker] { width:31px;height:31px; }
+ #game-dialog.meta-dialog :is(.storybook-detail-sheet,.storybook-recycle-card,.storybook-lottery-card) { padding:12px; }
+ #game-dialog.meta-dialog .storybook-hero-equip { grid-template-columns:repeat(2,minmax(0,1fr));gap:9px; }
+ #game-dialog.meta-dialog .storybook-lottery-heading { align-items:flex-start;gap:10px; }
+ #game-dialog.meta-dialog .ledger-body .storybook-lottery-heading h3 { font-size:19px!important; }
+ #game-dialog.meta-dialog .storybook-lottery-ring { gap:5px; }
+ #game-dialog.meta-dialog .ledger-body .storybook-lottery-ring :is(.lottery-cell,.lottery-center) { min-height:103px;padding:5px; }
+ #game-dialog.meta-dialog .storybook-lottery-ring .lottery-cell [data-sticker] { width:48px;height:48px; }
+ #game-dialog.meta-dialog .storybook-spin-payments { flex-direction:column; }
+ #game-dialog.profile-dialog :is(.my-rank-summary-card,.storybook-profile-summary) { grid-template-columns:60px minmax(0,1fr) 50px;gap:9px;padding:11px 9px; }
+ #game-dialog.profile-dialog :is(.my-rank-summary-card,.storybook-profile-summary)>.storybook-frame { width:60px;height:60px; }
+ #game-dialog.profile-dialog .storybook-rank-list .leaderboard-row { grid-template-columns:70px minmax(0,1fr) 45px;gap:9px;padding:10px; }
+ #game-dialog.profile-dialog .leaderboard-row .storybook-frame { width:44px;height:44px; }
+ #game-dialog.profile-dialog .leaderboard-row .storybook-frame [data-sticker] { width:36px;height:36px; }
+ #game-dialog.profile-dialog .avatar-row .storybook-frame { width:60px;height:60px; }
+ #game-dialog.profile-dialog .avatar-row .storybook-frame [data-sticker] { width:50px;height:50px; }
+ #game-dialog.settings-dialog .setting-row { padding:12px; }
+ #game-dialog.settings-dialog .storybook-volume-control { grid-template-columns:42px minmax(0,1fr) 42px;gap:8px; }
+ #game-dialog.settings-dialog .setting-icon { width:42px;height:42px;font-size:25px; }
+ #game-dialog.settings-dialog .setting-tutorial-row { padding:0; }
+}
+@media (prefers-reduced-motion:reduce) {
+ #game-dialog:is(.recipe-dialog,.meta-dialog,.profile-dialog,.settings-dialog) .ledger-body { scroll-behavior:auto; }
+ #game-dialog.settings-dialog .setting-row input::after { transition:none; }
+}

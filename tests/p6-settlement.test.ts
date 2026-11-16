@@ -35,7 +35,7 @@ it('renders an honest lineup fallback for a zero-damage battle and all P6 keys i
 it('uses portrait equipment controls without selects and preserves real shop actions',()=>{
  const p={...createProfile(),unlockedWeapons:['m10_bamboo_staff'],equippedWeapons:{kungfu_po:'m10_bamboo_staff'}};
  const meta=new MetaScreens(()=>p,()=>{},()=>{},()=>{}),profile=new ProfileScreens(()=>p,()=>true,()=>{},()=>{});
- const html=meta.markup('armory');expect(html).not.toContain('<select');expect(html.match(/data-action="meta-equip:m10_bamboo_staff:/g)).toHaveLength(4);expect(html).toContain('aria-pressed="true"');expect(html).toContain('equip-status');expect(html).not.toContain('class="text-button" data-action="meta-unequip:');
- const shop=meta.markup('market');expect(shop).toMatch(/class="stall-awning market-awning"[\s\S]*?data-action="meta-refresh"[\s\S]*?<\/h3>/);
+ meta.action('meta-weapon:m10_bamboo_staff');const html=meta.markup('armory');expect(html).not.toContain('<select');expect(html.match(/data-action="meta-equip:m10_bamboo_staff:/g)).toHaveLength(4);expect(html).toContain('aria-pressed="true"');expect(html).toContain('ui_storybook_check');expect(html).not.toContain('class="text-button" data-action="meta-unequip:');
+ const shop=meta.markup('market');expect(shop).toMatch(/class="storybook-shop-heading"[\s\S]*?data-action="meta-refresh"/);
  expect(profile.markup('settings')).not.toContain('settings-language');expect(rankCard(p)).toContain('data-sticker="ui_star_rank"');expect(rankCard(p)).not.toContain('★');
 });

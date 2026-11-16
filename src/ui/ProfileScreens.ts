@@ -1,10 +1,9 @@
-import {ledger,threatBanner} from './LedgerView';
+import {ledger} from './LedgerView';
 import {sceneSticker} from './stickers';
 import type { Profile } from '../core/types';
 import { AVATARS } from '../config/avatars';
-import { RANKS } from '../config/ranks';
+import { RANKS, getRank, getRankDifficulty } from '../config/ranks';
 import { getLeaderboard, getUnlockedMaps, selectAvatar, selectMap, setRank, updateSettings } from '../core/PlayerProgression';
-import { getRank } from '../config/ranks';
 import { avatarSticker } from '../render/M3Art';
 import { getLanguage,t } from '../i18n/i18n';
 import { escapeHtml as esc } from './art';
@@ -55,17 +54,33 @@ export class ProfileScreens {
   }
   markup(screen: ProfileScreen): string {
     const profile=this.profile();
-    const shell=(body:string)=>ledger(screen,body,{profile});
-    if(screen==='settings')return ledger('settings',`<div class="settings-form">${(['musicVolume','soundVolume'] as const).map(key=>`<label class="wood-slider"><span>${tr(key==='musicVolume'?'m3.music':'m3.sound')} <output>${Math.round(profile.settings[key]*100)}%</output></span><input class="cozy-range" style="--range-fill:${Math.round(profile.settings[key]*100)}%" type="range" min="0" max="1" step="0.01" value="${profile.settings[key]}" data-setting="${key}" aria-label="${tr(key==='musicVolume'?'m3.music':'m3.sound')}"></label>`).join('')}<div class="setting-toggles">${(['showDamageNumbers','developerMode'] as const).map(key=>`<label class="capsule-setting toggle-setting-card"><input type="checkbox" data-setting="${key}"${profile.settings[key]?' checked':''}><i class="toggle-knob switch-pill" aria-hidden="true"></i><span><b>${tr(key==='developerMode'?'p1.developer':'m3.damage')}</b><small>${tr(key==='developerMode'?'p5.developerHint':'p5.damageHint')}</small></span></label>`).join('')}</div><button type="button" class="tutorial-replay-card" data-action="tutorial-replay">${sceneSticker('ui_tutorial_capy','',64)}<span><b>📖 ${tr('p1.tutorialReplay')}</b><small>${tr('p5.replayHint')}</small></span></button><p class="settings-saved">${tr('m3.settingsSaved')}</p></div>`);
-    if(screen==='leaderboard'){
-      const entries=getLeaderboard(profile);
-      const row=(index:number,podium=false)=>{const entry=entries[index];return `<li class="leaderboard-row ${entry.isPlayer?'is-player':''} ${podium?'podium-card podium-'+(index+1):''}" data-player="${entry.isPlayer}" data-place="${index+1}" aria-label="${tr('m3.place',{place:index+1})}"><b class="place-number">${index<3?['🥇','🥈','🥉'][index]:index+1}</b><span>${avatarSticker(entry.avatarId,podium?72:44)}</span><div><strong>${esc(entry.name[getLanguage()])}</strong><small>${tr(`rank.${getRank(entry.stars).index}`)}</small><small>${tr('m3.record',{wins:entry.wins,matches:entry.matches,rate:entry.matches?Math.round(entry.wins/entry.matches*100):0})}</small>${entry.isPlayer?`<b class="you-here">${tr('p5.here')}</b>`:''}</div><strong class="rank-stars">${sceneSticker('ui_star_rank','',22)} ${entry.stars}</strong></li>`;};
-      return shell(`<section class="rank-threat-banner">${rankCard(profile)}<div>${threatBanner(profile)}<p>${tr('p5.threatExplanation')}</p></div></section><p class="meta-rule">${tr('m3.localBoard')}</p><ol class="rank-podium leaderboard-podium">${[1,0,2].map(i=>row(i,true)).join('')}</ol><ol class="leaderboard-list" start="4">${entries.slice(3).map((_,i)=>row(i+3)).join('')}</ol>`);
-    }
+    const body=screen==='settings'?this.settings(profile):screen==='leaderboard'?this.leaderboard(profile):this.passport(profile);
+    return ledger(screen,body,{profile});
+  }
+  private leaderboard(profile:Profile):string {
+    const rank=getRank(profile.stars),next=RANKS[rank.index+1],hp=getRankDifficulty(rank.index).hpMultiplier;
+    const progress=next?Math.max(0,Math.min(100,(profile.stars-rank.minStars)/(next.minStars-rank.minStars)*100)):100;
+    const summary=`<section class="storybook-row-card my-rank-summary-card" aria-label="${tr('p11.profile.myRank')}"><span class="storybook-frame tone-heroes">${avatarSticker(profile.avatarId,64)}</span><span class="storybook-copy"><strong class="portrait-name">${tr(`rank.${rank.index}`)}</strong><span class="storybook-tagline">${tr(next?'p11.profile.rankProgress':'p11.profile.topRank',{count:next?next.minStars-profile.stars:0,hp})}</span><span class="slim-progress" role="progressbar" aria-label="${tr('p11.profile.rankProgressLabel')}" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${Math.round(progress)}"><i style="width:${progress}%"></i></span></span><span class="storybook-status rank-stars">${sceneSticker('ui_star_rank','',24)}<b>${profile.stars}</b></span></section>`;
+    const rows=getLeaderboard(profile).map((entry,index)=>`<li class="storybook-row-card leaderboard-row${entry.isPlayer?' is-player':''}" data-player="${entry.isPlayer}" data-place="${index+1}" aria-label="${tr('m3.place',{place:index+1})}"><span class="rank-portrait"><b class="place-number">${index<3?['🥇','🥈','🥉'][index]:index+1}</b><span class="storybook-frame tone-heroes">${avatarSticker(entry.avatarId,44)}</span></span><span class="storybook-copy"><strong class="portrait-name">${esc(entry.name[getLanguage()])}${entry.isPlayer?` <span class="you-here">${tr('p11.profile.youHere')}</span>`:''}</strong><span class="storybook-tagline">${tr(`rank.${getRank(entry.stars).index}`)}</span></span><span class="storybook-status rank-stars">${sceneSticker('ui_star_rank','',20)}<b>${entry.stars}</b></span></li>`).join('');
+    return `${summary}<ol class="storybook-rank-list" aria-label="${tr('m3.localBoard')}">${rows}</ol>`;
+  }
+  private passport(profile:Profile):string {
     const rate=profile.matches?Math.round(profile.wins/profile.matches*100):0;
-    return shell(`<section class="keeper-passport keeper-license-card"><h3>${tr('p5.passport')}</h3><div class="passport-layout">${rankCard(profile)}<div class="passport-stats keeper-stat-grid"><article><small>${tr('p5.winRate')}</small><b>${rate}%</b><span>${tr('m3.record',{wins:profile.wins,matches:profile.matches,rate})}</span></article><article><small>${tr('p5.streak')}</small><b>${profile.winStreak} / ${profile.bestWinStreak}</b></article><article><small>${tr('p5.catalog')}</small><b>${tr('p5.collection',{heroes:profile.mergedHeroes.length,weapons:profile.unlockedWeapons.length})}</b></article><button type="button" data-action="leaderboard">${threatBanner(profile,true)}</button></div></div></section><h3 class="avatar-wall-heading">${tr('p5.avatarWall')}</h3><div class="avatar-grid">${Object.values(AVATARS).map(avatar=>{
+    const summary=`<section class="storybook-row-card storybook-profile-summary" aria-label="${tr('p5.passport')}"><span class="storybook-frame tone-heroes">${avatarSticker(profile.avatarId,68)}</span><span class="storybook-copy"><strong class="portrait-name">${tr(`rank.${getRank(profile.stars).index}`)}</strong><span class="storybook-tagline">${tr('p11.profile.record',{matches:profile.matches,rate,best:profile.bestWinStreak})}</span></span><span class="storybook-status profile-collection"><span>${tr('p11.profile.collection')}</span><b>${profile.mergedHeroes.length}/12</b></span></section>`;
+    const rows=Object.values(AVATARS).map(avatar=>{
       const unlocked=profile.unlockedAvatars.includes(avatar.id),selected=profile.avatarId===avatar.id;
-      return `<button type="button" class="avatar-card ${unlocked?'unlocked':'locked'}" data-action="avatar:${avatar.id}" aria-pressed="${selected}"${unlocked?'':' disabled'}><span class="avatar-seal">${avatarSticker(avatar.id,72)}</span><strong>${tr(`avatar.${avatar.id}`)}</strong><small>${tr(`avatar.${avatar.id}.desc`)}</small><b>${selected?'💮 ':unlocked?'':'🔒 '}${tr(selected?'m3.avatarCurrent':unlocked?'m3.avatarUnlocked':'m3.avatarLocked')}</b></button>`;
-    }).join('')}</div>`);
+      const status=selected?`<b>${tr('p11.profile.avatarCurrent')}</b><span class="storybook-mark" aria-hidden="true">${sceneSticker('ui_storybook_check','',26)}</span>`:unlocked?`<span class="storybook-pill-label">${tr('p11.profile.avatarChange')}</span>`:`<b>${tr('m3.avatarLocked')}</b><span class="storybook-mark" aria-hidden="true">${sceneSticker('ui_lock_closed','',22)}</span>`;
+      return `<article class="storybook-row-card avatar-row ${unlocked?'unlocked':'locked'}${selected?' is-current':''}" role="listitem"><button type="button" class="storybook-row-button" data-action="avatar:${avatar.id}" aria-pressed="${selected}"${unlocked?'':' disabled'}><span class="storybook-frame tone-heroes${unlocked?'':' unowned-art'}">${avatarSticker(avatar.id,60)}</span><span class="storybook-copy"><strong class="portrait-name">${tr(`avatar.${avatar.id}`)}</strong><span class="storybook-tagline">${tr(`avatar.${avatar.id}.desc`)}</span></span><span class="storybook-status">${status}</span></button></article>`;
+    }).join('');
+    return `${summary}<h3 class="storybook-list-heading">${tr('p11.profile.avatarCollection')}</h3><div class="storybook-list storybook-avatar-list" role="list" aria-label="${tr('p11.profile.avatarCollection')}">${rows}</div>`;
+  }
+  private settings(profile:Profile):string {
+    const volumes=(['musicVolume','soundVolume'] as const).map(key=>{
+      const label=tr(key==='musicVolume'?'p11.profile.musicVolume':'p11.profile.soundVolume'),percent=Math.round(profile.settings[key]*100),id=`profile-setting-${key}`;
+      return `<article class="storybook-row-card setting-row setting-volume-row"><label class="storybook-volume-control"><span class="storybook-frame tone-settings setting-icon" aria-hidden="true">${key==='musicVolume'?'♫':'🔊'}</span><span class="storybook-copy"><strong class="portrait-name">${label}</strong><input id="${id}" class="cozy-range" style="--range-fill:${percent}%" type="range" min="0" max="1" step="0.01" value="${profile.settings[key]}" data-setting="${key}" aria-label="${label}"></span><output class="storybook-status" for="${id}">${percent}%</output></label></article>`;
+    }).join('');
+    const toggles=(['showDamageNumbers','developerMode'] as const).map(key=>`<label class="storybook-setting-toggle"><span class="storybook-copy"><strong class="portrait-name">${tr(key==='developerMode'?'p1.developer':'m3.damage')}</strong><span class="storybook-tagline">${tr(key==='developerMode'?'p5.developerHint':'p5.damageHint')}</span></span><span class="storybook-toggle"><input class="storybook-toggle-input" type="checkbox" data-setting="${key}"${profile.settings[key]?' checked':''}><i class="storybook-toggle-track" aria-hidden="true"></i></span></label>`).join('');
+    const replay=`<article class="storybook-row-card setting-row setting-tutorial-row"><button type="button" class="storybook-row-button" data-action="tutorial-replay"><span class="storybook-frame tone-heroes">${sceneSticker('ui_tutorial_capy','',64)}</span><span class="storybook-copy"><strong class="portrait-name">${tr('p11.profile.tutorialReplay')}</strong><span class="storybook-tagline">${tr('p11.profile.tutorialHint')}</span></span><span class="storybook-status"><span class="storybook-pill-label">${tr('p11.profile.start')}</span></span></button></article>`;
+    return `<div class="storybook-list storybook-settings-list">${volumes}<article class="storybook-row-card setting-row setting-toggle-row">${toggles}</article>${replay}</div>`;
   }
 }

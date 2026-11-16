@@ -25,7 +25,7 @@ Keep the silhouette readable at small display scales. P3 regular enemy PNGs use 
 
 Run `npm run sync-assets` in the game directory. The zero-dependency script copies only regular lowercase PNG filenames matching `^[a-z][a-z0-9_]*\.png$` from the optional read-only source `../../design/assets/sprites/`. It preserves the source manifest verbatim when it exactly matches the destination PNG catalog, otherwise it writes a safe sorted array manifest. It never deletes existing destination art, creates the source, or fails because the source is absent/empty. Uppercase extensions, hyphens, directories and symlinks are skipped. Canvas and HTML share a loaded-only registry; malformed manifests, missing files and decode failures retain the built-in fallback. Vite's `BASE_URL` supports relative/subdirectory hosting. HTML refreshes once the initial asset batch settles.
 
-The current P10 catalog contains **205 PNGs**; the sections below retain the additions from each release. Characters, objects, props, weapons and avatars should be transparent RGBA PNG at 256×256 or 512×512 with clear margins. Keep feet near the lower center so gold hero disks remain visible. The soaking guardian and storybook check/peek art deliberately have no outer sticker border. Level/status badges, energy, hits, shields, weapon effects and input positions remain dynamic.
+The current P11 catalog contains **209 PNGs**; the sections below retain the additions from each release. Characters, objects, props, weapons and avatars should be transparent RGBA PNG at 256×256 or 512×512 with clear margins. Keep feet near the lower center so gold hero disks remain visible. The soaking guardian and storybook check/peek art deliberately have no outer sticker border. Level/status badges, energy, hits, shields, weapon effects and input positions remain dynamic.
 
 ## Four maps and tile aliases
 
@@ -170,3 +170,16 @@ P9 shipped **201** original PNGs. New scene IDs: `npc_shop_raccoon`, `npc_blacks
 The **205-item** manifest includes `capybara_soak` (256×256), `capybara_soak_dizzy` (256×256), `ui_compendium_peek_capy` (256×256), and `ui_storybook_check` (128×128), all transparent RGBA with no white border/backing. HTML has four matching frame-free SVG fallbacks; battle Canvas has an independent tub-free head-and-shoulders fallback.
 
 The four maps retain every board coordinate and their 1280×720 canvas. Three dry endpoint containers now contain painted water; Sakura's existing pool is unchanged. Visual centres and square portrait sizes are: backyard `(1053.5,531)`, `74px`; Sakura `(263,490)`, `90px`; kitchen `(1055,323)`, `80px`; cat tower `(1054,325)`, `74px`. Orange stacks, losses, gains, water ripples and steam share these anchors.
+
+## P11 shared storybook folders
+
+The 209-item manifest adds four 256×256 transparent, borderless peeking mascots:
+
+| ID | Folder |
+| --- | --- |
+| `ui_armory_peek_capy` | Armory, brass goggles |
+| `ui_market_peek_raccoon` | Market, tiny pot and glasses |
+| `ui_rank_peek_capy` | Rankings, golden star laurel |
+| `ui_profile_peek_capy` | Passport and Settings, cherry blossom |
+
+All four keep their paws on the bottom edge, without a backing card or white outline. `P11_SCENE_IDS` registers their distinct offline SVG fallbacks and asynchronous UI refresh. Run `npm run sync-assets` to copy the authoritative read-only design assets into this directory; never edit the source art.

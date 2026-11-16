@@ -92,13 +92,16 @@ describe('P5 safe selection and tutorial integration',()=>{
     canvas.fire('pointerdown',event);canvas.fire('pointermove',{...event,clientX:150});canvas.fire('pointerup',{...event,clientX:150});
     expect(unit.location).toEqual({zone:'bench',slot:0});expect(engine.state.units.find(u=>u.id===otherId)?.level).toBe(1);expect(engine.state.sides.player.propCooldowns.milk_bottle).toBeUndefined();expect(app.selectedProp).toBeUndefined();
   });
-  it('preserves both market pane scroll offsets during a same-page purchase/equip redraw',()=>{
+  it('preserves the single folder scroll on redraw and resets it when the tab or detail changes',()=>{
     const {app}=harness();app.refresh=()=>{};app.dialogKind='market';app.meta=new MetaScreens(()=>app.profile,()=>{},()=>{},()=>{});
-    const panes=new Map(['.ledger-body','.market-stall','.market-backpack'].map(key=>[key,new Element()]));
+    const panes=new Map(['.ledger-body'].map(key=>[key,new Element()]));
     app.dialog.querySelector=(key:string)=>panes.get(key)??new Element();
     Object.defineProperty(app.dialog,'innerHTML',{get:()=>'',set:()=>{for(const p of panes.values())p.scrollTop=0;}});
-    app.renderDialog();panes.get('.market-stall')!.scrollTop=160;panes.get('.market-backpack')!.scrollTop=280;app.renderDialog();
-    expect(panes.get('.market-stall')!.scrollTop).toBe(160);expect(panes.get('.market-backpack')!.scrollTop).toBe(280);
+    app.renderDialog();panes.get('.ledger-body')!.scrollTop=160;app.renderDialog();
+    expect(panes.get('.ledger-body')!.scrollTop).toBe(160);
+    app.meta.action('meta-tab:backpack');app.renderDialog();expect(panes.get('.ledger-body')!.scrollTop).toBe(0);
+    app.dialogKind='armory';app.renderDialog();panes.get('.ledger-body')!.scrollTop=280;app.renderDialog();expect(panes.get('.ledger-body')!.scrollTop).toBe(280);
+    app.meta.action('meta-weapon:m10_bamboo_staff');app.renderDialog();expect(panes.get('.ledger-body')!.scrollTop).toBe(0);
   });
   it('does not skip the hero lesson on an unrelated basic upgrade; blank stage cancels except while a dialog owns input',()=>{
     const {app,engine,root}=harness();app.refresh=()=>{};app.tutorialStep=4;const id=engine.grant('hamster').unitId!;

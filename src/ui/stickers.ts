@@ -68,6 +68,15 @@ Object.assign(tools,{
   ui_skull_threat:p('M-26 6 Q-38 -25 -13 -34 Q13 -42 28 -17 Q36 2 21 15 V31 H-20 V15Z','#f8ecd2')+e(-13,-3,8,10,'#7a6553')+e(13,-3,8,10,'#7a6553')+p('M0 6 L-5 15 H5Z','#7a6553')+p('M-11 25 V33 M0 25 V33 M11 25 V33'),
 });
 export const P10_SCENE_IDS=['capybara_soak','capybara_soak_dizzy','ui_compendium_peek_capy','ui_storybook_check'] as const;
+export const P11_SCENE_IDS=['ui_armory_peek_capy','ui_market_peek_raccoon','ui_rank_peek_capy','ui_profile_peek_capy'] as const;
+const peekBody=p('M-30 48 Q-34 28 -27 6 Q-39 -12 -25 -14 L-18 -7 Q1 -24 22 -5 Q39 -10 37 6 Q41 30 28 48Z','#d0a67e','#462e27')+p('M22 4 Q38 0 37 20 Q31 27 24 20 M-13 9 Q-8 4 -3 9 M2 25 Q8 30 13 25','none','#462e27',2.5)+e(-18,20,4,2,'#dfaa9d');
+const peekPaws=p('M-44 49 H44','none','#462e27',2)+p('M-26 49 Q-34 35 -23 35 Q-12 36 -14 49Z M17 49 Q13 35 25 35 Q36 37 29 49Z','#dfb98e','#462e27',2);
+Object.assign(tools,{
+ ui_armory_peek_capy:peekBody+p('M-22 -3 Q-2 -20 20 -3','none','#97663b',5)+e(-8,-7,10,9,'#d9b270')+e(12,-8,10,9,'#d9b270')+e(-8,-7,6,6,'#c6d7cc')+e(12,-8,6,6,'#c6d7cc')+peekPaws,
+ ui_market_peek_raccoon:p('M-31 47 Q-35 23 -24 4 L-30 -15 -10 -7 Q0 -12 11 -7 L29 -15 24 4 Q36 24 30 47Z','#aea59a','#462e27')+p('M-24 9 L-13 2 0 7 13 2 24 9 15 21 0 14 -15 21Z','#6f6258','#462e27',1)+e(-11,11,9,8,'#e3d9c8')+e(11,11,9,8,'#e3d9c8')+e(-11,11,2,3,'#462e27')+e(11,11,2,3,'#462e27')+p('M-3 24 H3 L0 28Z','#462e27')+p('M-19 -8 L-16 -28 H17 L21 -8Z','#b5b6ad','#462e27')+p('M-20 -8 H24 M17 -25 H32 V-17 H20','none','#462e27',3)+peekPaws,
+ ui_rank_peek_capy:peekBody+p('M-27 -3 Q-12 -26 11 -12','none','#b69b52',4)+p('M-23 -7 L-30 -17 -17 -13 M-14 -17 L-17 -28 -5 -21 M-1 -17 L5 -28 8 -15','#b8ad6c','#73643f',1.5)+p('M10 -13 L13 -23 18 -16 27 -17 22 -9 25 -1 16 -4 9 2 10 -7 4 -12Z','#eed28d','#7a582e',2)+peekPaws,
+ ui_profile_peek_capy:peekBody+`<g transform="translate(-17 -6)">${[0,72,144,216,288].map(a=>`<g transform="rotate(${a})">${e(0,-8,6,9,'#e8b8bd')}</g>`).join('')}${e(0,0,4,4,'#f6d99f')}</g>`+peekPaws,
+});
 const soakingBody=p('M-29 28 Q-21 11 -23 -10 Q-25 -36 6 -34 Q26 -33 34 -17 Q46 -11 38 6 Q31 17 18 16 L26 29 Q0 39 -29 28Z','#cda172','#3a2618')+p('M-22 -25 Q-37 -44 -27 -42 Q-15 -41 -15 -29 M2 -34 Q1 -45 9 -44 Q16 -43 16 -32','#c59b70','#3a2618')+p('M28 -13 Q39 -17 38 4 Q34 13 25 6','#d8b388','#3a2618');
 const soakingWater=p('M-38 26 Q-47 38 -5 40 Q36 44 43 27','none','#88c7c0',5)+p('M-39 28 Q-31 44 34 35','none','#fffdf8',2)+p('M-34 28 Q-39 17 -32 21 Q-26 15 -24 25 Q-17 22 -17 31 M25 30 Q26 20 31 25 Q37 18 37 28','#fffdf8','#fffdf8',1);
 Object.assign(tools,{
@@ -129,9 +138,9 @@ export function unitSticker(kind:string,size=40):string {
   if(['hamster','squirrel','bee'].includes(key))return avatarSticker(key,n);
   return `<span role="img" aria-label="${key}" data-sticker="${key}" style="display:inline-grid;place-items:center;width:${n}px;height:${n}px;font-size:${Math.round(n*.63)}px">${escapeHtml(UNIT_ICONS[key])}</span>`;
 }
-export function sceneSticker(id:typeof P10_SCENE_IDS[number]|typeof P9_SCENE_IDS[number]|'menu_banner'|'logo_capy'|'sprinkler'|'shovel'|'ui_compendium_book'|'ui_fish_food'|'ui_bell_summon'|'ui_shop_bag'|'orange'|'ui_trophy_rank'|'ui_map_sign'|'ui_header_compendium'|'ui_header_armory'|'ui_header_market'|'ui_header_rank'|'ui_header_profile'|'ui_header_settings'|'ui_tutorial_pointer'|'ui_tutorial_capy'|'ui_coin_gold'|'ui_star_rank'|'ui_ticket_gacha'|'ui_skull_threat'|'ui_result_victory'|'ui_result_defeat'|'ui_header_pause'|'ui_mvp_crown'|'ui_lock_closed'|'ui_lock_open'|'ui_wave_horn'|'ui_merge_sparkle',fallback:string,size?:number):string {
+export function sceneSticker(id:typeof P11_SCENE_IDS[number]|typeof P10_SCENE_IDS[number]|typeof P9_SCENE_IDS[number]|'menu_banner'|'logo_capy'|'sprinkler'|'shovel'|'ui_compendium_book'|'ui_fish_food'|'ui_bell_summon'|'ui_shop_bag'|'orange'|'ui_trophy_rank'|'ui_map_sign'|'ui_header_compendium'|'ui_header_armory'|'ui_header_market'|'ui_header_rank'|'ui_header_profile'|'ui_header_settings'|'ui_tutorial_pointer'|'ui_tutorial_capy'|'ui_coin_gold'|'ui_star_rank'|'ui_ticket_gacha'|'ui_skull_threat'|'ui_result_victory'|'ui_result_defeat'|'ui_header_pause'|'ui_mvp_crown'|'ui_lock_closed'|'ui_lock_open'|'ui_wave_horn'|'ui_merge_sparkle',fallback:string,size?:number):string {
   const n=sizeOf(size??(id==='menu_banner'?400:64),64);
-  return image(id,n)||(Object.hasOwn(tools,id)?geometry(id,tools[id],n,!(P10_SCENE_IDS as readonly string[]).includes(id)):fallback);
+  return image(id,n)||(Object.hasOwn(tools,id)?geometry(id,tools[id],n,![...P10_SCENE_IDS,...P11_SCENE_IDS].some(key=>key===id)):fallback);
 }
 
 type ArtStickerId='title_logo_zh'|'title_logo_en'|'ui_btn_start_zh'|'ui_btn_start_en';

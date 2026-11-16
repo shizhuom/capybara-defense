@@ -74,14 +74,14 @@ describe('P10 storybook compendium',()=>{
     book.openTo('hat_bamboo');book.selectHero('kungfu_po');expect(book.tab).toBe('heroes');expect(book.markup(profile,false)).toContain('compendium-detail-sheet');
   });
 
-  it.each([['zh-CN','萌宠图鉴'],['en','Compendium']] as const)('puts the peeking mascot, clean tabs and footer only on the Compendium (%s)',(language,title)=>{
+  it.each([['zh-CN','萌宠图鉴'],['en','Compendium']] as const)('keeps the Compendium mascot distinct while sharing the storybook shell (%s)',(language,title)=>{
     setLanguage(language);const html=new Compendium().markup(createProfile(),false);
     expect(html).toContain(`id="dialog-title">${title}</h2>`);expect(html).toContain('data-sticker="ui_compendium_peek_capy"');expect(html.match(/class="tab-icon" aria-hidden="true"/g)).toHaveLength(6);
     expect(html).toContain('data-sticker="ui_compendium_book"');expect(html).toContain('0/12');expect(html).toContain('0/36');
     expect(html).toContain('class="storybook-footer-tip"');expect(html).toContain(t('p10.footerTip1').replace(/&/g,'&amp;'));expect(html).toContain(t('p10.footerTip2').replace(/&/g,'&amp;'));
     expect(html.match(/data-action="close-recipes"/g)).toHaveLength(1);expect(html.indexOf('data-action="close-recipes"')).toBeLessThan(html.indexOf('class="p3-compendium"'));
     for(const page of ['armory','market','profile','leaderboard','settings'] as const){
-      const other=ledger(page,'<p>Page content</p>');expect(other).not.toContain('storybook-');expect(other).not.toContain('ui_compendium_peek_capy');expect(other).toContain(`data-sticker="ui_header_${page==='leaderboard'?'rank':page}"`);
+      const other=ledger(page,'<p>Page content</p>');expect(other).toContain('storybook-footer-tip');expect(other).not.toContain('ui_compendium_peek_capy');expect(other).toContain('ledger-tabs');
     }
   });
 });

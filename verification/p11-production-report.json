@@ -1,0 +1,203 @@
+{
+  "passed": true,
+  "errors": [],
+  "checks": [
+    "desktop: exact production bytes, 209 relative PNGs, no debug bridge, locked/detail/back, shared storybook folders, unchanged pause/result, tutorial/summon and saved profile reload",
+    "landscape: exact production bytes, 209 relative PNGs, no debug bridge, locked/detail/back, shared storybook folders, unchanged pause/result, tutorial/summon and saved profile reload",
+    "portrait: exact production bytes, 209 relative PNGs, no debug bridge, locked/detail/back, shared storybook folders, unchanged pause/result, tutorial/summon and saved profile reload"
+  ],
+  "reports": [
+    {
+      "label": "desktop-zh-CN-armory",
+      "storybook": true,
+      "thin": []
+    },
+    {
+      "label": "desktop-zh-CN-market",
+      "storybook": true,
+      "thin": []
+    },
+    {
+      "label": "desktop-zh-CN-profile",
+      "storybook": true,
+      "thin": []
+    },
+    {
+      "label": "desktop-zh-CN-leaderboard",
+      "storybook": true,
+      "thin": []
+    },
+    {
+      "label": "desktop-zh-CN-settings",
+      "storybook": true,
+      "thin": []
+    },
+    {
+      "label": "desktop-en-armory",
+      "storybook": true,
+      "thin": []
+    },
+    {
+      "label": "desktop-en-market",
+      "storybook": true,
+      "thin": []
+    },
+    {
+      "label": "desktop-en-profile",
+      "storybook": true,
+      "thin": []
+    },
+    {
+      "label": "desktop-en-leaderboard",
+      "storybook": true,
+      "thin": []
+    },
+    {
+      "label": "desktop-en-settings",
+      "storybook": true,
+      "thin": []
+    },
+    {
+      "label": "desktop-pause",
+      "checked": 14,
+      "minContrast": 10.846,
+      "minWeight": 700,
+      "issues": []
+    },
+    {
+      "label": "desktop-defeat",
+      "checked": 20,
+      "minContrast": 10.846,
+      "minWeight": 700,
+      "issues": []
+    },
+    {
+      "label": "landscape-zh-CN-armory",
+      "storybook": true,
+      "thin": []
+    },
+    {
+      "label": "landscape-zh-CN-market",
+      "storybook": true,
+      "thin": []
+    },
+    {
+      "label": "landscape-zh-CN-profile",
+      "storybook": true,
+      "thin": []
+    },
+    {
+      "label": "landscape-zh-CN-leaderboard",
+      "storybook": true,
+      "thin": []
+    },
+    {
+      "label": "landscape-zh-CN-settings",
+      "storybook": true,
+      "thin": []
+    },
+    {
+      "label": "landscape-en-armory",
+      "storybook": true,
+      "thin": []
+    },
+    {
+      "label": "landscape-en-market",
+      "storybook": true,
+      "thin": []
+    },
+    {
+      "label": "landscape-en-profile",
+      "storybook": true,
+      "thin": []
+    },
+    {
+      "label": "landscape-en-leaderboard",
+      "storybook": true,
+      "thin": []
+    },
+    {
+      "label": "landscape-en-settings",
+      "storybook": true,
+      "thin": []
+    },
+    {
+      "label": "landscape-pause",
+      "checked": 13,
+      "minContrast": 11.589,
+      "minWeight": 700,
+      "issues": []
+    },
+    {
+      "label": "landscape-defeat",
+      "checked": 19,
+      "minContrast": 11.589,
+      "minWeight": 700,
+      "issues": []
+    },
+    {
+      "label": "portrait-zh-CN-armory",
+      "storybook": true,
+      "thin": []
+    },
+    {
+      "label": "portrait-zh-CN-market",
+      "storybook": true,
+      "thin": []
+    },
+    {
+      "label": "portrait-zh-CN-profile",
+      "storybook": true,
+      "thin": []
+    },
+    {
+      "label": "portrait-zh-CN-leaderboard",
+      "storybook": true,
+      "thin": []
+    },
+    {
+      "label": "portrait-zh-CN-settings",
+      "storybook": true,
+      "thin": []
+    },
+    {
+      "label": "portrait-en-armory",
+      "storybook": true,
+      "thin": []
+    },
+    {
+      "label": "portrait-en-market",
+      "storybook": true,
+      "thin": []
+    },
+    {
+      "label": "portrait-en-profile",
+      "storybook": true,
+      "thin": []
+    },
+    {
+      "label": "portrait-en-leaderboard",
+      "storybook": true,
+      "thin": []
+    },
+    {
+      "label": "portrait-en-settings",
+      "storybook": true,
+      "thin": []
+    },
+    {
+      "label": "portrait-pause",
+      "checked": 13,
+      "minContrast": 11.589,
+      "minWeight": 700,
+      "issues": []
+    },
+    {
+      "label": "portrait-defeat",
+      "checked": 19,
+      "minContrast": 11.589,
+      "minWeight": 700,
+      "issues": []
+    }
+  ]
+}

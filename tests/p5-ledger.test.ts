@@ -28,17 +28,18 @@ it('has exactly four matching accessible hero equip chips and toggles equip atom
  let p={...createProfile(),unlockedWeapons:['m10_bamboo_staff']};
  const data=new Map();vi.stubGlobal('window',{localStorage:{getItem:(k:string)=>data.get(k)??null,setItem:(k:string,v:string)=>data.set(k,v)}});
  const meta=new MetaScreens(()=>p,next=>{p=next;},()=>{},()=>{});
- let html=meta.markup('armory');expect(html.match(/data-action="meta-equip:m10_bamboo_staff:/g)).toHaveLength(4);expect(html).not.toContain('<select');expect(html).toContain('aria-label="穿戴 功夫阿宝"');
+ let html=meta.markup('armory');expect(html).not.toContain('data-action="meta-equip:');meta.action('meta-weapon:m10_bamboo_staff');html=meta.markup('armory');expect(html.match(/data-action="meta-equip:m10_bamboo_staff:/g)).toHaveLength(4);expect(html).not.toContain('<select');expect(html).toContain('aria-label="穿戴 功夫阿宝"');
  meta.action('meta-equip:m10_bamboo_staff:kungfu_po');expect(p.equippedWeapons.kungfu_po).toBe('m10_bamboo_staff');
- html=meta.markup('armory');expect(html).toContain('hero-equip-chip equipped');meta.action('meta-equip:m10_bamboo_staff:kungfu_po');expect(p.equippedWeapons.kungfu_po).toBeUndefined();
- expect(html.match(/data-rarity=/g)).toHaveLength(5);expect(html.match(/data-loadout-hero=/g)).toHaveLength(12);
+ html=meta.markup('armory');expect(html).toContain('storybook-hero-button equipped');meta.action('meta-equip:m10_bamboo_staff:kungfu_po');expect(p.equippedWeapons.kungfu_po).toBeUndefined();
+ meta.action('meta-family:recycle');html=meta.markup('armory');expect(html.match(/data-rarity=/g)).toHaveLength(5);expect(html).not.toContain('data-loadout-hero=');
 });
-it('keeps the market backpack visible on both tabs and retains all settings semantics and profile links',()=>{
+it('separates market tabs and retains all settings semantics and profile links',()=>{
  const p=createProfile(),meta=new MetaScreens(()=>p,()=>{},()=>{},()=>{}),profile=new ProfileScreens(()=>p,()=>true,()=>{},()=>{});
- for(const tab of ['shop','lottery'] as const){meta.tab=tab;const html=meta.markup('market');expect(html).toContain('market-split');expect(html.match(/class="prop-slot /g)).toHaveLength(8);expect(html).toContain('inventory-grid');}
+ for(const tab of ['shop','lottery'] as const){meta.tab=tab;const html=meta.markup('market');expect(html).not.toContain('market-split');expect(html).not.toContain('class="prop-slot ');expect(html).not.toContain('prop-row');}
+ meta.tab='backpack';expect(meta.markup('market').match(/class="prop-slot /g)).toHaveLength(8);
  for(const page of ['profile','leaderboard','settings'] as const){const html=profile.markup(page);for(const action of ['profile','leaderboard','settings'])expect(html).toContain(`data-action="${action}"`);}
  const settings=profile.markup('settings');expect(settings.match(/type="range"/g)).toHaveLength(2);expect(settings.match(/type="checkbox"/g)).toHaveLength(2);expect(settings).toContain('tutorial-replay');
- const rank=profile.markup('leaderboard');expect(rank).toContain('rank-podium');expect(rank).toContain('threat-banner');expect(rank.match(/data-player=/g)).toHaveLength(16);
+ const rank=profile.markup('leaderboard');expect(rank).not.toContain('rank-podium');expect(rank).not.toContain('threat-banner');expect(rank).toContain('my-rank-summary-card');expect(rank.match(/data-player=/g)).toHaveLength(16);
 });
 it('has complete P5 bilingual keys and retains all 36 weapons',()=>{
  expect(Object.keys(p5Zh).sort()).toEqual(Object.keys(p5En).sort());

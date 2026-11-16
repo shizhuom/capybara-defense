@@ -35,7 +35,7 @@ import { ProfileScreens, type ProfileScreen } from './ProfileScreens';
 import { SoundManager } from './SoundManager';
 import { capyLogo, escapeHtml as esc } from './art';
 import { onAssetsReady } from '../render/AssetRegistry';
-import { propSticker, sceneSticker, unitSticker, P9_SCENE_IDS, P10_SCENE_IDS } from './stickers';
+import { propSticker, sceneSticker, unitSticker, P9_SCENE_IDS, P10_SCENE_IDS, P11_SCENE_IDS } from './stickers';
 import { Compendium } from './Compendium';
 import { getBossHUD, getWaveHUD, getMusicMode, isDeveloperMode } from './BattleHUD';
 import { advanceTutorial, finishTutorial, replayTutorial, type TutorialAction, type TutorialStep } from '../core/Tutorial';
@@ -329,7 +329,7 @@ export class GameApp {
       this.assetsDirty=false; force=true;
       this.quickStamp=''; this.battlePropsStamp=''; this.bossStamp='';this.tutorialStamp='';this.waveStrategyStamp='';this.liveStamp='';
       this.root.querySelector('.brand-mark')!.innerHTML=sceneSticker('logo_capy',capyLogo,54);
-      const ids=['ui_fish_food','ui_bell_summon','ui_compendium_book','ui_shop_bag','orange','ui_trophy_rank','ui_map_sign','ui_header_compendium','ui_header_armory','ui_header_market','ui_header_rank','ui_header_profile','ui_header_settings','ui_tutorial_pointer','ui_tutorial_capy','ui_coin_gold','ui_star_rank','ui_ticket_gacha','ui_skull_threat','ui_result_victory','ui_result_defeat','ui_header_pause','ui_mvp_crown','ui_lock_closed','ui_lock_open','ui_wave_horn','ui_merge_sparkle',...P9_SCENE_IDS,...P10_SCENE_IDS] as const;
+      const ids=['ui_fish_food','ui_bell_summon','ui_compendium_book','ui_shop_bag','orange','ui_trophy_rank','ui_map_sign','ui_header_compendium','ui_header_armory','ui_header_market','ui_header_rank','ui_header_profile','ui_header_settings','ui_tutorial_pointer','ui_tutorial_capy','ui_coin_gold','ui_star_rank','ui_ticket_gacha','ui_skull_threat','ui_result_victory','ui_result_defeat','ui_header_pause','ui_mvp_crown','ui_lock_closed','ui_lock_open','ui_wave_horn','ui_merge_sparkle',...P9_SCENE_IDS,...P10_SCENE_IDS,...P11_SCENE_IDS] as const;
       for(const id of ids)this.root.querySelectorAll<HTMLElement>(`#stage [data-sticker="${id}"]`).forEach(el=>{el.outerHTML=sceneSticker(id,'',Number(el.getAttribute('width'))||34);});
     }
     const developer = isDeveloperMode(location.search,this.profile.settings);
@@ -667,11 +667,10 @@ export class GameApp {
     const kind = this.dialogKind;
     const active=typeof document!=='undefined'&&typeof HTMLElement!=='undefined'&&document.activeElement instanceof HTMLElement&&this.dialog.contains(document.activeElement)?document.activeElement:undefined;
     const focused=active?.dataset.action,rarityFocus=active?.dataset.rarity;
-    const heroFocus=active?.dataset.loadoutHero??(focused?.startsWith('meta-unequip:')?focused.split(':')[1]:undefined);
-    const disclosures=kind==='armory'?['.recycle-panel','.p9-loadout-overview'].map(selector=>({selector,open:!!this.dialog.querySelector<HTMLDetailsElement>(selector)?.open})):[];
+    const propRowFocus=active?.closest<HTMLElement>('.prop-row')?.dataset.propId;
     const ledgerPage=!!kind&&['recipes','armory','market','profile','leaderboard','settings','pause','result'].includes(kind);
-    const stamp=JSON.stringify([kind,kind==='recipes'?this.compendium.viewKey:kind==='market'?this.meta.tab:kind==='armory'?[this.meta.family,this.meta.orangeFirst]:null]);
-    const scrolls=['.ledger-body','.market-stall','.market-backpack','.p9-weapon-rack','.p9-anvil','.p9-merchant','.p9-speech','.p9-market-racks'].map(selector=>({selector,top:stamp===this.ledgerStamp?this.dialog.querySelector<HTMLElement>(selector)?.scrollTop??0:0}));
+    const stamp=JSON.stringify([kind,kind==='recipes'?this.compendium.viewKey:kind==='market'||kind==='armory'?this.meta.viewKey:null]);
+    const scrolls=['.ledger-body'].map(selector=>({selector,top:stamp===this.ledgerStamp?this.dialog.querySelector<HTMLElement>(selector)?.scrollTop??0:0}));
     this.ledgerStamp=stamp;
     this.dialog.classList.toggle('ledger-dialog',ledgerPage);
     this.dialog.classList.toggle('pause-ledger',kind==='pause');
@@ -685,8 +684,7 @@ export class GameApp {
       this.dialog.innerHTML = this.profileScreens.markup(kind);
       if(kind==='settings')this.dialog.querySelector<HTMLInputElement>('[data-setting="developerMode"]')!.checked=isDeveloperMode(location.search,this.profile.settings);
     } else if (kind === 'armory' || kind === 'market') {
-      this.dialog.innerHTML = this.meta.markup(kind,!!this.engine);
-      if(this.engine)this.dialog.querySelector('.shop-navigation')?.insertAdjacentHTML('afterend',`<p class="battle-shop-banner" role="status">${tr(this.engine.canSyncPreparationLoadout() ? 'p3.prepShop' : 'p3.nextBattle')}</p>`);
+      this.dialog.innerHTML = this.meta.markup(kind,!!this.engine,!!this.engine?.canSyncPreparationLoadout());
     } else if (kind === 'pause' && this.engine) {
       this.dialog.innerHTML=pauseMarkup(this.engine.state);
     } else if (kind === 'recipes') {
@@ -694,7 +692,6 @@ export class GameApp {
     } else if (kind === 'result' && this.engine?.state.result) {
       this.dialog.innerHTML=resultMarkup({state:this.engine.state,profile:this.profile,savedResult:this.savedResult,resultStars:this.resultStars,previousRank:this.previousRank,newWeapons:this.newWeapons,newAvatars:this.newAvatars,newRoster:this.newRoster});
     }
-    for(const {selector,open} of disclosures){const details=this.dialog.querySelector<HTMLDetailsElement>(selector);if(details)details.open=open;}
     for(const {selector,top} of scrolls){
       const body=this.dialog.querySelector<HTMLElement>(selector);
       if(body){
@@ -704,9 +701,12 @@ export class GameApp {
       }
     }
     if(kind!=='recipes'){
-      let target=focused?this.dialog.querySelector<HTMLElement>(`[data-action="${CSS.escape(focused)}"]`):rarityFocus!==undefined?this.dialog.querySelector<HTMLElement>(`[data-rarity="${CSS.escape(rarityFocus)}"]`):null;
-      if(!target&&heroFocus){target=this.dialog.querySelector<HTMLElement>(`[data-loadout-hero="${CSS.escape(heroFocus)}"]`);if(target)target.tabIndex=-1;}
+      let target=focused?this.dialog.querySelector<HTMLElement>(`${propRowFocus?`.prop-row[data-prop-id="${CSS.escape(propRowFocus)}"] `:''}[data-action="${CSS.escape(focused)}"]`):rarityFocus!==undefined?this.dialog.querySelector<HTMLElement>(`[data-rarity="${CSS.escape(rarityFocus)}"]`):null;
+      if(!target&&focused?.startsWith('meta-buy:'))target=this.dialog.querySelector<HTMLElement>('.shop-row button[data-action^="meta-buy:"]')??this.dialog.querySelector<HTMLElement>('[data-action="meta-refresh"]');
       target?.focus({preventScroll:true});
+      // Equipping reorders backpack rows. Keep the exact row control, and reveal it
+      // after sorting instead of focusing its duplicate action in the top tray.
+      if(propRowFocus||focused?.startsWith('meta-prop:')||focused?.startsWith('meta-buy:'))(target?.closest('.prop-row,.shop-row')??target)?.scrollIntoView?.({block:'nearest'});
     }
     this.focusCompendium();
   }
@@ -1125,7 +1125,15 @@ export class GameApp {
     if (action.startsWith('compendium-hero:')) { this.compendium.selectHero(action.slice(16)); this.renderDialog(); return; }
     if (action === 'store-shovel') { if(this.canInteract() && this.selectedId) this.apply(this.engine!.storeShovel(this.selectedId)); this.refresh(); return; }
     if (action === 'battle-shop' || action.startsWith('battle-shop:')) { const screen=action === 'battle-shop:armory'?'armory':'market'; this.meta.open(screen); this.openModal(screen); return; }
-    if (this.meta.action(action)) return;
+    const previousWeapon=action==='meta-weapon-back'?this.dialog.querySelector<HTMLElement>('.storybook-detail-sheet')?.dataset.weaponId:undefined;
+    if (this.meta.action(action)) {
+      const focusAction=action.startsWith('meta-weapon:')?'meta-weapon-back':previousWeapon?`meta-weapon:${previousWeapon}`:undefined;
+      if(focusAction){
+        const target=this.dialog.querySelector<HTMLElement>(`[data-action="${CSS.escape(focusAction)}"]`);
+        target?.focus({preventScroll:true});target?.scrollIntoView?.({block:'nearest'});
+      }
+      return;
+    }
     if (action === 'armory' || action === 'market') { this.meta.open(action); this.openModal(action); return; }
     if (action === 'close-meta') { this.closeModal(); return; }
     if (action === 'test-enable' || action === 'test-restore') {

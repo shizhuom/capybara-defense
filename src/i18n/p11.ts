@@ -1,0 +1,37 @@
+import {p11MetaZh,p11MetaEn} from './p11-meta';
+import {p11ProfileZh,p11ProfileEn} from './p11-profile';
+const phrases:Record<string,[string,string]>={
+ 'p11.title.armory':['神兵工坊','Armory'],
+ 'p11.title.market':['浣熊黑市','Raccoon Market'],
+ 'p11.title.leaderboard':['温泉段位榜','Onsen Rankings'],
+ 'p11.title.profile':['水豚通行证','Keeper Passport'],
+ 'p11.title.settings':['庭院设置','Courtyard Settings'],
+ 'p11.tab.leaderboard':['段位排行','Rankings'],
+ 'p11.tab.profile':['通行名片','Passport'],
+ 'p11.tab.settings':['庭院设置','Settings'],
+ 'p11.tab.all':['全部','All'],
+ 'p11.tab.melee':['近战','Melee'],
+ 'p11.tab.ranged':['远程','Ranged'],
+ 'p11.tab.magic':['魔法','Magic'],
+ 'p11.tab.recycle':['碎片工坊','Fragments'],
+ 'p11.tab.shop':['每日特惠','Daily Deals'],
+ 'p11.tab.backpack':['道具背包','Backpack'],
+ 'p11.tab.lottery':['幸运扭蛋','Lucky Gacha'],
+ 'p11.unlocked':['已解锁 {count}/36','Unlocked {count}/36'],
+ 'p11.switch.armory':['切至神兵','Visit Armory'],
+ 'p11.switch.market':['切至黑市','Visit Market'],
+ 'p11.tip.armory.1':['轻点神兵，查看特效并为同流派英雄穿戴','Tap a weapon for its effect and matching heroes'],
+ 'p11.tip.armory.2':['集齐碎片自动解锁，多余碎片可在工坊分解','Collect fragments to unlock; recycle extras in Fragments'],
+ 'p11.tip.market.1':['每日特惠添新物，道具背包轻松管理出战装备','Find daily deals, then manage your loadout in Backpack'],
+ 'p11.tip.market.2':['每次守护胜利都能获得一张免费扭蛋券','Every successful defense earns a free gacha ticket'],
+ 'p11.tip.leaderboard.1':['慢慢积攒星星，和庭院伙伴一起成长','Gather stars and grow alongside your garden friends'],
+ 'p11.tip.leaderboard.2':['提高段位，逐步解锁更多地图与萌宠','Rank up to discover new maps and furry friends'],
+ 'p11.tip.profile.1':['轻点已解锁的头像，换上今天的心情','Tap an unlocked portrait to match today’s mood'],
+ 'p11.tip.profile.2':['每一枚头像印章，都记着一段守护时光','Every portrait stamp remembers a little adventure'],
+ 'p11.tip.settings.1':['按自己的节奏，调一份舒服的庭院时光','Set a comfortable pace for your time in the garden'],
+ 'p11.tip.settings.2':['设置即时保存，随时都能重温新手引导','Settings save instantly; replay the guide whenever you like'],
+ 'p11.preparation':['备战阶段调整装备，本局立即生效','Loadout changes during preparation apply this battle'],
+ 'p11.nextBattle':['战斗中调整装备，下局生效','Loadout changes during combat apply next battle'],
+};
+export const p11Zh:Record<string,string>={...p11MetaZh,...p11ProfileZh,...Object.fromEntries(Object.entries(phrases).map(([key,value])=>[key,value[0]]))};
+export const p11En:Record<string,string>={...p11MetaEn,...p11ProfileEn,...Object.fromEntries(Object.entries(phrases).map(([key,value])=>[key,value[1]]))};
