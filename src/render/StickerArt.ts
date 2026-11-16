@@ -224,6 +224,24 @@ export function drawUnitArt(c:C,kind:string,time:number):void {
   c.restore();
 }
 
+/** Waterline portrait only: the map supplies the bath, so no tub or sticker halo. */
+export function drawSoakingCapybaraArt(c:C,dizzy=false):void {
+  const ink='#3a2618';c.save();c.lineJoin='round';c.lineCap='round';
+  ellipse(c,0,33,44,10,'#8dcac3',ink,1.5);
+  c.beginPath();c.moveTo(-30,28);c.quadraticCurveTo(-24,9,-24,-13);
+  c.bezierCurveTo(-25,-43,22,-39,33,-18);c.quadraticCurveTo(46,-11,39,4);
+  c.quadraticCurveTo(34,17,20,17);c.lineTo(26,29);c.quadraticCurveTo(0,40,-30,28);
+  c.fillStyle='#cda172';c.fill();c.strokeStyle=ink;c.lineWidth=2.2;c.stroke();
+  ellipse(c,-23,-29,6,8,'#c59b70',ink,2);ellipse(c,6,-37,5,6,'#c59b70',ink,2);
+  ellipse(c,30,-6,11,17,'#d8b388',ink,1.6);ellipse(c,32,-14,2.3,1.8,ink,ink,0);
+  if(dizzy){
+    c.beginPath();for(let i=0;i<=40;i++){const a=i*.3,r=.3+i*.14,x=-8+Math.cos(a)*r,y=-14+Math.sin(a)*r;i?c.lineTo(x,y):c.moveTo(x,y);}
+    c.strokeStyle=ink;c.lineWidth=2;c.stroke();line(c,[[30,6],[34,3],[38,6]],ink,1.8);
+  }else{line(c,[[-14,-13],[-8,-16],[-3,-13]],ink,2.3);line(c,[[28,4],[32,7],[36,4]],ink,1.8);}
+  for(const[x,y,r]of[[-32,28,3],[-25,32,4],[-18,34,3],[23,33,3],[29,30,4]])ellipse(c,x,y,r,r,'#fffdf8','#fffdf8',0);
+  c.beginPath();c.ellipse(0,32,41,8,0,.1,Math.PI*.94);c.strokeStyle='rgba(255,255,255,.8)';c.lineWidth=2;c.stroke();c.restore();
+}
+
 export function drawCapybaraArt(c:C,time:number,oranges:number,fallen=false):void {
   c.save();
   if(fallen) { c.translate(3,16); c.rotate(.45); }

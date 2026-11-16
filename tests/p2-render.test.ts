@@ -41,7 +41,7 @@ describe('P2 single garden geometry',()=>{
   const state=new BattleEngine({ai:false,autoWaves:false,mapId}).state,{renderer,calls}=surface();renderer.draw(state,0);
   expect(calls.filter(c=>c.name==='drawImage'&&c.args[0]===guardian)).toHaveLength(1);
   expect(calls.find(c=>c.name==='drawImage'&&c.args[0]===map)?.args.slice(1)).toEqual([0,0,1280,720]);
-  const end=MAPS[mapId].paths.player.at(-1)!;expect(calls.some(c=>c.name==='translate'&&c.args[0]===224+104*end.col&&c.args[1]===122+104*end.row)).toBe(true);
+  const spot={sunny_backyard:[1053.5,531],sakura_onsen:[263,490],midnight_kitchen:[1055,323],cat_tower_maze:[1054,325]}[mapId];expect(calls.some(c=>c.name==='translate'&&c.args[0]===spot[0]&&c.args[1]===spot[1])).toBe(true);
   expect(calls.some(c=>c.name==='fillText'&&c.args[0]==='AI')).toBe(false);
   expect(calls.some(c=>c.name==='stroke'&&c.stroke==='#9b9c83')).toBe(false);
  });
@@ -193,5 +193,5 @@ describe('P2 captured combat effects and bench tools',()=>{
   expect(calls.find(c=>c.name==='drawImage'&&c.args[0]===art)?.filter).toBe('brightness(0) invert(1)');
  });
  it('draws no projectile geometry for a captured melee kind',()=>{const {c,calls}=surface();expect(drawCombatEvent(c,{id:1,type:'projectile',side:'player',col:1,row:1,targetCol:2,targetRow:1,effect:'corgi',age:.1,duration:.25},[])).toBe(true);expect(calls.filter(c=>!['save','restore'].includes(c.name))).toHaveLength(0);});
- it('ships exactly the 201 safe optional sprite IDs',()=>{const ids=JSON.parse(readFileSync('public/assets/sprites/manifest.json','utf8'));expect(ids).toHaveLength(201);for(const id of [...Object.values(DEFAULT_HELD_WEAPONS),'vfx_slash_spin','vfx_muzzle_flash'])expect(ids).toContain(id);});
+ it('ships exactly the 205 safe optional sprite IDs',()=>{const ids=JSON.parse(readFileSync('public/assets/sprites/manifest.json','utf8'));expect(ids).toHaveLength(205);for(const id of [...Object.values(DEFAULT_HELD_WEAPONS),'vfx_slash_spin','vfx_muzzle_flash'])expect(ids).toContain(id);});
 });

@@ -25,6 +25,7 @@ const catalogs:Record<Exclude<CompendiumTab,'matrix'>,string[]>={
 const own=(table:object,id:string)=>Object.hasOwn(table,id);
 const owner=(id:string):Exclude<CompendiumTab,'matrix'>|undefined=>own(HEROES,id)?'heroes':own(UNITS,id)?'pets':own(ENEMIES,id)?'bosses':own(WEAPONS,id)?'weapons':own(PROPS,id)?'props':undefined;
 const name=(kind:string)=>tr(`${own(WEAPONS,kind)?'weapon':own(PROPS,kind)?'prop':own(HEROES,kind)?'hero':own(ENEMIES,kind)?(ENEMIES[kind].boss?'boss':'enemy'):'unit'}.${kind}`);
+const rowName=(kind:string)=>kind==='r11_sniper_laser'?tr('p10.name.r11_sniper_laser'):name(kind);
 const sticker=(kind:string,size:number)=>`<span class="book-sticker" role="img" aria-label="${name(kind)}"><span aria-hidden="true">${own(WEAPONS,kind)?weaponSticker(kind,size):own(PROPS,kind)?propSticker(kind,size):unitSticker(kind,size)}</span></span>`;
 const equation=(parts:readonly string[],hero:string,size=30)=>`${parts.map(part=>sticker(part,size)).join('<b>＋</b>')}<b>→</b>${sticker(hero,size+4)}<span>${name(hero)}</span>`;
 const tabArt=(tab:CompendiumTab)=>tab==='matrix'?sceneSticker('ui_compendium_book','',28):tab==='weapons'?weaponSticker('m10_bamboo_staff',28):tab==='props'?propSticker('washer',28):sticker(tab==='pets'?'hamster':tab==='heroes'?'kungfu_po':'husky_wrecker',28);
@@ -54,7 +55,7 @@ export class Compendium {
   private unlocked=new Set<string>();
   private available(id:string):boolean {return !!WEAPONS[id]||!!PROPS[id]||this.unlocked.has(id);}
   private art(id:string,size:number):string {return `<span class="${this.available(id)?'roster-art':'mystery-art'}">${sticker(id,size)}</span>`;}
-  private unlockBadge(id:string):string {return `<b class="star-unlock">${sceneSticker('ui_lock_closed','',22)}${tr('p9.starUnlock',{stars:requiredStars(id)})}</b>`;}
+  private unlockBadge(id:string,icon=true):string {return `<b class="star-unlock">${icon?sceneSticker('ui_lock_closed','',22):''}${tr('p9.starUnlock',{stars:requiredStars(id)})}</b>`;}
   private lockedMessage(id:string):string {const stars=requiredStars(id);return `<aside class="locked-entry-notice">${sceneSticker('ui_unlock_chest','',72)}<p>${tr('p9.lockedDetail',{stars,rank:t(`rank.${getRank(stars).index}`)})}</p></aside>`;}
   select(tab:string):boolean {
     if(!COMPENDIUM_TABS.includes(tab as CompendiumTab))return false;
@@ -85,22 +86,37 @@ export class Compendium {
   }
   private entry(kind:string):string {return `data-compendium-kind="${kind}"${this.focusedKind===kind?' data-compendium-focused="true"':''} tabindex="-1"`;}
   private heroDetail(kind:string,profile:Profile):string {
-    if(!this.available(kind))return `<article class="encyclopedia-card locked-roster" ${this.entry(kind)}>${this.art(kind,120)}<h4>${name(kind)}</h4>${this.unlockBadge(kind)}${this.lockedMessage(kind)}</article>`;
+    if(!this.available(kind))return `<article class="encyclopedia-card locked-roster" ${this.entry(kind)}><span class="storybook-frame tone-heroes">${this.art(kind,68)}</span><h4>${name(kind)}</h4><p class="storybook-tagline">${this.tagline(kind)}</p>${this.unlockBadge(kind)}${this.lockedMessage(kind)}</article>`;
     const hero=HEROES[kind],recipe=RECIPES.find(r=>r.hero===kind)!;
-    return `<article class="encyclopedia-card rarity-4" ${this.entry(kind)}><div class="book-heading">${sticker(kind,72)}<div><h4>${name(kind)}</h4><b class="collection-state">${tr(profile.mergedHeroes.includes(kind)?'p5.collected':'p9.heroAvailable')}</b></div></div><div class="recipe-equation">${equation(recipe.parts,kind)}</div>${statPills(kind)}${growth(kind)}<p><b>${tr(`skill.${kind}`)}</b> · ${tr(`skill.${kind}.desc`,{charge:hero.charge})}</p>${heroWeapons(kind)}</article>`;
+    return `<article class="encyclopedia-card rarity-4" ${this.entry(kind)}><div class="book-heading"><span class="storybook-frame tone-heroes">${this.art(kind,68)}</span><div><h4>${name(kind)}</h4>${this.statusTop(kind,profile)}<p class="storybook-tagline">${this.tagline(kind)}</p></div></div><div class="recipe-equation">${equation(recipe.parts,kind)}</div>${statPills(kind)}${growth(kind)}<p><b>${tr(`skill.${kind}`)}</b> · ${tr(`skill.${kind}.desc`,{charge:hero.charge})}</p>${heroWeapons(kind)}</article>`;
+  }
+  private recipeList(profile:Profile):string {
+    return `<div class="storybook-recipe-list" role="list" aria-label="${tr('p10.recipeList')}">${RECIPES.map(r=>`<article class="storybook-recipe-card${this.available(r.hero)?'':' locked-roster'}" role="listitem" data-storybook-recipe="${r.hero}"><button type="button" class="storybook-recipe-button" data-action="compendium-hero:${r.hero}" aria-pressed="${this.selectedHero===r.hero}"><span class="storybook-frame tone-heroes">${this.art(r.hero,68)}</span><span class="storybook-copy"><strong class="portrait-name">${name(r.hero)}</strong><span class="storybook-recipe-parts">${r.parts.map(part=>`<span class="storybook-ingredient">${this.art(part,24)}<span>${name(part)}</span></span>`).join('<b aria-hidden="true">＋</b>')}</span></span>${this.status(r.hero,profile)}</button></article>`).join('')}</div>`;
   }
   private matrix(profile:Profile):string {
     const hats=['hat_bamboo','hat_shades','hat_wizard'];
-    return `<div class="compendium-split"><div><table class="merge-matrix"><caption>${tr('p3.matrix')}</caption><thead><tr><th class="matrix-corner">${tr('p5.matrixCorner')}</th>${hats.map(h=>`<th scope="col">${this.art(h,42)}<span>${name(h)}</span></th>`).join('')}</tr></thead><tbody>${['panda','cat','shiba'].map(p=>`<tr><th scope="row">${this.art(p,42)}<span>${name(p)}</span></th>${hats.map(h=>{
+    return `<div class="compendium-split">${this.recipeList(profile)}<div class="compendium-detail" aria-live="polite">${this.heroDetail(this.selectedHero,profile)}</div><details class="storybook-matrix-reference"><summary>${tr('p10.matrixReference')}</summary><div class="storybook-matrix-scroll" tabindex="0" role="region" aria-label="${tr('p3.matrix')}"><table class="merge-matrix"><caption>${tr('p3.matrix')}</caption><thead><tr><th class="matrix-corner">${tr('p5.matrixCorner')}</th>${hats.map(h=>`<th scope="col">${this.art(h,42)}<span>${name(h)}</span></th>`).join('')}</tr></thead><tbody>${['panda','cat','shiba'].map(p=>`<tr><th scope="row">${this.art(p,42)}<span>${name(p)}</span></th>${hats.map(h=>{
       const recipe=RECIPES.find(r=>r.parts[0]===p&&r.parts[1]===h);
       return `<td data-matrix-cell="${p}:${h}">${recipe?`<button type="button" data-action="compendium-hero:${recipe.hero}" aria-pressed="${this.selectedHero===recipe.hero}">${this.art(recipe.hero,64)}<span>${name(recipe.hero)}</span>${this.available(recipe.hero)?'':this.unlockBadge(recipe.hero)}</button>`:`<span class="locked-pair">🔒 ${tr('p3.lockedPair')}</span>`}</td>`;
-    }).join('')}</tr>`).join('')}</tbody></table><h3>${tr('p3.special')}</h3><div class="special-recipes">${RECIPES.slice(8).map(r=>`<button type="button" data-special-recipe="${r.hero}" data-action="compendium-hero:${r.hero}" aria-pressed="${this.selectedHero===r.hero}" class="recipe-equation">${this.available(r.hero)?equation(r.parts,r.hero):`${this.art(r.hero,44)}${this.unlockBadge(r.hero)}`}</button>`).join('')}</div></div><div class="compendium-detail" aria-live="polite">${this.heroDetail(this.selectedHero,profile)}</div></div>`;
+    }).join('')}</tr>`).join('')}</tbody></table></div><h3>${tr('p3.special')}</h3><div class="special-recipes">${RECIPES.slice(8).map(r=>`<button type="button" data-special-recipe="${r.hero}" data-action="compendium-hero:${r.hero}" aria-pressed="${this.selectedHero===r.hero}" class="recipe-equation">${this.available(r.hero)?equation(r.parts,r.hero):`${this.art(r.hero,44)}${this.unlockBadge(r.hero)}`}</button>`).join('')}</div></details></div>`;
   }
   private collected(id:string,p:Profile):boolean {
     return own(HEROES,id)?p.mergedHeroes.includes(id):own(WEAPONS,id)?p.unlockedWeapons.includes(id):own(PROPS,id)?!!p.ownedProps[id]:true;
   }
   private rarity(id:string):number {return WEAPONS[id]?.rarity??PROPS[id]?.rarity??(HEROES[id]||ENEMIES[id]?.boss?4:UNITS[id]?.category==='component'?2:0);}
-  private badge(id:string,p:Profile):string {return this.available(id)?`<b class="collection-state">${tr(this.collected(id,p)?'p5.collected':HEROES[id]?'p9.heroAvailable':'p5.locked')}</b>`:this.unlockBadge(id);}
+  private tagline(id:string):string {
+    return tr(WEAPONS[id]?`p10.weapon.${WEAPONS[id].family}`:PROPS[id]?`p10.prop.${PROPS[id].type}`:HEROES[id]?`p10.hero.${id}`:ENEMIES[id]?`p10.enemy.${id}`:`p10.unit.${id}`);
+  }
+  private statusTop(id:string,p:Profile):string {
+    if(!this.available(id))return this.unlockBadge(id,false);
+    const collected=this.collected(id,p),key=collected?(WEAPONS[id]||PROPS[id]?'p10.owned':'p10.collected'):HEROES[id]?'p10.canMerge':'p10.uncollected';
+    return `<b class="collection-state" data-collection-state="${collected?'recorded':'awaiting'}">${tr(key)}</b>`;
+  }
+  private statusMark(id:string,p:Profile):string {
+    if(!this.available(id)||(!HEROES[id]&&!this.collected(id,p)))return sceneSticker('ui_lock_closed','',22);
+    return this.collected(id,p)?sceneSticker('ui_storybook_check','',26):'<span class="storybook-awaiting"></span>';
+  }
+  private status(id:string,p:Profile):string {return `<span class="storybook-status">${this.statusTop(id,p)}<span class="storybook-mark" aria-hidden="true">${this.statusMark(id,p)}</span></span>`;}
   private family(id:string):string {
     if(HEROES[id])return tr(`m2.family.${HERO_FAMILIES[id]}`);
     if(WEAPONS[id])return `${tr(`m2.rarity.${WEAPONS[id].rarity}`)} · ${tr(`m2.family.${WEAPONS[id].family}`)}`;
@@ -110,8 +126,7 @@ export class Compendium {
   }
   private portraits(profile:Profile):string {
     if(this.tab==='matrix')return '';
-    const grid=(ids:string[])=>`<div class="portrait-grid">${ids.map(id=>`<article class="portrait-tile encyclopedia-card rarity-${this.rarity(id)}${this.available(id)?this.collected(id,profile)?' collected':'':' locked-roster'}" data-entry="${id}"><button type="button" class="portrait-tile-button" data-action="compendium-entry:${id}">${this.art(id,96)}<strong class="portrait-name">${name(id)}</strong>${this.badge(id,profile)}${this.tab==='bosses'?`<small class="portrait-family">${this.family(id)}</small>`:''}</button></article>`).join('')}</div>`;
-    return `<p class="portrait-instruction">${tr('p7.tapPortrait')}</p>${this.tab==='pets'?(['basic','component'] as const).map(category=>`<h3>${tr(category==='basic'?'p3.basics':'p3.components')}</h3>${grid(catalogs.pets.filter(id=>UNITS[id].category===category))}`).join(''):grid(catalogs[this.tab])}`;
+    return `<div class="portrait-grid">${catalogs[this.tab].map(id=>`<article class="portrait-tile encyclopedia-card rarity-${this.rarity(id)}${this.available(id)?this.collected(id,profile)?' collected':'':' locked-roster'}" data-entry="${id}"><button type="button" class="portrait-tile-button" data-action="compendium-entry:${id}"><span class="storybook-frame tone-${this.tab}">${this.art(id,68)}</span><span class="storybook-copy"><strong class="portrait-name">${rowName(id)}</strong><span class="storybook-tagline">${this.tagline(id)}</span></span>${this.status(id,profile)}</button></article>`).join('')}</div>`;
   }
   private details(id:string,profile:Profile):string {
     const tab=owner(id)!;if(tab!==this.tab)return this.portraits(profile);
@@ -123,11 +138,11 @@ export class Compendium {
     else if(enemy)body=`<div class="book-stat-pills"><span>❤️ ${tr('p7.hp',{value:enemy.hp})}</span><span>💨 ${tr('p7.speed',{value:enemy.speed})}</span><span>🛡️ ${tr('p7.armor',{value:Math.round(enemy.armor*100)})}</span>${enemy.boss?`<span>⏱ ${tr('p1.cooldown',{time:enemy.interval})}</span>`:''}</div><p>${tr(enemy.boss?`p1.boss.${id}.mechanic`:`p3.minion.${id}.mechanic`)}</p><aside class="counter-tip"><b>${tr('p1.counter')}</b><p>${tr(enemy.boss?`p1.boss.${id}.tip`:`p3.minion.${id}.tip`)}</p></aside>`;
     else if(weapon)body=`<div class="book-stat-pills"><span>🧩 ${tr('p1.unlock',{count:RARITY_RULES[weapon.rarity].fragments})}</span><span>⚔️ ${tr('m2.damage',{value:Math.round(RARITY_RULES[weapon.rarity].damageBonus*100)})}</span></div><p>${tr(`weapon.${id}.desc`)}</p>${weapon.signatureHero?`<button type="button" class="signature-link" data-action="compendium-entry:${weapon.signatureHero}">${sticker(weapon.signatureHero,64)}<span>${tr('m2.signature',{hero:t(`hero.${weapon.signatureHero}`)})}</span></button>`:''}`;
     else if(prop)body=`<div class="book-stat-pills"><span>${tr(`m2.${prop.type}`)}</span><span>🪙 ${tr('p1.price',{price:prop.price})}</span><span>⏱ ${tr(prop.type==='active'?'p1.cooldown':'p1.auto',{time:prop.cooldown})}</span></div><p>${tr(`prop.${id}.desc`)}</p>`;
-    return `<div class="compendium-detail-bar"><button type="button" data-action="compendium-back">${tr('p7.back')}</button><div><button type="button" data-action="compendium-prev" ${index<0?'disabled':''}>◀ ${tr('p7.prev')}</button><span aria-live="polite">${index<0?'—':`${index+1} / ${ids.length}`}</span><button type="button" data-action="compendium-next" ${index<0?'disabled':''}>${tr('p7.next')} ▶</button></div></div><article class="compendium-detail-sheet encyclopedia-card rarity-${this.rarity(id)}" data-entry="${id}" ${this.entry(id)}><div class="detail-showcase">${this.art(id,136)}<h4>${name(id)}</h4><span class="detail-family">${this.family(id)}</span>${this.badge(id,profile)}${formulas}</div><div class="detail-stats">${this.available(id)?body:this.lockedMessage(id)}</div></article>`;
+    return `<div class="compendium-detail-bar"><button type="button" data-action="compendium-back">${tr('p7.back')}</button><div><button type="button" data-action="compendium-prev" ${index<0?'disabled':''}>◀ ${tr('p7.prev')}</button><span aria-live="polite">${index<0?'—':`${index+1} / ${ids.length}`}</span><button type="button" data-action="compendium-next" ${index<0?'disabled':''}>${tr('p7.next')} ▶</button></div></div><article class="compendium-detail-sheet encyclopedia-card rarity-${this.rarity(id)}" data-entry="${id}" ${this.entry(id)}><div class="detail-showcase"><span class="storybook-frame tone-${tab}">${this.art(id,136)}</span><h4>${name(id)}</h4><p class="storybook-tagline">${this.tagline(id)}</p><span class="detail-family">${this.family(id)}</span>${this.statusTop(id,profile)}${formulas}</div><div class="detail-stats">${this.available(id)?body:this.lockedMessage(id)}</div></article>`;
   }
   markup(profile:Profile,unrestricted=isTestProfile()):string {
     const roster=progressionFor(profile,unrestricted);this.unlocked=new Set([...roster.units,...roster.heroes,...roster.minions,...roster.bosses]);
-    const tabs=`<div class="encyclopedia-tabs ledger-tabs" role="tablist" aria-label="${tr('p1.encyclopedia')}">${COMPENDIUM_TABS.map(tab=>`<button type="button" role="tab" id="book-tab-${tab}" aria-selected="${tab===this.tab}" aria-controls="book-content" data-action="book:${tab}"><span aria-hidden="true">${tabArt(tab)}</span><span>${tr(`p3.${tab}`)}</span></button>`).join('')}</div>`;
+    const tabs=`<div class="encyclopedia-tabs ledger-tabs" role="tablist" aria-label="${tr('p1.encyclopedia')}">${COMPENDIUM_TABS.map(tab=>`<button type="button" role="tab" id="book-tab-${tab}" aria-selected="${tab===this.tab}" aria-controls="book-content" data-action="book:${tab}"><span class="tab-icon" aria-hidden="true">${tabArt(tab)}</span><span>${tr(`p10.tab.${tab}`)}</span></button>`).join('')}</div>`;
     const content=this.tab==='matrix'?this.matrix(profile):this.detailId?this.details(this.detailId,profile):this.portraits(profile);
     return ledger('compendium',`<div class="p3-compendium"><section id="book-content" role="tabpanel" aria-labelledby="book-tab-${this.tab}">${content}</section></div>`,{tabs,badges:`<span class="collection-badge">${tr('p5.collection',{heroes:profile.mergedHeroes.length,weapons:profile.unlockedWeapons.length})}</span>`});
   }

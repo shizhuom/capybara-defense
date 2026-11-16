@@ -1,0 +1,21 @@
+{
+  "passed": true,
+  "errors": [],
+  "checks": [
+    "sunny_backyard: native water anchor, new soaking PNG only, upright dizzy state",
+    "sakura_onsen: native water anchor, new soaking PNG only, upright dizzy state",
+    "midnight_kitchen: native water anchor, new soaking PNG only, upright dizzy state",
+    "cat_tower_maze: native water anchor, new soaking PNG only, upright dizzy state"
+  ],
+  "layouts": [],
+  "screenshots": [
+    "p10-bath-sunny_backyard.png",
+    "p10-bath-sunny_backyard-dizzy.png",
+    "p10-bath-sakura_onsen.png",
+    "p10-bath-sakura_onsen-dizzy.png",
+    "p10-bath-midnight_kitchen.png",
+    "p10-bath-midnight_kitchen-dizzy.png",
+    "p10-bath-cat_tower_maze.png",
+    "p10-bath-cat_tower_maze-dizzy.png"
+  ]
+}

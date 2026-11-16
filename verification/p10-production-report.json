@@ -1,0 +1,263 @@
+{
+  "passed": true,
+  "errors": [],
+  "checks": [
+    "desktop: exact production bytes, 205 relative PNGs, no debug bridge, locked/detail/back, 7 unchanged P9 pages, tutorial/summon/settlement and saved profile reload",
+    "landscape: exact production bytes, 205 relative PNGs, no debug bridge, locked/detail/back, 7 unchanged P9 pages, tutorial/summon/settlement and saved profile reload",
+    "portrait: exact production bytes, 205 relative PNGs, no debug bridge, locked/detail/back, 7 unchanged P9 pages, tutorial/summon/settlement and saved profile reload"
+  ],
+  "reports": [
+    {
+      "label": "desktop-zh-CN-armory",
+      "checked": 174,
+      "minContrast": 10.846,
+      "minWeight": 700,
+      "issues": []
+    },
+    {
+      "label": "desktop-zh-CN-market",
+      "checked": 80,
+      "minContrast": 10.846,
+      "minWeight": 700,
+      "issues": []
+    },
+    {
+      "label": "desktop-zh-CN-profile",
+      "checked": 74,
+      "minContrast": 10.846,
+      "minWeight": 700,
+      "issues": []
+    },
+    {
+      "label": "desktop-zh-CN-leaderboard",
+      "checked": 101,
+      "minContrast": 10.846,
+      "minWeight": 700,
+      "issues": []
+    },
+    {
+      "label": "desktop-zh-CN-settings",
+      "checked": 17,
+      "minContrast": 9.804,
+      "minWeight": 700,
+      "issues": []
+    },
+    {
+      "label": "desktop-en-armory",
+      "checked": 174,
+      "minContrast": 10.846,
+      "minWeight": 700,
+      "issues": []
+    },
+    {
+      "label": "desktop-en-market",
+      "checked": 80,
+      "minContrast": 10.846,
+      "minWeight": 700,
+      "issues": []
+    },
+    {
+      "label": "desktop-en-profile",
+      "checked": 74,
+      "minContrast": 10.846,
+      "minWeight": 700,
+      "issues": []
+    },
+    {
+      "label": "desktop-en-leaderboard",
+      "checked": 101,
+      "minContrast": 10.846,
+      "minWeight": 700,
+      "issues": []
+    },
+    {
+      "label": "desktop-en-settings",
+      "checked": 17,
+      "minContrast": 9.804,
+      "minWeight": 700,
+      "issues": []
+    },
+    {
+      "label": "desktop-pause",
+      "checked": 14,
+      "minContrast": 10.846,
+      "minWeight": 700,
+      "issues": []
+    },
+    {
+      "label": "desktop-defeat",
+      "checked": 20,
+      "minContrast": 10.846,
+      "minWeight": 700,
+      "issues": []
+    },
+    {
+      "label": "landscape-zh-CN-armory",
+      "checked": 173,
+      "minContrast": 11.589,
+      "minWeight": 700,
+      "issues": []
+    },
+    {
+      "label": "landscape-zh-CN-market",
+      "checked": 71,
+      "minContrast": 11.589,
+      "minWeight": 700,
+      "issues": []
+    },
+    {
+      "label": "landscape-zh-CN-profile",
+      "checked": 73,
+      "minContrast": 11.589,
+      "minWeight": 700,
+      "issues": []
+    },
+    {
+      "label": "landscape-zh-CN-leaderboard",
+      "checked": 100,
+      "minContrast": 11.589,
+      "minWeight": 700,
+      "issues": []
+    },
+    {
+      "label": "landscape-zh-CN-settings",
+      "checked": 16,
+      "minContrast": 9.804,
+      "minWeight": 700,
+      "issues": []
+    },
+    {
+      "label": "landscape-en-armory",
+      "checked": 173,
+      "minContrast": 11.589,
+      "minWeight": 700,
+      "issues": []
+    },
+    {
+      "label": "landscape-en-market",
+      "checked": 71,
+      "minContrast": 11.589,
+      "minWeight": 700,
+      "issues": []
+    },
+    {
+      "label": "landscape-en-profile",
+      "checked": 73,
+      "minContrast": 11.589,
+      "minWeight": 700,
+      "issues": []
+    },
+    {
+      "label": "landscape-en-leaderboard",
+      "checked": 100,
+      "minContrast": 11.589,
+      "minWeight": 700,
+      "issues": []
+    },
+    {
+      "label": "landscape-en-settings",
+      "checked": 16,
+      "minContrast": 9.804,
+      "minWeight": 700,
+      "issues": []
+    },
+    {
+      "label": "landscape-pause",
+      "checked": 13,
+      "minContrast": 11.589,
+      "minWeight": 700,
+      "issues": []
+    },
+    {
+      "label": "landscape-defeat",
+      "checked": 19,
+      "minContrast": 11.589,
+      "minWeight": 700,
+      "issues": []
+    },
+    {
+      "label": "portrait-zh-CN-armory",
+      "checked": 173,
+      "minContrast": 11.589,
+      "minWeight": 700,
+      "issues": []
+    },
+    {
+      "label": "portrait-zh-CN-market",
+      "checked": 79,
+      "minContrast": 11.589,
+      "minWeight": 700,
+      "issues": []
+    },
+    {
+      "label": "portrait-zh-CN-profile",
+      "checked": 73,
+      "minContrast": 11.589,
+      "minWeight": 700,
+      "issues": []
+    },
+    {
+      "label": "portrait-zh-CN-leaderboard",
+      "checked": 100,
+      "minContrast": 11.589,
+      "minWeight": 700,
+      "issues": []
+    },
+    {
+      "label": "portrait-zh-CN-settings",
+      "checked": 16,
+      "minContrast": 9.804,
+      "minWeight": 700,
+      "issues": []
+    },
+    {
+      "label": "portrait-en-armory",
+      "checked": 173,
+      "minContrast": 11.589,
+      "minWeight": 700,
+      "issues": []
+    },
+    {
+      "label": "portrait-en-market",
+      "checked": 79,
+      "minContrast": 11.589,
+      "minWeight": 700,
+      "issues": []
+    },
+    {
+      "label": "portrait-en-profile",
+      "checked": 73,
+      "minContrast": 11.589,
+      "minWeight": 700,
+      "issues": []
+    },
+    {
+      "label": "portrait-en-leaderboard",
+      "checked": 100,
+      "minContrast": 11.589,
+      "minWeight": 700,
+      "issues": []
+    },
+    {
+      "label": "portrait-en-settings",
+      "checked": 16,
+      "minContrast": 9.804,
+      "minWeight": 700,
+      "issues": []
+    },
+    {
+      "label": "portrait-pause",
+      "checked": 13,
+      "minContrast": 11.589,
+      "minWeight": 700,
+      "issues": []
+    },
+    {
+      "label": "portrait-defeat",
+      "checked": 19,
+      "minContrast": 11.589,
+      "minWeight": 700,
+      "issues": []
+    }
+  ]
+}

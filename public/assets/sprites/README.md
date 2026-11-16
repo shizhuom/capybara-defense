@@ -17,7 +17,7 @@ Use a square 256 × 256 or larger canvas, transparent background, generous clear
 - Heroes: `kungfu_po`, `bamboo_mafia`, `zen_master`, `puss_in_hat`, `meowfia`, `purrcerer`, `samurai_doge`, `doge_wick`, `ronin_goose`, `ballin_rooster`, `rocket_coon`, `pepe_king`.
 - Enemies: `rat`, `roach`, `crab`.
 - Bosses: `husky_wrecker`, `mega_roomba`, `dr_clippers`, `box_kraken`, `sad_rain_frog`, `king_skunk`.
-- Guardian: `capybara`. Include the capybara **and its wooden bath tub**, but no oranges. The live orange stack is always drawn separately so life remains readable. Keep the top of the head near 23% of image height; the tub should reach 85%.
+- Battle guardian: `capybara_soak` and `capybara_soak_dizzy`. Draw only the soaking head/shoulders and waterline, **no tub and no outer white sticker border**. Oranges remain live Canvas art. The legacy `capybara` illustration is retained for existing consumers; battle maps supply their own native baths.
 
 Keep the silhouette readable at small display scales. P3 regular enemy PNGs use a 98px base draw box and bosses use 126px, before gait and size scaling. Art is cosmetic only: changing it does not alter range, movement, input targets, or game rules.
 
@@ -25,11 +25,11 @@ Keep the silhouette readable at small display scales. P3 regular enemy PNGs use 
 
 Run `npm run sync-assets` in the game directory. The zero-dependency script copies only regular lowercase PNG filenames matching `^[a-z][a-z0-9_]*\.png$` from the optional read-only source `../../design/assets/sprites/`. It preserves the source manifest verbatim when it exactly matches the destination PNG catalog, otherwise it writes a safe sorted array manifest. It never deletes existing destination art, creates the source, or fails because the source is absent/empty. Uppercase extensions, hyphens, directories and symlinks are skipped. Canvas and HTML share a loaded-only registry; malformed manifests, missing files and decode failures retain the built-in fallback. Vite's `BASE_URL` supports relative/subdirectory hosting. HTML refreshes once the initial asset batch settles.
 
-The lists below are the complete P3 catalog: **166 PNGs**, including four basic held weapons and eight combat VFX added to P1. Characters, objects, props, weapons and avatars should be transparent RGBA PNG at 256×256 or 512×512 with clear margins. Keep feet near the lower center so gold hero disks remain visible. Level/status badges, energy, hits, shields, weapon effects and input positions remain dynamic.
+The current P10 catalog contains **205 PNGs**; the sections below retain the additions from each release. Characters, objects, props, weapons and avatars should be transparent RGBA PNG at 256×256 or 512×512 with clear margins. Keep feet near the lower center so gold hero disks remain visible. The soaking guardian and storybook check/peek art deliberately have no outer sticker border. Level/status badges, energy, hits, shields, weapon effects and input positions remain dynamic.
 
 ## Four maps and tile aliases
 
-Maps fill the entire **1280×720** landscape stage. The **9×5** board spans **936×520** logical pixels at `(172,72)`, with **104px** cells. The supplied map PNGs are **1280×720**; their scenic rim stays visible without an opaque board card. The guardian uses the active route endpoint. Static G/R/S/C tiles never paint over external maps; route arrows and subtle grid lines remain. Open/broken tile changes and the `1/2` repair tag are live overlays.
+Maps fill the entire **1280×720** landscape stage. The **9×5** board spans **936×520** logical pixels at `(172,72)`, with **104px** cells. The supplied map PNGs are **1280×720**; their scenic rim stays visible without an opaque board card. Guardian art uses the painted water centres in `src/config/guardianBaths.ts`; enemy arrival continues to use the unchanged route endpoint. Static G/R/S/C tiles never paint over external maps; route arrows and subtle grid lines remain. Open/broken tile changes and the `1/2` repair tag are live overlays.
 
 `map_sunny_backyard`, `map_sakura_onsen`, `map_midnight_kitchen`, `map_cat_tower_maze`.
 
@@ -39,7 +39,7 @@ Dynamic tiles should be square 256×256 RGBA with transparent margins. Open tile
 
 ## Five guardians and objects
 
-- `capybara`: guardian and wooden tub only; exclude oranges. Head top near 23% of image height, tub bottom near 85%. The tub still tips on defeat.
+- `capybara`: legacy tub portrait. P10 battle rendering instead uses the two tub-free soaking portraits below; defeat stays upright inside the native water.
 - `orange`: one orange and leaf; life stacks and flying gain/loss remain dynamic.
 - `shovel`: garden shovel, centered upright; covers the tool button and dragged cursor.
 - `sprinkler`: compact water truck pointing right, following the captured path with procedural water jets.
@@ -163,4 +163,10 @@ These eight IDs have independent SVG fallbacks in `sceneSticker`; Canvas lock an
 
 ## P9 v2 shop and battle presentation
 
-The current manifest contains **201** original PNGs. New scene IDs: `npc_shop_raccoon`, `npc_blacksmith_capy`, `ui_gacha_machine`, `ui_trunk_crate`, `ui_battle_clash_crest`, `ui_crossed_blades`, `ui_alert_siren`, and `ui_unlock_chest`. All eight have distinct inline SVG fallbacks and participate in asynchronous menu/dialog refresh. Merchant, weapon-rack, transition and unlock labels remain live bilingual HTML rather than baked text. The source design directory is strictly read-only.
+P9 shipped **201** original PNGs. New scene IDs: `npc_shop_raccoon`, `npc_blacksmith_capy`, `ui_gacha_machine`, `ui_trunk_crate`, `ui_battle_clash_crest`, `ui_crossed_blades`, `ui_alert_siren`, and `ui_unlock_chest`. All eight have distinct inline SVG fallbacks and participate in asynchronous menu/dialog refresh. Merchant, weapon-rack, transition and unlock labels remain live bilingual HTML rather than baked text. The source design directory is strictly read-only.
+
+## P10 native baths and storybook compendium
+
+The **205-item** manifest includes `capybara_soak` (256×256), `capybara_soak_dizzy` (256×256), `ui_compendium_peek_capy` (256×256), and `ui_storybook_check` (128×128), all transparent RGBA with no white border/backing. HTML has four matching frame-free SVG fallbacks; battle Canvas has an independent tub-free head-and-shoulders fallback.
+
+The four maps retain every board coordinate and their 1280×720 canvas. Three dry endpoint containers now contain painted water; Sakura's existing pool is unchanged. Visual centres and square portrait sizes are: backyard `(1053.5,531)`, `74px`; Sakura `(263,490)`, `90px`; kitchen `(1055,323)`, `80px`; cat tower `(1054,325)`, `74px`. Orange stacks, losses, gains, water ripples and steam share these anchors.

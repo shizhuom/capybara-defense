@@ -1,6 +1,7 @@
 import type { BattleLoadout, BattleState, Enemy, Interaction, MapId, Side, StageRect, Unit, VisualEvent } from '../core/types';
 import {combatRange,combatCharge} from '../core/CombatRules';
 import { getMap, STAGE } from '../config/maps';
+import {GUARDIAN_BATH_SPOTS} from '../config/guardianBaths';
 import {EnemyMotion} from './EnemyMotion';
 import {SHOVEL_PRODUCTION,UNITS} from '../config/units';
 import { HEROES } from '../config/heroes';
@@ -8,7 +9,7 @@ import { MergeSystem } from '../core/MergeSystem';
 import {getMergeTargets,getBenchMergeHints,getPassiveMergeCallouts,type MergeTarget} from '../core/MergeTargets';
 import { t } from '../i18n/i18n';
 import { assets } from './AssetRegistry';
-import { drawCapybaraArt, drawEnemyArt, drawOrange, drawShovelArt, drawUnitArt, ellipse, INK, line, PAPER, polygon, round, star } from './StickerArt';
+import { drawSoakingCapybaraArt, drawEnemyArt, drawOrange, drawShovelArt, drawUnitArt, ellipse, INK, line, PAPER, polygon, round, star } from './StickerArt';
 import { drawGlueTrap, drawM2Event, drawPropCursor, drawSealed, drawWasher, drawWet } from './M2Effects';
 import {boneShield,confusionSpiral,drawM3Event} from './M3Effects';
 import {bodyPose,drawHeldWeapon} from './HeldWeaponRenderer';
@@ -210,23 +211,33 @@ export class StickerRenderer {
   }
 
   private drawGuardian(mapId:MapId,oranges:number,seconds:number):void {
-    const c=this.c,endpoint=getMap(mapId).paths.player.at(-1)!,position=cellCenter(endpoint.col,endpoint.row);
-    c.save();c.translate(position.x,position.y-2);
-    ellipse(c,0,35,34,9,'rgba(76,89,63,.14)','',0);c.translate(0,Math.sin(seconds*1.5)*1.3);
-    const override=this.assets.get('capybara');
-    if(override){
-      c.save();if(oranges<=0){c.translate(3,16);c.rotate(.45);}
-      this.drawImage(override,104,112,0,-2);c.restore();this.drawOrangeStack(oranges,seconds);
-    }else {
-      const orange=this.assets.get('orange');
-      c.save();c.scale(1.24,1.22);drawCapybaraArt(c,seconds,orange?0:oranges,oranges<=0);c.restore();
-      if(orange)this.drawOrangeStack(oranges,seconds);
+    const c=this.c,spot=GUARDIAN_BATH_SPOTS[mapId],dizzy=oranges<=0;
+    c.save();c.translate(spot.x,spot.y);
+    // Small expanding water rings stay inside the painted waterline.
+    for(let i=0;i<2;i++){
+      const pulse=(seconds*.23+i*.5)%1;
+      c.beginPath();c.ellipse(0,spot.size*.22,spot.rippleRx*(.8+pulse*.16),spot.rippleRy*(.7+pulse*.18),0,i*.3,Math.PI*1.9+i*.3);
+      c.strokeStyle=i?'rgba(167,225,215,0.36)':'rgba(255,255,255,0.42)';c.lineWidth=1.6;c.stroke();
+    }
+    c.save();c.translate(dizzy?Math.sin(seconds*6)*1.2:0,dizzy?1:Math.sin(seconds*1.5)*1.4);
+    const soak=this.assets.get(dizzy?'capybara_soak_dizzy':'capybara_soak');
+    // Legacy headless canvas consumers may explicitly supply the old image.
+    // A browser with a missing/undecoded new PNG always uses tub-free vector art.
+    const override=soak??(typeof Image==='undefined'?this.assets.get('capybara'):undefined);
+    if(override)this.drawImage(override,spot.size,spot.size);
+    else{c.save();c.scale(spot.size/100,spot.size/100);drawSoakingCapybaraArt(c,dizzy);c.restore();}
+    this.drawOrangeStack(oranges,seconds,spot.orangeBaseY);c.restore();
+    c.strokeStyle='rgba(255,255,255,0.26)';c.lineWidth=1.6;
+    for(let i=0;i<2;i++){
+      const phase=(seconds*.18+i*.5)%1,x=(i?1:-1)*spot.rippleRx*.92,y=-spot.size*.1-phase*19;
+      c.save();c.globalAlpha*=Math.sin(phase*Math.PI);c.beginPath();c.moveTo(x,y);
+      c.bezierCurveTo(x-6,y-5,x+7,y-11,x,y-18);c.stroke();c.restore();
     }
     c.restore();
   }
 
-  private drawOrangeStack(count:number,seconds:number):void {
-    for(let i=0;i<Math.max(0,count);i++)this.drawOrangeArt(Math.sin(seconds*1.5-i*.38)*(1.5+i*.8),-54-i*16,10,Math.sin(seconds*1.2-i*.4)*.07*(i+1));
+  private drawOrangeStack(count:number,seconds:number,baseY:number):void {
+    for(let i=0;i<Math.max(0,Math.floor(count));i++)this.drawOrangeArt(Math.sin(seconds*1.5-i*.38)*(1.5+i*.8),baseY-i*15,10,Math.sin(seconds*1.2-i*.4)*.07*(i+1));
   }
 
   private drawOrangeArt(x:number,y:number,size:number,rotation:number):void {
@@ -701,9 +712,9 @@ export class StickerRenderer {
 
   private observeOranges(state:BattleState,dt:number):void {
     if(this.previousOranges)for(const side of ['player'] as const) {
-      const endpoint=getMap(state.mapId).paths.player.at(-1)!;
-      const old=this.previousOranges[side],now=state.sides[side].oranges,diff=now-old,point=cellCenter(endpoint.col,endpoint.row);
-      for(let i=0;i<Math.min(Math.abs(diff),12);i++)this.orangeMotions.push({x:point.x,y:point.y-56-Math.max(0,old-1-i)*16,age:0,index:i,add:diff>0,direction:-1,targetY:point.y-56-Math.max(0,now-1-i)*16});
+      const spot=GUARDIAN_BATH_SPOTS[state.mapId];
+      const old=this.previousOranges[side],now=state.sides[side].oranges,diff=now-old;
+      for(let i=0;i<Math.min(Math.abs(diff),12);i++)this.orangeMotions.push({x:spot.x,y:spot.y+spot.orangeBaseY-Math.max(0,old-1-i)*15,age:0,index:i,add:diff>0,direction:-1,targetY:spot.y+spot.orangeBaseY-Math.max(0,now-1-i)*15});
     }
     this.previousOranges={player:state.sides.player.oranges,ai:state.sides.ai.oranges};
     this.orangeMotions=this.orangeMotions.filter(motion=>(motion.age+=dt)<1.1);

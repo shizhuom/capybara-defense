@@ -1,0 +1,229 @@
+/* P10 is a separate illustrated folder. All overrides stop at the Compendium. */
+#game-dialog.recipe-dialog {
+  --ink:#3E2822;--ink-secondary:#594039;--copy:15.5px;--label:14px;--card-title:20px;
+  width:min(92vw,680px);height:min(90dvh,830px);max-height:min(90dvh,830px);max-width:none;
+  padding:0;background:transparent!important;border:0!important;border-radius:0;box-shadow:none!important;overflow:visible;
+}
+#game-dialog.recipe-dialog::backdrop { background:rgba(28,25,23,.58); }
+#game-dialog.recipe-dialog .ledger-shell { overflow:visible;background:transparent;isolation:isolate; }
+#game-dialog.recipe-dialog .ledger-header {
+  position:relative;min-height:100px;padding:8px 96px 12px;justify-content:center;
+  background:transparent!important;border:0!important;box-shadow:none!important;
+}
+#game-dialog.recipe-dialog .ledger-heading { text-align:center; }
+#game-dialog.recipe-dialog #dialog-title {
+  margin:0;padding:0;font-size:clamp(28px,3vw,36px)!important;line-height:1.15;font-weight:900!important;
+  color:#FFFDF8!important;-webkit-text-stroke:5px #462E27;paint-order:stroke fill;
+  text-shadow:0 3px 0 #462E27,0 4px 10px rgba(0,0,0,.32);letter-spacing:.025em;
+}
+#game-dialog.recipe-dialog .ledger-heading>p { display:none; }
+#game-dialog.recipe-dialog .ledger-mascot {
+  position:absolute;left:22px;bottom:-3px;z-index:4;width:78px;height:78px;pointer-events:none;filter:none;
+}
+#game-dialog.recipe-dialog .ledger-mascot>[data-sticker] { display:block;width:78px;height:78px; }
+#game-dialog.recipe-dialog .ledger-header-end { position:absolute;right:12px;top:24px; }
+#game-dialog.recipe-dialog .compendium-toolbar [data-action="close-recipes"] {
+  width:40px;height:40px;min-width:40px;min-height:40px;border-radius:999px;
+  background:#F5EDE2;border:2.5px solid #4A322B;color:#4A322B!important;font-size:28px!important;box-shadow:0 2px 0 #462E2733;
+}
+#game-dialog.recipe-dialog .collection-badge {
+  display:inline-block;max-width:100%;margin-top:7px;padding:3px 10px;border:1.5px solid #6B5047;border-radius:999px;
+  background:#F4ECE1;color:#594039!important;font-size:12.5px!important;line-height:1.25;font-weight:800!important;
+}
+#game-dialog.recipe-dialog .encyclopedia-tabs.ledger-tabs {
+  position:relative;inset:auto;z-index:3;display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:5px;
+  margin:0 0 -2.5px;padding:0 10px;overflow:visible;background:transparent!important;border:0!important;
+}
+#game-dialog.recipe-dialog .encyclopedia-tabs.ledger-tabs button {
+  position:relative;min-width:0;min-height:47px;gap:0;padding:9px 5px 8px;border:2.5px solid #593E36;border-radius:11px 11px 0 0;
+  background:#B9A094;color:#473029!important;font-size:15.5px!important;line-height:1.25;font-weight:900!important;box-shadow:none;transform:translateY(3px);
+}
+#game-dialog.recipe-dialog .encyclopedia-tabs.ledger-tabs button>span { color:inherit!important;overflow-wrap:normal; }
+#game-dialog.recipe-dialog .encyclopedia-tabs.ledger-tabs button[aria-selected="true"] {
+  z-index:1;background:#F4ECE1;border-color:#593E36;border-bottom-color:#F4ECE1!important;border-radius:12px 12px 0 0;
+  color:#3F2923!important;transform:none;box-shadow:none;
+}
+#game-dialog.recipe-dialog .encyclopedia-tabs.ledger-tabs button[aria-selected="true"]::after {
+  content:'';position:absolute;top:5px;right:5px;width:6px;height:6px;border-radius:50%;background:#D77768;box-shadow:0 0 0 1px #A45F52;
+}
+#game-dialog.recipe-dialog .encyclopedia-tabs.ledger-tabs .tab-icon {
+  position:absolute;width:1px;height:1px;margin:-1px;padding:0;overflow:hidden;clip-path:inset(50%);white-space:nowrap;
+}
+#game-dialog.recipe-dialog .ledger-body {
+  position:relative;z-index:1;min-height:0;padding:17px 17px 20px;border:3px solid #593E36;border-radius:14px;
+  background:#C7B0A3;box-shadow:inset 0 0 0 5px #F4ECE1,0 10px 26px rgba(24,15,11,.36);
+  scrollbar-color:#806459 #E6D9CD;scrollbar-width:thin;scroll-padding:17px;overflow-x:hidden;
+}
+#game-dialog.recipe-dialog .ledger-body::after { content:none; }
+#game-dialog.recipe-dialog .p3-compendium,#game-dialog.recipe-dialog #book-content { min-width:0; }
+#game-dialog.recipe-dialog .portrait-grid,#game-dialog.recipe-dialog .storybook-recipe-list { display:flex;flex-direction:column;gap:12px; }
+#game-dialog.recipe-dialog .ledger-body .encyclopedia-card,#game-dialog.recipe-dialog .storybook-recipe-card {
+  min-width:0;background:#FCF9F4!important;border:1.5px solid #E5DBD0!important;border-top:1.5px solid #E5DBD0!important;
+  border-radius:12px;box-shadow:0 3px 0 rgba(122,95,82,.14);
+}
+#game-dialog.recipe-dialog .ledger-body .portrait-tile,#game-dialog.recipe-dialog .storybook-recipe-card { margin:0;padding:0; }
+#game-dialog.recipe-dialog .portrait-tile:hover { transform:none;box-shadow:0 3px 0 rgba(122,95,82,.14); }
+#game-dialog.recipe-dialog .portrait-tile-button,#game-dialog.recipe-dialog .storybook-recipe-button {
+  display:grid;grid-template-columns:82px minmax(0,1fr) 74px;align-items:center;gap:16px;
+  width:100%;height:auto;min-height:104px;margin:0;padding:12px 16px;border:0;border-radius:11px;background:transparent;
+  text-align:left;box-shadow:none;color:#3E2822!important;white-space:normal;
+}
+#game-dialog.recipe-dialog .portrait-tile-button:hover,#game-dialog.recipe-dialog .storybook-recipe-button:hover { background:#F8F2E9; }
+#game-dialog.recipe-dialog .storybook-frame {
+  display:flex;align-items:center;justify-content:center;flex:none;width:82px;height:82px;min-width:0;overflow:hidden;
+  border:2.5px solid #6B5047;border-radius:12px;background:#E9F0E2;box-shadow:inset 0 0 12px #FFFCF680;
+}
+#game-dialog.recipe-dialog .storybook-frame.tone-heroes { background:#F6ECD8; }
+#game-dialog.recipe-dialog .storybook-frame.tone-bosses { background:#F3E4E0; }
+#game-dialog.recipe-dialog .storybook-frame.tone-weapons { background:#E5EDF2; }
+#game-dialog.recipe-dialog .storybook-frame.tone-props { background:#F1E9DF; }
+#game-dialog.recipe-dialog .storybook-frame :is(.roster-art,.mystery-art,.book-sticker),#game-dialog.recipe-dialog .storybook-frame .book-sticker>span {
+  display:flex;align-items:center;justify-content:center;min-height:0;line-height:0;
+}
+#game-dialog.recipe-dialog .storybook-frame [data-sticker] { width:68px;height:68px;object-fit:contain; }
+#game-dialog.recipe-dialog .portrait-tile:not(.collected) .book-sticker { filter:none; }
+#game-dialog.recipe-dialog .mystery-art [data-sticker] { filter:brightness(.22) sepia(.35) contrast(1.2); }
+#game-dialog.recipe-dialog .storybook-copy { display:flex;flex-direction:column;min-width:0;gap:6px; }
+#game-dialog.recipe-dialog .ledger-body .portrait-name {
+  display:block;color:#3E2822!important;font-size:20px!important;line-height:1.25;font-weight:900!important;text-align:left;overflow-wrap:break-word;
+}
+#game-dialog.recipe-dialog .ledger-body .storybook-tagline {
+  display:block;margin:0;color:#594039!important;font-size:15.5px!important;line-height:1.45;font-weight:700!important;overflow-wrap:break-word;
+}
+#game-dialog.recipe-dialog .storybook-status { display:flex;flex-direction:column;align-items:center;justify-content:center;min-width:0;gap:8px;text-align:center; }
+#game-dialog.recipe-dialog .ledger-body .collection-state,#game-dialog.recipe-dialog .ledger-body .star-unlock {
+  display:inline-block;margin:0;padding:0;border:0;border-radius:0;background:transparent;color:#3D5A2B!important;
+  font-size:13.5px!important;line-height:1.3;font-weight:800!important;transform:none;white-space:normal;
+}
+#game-dialog.recipe-dialog .ledger-body .collection-state[data-collection-state="awaiting"],#game-dialog.recipe-dialog .ledger-body .star-unlock { color:#5C4033!important; }
+#game-dialog.recipe-dialog .storybook-mark { display:flex;align-items:center;justify-content:center;width:30px;height:30px; }
+#game-dialog.recipe-dialog .storybook-mark [data-sticker="ui_storybook_check"] { width:26px;height:26px; }
+#game-dialog.recipe-dialog .storybook-mark [data-sticker="ui_lock_closed"] { width:22px;height:22px; }
+#game-dialog.recipe-dialog .storybook-awaiting { display:block;width:20px;height:20px;border:2px dashed #9F877A;border-radius:50%; }
+#game-dialog.recipe-dialog .storybook-footer-tip { flex:none;padding:12px 6px 0;text-align:center; }
+#game-dialog.recipe-dialog .storybook-footer-tip p {
+  margin:0;color:#FFFDF8!important;font-size:14.5px!important;line-height:1.4;font-weight:800!important;
+  text-shadow:0 2px 4px #1E120E,0 0 5px #1E120E;
+}
+#game-dialog.recipe-dialog .compendium-split { display:flex;flex-direction:column;align-items:stretch;gap:20px; }
+#game-dialog.recipe-dialog .storybook-recipe-parts { display:flex;flex-wrap:wrap;align-items:center;gap:4px 7px;color:#594039!important;font-size:14px;line-height:1.35; }
+#game-dialog.recipe-dialog .storybook-ingredient { display:inline-flex;align-items:center;gap:4px;min-width:0; }
+#game-dialog.recipe-dialog .storybook-ingredient .book-sticker { display:inline-flex;min-height:0;line-height:0; }
+#game-dialog.recipe-dialog .storybook-ingredient [data-sticker] { width:24px;height:24px;flex:none; }
+#game-dialog.recipe-dialog .storybook-ingredient>span:last-child { color:#594039!important; }
+#game-dialog.recipe-dialog .storybook-matrix-reference { min-width:0;padding:12px;border:1.5px solid #A88E80;border-radius:12px;background:#F4ECE1; }
+#game-dialog.recipe-dialog .storybook-matrix-reference>summary { padding:5px 0;cursor:pointer;color:#3E2822!important;font-size:16px;font-weight:900; }
+#game-dialog.recipe-dialog .storybook-matrix-scroll { max-width:100%;overflow:auto;overscroll-behavior:contain; }
+#game-dialog.recipe-dialog .ledger-body .merge-matrix { width:100%;min-width:470px;margin-top:12px;border-spacing:5px; }
+#game-dialog.recipe-dialog .ledger-body .merge-matrix caption { color:#594039!important;font-size:15px!important; }
+#game-dialog.recipe-dialog .ledger-body .merge-matrix :is(th,td button),#game-dialog.recipe-dialog .ledger-body .matrix-corner { font-size:14px!important; }
+#game-dialog.recipe-dialog .ledger-body .matrix-corner { background:#E9DED0;border:1px solid #B59A89; }
+#game-dialog.recipe-dialog .ledger-body .merge-matrix td button { padding:6px;background:#FCF9F4;border:1.5px solid #C7B0A3;border-radius:9px;box-shadow:none; }
+#game-dialog.recipe-dialog .ledger-body .merge-matrix td button[aria-pressed="true"] { border-color:#6B5047;background:#F6ECD8; }
+#game-dialog.recipe-dialog .ledger-body .merge-matrix .star-unlock { font-size:12px!important; }
+#game-dialog.recipe-dialog .ledger-body .merge-matrix .star-unlock [data-sticker] { width:18px;height:18px; }
+#game-dialog.recipe-dialog .special-recipes { display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px; }
+#game-dialog.recipe-dialog .ledger-body .compendium-detail>.encyclopedia-card { padding:18px;scroll-margin-block:16px; }
+#game-dialog.recipe-dialog .ledger-body .book-heading { display:flex;align-items:center;gap:14px;margin-bottom:14px; }
+#game-dialog.recipe-dialog .ledger-body .book-heading>div { min-width:0; }
+#game-dialog.recipe-dialog .ledger-body .book-heading h4 { margin:0 0 5px;font-size:22px!important;color:#3E2822!important; }
+#game-dialog.recipe-dialog .ledger-body .book-heading .storybook-tagline { margin-top:7px; }
+#game-dialog.recipe-dialog .ledger-body .compendium-detail-sheet { display:flex;flex-direction:column;gap:18px;padding:20px; }
+#game-dialog.recipe-dialog .detail-showcase { gap:10px; }
+#game-dialog.recipe-dialog .detail-showcase>.storybook-frame { width:156px;height:156px; }
+#game-dialog.recipe-dialog .detail-showcase>.storybook-frame [data-sticker] { width:136px;height:136px; }
+#game-dialog.recipe-dialog .ledger-body .detail-showcase h4 { font-size:27px!important;color:#3E2822!important; }
+#game-dialog.recipe-dialog .detail-showcase>.storybook-tagline { max-width:440px; }
+#game-dialog.recipe-dialog .detail-stats { min-width:0;max-width:100%; }
+#game-dialog.recipe-dialog .ledger-body .book-stat-pills { gap:7px;margin:12px 0; }
+#game-dialog.recipe-dialog .ledger-body .book-stat-pills>span {
+  padding:6px 10px;background:#F6ECD8;border:1px solid #D3BEA7;border-radius:999px;font-size:15px!important;
+}
+#game-dialog.recipe-dialog .ledger-body .book-growth { width:100%;margin:16px 0;border:1.5px solid #B59A89;border-collapse:collapse;border-radius:8px;background:#FCF9F4; }
+#game-dialog.recipe-dialog .ledger-body .book-growth caption { margin-bottom:8px;font-size:15.5px!important;color:#594039!important;text-align:left; }
+#game-dialog.recipe-dialog .ledger-body .book-growth :is(th,td) { padding:9px 7px;font-size:15px!important;white-space:normal;overflow-wrap:normal;word-break:normal;border-color:#E5DBD0; }
+#game-dialog.recipe-dialog .ledger-body .book-growth thead { background:#EDE2D5; }
+#game-dialog.recipe-dialog .ledger-body .book-growth tbody tr:nth-child(even) { background:#F4ECE1; }
+#game-dialog.recipe-dialog .ledger-body :is(.recipe-equation,.signature-link,.hero-weapon-previews>button,.counter-tip) { background:#F4ECE1;border:1.5px solid #C7B0A3;border-radius:10px; }
+#game-dialog.recipe-dialog .ledger-body .recipe-equation { flex-wrap:wrap;gap:6px;padding:8px; }
+#game-dialog.recipe-dialog .ledger-body .recipe-equation>span { font-size:15px!important; }
+#game-dialog.recipe-dialog .ledger-body :is(.detail-stats p,.detail-stats aside,.compendium-detail p) { font-size:15.5px!important;line-height:1.55; }
+#game-dialog.recipe-dialog .ledger-body .locked-entry-notice { padding:16px;background:#F4ECE1;border:2px dashed #B59A89;border-radius:12px; }
+#game-dialog.recipe-dialog .compendium-detail-bar { gap:9px;flex-wrap:wrap;margin-bottom:14px; }
+#game-dialog.recipe-dialog .compendium-detail-bar>div { min-width:0;gap:8px;font-size:14px; }
+#game-dialog.recipe-dialog .ledger-body .compendium-detail-bar button { min-height:40px;padding:7px 10px;border:1.5px solid #6B5047;border-radius:999px;background:#F4ECE1;color:#3E2822!important;font-size:14px!important; }
+#game-dialog.recipe-dialog [data-compendium-focused="true"] { outline:3px solid #6B5047;outline-offset:-3px;scroll-margin-block:16px; }
+#game-dialog.recipe-dialog :is(button,summary,[tabindex]):focus-visible { outline:3px solid #5E7460;outline-offset:3px; }
+#game-dialog.recipe-dialog .ledger-body:focus-visible { outline-offset:-7px; }
+#game-dialog.recipe-dialog .portrait-tile-button:focus-visible,#game-dialog.recipe-dialog .storybook-recipe-button:focus-visible { outline-offset:-4px; }
+
+@media (max-height:500px) and (orientation:landscape) {
+  #game-dialog.recipe-dialog { width:min(90vw,660px);height:95dvh;max-height:95dvh; }
+  #game-dialog.recipe-dialog .ledger-header { min-height:65px;padding:3px 86px 6px; }
+  #game-dialog.recipe-dialog #dialog-title { font-size:28px!important;-webkit-text-stroke-width:4px; }
+  #game-dialog.recipe-dialog .ledger-mascot,#game-dialog.recipe-dialog .ledger-mascot>[data-sticker] { width:60px;height:60px; }
+  #game-dialog.recipe-dialog .ledger-mascot { left:22px;bottom:-3px; }
+  #game-dialog.recipe-dialog .ledger-header-end { top:10px; }
+  #game-dialog.recipe-dialog .collection-badge { margin-top:4px;padding:2px 8px;font-size:11.5px!important; }
+  #game-dialog.recipe-dialog .encyclopedia-tabs.ledger-tabs button { min-height:35px;padding:5px 3px;font-size:14px!important; }
+  #game-dialog.recipe-dialog .ledger-body { padding:12px;scroll-padding:12px; }
+  #game-dialog.recipe-dialog .portrait-grid,#game-dialog.recipe-dialog .storybook-recipe-list { gap:10px; }
+  #game-dialog.recipe-dialog .portrait-tile-button,#game-dialog.recipe-dialog .storybook-recipe-button { grid-template-columns:68px minmax(0,1fr) 70px;min-height:88px;gap:12px;padding:9px 12px; }
+  #game-dialog.recipe-dialog .storybook-frame { width:68px;height:68px; }
+  #game-dialog.recipe-dialog .storybook-frame [data-sticker] { width:56px;height:56px; }
+  #game-dialog.recipe-dialog .ledger-body .portrait-name { font-size:18px!important; }
+  #game-dialog.recipe-dialog .ledger-body .storybook-tagline { font-size:14px!important; }
+  #game-dialog.recipe-dialog .storybook-footer-tip { padding-top:6px; }
+  #game-dialog.recipe-dialog .storybook-footer-tip p { font-size:11.5px!important;line-height:1.3; }
+  #game-dialog.recipe-dialog .ledger-body .compendium-detail-sheet { padding:14px; }
+  #game-dialog.recipe-dialog .detail-showcase>.storybook-frame { width:116px;height:116px; }
+  #game-dialog.recipe-dialog .detail-showcase>.storybook-frame [data-sticker] { width:100px;height:100px; }
+}
+
+@media (max-width:600px) and (orientation:portrait) {
+  #game-dialog.recipe-dialog { width:94vw;height:91dvh;max-height:91dvh; }
+  #game-dialog.recipe-dialog .ledger-header { min-height:94px;padding:7px 42px 12px 68px; }
+  #game-dialog.recipe-dialog #dialog-title { font-size:28px!important;-webkit-text-stroke-width:4px;letter-spacing:0; }
+  #game-dialog.recipe-dialog .ledger-mascot,#game-dialog.recipe-dialog .ledger-mascot>[data-sticker] { width:62px;height:62px; }
+  #game-dialog.recipe-dialog .ledger-mascot { left:8px;bottom:-3px; }
+  #game-dialog.recipe-dialog .ledger-header-end { right:2px;top:17px; }
+  #game-dialog.recipe-dialog .compendium-toolbar [data-action="close-recipes"] { width:36px;height:36px;min-width:36px;min-height:36px;font-size:26px!important; }
+  #game-dialog.recipe-dialog .collection-badge { padding:3px 6px;font-size:11px!important; }
+  #game-dialog.recipe-dialog .encyclopedia-tabs.ledger-tabs { padding:0 5px;gap:3px; }
+  #game-dialog.recipe-dialog .encyclopedia-tabs.ledger-tabs button { min-height:47px;padding:7px 2px 6px;font-size:12px!important;line-height:1.25; }
+  #game-dialog.recipe-dialog .encyclopedia-tabs.ledger-tabs button>span { overflow-wrap:anywhere; }
+  #game-dialog.recipe-dialog .encyclopedia-tabs.ledger-tabs button[aria-selected="true"]::after { top:4px;right:4px;width:5px;height:5px; }
+  #game-dialog.recipe-dialog .ledger-body { padding:12px 10px 15px;scroll-padding:12px; }
+  #game-dialog.recipe-dialog .portrait-grid,#game-dialog.recipe-dialog .storybook-recipe-list { gap:11px; }
+  #game-dialog.recipe-dialog .portrait-tile-button,#game-dialog.recipe-dialog .storybook-recipe-button { grid-template-columns:66px minmax(0,1fr) 55px;gap:9px;min-height:102px;padding:11px 9px; }
+  #game-dialog.recipe-dialog .storybook-frame { width:66px;height:66px;border-width:2px;border-radius:10px; }
+  #game-dialog.recipe-dialog .storybook-frame [data-sticker] { width:56px;height:56px; }
+  #game-dialog.recipe-dialog .storybook-copy { gap:5px; }
+  #game-dialog.recipe-dialog .ledger-body .portrait-name { font-size:18px!important;line-height:1.28; }
+  #game-dialog.recipe-dialog .ledger-body .storybook-tagline { font-size:14px!important;line-height:1.45; }
+  #game-dialog.recipe-dialog .ledger-body .collection-state,#game-dialog.recipe-dialog .ledger-body .star-unlock { font-size:12px!important; }
+  #game-dialog.recipe-dialog .storybook-status { gap:5px; }
+  #game-dialog.recipe-dialog .storybook-recipe-parts { gap:3px;font-size:12px; }
+  #game-dialog.recipe-dialog .storybook-ingredient { gap:3px; }
+  #game-dialog.recipe-dialog .storybook-ingredient [data-sticker] { width:19px;height:19px; }
+  #game-dialog.recipe-dialog .storybook-footer-tip { padding:10px 3px 0; }
+  #game-dialog.recipe-dialog .storybook-footer-tip p { font-size:12px!important;line-height:1.4; }
+  #game-dialog.recipe-dialog .ledger-body .compendium-detail>.encyclopedia-card,#game-dialog.recipe-dialog .ledger-body .compendium-detail-sheet { padding:12px; }
+  #game-dialog.recipe-dialog .ledger-body .book-heading { gap:10px;align-items:flex-start; }
+  #game-dialog.recipe-dialog .ledger-body .book-heading h4 { font-size:20px!important; }
+  #game-dialog.recipe-dialog .ledger-body .book-growth :is(th,td) { padding:8px 3px;font-size:12px!important; }
+  #game-dialog.recipe-dialog .ledger-body .book-growth caption { font-size:14px!important; }
+  #game-dialog.recipe-dialog .ledger-body .book-stat-pills>span { padding:5px 7px;font-size:14px!important; }
+  #game-dialog.recipe-dialog .detail-showcase>.storybook-frame { width:136px;height:136px; }
+  #game-dialog.recipe-dialog .detail-showcase>.storybook-frame [data-sticker] { width:116px;height:116px; }
+  #game-dialog.recipe-dialog .ledger-body .detail-showcase h4 { font-size:24px!important; }
+  #game-dialog.recipe-dialog .ledger-body .compendium-detail-bar button { padding:6px 9px;font-size:13px!important; }
+  #game-dialog.recipe-dialog .compendium-detail-bar>div { gap:6px; }
+  #game-dialog.recipe-dialog .special-recipes { grid-template-columns:1fr; }
+  #game-dialog.recipe-dialog .storybook-matrix-reference { padding:9px; }
+}
+
+@media (prefers-reduced-motion:reduce) {
+  #game-dialog.recipe-dialog .ledger-body { scroll-behavior:auto; }
+  #game-dialog.recipe-dialog .portrait-tile { transition:none; }
+}

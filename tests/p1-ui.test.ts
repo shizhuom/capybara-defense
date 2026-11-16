@@ -60,7 +60,7 @@ describe('P1 bilingual encyclopedia', () => {
   it.each(['zh-CN','en'] as const)('shows each weapon current unlock state and its fragment requirement in %s', lang => {
     setLanguage(lang);
     const book=new Compendium(), profile=createProfile(); book.tab='weapons';
-    const ids=Object.keys(WEAPONS), unlocked=t('p5.collected'), locked=t('p5.locked');
+    const ids=Object.keys(WEAPONS), unlocked=t('p10.owned'), locked=t('p10.uncollected');
     for(const unlockedIds of [[],[ids[1]],ids]) {
       profile.unlockedWeapons=[...unlockedIds];
       book.select('weapons');
@@ -68,7 +68,9 @@ describe('P1 bilingual encyclopedia', () => {
       expect(html.match(/data-entry=/g)).toHaveLength(36);
       for(const weapon of Object.values(WEAPONS)) {
         const card=html.match(new RegExp(`<article[^>]*data-entry="${weapon.id}"[\\s\\S]*?</article>`))?.[0];
-        expect(card).toContain(`<b class="collection-state">${unlockedIds.includes(weapon.id)?unlocked:locked}</b>`);
+        const owned=unlockedIds.includes(weapon.id);
+        expect(card).toContain(`<b class="collection-state" data-collection-state="${owned?'recorded':'awaiting'}">${owned?unlocked:locked}</b>`);
+        expect(card).toContain(`data-sticker="${owned?'ui_storybook_check':'ui_lock_closed'}"`);
         const count=RARITY_RULES[weapon.rarity].fragments;
         expect(card).not.toContain('book-stats');
         book.inspectEntry(weapon.id);

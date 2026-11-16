@@ -67,6 +67,15 @@ Object.assign(tools,{
   ui_ticket_gacha:p('M-37 -22 H37 V-7 Q23 0 37 7 V22 H-37 V7 Q-23 0 -37 -7Z','#edc393')+p('M-18 -20 V20','none','#b78b60',2)+p('M9 -13 L13 -4 23 -3 16 4 18 14 9 9 0 14 2 4 -5 -3 5 -4Z','#c78571'),
   ui_skull_threat:p('M-26 6 Q-38 -25 -13 -34 Q13 -42 28 -17 Q36 2 21 15 V31 H-20 V15Z','#f8ecd2')+e(-13,-3,8,10,'#7a6553')+e(13,-3,8,10,'#7a6553')+p('M0 6 L-5 15 H5Z','#7a6553')+p('M-11 25 V33 M0 25 V33 M11 25 V33'),
 });
+export const P10_SCENE_IDS=['capybara_soak','capybara_soak_dizzy','ui_compendium_peek_capy','ui_storybook_check'] as const;
+const soakingBody=p('M-29 28 Q-21 11 -23 -10 Q-25 -36 6 -34 Q26 -33 34 -17 Q46 -11 38 6 Q31 17 18 16 L26 29 Q0 39 -29 28Z','#cda172','#3a2618')+p('M-22 -25 Q-37 -44 -27 -42 Q-15 -41 -15 -29 M2 -34 Q1 -45 9 -44 Q16 -43 16 -32','#c59b70','#3a2618')+p('M28 -13 Q39 -17 38 4 Q34 13 25 6','#d8b388','#3a2618');
+const soakingWater=p('M-38 26 Q-47 38 -5 40 Q36 44 43 27','none','#88c7c0',5)+p('M-39 28 Q-31 44 34 35','none','#fffdf8',2)+p('M-34 28 Q-39 17 -32 21 Q-26 15 -24 25 Q-17 22 -17 31 M25 30 Q26 20 31 25 Q37 18 37 28','#fffdf8','#fffdf8',1);
+Object.assign(tools,{
+ capybara_soak:soakingBody+p('M-12 -13 Q-6 -19 0 -13 M28 0 Q33 7 37 1','none','#3a2618',3)+soakingWater,
+ capybara_soak_dizzy:soakingBody+p('M-4 -12 Q-1 -20 -10 -20 Q-19 -18 -14 -9 Q-8 -4 -4 -11 Q-3 -16 -9 -16 Q-12 -15 -10 -12 M27 6 L32 2 36 6','none','#3a2618',2.4)+soakingWater+p('M40 12 Q49 9 47 17 Q45 20 40 12Z','#b9e0da','#3a2618',1),
+ ui_compendium_peek_capy:p('M-30 31 Q-36 14 -27 -4 Q-41 -20 -26 -23 L-19 -16 Q0 -31 22 -13 Q39 -19 36 -4 Q42 13 29 30Z','#cfa779','#462e27')+p('M0 -23 Q-15 -37 -12 -43 Q6 -43 1 -26 Q9 -40 23 -39 Q25 -23 1 -23Z','#a4bd83','#462e27',2)+p('M-15 4 Q-10 -2 -5 4 M10 4 Q15 -2 20 4 M0 16 Q6 22 11 16','none','#462e27',2.5)+e(-19,13,4,2,'#e2a18f')+e(24,13,4,2,'#e2a18f')+p('M-44 38 H44','none','#462e27',3)+p('M-25 38 Q-34 24 -22 24 Q-12 25 -13 38Z M16 38 Q13 24 25 24 Q36 26 29 38Z','#dcb58b','#462e27',2),
+ ui_storybook_check:p('M-31 4 Q-25 -5 -17 12 L-10 22 Q4 -6 34 -30 L40 -28 Q9 3 -4 33 Q-7 39 -14 33Z','#4a322b','#4a322b',1),
+});
 export const P9_SCENE_IDS=['npc_shop_raccoon','npc_blacksmith_capy','ui_gacha_machine','ui_trunk_crate','ui_battle_clash_crest','ui_crossed_blades','ui_alert_siren','ui_unlock_chest'] as const;
 Object.assign(tools,{
  npc_shop_raccoon:coon+r(-32,22,64,19,'#8eb09a')+p('M-34 -23 H34 L25 -39 H-23Z','#d0a66d'),
@@ -101,8 +110,9 @@ const props:Record<string,string>={
   bee_overtime:e(-18,-13,12,16,'#d3e3df')+e(15,-13,12,16,'#d3e3df')+e(0,4,19,24,'#efd07c')+p('M-18 3 H18 M-14 17 H14','none','#665e4c',6)+e(-7,-5,2,3,ink)+e(7,-5,2,3,ink)+e(23,25,12,12,'#eed49a')+p('M23 18 V25 L29 28'),
 };
 const sizeOf=(size:number,fallback:number)=>Number.isFinite(size)&&size>0?Math.max(16,Math.min(512,Math.round(size))):fallback;
-function geometry(id:string,art:string,size:number):string {
-  return `<svg viewBox="-48 -48 96 96" width="${size}" height="${size}" role="img" aria-label="${id}" data-sticker="${id}"><g stroke-linecap="round" stroke-linejoin="round"><path d="M-39 -26 Q-42 -42 -19 -40 L19 -41 Q42 -39 40 -18 L41 22 Q38 43 17 41 L-22 42 Q-43 38 -40 18Z" fill="#fff9eb" stroke="#fffdf6" stroke-width="5"/>${art}</g></svg>`;
+function geometry(id:string,art:string,size:number,frame=true):string {
+  const backing=frame?'<path d="M-39 -26 Q-42 -42 -19 -40 L19 -41 Q42 -39 40 -18 L41 22 Q38 43 17 41 L-22 42 Q-43 38 -40 18Z" fill="#fff9eb" stroke="#fffdf6" stroke-width="5"/>':'';
+  return `<svg viewBox="-48 -48 96 96" width="${size}" height="${size}" role="img" aria-label="${id}" data-sticker="${id}"><g stroke-linecap="round" stroke-linejoin="round">${backing}${art}</g></svg>`;
 }
 function image(id:string,size:number):string|undefined {
   const url=spriteUrl(id);return url?`<img src="${escapeHtml(url)}" width="${size}" height="${size}" alt="${id}" data-sticker="${id}" style="object-fit:contain"/>`:undefined;
@@ -119,9 +129,9 @@ export function unitSticker(kind:string,size=40):string {
   if(['hamster','squirrel','bee'].includes(key))return avatarSticker(key,n);
   return `<span role="img" aria-label="${key}" data-sticker="${key}" style="display:inline-grid;place-items:center;width:${n}px;height:${n}px;font-size:${Math.round(n*.63)}px">${escapeHtml(UNIT_ICONS[key])}</span>`;
 }
-export function sceneSticker(id:typeof P9_SCENE_IDS[number]|'menu_banner'|'logo_capy'|'sprinkler'|'shovel'|'ui_compendium_book'|'ui_fish_food'|'ui_bell_summon'|'ui_shop_bag'|'orange'|'ui_trophy_rank'|'ui_map_sign'|'ui_header_compendium'|'ui_header_armory'|'ui_header_market'|'ui_header_rank'|'ui_header_profile'|'ui_header_settings'|'ui_tutorial_pointer'|'ui_tutorial_capy'|'ui_coin_gold'|'ui_star_rank'|'ui_ticket_gacha'|'ui_skull_threat'|'ui_result_victory'|'ui_result_defeat'|'ui_header_pause'|'ui_mvp_crown'|'ui_lock_closed'|'ui_lock_open'|'ui_wave_horn'|'ui_merge_sparkle',fallback:string,size?:number):string {
+export function sceneSticker(id:typeof P10_SCENE_IDS[number]|typeof P9_SCENE_IDS[number]|'menu_banner'|'logo_capy'|'sprinkler'|'shovel'|'ui_compendium_book'|'ui_fish_food'|'ui_bell_summon'|'ui_shop_bag'|'orange'|'ui_trophy_rank'|'ui_map_sign'|'ui_header_compendium'|'ui_header_armory'|'ui_header_market'|'ui_header_rank'|'ui_header_profile'|'ui_header_settings'|'ui_tutorial_pointer'|'ui_tutorial_capy'|'ui_coin_gold'|'ui_star_rank'|'ui_ticket_gacha'|'ui_skull_threat'|'ui_result_victory'|'ui_result_defeat'|'ui_header_pause'|'ui_mvp_crown'|'ui_lock_closed'|'ui_lock_open'|'ui_wave_horn'|'ui_merge_sparkle',fallback:string,size?:number):string {
   const n=sizeOf(size??(id==='menu_banner'?400:64),64);
-  return image(id,n)||(Object.hasOwn(tools,id)?geometry(id,tools[id],n):fallback);
+  return image(id,n)||(Object.hasOwn(tools,id)?geometry(id,tools[id],n,!(P10_SCENE_IDS as readonly string[]).includes(id)):fallback);
 }
 
 type ArtStickerId='title_logo_zh'|'title_logo_en'|'ui_btn_start_zh'|'ui_btn_start_en';
