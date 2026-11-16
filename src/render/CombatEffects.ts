@@ -3,7 +3,7 @@ import {STAGE} from '../config/maps';
 import {COMBAT_STYLES} from '../config/combat';
 import {assets} from './AssetRegistry';
 import {fitSprite} from './HeldWeaponRenderer';
-import {ellipse,INK,line,PAPER,polygon,round,star} from './StickerArt';
+import {drawEnemyArt,ellipse,INK,line,PAPER,polygon,round,star} from './StickerArt';
 
 const pixel=(col:number,row:number)=>({x:STAGE.boardX+(col+.5)*STAGE.cell,y:STAGE.boardY+(row+.5)*STAGE.cell});
 /** Captured geometry/effect keeps attacks visible after the firing unit disappears. */
@@ -42,10 +42,22 @@ export function drawCombatEvent(c:CanvasRenderingContext2D,event:VisualEvent,uni
   c.font='900 22px "Trebuchet MS",sans-serif';c.textAlign='left';c.strokeStyle=PAPER;c.lineWidth=4;c.strokeText(`+${event.value??1}`,0,1);c.fillStyle='#aa762e';c.fillText(`+${event.value??1}`,0,1);
  }else{
   c.translate(from.x,from.y);c.globalAlpha*=1-p;
+  if(event.type==='death'&&event.enemyKind&&p<.75){
+   c.save();c.translate((event.id%2?1:-1)*p*24,-Math.sin(p*Math.PI)*(event.boss?46:32));
+   c.rotate(p*4.2);const shrink=1-p*.55;c.scale(shrink,shrink);
+   const body=assets.get(event.enemyKind);
+   if(body)fitSprite(c,body,event.boss?126:98);
+   else{c.scale(event.boss?1.6:1.24,event.boss?1.6:1.24);drawEnemyArt(c,event.enemyKind,0);}
+   c.restore();
+  }
   const death=event.type==='death',id=death?'vfx_dust_puff':'vfx_hit_burst',art=assets.get(id);c.rotate(death?p*.4:event.id*.7);
   if(art)fitSprite(c,art,death?55+p*46:46+p*20);
   else if(death){for(let i=0;i<6;i++){const a=i*Math.PI/3;ellipse(c,Math.cos(a)*p*30,Math.sin(a)*p*23,13+p*9,10+p*8,'#e7dcc3',PAPER,2);}}
   else{star(c,0,0,24*(1-p)+7,'#ffdc80',2);line(c,[[-22,0],[22,0]],PAPER,4);line(c,[[0,-22],[0,22]],PAPER,4);}
+  if(death)for(let i=0;i<5;i++){
+   const a=i*Math.PI*2/5+event.id*.7,r=18+p*(event.boss?77:54);
+   star(c,Math.cos(a)*r,Math.sin(a)*r-p*12,3+(1-p)*4,'#ffdf76',.8);
+  }
  }
  c.restore();return true;
 }

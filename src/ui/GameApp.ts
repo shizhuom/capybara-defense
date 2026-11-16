@@ -11,7 +11,7 @@ import { StickerRenderer, type HitTarget } from '../render/StickerRenderer';
 import { getHeroMergeOptions } from '../core/MergeTargets';
 import { waveStrategyMarkup, wavePreviewTip } from './WaveStrategyView';
 import { getLanguage, onLanguageChange, setLanguage, t } from '../i18n/i18n';
-import { awardBattle, emptyProfile, loadProfile, resetOwnStorage, saveProfile, enableTestProfile, restoreNormalProfile, isTestProfile } from './storage';
+import { awardBattle, awardEndless, emptyProfile, loadProfile, resetOwnStorage, saveProfile, enableTestProfile, restoreNormalProfile, isTestProfile } from './storage';
 import { MetaScreens, propSlots, type MetaScreen } from './MetaScreens';
 import { PROPS } from '../config/props';
 import { setPropSlots } from '../core/MetaProgression';
@@ -22,7 +22,9 @@ import './p3-components.css';
 import './p3.css';
 import './p5.css';
 import './p6.css';
-import {lootMarkup as illustratedLoot, pauseMarkup, resultMarkup} from './SettlementView';
+import {lootMarkup as illustratedLoot, pauseMarkup, resultMarkup, endlessOfferMarkup} from './SettlementView';
+import {earlyWaveCoachmarkMarkup,nextBattleSpeed,passiveRailMarkup,p13WaveMarkup} from './P13HUD';
+import {propTargetKind,resolvePropDrop} from '../core/PropTargets';
 import { liveUnitCardMarkup } from './LiveUnitCard';
 import { getBeeProduction } from '../core/UnitStats';
 import { courtyardMarkup } from './CourtyardView';
@@ -35,14 +37,14 @@ import { ProfileScreens, type ProfileScreen } from './ProfileScreens';
 import { SoundManager } from './SoundManager';
 import { capyLogo, escapeHtml as esc } from './art';
 import { onAssetsReady } from '../render/AssetRegistry';
-import { propSticker, sceneSticker, unitSticker, P9_SCENE_IDS, P10_SCENE_IDS, P11_SCENE_IDS } from './stickers';
+import { propSticker, sceneSticker, unitSticker, P9_SCENE_IDS, P10_SCENE_IDS, P11_SCENE_IDS, P12_SCENE_IDS, P13_SCENE_IDS } from './stickers';
 import { Compendium } from './Compendium';
 import { getBossHUD, getWaveHUD, getMusicMode, isDeveloperMode } from './BattleHUD';
 import { advanceTutorial, finishTutorial, replayTutorial, type TutorialAction, type TutorialStep } from '../core/Tutorial';
 import { tutorialMarkup, tutorialTargets, placeTutorialBubble, tutorialCardDock, type TutorialRect } from './TutorialView';
 
 type Hit = HitTarget;
-type DialogKind = 'pause' | 'recipes' | 'result' | MetaScreen | ProfileScreen;
+type DialogKind = 'pause' | 'recipes' | 'result' | 'endless-offer' | MetaScreen | ProfileScreen;
 type Drag = { pointerId: number; start: { x: number; y: number }; point: { x: number; y: number }; id?: number; shovel: boolean; moved: boolean };
 const tr = (key: string, vars?: Record<string, string | number>) => esc(t(key, vars));
 const unitName = (kind: string) => t(`${HEROES[kind] ? 'hero' : 'unit'}.${kind}`);
@@ -62,12 +64,16 @@ export class GameApp {
   private rotateDismissed = false;
   private tutorialPointerAction?: string;
   private ledgerStamp='';
-  private speed: 1 | 2 = 1;
+  private resultStatsOpen=false;
+  private speed: 1 | 2 | 3 = 1;
+  private earlyTipStamp='';
+  private passiveStamp='';
+  private passiveInfoId?:string;
   private selectedId?: number;
   private mergeLocatorHero?: string;
   private shovelSelected = false;
   private selectedProp?: string;
-  private propDrag?: { pointerId: number; startX: number; startY: number; moved: boolean; id: string; button: HTMLElement; point?: { x: number; y: number } };
+  private propDrag?: { pointerId: number; startX: number; startY: number; moved: boolean; id: string; point?: { x: number; y: number } };
   private suppressPropClick = false;
   private newWeapons: string[] = [];
   private meta: MetaScreens;
@@ -140,7 +146,7 @@ export class GameApp {
               <div class="control-group"><label for="dev-boss" data-i18n="dev.bossLabel"></label><select id="dev-boss" data-battle></select><button type="button" class="button button-peach" data-action="boss" data-battle data-i18n="dev.boss"></button><p class="control-caption" data-i18n="dev.bossNote"></p></div>
               <div class="control-group"><span class="field-label" data-i18n="dev.oranges"></span><div class="button-row"><button type="button" class="button button-light" data-action="orange-minus" data-battle data-i18n="dev.orangeRemove"></button><button type="button" class="button button-light" data-action="orange-plus" data-battle data-i18n="dev.orangeAdd"></button></div></div>
               <button type="button" class="button button-light" data-action="skip" data-battle><span aria-hidden="true">↠</span> <span data-i18n="dev.skip"></span></button>
-              <div class="speed-control"><span data-i18n="dev.speed"></span><div class="segmented"><button type="button" data-action="speed-1" data-battle>1×</button><button type="button" data-action="speed-2" data-battle>2×</button></div></div>
+              <div class="speed-control"><span data-i18n="dev.speed"></span><div class="segmented"><button type="button" data-action="speed-1" data-battle>1×</button><button type="button" data-action="speed-2" data-battle>2×</button><button type="button" data-action="speed-3" data-battle>3×</button></div></div>
               <div class="dev-live" id="dev-live"></div><p class="control-caption" id="dev-tip"></p>
               <section class="m2-dev"><strong id="profile-mode"></strong><button type="button" class="button button-peach" data-action="test-enable" data-i18n="m2.testEnable"></button><button type="button" class="button button-light" data-action="test-restore" data-i18n="m2.testRestore"></button><label for="dev-rank" data-i18n="m3.devRank"></label><select id="dev-rank"></select><label for="dev-map" data-i18n="m3.devMap"></label><select id="dev-map"></select><p data-i18n="m2.nextBattle"></p><div id="quick-loadout"></div></section>
               <details class="paper-card keyboard-card"><summary data-i18n="keyboard.title"></summary><p class="muted" data-i18n="keyboard.help"></p><div id="keyboard-controls"></div></details><div class="reset-control"><button type="button" class="text-button" data-action="reset" data-i18n="dev.reset"></button><p class="control-caption" data-i18n="dev.resetNote"></p></div>
@@ -163,6 +169,8 @@ export class GameApp {
             <div id="live-card-host"></div>
             <div id="battle-props" hidden></div><div id="sealed-hint" class="sealed-hint" hidden></div>
             <div id="tutorial-overlay" hidden></div>
+            <div id="early-wave-coachmark" hidden></div>
+            <aside id="passive-rail" hidden></aside>
           </div>
           <div id="rotate-hint" class="rotate-hint"><span data-i18n="p3.rotate"></span><button type="button" data-action="fullscreen" id="fullscreen-button" data-i18n="p3.fullscreen"></button><button type="button" data-action="dismiss-rotate" data-label="m2.close">×</button></div><p class="stage-caption" data-i18n="guide.controls"></p>
         </section>
@@ -181,6 +189,8 @@ export class GameApp {
 
   /** Direct calls remain synchronous for headless logic tests; UI starts use the curtain. */
   start(withTransition=false): void {
+    if(this.engine?.state.phase==='finished'&&this.savedResult===false){this.notify('p13.saveFirst',true);return;}
+    this.resultStatsOpen=false;
     this.endTransition();
     this.closeDialog(false);
     this.overlayReturn = null; this.modalReturn = null;
@@ -192,6 +202,7 @@ export class GameApp {
     this.tutorialStamp = ''; this.bossStamp = '';
     this.speed = 1;
     this.completedId = '';
+    this.savedResult=true;this.resultStars=0;this.passiveInfoId=undefined;this.earlyTipStamp='';this.passiveStamp='';
     this.newWeapons = [];
     this.newAvatars = []; this.mergedStamp = '';
     this.newRoster={units:[],heroes:[]};this.alertSeen=new Set();this.alertQueue=[];this.activeAlert=undefined;
@@ -243,6 +254,8 @@ export class GameApp {
   }
 
   private menu(): void {
+    if(this.engine?.state.phase==='finished'&&this.savedResult===false){this.notify('p13.saveFirst',true);return;}
+    this.resultStatsOpen=false;
     this.endTransition();this.activeAlert=undefined;this.alertQueue=[];this.element('enemy-alert-banner').hidden=true;
     this.closeDialog(false);
     this.overlayReturn = null;
@@ -272,7 +285,7 @@ export class GameApp {
         if (JSON.stringify(next) !== JSON.stringify(this.profile)) this.persistProfile(next);
       }
       if (this.selectedId && !state.units.some(unit => unit.id === this.selectedId && unit.side === 'player')) this.selectedId = undefined;
-      if (state.phase === 'finished' && this.completedId !== state.id) this.finish(state);
+      if (state.phase === 'finished' && this.completedId !== this.settlementKey(state)) this.finish(state);
       const interaction: Interaction = { selectedId: this.selectedId, shovel: this.shovelSelected, propId: this.selectedProp, showDamageNumbers: this.profile.settings.showDamageNumbers,allowBenchLock:this.tutorialStep==='done' };
       if(this.drag?.id&&!this.selectedProp&&!this.shovelSelected)interaction.previewSourceId=this.drag.id;
       if (this.drag?.moved) {
@@ -300,25 +313,38 @@ export class GameApp {
     requestAnimationFrame(this.frame);
   };
 
-  private finish(state: BattleState): void {
-    this.completedId = state.id;
-    this.clearSelection();
+  private settlementKey(state:BattleState):string {return state.endless?`${state.id}:endless`:state.id;}
+
+  /** Only adopt a reward candidate after its receipt and inventory are persisted together. */
+  private persistResult(state:BattleState):void {
     if (state.result) {
       const before = this.profile;
-      this.previousRank = getRank(before.stars).index;
-      const award = awardBattle(this.profile, state.id, state.result);
-      this.savedResult = !award.awarded || saveProfile(award.profile);
+      if(!state.endless&&!before.awardedBattles.includes(state.id))this.previousRank = getRank(before.stars).index;
+      const award = state.endless?awardEndless(this.profile,state.id,state.result):awardBattle(this.profile, state.id, state.result);
+      const receipt=this.settlementKey(state);
+      this.savedResult = award.awarded?saveProfile(award.profile):award.profile.awardedBattles.includes(receipt);
       if (this.savedResult) {
         this.profile = award.profile;
-        this.newWeapons = award.newWeapons;
-        this.newRoster=award.awarded&&state.result.winner==='player'?newlyUnlocked(Math.max(before.stars,before.highestStars),Math.max(this.profile.stars,this.profile.highestStars)):{units:[],heroes:[]};
-        if(this.newRoster.heroes.length)this.sound.play('hero_merge');
-        this.newAvatars = this.profile.unlockedAvatars.filter(id => !before.unlockedAvatars.includes(id));
+        if(award.awarded){
+          this.newWeapons = [...new Set([...(state.endless?this.newWeapons:[]),...award.newWeapons])];
+          if(!state.endless){
+            this.newRoster=state.result.winner==='player'?newlyUnlocked(Math.max(before.stars,before.highestStars),Math.max(this.profile.stars,this.profile.highestStars)):{units:[],heroes:[]};
+            this.resultStars = this.profile.stars - before.stars;
+            if(this.newRoster.heroes.length)this.sound.play('hero_merge');
+          }
+          this.newAvatars = [...new Set([...(state.endless?this.newAvatars:[]),...this.profile.unlockedAvatars.filter(id => !before.unlockedAvatars.includes(id))])];
+        }
       }
-      this.resultStars = this.profile.stars - before.stars;
-      this.sound.play(state.result.winner === 'player' ? 'victory' : 'defeat');
     }
-    this.showDialog('result');
+  }
+
+  private finish(state: BattleState): void {
+    this.completedId = this.settlementKey(state);
+    this.clearSelection();
+    this.persistResult(state);
+    if(state.result)this.sound.play(state.result.winner === 'player' ? 'victory' : 'defeat');
+    const offer=!state.endless&&state.wave===10&&state.result?.winner==='player'&&state.result.reason==='waves';
+    this.showDialog(offer?'endless-offer':'result');
     this.refresh(true);
   }
 
@@ -327,9 +353,9 @@ export class GameApp {
     const active = state?.phase === 'playing';
     if(this.assetsDirty && !this.drag && !this.propDrag) {
       this.assetsDirty=false; force=true;
-      this.quickStamp=''; this.battlePropsStamp=''; this.bossStamp='';this.tutorialStamp='';this.waveStrategyStamp='';this.liveStamp='';
+      this.quickStamp=''; this.battlePropsStamp=''; this.bossStamp='';this.tutorialStamp='';this.waveStrategyStamp='';this.liveStamp='';this.earlyTipStamp='';this.passiveStamp='';
       this.root.querySelector('.brand-mark')!.innerHTML=sceneSticker('logo_capy',capyLogo,54);
-      const ids=['ui_fish_food','ui_bell_summon','ui_compendium_book','ui_shop_bag','orange','ui_trophy_rank','ui_map_sign','ui_header_compendium','ui_header_armory','ui_header_market','ui_header_rank','ui_header_profile','ui_header_settings','ui_tutorial_pointer','ui_tutorial_capy','ui_coin_gold','ui_star_rank','ui_ticket_gacha','ui_skull_threat','ui_result_victory','ui_result_defeat','ui_header_pause','ui_mvp_crown','ui_lock_closed','ui_lock_open','ui_wave_horn','ui_merge_sparkle',...P9_SCENE_IDS,...P10_SCENE_IDS,...P11_SCENE_IDS] as const;
+      const ids=['ui_fish_food','ui_bell_summon','ui_compendium_book','ui_shop_bag','orange','ui_trophy_rank','ui_map_sign','ui_header_compendium','ui_header_armory','ui_header_market','ui_header_rank','ui_header_profile','ui_header_settings','ui_tutorial_pointer','ui_tutorial_capy','ui_coin_gold','ui_star_rank','ui_ticket_gacha','ui_skull_threat','ui_result_victory','ui_result_defeat','ui_header_pause','ui_mvp_crown','ui_lock_closed','ui_lock_open','ui_wave_horn','ui_merge_sparkle',...P9_SCENE_IDS,...P10_SCENE_IDS,...P11_SCENE_IDS,...P12_SCENE_IDS,...P13_SCENE_IDS] as const;
       for(const id of ids)this.root.querySelectorAll<HTMLElement>(`#stage [data-sticker="${id}"]`).forEach(el=>{el.outerHTML=sceneSticker(id,'',Number(el.getAttribute('width'))||34);});
     }
     const developer = isDeveloperMode(location.search,this.profile.settings);
@@ -388,6 +414,7 @@ export class GameApp {
     this.element('dev-live').textContent = state ? `${t('dev.units', { count: state.units.filter(unit => unit.side === 'player' && unit.location.zone === 'board').length })} · ${t('dev.enemies', { count: state.enemies.filter(enemy => enemy.side === 'player').length })}` : '';
     this.root.querySelectorAll<HTMLButtonElement>('[data-action^="speed-"]').forEach(button => { button.classList.toggle('selected', button.dataset.action === `speed-${this.speed}`); });
     this.element('hud-speed').textContent = `${this.speed}×`;
+    this.element('hud-speed').dataset.speed=String(this.speed);
     this.element<HTMLButtonElement>('hud-speed').disabled = !active;
     this.element<HTMLButtonElement>('pause-button').disabled = state?.phase !== 'playing';
     if (state) {
@@ -398,7 +425,10 @@ export class GameApp {
       const summonTitle = t(remaining > 0 ? 'hud.redraw' : 'hud.summon');
       const refreshCount=player.lockedBenchSlot==null?5:4;
       const summonNote = t(remaining > 0 ? 'hud.redrawCost' : 'hud.cost', { remaining, cost, count: refreshCount });
-      this.element('hud-wave').textContent = `🌊 ${Math.max(1,state.wave)}/${WAVES.length}`;
+      const waveLabel=this.element('hud-wave');
+      if(state.endless){const html=p13WaveMarkup(state);if(waveLabel.innerHTML!==html)waveLabel.innerHTML=html;}
+      else waveLabel.textContent=`🌊 ${Math.max(1,state.wave)}/${WAVES.length}`;
+      this.element('hud-wave').closest('.wave-pill')?.classList.toggle('endless-wave',!!state.endless);
       this.element('orange-value').textContent = `×${player.oranges}`;
       this.element('food-value').textContent = String(Math.floor(player.food));
       this.element('battle-clock').textContent = clock(state.time);
@@ -422,6 +452,8 @@ export class GameApp {
     this.renderLiveCard();
     // The tutorial avoids the card after this frame has applied its new content/side.
     this.renderTutorial();
+    this.renderPassives();
+    this.renderEarlyWaveTip();
     const toast = this.element('toast');
     toast.hidden = !this.toast || performance.now() > this.toast.until;
     if (this.toast) {
@@ -490,7 +522,42 @@ export class GameApp {
       const status = cooldown ? t('m2.cooldown', { time: cooldown }) : t('m2.ready');
       return `<button type="button" class="battle-prop prop-${slot} ${id === this.selectedProp ? 'selected' : ''}" data-action="${prop ? `prop:${id}` : 'battle-shop'}" ${prop ? `data-prop-drag="${id}"` : ''} aria-label="${esc(name)}${prop ? `. ${esc(status)}. ${tr(`prop.${id}.desc`)}` : ''}" title="${prop ? tr(`prop.${id}.desc`) : esc(name)}"${(prop ? !active || cooldown : !this.engine?.canSyncPreparationLoadout()) ? ' disabled' : ''}><span>${prop ? propSticker(id,46) : '+'}</span>${prop ? `<b>${cooldown ? `${cooldown}s` : '1'}</b>` : ''}</button>`;
     }).join('');
-    this.element('battle-props').innerHTML = `<button type="button" class="sprinkler-button" data-action="sprinkler" title="${tr('m2.sprinklerDesc')}" aria-label="${tr('m2.sprinkler')}. ${tr(player.sprinklerUsed ? 'm2.sprinklerUsed' : 'm2.sprinklerReady')}"${!active || player.sprinklerUsed ? ' disabled' : ''}><span>${sceneSticker('sprinkler',propSticker('washer',46),46)}</span><b>${player.sprinklerUsed ? '0' : '1'}</b></button>${slots}<div class="passive-icons">${player.loadout.equippedPassiveProps.map(id => `<span title="${tr(`prop.${id}`)}: ${tr(`prop.${id}.desc`)}" aria-label="${tr(`prop.${id}`)}">${propSticker(id,32)}</span>`).join('')}</div>${this.selectedProp ? `<p class="prop-target-hint" role="status">${tr(PROPS[this.selectedProp].target === 'road' ? 'm2.targetRoad' : 'm2.targetUnit')}</p>` : ''}`;
+    const targetKind=this.selectedProp?propTargetKind(this.selectedProp):undefined;
+    this.element('battle-props').innerHTML = `<button type="button" class="sprinkler-button" data-action="sprinkler" data-prop-drag="sprinkler" title="${tr('m2.sprinklerDesc')}" aria-label="${tr('m2.sprinkler')}. ${tr(player.sprinklerUsed ? 'm2.sprinklerUsed' : 'm2.sprinklerReady')}"${!active || player.sprinklerUsed ? ' disabled' : ''}><span>${sceneSticker('sprinkler',propSticker('washer',46),46)}</span><b>${player.sprinklerUsed ? '0' : '1'}</b></button>${slots}${targetKind ? `<p class="prop-target-hint" role="status">${tr(targetKind==='self'?'p13.targetField':targetKind === 'road' ? 'm2.targetRoad' : 'm2.targetUnit')}</p>` : ''}`;
+  }
+
+  private renderPassives():void {
+    const rail=this.element('passive-rail'),state=this.engine?.state;
+    rail.hidden=!state||state.phase==='finished';if(!state||rail.hidden)return;
+    const preparation=!!this.engine?.canSyncPreparationLoadout();
+    const stamp=JSON.stringify([getLanguage(),preparation,state.sides.player.loadout,this.passiveInfoId]);
+    if(stamp!==this.passiveStamp){rail.innerHTML=passiveRailMarkup(state,preparation,this.passiveInfoId);this.passiveStamp=stamp;}
+  }
+
+  private markEarlyTipSeen():void {
+    // Prototype-only command tests do not mount a player profile.
+    if(this.profile&&!this.profile.earlyWaveTipSeen)this.persistProfile({...this.profile,earlyWaveTipSeen:true});
+  }
+
+  private renderEarlyWaveTip():void {
+    const overlay=this.element('early-wave-coachmark'),button=this.element('early-wave-button');
+    const early=this.engine?.canCallEarlyWave();
+    const show=!!early?.allowed&&this.tutorialStep==='done'&&!this.profile.earlyWaveTipSeen&&!this.dialogKind&&!this.drag&&!this.propDrag&&!this.selectedProp&&!this.shovelSelected&&!this.transitionUntil;
+    overlay.hidden=!show;button?.classList.toggle('early-coached',show);
+    if(!show||!early||!button)return;
+    const stamp=`${getLanguage()}:${early.bonusFood}`;
+    if(stamp!==this.earlyTipStamp){overlay.innerHTML=earlyWaveCoachmarkMarkup(early.bonusFood);this.earlyTipStamp=stamp;}
+    const bounds=this.canvas.getBoundingClientRect(),target=button.getBoundingClientRect();
+    if(!bounds.width||!bounds.height)return;
+    const relative=(rect:DOMRect):TutorialRect=>({x:(rect.left-bounds.left)/bounds.width*STAGE.width,y:(rect.top-bounds.top)/bounds.height*STAGE.height,w:rect.width/bounds.width*STAGE.width,h:rect.height/bounds.height*STAGE.height});
+    const pointer=overlay.querySelector<HTMLElement>('.early-tip-pointer')!,r=relative(target);
+    pointer.style.left=`${(r.x+r.w*.65)/STAGE.width*100}%`;pointer.style.top=`${(r.y+r.h+4)/STAGE.height*100}%`;
+    const bubble=overlay.querySelector<HTMLElement>('.early-tip-bubble')!;
+    if(window.innerWidth<=760&&window.innerHeight>window.innerWidth){bubble.style.removeProperty('left');bubble.style.removeProperty('top');return;}
+    const avoid=[r,...[...this.root.querySelectorAll<HTMLElement>('.control-dock,.resource-dock,#boss-banner,#live-unit-card,#passive-rail,#battle-props,#summon-button,#toast')].filter(el=>!el.hidden).map(el=>relative(el.getBoundingClientRect()))];
+    const measured=bubble.getBoundingClientRect(),size={w:measured.width/bounds.width*STAGE.width,h:measured.height/bounds.height*STAGE.height};
+    const position=placeTutorialBubble(avoid,size);
+    bubble.style.left=`${position.x/STAGE.width*100}%`;bubble.style.top=`${position.y/STAGE.height*100}%`;
   }
 
   private renderBattleHUD(): void {
@@ -675,6 +742,7 @@ export class GameApp {
     this.dialog.classList.toggle('ledger-dialog',ledgerPage);
     this.dialog.classList.toggle('pause-ledger',kind==='pause');
     this.dialog.classList.toggle('result-ledger',kind==='result');
+    this.dialog.classList.toggle('endless-offer-ledger',kind==='endless-offer');
     this.dialog.classList.toggle('settings-dialog',kind==='settings');
     this.dialog.classList.toggle('recipe-dialog', kind === 'recipes');
     this.dialog.classList.toggle('meta-dialog', kind === 'armory' || kind === 'market');
@@ -689,8 +757,10 @@ export class GameApp {
       this.dialog.innerHTML=pauseMarkup(this.engine.state);
     } else if (kind === 'recipes') {
       this.dialog.innerHTML=this.compendium.markup(this.profile);
+    } else if (kind === 'endless-offer' && this.engine?.state.result) {
+      this.dialog.innerHTML=endlessOfferMarkup(this.engine.state,this.savedResult);
     } else if (kind === 'result' && this.engine?.state.result) {
-      this.dialog.innerHTML=resultMarkup({state:this.engine.state,profile:this.profile,savedResult:this.savedResult,resultStars:this.resultStars,previousRank:this.previousRank,newWeapons:this.newWeapons,newAvatars:this.newAvatars,newRoster:this.newRoster});
+      this.dialog.innerHTML=resultMarkup({state:this.engine.state,profile:this.profile,savedResult:this.savedResult,resultStars:this.resultStars,previousRank:this.previousRank,newWeapons:this.newWeapons,newAvatars:this.newAvatars,newRoster:this.newRoster,statsOpen:this.resultStatsOpen});
     }
     for(const {selector,top} of scrolls){
       const body=this.dialog.querySelector<HTMLElement>(selector);
@@ -839,7 +909,7 @@ export class GameApp {
 
   private canInteract(): boolean { return !this.transitionUntil && this.engine?.state.phase === 'playing'; }
 
-  private clearSelection(): void { this.selectedId = undefined; this.shovelSelected = false; this.selectedProp = undefined; this.cancelDrag(); this.cancelPropDrag(); }
+  private clearSelection(): void { this.selectedId = undefined; this.shovelSelected = false; this.selectedProp = undefined; this.passiveInfoId=undefined; this.cancelDrag(); this.cancelPropDrag(); }
 
   private unitAt(hit: Hit): Unit | undefined {
     return this.engine?.state.units.find(unit => unit.side === 'player' && (hit.kind === 'bench'||hit.kind==='bench-lock'
@@ -857,6 +927,11 @@ export class GameApp {
     }
     const tap=!options.dragged&&!options.fromKeyboard;
     if (this.selectedProp) {
+      if(this.selectedProp==='sprinkler'){
+        if(hit.kind==='cell'){this.apply(this.engine.useSprinkler());this.selectedProp=undefined;}
+        else this.clearSelection();
+        this.refresh();return;
+      }
       const prop = PROPS[this.selectedProp];
       const unit = this.unitAt(hit);
       const result = this.engine.useProp(this.selectedProp, prop.target === 'road' && hit.kind === 'cell' ? { col: hit.col, row: hit.row } : { unitId: unit?.id });
@@ -918,7 +993,7 @@ export class GameApp {
 
   private cancelPropDrag(): void {
     const drag = this.propDrag; this.propDrag = undefined;
-    if (drag?.button.hasPointerCapture(drag.pointerId)) drag.button.releasePointerCapture(drag.pointerId);
+    if (drag&&this.root?.hasPointerCapture(drag.pointerId)) this.root.releasePointerCapture(drag.pointerId);
   }
 
   private bindEvents(): void {
@@ -963,10 +1038,13 @@ export class GameApp {
     this.root.addEventListener('pointerdown', event => {
       const button = (event.target as HTMLElement).closest<HTMLElement>('[data-prop-drag]');
       if (!button || !event.isPrimary || event.button !== 0 || (button as HTMLButtonElement).disabled || !this.canInteract()) return;
+      event.preventDefault();
       const id = button.dataset.propDrag!;
-      this.propDrag = { pointerId: event.pointerId, startX: event.clientX, startY: event.clientY, moved: false, id, button };
-      button.setPointerCapture(event.pointerId);
+      this.cancelDrag();
+      this.propDrag = { pointerId: event.pointerId, startX: event.clientX, startY: event.clientY, moved: false, id };
+      this.root.setPointerCapture(event.pointerId);
     });
+    this.root.addEventListener('dragstart',event=>{if((event.target as HTMLElement).closest('#battle-props'))event.preventDefault();});
     this.root.addEventListener('pointermove', event => {
       const drag = this.propDrag; if (!drag || drag.pointerId !== event.pointerId) return;
       if (Math.hypot(event.clientX - drag.startX, event.clientY - drag.startY) > 5) {
@@ -975,20 +1053,21 @@ export class GameApp {
     });
     this.root.addEventListener('pointerup', event => {
       const drag = this.propDrag; if (!drag || drag.pointerId !== event.pointerId) return;
-      const point = this.point(event); const hit = this.renderer.hitTest(point.x, point.y);
+      event.preventDefault();
+      const point = this.point(event);
       this.cancelPropDrag();
-      if (!drag.moved) return;
-      this.suppressPropClick = true; setTimeout(() => { this.suppressPropClick = false; }, 0);
-      this.selectedProp = drag.id;
-      const bounds = this.canvas.getBoundingClientRect();
-      if (event.clientX >= bounds.left && event.clientX <= bounds.right && event.clientY >= bounds.top && event.clientY <= bounds.bottom && this.canInteract()) {
-        if (PROPS[drag.id].target === 'self') { const result = this.engine!.useProp(drag.id); if (result.ok) this.selectedProp = undefined; this.apply(result); }
-        else if (hit) this.activate(hit,{dragged:true});
+      if(!drag.moved){
+        this.action(drag.id==='sprinkler'?'sprinkler':`prop:${drag.id}`);
+      }else{
+        this.selectedProp=undefined;
+        const target=this.engine&&this.canInteract()?resolvePropDrop(this.engine.state,drag.id,point):null;
+        if(target!==null)this.apply(drag.id==='sprinkler'?this.engine!.useSprinkler():this.engine!.useProp(drag.id,target));
       }
+      this.suppressPropClick = true; setTimeout(() => { this.suppressPropClick = false; }, 0);
       this.refresh();
     });
-    this.root.addEventListener('pointercancel', () => { this.tutorialPointerAction=undefined; this.cancelPropDrag(); this.refresh(); });
-    this.root.addEventListener('lostpointercapture', event => { if (this.propDrag?.pointerId === event.pointerId) { this.propDrag = undefined; this.refresh(); } });
+    this.root.addEventListener('pointercancel', () => { this.tutorialPointerAction=undefined; if(this.propDrag)this.selectedProp=undefined;this.cancelPropDrag(); this.refresh(); });
+    this.root.addEventListener('lostpointercapture', event => { if (this.propDrag?.pointerId === event.pointerId) { this.propDrag = undefined;this.selectedProp=undefined; this.refresh(); } });
     this.root.addEventListener('click', event => {
       const element = (event.target as HTMLElement).closest<HTMLElement>('[data-action], [data-target]');
       if (!element || (element instanceof HTMLButtonElement && element.disabled)) return;
@@ -1046,7 +1125,9 @@ export class GameApp {
     this.canvas.addEventListener('lostpointercapture', () => { this.drag = undefined; });
     this.dialog.addEventListener('cancel', event => {
       event.preventDefault();
-      if (this.dialogKind === 'pause') this.action('resume');
+      if (this.dialogKind === 'result'&&this.resultStatsOpen) this.action('close-result-stats');
+      else if(this.dialogKind==='endless-offer')this.action('decline-endless');
+      else if (this.dialogKind === 'pause') this.action('resume');
       else if (this.dialogKind === 'recipes') this.action('close-recipes');
       else if (this.dialogKind === 'armory' || this.dialogKind === 'market') this.action('close-meta');
       else if (this.dialogKind === 'profile' || this.dialogKind === 'leaderboard' || this.dialogKind === 'settings') this.action('close-profile');
@@ -1072,8 +1153,38 @@ export class GameApp {
   private action(action: string): void {
     if(!['summon','sprinkler','grant','boss','food','orange-plus','orange-minus','skip'].includes(action)&&!action.startsWith('prop:'))this.sound.play('ui_click');
     if (action === 'zh-CN' || action === 'en') { setLanguage(action); return; }
+    if(action==='retry-save-result'){
+      if(this.engine?.state.result){this.persistResult(this.engine.state);this.renderDialog();if(!this.savedResult)this.notify('hint.storage',true);}
+      return;
+    }
+    if(action==='enter-endless'||action==='decline-endless'){
+      if(this.dialogKind!=='endless-offer'||!this.engine)return;
+      if(!this.savedResult||!this.profile.awardedBattles.includes(this.engine.state.id)){this.notify('p13.saveFirst',true);return;}
+      if(action==='decline-endless'){this.showDialog('result');return;}
+      const result=this.engine.enterEndless();
+      if(result.ok){this.closeDialog(false);this.clearSelection();this.resultStatsOpen=false;this.waveStrategyStamp='';this.canvas.focus({preventScroll:true});this.refresh(true);}
+      else this.apply(result);
+      return;
+    }
+    if(action==='dismiss-early-tip'){this.markEarlyTipSeen();this.refresh();return;}
+    if(action==='passive-backpack'){
+      if(this.engine?.canSyncPreparationLoadout()){this.meta.open('market');this.meta.tab='backpack';this.openModal('market');}
+      return;
+    }
+    if(action.startsWith('passive-info:')){
+      const id=action.slice(13);
+      if(this.engine?.state.sides.player.loadout.equippedPassiveProps.includes(id)){this.passiveInfoId=this.passiveInfoId===id?undefined:id;this.renderPassives();}
+      return;
+    }
+    if(action==='toggle-result-stats'||action==='close-result-stats'){
+      if(this.dialogKind!=='result')return;
+      this.resultStatsOpen=action==='toggle-result-stats'&&!this.resultStatsOpen;
+      this.renderDialog();
+      this.dialog.querySelector<HTMLElement>(this.resultStatsOpen?'[data-action="close-result-stats"]':'.btn-stats')?.focus({preventScroll:true});
+      return;
+    }
     if(action==='early-wave'){
-      if(this.canInteract()&&this.tutorialStep==='done'){this.apply(this.engine!.callEarlyWave());this.refresh();}return;
+      if(this.canInteract()&&this.tutorialStep==='done'){const result=this.engine!.callEarlyWave();this.apply(result);if(result.ok)this.markEarlyTipSeen();this.refresh();}return;
     }
     if(action==='wave-preview'){this.notify('p6.previewDetail',false,{detail:wavePreviewTip(this.engine?.getUpcomingWavePreview()??null)});return;}
     if(action==='toggle-bench-lock'){
@@ -1161,7 +1272,7 @@ export class GameApp {
       else { this.selectedProp = this.selectedProp === id ? undefined : id; this.selectedId = undefined; this.shovelSelected = false; }
       this.refresh(); return;
     }
-    if (action === 'sprinkler') { if (this.canInteract()) this.apply(this.engine!.useSprinkler()); return; }
+    if (action === 'sprinkler') { if (!this.suppressPropClick&&this.canInteract()) this.apply(this.engine!.useSprinkler()); return; }
     if (action === 'skip-transition') {this.endTransition();return;}
     if (action === 'start') { this.start(true); return; }
     if (action === 'menu') { this.menu(); return; }
@@ -1203,9 +1314,10 @@ export class GameApp {
     else if (action === 'boss') this.apply(this.engine.spawnBoss(this.element<HTMLSelectElement>('dev-boss').value));
     else if (action === 'orange-plus' || action === 'orange-minus') { this.engine.adjustOranges(action === 'orange-plus' ? 1 : -1); this.notify(action === 'orange-plus' ? 'hint.orangeAdded' : 'hint.orangeLost'); }
     else if (action === 'skip') { this.engine.skipWave(); this.notify('hint.waveSkipped'); }
-    else if (action === 'speed') this.speed = this.speed === 1 ? 2 : 1;
+    else if (action === 'speed') this.speed = nextBattleSpeed(this.speed);
     else if (action === 'speed-1') this.speed = 1;
     else if (action === 'speed-2') this.speed = 2;
+    else if (action === 'speed-3') this.speed = 3;
     this.refresh();
   }
 }

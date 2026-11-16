@@ -42,10 +42,10 @@ describe('开局缓冲与恢复节奏',()=>{
     e.tick(89.9);expect(e.state.enemies.some(m=>m.boss)).toBe(false);
     e.tick(.1);expect(e.state.wave).toBe(4);expect(e.state.enemies.some(m=>m.kind==='husky_wrecker')).toBe(true);
   });
-  it('初级仓鼠三次普攻击倒第一波老鼠',()=>{
+  it('加强后的初级仓鼠两次普攻击倒第一波老鼠',()=>{
     const e=game(),id=e.grant('hamster').unitId!,u=e.state.units.find(u=>u.id===id)!;u.location={zone:'board',col:2,row:1};
-    const m=e.spawnEnemy('rat','player');Object.assign(m,{progress:2,col:2,row:0,speed:0});e.tick(.05);expect(m.hp).toBe(16);
-    e.tick(1.6);expect(m.hp).toBeLessThanOrEqual(0);expect(e.state.sides.player.kills).toBe(1);
+    const m=e.spawnEnemy('rat','player');Object.assign(m,{progress:2,col:2,row:0,speed:0});e.tick(.05);expect(m.hp).toBe(12);
+    e.tick(.8);expect(m.hp).toBeLessThanOrEqual(0);expect(e.state.sides.player.kills).toBe(1);
   });
   it('每55秒补1把铲子，AI不生产，满4把停止囤积计时',()=>{
     const e=game();e.tick(54.95);expect(e.state.sides.player.shovels).toBe(1);

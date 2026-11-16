@@ -45,7 +45,10 @@ export interface VisualEvent {
   readonly presentation?:Readonly<AttackPresentation>;
 }
 export interface BattleMVP {kind:string;level:number;damage:number;kills:number}
-export interface BattleResult { winner: Side; reason: 'oranges' | 'waves' | 'surrender'; loot: string[]; playerLoot: string[]; aiLoot: string[]; coins: number; elapsed: number; rankIndex?:number; mergedHeroes?:string[];mvp?:BattleMVP }
+export interface BattleResult { winner: Side; reason: 'oranges' | 'waves' | 'surrender'; loot: string[]; playerLoot: string[]; aiLoot: string[]; coins: number; elapsed: number; rankIndex?:number; mergedHeroes?:string[];mvp?:BattleMVP;
+  /** Display totals stay in coins/loot; these fields contain only the additional award. */
+  endless?:boolean;endlessWave?:number;endlessCoins?:number;endlessLoot?:string[];
+}
 export interface BattleState {
   opponent?:OpponentIdentity;
   id: string; phase: 'ready' | 'playing' | 'paused' | 'finished'; time: number;
@@ -54,11 +57,13 @@ export interface BattleState {
   craterHits:Record<string,number>;
   grid: Tile[][]; sides: Record<Side, SideState>; units: Unit[]; enemies: Enemy[];
   events: VisualEvent[]; traps:Trap[]; result: BattleResult | null;
+  endless?:boolean;standardResult?:BattleResult;endlessCoins?:number;endlessClearedWave?:number;
 }
 export interface CommandResult { ok: boolean; key: string; unitId?: number }
 export interface WavePreview {wave:number;count:number;bosses:readonly string[];minion:string}
 export interface Profile extends BattleLoadout {
   tutorialCompleted?:boolean; tutorialRewardClaimed?:boolean;
+  earlyWaveTipSeen?:boolean;bestEndlessWave?:number;
   coins:number; wins:number; matches:number; fragments:string[]; awardedBattles:string[];
   schemaVersion:2; weaponFragments:Record<string,number>; unlockedWeapons:string[]; freeLotteryTickets:number;
   shop:{day:string;offers:string[]}|null;

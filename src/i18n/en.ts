@@ -116,7 +116,7 @@ export const en: Record<keyof typeof zhCN, string> = {
   'skill.bamboo_mafia': 'Bamboo Rocket Rain', 'skill.bamboo_mafia.desc': 'Every {charge} hits: blast 5 targets with bamboo rockets that burn for 3 seconds.',
   'skill.zen_master': 'Yin-Yang Wave', 'skill.zen_master.desc': 'Every {charge} hits: send a wave up the path for 280% piercing damage and knockback.',
   'skill.puss_in_hat': 'Cross-Slash Combo', 'skill.puss_in_hat.desc': 'Every {charge} hits: the next 4 attacks add 220% cross-shaped splash damage.',
-  'skill.meowfia': 'Fishbone Barrage', 'skill.meowfia.desc': 'Every {charge} hits: unleash a barrage with 300% more attack speed for 2.5 seconds.',
+  'skill.meowfia': 'Fishbone Barrage', 'skill.meowfia.desc': 'Every {charge} normal-mode hits: gain 300% attack speed for 2.5 seconds. Charging resumes after the barrage ends.',
   'skill.purrcerer': 'Yarn-ball Thunderstorm', 'skill.purrcerer.desc': 'Every {charge} hits: chain lightning to 6 targets for 240% damage and a 0.6-second stun.',
   'skill.samurai_doge': 'Justice Armor-Breaker', 'skill.samurai_doge.desc': 'Every {charge} hits: a 450% heavy slam. Instantly finish ordinary pests below 25% health.',
   'skill.doge_wick': 'Double-barrel Bounty', 'skill.doge_wick.desc': 'Every {charge} hits: fire 3 powerful piercing shots. Kills have a 50% chance to drop 2 extra food.',

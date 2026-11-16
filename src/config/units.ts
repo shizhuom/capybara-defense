@@ -1,9 +1,9 @@
 export interface UnitDefinition { id: string; category: 'basic' | 'component' | 'tool'; weight: number; damage: number; rate: number; range: number; maxLevel: number; color: string }
 export const UNITS: Record<string, UnitDefinition> = {
-  hamster: { id:'hamster', category:'basic', weight:20, damage:12, rate:1.25, range:1.35, maxLevel:5, color:'#f3be76' },
+  hamster: { id:'hamster', category:'basic', weight:20, damage:16, rate:1.25, range:1.6, maxLevel:5, color:'#f3be76' },
   squirrel: { id:'squirrel', category:'basic', weight:20, damage:10, rate:1.1, range:2.8, maxLevel:5, color:'#cc805c' },
   hedgehog: { id:'hedgehog', category:'basic', weight:16, damage:14, rate:.85, range:2, maxLevel:5, color:'#ad9983' },
-  corgi: { id:'corgi', category:'basic', weight:12, damage:16, rate:.75, range:1.5, maxLevel:5, color:'#f2ac50' },
+  corgi: { id:'corgi', category:'basic', weight:12, damage:22, rate:.75, range:1.7, maxLevel:5, color:'#f2ac50' },
   bee: { id:'bee', category:'basic', weight:8, damage:0, rate:0, range:0, maxLevel:3, color:'#ffdb59' },
   ...Object.fromEntries([
     ['panda',3,'#e7e6dc'], ['cat',3,'#ffc8b4'], ['shiba',3,'#dca058'],

@@ -1,6 +1,6 @@
 import { FRAGMENTS } from '../config/enemies';
 import { createProfile, grantWeaponFragments, normalizeProfile, unlockAllProfile } from '../core/MetaProgression';
-import { applyBattleProgress } from '../core/PlayerProgression';
+import { applyBattleProgress,recordMergedHeroes } from '../core/PlayerProgression';
 import type { BattleResult, Profile } from '../core/types';
 
 export const STORAGE_PREFIX = 'capybara_defense_v1:';
@@ -44,7 +44,7 @@ export function saveProfile(profile: Profile, storage = browserStorage()): boole
 
 /** A receipt and its rewards are saved together, so revisiting a result cannot pay twice. */
 export function awardBattle(profile: Profile, battleId: string, result: BattleResult): { profile: Profile; awarded: boolean; newWeapons:string[] } {
-  if (!battleId || profile.awardedBattles.includes(battleId)) return { profile, awarded: false, newWeapons:[] };
+  if (!battleId || result?.endless || profile.awardedBattles.includes(battleId)) return { profile, awarded: false, newWeapons:[] };
   const won = result.winner === 'player';
   const p=normalizeProfile(profile);
   const legacy=won ? result.loot.filter(id=>validFragments.has(id)) : [];
@@ -61,6 +61,25 @@ export function awardBattle(profile: Profile, battleId: string, result: BattleRe
       freeLotteryTickets:p.freeLotteryTickets+(won?1:0),
     },won,result.mergedHeroes),
   };
+}
+
+/** The standard receipt must already be banked. Save this bonus and its own receipt atomically. */
+export function awardEndless(profile:Profile,battleId:string,result:BattleResult):{profile:Profile;awarded:boolean;newWeapons:string[]} {
+  const p=normalizeProfile(profile),rejected={profile:p,awarded:false,newWeapons:[] as string[]};
+  if(typeof battleId!=='string'||!battleId.trim()||battleId.length>191||!p.awardedBattles.includes(battleId))return rejected;
+  const receipt=`${battleId}:endless`,wave=result?.endlessWave,bonus=result?.endlessCoins,loot=result?.endlessLoot;
+  if(p.awardedBattles.includes(receipt)||!result||result.endless!==true||result.winner!=='player'||
+    typeof wave!=='number'||!Number.isSafeInteger(wave)||wave<11||
+    typeof bonus!=='number'||!Number.isSafeInteger(bonus)||bonus<0||
+    !Array.isArray(loot)||!loot.every(id=>typeof id==='string'))return rejected;
+  const coins=p.coins+bonus;
+  if(!Number.isSafeInteger(coins))return rejected;
+  const legacy=loot.filter(id=>validFragments.has(id));
+  const granted=grantWeaponFragments(p,[...loot,...legacy.map(()=>'m01_swatter')]);
+  const heroes=Array.isArray(result.mergedHeroes)?result.mergedHeroes.filter(id=>typeof id==='string'):[];
+  return {awarded:true,newWeapons:granted.newWeapons,profile:recordMergedHeroes({...granted.profile,coins,
+    fragments:[...p.fragments,...legacy],awardedBattles:[...p.awardedBattles,receipt],
+    bestEndlessWave:Math.max(p.bestEndlessWave??0,wave)},heroes)};
 }
 
 export function isTestProfile(storage = browserStorage()):boolean {

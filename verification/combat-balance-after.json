@@ -1,0 +1,3245 @@
+{
+  "method": "Lv.1 unless specified. Single target / four stacked targets: 180 seconds, 60 Hz, 0 armor, no knockback or kills. Path: each existing open pad across all 4 maps, solo defender, 24 rats (1200 HP, 0 armor, 0.6 tiles/s, 1.3 s spawn interval), 90 seconds at 20 Hz. No props/weapons except named signature scenario.",
+  "rows": [
+    {
+      "kind": "hamster",
+      "family": "basic_melee",
+      "normalDps": 20,
+      "range": 1.6,
+      "dummy": {
+        "dps": 20.08888888888889,
+        "buffUptime": 0,
+        "maxConsecutiveBuff": 0,
+        "damage": 3616
+      },
+      "pack": {
+        "dps": 20.08888888888889,
+        "buffUptime": 0,
+        "maxConsecutiveBuff": 0,
+        "damage": 3616
+      },
+      "level3": {
+        "dps": 56,
+        "buffUptime": 0,
+        "maxConsecutiveBuff": 0,
+        "damage": 10080
+      },
+      "level5": {
+        "dps": 127.66222222222144,
+        "buffUptime": 0,
+        "maxConsecutiveBuff": 0,
+        "damage": 22979.19999999986
+      },
+      "pathAverageDps": 9.385185185185184,
+      "pathBestDps": 10.666666666666666,
+      "maps": [
+        {
+          "mapId": "sunny_backyard",
+          "pads": [
+            {
+              "col": 2,
+              "row": 1,
+              "dps": 7.644444444444445,
+              "kills": 0
+            },
+            {
+              "col": 6,
+              "row": 1,
+              "dps": 8.355555555555556,
+              "kills": 0
+            },
+            {
+              "col": 3,
+              "row": 2,
+              "dps": 7.644444444444445,
+              "kills": 0
+            },
+            {
+              "col": 5,
+              "row": 2,
+              "dps": 7.644444444444445,
+              "kills": 0
+            },
+            {
+              "col": 2,
+              "row": 3,
+              "dps": 8.355555555555556,
+              "kills": 0
+            },
+            {
+              "col": 6,
+              "row": 3,
+              "dps": 7.644444444444445,
+              "kills": 0
+            }
+          ]
+        },
+        {
+          "mapId": "sakura_onsen",
+          "pads": [
+            {
+              "col": 2,
+              "row": 1,
+              "dps": 9.066666666666666,
+              "kills": 0
+            },
+            {
+              "col": 4,
+              "row": 1,
+              "dps": 10.666666666666666,
+              "kills": 0
+            },
+            {
+              "col": 6,
+              "row": 1,
+              "dps": 12.088888888888889,
+              "kills": 0
+            },
+            {
+              "col": 2,
+              "row": 3,
+              "dps": 12.088888888888889,
+              "kills": 0
+            },
+            {
+              "col": 4,
+              "row": 3,
+              "dps": 10.666666666666666,
+              "kills": 0
+            },
+            {
+              "col": 6,
+              "row": 3,
+              "dps": 9.066666666666666,
+              "kills": 0
+            }
+          ]
+        },
+        {
+          "mapId": "midnight_kitchen",
+          "pads": [
+            {
+              "col": 1,
+              "row": 1,
+              "dps": 11.2,
+              "kills": 0
+            },
+            {
+              "col": 3,
+              "row": 1,
+              "dps": 9.955555555555556,
+              "kills": 0
+            },
+            {
+              "col": 7,
+              "row": 1,
+              "dps": 7.288888888888889,
+              "kills": 0
+            },
+            {
+              "col": 3,
+              "row": 3,
+              "dps": 9.066666666666666,
+              "kills": 0
+            },
+            {
+              "col": 5,
+              "row": 3,
+              "dps": 10.311111111111112,
+              "kills": 0
+            },
+            {
+              "col": 6,
+              "row": 3,
+              "dps": 11.2,
+              "kills": 0
+            }
+          ]
+        },
+        {
+          "mapId": "cat_tower_maze",
+          "pads": [
+            {
+              "col": 1,
+              "row": 1,
+              "dps": 8.355555555555556,
+              "kills": 0
+            },
+            {
+              "col": 4,
+              "row": 1,
+              "dps": 9.6,
+              "kills": 0
+            },
+            {
+              "col": 5,
+              "row": 1,
+              "dps": 9.066666666666666,
+              "kills": 0
+            },
+            {
+              "col": 1,
+              "row": 3,
+              "dps": 7.644444444444445,
+              "kills": 0
+            },
+            {
+              "col": 3,
+              "row": 3,
+              "dps": 11.022222222222222,
+              "kills": 0
+            },
+            {
+              "col": 6,
+              "row": 3,
+              "dps": 9.6,
+              "kills": 0
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "kind": "squirrel",
+      "family": "basic_ranged",
+      "normalDps": 11,
+      "range": 2.8,
+      "dummy": {
+        "dps": 11.055555555555555,
+        "buffUptime": 0,
+        "maxConsecutiveBuff": 0,
+        "damage": 1990
+      },
+      "pack": {
+        "dps": 11.055555555555555,
+        "buffUptime": 0,
+        "maxConsecutiveBuff": 0,
+        "damage": 1990
+      },
+      "level3": {
+        "dps": 30.75,
+        "buffUptime": 0,
+        "maxConsecutiveBuff": 0,
+        "damage": 5535
+      },
+      "level5": {
+        "dps": 70.23333333333333,
+        "buffUptime": 0,
+        "maxConsecutiveBuff": 0,
+        "damage": 12642
+      },
+      "pathAverageDps": 6.125000000000001,
+      "pathBestDps": 6.777777777777778,
+      "maps": [
+        {
+          "mapId": "sunny_backyard",
+          "pads": [
+            {
+              "col": 2,
+              "row": 1,
+              "dps": 6.333333333333333,
+              "kills": 0
+            },
+            {
+              "col": 6,
+              "row": 1,
+              "dps": 5.666666666666667,
+              "kills": 0
+            },
+            {
+              "col": 3,
+              "row": 2,
+              "dps": 6.111111111111111,
+              "kills": 0
+            },
+            {
+              "col": 5,
+              "row": 2,
+              "dps": 6.111111111111111,
+              "kills": 0
+            },
+            {
+              "col": 2,
+              "row": 3,
+              "dps": 5.666666666666667,
+              "kills": 0
+            },
+            {
+              "col": 6,
+              "row": 3,
+              "dps": 6.222222222222222,
+              "kills": 0
+            }
+          ]
+        },
+        {
+          "mapId": "sakura_onsen",
+          "pads": [
+            {
+              "col": 2,
+              "row": 1,
+              "dps": 5.555555555555555,
+              "kills": 0
+            },
+            {
+              "col": 4,
+              "row": 1,
+              "dps": 6.444444444444445,
+              "kills": 0
+            },
+            {
+              "col": 6,
+              "row": 1,
+              "dps": 7.111111111111111,
+              "kills": 0
+            },
+            {
+              "col": 2,
+              "row": 3,
+              "dps": 7.111111111111111,
+              "kills": 0
+            },
+            {
+              "col": 4,
+              "row": 3,
+              "dps": 6.444444444444445,
+              "kills": 0
+            },
+            {
+              "col": 6,
+              "row": 3,
+              "dps": 5.555555555555555,
+              "kills": 0
+            }
+          ]
+        },
+        {
+          "mapId": "midnight_kitchen",
+          "pads": [
+            {
+              "col": 1,
+              "row": 1,
+              "dps": 6.777777777777778,
+              "kills": 0
+            },
+            {
+              "col": 3,
+              "row": 1,
+              "dps": 6,
+              "kills": 0
+            },
+            {
+              "col": 7,
+              "row": 1,
+              "dps": 6.888888888888889,
+              "kills": 0
+            },
+            {
+              "col": 3,
+              "row": 3,
+              "dps": 5.666666666666667,
+              "kills": 0
+            },
+            {
+              "col": 5,
+              "row": 3,
+              "dps": 6.666666666666667,
+              "kills": 0
+            },
+            {
+              "col": 6,
+              "row": 3,
+              "dps": 6.666666666666667,
+              "kills": 0
+            }
+          ]
+        },
+        {
+          "mapId": "cat_tower_maze",
+          "pads": [
+            {
+              "col": 1,
+              "row": 1,
+              "dps": 4.888888888888889,
+              "kills": 0
+            },
+            {
+              "col": 4,
+              "row": 1,
+              "dps": 6.222222222222222,
+              "kills": 0
+            },
+            {
+              "col": 5,
+              "row": 1,
+              "dps": 5.555555555555555,
+              "kills": 0
+            },
+            {
+              "col": 1,
+              "row": 3,
+              "dps": 4.444444444444445,
+              "kills": 0
+            },
+            {
+              "col": 3,
+              "row": 3,
+              "dps": 6.777777777777778,
+              "kills": 0
+            },
+            {
+              "col": 6,
+              "row": 3,
+              "dps": 6.111111111111111,
+              "kills": 0
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "kind": "hedgehog",
+      "family": "basic_ranged",
+      "normalDps": 11.9,
+      "range": 2,
+      "dummy": {
+        "dps": 11.977777777777778,
+        "buffUptime": 0,
+        "maxConsecutiveBuff": 0,
+        "damage": 2156
+      },
+      "pack": {
+        "dps": 35.93333333333333,
+        "buffUptime": 0,
+        "maxConsecutiveBuff": 0,
+        "damage": 6468
+      },
+      "level3": {
+        "dps": 33.25,
+        "buffUptime": 0,
+        "maxConsecutiveBuff": 0,
+        "damage": 5985
+      },
+      "level5": {
+        "dps": 75.91888888888916,
+        "buffUptime": 0,
+        "maxConsecutiveBuff": 0,
+        "damage": 13665.400000000049
+      },
+      "pathAverageDps": 11.99722222222222,
+      "pathBestDps": 14.66111111111111,
+      "maps": [
+        {
+          "mapId": "sunny_backyard",
+          "pads": [
+            {
+              "col": 2,
+              "row": 1,
+              "dps": 10.422222222222222,
+              "kills": 0
+            },
+            {
+              "col": 6,
+              "row": 1,
+              "dps": 10.11111111111111,
+              "kills": 0
+            },
+            {
+              "col": 3,
+              "row": 2,
+              "dps": 12.133333333333333,
+              "kills": 0
+            },
+            {
+              "col": 5,
+              "row": 2,
+              "dps": 8.71111111111111,
+              "kills": 0
+            },
+            {
+              "col": 2,
+              "row": 3,
+              "dps": 8.866666666666667,
+              "kills": 0
+            },
+            {
+              "col": 6,
+              "row": 3,
+              "dps": 10.733333333333333,
+              "kills": 0
+            }
+          ]
+        },
+        {
+          "mapId": "sakura_onsen",
+          "pads": [
+            {
+              "col": 2,
+              "row": 1,
+              "dps": 10.88888888888889,
+              "kills": 0
+            },
+            {
+              "col": 4,
+              "row": 1,
+              "dps": 14.622222222222222,
+              "kills": 0
+            },
+            {
+              "col": 6,
+              "row": 1,
+              "dps": 16.177777777777777,
+              "kills": 0
+            },
+            {
+              "col": 2,
+              "row": 3,
+              "dps": 13.066666666666666,
+              "kills": 0
+            },
+            {
+              "col": 4,
+              "row": 3,
+              "dps": 14.311111111111112,
+              "kills": 0
+            },
+            {
+              "col": 6,
+              "row": 3,
+              "dps": 10.88888888888889,
+              "kills": 0
+            }
+          ]
+        },
+        {
+          "mapId": "midnight_kitchen",
+          "pads": [
+            {
+              "col": 1,
+              "row": 1,
+              "dps": 13.844444444444445,
+              "kills": 0
+            },
+            {
+              "col": 3,
+              "row": 1,
+              "dps": 13.222222222222221,
+              "kills": 0
+            },
+            {
+              "col": 7,
+              "row": 1,
+              "dps": 6.066666666666666,
+              "kills": 0
+            },
+            {
+              "col": 3,
+              "row": 3,
+              "dps": 11.044444444444444,
+              "kills": 0
+            },
+            {
+              "col": 5,
+              "row": 3,
+              "dps": 12.911111111111111,
+              "kills": 0
+            },
+            {
+              "col": 6,
+              "row": 3,
+              "dps": 13.222222222222221,
+              "kills": 0
+            }
+          ]
+        },
+        {
+          "mapId": "cat_tower_maze",
+          "pads": [
+            {
+              "col": 1,
+              "row": 1,
+              "dps": 11.355555555555556,
+              "kills": 0
+            },
+            {
+              "col": 4,
+              "row": 1,
+              "dps": 14.622222222222222,
+              "kills": 0
+            },
+            {
+              "col": 5,
+              "row": 1,
+              "dps": 11.822222222222223,
+              "kills": 0
+            },
+            {
+              "col": 1,
+              "row": 3,
+              "dps": 11.2,
+              "kills": 0
+            },
+            {
+              "col": 3,
+              "row": 3,
+              "dps": 16.488888888888887,
+              "kills": 0
+            },
+            {
+              "col": 6,
+              "row": 3,
+              "dps": 11.2,
+              "kills": 0
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "kind": "corgi",
+      "family": "basic_melee",
+      "normalDps": 16.5,
+      "range": 1.7,
+      "dummy": {
+        "dps": 16.622222222222224,
+        "buffUptime": 0,
+        "maxConsecutiveBuff": 0,
+        "damage": 2992
+      },
+      "pack": {
+        "dps": 41.55555555555556,
+        "buffUptime": 0,
+        "maxConsecutiveBuff": 0,
+        "damage": 7480
+      },
+      "level3": {
+        "dps": 46.2,
+        "buffUptime": 0,
+        "maxConsecutiveBuff": 0,
+        "damage": 8316
+      },
+      "level5": {
+        "dps": 105.11111111111116,
+        "buffUptime": 0,
+        "maxConsecutiveBuff": 0,
+        "damage": 18920.000000000007
+      },
+      "pathAverageDps": 14.625925925925927,
+      "pathBestDps": 17.233333333333334,
+      "maps": [
+        {
+          "mapId": "sunny_backyard",
+          "pads": [
+            {
+              "col": 2,
+              "row": 1,
+              "dps": 11.977777777777778,
+              "kills": 0
+            },
+            {
+              "col": 6,
+              "row": 1,
+              "dps": 13.322222222222223,
+              "kills": 0
+            },
+            {
+              "col": 3,
+              "row": 2,
+              "dps": 12.1,
+              "kills": 0
+            },
+            {
+              "col": 5,
+              "row": 2,
+              "dps": 12.1,
+              "kills": 0
+            },
+            {
+              "col": 2,
+              "row": 3,
+              "dps": 13.322222222222223,
+              "kills": 0
+            },
+            {
+              "col": 6,
+              "row": 3,
+              "dps": 11.244444444444444,
+              "kills": 0
+            }
+          ]
+        },
+        {
+          "mapId": "sakura_onsen",
+          "pads": [
+            {
+              "col": 2,
+              "row": 1,
+              "dps": 13.933333333333334,
+              "kills": 0
+            },
+            {
+              "col": 4,
+              "row": 1,
+              "dps": 16.622222222222224,
+              "kills": 0
+            },
+            {
+              "col": 6,
+              "row": 1,
+              "dps": 18.944444444444443,
+              "kills": 0
+            },
+            {
+              "col": 2,
+              "row": 3,
+              "dps": 17.966666666666665,
+              "kills": 0
+            },
+            {
+              "col": 4,
+              "row": 3,
+              "dps": 16.5,
+              "kills": 0
+            },
+            {
+              "col": 6,
+              "row": 3,
+              "dps": 13.933333333333334,
+              "kills": 0
+            }
+          ]
+        },
+        {
+          "mapId": "midnight_kitchen",
+          "pads": [
+            {
+              "col": 1,
+              "row": 1,
+              "dps": 18.211111111111112,
+              "kills": 0
+            },
+            {
+              "col": 3,
+              "row": 1,
+              "dps": 15.644444444444444,
+              "kills": 0
+            },
+            {
+              "col": 7,
+              "row": 1,
+              "dps": 9.044444444444444,
+              "kills": 0
+            },
+            {
+              "col": 3,
+              "row": 3,
+              "dps": 13.933333333333334,
+              "kills": 0
+            },
+            {
+              "col": 5,
+              "row": 3,
+              "dps": 16.744444444444444,
+              "kills": 0
+            },
+            {
+              "col": 6,
+              "row": 3,
+              "dps": 18.08888888888889,
+              "kills": 0
+            }
+          ]
+        },
+        {
+          "mapId": "cat_tower_maze",
+          "pads": [
+            {
+              "col": 1,
+              "row": 1,
+              "dps": 12.71111111111111,
+              "kills": 0
+            },
+            {
+              "col": 4,
+              "row": 1,
+              "dps": 15.155555555555555,
+              "kills": 0
+            },
+            {
+              "col": 5,
+              "row": 1,
+              "dps": 13.933333333333334,
+              "kills": 0
+            },
+            {
+              "col": 1,
+              "row": 3,
+              "dps": 11.977777777777778,
+              "kills": 0
+            },
+            {
+              "col": 3,
+              "row": 3,
+              "dps": 18.455555555555556,
+              "kills": 0
+            },
+            {
+              "col": 6,
+              "row": 3,
+              "dps": 15.155555555555555,
+              "kills": 0
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "kind": "kungfu_po",
+      "family": "melee",
+      "normalDps": 70,
+      "range": 1.8,
+      "dummy": {
+        "dps": 100.41666666666667,
+        "buffUptime": 0,
+        "maxConsecutiveBuff": 0,
+        "damage": 18075
+      },
+      "pack": {
+        "dps": 190.83333333333334,
+        "buffUptime": 0,
+        "maxConsecutiveBuff": 0,
+        "damage": 34350
+      },
+      "level3": {
+        "dps": 269.5111111111112,
+        "buffUptime": 0,
+        "maxConsecutiveBuff": 0,
+        "damage": 48512.00000000001
+      },
+      "level5": {
+        "dps": 728.1777777777735,
+        "buffUptime": 0,
+        "maxConsecutiveBuff": 0,
+        "damage": 131071.99999999923
+      },
+      "signature": {
+        "dps": 237.83388888888908,
+        "buffUptime": 0,
+        "maxConsecutiveBuff": 0,
+        "damage": 42810.100000000035
+      },
+      "pathAverageDps": 166.9560185185185,
+      "pathBestDps": 208.54166666666669,
+      "maps": [
+        {
+          "mapId": "sunny_backyard",
+          "pads": [
+            {
+              "col": 2,
+              "row": 1,
+              "dps": 109.16666666666667,
+              "kills": 0
+            },
+            {
+              "col": 6,
+              "row": 1,
+              "dps": 178.33333333333334,
+              "kills": 0
+            },
+            {
+              "col": 3,
+              "row": 2,
+              "dps": 138.33333333333334,
+              "kills": 0
+            },
+            {
+              "col": 5,
+              "row": 2,
+              "dps": 136.38888888888889,
+              "kills": 0
+            },
+            {
+              "col": 2,
+              "row": 3,
+              "dps": 177.22222222222223,
+              "kills": 0
+            },
+            {
+              "col": 6,
+              "row": 3,
+              "dps": 108.33333333333333,
+              "kills": 0
+            }
+          ]
+        },
+        {
+          "mapId": "sakura_onsen",
+          "pads": [
+            {
+              "col": 2,
+              "row": 1,
+              "dps": 191.38888888888889,
+              "kills": 1
+            },
+            {
+              "col": 4,
+              "row": 1,
+              "dps": 191.94444444444446,
+              "kills": 2
+            },
+            {
+              "col": 6,
+              "row": 1,
+              "dps": 183.33333333333334,
+              "kills": 0
+            },
+            {
+              "col": 2,
+              "row": 3,
+              "dps": 183.33333333333334,
+              "kills": 0
+            },
+            {
+              "col": 4,
+              "row": 3,
+              "dps": 191.94444444444446,
+              "kills": 2
+            },
+            {
+              "col": 6,
+              "row": 3,
+              "dps": 191.38888888888889,
+              "kills": 1
+            }
+          ]
+        },
+        {
+          "mapId": "midnight_kitchen",
+          "pads": [
+            {
+              "col": 1,
+              "row": 1,
+              "dps": 172.22222222222223,
+              "kills": 1
+            },
+            {
+              "col": 3,
+              "row": 1,
+              "dps": 231.94444444444446,
+              "kills": 2
+            },
+            {
+              "col": 7,
+              "row": 1,
+              "dps": 65.83333333333333,
+              "kills": 0
+            },
+            {
+              "col": 3,
+              "row": 3,
+              "dps": 191.38888888888889,
+              "kills": 1
+            },
+            {
+              "col": 5,
+              "row": 3,
+              "dps": 207.5,
+              "kills": 2
+            },
+            {
+              "col": 6,
+              "row": 3,
+              "dps": 172.22222222222223,
+              "kills": 1
+            }
+          ]
+        },
+        {
+          "mapId": "cat_tower_maze",
+          "pads": [
+            {
+              "col": 1,
+              "row": 1,
+              "dps": 121.66666666666667,
+              "kills": 0
+            },
+            {
+              "col": 4,
+              "row": 1,
+              "dps": 231.94444444444446,
+              "kills": 1
+            },
+            {
+              "col": 5,
+              "row": 1,
+              "dps": 191.38888888888889,
+              "kills": 1
+            },
+            {
+              "col": 1,
+              "row": 3,
+              "dps": 76.94444444444444,
+              "kills": 0
+            },
+            {
+              "col": 3,
+              "row": 3,
+              "dps": 131.66666666666666,
+              "kills": 0
+            },
+            {
+              "col": 6,
+              "row": 3,
+              "dps": 231.11111111111111,
+              "kills": 1
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "kind": "bamboo_mafia",
+      "family": "ranged",
+      "normalDps": 50.6,
+      "range": 3.2,
+      "dummy": {
+        "dps": 98.73921296296173,
+        "buffUptime": 0,
+        "maxConsecutiveBuff": 0,
+        "damage": 17773.058333333112
+      },
+      "pack": {
+        "dps": 242.39018518518085,
+        "buffUptime": 0,
+        "maxConsecutiveBuff": 0,
+        "damage": 43630.23333333255
+      },
+      "level3": {
+        "dps": 264.43662222220553,
+        "buffUptime": 0,
+        "maxConsecutiveBuff": 0,
+        "damage": 47598.591999997
+      },
+      "level5": {
+        "dps": 804.6130820740514,
+        "buffUptime": 0,
+        "maxConsecutiveBuff": 0,
+        "damage": 144830.35477332925
+      },
+      "signature": {
+        "dps": 201.95988648146903,
+        "buffUptime": 0,
+        "maxConsecutiveBuff": 0,
+        "damage": 36352.77956666442
+      },
+      "pathAverageDps": 127.23408796296958,
+      "pathBestDps": 134.78029166667434,
+      "maps": [
+        {
+          "mapId": "sunny_backyard",
+          "pads": [
+            {
+              "col": 2,
+              "row": 1,
+              "dps": 119.2151111111178,
+              "kills": 1
+            },
+            {
+              "col": 6,
+              "row": 1,
+              "dps": 102.45094444444844,
+              "kills": 0
+            },
+            {
+              "col": 3,
+              "row": 2,
+              "dps": 119.8552777777842,
+              "kills": 1
+            },
+            {
+              "col": 5,
+              "row": 2,
+              "dps": 116.30305555556062,
+              "kills": 1
+            },
+            {
+              "col": 2,
+              "row": 3,
+              "dps": 104.72922222222736,
+              "kills": 0
+            },
+            {
+              "col": 6,
+              "row": 3,
+              "dps": 115.60311111111606,
+              "kills": 0
+            }
+          ]
+        },
+        {
+          "mapId": "sakura_onsen",
+          "pads": [
+            {
+              "col": 2,
+              "row": 1,
+              "dps": 141.74488888889675,
+              "kills": 1
+            },
+            {
+              "col": 4,
+              "row": 1,
+              "dps": 142.34033333334128,
+              "kills": 1
+            },
+            {
+              "col": 6,
+              "row": 1,
+              "dps": 140.40066666667514,
+              "kills": 1
+            },
+            {
+              "col": 2,
+              "row": 3,
+              "dps": 140.47477777778502,
+              "kills": 1
+            },
+            {
+              "col": 4,
+              "row": 3,
+              "dps": 141.870111111119,
+              "kills": 1
+            },
+            {
+              "col": 6,
+              "row": 3,
+              "dps": 142.5281666666747,
+              "kills": 1
+            }
+          ]
+        },
+        {
+          "mapId": "midnight_kitchen",
+          "pads": [
+            {
+              "col": 1,
+              "row": 1,
+              "dps": 137.84511111111956,
+              "kills": 1
+            },
+            {
+              "col": 3,
+              "row": 1,
+              "dps": 138.7932222222303,
+              "kills": 1
+            },
+            {
+              "col": 7,
+              "row": 1,
+              "dps": 129.1513888888946,
+              "kills": 0
+            },
+            {
+              "col": 3,
+              "row": 3,
+              "dps": 141.20027777778643,
+              "kills": 2
+            },
+            {
+              "col": 5,
+              "row": 3,
+              "dps": 129.04888888889468,
+              "kills": 1
+            },
+            {
+              "col": 6,
+              "row": 3,
+              "dps": 124.07222222222764,
+              "kills": 0
+            }
+          ]
+        },
+        {
+          "mapId": "cat_tower_maze",
+          "pads": [
+            {
+              "col": 1,
+              "row": 1,
+              "dps": 103.19077777778314,
+              "kills": 0
+            },
+            {
+              "col": 4,
+              "row": 1,
+              "dps": 121.31577777778405,
+              "kills": 1
+            },
+            {
+              "col": 5,
+              "row": 1,
+              "dps": 130.209111111117,
+              "kills": 1
+            },
+            {
+              "col": 1,
+              "row": 3,
+              "dps": 120.72955555556226,
+              "kills": 0
+            },
+            {
+              "col": 3,
+              "row": 3,
+              "dps": 135.53744444445206,
+              "kills": 1
+            },
+            {
+              "col": 6,
+              "row": 3,
+              "dps": 115.00866666667154,
+              "kills": 1
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "kind": "zen_master",
+      "family": "magic",
+      "normalDps": 50.4,
+      "range": 2.6,
+      "dummy": {
+        "dps": 68.27333333333337,
+        "buffUptime": 0,
+        "maxConsecutiveBuff": 0,
+        "damage": 12289.200000000006
+      },
+      "pack": {
+        "dps": 121.19333333333323,
+        "buffUptime": 0,
+        "maxConsecutiveBuff": 0,
+        "damage": 21814.79999999998
+      },
+      "level3": {
+        "dps": 181.4698666666672,
+        "buffUptime": 0,
+        "maxConsecutiveBuff": 0,
+        "damage": 32664.576000000096
+      },
+      "level5": {
+        "dps": 485.97128533333216,
+        "buffUptime": 0,
+        "maxConsecutiveBuff": 0,
+        "damage": 87474.8313599998
+      },
+      "signature": {
+        "dps": 147.61413333333266,
+        "buffUptime": 0,
+        "maxConsecutiveBuff": 0,
+        "damage": 26570.543999999878
+      },
+      "pathAverageDps": 197.6772222222222,
+      "pathBestDps": 251.98999999999967,
+      "maps": [
+        {
+          "mapId": "sunny_backyard",
+          "pads": [
+            {
+              "col": 2,
+              "row": 1,
+              "dps": 166.9733333333336,
+              "kills": 0
+            },
+            {
+              "col": 6,
+              "row": 1,
+              "dps": 204.29333333333346,
+              "kills": 1
+            },
+            {
+              "col": 3,
+              "row": 2,
+              "dps": 171.1600000000003,
+              "kills": 1
+            },
+            {
+              "col": 5,
+              "row": 2,
+              "dps": 221.93333333333328,
+              "kills": 1
+            },
+            {
+              "col": 2,
+              "row": 3,
+              "dps": 140.45333333333355,
+              "kills": 1
+            },
+            {
+              "col": 6,
+              "row": 3,
+              "dps": 233.42666666666653,
+              "kills": 0
+            }
+          ]
+        },
+        {
+          "mapId": "sakura_onsen",
+          "pads": [
+            {
+              "col": 2,
+              "row": 1,
+              "dps": 165.00000000000028,
+              "kills": 1
+            },
+            {
+              "col": 4,
+              "row": 1,
+              "dps": 196.17333333333357,
+              "kills": 1
+            },
+            {
+              "col": 6,
+              "row": 1,
+              "dps": 200.84000000000017,
+              "kills": 1
+            },
+            {
+              "col": 2,
+              "row": 3,
+              "dps": 275.9999999999994,
+              "kills": 6
+            },
+            {
+              "col": 4,
+              "row": 3,
+              "dps": 254.19999999999965,
+              "kills": 3
+            },
+            {
+              "col": 6,
+              "row": 3,
+              "dps": 214.4666666666667,
+              "kills": 1
+            }
+          ]
+        },
+        {
+          "mapId": "midnight_kitchen",
+          "pads": [
+            {
+              "col": 1,
+              "row": 1,
+              "dps": 206.33333333333348,
+              "kills": 2
+            },
+            {
+              "col": 3,
+              "row": 1,
+              "dps": 197.01333333333355,
+              "kills": 1
+            },
+            {
+              "col": 7,
+              "row": 1,
+              "dps": 255.87999999999957,
+              "kills": 3
+            },
+            {
+              "col": 3,
+              "row": 3,
+              "dps": 209.52000000000007,
+              "kills": 1
+            },
+            {
+              "col": 5,
+              "row": 3,
+              "dps": 263.43999999999954,
+              "kills": 3
+            },
+            {
+              "col": 6,
+              "row": 3,
+              "dps": 264.3733333333328,
+              "kills": 3
+            }
+          ]
+        },
+        {
+          "mapId": "cat_tower_maze",
+          "pads": [
+            {
+              "col": 1,
+              "row": 1,
+              "dps": 75.69333333333338,
+              "kills": 0
+            },
+            {
+              "col": 4,
+              "row": 1,
+              "dps": 179.56000000000031,
+              "kills": 1
+            },
+            {
+              "col": 5,
+              "row": 1,
+              "dps": 168.9200000000003,
+              "kills": 1
+            },
+            {
+              "col": 1,
+              "row": 3,
+              "dps": 46.29333333333332,
+              "kills": 0
+            },
+            {
+              "col": 3,
+              "row": 3,
+              "dps": 198.14666666666687,
+              "kills": 0
+            },
+            {
+              "col": 6,
+              "row": 3,
+              "dps": 234.15999999999985,
+              "kills": 1
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "kind": "puss_in_hat",
+      "family": "melee",
+      "normalDps": 68,
+      "range": 1.8,
+      "dummy": {
+        "dps": 114.42888888888845,
+        "buffUptime": 0,
+        "maxConsecutiveBuff": 0,
+        "damage": 20597.19999999992
+      },
+      "pack": {
+        "dps": 368.7488888888944,
+        "buffUptime": 0,
+        "maxConsecutiveBuff": 0,
+        "damage": 66374.80000000099
+      },
+      "level3": {
+        "dps": 312.0867555555551,
+        "buffUptime": 0,
+        "maxConsecutiveBuff": 0,
+        "damage": 56175.615999999914
+      },
+      "level5": {
+        "dps": 870.2452622222236,
+        "buffUptime": 0,
+        "maxConsecutiveBuff": 0,
+        "damage": 156644.14720000024
+      },
+      "signature": {
+        "dps": 235.0491242592633,
+        "buffUptime": 0,
+        "maxConsecutiveBuff": 0,
+        "damage": 42308.84236666739
+      },
+      "pathAverageDps": 118.6762962962962,
+      "pathBestDps": 139.47444444444417,
+      "maps": [
+        {
+          "mapId": "sunny_backyard",
+          "pads": [
+            {
+              "col": 2,
+              "row": 1,
+              "dps": 99.28000000000007,
+              "kills": 0
+            },
+            {
+              "col": 6,
+              "row": 1,
+              "dps": 107.89333333333333,
+              "kills": 0
+            },
+            {
+              "col": 3,
+              "row": 2,
+              "dps": 99.28000000000007,
+              "kills": 0
+            },
+            {
+              "col": 5,
+              "row": 2,
+              "dps": 99.28000000000007,
+              "kills": 0
+            },
+            {
+              "col": 2,
+              "row": 3,
+              "dps": 107.89333333333333,
+              "kills": 0
+            },
+            {
+              "col": 6,
+              "row": 3,
+              "dps": 90.96888888888903,
+              "kills": 0
+            }
+          ]
+        },
+        {
+          "mapId": "sakura_onsen",
+          "pads": [
+            {
+              "col": 2,
+              "row": 1,
+              "dps": 114.12444444444439,
+              "kills": 1
+            },
+            {
+              "col": 4,
+              "row": 1,
+              "dps": 136.7155555555553,
+              "kills": 1
+            },
+            {
+              "col": 6,
+              "row": 1,
+              "dps": 154.39555555555515,
+              "kills": 1
+            },
+            {
+              "col": 2,
+              "row": 3,
+              "dps": 149.37333333333297,
+              "kills": 0
+            },
+            {
+              "col": 4,
+              "row": 3,
+              "dps": 137.54666666666643,
+              "kills": 1
+            },
+            {
+              "col": 6,
+              "row": 3,
+              "dps": 114.12444444444439,
+              "kills": 1
+            }
+          ]
+        },
+        {
+          "mapId": "midnight_kitchen",
+          "pads": [
+            {
+              "col": 1,
+              "row": 1,
+              "dps": 146.99111111111077,
+              "kills": 1
+            },
+            {
+              "col": 3,
+              "row": 1,
+              "dps": 122.39555555555542,
+              "kills": 2
+            },
+            {
+              "col": 7,
+              "row": 1,
+              "dps": 64.9022222222223,
+              "kills": 0
+            },
+            {
+              "col": 3,
+              "row": 3,
+              "dps": 114.12444444444439,
+              "kills": 1
+            },
+            {
+              "col": 5,
+              "row": 3,
+              "dps": 139.24888888888862,
+              "kills": 0
+            },
+            {
+              "col": 6,
+              "row": 3,
+              "dps": 135.31999999999974,
+              "kills": 0
+            }
+          ]
+        },
+        {
+          "mapId": "cat_tower_maze",
+          "pads": [
+            {
+              "col": 1,
+              "row": 1,
+              "dps": 104.64444444444446,
+              "kills": 0
+            },
+            {
+              "col": 4,
+              "row": 1,
+              "dps": 123.98666666666652,
+              "kills": 0
+            },
+            {
+              "col": 5,
+              "row": 1,
+              "dps": 111.63111111111107,
+              "kills": 1
+            },
+            {
+              "col": 1,
+              "row": 3,
+              "dps": 98.0711111111112,
+              "kills": 0
+            },
+            {
+              "col": 3,
+              "row": 3,
+              "dps": 148.6177777777774,
+              "kills": 0
+            },
+            {
+              "col": 6,
+              "row": 3,
+              "dps": 127.42222222222205,
+              "kills": 1
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "kind": "meowfia",
+      "family": "ranged",
+      "normalDps": 52,
+      "range": 3,
+      "dummy": {
+        "dps": 111,
+        "buffUptime": 0.36351851851850503,
+        "maxConsecutiveBuff": 2.5166666666666626,
+        "damage": 19980
+      },
+      "pack": {
+        "dps": 111,
+        "buffUptime": 0.36351851851850503,
+        "maxConsecutiveBuff": 2.5166666666666626,
+        "damage": 19980
+      },
+      "level3": {
+        "dps": 307.76888888888357,
+        "buffUptime": 0.4194444444444278,
+        "maxConsecutiveBuff": 2.5166666666666626,
+        "damage": 55398.39999999904
+      },
+      "level5": {
+        "dps": 846.8707555555429,
+        "buffUptime": 0.4753703703703505,
+        "maxConsecutiveBuff": 2.5166666666666626,
+        "damage": 152436.73599999773
+      },
+      "signature": {
+        "dps": 326.18222222221215,
+        "buffUptime": 0.4768518518516354,
+        "maxConsecutiveBuff": 4.016666666666658,
+        "damage": 58712.799999998184
+      },
+      "pathAverageDps": 61.21296296296297,
+      "pathBestDps": 67.22222222222223,
+      "maps": [
+        {
+          "mapId": "sunny_backyard",
+          "pads": [
+            {
+              "col": 2,
+              "row": 1,
+              "dps": 61.333333333333336,
+              "kills": 1
+            },
+            {
+              "col": 6,
+              "row": 1,
+              "dps": 57.111111111111114,
+              "kills": 1
+            },
+            {
+              "col": 3,
+              "row": 2,
+              "dps": 61.111111111111114,
+              "kills": 1
+            },
+            {
+              "col": 5,
+              "row": 2,
+              "dps": 61.111111111111114,
+              "kills": 1
+            },
+            {
+              "col": 2,
+              "row": 3,
+              "dps": 57.111111111111114,
+              "kills": 1
+            },
+            {
+              "col": 6,
+              "row": 3,
+              "dps": 61.333333333333336,
+              "kills": 1
+            }
+          ]
+        },
+        {
+          "mapId": "sakura_onsen",
+          "pads": [
+            {
+              "col": 2,
+              "row": 1,
+              "dps": 55.55555555555556,
+              "kills": 1
+            },
+            {
+              "col": 4,
+              "row": 1,
+              "dps": 63.77777777777778,
+              "kills": 1
+            },
+            {
+              "col": 6,
+              "row": 1,
+              "dps": 70.22222222222223,
+              "kills": 1
+            },
+            {
+              "col": 2,
+              "row": 3,
+              "dps": 70.22222222222223,
+              "kills": 1
+            },
+            {
+              "col": 4,
+              "row": 3,
+              "dps": 63.77777777777778,
+              "kills": 1
+            },
+            {
+              "col": 6,
+              "row": 3,
+              "dps": 55.55555555555556,
+              "kills": 1
+            }
+          ]
+        },
+        {
+          "mapId": "midnight_kitchen",
+          "pads": [
+            {
+              "col": 1,
+              "row": 1,
+              "dps": 68.66666666666667,
+              "kills": 1
+            },
+            {
+              "col": 3,
+              "row": 1,
+              "dps": 60.666666666666664,
+              "kills": 1
+            },
+            {
+              "col": 7,
+              "row": 1,
+              "dps": 68.66666666666667,
+              "kills": 0
+            },
+            {
+              "col": 3,
+              "row": 3,
+              "dps": 57.111111111111114,
+              "kills": 1
+            },
+            {
+              "col": 5,
+              "row": 3,
+              "dps": 67.77777777777777,
+              "kills": 2
+            },
+            {
+              "col": 6,
+              "row": 3,
+              "dps": 67.77777777777777,
+              "kills": 1
+            }
+          ]
+        },
+        {
+          "mapId": "cat_tower_maze",
+          "pads": [
+            {
+              "col": 1,
+              "row": 1,
+              "dps": 48.22222222222222,
+              "kills": 0
+            },
+            {
+              "col": 4,
+              "row": 1,
+              "dps": 61.333333333333336,
+              "kills": 2
+            },
+            {
+              "col": 5,
+              "row": 1,
+              "dps": 57.55555555555556,
+              "kills": 1
+            },
+            {
+              "col": 1,
+              "row": 3,
+              "dps": 43.77777777777778,
+              "kills": 0
+            },
+            {
+              "col": 3,
+              "row": 3,
+              "dps": 68.66666666666667,
+              "kills": 1
+            },
+            {
+              "col": 6,
+              "row": 3,
+              "dps": 60.666666666666664,
+              "kills": 1
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "kind": "purrcerer",
+      "family": "magic",
+      "normalDps": 50.599999999999994,
+      "range": 2.8,
+      "dummy": {
+        "dps": 67.85777777777781,
+        "buffUptime": 0,
+        "maxConsecutiveBuff": 0,
+        "damage": 12214.400000000007
+      },
+      "pack": {
+        "dps": 118.89777777777769,
+        "buffUptime": 0,
+        "maxConsecutiveBuff": 0,
+        "damage": 21401.599999999984
+      },
+      "level3": {
+        "dps": 181.22524444444392,
+        "buffUptime": 0,
+        "maxConsecutiveBuff": 0,
+        "damage": 32620.543999999903
+      },
+      "level5": {
+        "dps": 490.8500764444426,
+        "buffUptime": 0,
+        "maxConsecutiveBuff": 0,
+        "damage": 88353.01375999967
+      },
+      "signature": {
+        "dps": 107.21528888888932,
+        "buffUptime": 0,
+        "maxConsecutiveBuff": 0,
+        "damage": 19298.752000000077
+      },
+      "pathAverageDps": 82.21629629629636,
+      "pathBestDps": 91.5711111111112,
+      "maps": [
+        {
+          "mapId": "sunny_backyard",
+          "pads": [
+            {
+              "col": 2,
+              "row": 1,
+              "dps": 84.32000000000008,
+              "kills": 1
+            },
+            {
+              "col": 6,
+              "row": 1,
+              "dps": 75.68000000000006,
+              "kills": 0
+            },
+            {
+              "col": 3,
+              "row": 2,
+              "dps": 84.2222222222223,
+              "kills": 1
+            },
+            {
+              "col": 5,
+              "row": 2,
+              "dps": 81.87555555555562,
+              "kills": 1
+            },
+            {
+              "col": 2,
+              "row": 3,
+              "dps": 75.19111111111117,
+              "kills": 0
+            },
+            {
+              "col": 6,
+              "row": 3,
+              "dps": 82.13333333333341,
+              "kills": 0
+            }
+          ]
+        },
+        {
+          "mapId": "sakura_onsen",
+          "pads": [
+            {
+              "col": 2,
+              "row": 1,
+              "dps": 75.19111111111117,
+              "kills": 0
+            },
+            {
+              "col": 4,
+              "row": 1,
+              "dps": 85.20000000000007,
+              "kills": 1
+            },
+            {
+              "col": 6,
+              "row": 1,
+              "dps": 94.48888888888897,
+              "kills": 1
+            },
+            {
+              "col": 2,
+              "row": 3,
+              "dps": 94.25777777777786,
+              "kills": 0
+            },
+            {
+              "col": 4,
+              "row": 3,
+              "dps": 85.68888888888897,
+              "kills": 1
+            },
+            {
+              "col": 6,
+              "row": 3,
+              "dps": 75.19111111111117,
+              "kills": 0
+            }
+          ]
+        },
+        {
+          "mapId": "midnight_kitchen",
+          "pads": [
+            {
+              "col": 1,
+              "row": 1,
+              "dps": 93.51111111111119,
+              "kills": 1
+            },
+            {
+              "col": 3,
+              "row": 1,
+              "dps": 83.73333333333342,
+              "kills": 1
+            },
+            {
+              "col": 7,
+              "row": 1,
+              "dps": 90.44444444444454,
+              "kills": 0
+            },
+            {
+              "col": 3,
+              "row": 3,
+              "dps": 75.19111111111117,
+              "kills": 0
+            },
+            {
+              "col": 5,
+              "row": 3,
+              "dps": 88.32888888888897,
+              "kills": 1
+            },
+            {
+              "col": 6,
+              "row": 3,
+              "dps": 88.32888888888897,
+              "kills": 1
+            }
+          ]
+        },
+        {
+          "mapId": "cat_tower_maze",
+          "pads": [
+            {
+              "col": 1,
+              "row": 1,
+              "dps": 63.55555555555558,
+              "kills": 0
+            },
+            {
+              "col": 4,
+              "row": 1,
+              "dps": 84.7111111111112,
+              "kills": 1
+            },
+            {
+              "col": 5,
+              "row": 1,
+              "dps": 75.19111111111117,
+              "kills": 0
+            },
+            {
+              "col": 1,
+              "row": 3,
+              "dps": 62.08888888888891,
+              "kills": 0
+            },
+            {
+              "col": 3,
+              "row": 3,
+              "dps": 93.96444444444454,
+              "kills": 0
+            },
+            {
+              "col": 6,
+              "row": 3,
+              "dps": 80.70222222222229,
+              "kills": 1
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "kind": "samurai_doge",
+      "family": "melee",
+      "normalDps": 68.8,
+      "range": 1.8,
+      "dummy": {
+        "dps": 120.87777777777778,
+        "buffUptime": 0,
+        "maxConsecutiveBuff": 0,
+        "damage": 21758
+      },
+      "pack": {
+        "dps": 275.6777777777778,
+        "buffUptime": 0,
+        "maxConsecutiveBuff": 0,
+        "damage": 49622
+      },
+      "level3": {
+        "dps": 336.96711111111244,
+        "buffUptime": 0,
+        "maxConsecutiveBuff": 0,
+        "damage": 60654.08000000024
+      },
+      "level5": {
+        "dps": 961.2674844444427,
+        "buffUptime": 0,
+        "maxConsecutiveBuff": 0,
+        "damage": 173028.1471999997
+      },
+      "signature": {
+        "dps": 227.22155555555523,
+        "buffUptime": 0,
+        "maxConsecutiveBuff": 0,
+        "damage": 40899.87999999994
+      },
+      "pathAverageDps": 63.990740740740755,
+      "pathBestDps": 76.75833333333333,
+      "maps": [
+        {
+          "mapId": "sunny_backyard",
+          "pads": [
+            {
+              "col": 2,
+              "row": 1,
+              "dps": 43.955555555555556,
+              "kills": 0
+            },
+            {
+              "col": 6,
+              "row": 1,
+              "dps": 54.422222222222224,
+              "kills": 1
+            },
+            {
+              "col": 3,
+              "row": 2,
+              "dps": 48.25555555555555,
+              "kills": 0
+            },
+            {
+              "col": 5,
+              "row": 2,
+              "dps": 48.25555555555555,
+              "kills": 0
+            },
+            {
+              "col": 2,
+              "row": 3,
+              "dps": 58.72222222222222,
+              "kills": 1
+            },
+            {
+              "col": 6,
+              "row": 3,
+              "dps": 52.55555555555556,
+              "kills": 0
+            }
+          ]
+        },
+        {
+          "mapId": "sakura_onsen",
+          "pads": [
+            {
+              "col": 2,
+              "row": 1,
+              "dps": 57.28888888888889,
+              "kills": 1
+            },
+            {
+              "col": 4,
+              "row": 1,
+              "dps": 66.36666666666666,
+              "kills": 1
+            },
+            {
+              "col": 6,
+              "row": 1,
+              "dps": 88.34444444444445,
+              "kills": 1
+            },
+            {
+              "col": 2,
+              "row": 3,
+              "dps": 75.44444444444444,
+              "kills": 1
+            },
+            {
+              "col": 4,
+              "row": 3,
+              "dps": 63.06666666666667,
+              "kills": 0
+            },
+            {
+              "col": 6,
+              "row": 3,
+              "dps": 57.28888888888889,
+              "kills": 1
+            }
+          ]
+        },
+        {
+          "mapId": "midnight_kitchen",
+          "pads": [
+            {
+              "col": 1,
+              "row": 1,
+              "dps": 77.83333333333333,
+              "kills": 1
+            },
+            {
+              "col": 3,
+              "row": 1,
+              "dps": 74.4888888888889,
+              "kills": 1
+            },
+            {
+              "col": 7,
+              "row": 1,
+              "dps": 55.9,
+              "kills": 0
+            },
+            {
+              "col": 3,
+              "row": 3,
+              "dps": 57.28888888888889,
+              "kills": 1
+            },
+            {
+              "col": 5,
+              "row": 3,
+              "dps": 69.71111111111111,
+              "kills": 1
+            },
+            {
+              "col": 6,
+              "row": 3,
+              "dps": 74.96666666666667,
+              "kills": 1
+            }
+          ]
+        },
+        {
+          "mapId": "cat_tower_maze",
+          "pads": [
+            {
+              "col": 1,
+              "row": 1,
+              "dps": 62.06666666666667,
+              "kills": 1
+            },
+            {
+              "col": 4,
+              "row": 1,
+              "dps": 70.18888888888888,
+              "kills": 1
+            },
+            {
+              "col": 5,
+              "row": 1,
+              "dps": 70.18888888888888,
+              "kills": 1
+            },
+            {
+              "col": 1,
+              "row": 3,
+              "dps": 56.855555555555554,
+              "kills": 0
+            },
+            {
+              "col": 3,
+              "row": 3,
+              "dps": 82.13333333333334,
+              "kills": 1
+            },
+            {
+              "col": 6,
+              "row": 3,
+              "dps": 70.18888888888888,
+              "kills": 1
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "kind": "doge_wick",
+      "family": "ranged",
+      "normalDps": 54,
+      "range": 3.2,
+      "dummy": {
+        "dps": 110.84999999999997,
+        "buffUptime": 0,
+        "maxConsecutiveBuff": 0,
+        "damage": 19952.999999999993
+      },
+      "pack": {
+        "dps": 389.24999999999824,
+        "buffUptime": 0,
+        "maxConsecutiveBuff": 0,
+        "damage": 70064.99999999968
+      },
+      "level3": {
+        "dps": 303.12959999999765,
+        "buffUptime": 0,
+        "maxConsecutiveBuff": 0,
+        "damage": 54563.32799999958
+      },
+      "level5": {
+        "dps": 850.3295999999912,
+        "buffUptime": 0,
+        "maxConsecutiveBuff": 0,
+        "damage": 153059.3279999984
+      },
+      "signature": {
+        "dps": 195.41418055555945,
+        "buffUptime": 0,
+        "maxConsecutiveBuff": 0,
+        "damage": 35174.552500000704
+      },
+      "pathAverageDps": 135.63194444444468,
+      "pathBestDps": 159.63666666666694,
+      "maps": [
+        {
+          "mapId": "sunny_backyard",
+          "pads": [
+            {
+              "col": 2,
+              "row": 1,
+              "dps": 142.4666666666669,
+              "kills": 2
+            },
+            {
+              "col": 6,
+              "row": 1,
+              "dps": 122.05333333333348,
+              "kills": 1
+            },
+            {
+              "col": 3,
+              "row": 2,
+              "dps": 122.7733333333335,
+              "kills": 1
+            },
+            {
+              "col": 5,
+              "row": 2,
+              "dps": 101.66666666666679,
+              "kills": 2
+            },
+            {
+              "col": 2,
+              "row": 3,
+              "dps": 110.23333333333349,
+              "kills": 1
+            },
+            {
+              "col": 6,
+              "row": 3,
+              "dps": 126.38666666666686,
+              "kills": 2
+            }
+          ]
+        },
+        {
+          "mapId": "sakura_onsen",
+          "pads": [
+            {
+              "col": 2,
+              "row": 1,
+              "dps": 135.0266666666669,
+              "kills": 2
+            },
+            {
+              "col": 4,
+              "row": 1,
+              "dps": 135.1000000000002,
+              "kills": 3
+            },
+            {
+              "col": 6,
+              "row": 1,
+              "dps": 139.5533333333335,
+              "kills": 4
+            },
+            {
+              "col": 2,
+              "row": 3,
+              "dps": 150.71333333333357,
+              "kills": 4
+            },
+            {
+              "col": 4,
+              "row": 3,
+              "dps": 161.1533333333336,
+              "kills": 4
+            },
+            {
+              "col": 6,
+              "row": 3,
+              "dps": 154.28666666666692,
+              "kills": 2
+            }
+          ]
+        },
+        {
+          "mapId": "midnight_kitchen",
+          "pads": [
+            {
+              "col": 1,
+              "row": 1,
+              "dps": 155.33333333333357,
+              "kills": 4
+            },
+            {
+              "col": 3,
+              "row": 1,
+              "dps": 118.64666666666683,
+              "kills": 2
+            },
+            {
+              "col": 7,
+              "row": 1,
+              "dps": 124.46666666666685,
+              "kills": 2
+            },
+            {
+              "col": 3,
+              "row": 3,
+              "dps": 157.06000000000023,
+              "kills": 3
+            },
+            {
+              "col": 5,
+              "row": 3,
+              "dps": 129.58000000000018,
+              "kills": 3
+            },
+            {
+              "col": 6,
+              "row": 3,
+              "dps": 135.58000000000018,
+              "kills": 3
+            }
+          ]
+        },
+        {
+          "mapId": "cat_tower_maze",
+          "pads": [
+            {
+              "col": 1,
+              "row": 1,
+              "dps": 165.48000000000033,
+              "kills": 0
+            },
+            {
+              "col": 4,
+              "row": 1,
+              "dps": 153.74666666666695,
+              "kills": 2
+            },
+            {
+              "col": 5,
+              "row": 1,
+              "dps": 112.10666666666681,
+              "kills": 2
+            },
+            {
+              "col": 1,
+              "row": 3,
+              "dps": 149.34000000000026,
+              "kills": 0
+            },
+            {
+              "col": 3,
+              "row": 3,
+              "dps": 177.86666666666704,
+              "kills": 2
+            },
+            {
+              "col": 6,
+              "row": 3,
+              "dps": 74.54666666666671,
+              "kills": 2
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "kind": "ronin_goose",
+      "family": "melee",
+      "normalDps": 67.10000000000001,
+      "range": 2,
+      "dummy": {
+        "dps": 158.5322222222218,
+        "buffUptime": 0,
+        "maxConsecutiveBuff": 0,
+        "damage": 28535.799999999923
+      },
+      "pack": {
+        "dps": 158.5322222222218,
+        "buffUptime": 0,
+        "maxConsecutiveBuff": 0,
+        "damage": 28535.799999999923
+      },
+      "level3": {
+        "dps": 444.7089777777797,
+        "buffUptime": 0,
+        "maxConsecutiveBuff": 0,
+        "damage": 80047.61600000034
+      },
+      "level5": {
+        "dps": 1262.8277475555547,
+        "buffUptime": 0,
+        "maxConsecutiveBuff": 0,
+        "damage": 227308.99455999982
+      },
+      "signature": {
+        "dps": 358.7477777777753,
+        "buffUptime": 0,
+        "maxConsecutiveBuff": 0,
+        "damage": 64574.599999999555
+      },
+      "pathAverageDps": 75.99583333333341,
+      "pathBestDps": 89.70388888888897,
+      "maps": [
+        {
+          "mapId": "sunny_backyard",
+          "pads": [
+            {
+              "col": 2,
+              "row": 1,
+              "dps": 65.0666666666667,
+              "kills": 0
+            },
+            {
+              "col": 6,
+              "row": 1,
+              "dps": 67.10000000000004,
+              "kills": 0
+            },
+            {
+              "col": 3,
+              "row": 2,
+              "dps": 69.81111111111115,
+              "kills": 0
+            },
+            {
+              "col": 5,
+              "row": 2,
+              "dps": 65.0666666666667,
+              "kills": 0
+            },
+            {
+              "col": 2,
+              "row": 3,
+              "dps": 68.45555555555559,
+              "kills": 0
+            },
+            {
+              "col": 6,
+              "row": 3,
+              "dps": 78.75777777777785,
+              "kills": 0
+            }
+          ]
+        },
+        {
+          "mapId": "sakura_onsen",
+          "pads": [
+            {
+              "col": 2,
+              "row": 1,
+              "dps": 69.81111111111115,
+              "kills": 0
+            },
+            {
+              "col": 4,
+              "row": 1,
+              "dps": 82.14666666666673,
+              "kills": 0
+            },
+            {
+              "col": 6,
+              "row": 1,
+              "dps": 95.1600000000001,
+              "kills": 0
+            },
+            {
+              "col": 2,
+              "row": 3,
+              "dps": 95.1600000000001,
+              "kills": 0
+            },
+            {
+              "col": 4,
+              "row": 3,
+              "dps": 82.14666666666673,
+              "kills": 0
+            },
+            {
+              "col": 6,
+              "row": 3,
+              "dps": 69.81111111111115,
+              "kills": 0
+            }
+          ]
+        },
+        {
+          "mapId": "midnight_kitchen",
+          "pads": [
+            {
+              "col": 1,
+              "row": 1,
+              "dps": 92.44888888888899,
+              "kills": 0
+            },
+            {
+              "col": 3,
+              "row": 1,
+              "dps": 80.1133333333334,
+              "kills": 0
+            },
+            {
+              "col": 7,
+              "row": 1,
+              "dps": 55.442222222222235,
+              "kills": 0
+            },
+            {
+              "col": 3,
+              "row": 3,
+              "dps": 69.81111111111115,
+              "kills": 0
+            },
+            {
+              "col": 5,
+              "row": 3,
+              "dps": 81.46888888888896,
+              "kills": 0
+            },
+            {
+              "col": 6,
+              "row": 3,
+              "dps": 92.44888888888899,
+              "kills": 0
+            }
+          ]
+        },
+        {
+          "mapId": "cat_tower_maze",
+          "pads": [
+            {
+              "col": 1,
+              "row": 1,
+              "dps": 66.42222222222226,
+              "kills": 0
+            },
+            {
+              "col": 4,
+              "row": 1,
+              "dps": 80.1133333333334,
+              "kills": 0
+            },
+            {
+              "col": 5,
+              "row": 1,
+              "dps": 69.81111111111115,
+              "kills": 0
+            },
+            {
+              "col": 1,
+              "row": 3,
+              "dps": 56.12000000000001,
+              "kills": 0
+            },
+            {
+              "col": 3,
+              "row": 3,
+              "dps": 92.44888888888899,
+              "kills": 0
+            },
+            {
+              "col": 6,
+              "row": 3,
+              "dps": 78.75777777777785,
+              "kills": 0
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "kind": "ballin_rooster",
+      "family": "magic",
+      "normalDps": 54,
+      "range": 2.2,
+      "dummy": {
+        "dps": 178.25,
+        "buffUptime": 0,
+        "maxConsecutiveBuff": 0,
+        "damage": 32085
+      },
+      "pack": {
+        "dps": 178.25,
+        "buffUptime": 0,
+        "maxConsecutiveBuff": 0,
+        "damage": 32085
+      },
+      "level3": {
+        "dps": 507.51999999999646,
+        "buffUptime": 0,
+        "maxConsecutiveBuff": 0,
+        "damage": 91353.59999999937
+      },
+      "level5": {
+        "dps": 1482.751999999997,
+        "buffUptime": 0,
+        "maxConsecutiveBuff": 0,
+        "damage": 266895.35999999946
+      },
+      "signature": {
+        "dps": 413.8809999999978,
+        "buffUptime": 0,
+        "maxConsecutiveBuff": 0,
+        "damage": 74498.57999999961
+      },
+      "pathAverageDps": 98.01388888888887,
+      "pathBestDps": 105.875,
+      "maps": [
+        {
+          "mapId": "sunny_backyard",
+          "pads": [
+            {
+              "col": 2,
+              "row": 1,
+              "dps": 94.83333333333333,
+              "kills": 1
+            },
+            {
+              "col": 6,
+              "row": 1,
+              "dps": 93,
+              "kills": 0
+            },
+            {
+              "col": 3,
+              "row": 2,
+              "dps": 93.83333333333333,
+              "kills": 1
+            },
+            {
+              "col": 5,
+              "row": 2,
+              "dps": 94.5,
+              "kills": 0
+            },
+            {
+              "col": 2,
+              "row": 3,
+              "dps": 92.83333333333333,
+              "kills": 1
+            },
+            {
+              "col": 6,
+              "row": 3,
+              "dps": 95,
+              "kills": 0
+            }
+          ]
+        },
+        {
+          "mapId": "sakura_onsen",
+          "pads": [
+            {
+              "col": 2,
+              "row": 1,
+              "dps": 92.33333333333333,
+              "kills": 1
+            },
+            {
+              "col": 4,
+              "row": 1,
+              "dps": 104.83333333333333,
+              "kills": 1
+            },
+            {
+              "col": 6,
+              "row": 1,
+              "dps": 116.33333333333333,
+              "kills": 1
+            },
+            {
+              "col": 2,
+              "row": 3,
+              "dps": 117,
+              "kills": 0
+            },
+            {
+              "col": 4,
+              "row": 3,
+              "dps": 104.83333333333333,
+              "kills": 1
+            },
+            {
+              "col": 6,
+              "row": 3,
+              "dps": 92.33333333333333,
+              "kills": 1
+            }
+          ]
+        },
+        {
+          "mapId": "midnight_kitchen",
+          "pads": [
+            {
+              "col": 1,
+              "row": 1,
+              "dps": 105.83333333333333,
+              "kills": 1
+            },
+            {
+              "col": 3,
+              "row": 1,
+              "dps": 94.83333333333333,
+              "kills": 1
+            },
+            {
+              "col": 7,
+              "row": 1,
+              "dps": 106,
+              "kills": 0
+            },
+            {
+              "col": 3,
+              "row": 3,
+              "dps": 92.33333333333333,
+              "kills": 1
+            },
+            {
+              "col": 5,
+              "row": 3,
+              "dps": 105.83333333333333,
+              "kills": 1
+            },
+            {
+              "col": 6,
+              "row": 3,
+              "dps": 105.83333333333333,
+              "kills": 1
+            }
+          ]
+        },
+        {
+          "mapId": "cat_tower_maze",
+          "pads": [
+            {
+              "col": 1,
+              "row": 1,
+              "dps": 72,
+              "kills": 0
+            },
+            {
+              "col": 4,
+              "row": 1,
+              "dps": 104.83333333333333,
+              "kills": 1
+            },
+            {
+              "col": 5,
+              "row": 1,
+              "dps": 92.33333333333333,
+              "kills": 1
+            },
+            {
+              "col": 1,
+              "row": 3,
+              "dps": 70,
+              "kills": 0
+            },
+            {
+              "col": 3,
+              "row": 3,
+              "dps": 105.5,
+              "kills": 0
+            },
+            {
+              "col": 6,
+              "row": 3,
+              "dps": 105.33333333333333,
+              "kills": 1
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "kind": "rocket_coon",
+      "family": "ranged",
+      "normalDps": 51.6,
+      "range": 3,
+      "dummy": {
+        "dps": 72.47888888888892,
+        "buffUptime": 0,
+        "maxConsecutiveBuff": 0,
+        "damage": 13046.200000000006
+      },
+      "pack": {
+        "dps": 134.3988888888887,
+        "buffUptime": 0,
+        "maxConsecutiveBuff": 0,
+        "damage": 24191.799999999967
+      },
+      "level3": {
+        "dps": 193.37386666666782,
+        "buffUptime": 0,
+        "maxConsecutiveBuff": 0,
+        "damage": 34807.296000000206
+      },
+      "level5": {
+        "dps": 520.086414222221,
+        "buffUptime": 0,
+        "maxConsecutiveBuff": 0,
+        "damage": 93615.55455999979
+      },
+      "signature": {
+        "dps": 114.51664444444424,
+        "buffUptime": 0,
+        "maxConsecutiveBuff": 0,
+        "damage": 20612.995999999963
+      },
+      "pathAverageDps": 63.098611111111126,
+      "pathBestDps": 73.3055555555556,
+      "maps": [
+        {
+          "mapId": "sunny_backyard",
+          "pads": [
+            {
+              "col": 2,
+              "row": 1,
+              "dps": 66.31555555555558,
+              "kills": 0
+            },
+            {
+              "col": 6,
+              "row": 1,
+              "dps": 61.92000000000001,
+              "kills": 0
+            },
+            {
+              "col": 3,
+              "row": 2,
+              "dps": 64.07333333333335,
+              "kills": 1
+            },
+            {
+              "col": 5,
+              "row": 2,
+              "dps": 56.42888888888889,
+              "kills": 1
+            },
+            {
+              "col": 2,
+              "row": 3,
+              "dps": 60.633333333333354,
+              "kills": 1
+            },
+            {
+              "col": 6,
+              "row": 3,
+              "dps": 60.20000000000001,
+              "kills": 0
+            }
+          ]
+        },
+        {
+          "mapId": "sakura_onsen",
+          "pads": [
+            {
+              "col": 2,
+              "row": 1,
+              "dps": 54.275555555555556,
+              "kills": 0
+            },
+            {
+              "col": 4,
+              "row": 1,
+              "dps": 71.62222222222226,
+              "kills": 1
+            },
+            {
+              "col": 6,
+              "row": 1,
+              "dps": 78.40666666666671,
+              "kills": 1
+            },
+            {
+              "col": 2,
+              "row": 3,
+              "dps": 64.74222222222224,
+              "kills": 1
+            },
+            {
+              "col": 4,
+              "row": 3,
+              "dps": 63.977777777777796,
+              "kills": 1
+            },
+            {
+              "col": 6,
+              "row": 3,
+              "dps": 54.275555555555556,
+              "kills": 0
+            }
+          ]
+        },
+        {
+          "mapId": "midnight_kitchen",
+          "pads": [
+            {
+              "col": 1,
+              "row": 1,
+              "dps": 78.12000000000005,
+              "kills": 1
+            },
+            {
+              "col": 3,
+              "row": 1,
+              "dps": 66.08000000000003,
+              "kills": 1
+            },
+            {
+              "col": 7,
+              "row": 1,
+              "dps": 70.71111111111114,
+              "kills": 0
+            },
+            {
+              "col": 3,
+              "row": 3,
+              "dps": 57.57555555555557,
+              "kills": 1
+            },
+            {
+              "col": 5,
+              "row": 3,
+              "dps": 63.3088888888889,
+              "kills": 1
+            },
+            {
+              "col": 6,
+              "row": 3,
+              "dps": 65.1688888888889,
+              "kills": 0
+            }
+          ]
+        },
+        {
+          "mapId": "cat_tower_maze",
+          "pads": [
+            {
+              "col": 1,
+              "row": 1,
+              "dps": 51.98222222222222,
+              "kills": 0
+            },
+            {
+              "col": 4,
+              "row": 1,
+              "dps": 64.55111111111114,
+              "kills": 1
+            },
+            {
+              "col": 5,
+              "row": 1,
+              "dps": 68.18222222222224,
+              "kills": 1
+            },
+            {
+              "col": 1,
+              "row": 3,
+              "dps": 50.07111111111111,
+              "kills": 0
+            },
+            {
+              "col": 3,
+              "row": 3,
+              "dps": 70.38000000000002,
+              "kills": 1
+            },
+            {
+              "col": 6,
+              "row": 3,
+              "dps": 51.36444444444444,
+              "kills": 1
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "kind": "pepe_king",
+      "family": "magic",
+      "normalDps": 52,
+      "range": 2.8,
+      "dummy": {
+        "dps": 68.73462962961472,
+        "buffUptime": 0,
+        "maxConsecutiveBuff": 0,
+        "damage": 12372.233333330649
+      },
+      "pack": {
+        "dps": 118.27185185181818,
+        "buffUptime": 0,
+        "maxConsecutiveBuff": 0,
+        "damage": 21288.933333327273
+      },
+      "level3": {
+        "dps": 182.16059259259762,
+        "buffUptime": 0,
+        "maxConsecutiveBuff": 0,
+        "damage": 32788.90666666757
+      },
+      "level5": {
+        "dps": 486.8730121481123,
+        "buffUptime": 0,
+        "maxConsecutiveBuff": 0,
+        "damage": 87637.14218666022
+      },
+      "signature": {
+        "dps": 159.44056499996566,
+        "buffUptime": 0,
+        "maxConsecutiveBuff": 0,
+        "damage": 28699.30169999382
+      },
+      "pathAverageDps": 212.165462962913,
+      "pathBestDps": 231.22416666660823,
+      "maps": [
+        {
+          "mapId": "sunny_backyard",
+          "pads": [
+            {
+              "col": 2,
+              "row": 1,
+              "dps": 204.71222222217486,
+              "kills": 1
+            },
+            {
+              "col": 6,
+              "row": 1,
+              "dps": 189.75666666662917,
+              "kills": 1
+            },
+            {
+              "col": 3,
+              "row": 2,
+              "dps": 204.09333333328607,
+              "kills": 1
+            },
+            {
+              "col": 5,
+              "row": 2,
+              "dps": 201.1799999999573,
+              "kills": 1
+            },
+            {
+              "col": 2,
+              "row": 3,
+              "dps": 187.18777777773823,
+              "kills": 1
+            },
+            {
+              "col": 6,
+              "row": 3,
+              "dps": 205.0533333332898,
+              "kills": 1
+            }
+          ]
+        },
+        {
+          "mapId": "sakura_onsen",
+          "pads": [
+            {
+              "col": 2,
+              "row": 1,
+              "dps": 205.0699999999509,
+              "kills": 1
+            },
+            {
+              "col": 4,
+              "row": 1,
+              "dps": 223.79888888883147,
+              "kills": 2
+            },
+            {
+              "col": 6,
+              "row": 1,
+              "dps": 255.29444444437163,
+              "kills": 2
+            },
+            {
+              "col": 2,
+              "row": 3,
+              "dps": 250.75555555548925,
+              "kills": 1
+            },
+            {
+              "col": 4,
+              "row": 3,
+              "dps": 233.67888888883,
+              "kills": 1
+            },
+            {
+              "col": 6,
+              "row": 3,
+              "dps": 214.90888888883836,
+              "kills": 1
+            }
+          ]
+        },
+        {
+          "mapId": "midnight_kitchen",
+          "pads": [
+            {
+              "col": 1,
+              "row": 1,
+              "dps": 241.18111111104537,
+              "kills": 2
+            },
+            {
+              "col": 3,
+              "row": 1,
+              "dps": 230.17666666660676,
+              "kills": 1
+            },
+            {
+              "col": 7,
+              "row": 1,
+              "dps": 244.154444444381,
+              "kills": 0
+            },
+            {
+              "col": 3,
+              "row": 3,
+              "dps": 220.3211111110568,
+              "kills": 1
+            },
+            {
+              "col": 5,
+              "row": 3,
+              "dps": 234.89999999994075,
+              "kills": 1
+            },
+            {
+              "col": 6,
+              "row": 3,
+              "dps": 235.97333333327393,
+              "kills": 1
+            }
+          ]
+        },
+        {
+          "mapId": "cat_tower_maze",
+          "pads": [
+            {
+              "col": 1,
+              "row": 1,
+              "dps": 160.76111111108304,
+              "kills": 1
+            },
+            {
+              "col": 4,
+              "row": 1,
+              "dps": 205.09777777773044,
+              "kills": 1
+            },
+            {
+              "col": 5,
+              "row": 1,
+              "dps": 194.2155555555143,
+              "kills": 1
+            },
+            {
+              "col": 1,
+              "row": 3,
+              "dps": 131.99999999998653,
+              "kills": 0
+            },
+            {
+              "col": 3,
+              "row": 3,
+              "dps": 220.39444444439036,
+              "kills": 1
+            },
+            {
+              "col": 6,
+              "row": 3,
+              "dps": 197.30555555551538,
+              "kills": 1
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

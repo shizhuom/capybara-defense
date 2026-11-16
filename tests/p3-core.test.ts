@@ -10,13 +10,13 @@ function pet(e:BattleEngine,kind='hamster'){const id=e.grant(kind).unitId!;retur
 describe('P3 shared base and effective stats',()=>{
  it('uses five exact basic damage levels with existing rate growth and clamps impossible levels',()=>{
   expect(LEVEL_MULTIPLIERS).toEqual([1,1.55,2.25,3.15,4.3]);
-  [12,18.6,27,37.8,51.6].forEach((damage,i)=>expect(getBaseUnitStats('hamster',i+1).damage).toBeCloseTo(damage));
-  expect(getBaseUnitStats('hamster',2)).toMatchObject({range:1.35,charge:0});expect(getBaseUnitStats('hamster',2).rate).toBeCloseTo(1.4);
+  [16,24.8,36,50.4,68.8].forEach((damage,i)=>expect(getBaseUnitStats('hamster',i+1).damage).toBeCloseTo(damage));
+  expect(getBaseUnitStats('hamster',2)).toMatchObject({range:1.6,charge:0});expect(getBaseUnitStats('hamster',2).rate).toBeCloseTo(1.4);
   expect(getBaseUnitStats('panda',5)).toEqual({damage:3,rate:1/1.5,range:1.35,charge:0});
   expect(getBaseUnitStats('shovel',5)).toEqual({damage:0,rate:0,range:0,charge:0});
   expect(getBaseUnitStats('missing',1)).toEqual({damage:0,rate:0,range:0,charge:0});
   expect(getBaseUnitStats('hamster',NaN)).toEqual(getBaseUnitStats('hamster',1));
-  const e=prep(),u=pet(e);u.level=4;expect(e.getUnitStats(u).damage).toBeCloseTo(37.8);
+  const e=prep(),u=pet(e);u.level=4;expect(e.getUnitStats(u).damage).toBeCloseTo(50.4);
   const hero=pet(e,'kungfu_po');hero.level=3;expect(getBaseUnitStats(hero.kind,3).damage).toBeCloseTo(getBaseUnitStats(hero.kind,1).damage*2.56);
  });
  it('shares actual bee production at all three levels and overtime rates',()=>{

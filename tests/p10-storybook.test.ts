@@ -58,7 +58,7 @@ describe('P10 storybook compendium',()=>{
     expect(initial.indexOf('class="compendium-detail"')).toBeLessThan(initial.indexOf('class="storybook-matrix-reference"'));
     expect(initial).toContain('<details class="storybook-matrix-reference"><summary>');
     expect(initial.match(/data-matrix-cell=/g)).toHaveLength(9);expect(initial.match(/data-special-recipe=/g)).toHaveLength(4);expect(initial).toContain('matrix-corner');
-    for(const damage of [38,61,97,156,249])expect(initial).toContain(`<td>${damage}</td>`);
+    for(const damage of [50,80,128,205,328])expect(initial).toContain(`<td>${damage}</td>`);
     book.selectHero('puss_in_hat');const selected=book.markup(profile,false);
     expect(book.tab).toBe('matrix');expect(selected).toContain('data-compendium-kind="puss_in_hat" data-compendium-focused="true" tabindex="-1"');
     expect(selected).toContain('data-action="compendium-hero:puss_in_hat" aria-pressed="true"');

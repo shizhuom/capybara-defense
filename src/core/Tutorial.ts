@@ -18,5 +18,5 @@ export function finishTutorial(profile:Profile,reward:boolean):{profile:Profile;
   return {profile:{...profile,tutorialCompleted:true,tutorialRewardClaimed:!!profile.tutorialRewardClaimed||awarded,coins:profile.coins+(awarded?20:0)},awarded};
 }
 export function replayTutorial(profile:Profile):Profile {
-  return {...profile,tutorialCompleted:false};
+  return {...profile,tutorialCompleted:false,earlyWaveTipSeen:false};
 }

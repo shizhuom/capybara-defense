@@ -1,0 +1,46 @@
+{
+  "passed": true,
+  "checks": [
+    {
+      "label": "desktop",
+      "values": [
+        "16",
+        "1.25",
+        "1.6"
+      ],
+      "liveDamage": 50,
+      "liveRange": 1.8,
+      "during": {
+        "buff": 1.916099999999999,
+        "energy": 0
+      },
+      "after": {
+        "buff": 0,
+        "energy": 1
+      }
+    },
+    {
+      "label": "mobile",
+      "values": [
+        "16",
+        "1.25",
+        "1.6"
+      ],
+      "liveDamage": 50,
+      "liveRange": 1.8,
+      "during": {
+        "buff": 1.9152999999999987,
+        "energy": 0
+      },
+      "after": {
+        "buff": 0,
+        "energy": 1
+      }
+    }
+  ],
+  "screenshots": [
+    "combat-balance-desktop-live-stats.png",
+    "combat-balance-mobile-live-stats.png"
+  ],
+  "errors": []
+}

@@ -23,13 +23,18 @@ describe('P3 scenic rendering',()=>{
   expect(calls.some(c=>c.name==='strokeRect'&&c.stroke==='rgba(60,48,34,0.12)'&&c.args[0]===172.5)).toBe(true);
  });
  // Menu previews intentionally use the dedicated P4 splash; covered in p4-start-screen.test.ts.
- it('uses the second frame when present, falls back to base, and keeps exact enlarged HP bounds',()=>{
-  const base=image('rat'),walk=image('rat_walk2');let loaded=true;vi.spyOn(assets,'get').mockImplementation(id=>id==='rat'?base:id==='rat_walk2'&&loaded?walk:undefined);
+ it('deforms the base image continuously even when another frame is present and keeps exact enlarged HP bounds',()=>{
+  const base=image('rat'),walk=image('rat_walk2');const get=vi.spyOn(assets,'get').mockImplementation(id=>id==='rat'?base:id==='rat_walk2'?walk:undefined);
   const e=new BattleEngine({autoWaves:false}),rat=e.spawnEnemy('rat','player');rat.progress=.2;rat.id=0;
   const {renderer,calls}=surface();renderer.draw(e.state,0);
-  expect(calls.find(c=>c.name==='drawImage'&&c.args[0]===walk)?.args.slice(3)).toEqual([98,98]);
+  const slices=calls.filter(c=>c.name==='drawImage'&&c.args[0]===base);
+  expect(slices).toHaveLength(12);expect(slices.every(c=>c.args.length===9)).toBe(true);
+  expect(slices[0].args[6]).toBe(-49);expect(Math.max(...slices.map(c=>c.args[6]+c.args[8]))).toBe(49);
+  expect(calls.some(c=>c.name==='drawImage'&&c.args[0]===walk)).toBe(false);
+  expect(get.mock.calls.some(([id])=>id==='rat_walk2')).toBe(false);
   expect(calls.some(c=>c.name==='roundRect'&&c.args[2]===42&&c.args[3]===7)).toBe(true);
-  loaded=false;calls.length=0;renderer.draw(e.state,.1);expect(calls.some(c=>c.name==='drawImage'&&c.args[0]===base)).toBe(true);
+  calls.length=0;rat.progress+=.01;renderer.draw(e.state,.3);expect(calls.some(c=>c.name==='drawImage'&&c.args[0]===base)).toBe(true);
+  expect(calls.filter(c=>c.name==='drawImage'&&c.args[0]===base).map(c=>c.args)).not.toEqual(slices.map(c=>c.args));
   expect(calls.some(c=>c.name==='scale'&&Math.abs(c.args[0])>.7&&Math.abs(c.args[0])<1.1)).toBe(true);
  });
  it('uses a golden recovery arc and no duplicate sprinkler or nest instructions',()=>{
@@ -62,16 +67,20 @@ describe('P3 scenic rendering',()=>{
   const art=image('husky_wrecker');vi.spyOn(assets,'get').mockImplementation(id=>id==='husky_wrecker'?art:undefined);
   const engine=new BattleEngine({autoWaves:false}),boss=engine.spawnEnemy('husky_wrecker','player');boss.id=0;boss.size=99;
   const {renderer,calls}=surface();renderer.draw(engine.state,0);
-  expect(calls.find(c=>c.name==='drawImage'&&c.args[0]===art)?.args.slice(3)).toEqual([126,126]);
-  expect(calls.some(c=>c.name==='scale'&&Math.abs(c.args[0]-1.89696)<1e-7&&Math.abs(c.args[1]-1.75104)<1e-7)).toBe(true);
+  const slices=calls.filter(c=>c.name==='drawImage'&&c.args[0]===art);
+  expect(slices).toHaveLength(12);expect(slices[0].args[6]).toBe(-63);
+  expect(Math.max(...slices.map(c=>c.args[6]+c.args[8]))).toBe(63);
   expect(calls.some(c=>c.name==='roundRect'&&c.args[2]===68&&c.args[3]===9)).toBe(true);
   expect(calls.some(c=>c.name==='fill'&&c.fill==='#e2b46e')).toBe(true);
+  const clampedScales=calls.filter(c=>c.name==='scale').map(c=>c.args);
+  boss.size=1.6;calls.length=0;renderer.draw(engine.state,0);
+  expect(calls.filter(c=>c.name==='scale').map(c=>c.args)).toEqual(clampedScales);
  });
  it('bounds footfall dust, freezes its age on pause and clears it on removals, previews and new battles',()=>{
   const dust=image('vfx_dust_puff');vi.spyOn(assets,'get').mockImplementation(id=>id==='vfx_dust_puff'?dust:undefined);
   const engine=new BattleEngine({autoWaves:false}),roach=engine.spawnEnemy('roach','player');roach.id=0;
   const {renderer,calls}=surface();renderer.draw(engine.state,0);
-  for(let i=1;i<=70;i++){roach.progress=i/6.5;renderer.draw(engine.state,0);}
+  for(let i=1;i<=70;i++){roach.progress=i*(Math.PI+.001)/13.5;renderer.draw(engine.state,0);}
   calls.length=0;engine.state.phase='paused';renderer.draw(engine.state,20);
   expect(calls.filter(c=>c.name==='drawImage'&&c.args[0]===dust)).toHaveLength(48);
   const snapshot=JSON.stringify(engine.state);renderer.drawPreview('sakura_onsen',21);expect(JSON.stringify(engine.state)).toBe(snapshot);
@@ -94,25 +103,28 @@ describe('P3 locomotion',()=>{
   e.row+=.5;expect(motion.sample(e,.3,false,path).dirX).toBe(1);
   expect(ENEMY_NATURAL_FACING).toEqual({rat:-1,roach:-1,killer_bee:-1,dr_clippers:-1,king_skunk:-1,hornet_queen:-1,dj_rat_king:-1,charmed_rat:1,husky_wrecker:1,diva_kitty:1,screaming_marmot:1,trash_coon:1,crab:0,mega_roomba:0,box_kraken:0,sad_rain_frog:0,buff_roo:0});
  });
- it.each([['roach',6.5,3.5],['rat',5.5,5.5],['charmed_rat',5.5,5.5],['crab',5,5.5],['husky_wrecker',3.8,6.5]] as const)('drives %s steps, hop, sway, squash and shadows from actual progress', (kind,steps,height)=>{
-  const m=new EnemyMotion(),e=enemy(kind);e.id=0;e.boss=kind==='husky_wrecker';e.progress=.5/steps;
+ it.each([['roach',13.5,1.8],['rat',9.5,3.4],['charmed_rat',9.5,3.4],['crab',8,0],['husky_wrecker',4.6,7]] as const)('drives %s steps, hop, sway, squash and shadows from actual progress', (kind,steps,height)=>{
+  const m=new EnemyMotion(),e=enemy(kind);e.id=0;e.boss=kind==='husky_wrecker';e.progress=Math.PI/(2*steps);
   const p=m.sample(e,0,false,MAPS.sunny_backyard.paths.player);
-  expect(p.phase).toBeCloseTo(Math.PI/2);expect(p.hopY).toBeCloseTo(-height);expect(p.tilt).toBeCloseTo(e.boss?.065:.085);
-  expect(p.squashX).toBeCloseTo(.96);expect(p.squashY).toBeCloseTo(1.04);expect(p.shadowScale).toBeCloseTo(1-height/18);
+  expect(p.phase).toBeCloseTo(Math.PI/2);expect(p.rig.phase).toBe(p.phase);expect(p.hopY).toBeCloseTo(-height);
+  expect(p.shadowScale).toBeCloseTo(1-height/28);
   // Wall time alone cannot move ground legs; speed and slow are reflected by engine progress.
-  expect(m.sample(e,20,false,MAPS.sunny_backyard.paths.player).phase).toBe(p.phase);
-  e.progress+=.01;expect(m.sample(e,21,false,MAPS.sunny_backyard.paths.player).phase-p.phase).toBeCloseTo(.01*steps*Math.PI);
+  const waiting=m.sample(e,20,false,MAPS.sunny_backyard.paths.player);
+  expect(waiting.phase).toBe(p.phase);expect(waiting.rig).toEqual(p.rig);
+  expect([waiting.hopY,waiting.tilt,waiting.squashX,waiting.squashY]).toEqual([p.hopY,p.tilt,p.squashX,p.squashY]);
+  e.progress+=.01;expect(m.sample(e,21,false,MAPS.sunny_backyard.paths.player).phase-p.phase).toBeCloseTo(.01*steps);
  });
- it('freezes the current frame under stun and the entire pose under pause',()=>{
+ it('freezes continuous gait under stun and the entire pose under pause',()=>{
   const m=new EnemyMotion(),e=enemy();e.id=0;e.progress=.2;const path=MAPS.sunny_backyard.paths.player;
-  const p=m.sample(e,0,false,path);expect(p.useWalk2).toBe(true);
-  e.stun=1;e.progress=.5;const stunned=m.sample(e,.1,false,path);expect(stunned.useWalk2).toBe(true);expect(stunned.hopY).toBe(0);
-  expect(m.sample(e,10,true,path)).toEqual({...stunned,footfall:false});
+  const p=m.sample(e,0,false,path);
+  e.stun=1;e.progress=.5;const stunned=m.sample(e,.1,false,path);expect(stunned.rig).toEqual(p.rig);expect(stunned.hopY).toBe(p.hopY);
+  expect(m.sample(e,10,true,path)).toEqual(stunned);
  });
- it('flaps flyers at 12fps, freezes on pause and drops removed/new-battle state',()=>{
+ it('flaps flyers continuously at 28Hz, freezes on pause and drops removed/new-battle state',()=>{
   const m=new EnemyMotion(),e=enemy('killer_bee');e.id=0;const path=MAPS.sunny_backyard.paths.player;
-  expect(m.sample(e,0,false,path).useWalk2).toBe(false);expect(m.sample(e,.09,false,path).useWalk2).toBe(true);
-  expect(m.sample(e,2,true,path).useWalk2).toBe(true);
+  const first=m.sample(e,0,false,path),flapping=m.sample(e,.09,false,path);
+  expect(flapping.wingPhase-first.wingPhase).toBeCloseTo(.09*28*Math.PI*2);
+  expect(m.sample(e,2,true,path)).toEqual(flapping);
   m.retain(new Set());e.col=5;expect(m.sample(e,3,false,MAPS.sakura_onsen.paths.player).dirX).toBe(-1);
   m.clear();expect(m.sample(e,4,false,path).dirX).toBe(1);
  });

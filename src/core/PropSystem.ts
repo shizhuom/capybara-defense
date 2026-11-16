@@ -7,8 +7,9 @@ import {HEROES} from '../config/heroes';
 import {RECIPES} from '../config/recipes';
 import {getMap} from '../config/maps';
 import {GridSystem} from './GridSystem';
+import {isValidPropRoad,propUnitTargetError,type PropTarget} from './PropTargets';
 
-export interface PropTarget {unitId?:number;col?:number;row?:number}
+export type {PropTarget} from './PropTargets';
 
 /** Snapshot validation keeps outside profile edits from changing a running match. */
 export function copyLoadout(input:Partial<BattleLoadout>={}):BattleLoadout {
@@ -74,17 +75,12 @@ export class PropSystem {
     if(state.phase!=='playing')return{ok:false,key:'hint.paused'};
     if(!prop||!resources.loadout.equippedActiveProps.includes(id))return{ok:false,key:'m2.propNotEquipped'};
     if((resources.propCooldowns[id]??0)>1e-8)return{ok:false,key:'m2.propCooldown'};
-    const unit=state.units.find(u=>u.id===target.unitId&&u.side===side),basic=unit&&UNITS[unit.kind],max=unit?(HEROES[unit.kind]?5:basic?.maxLevel??1):1;
+    const unit=state.units.find(u=>u.id===target.unitId&&u.side===side);
     if(prop.target==='unit'){
-      if(!unit)return{ok:false,key:'m2.invalidTarget'};
-      if(unit.kind==='shovel'&&(id!=='recycle_bin'||unit.location.zone!=='bench'))return{ok:false,key:'hint.toolOnly'};
-      if((unit.washing??0)>0)return{ok:false,key:'m2.washing'};
-      if(id==='washer'&&!(basic?.category==='component'||basic?.category==='basic'&&unit.level===1))return{ok:false,key:'m2.invalidTarget'};
-      if(id==='clay'&&basic?.category!=='component')return{ok:false,key:'m2.invalidTarget'};
-      if(id==='milk_bottle'&&(max===1||unit.level>=max))return{ok:false,key:'hint.maxLevel'};
-      if(id==='recycle_bin'&&unit.level!==1)return{ok:false,key:'m2.invalidTarget'};
+      const key=propUnitTargetError(state,id,unit,side);
+      if(key)return{ok:false,key};
     }
-    if(prop.target==='road'&&(!Number.isInteger(target.col)||!Number.isInteger(target.row)||!GridSystem.owns(side,target.col!,target.row!)||state.grid[target.row!][target.col!]!=='R'||state.traps.some(trap=>trap.side===side&&trap.col===target.col&&trap.row===target.row)))return{ok:false,key:'m2.invalidTarget'};
+    if(prop.target==='road'&&!isValidPropRoad(state,target.col!,target.row!,side))return{ok:false,key:'m2.invalidTarget'};
     resources.propCooldowns[id]=prop.cooldown;
     let key='m2.upgraded';
     switch(id){

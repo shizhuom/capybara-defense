@@ -15,6 +15,17 @@ export const WAVES = [
 ] as const;
 export const WAVE_DURATION = 36;
 export const FIRST_WAVE_PREPARATION = 18;
+export interface WaveConfig {count:number;interval:number;hpScale:number;speedScale:number;armorBonus:number}
+/** Standard waves retain their table; endless pressure starts at k=1 on wave 11. */
+export function getWaveConfig(waveNumber:number):WaveConfig {
+  const wave=Number.isFinite(waveNumber)?Math.max(1,Math.trunc(waveNumber)):1;
+  if(wave<=10)return {...WAVES[wave-1],speedScale:1,armorBonus:0};
+  const k=wave-10;
+  // Numerical saturation only: realistic waves retain their exact exponential curve.
+  const hpScale=Math.min(Number.MAX_SAFE_INTEGER,WAVES[9].hpScale*2**Math.min(53,k));
+  return {count:Math.min(56,26+3*k),interval:Math.max(.55,1.2*Math.pow(.92,k)),hpScale,
+    speedScale:1+Math.min(.75,.06*k),armorBonus:Math.min(.35,.025*k)};
+}
 const BOSS_WAVES=[4,6,8,9,10];
 export const THEME_BOSSES:Record<MapId,string[]>={
   sunny_backyard:['husky_wrecker','diva_kitty','mega_roomba','sad_rain_frog','king_skunk'],
@@ -23,10 +34,11 @@ export const THEME_BOSSES:Record<MapId,string[]>={
   cat_tower_maze:['hornet_queen','buff_roo','box_kraken','screaming_marmot','dj_rat_king'],
 };
 export function bossForWave(mapId:MapId,rankIndex:number,wave:number,random:()=>number):string|null {
-  const index=wave===3&&rankIndex>=20?0:BOSS_WAVES.indexOf(wave);if(index<0)return null;
+  const index=wave>=11?(Math.trunc(wave)-11)%5:wave===3&&rankIndex>=20?0:BOSS_WAVES.indexOf(wave);if(index<0)return null;
   return rankIndex>=40?BOSS_IDS[Math.floor(Math.max(0,Math.min(.999999999,random()))*BOSS_IDS.length)]:THEME_BOSSES[mapId][index];
 }
 export function bossCountForWave(wave:number,rankIndex:number):number {
+  if(wave>=11){const k=wave-10;return k<=2?1:k<=5?2:3;}
   const rank=clampRank(rankIndex);
   if(wave===3&&rank>=20)return 1;
   if(!BOSS_WAVES.includes(wave))return 0;
@@ -34,13 +46,15 @@ export function bossCountForWave(wave:number,rankIndex:number):number {
 }
 export function bossesForWave(mapId:MapId,rankIndex:number,wave:number,random:()=>number):string[] {
   const first=bossForWave(mapId,rankIndex,wave,random);if(!first)return [];
-  if(bossCountForWave(wave,rankIndex)<2)return [first];
+  const count=bossCountForWave(wave,rankIndex);if(count<2)return [first];
   const pool=(rankIndex>=40?BOSS_IDS:THEME_BOSSES[mapId]).filter(id=>id!==first);
-  return [first,pool[Math.floor(Math.max(0,Math.min(.999999999,random()))*pool.length)]];
+  const chosen=[first];
+  while(chosen.length<count)chosen.push(pool.splice(Math.floor(Math.max(0,Math.min(.999999999,random()))*pool.length),1)[0]);
+  return chosen;
 }
 export function waveEnemyCount(waveNumber:number,rankIndex:number):number {
-  const config=WAVES[Math.max(0,Math.min(9,Math.trunc(waveNumber)-1))];
-  return config.count+getRankDifficulty(rankIndex).extraCount;
+  const config=getWaveConfig(waveNumber);
+  return config.count+(waveNumber>=11?0:getRankDifficulty(rankIndex).extraCount);
 }
 export function minionForWave(waveNumber:number,spawnIndex:number,rankIndex:number):string {
   const rank=clampRank(rankIndex),i=Math.max(0,Math.trunc(spawnIndex));

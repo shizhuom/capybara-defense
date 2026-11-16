@@ -1,0 +1,1858 @@
+{
+  "passed": true,
+  "checks": [
+    "desktop-zh-CN: pause/resume/profile return, 3-star victory, stats/Escape focus, defeat/retry, image and geometry checks",
+    "desktop-en: pause/resume/profile return, 3-star victory, stats/Escape focus, defeat/retry, image and geometry checks",
+    "1080p-zh-CN: pause/resume/profile return, 3-star victory, stats/Escape focus, defeat/retry, image and geometry checks",
+    "1080p-en: pause/resume/profile return, 3-star victory, stats/Escape focus, defeat/retry, image and geometry checks",
+    "mobile-landscape-zh-CN: pause/resume/profile return, 3-star victory, stats/Escape focus, defeat/retry, image and geometry checks",
+    "mobile-landscape-en: pause/resume/profile return, 3-star victory, stats/Escape focus, defeat/retry, image and geometry checks",
+    "mobile-portrait-zh-CN: pause/resume/profile return, 3-star victory, stats/Escape focus, defeat/retry, image and geometry checks",
+    "mobile-portrait-en: pause/resume/profile return, 3-star victory, stats/Escape focus, defeat/retry, image and geometry checks",
+    "crowded combat: all seven locomotion rigs; whole canvas freezes during pause",
+    {
+      "benchmark": {
+        "units": 12,
+        "enemies": 28,
+        "samples": 210,
+        "medianMs": 1.899999976158142,
+        "p95Ms": 2.399999976158142,
+        "maxMs": 7.199999988079071,
+        "budgetMs": 16.666666666666668
+      }
+    }
+  ],
+  "layouts": [
+    {
+      "label": "desktop-zh-CN pause",
+      "boxes": [
+        {
+          "sel": ".pause-storybook-actions",
+          "left": 413,
+          "top": 485.375,
+          "right": 953,
+          "bottom": 602.375,
+          "width": 540,
+          "height": 117
+        }
+      ],
+      "overflow": [],
+      "thin": [],
+      "broken": [],
+      "raw": false,
+      "width": 1366,
+      "height": 768
+    },
+    {
+      "label": "desktop-zh-CN victory",
+      "boxes": [
+        {
+          "sel": ".crest-stage",
+          "left": 403,
+          "top": 126.40625,
+          "right": 963,
+          "bottom": 641.59375,
+          "width": 560,
+          "height": 515.1875
+        },
+        {
+          "sel": ".crest-return-btn",
+          "left": 34,
+          "top": 23.03125,
+          "right": 98,
+          "bottom": 87.03125,
+          "width": 64,
+          "height": 64
+        },
+        {
+          "sel": ".btn-stats",
+          "left": 48,
+          "top": 683.125,
+          "right": 182,
+          "bottom": 741.125,
+          "width": 134,
+          "height": 58
+        },
+        {
+          "sel": ".btn-continue",
+          "left": 1132,
+          "top": 679.125,
+          "right": 1318,
+          "bottom": 741.125,
+          "width": 186,
+          "height": 62
+        },
+        {
+          "sel": ".crest-plaque-body",
+          "left": 582.1875,
+          "top": 404.59375,
+          "right": 783.8125,
+          "bottom": 466.734375,
+          "width": 201.625,
+          "height": 62.140625
+        },
+        {
+          "sel": ".crest-ribbon-title",
+          "left": 503.796875,
+          "top": 327.328125,
+          "right": 862.203125,
+          "bottom": 382.328125,
+          "width": 358.40625,
+          "height": 55
+        }
+      ],
+      "overflow": [],
+      "thin": [],
+      "broken": [],
+      "raw": false,
+      "width": 1366,
+      "height": 768
+    },
+    {
+      "label": "desktop-zh-CN stats",
+      "boxes": [
+        {
+          "sel": ".crest-stage",
+          "left": 414.901611328125,
+          "top": 137.35548400878906,
+          "right": 951.098388671875,
+          "bottom": 630.6445465087891,
+          "width": 536.19677734375,
+          "height": 493.2890625
+        },
+        {
+          "sel": ".crest-return-btn",
+          "left": 34,
+          "top": 23.03125,
+          "right": 98,
+          "bottom": 87.03125,
+          "width": 64,
+          "height": 64
+        },
+        {
+          "sel": ".btn-stats",
+          "left": 48,
+          "top": 683.125,
+          "right": 182,
+          "bottom": 741.125,
+          "width": 134,
+          "height": 58
+        },
+        {
+          "sel": ".btn-continue",
+          "left": 1132,
+          "top": 679.125,
+          "right": 1318,
+          "bottom": 741.125,
+          "width": 186,
+          "height": 62
+        },
+        {
+          "sel": ".crest-plaque-body",
+          "left": 586.4725952148438,
+          "top": 403.7183837890625,
+          "right": 779.52734375,
+          "bottom": 463.21771240234375,
+          "width": 193.05474853515625,
+          "height": 59.49932861328125
+        },
+        {
+          "sel": ".crest-ribbon-title",
+          "left": 511.4140319824219,
+          "top": 329.73699951171875,
+          "right": 854.5859375,
+          "bottom": 382.3992004394531,
+          "width": 343.1719055175781,
+          "height": 52.662200927734375
+        },
+        {
+          "sel": ".crest-stats-drawer",
+          "left": 333,
+          "top": 61.4296875,
+          "right": 1033,
+          "bottom": 675.8203125,
+          "width": 700,
+          "height": 614.390625
+        }
+      ],
+      "overflow": [],
+      "thin": [],
+      "broken": [],
+      "raw": false,
+      "width": 1366,
+      "height": 768
+    },
+    {
+      "label": "desktop-zh-CN defeat",
+      "boxes": [
+        {
+          "sel": ".crest-stage",
+          "left": 403,
+          "top": 126.40625,
+          "right": 963,
+          "bottom": 641.59375,
+          "width": 560,
+          "height": 515.1875
+        },
+        {
+          "sel": ".crest-return-btn",
+          "left": 34,
+          "top": 23.03125,
+          "right": 98,
+          "bottom": 87.03125,
+          "width": 64,
+          "height": 64
+        },
+        {
+          "sel": ".btn-stats",
+          "left": 48,
+          "top": 683.125,
+          "right": 182,
+          "bottom": 741.125,
+          "width": 134,
+          "height": 58
+        },
+        {
+          "sel": ".btn-continue",
+          "left": 1132,
+          "top": 679.125,
+          "right": 1318,
+          "bottom": 741.125,
+          "width": 186,
+          "height": 62
+        },
+        {
+          "sel": ".crest-plaque-body",
+          "left": 582.1875,
+          "top": 404.59375,
+          "right": 783.8125,
+          "bottom": 466.734375,
+          "width": 201.625,
+          "height": 62.140625
+        },
+        {
+          "sel": ".crest-ribbon-title",
+          "left": 503.796875,
+          "top": 327.328125,
+          "right": 862.203125,
+          "bottom": 382.328125,
+          "width": 358.40625,
+          "height": 55
+        }
+      ],
+      "overflow": [],
+      "thin": [],
+      "broken": [],
+      "raw": false,
+      "width": 1366,
+      "height": 768
+    },
+    {
+      "label": "desktop-en pause",
+      "boxes": [
+        {
+          "sel": ".pause-storybook-actions",
+          "left": 413,
+          "top": 485.375,
+          "right": 953,
+          "bottom": 602.375,
+          "width": 540,
+          "height": 117
+        }
+      ],
+      "overflow": [],
+      "thin": [],
+      "broken": [],
+      "raw": false,
+      "width": 1366,
+      "height": 768
+    },
+    {
+      "label": "desktop-en victory",
+      "boxes": [
+        {
+          "sel": ".crest-stage",
+          "left": 403,
+          "top": 126.40625,
+          "right": 963,
+          "bottom": 641.59375,
+          "width": 560,
+          "height": 515.1875
+        },
+        {
+          "sel": ".crest-return-btn",
+          "left": 34,
+          "top": 23.03125,
+          "right": 98,
+          "bottom": 87.03125,
+          "width": 64,
+          "height": 64
+        },
+        {
+          "sel": ".btn-stats",
+          "left": 48,
+          "top": 683.125,
+          "right": 188.421875,
+          "bottom": 741.125,
+          "width": 140.421875,
+          "height": 58
+        },
+        {
+          "sel": ".btn-continue",
+          "left": 1009.859375,
+          "top": 679.125,
+          "right": 1318,
+          "bottom": 741.125,
+          "width": 308.140625,
+          "height": 62
+        },
+        {
+          "sel": ".crest-plaque-body",
+          "left": 582.1875,
+          "top": 404.59375,
+          "right": 783.8125,
+          "bottom": 466.734375,
+          "width": 201.625,
+          "height": 62.140625
+        },
+        {
+          "sel": ".crest-ribbon-title",
+          "left": 503.796875,
+          "top": 327.328125,
+          "right": 862.203125,
+          "bottom": 382.328125,
+          "width": 358.40625,
+          "height": 55
+        }
+      ],
+      "overflow": [],
+      "thin": [],
+      "broken": [],
+      "raw": false,
+      "width": 1366,
+      "height": 768
+    },
+    {
+      "label": "desktop-en stats",
+      "boxes": [
+        {
+          "sel": ".crest-stage",
+          "left": 407.0097961425781,
+          "top": 130.0951690673828,
+          "right": 958.9902648925781,
+          "bottom": 637.9048614501953,
+          "width": 551.98046875,
+          "height": 507.8096923828125
+        },
+        {
+          "sel": ".crest-return-btn",
+          "left": 34,
+          "top": 23.03125,
+          "right": 98,
+          "bottom": 87.03125,
+          "width": 64,
+          "height": 64
+        },
+        {
+          "sel": ".btn-stats",
+          "left": 48,
+          "top": 683.125,
+          "right": 188.421875,
+          "bottom": 741.125,
+          "width": 140.421875,
+          "height": 58
+        },
+        {
+          "sel": ".btn-continue",
+          "left": 1009.859375,
+          "top": 679.125,
+          "right": 1318,
+          "bottom": 741.125,
+          "width": 308.140625,
+          "height": 62
+        },
+        {
+          "sel": ".crest-plaque-body",
+          "left": 583.6312255859375,
+          "top": 404.298828125,
+          "right": 782.3687744140625,
+          "bottom": 465.549560546875,
+          "width": 198.737548828125,
+          "height": 61.250732421875
+        },
+        {
+          "sel": ".crest-ribbon-title",
+          "left": 506.3631896972656,
+          "top": 328.13970947265625,
+          "right": 859.6368408203125,
+          "bottom": 382.35205078125,
+          "width": 353.2736511230469,
+          "height": 54.21234130859375
+        },
+        {
+          "sel": ".crest-stats-drawer",
+          "left": 333,
+          "top": 61.4296875,
+          "right": 1033,
+          "bottom": 675.8203125,
+          "width": 700,
+          "height": 614.390625
+        }
+      ],
+      "overflow": [],
+      "thin": [],
+      "broken": [],
+      "raw": false,
+      "width": 1366,
+      "height": 768
+    },
+    {
+      "label": "desktop-en defeat",
+      "boxes": [
+        {
+          "sel": ".crest-stage",
+          "left": 403,
+          "top": 126.40625,
+          "right": 963,
+          "bottom": 641.59375,
+          "width": 560,
+          "height": 515.1875
+        },
+        {
+          "sel": ".crest-return-btn",
+          "left": 34,
+          "top": 23.03125,
+          "right": 98,
+          "bottom": 87.03125,
+          "width": 64,
+          "height": 64
+        },
+        {
+          "sel": ".btn-stats",
+          "left": 48,
+          "top": 683.125,
+          "right": 188.421875,
+          "bottom": 741.125,
+          "width": 140.421875,
+          "height": 58
+        },
+        {
+          "sel": ".btn-continue",
+          "left": 1125.4375,
+          "top": 679.125,
+          "right": 1318,
+          "bottom": 741.125,
+          "width": 192.5625,
+          "height": 62
+        },
+        {
+          "sel": ".crest-plaque-body",
+          "left": 582.1875,
+          "top": 404.59375,
+          "right": 783.8125,
+          "bottom": 466.734375,
+          "width": 201.625,
+          "height": 62.140625
+        },
+        {
+          "sel": ".crest-ribbon-title",
+          "left": 503.796875,
+          "top": 327.328125,
+          "right": 862.203125,
+          "bottom": 382.328125,
+          "width": 358.40625,
+          "height": 55
+        }
+      ],
+      "overflow": [],
+      "thin": [],
+      "broken": [],
+      "raw": false,
+      "width": 1366,
+      "height": 768
+    },
+    {
+      "label": "1080p-zh-CN pause",
+      "boxes": [
+        {
+          "sel": ".pause-storybook-actions",
+          "left": 690,
+          "top": 641.375,
+          "right": 1230,
+          "bottom": 758.375,
+          "width": 540,
+          "height": 117
+        }
+      ],
+      "overflow": [],
+      "thin": [],
+      "broken": [],
+      "raw": false,
+      "width": 1920,
+      "height": 1080
+    },
+    {
+      "label": "1080p-zh-CN victory",
+      "boxes": [
+        {
+          "sel": ".crest-stage",
+          "left": 680,
+          "top": 282.40625,
+          "right": 1240,
+          "bottom": 797.59375,
+          "width": 560,
+          "height": 515.1875
+        },
+        {
+          "sel": ".crest-return-btn",
+          "left": 34,
+          "top": 28,
+          "right": 98,
+          "bottom": 92,
+          "width": 64,
+          "height": 64
+        },
+        {
+          "sel": ".btn-stats",
+          "left": 48,
+          "top": 988,
+          "right": 182,
+          "bottom": 1046,
+          "width": 134,
+          "height": 58
+        },
+        {
+          "sel": ".btn-continue",
+          "left": 1686,
+          "top": 984,
+          "right": 1872,
+          "bottom": 1046,
+          "width": 186,
+          "height": 62
+        },
+        {
+          "sel": ".crest-plaque-body",
+          "left": 859.1875,
+          "top": 560.59375,
+          "right": 1060.8125,
+          "bottom": 622.734375,
+          "width": 201.625,
+          "height": 62.140625
+        },
+        {
+          "sel": ".crest-ribbon-title",
+          "left": 780.796875,
+          "top": 483.328125,
+          "right": 1139.203125,
+          "bottom": 538.328125,
+          "width": 358.40625,
+          "height": 55
+        }
+      ],
+      "overflow": [],
+      "thin": [],
+      "broken": [],
+      "raw": false,
+      "width": 1920,
+      "height": 1080
+    },
+    {
+      "label": "1080p-zh-CN stats",
+      "boxes": [
+        {
+          "sel": ".crest-stage",
+          "left": 691.80126953125,
+          "top": 293.26312255859375,
+          "right": 1228.19873046875,
+          "bottom": 786.7368774414062,
+          "width": 536.3974609375,
+          "height": 493.4737548828125
+        },
+        {
+          "sel": ".crest-return-btn",
+          "left": 34,
+          "top": 28,
+          "right": 98,
+          "bottom": 92,
+          "width": 64,
+          "height": 64
+        },
+        {
+          "sel": ".btn-stats",
+          "left": 48,
+          "top": 988,
+          "right": 182,
+          "bottom": 1046,
+          "width": 134,
+          "height": 58
+        },
+        {
+          "sel": ".btn-continue",
+          "left": 1686,
+          "top": 984,
+          "right": 1872,
+          "bottom": 1046,
+          "width": 186,
+          "height": 62
+        },
+        {
+          "sel": ".crest-plaque-body",
+          "left": 863.4365234375,
+          "top": 559.7257690429688,
+          "right": 1056.5635986328125,
+          "bottom": 619.247314453125,
+          "width": 193.1270751953125,
+          "height": 59.52154541015625
+        },
+        {
+          "sel": ".crest-ribbon-title",
+          "left": 788.349853515625,
+          "top": 485.7166748046875,
+          "right": 1131.6502685546875,
+          "bottom": 538.3985595703125,
+          "width": 343.3004150390625,
+          "height": 52.681884765625
+        },
+        {
+          "sel": ".crest-stats-drawer",
+          "left": 610,
+          "top": 193.390625,
+          "right": 1310,
+          "bottom": 843.390625,
+          "width": 700,
+          "height": 650
+        }
+      ],
+      "overflow": [],
+      "thin": [],
+      "broken": [],
+      "raw": false,
+      "width": 1920,
+      "height": 1080
+    },
+    {
+      "label": "1080p-zh-CN defeat",
+      "boxes": [
+        {
+          "sel": ".crest-stage",
+          "left": 680,
+          "top": 282.40625,
+          "right": 1240,
+          "bottom": 797.59375,
+          "width": 560,
+          "height": 515.1875
+        },
+        {
+          "sel": ".crest-return-btn",
+          "left": 34,
+          "top": 28,
+          "right": 98,
+          "bottom": 92,
+          "width": 64,
+          "height": 64
+        },
+        {
+          "sel": ".btn-stats",
+          "left": 48,
+          "top": 988,
+          "right": 182,
+          "bottom": 1046,
+          "width": 134,
+          "height": 58
+        },
+        {
+          "sel": ".btn-continue",
+          "left": 1686,
+          "top": 984,
+          "right": 1872,
+          "bottom": 1046,
+          "width": 186,
+          "height": 62
+        },
+        {
+          "sel": ".crest-plaque-body",
+          "left": 859.1875,
+          "top": 560.59375,
+          "right": 1060.8125,
+          "bottom": 622.734375,
+          "width": 201.625,
+          "height": 62.140625
+        },
+        {
+          "sel": ".crest-ribbon-title",
+          "left": 780.796875,
+          "top": 483.328125,
+          "right": 1139.203125,
+          "bottom": 538.328125,
+          "width": 358.40625,
+          "height": 55
+        }
+      ],
+      "overflow": [],
+      "thin": [],
+      "broken": [],
+      "raw": false,
+      "width": 1920,
+      "height": 1080
+    },
+    {
+      "label": "1080p-en pause",
+      "boxes": [
+        {
+          "sel": ".pause-storybook-actions",
+          "left": 690,
+          "top": 641.375,
+          "right": 1230,
+          "bottom": 758.375,
+          "width": 540,
+          "height": 117
+        }
+      ],
+      "overflow": [],
+      "thin": [],
+      "broken": [],
+      "raw": false,
+      "width": 1920,
+      "height": 1080
+    },
+    {
+      "label": "1080p-en victory",
+      "boxes": [
+        {
+          "sel": ".crest-stage",
+          "left": 680,
+          "top": 282.40625,
+          "right": 1240,
+          "bottom": 797.59375,
+          "width": 560,
+          "height": 515.1875
+        },
+        {
+          "sel": ".crest-return-btn",
+          "left": 34,
+          "top": 28,
+          "right": 98,
+          "bottom": 92,
+          "width": 64,
+          "height": 64
+        },
+        {
+          "sel": ".btn-stats",
+          "left": 48,
+          "top": 988,
+          "right": 188.421875,
+          "bottom": 1046,
+          "width": 140.421875,
+          "height": 58
+        },
+        {
+          "sel": ".btn-continue",
+          "left": 1563.859375,
+          "top": 984,
+          "right": 1872,
+          "bottom": 1046,
+          "width": 308.140625,
+          "height": 62
+        },
+        {
+          "sel": ".crest-plaque-body",
+          "left": 859.1875,
+          "top": 560.59375,
+          "right": 1060.8125,
+          "bottom": 622.734375,
+          "width": 201.625,
+          "height": 62.140625
+        },
+        {
+          "sel": ".crest-ribbon-title",
+          "left": 780.796875,
+          "top": 483.328125,
+          "right": 1139.203125,
+          "bottom": 538.328125,
+          "width": 358.40625,
+          "height": 55
+        }
+      ],
+      "overflow": [],
+      "thin": [],
+      "broken": [],
+      "raw": false,
+      "width": 1920,
+      "height": 1080
+    },
+    {
+      "label": "1080p-en stats",
+      "boxes": [
+        {
+          "sel": ".crest-stage",
+          "left": 691.4317626953125,
+          "top": 292.9232177734375,
+          "right": 1228.5682373046875,
+          "bottom": 787.0767822265625,
+          "width": 537.136474609375,
+          "height": 494.153564453125
+        },
+        {
+          "sel": ".crest-return-btn",
+          "left": 34,
+          "top": 28,
+          "right": 98,
+          "bottom": 92,
+          "width": 64,
+          "height": 64
+        },
+        {
+          "sel": ".btn-stats",
+          "left": 48,
+          "top": 988,
+          "right": 188.421875,
+          "bottom": 1046,
+          "width": 140.421875,
+          "height": 58
+        },
+        {
+          "sel": ".btn-continue",
+          "left": 1563.859375,
+          "top": 984,
+          "right": 1872,
+          "bottom": 1046,
+          "width": 308.140625,
+          "height": 62
+        },
+        {
+          "sel": ".crest-plaque-body",
+          "left": 863.303466796875,
+          "top": 559.7529296875,
+          "right": 1056.696533203125,
+          "bottom": 619.3565063476562,
+          "width": 193.39306640625,
+          "height": 59.60357666015625
+        },
+        {
+          "sel": ".crest-ribbon-title",
+          "left": 788.1133422851562,
+          "top": 485.64190673828125,
+          "right": 1131.88671875,
+          "bottom": 538.3963623046875,
+          "width": 343.77337646484375,
+          "height": 52.75445556640625
+        },
+        {
+          "sel": ".crest-stats-drawer",
+          "left": 610,
+          "top": 193.390625,
+          "right": 1310,
+          "bottom": 843.390625,
+          "width": 700,
+          "height": 650
+        }
+      ],
+      "overflow": [],
+      "thin": [],
+      "broken": [],
+      "raw": false,
+      "width": 1920,
+      "height": 1080
+    },
+    {
+      "label": "1080p-en defeat",
+      "boxes": [
+        {
+          "sel": ".crest-stage",
+          "left": 680,
+          "top": 282.40625,
+          "right": 1240,
+          "bottom": 797.59375,
+          "width": 560,
+          "height": 515.1875
+        },
+        {
+          "sel": ".crest-return-btn",
+          "left": 34,
+          "top": 28,
+          "right": 98,
+          "bottom": 92,
+          "width": 64,
+          "height": 64
+        },
+        {
+          "sel": ".btn-stats",
+          "left": 48,
+          "top": 988,
+          "right": 188.421875,
+          "bottom": 1046,
+          "width": 140.421875,
+          "height": 58
+        },
+        {
+          "sel": ".btn-continue",
+          "left": 1679.4375,
+          "top": 984,
+          "right": 1872,
+          "bottom": 1046,
+          "width": 192.5625,
+          "height": 62
+        },
+        {
+          "sel": ".crest-plaque-body",
+          "left": 859.1875,
+          "top": 560.59375,
+          "right": 1060.8125,
+          "bottom": 622.734375,
+          "width": 201.625,
+          "height": 62.140625
+        },
+        {
+          "sel": ".crest-ribbon-title",
+          "left": 780.796875,
+          "top": 483.328125,
+          "right": 1139.203125,
+          "bottom": 538.328125,
+          "width": 358.40625,
+          "height": 55
+        }
+      ],
+      "overflow": [],
+      "thin": [],
+      "broken": [],
+      "raw": false,
+      "width": 1920,
+      "height": 1080
+    },
+    {
+      "label": "mobile-landscape-zh-CN pause",
+      "boxes": [
+        {
+          "sel": ".pause-storybook-actions",
+          "left": 152,
+          "top": 270.25,
+          "right": 692,
+          "bottom": 363.25,
+          "width": 540,
+          "height": 93
+        }
+      ],
+      "overflow": [],
+      "thin": [],
+      "broken": [],
+      "raw": false,
+      "width": 844,
+      "height": 390
+    },
+    {
+      "label": "mobile-landscape-zh-CN victory",
+      "boxes": [
+        {
+          "sel": ".crest-stage",
+          "left": 249,
+          "top": 31.84375,
+          "right": 595,
+          "bottom": 350.15625,
+          "width": 346,
+          "height": 318.3125
+        },
+        {
+          "sel": ".crest-return-btn",
+          "left": 14,
+          "top": 10,
+          "right": 63,
+          "bottom": 59,
+          "width": 49,
+          "height": 49
+        },
+        {
+          "sel": ".btn-stats",
+          "left": 33.75,
+          "top": 326,
+          "right": 130.75,
+          "bottom": 374,
+          "width": 97,
+          "height": 48
+        },
+        {
+          "sel": ".btn-continue",
+          "left": 679.25,
+          "top": 326,
+          "right": 810.25,
+          "bottom": 374,
+          "width": 131,
+          "height": 48
+        },
+        {
+          "sel": ".crest-plaque-body",
+          "left": 359.71875,
+          "top": 203.71875,
+          "right": 484.28125,
+          "bottom": 243.71875,
+          "width": 124.5625,
+          "height": 40
+        },
+        {
+          "sel": ".crest-ribbon-title",
+          "left": 311.265625,
+          "top": 155.984375,
+          "right": 532.734375,
+          "bottom": 190.234375,
+          "width": 221.46875,
+          "height": 34.25
+        }
+      ],
+      "overflow": [],
+      "thin": [],
+      "broken": [],
+      "raw": false,
+      "width": 844,
+      "height": 390
+    },
+    {
+      "label": "mobile-landscape-zh-CN stats",
+      "boxes": [
+        {
+          "sel": ".crest-stage",
+          "left": 256.21368408203125,
+          "top": 38.48017883300781,
+          "right": 587.7863159179688,
+          "bottom": 343.5198516845703,
+          "width": 331.5726318359375,
+          "height": 305.0396728515625
+        },
+        {
+          "sel": ".crest-return-btn",
+          "left": 14,
+          "top": 10,
+          "right": 63,
+          "bottom": 59,
+          "width": 49,
+          "height": 49
+        },
+        {
+          "sel": ".btn-stats",
+          "left": 33.75,
+          "top": 326,
+          "right": 130.75,
+          "bottom": 374,
+          "width": 97,
+          "height": 48
+        },
+        {
+          "sel": ".btn-continue",
+          "left": 679.25,
+          "top": 326,
+          "right": 810.25,
+          "bottom": 374,
+          "width": 131,
+          "height": 48
+        },
+        {
+          "sel": ".crest-plaque-body",
+          "left": 362.31573486328125,
+          "top": 203.18841552734375,
+          "right": 481.68426513671875,
+          "bottom": 241.5205078125,
+          "width": 119.3685302734375,
+          "height": 38.33209228515625
+        },
+        {
+          "sel": ".crest-ribbon-title",
+          "left": 315.88299560546875,
+          "top": 157.44444274902344,
+          "right": 528.1170654296875,
+          "bottom": 190.26629638671875,
+          "width": 212.23406982421875,
+          "height": 32.82185363769531
+        },
+        {
+          "sel": ".crest-stats-drawer",
+          "left": 92.84375,
+          "top": 13.640625,
+          "right": 751.15625,
+          "bottom": 360.734375,
+          "width": 658.3125,
+          "height": 347.09375
+        }
+      ],
+      "overflow": [],
+      "thin": [],
+      "broken": [],
+      "raw": false,
+      "width": 844,
+      "height": 390
+    },
+    {
+      "label": "mobile-landscape-zh-CN defeat",
+      "boxes": [
+        {
+          "sel": ".crest-stage",
+          "left": 249,
+          "top": 31.84375,
+          "right": 595,
+          "bottom": 350.15625,
+          "width": 346,
+          "height": 318.3125
+        },
+        {
+          "sel": ".crest-return-btn",
+          "left": 14,
+          "top": 10,
+          "right": 63,
+          "bottom": 59,
+          "width": 49,
+          "height": 49
+        },
+        {
+          "sel": ".btn-stats",
+          "left": 33.75,
+          "top": 326,
+          "right": 130.75,
+          "bottom": 374,
+          "width": 97,
+          "height": 48
+        },
+        {
+          "sel": ".btn-continue",
+          "left": 679.25,
+          "top": 326,
+          "right": 810.25,
+          "bottom": 374,
+          "width": 131,
+          "height": 48
+        },
+        {
+          "sel": ".crest-plaque-body",
+          "left": 359.71875,
+          "top": 203.71875,
+          "right": 484.28125,
+          "bottom": 243.71875,
+          "width": 124.5625,
+          "height": 40
+        },
+        {
+          "sel": ".crest-ribbon-title",
+          "left": 311.265625,
+          "top": 155.984375,
+          "right": 532.734375,
+          "bottom": 190.234375,
+          "width": 221.46875,
+          "height": 34.25
+        }
+      ],
+      "overflow": [],
+      "thin": [],
+      "broken": [],
+      "raw": false,
+      "width": 844,
+      "height": 390
+    },
+    {
+      "label": "mobile-landscape-en pause",
+      "boxes": [
+        {
+          "sel": ".pause-storybook-actions",
+          "left": 152,
+          "top": 270.25,
+          "right": 692,
+          "bottom": 363.25,
+          "width": 540,
+          "height": 93
+        }
+      ],
+      "overflow": [],
+      "thin": [],
+      "broken": [],
+      "raw": false,
+      "width": 844,
+      "height": 390
+    },
+    {
+      "label": "mobile-landscape-en victory",
+      "boxes": [
+        {
+          "sel": ".crest-stage",
+          "left": 249,
+          "top": 31.84375,
+          "right": 595,
+          "bottom": 350.15625,
+          "width": 346,
+          "height": 318.3125
+        },
+        {
+          "sel": ".crest-return-btn",
+          "left": 14,
+          "top": 10,
+          "right": 63,
+          "bottom": 59,
+          "width": 49,
+          "height": 49
+        },
+        {
+          "sel": ".btn-stats",
+          "left": 33.75,
+          "top": 326,
+          "right": 135.3125,
+          "bottom": 374,
+          "width": 101.5625,
+          "height": 48
+        },
+        {
+          "sel": ".btn-continue",
+          "left": 592.734375,
+          "top": 326,
+          "right": 810.25,
+          "bottom": 374,
+          "width": 217.515625,
+          "height": 48
+        },
+        {
+          "sel": ".crest-plaque-body",
+          "left": 359.71875,
+          "top": 203.71875,
+          "right": 484.28125,
+          "bottom": 255.71875,
+          "width": 124.5625,
+          "height": 52
+        },
+        {
+          "sel": ".crest-ribbon-title",
+          "left": 311.265625,
+          "top": 155.984375,
+          "right": 532.734375,
+          "bottom": 190.234375,
+          "width": 221.46875,
+          "height": 34.25
+        }
+      ],
+      "overflow": [],
+      "thin": [],
+      "broken": [],
+      "raw": false,
+      "width": 844,
+      "height": 390
+    },
+    {
+      "label": "mobile-landscape-en stats",
+      "boxes": [
+        {
+          "sel": ".crest-stage",
+          "left": 256.421630859375,
+          "top": 38.671478271484375,
+          "right": 587.578369140625,
+          "bottom": 343.3285217285156,
+          "width": 331.15673828125,
+          "height": 304.65704345703125
+        },
+        {
+          "sel": ".crest-return-btn",
+          "left": 14,
+          "top": 10,
+          "right": 63,
+          "bottom": 59,
+          "width": 49,
+          "height": 49
+        },
+        {
+          "sel": ".btn-stats",
+          "left": 33.75,
+          "top": 326,
+          "right": 135.3125,
+          "bottom": 374,
+          "width": 101.5625,
+          "height": 48
+        },
+        {
+          "sel": ".btn-continue",
+          "left": 592.734375,
+          "top": 326,
+          "right": 810.25,
+          "bottom": 374,
+          "width": 217.515625,
+          "height": 48
+        },
+        {
+          "sel": ".crest-plaque-body",
+          "left": 362.3905944824219,
+          "top": 203.17312622070312,
+          "right": 481.60943603515625,
+          "bottom": 252.94235229492188,
+          "width": 119.21884155273438,
+          "height": 49.76922607421875
+        },
+        {
+          "sel": ".crest-ribbon-title",
+          "left": 316.0160827636719,
+          "top": 157.48654174804688,
+          "right": 527.9839477539062,
+          "bottom": 190.26722717285156,
+          "width": 211.96786499023438,
+          "height": 32.78068542480469
+        },
+        {
+          "sel": ".crest-stats-drawer",
+          "left": 92.84375,
+          "top": 13.640625,
+          "right": 751.15625,
+          "bottom": 360.734375,
+          "width": 658.3125,
+          "height": 347.09375
+        }
+      ],
+      "overflow": [],
+      "thin": [],
+      "broken": [],
+      "raw": false,
+      "width": 844,
+      "height": 390
+    },
+    {
+      "label": "mobile-landscape-en defeat",
+      "boxes": [
+        {
+          "sel": ".crest-stage",
+          "left": 249,
+          "top": 31.84375,
+          "right": 595,
+          "bottom": 350.15625,
+          "width": 346,
+          "height": 318.3125
+        },
+        {
+          "sel": ".crest-return-btn",
+          "left": 14,
+          "top": 10,
+          "right": 63,
+          "bottom": 59,
+          "width": 49,
+          "height": 49
+        },
+        {
+          "sel": ".btn-stats",
+          "left": 33.75,
+          "top": 326,
+          "right": 135.3125,
+          "bottom": 374,
+          "width": 101.5625,
+          "height": 48
+        },
+        {
+          "sel": ".btn-continue",
+          "left": 674.609375,
+          "top": 326,
+          "right": 810.25,
+          "bottom": 374,
+          "width": 135.640625,
+          "height": 48
+        },
+        {
+          "sel": ".crest-plaque-body",
+          "left": 359.71875,
+          "top": 203.71875,
+          "right": 484.28125,
+          "bottom": 255.71875,
+          "width": 124.5625,
+          "height": 52
+        },
+        {
+          "sel": ".crest-ribbon-title",
+          "left": 311.265625,
+          "top": 155.984375,
+          "right": 532.734375,
+          "bottom": 190.234375,
+          "width": 221.46875,
+          "height": 34.25
+        }
+      ],
+      "overflow": [],
+      "thin": [],
+      "broken": [],
+      "raw": false,
+      "width": 844,
+      "height": 390
+    },
+    {
+      "label": "mobile-portrait-zh-CN pause",
+      "boxes": [
+        {
+          "sel": ".pause-storybook-actions",
+          "left": 19.5,
+          "top": 541.25,
+          "right": 370.5,
+          "bottom": 658.25,
+          "width": 351,
+          "height": 117
+        }
+      ],
+      "overflow": [],
+      "thin": [],
+      "broken": [],
+      "raw": false,
+      "width": 390,
+      "height": 844
+    },
+    {
+      "label": "mobile-portrait-zh-CN victory",
+      "boxes": [
+        {
+          "sel": ".crest-stage",
+          "left": 27.296875,
+          "top": 267.71875,
+          "right": 362.6875,
+          "bottom": 576.265625,
+          "width": 335.390625,
+          "height": 308.546875
+        },
+        {
+          "sel": ".crest-return-btn",
+          "left": 16,
+          "top": 25.3125,
+          "right": 72,
+          "bottom": 81.3125,
+          "width": 56,
+          "height": 56
+        },
+        {
+          "sel": ".btn-stats",
+          "left": 16,
+          "top": 761.46875,
+          "right": 107,
+          "bottom": 814.46875,
+          "width": 91,
+          "height": 53
+        },
+        {
+          "sel": ".btn-continue",
+          "left": 251,
+          "top": 761.46875,
+          "right": 374,
+          "bottom": 814.46875,
+          "width": 123,
+          "height": 53
+        },
+        {
+          "sel": ".crest-plaque-body",
+          "left": 134.609375,
+          "top": 434.328125,
+          "right": 255.375,
+          "bottom": 473.484375,
+          "width": 120.765625,
+          "height": 39.15625
+        },
+        {
+          "sel": ".crest-ribbon-title",
+          "left": 87.65625,
+          "top": 388.046875,
+          "right": 302.328125,
+          "bottom": 421.25,
+          "width": 214.671875,
+          "height": 33.203125
+        }
+      ],
+      "overflow": [],
+      "thin": [],
+      "broken": [],
+      "raw": false,
+      "width": 390,
+      "height": 844
+    },
+    {
+      "label": "mobile-portrait-zh-CN stats",
+      "boxes": [
+        {
+          "sel": ".crest-stage",
+          "left": 34.22810363769531,
+          "top": 274.09521484375,
+          "right": 355.7563018798828,
+          "bottom": 569.88916015625,
+          "width": 321.5281982421875,
+          "height": 295.7939453125
+        },
+        {
+          "sel": ".crest-return-btn",
+          "left": 16,
+          "top": 25.3125,
+          "right": 72,
+          "bottom": 81.3125,
+          "width": 56,
+          "height": 56
+        },
+        {
+          "sel": ".btn-stats",
+          "left": 16,
+          "top": 761.46875,
+          "right": 107,
+          "bottom": 814.46875,
+          "width": 91,
+          "height": 53
+        },
+        {
+          "sel": ".btn-continue",
+          "left": 251,
+          "top": 761.46875,
+          "right": 374,
+          "bottom": 814.46875,
+          "width": 123,
+          "height": 53
+        },
+        {
+          "sel": ".crest-plaque-body",
+          "left": 137.10513305664062,
+          "top": 433.8182373046875,
+          "right": 252.87924194335938,
+          "bottom": 471.3560791015625,
+          "width": 115.77410888671875,
+          "height": 37.537841796875
+        },
+        {
+          "sel": ".crest-ribbon-title",
+          "left": 92.09268951416016,
+          "top": 389.44989013671875,
+          "right": 297.89173126220703,
+          "bottom": 421.2806701660156,
+          "width": 205.79904174804688,
+          "height": 31.830780029296875
+        },
+        {
+          "sel": ".crest-stats-drawer",
+          "left": 15.6015625,
+          "top": 67.515625,
+          "right": 374.3984375,
+          "bottom": 725.828125,
+          "width": 358.796875,
+          "height": 658.3125
+        }
+      ],
+      "overflow": [],
+      "thin": [],
+      "broken": [],
+      "raw": false,
+      "width": 390,
+      "height": 844
+    },
+    {
+      "label": "mobile-portrait-zh-CN defeat",
+      "boxes": [
+        {
+          "sel": ".crest-stage",
+          "left": 27.296875,
+          "top": 267.71875,
+          "right": 362.6875,
+          "bottom": 576.265625,
+          "width": 335.390625,
+          "height": 308.546875
+        },
+        {
+          "sel": ".crest-return-btn",
+          "left": 16,
+          "top": 25.3125,
+          "right": 72,
+          "bottom": 81.3125,
+          "width": 56,
+          "height": 56
+        },
+        {
+          "sel": ".btn-stats",
+          "left": 16,
+          "top": 761.46875,
+          "right": 107,
+          "bottom": 814.46875,
+          "width": 91,
+          "height": 53
+        },
+        {
+          "sel": ".btn-continue",
+          "left": 251,
+          "top": 761.46875,
+          "right": 374,
+          "bottom": 814.46875,
+          "width": 123,
+          "height": 53
+        },
+        {
+          "sel": ".crest-plaque-body",
+          "left": 134.609375,
+          "top": 434.328125,
+          "right": 255.375,
+          "bottom": 473.484375,
+          "width": 120.765625,
+          "height": 39.15625
+        },
+        {
+          "sel": ".crest-ribbon-title",
+          "left": 87.65625,
+          "top": 388.046875,
+          "right": 302.328125,
+          "bottom": 421.25,
+          "width": 214.671875,
+          "height": 33.203125
+        }
+      ],
+      "overflow": [],
+      "thin": [],
+      "broken": [],
+      "raw": false,
+      "width": 390,
+      "height": 844
+    },
+    {
+      "label": "mobile-portrait-en pause",
+      "boxes": [
+        {
+          "sel": ".pause-storybook-actions",
+          "left": 19.5,
+          "top": 541.25,
+          "right": 370.5,
+          "bottom": 658.25,
+          "width": 351,
+          "height": 117
+        }
+      ],
+      "overflow": [],
+      "thin": [],
+      "broken": [],
+      "raw": false,
+      "width": 390,
+      "height": 844
+    },
+    {
+      "label": "mobile-portrait-en victory",
+      "boxes": [
+        {
+          "sel": ".crest-stage",
+          "left": 27.296875,
+          "top": 267.71875,
+          "right": 362.6875,
+          "bottom": 576.265625,
+          "width": 335.390625,
+          "height": 308.546875
+        },
+        {
+          "sel": ".crest-return-btn",
+          "left": 16,
+          "top": 25.3125,
+          "right": 72,
+          "bottom": 81.3125,
+          "width": 56,
+          "height": 56
+        },
+        {
+          "sel": ".btn-stats",
+          "left": 16,
+          "top": 761.46875,
+          "right": 111.28125,
+          "bottom": 814.46875,
+          "width": 95.28125,
+          "height": 53
+        },
+        {
+          "sel": ".btn-continue",
+          "left": 175.109375,
+          "top": 757.6875,
+          "right": 374,
+          "bottom": 814.46875,
+          "width": 198.890625,
+          "height": 56.78125
+        },
+        {
+          "sel": ".crest-plaque-body",
+          "left": 134.609375,
+          "top": 434.328125,
+          "right": 255.375,
+          "bottom": 485.484375,
+          "width": 120.765625,
+          "height": 51.15625
+        },
+        {
+          "sel": ".crest-ribbon-title",
+          "left": 87.65625,
+          "top": 388.046875,
+          "right": 302.328125,
+          "bottom": 421.25,
+          "width": 214.671875,
+          "height": 33.203125
+        }
+      ],
+      "overflow": [],
+      "thin": [],
+      "broken": [],
+      "raw": false,
+      "width": 390,
+      "height": 844
+    },
+    {
+      "label": "mobile-portrait-en stats",
+      "boxes": [
+        {
+          "sel": ".crest-stage",
+          "left": 34.431549072265625,
+          "top": 274.28240966796875,
+          "right": 355.5528259277344,
+          "bottom": 569.7020263671875,
+          "width": 321.12127685546875,
+          "height": 295.41961669921875
+        },
+        {
+          "sel": ".crest-return-btn",
+          "left": 16,
+          "top": 25.3125,
+          "right": 72,
+          "bottom": 81.3125,
+          "width": 56,
+          "height": 56
+        },
+        {
+          "sel": ".btn-stats",
+          "left": 16,
+          "top": 761.46875,
+          "right": 111.28125,
+          "bottom": 814.46875,
+          "width": 95.28125,
+          "height": 53
+        },
+        {
+          "sel": ".btn-continue",
+          "left": 175.109375,
+          "top": 757.6875,
+          "right": 374,
+          "bottom": 814.46875,
+          "width": 198.890625,
+          "height": 56.78125
+        },
+        {
+          "sel": ".crest-plaque-body",
+          "left": 137.17837524414062,
+          "top": 433.80328369140625,
+          "right": 252.80596923828125,
+          "bottom": 482.7830810546875,
+          "width": 115.62759399414062,
+          "height": 48.97979736328125
+        },
+        {
+          "sel": ".crest-ribbon-title",
+          "left": 92.222900390625,
+          "top": 389.4911193847656,
+          "right": 297.7614440917969,
+          "bottom": 421.2816162109375,
+          "width": 205.53854370117188,
+          "height": 31.790496826171875
+        },
+        {
+          "sel": ".crest-stats-drawer",
+          "left": 15.6015625,
+          "top": 67.515625,
+          "right": 374.3984375,
+          "bottom": 725.828125,
+          "width": 358.796875,
+          "height": 658.3125
+        }
+      ],
+      "overflow": [],
+      "thin": [],
+      "broken": [],
+      "raw": false,
+      "width": 390,
+      "height": 844
+    },
+    {
+      "label": "mobile-portrait-en defeat",
+      "boxes": [
+        {
+          "sel": ".crest-stage",
+          "left": 27.296875,
+          "top": 267.71875,
+          "right": 362.6875,
+          "bottom": 576.265625,
+          "width": 335.390625,
+          "height": 308.546875
+        },
+        {
+          "sel": ".crest-return-btn",
+          "left": 16,
+          "top": 25.3125,
+          "right": 72,
+          "bottom": 81.3125,
+          "width": 56,
+          "height": 56
+        },
+        {
+          "sel": ".btn-stats",
+          "left": 16,
+          "top": 761.46875,
+          "right": 111.28125,
+          "bottom": 814.46875,
+          "width": 95.28125,
+          "height": 53
+        },
+        {
+          "sel": ".btn-continue",
+          "left": 246.625,
+          "top": 761.46875,
+          "right": 374,
+          "bottom": 814.46875,
+          "width": 127.375,
+          "height": 53
+        },
+        {
+          "sel": ".crest-plaque-body",
+          "left": 134.609375,
+          "top": 434.328125,
+          "right": 255.375,
+          "bottom": 485.484375,
+          "width": 120.765625,
+          "height": 51.15625
+        },
+        {
+          "sel": ".crest-ribbon-title",
+          "left": 87.65625,
+          "top": 388.046875,
+          "right": 302.328125,
+          "bottom": 421.25,
+          "width": 214.671875,
+          "height": 33.203125
+        }
+      ],
+      "overflow": [],
+      "thin": [],
+      "broken": [],
+      "raw": false,
+      "width": 390,
+      "height": 844
+    }
+  ],
+  "screenshots": [
+    "p12-desktop-zh-CN-pause.png",
+    "p12-desktop-zh-CN-victory.png",
+    "p12-desktop-zh-CN-stats.png",
+    "p12-desktop-zh-CN-defeat.png",
+    "p12-desktop-en-pause.png",
+    "p12-desktop-en-victory.png",
+    "p12-desktop-en-stats.png",
+    "p12-desktop-en-defeat.png",
+    "p12-1080p-zh-CN-pause.png",
+    "p12-1080p-zh-CN-victory.png",
+    "p12-1080p-zh-CN-stats.png",
+    "p12-1080p-zh-CN-defeat.png",
+    "p12-1080p-en-pause.png",
+    "p12-1080p-en-victory.png",
+    "p12-1080p-en-stats.png",
+    "p12-1080p-en-defeat.png",
+    "p12-mobile-landscape-zh-CN-pause.png",
+    "p12-mobile-landscape-zh-CN-victory.png",
+    "p12-mobile-landscape-zh-CN-stats.png",
+    "p12-mobile-landscape-zh-CN-defeat.png",
+    "p12-mobile-landscape-en-pause.png",
+    "p12-mobile-landscape-en-victory.png",
+    "p12-mobile-landscape-en-stats.png",
+    "p12-mobile-landscape-en-defeat.png",
+    "p12-mobile-portrait-zh-CN-pause.png",
+    "p12-mobile-portrait-zh-CN-victory.png",
+    "p12-mobile-portrait-zh-CN-stats.png",
+    "p12-mobile-portrait-zh-CN-defeat.png",
+    "p12-mobile-portrait-en-pause.png",
+    "p12-mobile-portrait-en-victory.png",
+    "p12-mobile-portrait-en-stats.png",
+    "p12-mobile-portrait-en-defeat.png",
+    "p12-continuous-combat-0.png",
+    "p12-continuous-combat-1.png",
+    "p12-continuous-combat-2.png",
+    "p12-continuous-combat-3.png"
+  ],
+  "errors": []
+}

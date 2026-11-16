@@ -69,8 +69,27 @@ Object.assign(tools,{
 });
 export const P10_SCENE_IDS=['capybara_soak','capybara_soak_dizzy','ui_compendium_peek_capy','ui_storybook_check'] as const;
 export const P11_SCENE_IDS=['ui_armory_peek_capy','ui_market_peek_raccoon','ui_rank_peek_capy','ui_profile_peek_capy'] as const;
+export const P12_SCENE_IDS=['ui_victory_shield_wings','ui_defeat_shield_wings','ui_victory_star_lit','ui_victory_star_dim','ui_pause_peek_capy','ui_btn_return_arrow','ui_stats_scroll','ui_horn_continue'] as const;
+export const P13_SCENE_IDS=['ui_endless_emblem','ui_stat_damage_burst','ui_stat_ko_skull','ui_passive_aura_badge'] as const;
+Object.assign(tools,{
+ ui_endless_emblem:p('M-34 24 Q-47 0 -28 -28 Q-22 -4 -12 -37 Q2 -48 12 -31 Q28 -42 34 -16 Q45 9 30 31Z','#e79c3f','#70421e',3)+p('M0 3 C-37 -36 -45 35 -14 25 C9 20 12 -22 32 -16 C56 -7 30 48 0 3','none','#fff1b5',9)+`<g transform="translate(0 24) scale(.48)">${head('#cba576')}</g>`,
+ ui_stat_damage_burst:p('M-38 19 L-22 6 -35 -7 -12 -9 -14 -32 5 -18 24 -38 24 -12 43 -2 25 10 34 34 10 23 -5 41 -13 22Z','#f4b64d','#804a24',3)+p('M-23 25 L15 -30 28 -35 30 -20 -14 31Z','#f7e9c7','#684b37',3)+p('M-26 13 L-6 30 M-23 27 L-32 39','none','#a56939',6),
+ ui_stat_ko_skull:tools.ui_skull_threat+p('M-25 -4 Q-31 -38 0 -39 Q30 -35 27 -5 L7 -13 0 -2 -7 -13Z','#aebcc0','#5e5a51',3)+p('M-36 -31 L-31 -42 -27 -34 -17 -34 -24 -27 -22 -18 -31 -23 -39 -18 -37 -27 -45 -32Z','#f4c259','#805229',2),
+ ui_passive_aura_badge:p('M-20 -21 Q0 -38 21 -20 L27 16 0 32 -27 16Z','#81b29b','#496c59',3)+p('M-15 -17 Q0 -29 15 -17 L20 12 0 23 -20 12Z','#c5e1c2','#668a6d',2)+p('M-13 28 L-18 44 M0 32 V47 M13 28 L18 44','none','#cfb278',5)+p('M-6 -28 Q-20 -47 -26 -35 Q-29 -22 -6 -28 Q20 -47 25 -35 Q29 -22 -6 -28','none','#aa794a',4),
+});
 const peekBody=p('M-30 48 Q-34 28 -27 6 Q-39 -12 -25 -14 L-18 -7 Q1 -24 22 -5 Q39 -10 37 6 Q41 30 28 48Z','#d0a67e','#462e27')+p('M22 4 Q38 0 37 20 Q31 27 24 20 M-13 9 Q-8 4 -3 9 M2 25 Q8 30 13 25','none','#462e27',2.5)+e(-18,20,4,2,'#dfaa9d');
 const peekPaws=p('M-44 49 H44','none','#462e27',2)+p('M-26 49 Q-34 35 -23 35 Q-12 36 -14 49Z M17 49 Q13 35 25 35 Q36 37 29 49Z','#dfb98e','#462e27',2);
+const shield=(loss:boolean)=>p('M-20 -17 Q-35 -17 -46 -37 Q-49 -6 -28 6 L-41 6 Q-35 22 -20 18 M20 -17 Q35 -17 46 -37 Q49 -6 28 6 L41 6 Q35 22 20 18',loss?'#bdc7d2':'#fffbed','#513c31',1.5)+p('M0 -35 L25 -25 22 15 Q16 30 0 41 Q-16 30 -22 15 L-25 -25Z',loss?'#ad8c6c':'#e9bd65','#583b27',2)+p('M0 -28 L19 -20 16 14 Q11 25 0 32 Q-11 25 -16 14 L-19 -20Z',loss?'#71696b':'#4d5361','#ffe7a1',1.3)+p('M-34 -14 Q0 -27 34 -14 L31 0 Q0 -8 -31 0Z',loss?'#96858f':'#b54728','#edc977',1.8);
+const victoryStar=(dim:boolean)=>p('M0 -39 L12 -14 40 -10 20 10 25 38 0 25 -25 38 -20 10 -40 -10 -12 -14Z',dim?'#91857b':'#f6ca51',dim?'#4f433d':'#a36a24',3)+p('M0 -30 L9 -10 29 -7 14 8 18 28 0 18 -18 28 -14 8 -29 -7 -9 -10Z',dim?'#a79b8c':'#ffe982',dim?'#c4b8a5':'#fff2a9',1.7);
+Object.assign(tools,{
+ ui_victory_shield_wings:shield(false)+orange(0,-29),
+ ui_defeat_shield_wings:shield(true)+`<g transform="rotate(-24)">${r(-24,-27,21,8,'#e8c6a8',3)}${p('M-17 -25 L-12 -21 M-12 -25 L-17 -21','none','#967355',1)}</g>`,
+ ui_victory_star_lit:victoryStar(false),ui_victory_star_dim:victoryStar(true),
+ ui_pause_peek_capy:peekBody+p('M-22 -5 Q0 1 22 -8 L19 -23 Q1 -17 -19 -22Z','#fffaf0','#462e27',2)+p('M-14 -13 Q0 -9 14 -15 M0 12 Q5 16 10 12','none','#695046',2)+peekPaws,
+ ui_btn_return_arrow:p('M-8 -35 L-38 -9 -8 15 V3 Q23 0 25 17 Q27 34 -3 34 H-25 V43 H3 Q43 41 40 12 Q38 -13 -8 -15Z','#b9e1e0','#577b80',2.7)+p('M-25 -8 L-10 -22 M-3 -7 Q25 -9 30 10','none','#efffff',4),
+ ui_stats_scroll:p('M-27 -34 Q-36 -42 -39 -31 L-37 -19 H-25 L-21 27 Q-30 39 -15 42 H27 Q41 37 32 24 H20 L24 -28 Q33 -42 19 -42 H-22Z','#f4dfb3','#70503b',2.6)+p('M-22 -19 H14 M-18 -9 H10 M-16 1 H12 M-12 11 H8','none','#9b7656',2)+p('M-19 23 L10 18 14 26 -16 31Z','#b95c49','#63372d',1.6),
+ ui_horn_continue:tools.ui_wave_horn,
+});
 Object.assign(tools,{
  ui_armory_peek_capy:peekBody+p('M-22 -3 Q-2 -20 20 -3','none','#97663b',5)+e(-8,-7,10,9,'#d9b270')+e(12,-8,10,9,'#d9b270')+e(-8,-7,6,6,'#c6d7cc')+e(12,-8,6,6,'#c6d7cc')+peekPaws,
  ui_market_peek_raccoon:p('M-31 47 Q-35 23 -24 4 L-30 -15 -10 -7 Q0 -12 11 -7 L29 -15 24 4 Q36 24 30 47Z','#aea59a','#462e27')+p('M-24 9 L-13 2 0 7 13 2 24 9 15 21 0 14 -15 21Z','#6f6258','#462e27',1)+e(-11,11,9,8,'#e3d9c8')+e(11,11,9,8,'#e3d9c8')+e(-11,11,2,3,'#462e27')+e(11,11,2,3,'#462e27')+p('M-3 24 H3 L0 28Z','#462e27')+p('M-19 -8 L-16 -28 H17 L21 -8Z','#b5b6ad','#462e27')+p('M-20 -8 H24 M17 -25 H32 V-17 H20','none','#462e27',3)+peekPaws,
@@ -124,7 +143,7 @@ function geometry(id:string,art:string,size:number,frame=true):string {
   return `<svg viewBox="-48 -48 96 96" width="${size}" height="${size}" role="img" aria-label="${id}" data-sticker="${id}"><g stroke-linecap="round" stroke-linejoin="round">${backing}${art}</g></svg>`;
 }
 function image(id:string,size:number):string|undefined {
-  const url=spriteUrl(id);return url?`<img src="${escapeHtml(url)}" width="${size}" height="${size}" alt="${id}" data-sticker="${id}" style="object-fit:contain"/>`:undefined;
+  const url=spriteUrl(id);return url?`<img src="${escapeHtml(url)}" width="${size}" height="${size}" alt="${id}" data-sticker="${id}" draggable="false" style="object-fit:contain"/>`:undefined;
 }
 export function propSticker(id:string,size=48):string {
   const key=Object.hasOwn(props,id)?id:'washer',n=sizeOf(size,48),override=image(`prop_${key}`,n);
@@ -138,9 +157,9 @@ export function unitSticker(kind:string,size=40):string {
   if(['hamster','squirrel','bee'].includes(key))return avatarSticker(key,n);
   return `<span role="img" aria-label="${key}" data-sticker="${key}" style="display:inline-grid;place-items:center;width:${n}px;height:${n}px;font-size:${Math.round(n*.63)}px">${escapeHtml(UNIT_ICONS[key])}</span>`;
 }
-export function sceneSticker(id:typeof P11_SCENE_IDS[number]|typeof P10_SCENE_IDS[number]|typeof P9_SCENE_IDS[number]|'menu_banner'|'logo_capy'|'sprinkler'|'shovel'|'ui_compendium_book'|'ui_fish_food'|'ui_bell_summon'|'ui_shop_bag'|'orange'|'ui_trophy_rank'|'ui_map_sign'|'ui_header_compendium'|'ui_header_armory'|'ui_header_market'|'ui_header_rank'|'ui_header_profile'|'ui_header_settings'|'ui_tutorial_pointer'|'ui_tutorial_capy'|'ui_coin_gold'|'ui_star_rank'|'ui_ticket_gacha'|'ui_skull_threat'|'ui_result_victory'|'ui_result_defeat'|'ui_header_pause'|'ui_mvp_crown'|'ui_lock_closed'|'ui_lock_open'|'ui_wave_horn'|'ui_merge_sparkle',fallback:string,size?:number):string {
+export function sceneSticker(id:typeof P13_SCENE_IDS[number]|typeof P12_SCENE_IDS[number]|typeof P11_SCENE_IDS[number]|typeof P10_SCENE_IDS[number]|typeof P9_SCENE_IDS[number]|'menu_banner'|'logo_capy'|'sprinkler'|'shovel'|'ui_compendium_book'|'ui_fish_food'|'ui_bell_summon'|'ui_shop_bag'|'orange'|'ui_trophy_rank'|'ui_map_sign'|'ui_header_compendium'|'ui_header_armory'|'ui_header_market'|'ui_header_rank'|'ui_header_profile'|'ui_header_settings'|'ui_tutorial_pointer'|'ui_tutorial_capy'|'ui_coin_gold'|'ui_star_rank'|'ui_ticket_gacha'|'ui_skull_threat'|'ui_result_victory'|'ui_result_defeat'|'ui_header_pause'|'ui_mvp_crown'|'ui_lock_closed'|'ui_lock_open'|'ui_wave_horn'|'ui_merge_sparkle',fallback:string,size?:number):string {
   const n=sizeOf(size??(id==='menu_banner'?400:64),64);
-  return image(id,n)||(Object.hasOwn(tools,id)?geometry(id,tools[id],n,![...P10_SCENE_IDS,...P11_SCENE_IDS].some(key=>key===id)):fallback);
+  return image(id,n)||(Object.hasOwn(tools,id)?geometry(id,tools[id],n,![...P10_SCENE_IDS,...P11_SCENE_IDS,...P12_SCENE_IDS].some(key=>key===id)):fallback);
 }
 
 type ArtStickerId='title_logo_zh'|'title_logo_en'|'ui_btn_start_zh'|'ui_btn_start_en';

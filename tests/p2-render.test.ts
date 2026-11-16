@@ -183,15 +183,17 @@ describe('P2 captured combat effects and bench tools',()=>{
  });
  it.each(['washer','clay','milk_bottle','whistle'])('never gives the bench shovel a %s target outline',propId=>{
   const state=new BattleEngine({ai:false,autoWaves:false}).state;state.units=[pet('shovel',false)];const {renderer,calls}=surface();renderer.draw(state,0,{propId});
-  expect(calls.some(c=>c.name==='stroke'&&c.stroke==='#a083c0')).toBe(false);
+  expect(calls.some(c=>c.name==='ellipse'&&c.args[0]===298&&c.args[1]===686&&Number(c.args[2])>=35)).toBe(false);
  });
- it('uses the exact core knock displacement, enemy scales and white flash',()=>{
+ it('preserves core knock displacement and white flash during the P12 spawn/jello pose',()=>{
   const engine=new BattleEngine({ai:false,autoWaves:false});engine.spawnEnemy('rat','player');const enemy=engine.state.enemies[0];Object.assign(enemy,{id:0,progress:0,col:2,row:3,hitFlash:.14,knockX:5,knockY:0,size:1});
   const art=image('rat');vi.spyOn(assets,'get').mockImplementation(id=>id==='rat'?art:undefined);const {renderer,calls}=surface();renderer.draw(engine.state,0);
   expect(calls.some(c=>c.name==='translate'&&c.args[0]===437&&c.args[1]===436)).toBe(true);
-  expect(calls.some(c=>c.name==='scale'&&c.args[0]===-.96*1.04*1.14&&c.args[1]===.96*.96*.88)).toBe(true);
+  const scale=calls.find(c=>c.name==='scale'&&Number(c.args[0])<0)!;
+  expect(Math.abs(Number(scale.args[0]))).toBeGreaterThan(.3);expect(Math.abs(Number(scale.args[0]))).toBeLessThan(.4);
+  expect(Number(scale.args[1])).toBeGreaterThan(.3);expect(Number(scale.args[1])).toBeLessThan(.4);
   expect(calls.find(c=>c.name==='drawImage'&&c.args[0]===art)?.filter).toBe('brightness(0) invert(1)');
  });
  it('draws no projectile geometry for a captured melee kind',()=>{const {c,calls}=surface();expect(drawCombatEvent(c,{id:1,type:'projectile',side:'player',col:1,row:1,targetCol:2,targetRow:1,effect:'corgi',age:.1,duration:.25},[])).toBe(true);expect(calls.filter(c=>!['save','restore'].includes(c.name))).toHaveLength(0);});
- it('ships exactly the 209 safe optional sprite IDs',()=>{const ids=JSON.parse(readFileSync('public/assets/sprites/manifest.json','utf8'));expect(ids).toHaveLength(209);for(const id of [...Object.values(DEFAULT_HELD_WEAPONS),'vfx_slash_spin','vfx_muzzle_flash'])expect(ids).toContain(id);});
+ it('ships exactly the 221 safe optional sprite IDs',()=>{const ids=JSON.parse(readFileSync('public/assets/sprites/manifest.json','utf8'));expect(ids).toHaveLength(221);for(const id of [...Object.values(DEFAULT_HELD_WEAPONS),'vfx_slash_spin','vfx_muzzle_flash'])expect(ids).toContain(id);});
 });

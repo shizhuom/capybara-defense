@@ -44,7 +44,7 @@ describe('P7 portrait compendium',()=>{
   expect(book.inspectEntry('kungfu_po')).toBe(true);expect(book.tab).toBe('heroes');
   expect(book.markup(p)).toContain('compendium-detail-sheet');
   expect(book.markup(p)).toContain('data-compendium-kind="kungfu_po" data-compendium-focused="true"');
-  expect(book.markup(p)).toContain('<td>249</td>');
+  expect(book.markup(p)).toContain('<td>328</td>');
   expect(book.markup(p).match(/data-weapon-role="signature"/g)).toHaveLength(1);
   expect(book.markup(p).match(/data-weapon-role="recommendation"/g)).toHaveLength(2);
   expect(book.stepDetail(-1)).toBe(true);expect(book.markup(p)).toContain('data-entry="pepe_king"');

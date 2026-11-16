@@ -1,0 +1,51 @@
+{
+  "at": "2026-11-16T06:54:51.697Z",
+  "checked": 2437,
+  "changed": [],
+  "added": [],
+  "frozenAudio": [
+    {
+      "path": "games/capybara-defense/src/ui/AudioGestures.ts",
+      "sha256": "9713e480601d7a246a2e1637cf36c5d345c2d2ff23a9beef80609f300c681475",
+      "unchanged": true
+    },
+    {
+      "path": "games/capybara-defense/src/ui/MusicTracks.ts",
+      "sha256": "1630a1c8ac6b7e2c502e221c2453b38f856f39f4e8ee74f503e07466500bd81d",
+      "unchanged": true
+    },
+    {
+      "path": "games/capybara-defense/src/ui/SoundManager.ts",
+      "sha256": "e1dbf800bc82bc88f3afa4ec81950e6aa2baa26cf41ec7a91fe3e5c6fc083494",
+      "unchanged": true
+    }
+  ],
+  "sourcePngs": 221,
+  "manifestCount": 221,
+  "mismatched": [],
+  "manifestEqual": true,
+  "mapSizes": [
+    {
+      "id": "map_cat_tower_maze",
+      "width": 1280,
+      "height": 720
+    },
+    {
+      "id": "map_midnight_kitchen",
+      "width": 1280,
+      "height": 720
+    },
+    {
+      "id": "map_sakura_onsen",
+      "width": 1280,
+      "height": 720
+    },
+    {
+      "id": "map_sunny_backyard",
+      "width": 1280,
+      "height": 720
+    }
+  ],
+  "trackedChanges": "",
+  "passed": true
+}

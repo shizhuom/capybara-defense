@@ -1,0 +1,18 @@
+{
+  "passed": true,
+  "errors": [],
+  "checks": [
+    "washer: native Chromium touch drag, outside cancel and valid release",
+    "clay: native Chromium touch drag, outside cancel and valid release",
+    "milk_bottle: native Chromium touch drag, outside cancel and valid release",
+    "whistle: native Chromium touch drag, outside cancel and valid release",
+    "recycle_bin: native Chromium touch drag, outside cancel and valid release",
+    "catnip: native Chromium touch drag, outside cancel and valid release",
+    "expired_can: native Chromium touch drag, outside cancel and valid release",
+    "glue_trap: native Chromium touch drag, outside cancel and valid release",
+    "sprinkler: native Chromium touch drag, outside cancel and valid release",
+    "Click-select unit prop plus canvas tap and one-click self prop remain functional",
+    "Empty prep passive slot opens Backpack; empty slots disappear after spawning",
+    "Real five-step tutorial + on-board hero + compendium + new early coach reward; replay resets flag and restores fixed pack without repeat coins"
+  ]
+}

@@ -1,0 +1,98 @@
+{
+  "passed": true,
+  "checks": [
+    {
+      "label": "desktop full pause",
+      "fits": true,
+      "overflow": []
+    },
+    {
+      "label": "desktop pause last loot",
+      "fits": true,
+      "overflow": []
+    },
+    {
+      "label": "desktop longest rank Backyard Overlord III",
+      "fits": true,
+      "overflow": []
+    },
+    {
+      "label": "desktop full report",
+      "fits": true,
+      "overflow": []
+    },
+    {
+      "label": "desktop report end",
+      "fits": true,
+      "overflow": []
+    },
+    {
+      "label": "landscape full pause",
+      "fits": true,
+      "overflow": []
+    },
+    {
+      "label": "landscape pause last loot",
+      "fits": true,
+      "overflow": []
+    },
+    {
+      "label": "landscape longest rank Backyard Overlord III",
+      "fits": true,
+      "overflow": []
+    },
+    {
+      "label": "landscape full report",
+      "fits": true,
+      "overflow": []
+    },
+    {
+      "label": "landscape report end",
+      "fits": true,
+      "overflow": []
+    },
+    {
+      "label": "portrait full pause",
+      "fits": true,
+      "overflow": []
+    },
+    {
+      "label": "portrait pause last loot",
+      "fits": true,
+      "overflow": []
+    },
+    {
+      "label": "portrait longest rank Backyard Overlord III",
+      "fits": true,
+      "overflow": []
+    },
+    {
+      "label": "portrait full report",
+      "fits": true,
+      "overflow": []
+    },
+    {
+      "label": "portrait report end",
+      "fits": true,
+      "overflow": []
+    }
+  ],
+  "shots": [
+    "p12-edge-desktop-pause.png",
+    "p12-edge-desktop-pause-end.png",
+    "p12-edge-desktop-rank.png",
+    "p12-edge-desktop-report.png",
+    "p12-edge-desktop-report-end.png",
+    "p12-edge-landscape-pause.png",
+    "p12-edge-landscape-pause-end.png",
+    "p12-edge-landscape-rank.png",
+    "p12-edge-landscape-report.png",
+    "p12-edge-landscape-report-end.png",
+    "p12-edge-portrait-pause.png",
+    "p12-edge-portrait-pause-end.png",
+    "p12-edge-portrait-rank.png",
+    "p12-edge-portrait-report.png",
+    "p12-edge-portrait-report-end.png"
+  ],
+  "errors": []
+}

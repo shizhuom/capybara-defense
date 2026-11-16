@@ -24,7 +24,7 @@ const fail = (profile:Profile,key:string):MetaResult => ({profile:copy(profile),
 const success = (profile:Profile,key:string,amount?:number):MetaResult => ({profile:unlockAchievements(profile),ok:true,key,...(amount===undefined?{}:{amount})});
 
 export function createProfile():Profile {
-  return {coins:0,wins:0,matches:0,fragments:[],awardedBattles:[],schemaVersion:2,tutorialCompleted:false,tutorialRewardClaimed:false,
+  return {coins:0,wins:0,matches:0,fragments:[],awardedBattles:[],schemaVersion:2,tutorialCompleted:false,tutorialRewardClaimed:false,earlyWaveTipSeen:false,bestEndlessWave:0,
     weaponFragments:{},unlockedWeapons:[],equippedWeapons:{},ownedProps:{},equippedActiveProps:[],equippedPassiveProps:[],freeLotteryTickets:0,shop:null,
     stars:0,highestStars:0,winStreak:0,bestWinStreak:0,selectedMap:'auto',avatarId:'capybara',unlockedAvatars:[...DEFAULT_AVATARS],mergedHeroes:[],settings:{...DEFAULT_SETTINGS}};
 }
@@ -33,6 +33,8 @@ export function normalizeProfile(raw:unknown):Profile {
   p.coins=count(data.coins);p.matches=count(data.matches);p.wins=Math.min(count(data.wins),p.matches);
   p.tutorialCompleted=typeof data.tutorialCompleted==='boolean'?data.tutorialCompleted:p.matches>0;
   p.tutorialRewardClaimed=typeof data.tutorialRewardClaimed==='boolean'?data.tutorialRewardClaimed:p.matches>0||p.tutorialCompleted;
+  p.earlyWaveTipSeen=data.earlyWaveTipSeen===true;
+  p.bestEndlessWave=count(data.bestEndlessWave)>=11?count(data.bestEndlessWave):0;
   // Only absence migrates from wins: explicit zero and malformed stars never replay progress.
   p.stars=has(data,'stars')?count(data.stars):p.wins;
   p.highestStars=Math.max(p.stars,count(data.highestStars));

@@ -25,8 +25,10 @@ describe('P9 gated encyclopedia and saved progress celebration',()=>{
   const e=new BattleEngine({autoWaves:false});e.start();e.state.result={winner:'player',reason:'waves',elapsed:55,loot:[],playerLoot:[],aiLoot:[],coins:60};
   const p={...createProfile(),stars:1,highestStars:1},newRoster=newlyUnlocked(0,1),args={state:e.state,profile:p,savedResult:true,resultStars:1,previousRank:0,newWeapons:[],newAvatars:[],newRoster};
   expect(newRoster).toEqual({units:['hedgehog','hat_shades'],heroes:['bamboo_mafia','meowfia']});
-  expect(resultMarkup(args)).toContain('ui_unlock_chest');expect(resultMarkup(args)).toContain('roster-unlock-celebration');expect(newlyUnlocked(1,1).heroes).toEqual([]);
-  e.state.result.winner='ai';expect(resultMarkup(args)).not.toContain('roster-unlock-celebration');
+  const won=resultMarkup(args);expect(won).toContain('ui_unlock_chest');expect(won).toContain('visual-unlock-ribbon');expect(newlyUnlocked(1,1).heroes).toEqual([]);
+  for(const id of [...newRoster.units,...newRoster.heroes])expect(won.split('<div class="visual-unlock-friends">')[1]?.split('</div>')[0].match(new RegExp(`data-sticker="${id}"`,'g'))).toHaveLength(1);
+  e.state.result.winner='ai';const lost=resultMarkup(args);expect(lost).not.toContain('visual-unlock-ribbon');
+  for(const id of [...newRoster.units,...newRoster.heroes])expect(lost).not.toContain(`data-sticker="${id}"`);
  });
  it('keeps washer and intelligent clay inside the permitted roster',()=>{
   const e=new BattleEngine({progressionStars:0,seed:18,autoWaves:false,loadouts:{player:{ownedProps:{washer:1,clay:1},equippedActiveProps:['washer','clay']}}});e.start();

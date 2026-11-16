@@ -3,16 +3,20 @@ import {combatRange,combatCharge} from '../core/CombatRules';
 import { getMap, STAGE } from '../config/maps';
 import {GUARDIAN_BATH_SPOTS} from '../config/guardianBaths';
 import {EnemyMotion} from './EnemyMotion';
-import {SHOVEL_PRODUCTION,UNITS} from '../config/units';
+import {UnitMotion} from './UnitMotion';
+import {drawPuppetSprite} from './SpritePuppetAnimator';
+import {drawEnemyAccents,drawLandingRipple} from './EnemyAccents';
+import {SHOVEL_PRODUCTION} from '../config/units';
 import { HEROES } from '../config/heroes';
 import { MergeSystem } from '../core/MergeSystem';
 import {getMergeTargets,getBenchMergeHints,getPassiveMergeCallouts,type MergeTarget} from '../core/MergeTargets';
+import {isInsideBattleBoard,isValidPropRoad,isValidPropUnit,propTargetKind,propUnitCenter,resolvePropDrop} from '../core/PropTargets';
 import { t } from '../i18n/i18n';
 import { assets } from './AssetRegistry';
 import { drawSoakingCapybaraArt, drawEnemyArt, drawOrange, drawShovelArt, drawUnitArt, ellipse, INK, line, PAPER, polygon, round, star } from './StickerArt';
 import { drawGlueTrap, drawM2Event, drawPropCursor, drawSealed, drawWasher, drawWet } from './M2Effects';
 import {boneShield,confusionSpiral,drawM3Event} from './M3Effects';
-import {bodyPose,drawHeldWeapon} from './HeldWeaponRenderer';
+import {drawHeldWeapon} from './HeldWeaponRenderer';
 import {drawCombatEvent} from './CombatEffects';
 import {drawSplashScene} from './SplashScene';
 import {placeMergeCallout} from './MergeCalloutLayout';
@@ -39,6 +43,8 @@ export class StickerRenderer {
   private previousOranges: Record<Side,number> | null = null;
   private orangeMotions: OrangeMotion[] = [];
   private readonly enemyMotion=new EnemyMotion();
+  private readonly unitMotion=new UnitMotion();
+  private animationPaused=false;
   private dust:{id:number;x:number;y:number;dir:number;age:number}[]=[];
 
   constructor(private readonly canvas: HTMLCanvasElement) {
@@ -68,13 +74,16 @@ export class StickerRenderer {
 
   draw(state:BattleState,seconds:number,interaction:Interaction={}):void {
     this.resize();
-    const dt=state.phase==='paused'?0:clamp(seconds-this.lastSeconds,0,.1); this.lastSeconds=seconds;
+    const fresh=this.battleId!==state.id;
+    const dt=fresh||state.phase==='paused'?0:clamp(seconds-this.lastSeconds,0,.1); this.lastSeconds=seconds;
     if(this.battleId!==state.id) {
-      this.battleId=state.id; this.unitPositions.clear(); this.previousOranges=null; this.orangeMotions=[];this.enemyMotion.clear();this.dust=[];
+      this.battleId=state.id; this.unitPositions.clear(); this.previousOranges=null; this.orangeMotions=[];this.enemyMotion.clear();this.unitMotion.clear();this.dust=[];
       this.sceneSeconds=seconds;
     }
-    if(state.phase!=='paused')this.sceneSeconds=seconds;
+    // Integrate only visible playing frames: resuming must never jump to wall time.
+    this.sceneSeconds+=dt;
     seconds=this.sceneSeconds;
+    this.animationPaused=state.phase==='paused';
     this.observeOranges(state,dt);
     const c=this.c;
     c.setTransform(this.pixelRatio,0,0,this.pixelRatio,0,0);
@@ -88,6 +97,7 @@ export class StickerRenderer {
     const source=this.mergeSource(state,interaction),targets=new Map(source?getMergeTargets(state,source.id).map(t=>[t.unitId,t]):[]);
 
     const liveIds=new Set(state.units.map(unit=>unit.id));
+    this.unitMotion.retain(new Set(state.units.filter(unit=>unit.location.zone==='board').map(unit=>unit.id)));
     for(const id of this.unitPositions.keys()) if(!liveIds.has(id)) this.unitPositions.delete(id);
     for(const unit of [...state.units].filter(unit=>unit.side==='player'&&unit.location.zone==='board'&&unit.kind!=='shovel').sort((a,b)=>this.position(a).y-this.position(b).y)) {
       const target=this.position(unit), previous=this.unitPositions.get(unit.id)||target;
@@ -110,6 +120,7 @@ export class StickerRenderer {
     this.drawEvents(state,seconds,true,interaction.showDamageNumbers!==false);
     const passiveRects=this.drawPassiveMergeOverlay(state,interaction,seconds);
     this.drawActiveMergeHighlights(state,interaction,seconds,passiveRects);
+    this.drawPropUnitTargets(state,interaction,seconds);
     this.drawDrag(state,interaction,seconds);
   }
 
@@ -128,7 +139,7 @@ export class StickerRenderer {
   /** Dedicated animal gathering; preview never enters the battle-map drawing path. */
   drawPreview(mapId:MapId,seconds:number,oranges=3):void {
     this.resize();this.battleId='';this.lastSeconds=seconds;this.sceneSeconds=seconds;this.unitPositions.clear();
-    this.enemyMotion.clear();this.dust=[];this.previousOranges=null;this.orangeMotions=[];
+    this.enemyMotion.clear();this.unitMotion.clear();this.dust=[];this.previousOranges=null;this.orangeMotions=[];
     const c=this.c;c.setTransform(this.pixelRatio,0,0,this.pixelRatio,0,0);c.clearRect(0,0,STAGE.width,STAGE.height);
     c.lineCap='round';c.lineJoin='round';c.textBaseline='middle';
     drawSplashScene(c,this.assets,mapId,seconds,oranges);
@@ -247,15 +258,15 @@ export class StickerRenderer {
   }
 
   private position(unit:Unit):Position {
-    if(unit.location.zone==='board')return cellCenter(unit.location.col,unit.location.row);
-    return{x:STAGE.benchX+unit.location.slot*STAGE.benchStep+STAGE.benchSize/2,y:STAGE.benchY+STAGE.benchSize/2+2};
+    return propUnitCenter(unit);
   }
 
   private drawUnit(unit:Unit,position:Position,seconds:number,opacity=1,drag=false,loadout:Partial<BattleLoadout>={},highlightScale=1):void {
     const c=this.c,hero=HEROES[unit.kind],onBench=unit.location.zone==='bench';
     const requiredCharge=hero?combatCharge(unit,loadout):1;
     const scale=(onBench ? .85 : .92)*(1+(unit.level-1)*.06);
-    const pose=onBench?{x:0,y:0,scaleX:1,scaleY:1}:bodyPose(unit);
+    const motion=onBench?undefined:this.unitMotion.sample(unit,seconds,this.animationPaused);
+    const pose=motion?.body??{x:0,y:0,scaleX:1,scaleY:1};
     const wave=Math.sin(seconds*2.7+unit.id*1.71);
     c.save();c.globalAlpha=opacity;c.translate(position.x,position.y);c.scale(highlightScale,highlightScale);
     if(unit.kind==='shovel'){this.drawShovel(false);if(!drag){round(c,16,-37,33,20,6,'#f2d68c',INK,1.4);this.label(t('render.dig'),32,-27,14,INK,'center',800);}c.restore();return;}
@@ -267,13 +278,13 @@ export class StickerRenderer {
       if(unit.energy>=requiredCharge-1) {c.save();c.globalAlpha*=.4+.15*Math.sin(seconds*5);ellipse(c,0,1,33,33,'rgba(255,255,255,0)','#f1c966',2);c.restore();}
     }
     c.restore();
-    c.save();c.translate(pose.x,pose.y-2-Math.max(0,unit.animation)*3);c.scale(scale*(1+wave*.018)*pose.scaleX*(onBench?1:unit.facing??1),scale*(1-wave*.025)*pose.scaleY);
+    c.save();c.translate(pose.x,pose.y-2-Math.max(0,unit.animation)*3);c.scale(scale*(1+wave*.018)*pose.scaleX*(motion?.visualFacing??1)*(motion?.spawnScale??1),scale*(1-wave*.025)*pose.scaleY*(motion?.spawnScale??1));
     if(unit.statuses.KNOCKDOWN)c.rotate(-.55);
     const override=this.assets.get(unit.kind);
-    if(override)this.drawImage(override,onBench?77:88,onBench?77:88,0,-3);else {if(!onBench)c.scale(88/77,88/77);drawUnitArt(c,unit.kind,seconds);}
+    if(override){if(motion){c.save();c.translate(0,-3);drawPuppetSprite(c,override,88,motion.rig);c.restore();}else this.drawImage(override,77,77,0,-3);}else {if(!onBench)c.scale(88/77,88/77);drawUnitArt(c,unit.kind,seconds);}
     if(unit.buffTime>0){star(c,-30,-24+Math.sin(seconds*4)*2,5,'#efcf72',1);star(c,31,10,3.5,'#f9e19b',1);}
     c.restore();
-    if(!drag){c.save();c.translate(pose.x,pose.y);drawHeldWeapon(c,unit,seconds,loadout);c.restore();}
+    if(!drag){c.save();c.translate(pose.x,pose.y);c.scale(motion?.spawnScale??1,motion?.spawnScale??1);drawHeldWeapon(c,unit,seconds,loadout);c.restore();}
     if(unit.animation>.1){c.save();c.globalAlpha*=Math.min(.2,unit.animation*.16);ellipse(c,0,-3,20,22,'#fffce5','#fffce5',0);c.restore();}
     if(!drag) {
       c.save();if(!onBench)c.scale(1.2,1.2);
@@ -306,14 +317,16 @@ export class StickerRenderer {
     const c=this.c,p=cellCenter(enemy.col,enemy.row),boss=enemy.boss;
     const size=(boss?1.14:.96)*clamp(enemy.size||1,.75,boss?1.6:1.5),base=boss?126:98;
     const pose=this.enemyMotion.sample(enemy,seconds,paused,path);
-    if(pose.footfall){this.dust.push({id:enemy.id,x:p.x-pose.dirX*20,y:p.y+30,dir:pose.dirX,age:0});if(this.dust.length>48)this.dust.shift();}
+    if(!paused&&pose.footfall){this.dust.push({id:enemy.id,x:p.x-pose.dirX*20,y:p.y+30,dir:pose.dirX,age:0});if(this.dust.length>48)this.dust.shift();}
     c.save();c.translate(p.x+(enemy.hitFlash>0?(enemy.knockX||0)+Math.sin(seconds*95)*1.4:0),p.y+(enemy.hitFlash>0?(enemy.knockY||0):0));
     ellipse(c,0,boss?39:29,(boss?35:26)*pose.shadowScale,6*pose.shadowScale,'rgba(80,70,51,.19)','',0);
-    c.save();c.translate(0,pose.hopY);c.rotate(pose.tilt);
-    c.scale(size*pose.squashX*(enemy.hitFlash>0?1.14:1)*pose.flipX,size*pose.squashY*(enemy.hitFlash>0?.88:1));
-    const override=(pose.useWalk2?this.assets.get(`${enemy.kind}_walk2`):undefined)||this.assets.get(enemy.kind);
+    drawLandingRipple(c,pose,base*size);
+    c.save();c.translate(0,pose.hopY);c.rotate(pose.tilt+pose.bankTilt);
+    c.scale(size*pose.squashX*(1+pose.jello*.19+pose.roar*.10)*pose.visualFlip*pose.spawnScale,size*pose.squashY*(1-pose.jello*.15+pose.roar*.14)*pose.spawnScale);
+    drawEnemyAccents(c,enemy,pose,base);
+    const override=this.assets.get(enemy.kind);
     if(enemy.hitFlash>0)c.filter='brightness(0) invert(1)';
-    if(override)this.drawImage(override,base,base,0,-4);
+    if(override){c.save();c.translate(0,-4);drawPuppetSprite(c,override,base,pose.rig);c.restore();}
     else {c.scale(base/79,base/79);drawEnemyArt(c,enemy.kind,pose.artSeconds);}
     if(enemy.boneShield)boneShield(c);c.restore();
     const width=boss?68:42,height=boss?9:7,y=-base*size*.5-8;
@@ -466,37 +479,38 @@ export class StickerRenderer {
     }
   }
 
-  private propUnitValid(id:string,unit:Unit):boolean {
-    if(unit.side!=='player'||(unit.washing||0)>0)return false;
-    if(unit.kind==='shovel')return id==='recycle_bin';
-    const component=!!UNITS[unit.kind]&&UNITS[unit.kind].category==='component';
-    if(id==='washer')return component||(!HEROES[unit.kind]&&unit.level===1);
-    if(id==='clay')return component;
-    if(id==='milk_bottle')return !component&&unit.level<(HEROES[unit.kind]?5:UNITS[unit.kind]?.maxLevel||1);
-    if(id==='whistle')return true;
-    if(id==='recycle_bin')return component||unit.level===1;
-    return false;
+  private drawPropTargets(state:BattleState,interaction:Interaction,seconds:number):void {
+    const id=interaction.propId!,kind=propTargetKind(id),c=this.c;
+    if(kind==='self'){
+      if(!interaction.pointer||!isInsideBattleBoard(interaction.pointer))return;
+      const pulse=(1+Math.sin(seconds*4))/2;
+      c.save();c.shadowColor='#f3c769';c.shadowBlur=22+pulse*10;
+      round(c,STAGE.boardX,STAGE.boardY,STAGE.cell*STAGE.cols,STAGE.cell*STAGE.rows,20,'rgba(255,222,128,.05)','#edbe55',4+pulse);c.restore();
+      return;
+    }
+    if(kind!=='road')return;
+    const point=interaction.pointer??(interaction.hover?cellCenter(interaction.hover.col,interaction.hover.row):undefined);
+    const target=point?resolvePropDrop(state,id,point):null;
+    c.save();c.setLineDash([7,6]);c.lineDashOffset=-seconds*18;
+    for(let row=0;row<STAGE.rows;row++)for(let col=0;col<STAGE.cols;col++)if(isValidPropRoad(state,col,row)){
+      const p=cellCenter(col,row),hot=target?.col===col&&target?.row===row;
+      round(c,p.x-44,p.y-44,88,88,12,hot?'rgba(246,203,105,.27)':'rgba(246,203,105,.07)','#d9a43d',hot?3.5:2);
+    }
+    c.restore();
   }
 
-  private drawPropTargets(state:BattleState,interaction:Interaction,seconds:number):void {
-    const id=interaction.propId!,c=this.c,hover=interaction.hover||(interaction.pointer?this.hitTest(interaction.pointer.x,interaction.pointer.y):null);
-    if(id==='glue_trap') {
-      for(let row=0;row<STAGE.rows;row++)for(let col=0;col<STAGE.cols;col++)if(state.grid[row][col]==='R'&&!(state.traps||[]).some(trap=>trap.side==='player'&&trap.col===col&&trap.row===row)) {
-        const p=cellCenter(col,row),hot=hover&&'col'in hover&&hover.col===col&&hover.row===row;
-        round(c,p.x-31,p.y-31,62,62,11,hot?'rgba(217,195,237,.34)':'rgba(217,195,237,.10)','#a083c0',hot?3:1.5);
-      }
-    } else {
-      for(const unit of state.units)if(unit.location.zone==='board'&&this.propUnitValid(id,unit)) {
-        const p=this.position(unit),pulse=Math.sin(seconds*4)*.06;
-        round(c,p.x-32,p.y-34,64,67,12,`rgba(217,195,237,${.13+pulse})`,'#a083c0',2.2);
-        star(c,p.x+25,p.y-29,5,'#e8d29b',1);
-      }
-    }
-    if(interaction.pointer) {
-      const target=hover&&'kind'in hover&&hover.kind==='bench'?state.units.find(unit=>unit.side==='player'&&unit.location.zone==='bench'&&unit.location.slot===hover.slot):hover&&'col'in hover?state.units.find(unit=>unit.side==='player'&&unit.location.zone==='board'&&unit.location.col===hover.col&&unit.location.row===hover.row):undefined;
-      const cell=hover&&'col'in hover?hover:null;
-      const valid=id==='glue_trap'?!!cell&&cell.row>=0&&cell.row<STAGE.rows&&state.grid[cell.row]?.[cell.col]==='R'&&!(state.traps||[]).some(trap=>trap.side==='player'&&trap.col===cell.col&&trap.row===cell.row):!!target&&this.propUnitValid(id,target);
-      if(!valid){const {x,y}=interaction.pointer;line(c,[[x-5,y-5],[x+5,y+5]],CORAL,2.5);line(c,[[x+5,y-5],[x-5,y+5]],CORAL,2.5);}
+  /** Target rings remain visible above opaque nest art and the large board puppets. */
+  private drawPropUnitTargets(state:BattleState,interaction:Interaction,seconds:number):void {
+    const id=interaction.propId;if(!id||propTargetKind(id)!=='unit')return;
+    const point=interaction.pointer??(interaction.hover?cellCenter(interaction.hover.col,interaction.hover.row):undefined);
+    const target=point?resolvePropDrop(state,id,point):null,c=this.c;
+    for(const unit of state.units)if(isValidPropUnit(state,id,unit)){
+      const p=(unit.location.zone==='board'?this.unitPositions.get(unit.id):undefined)??this.position(unit);
+      const pulse=(1+Math.sin(seconds*4+unit.id))/2,hot=target?.unitId===unit.id,color=hot?'#edb740':'#43bf86';
+      c.save();c.globalAlpha=.7+pulse*.25;c.shadowColor=color;c.shadowBlur=12+pulse*6;
+      ellipse(c,p.x,p.y+28,35+pulse*3,11+pulse*2,'rgba(105,225,161,.1)',color,hot?3.5:2.5);
+      if(hot)ellipse(c,p.x,p.y+28,40+pulse*3,16+pulse*2,'transparent','#fff1ad',1.8);
+      c.restore();
     }
   }
 
@@ -537,10 +551,6 @@ export class StickerRenderer {
         this.drawBenchBadge('ui_merge_sparkle',x+w-13,y+w-13+(hero?Math.sin(seconds*3.5)*2.5:0),size);
         if(hero){round(c,x+3,y+w-17,w-30,16,6,'#f4d582','#b88b33',1);this.label(t('p6.heroBadge'),x+(w-24)/2,y+w-9,11,'#68411b','center',800);}
       }
-      if(unit&&interaction.propId&&this.propUnitValid(interaction.propId,unit)) {
-        round(c,x+3,y+3,w-6,w-6,16,'rgba(217,195,237,.10)','#a083c0',2.5);
-        star(c,x+w-10,y+11,5,'#e8d29b',1);
-      }
     }
 
   }
@@ -576,7 +586,7 @@ export class StickerRenderer {
   private drawDrag(state:BattleState,interaction:Interaction,seconds:number):void {
     if(!interaction.pointer)return;
     const c=this.c,p=interaction.pointer;
-    if(interaction.propId){c.save();c.translate(p.x,p.y-23);c.globalAlpha=.92;drawPropCursor(c,interaction.propId,seconds);c.restore();return;}
+    if(interaction.propId){c.save();c.translate(p.x,p.y);c.globalAlpha=.95;drawPropCursor(c,interaction.propId,seconds,resolvePropDrop(state,interaction.propId,p)!==null);c.restore();return;}
     if(interaction.shovel){c.save();c.translate(p.x,p.y-12);c.globalAlpha=.9;this.drawShovel(true,state.sides.player.loadout?.equippedPassiveProps.includes('gold_doge'));c.restore();return;}
     const drag=state.units.find(unit=>unit.id===interaction.draggingId);
     if(!drag)return;

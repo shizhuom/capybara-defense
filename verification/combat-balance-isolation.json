@@ -1,0 +1,29 @@
+{
+  "at": "2026-11-16T05:20:43.779Z",
+  "protectedFiles": 2429,
+  "changed": [
+    {
+      "path": "design/assets/ASSET_GALLERY.md",
+      "sha256": "2963422c05b58f254b0e8afdd45d2197f03cc935f0c58a2d820d9ad240d3c8b7"
+    },
+    {
+      "path": "design/assets/sprites/manifest.json",
+      "sha256": "600abd1ed40412e8ee9c7a5b17689c678aaf7f9691716b0c513e9801aad064d9"
+    }
+  ],
+  "audio": [
+    {
+      "path": "games/capybara-defense/src/ui/AudioGestures.ts",
+      "unchanged": true
+    },
+    {
+      "path": "games/capybara-defense/src/ui/MusicTracks.ts",
+      "unchanged": true
+    },
+    {
+      "path": "games/capybara-defense/src/ui/SoundManager.ts",
+      "unchanged": true
+    }
+  ],
+  "passed": false
+}

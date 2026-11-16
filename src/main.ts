@@ -5,6 +5,9 @@ import './ui/p8.css';
 import './ui/p9.css';
 import './ui/p10.css';
 import './ui/p11.css';
+import './ui/p12.css';
+import './ui/p13-settlement.css';
+import './ui/p13.css';
 
 const root = document.getElementById('app');
 if (!root) throw new Error('Missing #app mount point');

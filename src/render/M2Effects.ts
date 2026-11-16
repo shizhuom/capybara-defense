@@ -1,6 +1,7 @@
 import type { Point, VisualEvent } from '../core/types';
 import { STAGE } from '../config/maps';
 import { drawUnitArt, ellipse, INK, line, PAPER, polygon, round, star } from './StickerArt';
+import {assets} from './AssetRegistry';
 
 type C=CanvasRenderingContext2D;
 type Pixel={x:number;y:number};
@@ -176,8 +177,15 @@ export function drawGlueTrap(c:C,charges:number):void {
   for(let i=0;i<Math.max(0,Math.min(3,charges));i++)ellipse(c,-9+i*9,19,2.5,2.5,'#916c49',PAPER,1);
 }
 
-export function drawPropCursor(c:C,id:string,seconds:number):void {
-  c.save();c.rotate(Math.sin(seconds*5)*.06);
+export function drawPropCursor(c:C,id:string,seconds:number,valid=true):void {
+  c.save();c.strokeStyle=valid?'#e4b644':'#d28e78';c.lineWidth=2;c.setLineDash([4,5]);
+  c.beginPath();c.arc(0,0,24+Math.sin(seconds*4)*1.5,0,Math.PI*2);c.stroke();c.setLineDash([]);
+  const color=valid?'#e4b644':'#d28e78';
+  for(const [x,y] of [[-30,0],[30,0],[0,-30],[0,30]])line(c,[[x*.8,y*.8],[x,y]],color,2);
+  c.translate(0,-23);c.rotate(Math.sin(seconds*5)*.06);
+  c.shadowColor='rgba(63,48,29,.28)';c.shadowBlur=12;c.shadowOffsetY=7;
+  const image=assets.get(id==='sprinkler'?'sprinkler':`prop_${id}`);
+  if(image){c.drawImage(image,-37,-37,74,74);c.restore();return;}
   if(id==='washer'){c.scale(.65,.65);drawWasher(c,seconds,3);}
   else if(id==='glue_trap')drawGlueTrap(c,3);
   else if(id==='milk_bottle'){round(c,-11,-15,22,34,6,'#f8e7bf',INK,2);round(c,-7,-23,14,10,4,'#dda6a3',INK,2);star(c,0,2,6,'#e6bb64',1);}

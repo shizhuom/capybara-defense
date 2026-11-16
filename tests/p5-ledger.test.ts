@@ -20,8 +20,8 @@ it.each(['zh-CN','en'] as const)('provides a fixed header, tabs and inner body i
 });
 it('rounds attack growth, rate and range, and labels the matrix corner and collection progress',()=>{
  const p=createProfile(),book=new Compendium(),html=book.markup(p);
- for(const damage of [38,61,97,156,249])expect(html).toContain(`<td>${damage}</td>`);
- expect(html).not.toMatch(/60\.8|97\.28|155\.648/);expect(html).toContain('matrix-corner');expect(html).toContain('0/12');expect(html).toContain('0/36');
+ for(const damage of [50,80,128,205,328])expect(html).toContain(`<td>${damage}</td>`);
+ expect(html).not.toMatch(/204\.8|327\.68/);expect(html).toContain('matrix-corner');expect(html).toContain('0/12');expect(html).toContain('0/36');
  book.openTo('panda');expect(book.markup(p)).toContain('0.67');
 });
 it('has exactly four matching accessible hero equip chips and toggles equip atomically',()=>{

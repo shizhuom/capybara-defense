@@ -1,0 +1,227 @@
+{
+  "passed": true,
+  "errors": [],
+  "checks": [
+    "desktop: exact production bytes, 217 relative PNGs, no debug bridge, locked/detail/back, shared storybook folders, P12 pause/result, tutorial/summon and saved profile reload",
+    "landscape: exact production bytes, 217 relative PNGs, no debug bridge, locked/detail/back, shared storybook folders, P12 pause/result, tutorial/summon and saved profile reload",
+    "portrait: exact production bytes, 217 relative PNGs, no debug bridge, locked/detail/back, shared storybook folders, P12 pause/result, tutorial/summon and saved profile reload"
+  ],
+  "reports": [
+    {
+      "label": "desktop-zh-CN-armory",
+      "fits": true,
+      "thin": [],
+      "overflow": []
+    },
+    {
+      "label": "desktop-zh-CN-market",
+      "fits": true,
+      "thin": [],
+      "overflow": []
+    },
+    {
+      "label": "desktop-zh-CN-profile",
+      "fits": true,
+      "thin": [],
+      "overflow": []
+    },
+    {
+      "label": "desktop-zh-CN-leaderboard",
+      "fits": true,
+      "thin": [],
+      "overflow": []
+    },
+    {
+      "label": "desktop-zh-CN-settings",
+      "fits": true,
+      "thin": [],
+      "overflow": []
+    },
+    {
+      "label": "desktop-en-armory",
+      "fits": true,
+      "thin": [],
+      "overflow": []
+    },
+    {
+      "label": "desktop-en-market",
+      "fits": true,
+      "thin": [],
+      "overflow": []
+    },
+    {
+      "label": "desktop-en-profile",
+      "fits": true,
+      "thin": [],
+      "overflow": []
+    },
+    {
+      "label": "desktop-en-leaderboard",
+      "fits": true,
+      "thin": [],
+      "overflow": []
+    },
+    {
+      "label": "desktop-en-settings",
+      "fits": true,
+      "thin": [],
+      "overflow": []
+    },
+    {
+      "label": "desktop-pause",
+      "fits": true,
+      "thin": [],
+      "overflow": []
+    },
+    {
+      "label": "desktop-defeat",
+      "fits": true,
+      "thin": [],
+      "overflow": []
+    },
+    {
+      "label": "landscape-zh-CN-armory",
+      "fits": true,
+      "thin": [],
+      "overflow": []
+    },
+    {
+      "label": "landscape-zh-CN-market",
+      "fits": true,
+      "thin": [],
+      "overflow": []
+    },
+    {
+      "label": "landscape-zh-CN-profile",
+      "fits": true,
+      "thin": [],
+      "overflow": []
+    },
+    {
+      "label": "landscape-zh-CN-leaderboard",
+      "fits": true,
+      "thin": [],
+      "overflow": []
+    },
+    {
+      "label": "landscape-zh-CN-settings",
+      "fits": true,
+      "thin": [],
+      "overflow": []
+    },
+    {
+      "label": "landscape-en-armory",
+      "fits": true,
+      "thin": [],
+      "overflow": []
+    },
+    {
+      "label": "landscape-en-market",
+      "fits": true,
+      "thin": [],
+      "overflow": []
+    },
+    {
+      "label": "landscape-en-profile",
+      "fits": true,
+      "thin": [],
+      "overflow": []
+    },
+    {
+      "label": "landscape-en-leaderboard",
+      "fits": true,
+      "thin": [],
+      "overflow": []
+    },
+    {
+      "label": "landscape-en-settings",
+      "fits": true,
+      "thin": [],
+      "overflow": []
+    },
+    {
+      "label": "landscape-pause",
+      "fits": true,
+      "thin": [],
+      "overflow": []
+    },
+    {
+      "label": "landscape-defeat",
+      "fits": true,
+      "thin": [],
+      "overflow": []
+    },
+    {
+      "label": "portrait-zh-CN-armory",
+      "fits": true,
+      "thin": [],
+      "overflow": []
+    },
+    {
+      "label": "portrait-zh-CN-market",
+      "fits": true,
+      "thin": [],
+      "overflow": []
+    },
+    {
+      "label": "portrait-zh-CN-profile",
+      "fits": true,
+      "thin": [],
+      "overflow": []
+    },
+    {
+      "label": "portrait-zh-CN-leaderboard",
+      "fits": true,
+      "thin": [],
+      "overflow": []
+    },
+    {
+      "label": "portrait-zh-CN-settings",
+      "fits": true,
+      "thin": [],
+      "overflow": []
+    },
+    {
+      "label": "portrait-en-armory",
+      "fits": true,
+      "thin": [],
+      "overflow": []
+    },
+    {
+      "label": "portrait-en-market",
+      "fits": true,
+      "thin": [],
+      "overflow": []
+    },
+    {
+      "label": "portrait-en-profile",
+      "fits": true,
+      "thin": [],
+      "overflow": []
+    },
+    {
+      "label": "portrait-en-leaderboard",
+      "fits": true,
+      "thin": [],
+      "overflow": []
+    },
+    {
+      "label": "portrait-en-settings",
+      "fits": true,
+      "thin": [],
+      "overflow": []
+    },
+    {
+      "label": "portrait-pause",
+      "fits": true,
+      "thin": [],
+      "overflow": []
+    },
+    {
+      "label": "portrait-defeat",
+      "fits": true,
+      "thin": [],
+      "overflow": []
+    }
+  ]
+}

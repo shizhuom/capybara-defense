@@ -6,6 +6,16 @@ import {assets} from './AssetRegistry';
 import {ellipse,INK,line,PAPER,polygon,round,star} from './StickerArt';
 
 const clamp=(n:number)=>Math.max(0,Math.min(1,n));
+const smoothstep=(t:number)=>t*t*(3-2*t);
+/** attackAnim counts down through the existing .32s attack, shared by body and mount. */
+function attackMotion(active:number):number {
+ if(active<=0)return 0;
+ const t=1-active;
+ if(t<.25)return -.28*smoothstep(t/.25);
+ if(t<.5)return -.28+1.28*smoothstep((t-.25)/.25);
+ const recovery=(t-.5)/.5;
+ return Math.exp(-5*recovery*recovery)*Math.cos(recovery*Math.PI*2)*(1-smoothstep(recovery));
+}
 export function heldWeapon(unit:Unit,loadout:Partial<BattleLoadout>={}) {
  const defaultId=DEFAULT_HELD_WEAPONS[unit.kind];
  if(unit.location.zone!=='board'||!defaultId)return null;
@@ -15,10 +25,10 @@ export function heldWeapon(unit:Unit,loadout:Partial<BattleLoadout>={}) {
 }
 /** Pure poses keep aim, image placement and VFX muzzle locations in agreement. */
 export function bodyPose(unit:Unit){
- const active=clamp(unit.attackAnim??0),t=1-active,angle=unit.attackAngle??(unit.facing===-1?Math.PI:0),style=COMBAT_STYLES[unit.kind];
- const pulse=active>0?Math.sin(t*Math.PI):0;
+ const active=clamp(unit.attackAnim??0),angle=unit.attackAngle??(unit.facing===-1?Math.PI:0),style=COMBAT_STYLES[unit.kind];
+ const pulse=attackMotion(active);
  const lunge=style==='ranged_recoil'?-10*active:style==='magic_cast'?3*pulse:(style==='spin360'?11:12)*pulse;
- return {x:Math.cos(angle)*lunge,y:Math.sin(angle)*lunge,scaleX:1+(active?Math.sin(t*2*Math.PI)*.14:0),scaleY:1-(active?Math.sin(t*2*Math.PI)*.11:0)};
+ return {x:Math.cos(angle)*lunge,y:Math.sin(angle)*lunge,scaleX:1+pulse*.14,scaleY:1-pulse*.11};
 }
 export function weaponPose(unit:Unit,seconds:number){
  const style=COMBAT_STYLES[unit.kind],active=clamp(unit.attackAnim??0),t=1-active,angle=unit.attackAngle??(unit.facing===-1?Math.PI:0),hero=!!HEROES[unit.kind];
@@ -33,11 +43,11 @@ export function weaponPose(unit:Unit,seconds:number){
   const swing=t<.25?-65*Math.PI/180*(t/.25):(-65+185*(t-.25)/.75)*Math.PI/180;
   rotation=angle+swing;x=Math.cos(rotation)*39;y=Math.sin(rotation)*39;
  }else if(style==='thrust'){
-  extension=active>0?Math.sin(t*Math.PI)*28:0;x=Math.cos(angle)*(33+extension);y=Math.sin(angle)*(33+extension);
+  extension=attackMotion(active)*28;x=Math.cos(angle)*(33+extension);y=Math.sin(angle)*(33+extension);
  }else if(style==='ranged_recoil'){
   recoil=active*10;x=Math.cos(angle)*(34-recoil);y=Math.sin(angle)*(34-recoil)+8;rotation=angle-active*8*Math.PI/180;
  }else if(style==='magic_cast'){
-  x=(unit.facing??1)*35;y=-15+Math.sin(seconds*3+unit.id)*5-(active?Math.sin(t*Math.PI)*14:0);rotation=angle+Math.sin(seconds*2)*.12;
+  x=(unit.facing??1)*35;y=-15+Math.sin(seconds*3+unit.id)*5-attackMotion(active)*14;rotation=angle+Math.sin(seconds*2)*.12;
  }
  return {x,y,rotation,extension,recoil,muzzle:style==='ranged_recoil'&&active>1-.12*3.1};
 }

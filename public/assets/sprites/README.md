@@ -1,4 +1,4 @@
-﻿# Optional full-scene sticker artwork
+# Optional full-scene sticker artwork
 
 The game ships with complete procedural Canvas artwork. No image download is required.
 
@@ -25,7 +25,7 @@ Keep the silhouette readable at small display scales. P3 regular enemy PNGs use 
 
 Run `npm run sync-assets` in the game directory. The zero-dependency script copies only regular lowercase PNG filenames matching `^[a-z][a-z0-9_]*\.png$` from the optional read-only source `../../design/assets/sprites/`. It preserves the source manifest verbatim when it exactly matches the destination PNG catalog, otherwise it writes a safe sorted array manifest. It never deletes existing destination art, creates the source, or fails because the source is absent/empty. Uppercase extensions, hyphens, directories and symlinks are skipped. Canvas and HTML share a loaded-only registry; malformed manifests, missing files and decode failures retain the built-in fallback. Vite's `BASE_URL` supports relative/subdirectory hosting. HTML refreshes once the initial asset batch settles.
 
-The current P11 catalog contains **209 PNGs**; the sections below retain the additions from each release. Characters, objects, props, weapons and avatars should be transparent RGBA PNG at 256×256 or 512×512 with clear margins. Keep feet near the lower center so gold hero disks remain visible. The soaking guardian and storybook check/peek art deliberately have no outer sticker border. Level/status badges, energy, hits, shields, weapon effects and input positions remain dynamic.
+The current P12 catalog contains **217 PNGs**; the sections below retain the additions from each release. Characters, objects, props, weapons and avatars should be transparent RGBA PNG at 256×256 or 512×512 with clear margins. Keep feet near the lower center so gold hero disks remain visible. The soaking guardian and storybook check/peek art deliberately have no outer sticker border. Level/status badges, energy, hits, shields, weapon effects and input positions remain dynamic.
 
 ## Four maps and tile aliases
 
@@ -183,3 +183,7 @@ The 209-item manifest adds four 256×256 transparent, borderless peeking mascots
 | `ui_profile_peek_capy` | Passport and Settings, cherry blossom |
 
 All four keep their paws on the bottom edge, without a backing card or white outline. `P11_SCENE_IDS` registers their distinct offline SVG fallbacks and asynchronous UI refresh. Run `npm run sync-assets` to copy the authoritative read-only design assets into this directory; never edit the source art.
+
+## P12 shield settlement and continuous puppets
+
+Eight transparent, borderless UI assets: `ui_victory_shield_wings`, `ui_defeat_shield_wings` (512x512); `ui_victory_star_lit`, `ui_victory_star_dim` (192x192); `ui_pause_peek_capy` (256x256); `ui_btn_return_arrow`, `ui_stats_scroll`, `ui_horn_continue` (160x160). All have offline SVG equivalents. Enemy animation samples the canonical base sprite through a continuous spine/limb rig; `_walk2` PNGs remain in the catalog for compatibility but are no longer rendered.

@@ -8,7 +8,7 @@ import {progressionFor,getUnlockedBossIds,getUnlockedMinionIds} from '../config/
 import {RANKS,getRankDifficulty} from '../config/ranks';
 import {applyNewBossMechanic} from './BossMechanics';
 import {rollWeapon} from '../config/weapons';
-import { FIRST_WAVE_PREPARATION, WAVES, WAVE_DURATION,bossesForWave,waveEnemyCount,minionForWave } from '../config/waves';
+import { FIRST_WAVE_PREPARATION, WAVE_DURATION,bossesForWave,waveEnemyCount,minionForWave,getWaveConfig } from '../config/waves';
 import { MergeSystem } from './MergeSystem';
 import {CombatRecords} from './CombatRecords';
 import type {OpponentTuning} from '../config/opponents';
@@ -32,6 +32,7 @@ export class BattleEngine {
   private unlockedDraws?:Set<string>;
   private pendingBosses:{kind:string;at:number}[]=[];
   private waveBossSchedule:readonly (readonly string[])[];
+  private bossSeed:number;
   private lockedBenchUnit?:Unit;
   private combatRecords=new CombatRecords();
   private effectOwners=new WeakMap<Enemy,Partial<Record<'burn'|'poison'|'bleed',Unit>>>();
@@ -39,14 +40,12 @@ export class BattleEngine {
     const seed=options.seed??Math.floor(Math.random()*0xffffffff);
     this.random=new Random(seed);
     const mapId=getMap(options.mapId).id,rankIndex=Number.isFinite(options.rankIndex)?Math.max(0,Math.min(53,Math.trunc(options.rankIndex!))):0;
-    const scheduleRandom=new Random(((seed^0x6d2b79f5)>>>0)||1);
+    this.bossSeed=((seed^0x6d2b79f5)>>>0)||1;
+    const scheduleRandom=new Random(this.bossSeed);
     if(options.progressionStars!==undefined)this.unlockedDraws=new Set(progressionFor({stars:options.progressionStars,highestStars:options.progressionStars,mergedHeroes:options.progressionHeroes??[]}).units);
     this.waveBossSchedule=Array.from({length:10},(_,i)=>{
       const originals=bossesForWave(mapId,rankIndex,i+1,()=>scheduleRandom.next());
-      if(options.progressionStars===undefined)return Object.freeze(originals);
-      const pool=getUnlockedBossIds(options.progressionStars),chosen:string[]=[];
-      originals.forEach((id,n)=>{const available=pool.filter(b=>!chosen.includes(b));chosen.push(available.includes(id)?id:available[(i+n)%available.length]??pool[(i+n)%pool.length]);});
-      return Object.freeze(chosen);
+      return Object.freeze(this.restrictBosses(originals,i+1));
     });
     const side=(side:Side):SideState=>({lockedBenchSlot:null,food:ECONOMY.initialFood,summons:0,oranges:ECONOMY.initialOranges,shovels:ECONOMY.initialShovels,shovelTimer:0,kills:0,damage:0,loot:[],fog:0,loadout:copyLoadout(side==='player'?options.loadouts?.player:undefined),propCooldowns:{},sprinklerUsed:false,giantCatUses:0,catnipTime:0});
     this.state={id:`${Date.now()}-${++battleSequence}`,phase:'ready',time:0,wave:0,waveTime:0,nextSpawn:0,spawned:0,mapId,rankIndex,mergedHeroes:{player:[],ai:[]},grid:GridSystem.create(mapId),craterHits:{},sides:{player:side('player'),ai:side('ai')},units:[],enemies:[],events:[],traps:[],result:null};
@@ -55,6 +54,22 @@ export class BattleEngine {
   start():void {
     if(this.state.phase!=='ready')return;
     this.state.phase='playing';if(this.options.autoWaves!==false)this.beginWave(1);
+  }
+  /** The UI banks the standard result before opting in; the headless default still ends at ten. */
+  enterEndless():CommandResult {
+    const s=this.state,result=s.result;
+    if(s.phase!=='finished'||s.endless||s.wave!==10||s.sides.player.oranges<=0||
+      !result||result.winner!=='player'||result.reason!=='waves'||result.endless)return{ok:false,key:'hint.invalid'};
+    s.standardResult={...result,loot:[...result.loot],playerLoot:[...result.playerLoot],aiLoot:[...result.aiLoot],
+      mergedHeroes:result.mergedHeroes?[...result.mergedHeroes]:undefined,mvp:result.mvp?{...result.mvp}:undefined};
+    Object.freeze(s.standardResult.loot);Object.freeze(s.standardResult.playerLoot);Object.freeze(s.standardResult.aiLoot);
+    if(s.standardResult.mergedHeroes)Object.freeze(s.standardResult.mergedHeroes);
+    if(s.standardResult.mvp)Object.freeze(s.standardResult.mvp);
+    Object.freeze(s.standardResult);
+    s.endless=true;s.endlessCoins=0;s.endlessClearedWave=10;s.result=null;s.phase='playing';
+    this.tutorialHold=false;this.transitionHold=false;
+    this.beginWave(11,false);
+    return{ok:true,key:'hint.wave'};
   }
   tick(dt:number):void {
     if(!Number.isFinite(dt)||dt<=0||this.state.phase!=='playing')return;
@@ -83,27 +98,42 @@ export class BattleEngine {
     if(ENEMIES[kind]?.boss){const pool=getUnlockedBossIds(this.options.progressionStars);return pool.includes(kind)?kind:pool[Math.max(0,this.state.wave-1)%pool.length];}
     return getUnlockedMinionIds(this.options.progressionStars).includes(kind)?kind:kind==='killer_bee'?'roach':'rat';
   }
+  private restrictBosses(originals:readonly string[],wave:number):string[] {
+    if(this.options.progressionStars===undefined)return [...originals];
+    const pool=getUnlockedBossIds(this.options.progressionStars),chosen:string[]=[];
+    originals.forEach((id,n)=>{
+      const available=pool.filter(b=>!chosen.includes(b)),index=wave-1+n;
+      chosen.push(available.includes(id)?id:available[index%available.length]??pool[index%pool.length]);
+    });
+    return chosen;
+  }
+  private bossesForCurrentSchedule(wave:number):readonly string[] {
+    if(wave<=10)return this.waveBossSchedule[wave-1]??[];
+    // Derive each wave independently: preview order and frequency cannot affect draws or boss choices.
+    const random=new Random(((this.bossSeed^Math.imul(wave,0x9e3779b1))>>>0)||1);
+    return this.restrictBosses(bossesForWave(this.state.mapId,this.state.rankIndex,wave,()=>random.next()),wave);
+  }
   currentWaveTargetCount():number {return waveEnemyCount(Math.max(1,this.state.wave),this.state.rankIndex);}
   getUpcomingWavePreview():WavePreview|null {
-    if(this.state.phase==='finished'||this.state.wave>=10)return null;
+    if(this.state.phase==='finished'||(!this.state.endless&&this.state.wave>=10))return null;
     const wave=this.state.wave<=1&&this.state.spawned===0?1:this.state.wave+1;
     const count=waveEnemyCount(wave,this.state.rankIndex);
     const kinds=new Set(Array.from({length:count},(_,i)=>this.unlockedEnemy(minionForWave(wave,i,this.state.rankIndex))));
     const minion=['charmed_rat','killer_bee','crab','roach','rat'].find(kind=>kinds.has(kind))!;
-    return{wave,count,bosses:[...this.waveBossSchedule[wave-1]],minion};
+    return{wave,count,bosses:[...this.bossesForCurrentSchedule(wave)],minion};
   }
   canCallEarlyWave():{allowed:boolean;bonusFood:number} {
     const s=this.state;
     if(s.phase!=='playing'||this.tutorialHold||this.transitionHold||s.sides.player.oranges<=0||s.enemies.length>0)return{allowed:false,bonusFood:0};
     const prep=s.wave===1&&s.spawned===0,wait=(prep?FIRST_WAVE_PREPARATION:WAVE_DURATION)-s.waveTime;
-    const clear=s.wave>=1&&s.wave<10&&s.spawned>=this.currentWaveTargetCount()&&!this.pendingBosses.length;
+    const clear=s.wave>=1&&(s.endless||s.wave<10)&&s.spawned>=this.currentWaveTargetCount()&&!this.pendingBosses.length;
     if(wait<=1.5||(!prep&&!clear))return{allowed:false,bonusFood:0};
     return{allowed:true,bonusFood:Math.max(3,Math.min(prep?8:10,Math.ceil(wait*(prep?.4:.35))))};
   }
   callEarlyWave():CommandResult {
     const {allowed,bonusFood}=this.canCallEarlyWave();if(!allowed)return{ok:false,key:'p6.earlyUnavailable'};
     if(this.state.wave===1&&this.state.spawned===0){this.state.waveTime=FIRST_WAVE_PREPARATION;this.state.nextSpawn=0;this.updateWaves(0);}
-    else this.beginWave(this.state.wave+1);
+    else {this.recordEndlessClear();this.beginWave(this.state.wave+1);}
     this.state.sides.player.food+=bonusFood;
     this.event({type:'food',side:'player',col:2,row:0,value:bonusFood,textKey:'hint.food',duration:1.1});
     return{ok:true,key:'p6.earlyCalled'};
@@ -250,14 +280,15 @@ export class BattleEngine {
     this.spawnEnemy(kind,'player');
     return{ok:true,key:'hint.boss'};
   }
-  spawnEnemy(kind:string,side:Side,scale=1):Enemy {
+  spawnEnemy(kind:string,side:Side,scale=this.state.endless?getWaveConfig(this.state.wave).hpScale:1):Enemy {
     if(!ENEMIES[kind])throw new Error('Unknown enemy');
     kind=this.unlockedEnemy(kind);
     const config=ENEMIES[kind];if(!config)throw new Error('Unknown enemy');
     const difficulty=getRankDifficulty(this.state.rankIndex,this.options);
+    const pressure=this.state.endless?getWaveConfig(this.state.wave):undefined;
     scale*=difficulty.hpMultiplier*(this.props.has('player','shared_oranges')?1.15:1);
     const p=GridSystem.pathPosition(side,0,this.state.mapId);
-    const enemy:Enemy={id:side==='player'?this.sequence++:0,kind,side,boss:config.boss,hp:config.hp*scale,maxHp:config.hp*scale,progress:0,col:p.col,row:p.row,speed:config.speed*difficulty.speedMultiplier*(this.props.has('player','hyper_party')?1.12:1),armor:Math.min(.8,config.armor+((config.armor>0||config.boss)?difficulty.armorBonus:0)),size:1,abilityCooldown:config.interval*difficulty.bossCooldownScale,stun:0,slow:0,slowFactor:1,burn:0,burnDps:0,poison:0,poisonDps:0,stolenBy:[],hitFlash:0};
+    const enemy:Enemy={id:side==='player'?this.sequence++:0,kind,side,boss:config.boss,hp:config.hp*scale,maxHp:config.hp*scale,progress:0,col:p.col,row:p.row,speed:config.speed*difficulty.speedMultiplier*(pressure?.speedScale??1)*(this.props.has('player','hyper_party')?1.12:1),armor:Math.min(.8,config.armor+((config.armor>0||config.boss)?difficulty.armorBonus:0)+(pressure?.armorBonus??0)),size:1,abilityCooldown:config.interval*difficulty.bossCooldownScale,stun:0,slow:0,slowFactor:1,burn:0,burnDps:0,poison:0,poisonDps:0,stolenBy:[],hitFlash:0};
     if(side!=='player')return enemy;
     this.enemyEverSpawned=true;
     this.state.enemies.push(enemy);
@@ -281,7 +312,7 @@ export class BattleEngine {
     if(!this.actionAllowed())return;
     // Skipping drops pending enemies without kill income or loot.
     this.state.enemies=[];
-    if(this.state.wave>=10){this.finishByScore();return;}
+    if(!this.state.endless&&this.state.wave>=10){this.finishByScore();return;}
     this.beginWave(Math.max(1,this.state.wave+1));
   }
   surrender():void { if(this.state.phase==='playing'||this.state.phase==='paused')this.finish('ai','surrender'); }
@@ -329,7 +360,9 @@ export class BattleEngine {
       // Preserve the fractional overshoot so fixed steps never reduce the configured attack rate.
       unit.cooldown+=1/this.getEffectiveUnitStats(unit).rate;
       unit.animation=1;
-      if(HEROES[unit.kind]){
+      // The barrage is the reward for charging, not a source of its own next charge.
+      // Otherwise four-times fire rate refreshes Meowfia's buff before it can expire.
+      if(HEROES[unit.kind]&&!(unit.kind==='meowfia'&&unit.buffTime>0)){
         unit.energy++;
         const required=this.stats(unit).charge;
         if(unit.energy>=required){unit.energy=0;this.ultimate(unit,candidates[0],stats.damage);}
@@ -361,29 +394,43 @@ export class BattleEngine {
       }
     }
     this.state.enemies=this.state.enemies.filter(e=>e.hp>0);
-    if(this.options.autoWaves!==false&&this.state.wave===10&&this.state.spawned>=this.currentWaveTargetCount()&&!this.pendingBosses.length&&this.state.enemies.length===0&&this.state.phase==='playing')this.finishByScore();
+    if(this.options.autoWaves!==false&&this.state.phase==='playing'){
+      if(this.state.endless){
+        if(this.recordEndlessClear()&&this.state.waveTime+1e-8>=WAVE_DURATION)this.beginWave(this.state.wave+1);
+      }else if(this.state.wave===10&&this.state.spawned>=this.currentWaveTargetCount()&&!this.pendingBosses.length&&this.state.enemies.length===0)this.finishByScore();
+    }
   }
-  private beginWave(wave:number):void {
+  private recordEndlessClear():boolean {
+    const s=this.state;
+    if(!s.endless||s.wave<11||s.sides.player.oranges<=0||s.spawned<this.currentWaveTargetCount()||this.pendingBosses.length||s.enemies.some(enemy=>enemy.hp>0))return false;
+    if(s.wave>(s.endlessClearedWave??10)){
+      s.endlessCoins=(s.endlessCoins??0)+15*(s.wave-10);s.endlessClearedWave=s.wave;
+    }
+    return true;
+  }
+  private beginWave(wave:number,grantIncome=true):void {
     this.announcedElites.clear();
     this.state.wave=wave;this.state.waveTime=0;this.state.nextSpawn=wave===1?FIRST_WAVE_PREPARATION:1;this.state.spawned=0;
     for(const side of ['player'] as Side[]){
-      if(wave>1)this.state.sides[side].food+=ECONOMY.waveIncome;
+      if(wave>1&&grantIncome)this.state.sides[side].food+=ECONOMY.waveIncome;
     }
     this.event({type:'bubble',side:'player',col:3.5,row:4.5,textKey:'hint.wave',value:wave,duration:1.8});
-    const bosses=this.waveBossSchedule[wave-1];
-    this.pendingBosses=bosses.slice(1).map(kind=>({kind,at:5}));if(bosses[0])this.spawnBoss(bosses[0]);
+    const bosses=this.bossesForCurrentSchedule(wave);
+    this.pendingBosses=bosses.slice(1).map((kind,index)=>({kind,at:5*(index+1)}));if(bosses[0])this.spawnBoss(bosses[0]);
   }
   private updateWaves(dt:number):void {
     if(!this.state.wave)return;
     if((this.tutorialHold||this.transitionHold)&&this.state.wave===1&&this.state.spawned===0)return;
     this.state.waveTime+=dt;this.state.nextSpawn-=dt;
-    const config=WAVES[this.state.wave-1];
+    const config=getWaveConfig(this.state.wave);
     for(const boss of this.pendingBosses.filter(b=>this.state.waveTime+1e-8>=b.at))this.spawnBoss(boss.kind);
     this.pendingBosses=this.pendingBosses.filter(b=>this.state.waveTime+1e-8<b.at);
     if(this.state.spawned<this.currentWaveTargetCount()&&this.state.nextSpawn<=0){
       const kind=minionForWave(this.state.wave,this.state.spawned,this.state.rankIndex);
       for(const side of ['player'] as Side[])this.spawnEnemy(kind,side,config.hpScale);
-      this.state.spawned++;this.state.nextSpawn=config.interval*getRankDifficulty(this.state.rankIndex).intervalScale;
+      this.state.spawned++;
+      // Carry sub-step overshoot in endless so each exponential density interval stays exact.
+      this.state.nextSpawn=this.state.endless?this.state.nextSpawn+config.interval:config.interval*getRankDifficulty(this.state.rankIndex).intervalScale;
     }
     if(this.state.wave<10&&this.state.waveTime+1e-8>=WAVE_DURATION&&this.state.spawned>=this.currentWaveTargetCount()&&!this.pendingBosses.length)this.beginWave(this.state.wave+1);
   }
@@ -541,7 +588,17 @@ export class BattleEngine {
   }
   private finish(winner:Side,reason:'oranges'|'waves'|'surrender'):void {
     if(this.state.result)return;
+    // A command can kill the last foe and cash out before the next simulation tick.
+    // Settle that clear now; pending spawns, live enemies and a lost guardian still block it.
+    if(this.state.endless)this.recordEndlessClear();
     const playerLoot=[...this.state.sides.player.loot],aiLoot:string[]=[];
+    if(this.state.endless&&this.state.standardResult){
+      const standard=this.state.standardResult,endlessCoins=this.state.endlessCoins??0;
+      this.state.result={winner:'player',reason,loot:[...playerLoot],playerLoot,aiLoot,coins:standard.coins+endlessCoins,
+        elapsed:this.state.time,rankIndex:this.state.rankIndex,mergedHeroes:[...this.state.mergedHeroes.player],mvp:this.combatRecords.mvp(this.state.units),
+        endless:true,endlessWave:this.state.wave,endlessCoins,endlessLoot:playerLoot.slice(standard.playerLoot.length)};
+      this.state.phase='finished';return;
+    }
     this.state.result={winner,reason,loot:winner==='player'?[...playerLoot]:[],playerLoot,aiLoot,coins:winner==='player'?RANKS[this.state.rankIndex].winCoins+Math.min(45,Math.floor(this.state.sides.player.food*.5)):0,elapsed:this.state.time,rankIndex:this.state.rankIndex,mergedHeroes:[...this.state.mergedHeroes.player],mvp:this.combatRecords.mvp(this.state.units)};this.state.phase='finished';
   }
 }

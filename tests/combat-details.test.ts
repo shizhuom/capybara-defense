@@ -29,7 +29,7 @@ it('喵利波特闪电最多命中6个目标并麻痹0.6秒',()=>{
 });
 it('剑客大招后四次十字攻击倍率220%，结束恢复普通伤害',()=>{
   const {e,u}=arena('puss_in_hat'),m=enemy(e);e.tick(.05);u.energy=-100;
-  const start=m.hp;e.tick(2.01);expect(start-m.hp).toBeCloseTo(27*2.2*4);expect(u.empowered).toBe(0);
+  const start=m.hp;e.tick(2.01);expect(start-m.hp).toBeCloseTo(HEROES.puss_in_hat.damage*2.2*4);expect(u.empowered).toBe(0);
 });
 it('加特林大招期间射速约4倍并自动结束',()=>{
   const {e,u}=arena('meowfia'),m=enemy(e);e.tick(.05);u.energy=-100;

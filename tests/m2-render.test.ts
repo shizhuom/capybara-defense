@@ -121,18 +121,18 @@ describe('M2 status, props and tools',()=>{
   it('highlights road targets and draws a prop cursor without changing hit targets',()=>{
     const board=state(),{renderer,calls}=surface();
     renderer.draw(board,0,{propId:'glue_trap',pointer:{x:140,y:708},hover:{col:1,row:3}} as Interaction);
-    expect(calls.some(call=>call.name==='stroke'&&call.stroke==='#a083c0')).toBe(true);
+    expect(calls.some(call=>call.name==='stroke'&&call.stroke==='#d9a43d')).toBe(true);
     expect(renderer.hitTest(86,162)).toEqual({kind:'shovel'});
   });
   it('does not mark an already trapped road cell as a valid placement',()=>{
     const board=state();board.traps=[{id:1,side:'player',col:1,row:3,charges:2,hitIds:[]}];
     const {renderer,calls}=surface();renderer.draw(board,0,{propId:'glue_trap'});
-    expect(calls.some(call=>call.name==='roundRect'&&call.args[0]===297&&call.args[1]===405&&call.args[2]===62)).toBe(false);
+    expect(calls.some(call=>call.name==='roundRect'&&call.args[0]===284&&call.args[1]===392&&call.args[2]===88)).toBe(false);
   });
   it('draws valid bench prop targets above the opaque nest backgrounds',()=>{
     const board=unitBoard(),{renderer,calls}=surface();renderer.draw(board,0,{propId:'washer'});
     const background=calls.findIndex(call=>call.name==='roundRect'&&call.args[0]===252&&call.args[1]===610&&call.args[2]===92);
-    const outline=calls.findIndex(call=>call.name==='roundRect'&&call.args[0]===255&&call.args[1]===613&&call.args[2]===86);
+    const outline=calls.findIndex(call=>call.name==='ellipse'&&call.args[0]===298&&call.args[1]===686&&Number(call.args[2])>=35);
     expect(background).toBeGreaterThan(-1);expect(outline).toBeGreaterThan(background);
   });
 });

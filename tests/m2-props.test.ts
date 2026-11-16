@@ -103,7 +103,7 @@ describe('12被动道具',()=>{
   it('狂欢己方38%，望远镜只增基础射程至少2格的单位',()=>{
     const e=arena([],['hyper_party','tall_perch']);const own=pet(e,'squirrel'),melee=pet(e);
     expect(e.getUnitStats(own).rate).toBeCloseTo(1.1*1.38);
-    expect(e.getUnitStats(own).range).toBe(3.5);expect(e.getUnitStats(melee).range).toBe(1.35);
+    expect(e.getUnitStats(own).range).toBe(3.5);expect(e.getUnitStats(melee).range).toBe(1.6);
   });
   it('香蕉皮永久减少己方道路敌人速度12%，对方不受影响',()=>{
     const e=arena([],['banana_peel']),a=e.spawnEnemy('rat','player'),b=e.spawnEnemy('rat','ai');e.tick(2);

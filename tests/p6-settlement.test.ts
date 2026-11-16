@@ -14,18 +14,18 @@ function dialog(kind:'pause'|'result',won=false,withMvp=true){
  Object.assign(app,{dialog:node,dialogKind:kind,engine,profile:{...createProfile(),stars:5},savedResult:true,resultStars:won?2:0,previousRank:0,newWeapons:won?['m10_bamboo_staff']:[],newAvatars:won?['sakura_capy']:[]});app.renderDialog();return node.innerHTML;
 }
 it.each(['zh-CN','en'] as const)('renders a pause ledger with exactly one bare player-loot section and illustrated counts (%s)',lang=>{
- setLanguage(lang);const html=dialog('pause');expect(html).toContain('ledger-shell');expect(html).toContain('ui_header_pause');expect(html.match(/<section>/g)).toHaveLength(1);
+ setLanguage(lang);const html=dialog('pause');expect(html).toContain('ledger-shell');expect(html).toContain('ui_pause_peek_capy');expect(html.match(/<section>/g)).toHaveLength(1);
  expect(html).toContain('data-sticker="m01_swatter"');expect(html).toContain(t('weapon.m01_swatter'));expect(html).toContain('×2');expect(html).not.toContain(t('weapon.w12_rain_crown_scepter'));
  for(const action of ['resume','profile','settings','surrender'])expect(html).toContain(`data-action="${action}"`);expect(html).toContain('pause-status-strip');expect(html).not.toMatch(/>p6\.[\w.]+</);
 });
 it.each(['zh-CN','en'] as const)('renders victory rewards, promotion, MVP and pictured unlocks without raw keys (%s)',lang=>{
- setLanguage(lang);const html=dialog('result',true);for(const cls of ['ledger-shell','result-win-header','result-rewards-card','result-mvp-card','settlement-actions'])expect(html).toContain(cls);
- for(const id of ['ui_result_victory','ui_mvp_crown','ui_star_rank','ui_coin_gold','ui_ticket_gacha','kungfu_po','m10_bamboo_staff','sakura_capy'])expect(html).toContain(`data-sticker="${id}"`);
- expect(html).toContain('1235');expect(html).toContain('27');expect(html).toContain(t('m3.streakBonus'));expect(html).toContain(t('m3.promotion',{rank:t('rank.2')}));
+ setLanguage(lang);const html=dialog('result',true);for(const cls of ['ledger-shell','result-win-header','visual-report-scroll','visual-mvp-stage','visual-treasure-shelf','settlement-actions'])expect(html).toContain(cls);
+ for(const id of ['ui_victory_shield_wings','ui_mvp_crown','ui_stat_damage_burst','ui_stat_ko_skull','ui_coin_gold','ui_ticket_gacha','kungfu_po','m10_bamboo_staff','sakura_capy'])expect(html).toContain(`data-sticker="${id}"`);
+ expect(html).toContain('1,235');expect(html).toContain('×27');expect(html).toContain(t('m3.streakBonus'));expect(html).toContain(t('m3.promotion',{rank:t('rank.2')}));
  expect(html).not.toMatch(/>p6\.[\w.]+</);for(const action of ['start','menu'])expect(html).toContain(`data-action="${action}"`);
 });
 it('uses a warm defeat theme, protected stars and no victory ticket on a loss',()=>{
- const html=dialog('result');expect(html).toContain('result-loss-header');expect(html).toContain('ui_result_defeat');expect(html).toContain(t('m3.protected'));expect(html).not.toContain('ui_ticket_gacha');
+ const html=dialog('result');expect(html).toContain('result-loss-header');expect(html).toContain('ui_defeat_shield_wings');expect(html).toContain(t('m3.protected'));expect(html).not.toContain('ui_ticket_gacha');
 });
 it('renders an honest lineup fallback for a zero-damage battle and all P6 keys in both languages',()=>{
  expect(dialog('result',false,false)).toContain(t('p6.noMvp'));

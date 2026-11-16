@@ -124,7 +124,7 @@ export const zhCN = {
   'skill.bamboo_mafia': '竹筒火箭雨', 'skill.bamboo_mafia.desc': '每 {charge} 次普攻轰炸 5 个目标，燃烧笋弹持续灼烧 3 秒。',
   'skill.zen_master': '黑白太极阵', 'skill.zen_master.desc': '每 {charge} 次普攻释放逆行太极波：280% 穿透伤害并击退。',
   'skill.puss_in_hat': '十字跳斩', 'skill.puss_in_hat.desc': '每 {charge} 次普攻强化接下来 4 次攻击，附带 220% 范围剑气。',
-  'skill.meowfia': '鱼骨弹幕', 'skill.meowfia.desc': '每 {charge} 次普攻进入弹幕模式，2.5 秒内攻速提升 300%。',
+  'skill.meowfia': '鱼骨弹幕', 'skill.meowfia.desc': '每 {charge} 次常态普攻进入弹幕模式，2.5 秒内攻速提升 300%；弹幕结束后重新充能。',
   'skill.purrcerer': '毛线球雷暴', 'skill.purrcerer.desc': '每 {charge} 次普攻弹射至多 6 个目标：240% 雷伤和 0.6 秒麻痹。',
   'skill.samurai_doge': '正义破甲槌', 'skill.samurai_doge.desc': '每 {charge} 次普攻挥出 450% 重击；直接斩杀生命低于 25% 的普通怪。',
   'skill.doge_wick': '双枪悬赏', 'skill.doge_wick.desc': '每 {charge} 次普攻射出 3 发贯穿弹；击杀有 50% 概率额外获得 2 口粮。',

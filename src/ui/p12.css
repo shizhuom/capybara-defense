@@ -1,0 +1,215 @@
+/* P12: the artwork supplies the result frame; the report is an optional card. */
+#game-dialog.result-ledger {
+ --ink:#3E2822;--ink-secondary:#594039;--copy:15px;--label:13px;--card-title:19px;
+ position:fixed;inset:0;width:100vw;height:100dvh;max-width:none;max-height:none;margin:0;padding:0;
+ border:0!important;border-radius:0;background:transparent!important;box-shadow:none!important;overflow:hidden;container-type:normal;
+}
+#game-dialog.result-ledger::backdrop { background:rgba(22,31,39,.72);backdrop-filter:blur(6px); }
+#game-dialog.result-ledger .result-shell {
+ position:relative;display:grid;place-items:center;width:100%;height:100%;min-height:0;overflow:visible;
+ background:transparent;isolation:isolate;
+}
+#game-dialog.result-ledger .crest-stage {
+ position:relative;width:min(86vw,560px,calc(100dvh - 36px));aspect-ratio:1/.92;
+ container-type:inline-size;animation:crest-arrive .42s cubic-bezier(.18,.85,.26,1.12) both;
+}
+#game-dialog.result-ledger .crest-emblem-art { position:absolute;inset:0 0 auto;pointer-events:none;filter:drop-shadow(0 13px 15px #13141c70); }
+#game-dialog.result-ledger .is-stats-open .crest-stage { opacity:.45;filter:blur(2px); }
+#game-dialog.result-ledger .crest-emblem-art>[data-sticker] { display:block;width:100%;height:auto;aspect-ratio:1;object-fit:contain; }
+#game-dialog.result-ledger .crest-stars-arc { position:absolute;z-index:2;left:26%;right:26%;top:-3%;height:22%;display:flex;align-items:flex-end;justify-content:center;gap:0; }
+#game-dialog.result-ledger .crest-star { display:block;width:33.333%;aspect-ratio:1;transform:rotate(-14deg); }
+#game-dialog.result-ledger .crest-star:nth-child(2) { transform:translateY(-22%) scale(1.22); }
+#game-dialog.result-ledger .crest-star:nth-child(3) { transform:rotate(14deg); }
+#game-dialog.result-ledger .crest-star>[data-sticker] { display:block;width:100%;height:100%;object-fit:contain; }
+#game-dialog.result-ledger .crest-star.is-lit>[data-sticker] { animation:crest-star-pop .38s var(--star-delay) cubic-bezier(.2,.8,.2,1.2) both;filter:drop-shadow(0 0 9px #ffd45860); }
+#game-dialog.result-ledger .crest-ribbon-title {
+ position:absolute;z-index:3;top:39%;left:18%;right:18%;margin:0;padding:0;text-align:center;background:transparent;
+ color:#FFE869!important;font-size:clamp(24px,9cqw,50px)!important;font-weight:900!important;line-height:1.1;
+ -webkit-text-stroke:4.5px #4A210B;paint-order:stroke fill;text-shadow:0 3px 0 #8e3f1a;letter-spacing:.01em;white-space:nowrap;
+}
+#game-dialog.result-ledger .result-loss .crest-ribbon-title { color:#F4EDE6!important;-webkit-text-stroke-color:#352728;text-shadow:0 3px 0 #6e5552; }
+#game-dialog.result-ledger .crest-plaque-body { position:absolute;z-index:2;left:32%;right:32%;top:54%;display:flex;flex-direction:column;gap:2cqw;text-align:center; }
+#game-dialog.result-ledger .crest-plaque-body :is(span,b) { color:#FFE680!important;font-weight:900!important;text-shadow:0 1px 2px #1a1c24; }
+#game-dialog.result-ledger .crest-rank-line { display:grid;grid-template-columns:minmax(0,1fr) 27%;gap:1.2cqw;align-items:center;min-width:0; }
+#game-dialog.result-ledger .crest-rank-copy { display:flex;align-items:center;justify-content:center;flex-wrap:wrap;gap:0 .7cqw;min-width:0;line-height:1.2;font-size:clamp(10px,2.5cqw,14px); }
+#game-dialog.result-ledger .crest-rank-name { overflow-wrap:anywhere; }
+#game-dialog.result-ledger .crest-rank-delta { white-space:nowrap; }
+#game-dialog.result-ledger .crest-rank-badge { padding-left:.6cqw; }
+#game-dialog.result-ledger .crest-exp-bar { height:2.1cqw;min-height:7px;border:.4cqw solid #b67e25;border-radius:999px;background:#2d2f39;box-shadow:0 1px 0 #f7c77a80,inset 0 1px 2px #17161c;overflow:hidden; }
+#game-dialog.result-ledger .crest-exp-bar>span { display:block;width:var(--rank-progress);height:100%;border-radius:999px;background:linear-gradient(#fff895 0 35%,#ffd438 40% 80%,#e7a629);box-shadow:0 0 6px #f9d54380; }
+#game-dialog.result-ledger .crest-core-rewards { display:flex;justify-content:center;align-items:center;gap:1cqw;min-width:0;white-space:nowrap; }
+#game-dialog.result-ledger .crest-core-rewards>span { display:flex;align-items:center;gap:.2cqw;min-width:0; }
+#game-dialog.result-ledger .crest-coin>[data-sticker] { width:6.1cqw;height:6.1cqw;flex:none; }
+#game-dialog.result-ledger .crest-coin>b { font-size:clamp(16px,4.4cqw,25px);letter-spacing:-.04em; }
+#game-dialog.result-ledger .crest-bonus>[data-sticker] { width:4.3cqw;height:4.3cqw;flex:none; }
+#game-dialog.result-ledger .crest-bonus>b { font-size:clamp(10px,2.5cqw,14px); }
+#game-dialog.result-ledger .crest-unlock-hint {
+ position:absolute;left:50%;top:97%;transform:translateX(-50%);display:flex;align-items:center;justify-content:center;gap:6px;
+ width:max-content;max-width:90%;min-height:38px;padding:5px 12px;border:1.5px solid #d5b66f;border-radius:999px;
+ background:#fff0cf;box-shadow:0 3px 0 #4c342c66,0 0 16px #ffdc7840;font-size:13px;line-height:1.15;white-space:nowrap;
+}
+#game-dialog.result-ledger .crest-unlock-hint :is(span,b) { color:#513729!important; }
+#game-dialog.result-ledger .crest-unlock-pictures { display:flex;align-items:center;gap:0; }
+#game-dialog.result-ledger .crest-unlock-pictures [data-sticker] { width:28px;height:28px; }
+#game-dialog.result-ledger .crest-return-btn { position:absolute;z-index:3;top:clamp(14px,3dvh,28px);left:clamp(16px,3vw,34px);display:grid;place-items:center;width:64px;height:64px;margin:0;padding:5px;border:0;border-radius:50%;background:transparent;box-shadow:none;filter:drop-shadow(0 3px 1px #16273780);transition:transform .15s; }
+#game-dialog.result-ledger .crest-return-btn span { display:block;height:54px; }
+#game-dialog.result-ledger .crest-return-btn:active { transform:scale(.88); }
+#game-dialog.result-ledger .crest-corner-actions { position:absolute;inset:0;display:block;margin:0;padding:0;border:0;background:transparent;box-shadow:none;pointer-events:none; }
+#game-dialog.result-ledger .crest-corner-btn {
+ position:absolute;bottom:clamp(16px,3.5dvh,34px);display:flex;align-items:center;justify-content:center;gap:8px;
+ min-height:57px;max-width:45vw;padding:9px 19px;border:2.5px solid #31566e;border-radius:17px;
+ background:linear-gradient(#d1f2fc 0 12%,#9cd6ed 18% 65%,#72b5d9);box-shadow:0 5px 0 #294d68,0 8px 10px #121d3860,inset 0 2px 0 #f7ffffc0;
+ font-size:clamp(17px,2vw,24px)!important;font-weight:900!important;line-height:1.15;pointer-events:auto;transition:transform .15s;white-space:normal;
+}
+#game-dialog.result-ledger .crest-corner-btn :is(span,b) { color:#254e69!important;font-weight:900!important; }
+#game-dialog.result-ledger .crest-corner-btn>[aria-hidden] { display:flex;align-items:center;flex:none; }
+#game-dialog.result-ledger .btn-stats { left:clamp(20px,4vw,48px); }
+#game-dialog.result-ledger .btn-continue { right:clamp(20px,4vw,48px);border-color:#476c25;background:linear-gradient(#e0f9a3 0 12%,#a8d867 18% 65%,#7eaf43);box-shadow:0 5px 0 #3f6226,0 8px 10px #14250b60,inset 0 2px 0 #f6ffcf; }
+#game-dialog.result-ledger .btn-continue :is(span,b) { color:#294a1d!important; }
+#game-dialog.result-ledger .crest-corner-btn:active { transform:translateY(3px);box-shadow:0 2px 0 #365332; }
+#game-dialog.result-ledger :is(.crest-return-btn,.crest-corner-btn,.crest-unlock-hint,.crest-stats-close):focus-visible { outline:3px solid #fff8c7;outline-offset:5px; }
+#game-dialog.result-ledger .crest-stats-drawer {
+ position:absolute;z-index:5;left:50%;top:48%;transform:translate(-50%,-50%);display:flex;flex-direction:column;
+ width:min(92vw,700px);max-height:min(80dvh,650px);border:3px solid #593E36;border-radius:18px;background:#C7B0A3;
+ box-shadow:0 12px 40px #160e0b90,0 0 0 100vmax #15202c88;overflow:hidden;
+}
+#game-dialog.result-ledger .crest-stats-drawer[hidden] { display:none!important; }
+#game-dialog.result-ledger .crest-drawer-header { display:flex;align-items:center;justify-content:space-between;gap:12px;flex:none;padding:9px 15px;background:#F4ECE1;border-bottom:2px solid #806459; }
+#game-dialog.result-ledger .crest-drawer-header h3 { display:flex;align-items:center;gap:8px;margin:0;color:#3E2822!important;font-size:22px!important;line-height:1.2; }
+#game-dialog.result-ledger .crest-drawer-header .compendium-toolbar { position:static;display:flex;min-height:0;margin:0;padding:0;border:0;background:transparent;box-shadow:none; }
+#game-dialog.result-ledger .crest-stats-close { display:grid;place-items:center;flex:none;width:39px;height:39px;padding:0;border:2px solid #6B5047;border-radius:50%;background:#FCF9F4;font-size:28px;line-height:1;box-shadow:0 2px 0 #61433930; }
+#game-dialog.result-ledger .crest-report-body { min-height:0;overflow:auto;padding:16px;background:#C7B0A3;scrollbar-color:#806459 #E6D9CD;scroll-padding:16px; }
+#game-dialog.result-ledger .crest-report-body::after { content:none; }
+#game-dialog.result-ledger .crest-report-body :is(p,li,small,span,button) { font-size:15px!important;line-height:1.4; }
+#game-dialog.result-ledger .crest-report-body :is(h3,h4) { font-size:18px!important;line-height:1.3; }
+#game-dialog.result-ledger .crest-report-intro { margin:0 0 14px; }
+#game-dialog.result-ledger .crest-report-body :is(.result-rewards-card,.result-mvp-card,.loot-empty) { border:1.5px solid #E5DBD0;border-radius:12px;background:#FCF9F4!important;box-shadow:0 3px 0 #7a5f5224; }
+#game-dialog.result-ledger .result-summary-grid { grid-template-columns:1.05fr 1fr;gap:12px; }
+#game-dialog.result-ledger .result-rewards-card { padding:12px; }
+#game-dialog.result-ledger .result-star-change { gap:6px; }
+#game-dialog.result-ledger .result-star-change>b { font-size:28px;color:#79501f!important; }
+#game-dialog.result-ledger .crest-report-body .result-star-change small { padding:2px 7px;border:1px solid #c3a369;border-radius:999px;background:#F1E5C9;font-size:15px!important; }
+#game-dialog.result-ledger .crest-report-body .rank-result p { font-size:15px!important; }
+#game-dialog.result-ledger .result-rewards { gap:5px;margin-top:11px; }
+#game-dialog.result-ledger .result-rewards>span { padding:6px 2px;border:0;border-radius:8px;background:#F2E8D8; }
+#game-dialog.result-ledger .result-rewards b { color:#79501f!important;font-size:23px; }
+#game-dialog.result-ledger .result-rewards small { font-size:15px!important; }
+#game-dialog.result-ledger .result-mvp-card>strong { font-size:20px; }
+#game-dialog.result-ledger .result-mvp-card>span { background:#F1E5C9;border-color:#c3a369; }
+#game-dialog.result-ledger .mvp-stats { gap:7px; }
+#game-dialog.result-ledger .mvp-stats>span { border:0;background:#F2E8D8;padding:7px 3px;font-size:15px!important; }
+#game-dialog.result-ledger .mvp-stats b { color:#79501f!important;font-size:24px; }
+#game-dialog.result-ledger .crest-report-body .loot-tray { grid-template-columns:repeat(2,minmax(0,1fr)); }
+#game-dialog.result-ledger .crest-report-body .loot-tray li { padding:7px 9px;gap:7px;border:1px solid #E5DBD0;border-radius:10px;background:#FCF9F4; }
+#game-dialog.result-ledger .loot-tray li>b { padding:2px 6px;border:1px solid #c3a369;background:#F1E5C9;font-size:15px!important; }
+#game-dialog.result-ledger .crest-report-body .loot-tray li>span { font-size:15px!important; }
+#game-dialog.result-ledger .crest-report-body .loot-empty { margin:8px 0;padding:14px; }
+#game-dialog.result-ledger .roster-unlock-celebration { display:flex;gap:12px;align-items:center;margin:14px 0;padding:12px;border:1px solid #E5DBD0;border-radius:12px;background:#FCF9F4; }
+#game-dialog.result-ledger .roster-unlock-celebration>div { min-width:0; }
+#game-dialog.result-ledger .roster-unlock-celebration>[data-sticker] { flex:none;width:60px;height:60px; }
+#game-dialog.result-ledger .roster-unlock-celebration h3 { margin:0 0 8px; }
+#game-dialog.result-ledger .unlocked-roster { display:flex;flex-wrap:wrap;gap:8px; }
+#game-dialog.result-ledger .unlocked-roster>span { display:flex;align-items:center;gap:4px; }
+#game-dialog.result-ledger .unlock-gallery { padding:12px;border-radius:12px;background:#FCF9F4; }
+#game-dialog.result-ledger .unlock-gallery>div { background:#F2E8D8;border:0; }
+#game-dialog.result-ledger .crest-report-body :is(.save-note,.result-reason) { font-size:15px!important; }
+
+/* Pause shares the cocoa storybook surface, with exactly two cream cards. */
+#game-dialog.pause-ledger {
+ --ink:#3E2822;--ink-secondary:#594039;--copy:15px;--label:13px;--card-title:18px;
+ position:fixed;top:50%;bottom:auto;left:0;right:0;margin:0 auto;transform:translateY(-50%);
+ width:min(90vw,540px);height:auto;max-height:90dvh;max-width:none;padding:0;
+ background:transparent!important;border:0!important;border-radius:0;box-shadow:none!important;overflow:visible;container-type:normal;
+}
+#game-dialog.pause-ledger::backdrop { background:rgba(28,25,23,.58);backdrop-filter:blur(4px); }
+#game-dialog.pause-ledger .pause-shell { height:auto;max-height:90dvh;overflow:visible;background:transparent;isolation:isolate; }
+#game-dialog.pause-ledger .pause-header { position:relative;min-height:87px;padding:12px 74px 17px;justify-content:center;border:0;background:transparent!important;box-shadow:none; }
+#game-dialog.pause-ledger .ledger-heading { text-align:center; }
+#game-dialog.pause-ledger .ledger-heading h2 { margin:0;padding:0;font-size:clamp(25px,3vw,34px)!important;font-weight:900!important;line-height:1.1;letter-spacing:.015em;color:#FFFDF8!important;-webkit-text-stroke:5px #462E27;paint-order:stroke fill;text-shadow:0 3px 0 #462E27,0 4px 10px #0005; }
+#game-dialog.pause-ledger .ledger-mascot { position:absolute;z-index:3;left:17px;bottom:-3px;width:78px;height:78px;filter:none;pointer-events:none; }
+#game-dialog.pause-ledger .ledger-mascot>[data-sticker] { display:block;width:78px;height:78px; }
+#game-dialog.pause-ledger .pause-header .ledger-close { position:absolute;right:9px;top:20px;display:grid;place-items:center;min-width:38px;width:38px;height:38px;padding:0;border:2.5px solid #4A322B;border-radius:50%;background:#F5EDE2;color:#4A322B!important;font-size:27px!important;box-shadow:0 2px 0 #462E2733; }
+#game-dialog.pause-ledger .pause-storybook-board { position:relative;z-index:1;display:flex;flex-direction:column;flex:0 1 auto;gap:12px;min-height:0;padding:15px;border:3px solid #593E36;border-radius:14px;background:#C7B0A3;box-shadow:inset 0 0 0 5px #F4ECE1,0 10px 26px #180f0b5c;overflow:auto;scrollbar-color:#806459 #E6D9CD; }
+#game-dialog.pause-ledger .pause-storybook-board::after { content:none; }
+#game-dialog.pause-ledger .pause-storybook-board>.pause-status-strip,#game-dialog.pause-ledger .pause-storybook-board>section { flex:none;margin:0;padding:12px;border:1.5px solid #E5DBD0;border-radius:12px;background:#FCF9F4;box-shadow:0 3px 0 #7a5f5224; }
+#game-dialog.pause-ledger .pause-storybook-board>.pause-status-strip { display:grid;grid-template-columns:68px minmax(0,1fr);align-items:center;gap:12px; }
+#game-dialog.pause-ledger .storybook-frame { display:flex;justify-content:center;align-items:center;width:68px;height:68px;overflow:hidden;border:2.5px solid #6B5047;border-radius:12px;background:#E9F0E2;box-shadow:inset 0 0 12px #FFFCF680; }
+#game-dialog.pause-ledger .storybook-frame>[data-sticker] { display:block;width:58px;height:58px;object-fit:contain; }
+#game-dialog.pause-ledger .pause-status-copy { min-width:0; }
+#game-dialog.pause-ledger .pause-storybook-board h3 { margin:0 0 7px;font-size:17px!important;line-height:1.25;color:#3E2822!important; }
+#game-dialog.pause-ledger .pause-status-copy p { display:flex;flex-wrap:wrap;gap:2px 7px;margin:0;font-size:15px!important;line-height:1.45; }
+#game-dialog.pause-ledger .pause-status-copy p>span { white-space:nowrap;font-size:15px!important; }
+#game-dialog.pause-ledger .pause-status-copy p>span+span::before { content:'·';padding-right:7px; }
+#game-dialog.pause-ledger .pause-storybook-board>section h3 { font-size:15px!important; }
+#game-dialog.pause-ledger .pause-storybook-board .loot-empty { margin:0;padding:0;border:0;background:transparent!important;text-align:left;font-size:15px!important;line-height:1.5; }
+#game-dialog.pause-ledger .pause-storybook-board .loot-tray { display:flex;flex-wrap:wrap;gap:7px;margin:0;padding:0; }
+#game-dialog.pause-ledger .pause-storybook-board .loot-tray li { display:flex;align-items:center;max-width:100%;gap:5px;margin:0;padding:4px 7px;border:1px solid #D8C5A9;border-radius:999px;background:#F3EADB;font-size:14px!important;line-height:1.2; }
+#game-dialog.pause-ledger .loot-tray li [data-sticker] { width:29px;height:29px; }
+#game-dialog.pause-ledger .pause-storybook-board .loot-tray li>span { font-size:14px!important;overflow-wrap:anywhere; }
+#game-dialog.pause-ledger .pause-storybook-board .loot-tray li>b { padding:1px 4px;border:0;background:transparent;font-size:14px!important; }
+#game-dialog.pause-ledger .pause-storybook-actions { display:flex;flex-direction:column;gap:10px;flex:none;margin:0;padding:13px 5px 3px;border:0;background:transparent;box-shadow:none; }
+#game-dialog.pause-ledger .pause-storybook-actions button { min-height:42px;margin:0;padding:8px 12px;border:2px solid #6B5047;border-radius:999px;background:#F4ECE1;color:#4A322B!important;box-shadow:0 3px 0 #462E2740;font-size:15px!important;line-height:1.25; }
+#game-dialog.pause-ledger .pause-storybook-actions>.button-teal { min-height:49px;background:#B9CD8B;border-color:#596A3E;color:#31451F!important;font-size:19px!important;text-shadow:none; }
+#game-dialog.pause-ledger .pause-storybook-actions>.button-teal>span { color:#31451F!important; }
+#game-dialog.pause-ledger .pause-storybook-actions>div { display:flex;gap:8px; }
+#game-dialog.pause-ledger .pause-storybook-actions>div>button { flex:1;min-width:0;padding:7px 8px;font-size:14px!important; }
+#game-dialog.pause-ledger .pause-storybook-actions .surrender-button { background:#EED9CB;color:#73483B!important; }
+#game-dialog.pause-ledger :is(.pause-storybook-actions button,.ledger-close):focus-visible { outline:3px solid #fff8db;outline-offset:4px; }
+
+@media(max-width:600px) and (orientation:portrait) {
+ #game-dialog.result-ledger .crest-ribbon-title { -webkit-text-stroke-width:3px; }
+ #game-dialog.result-ledger .crest-corner-btn { gap:4px;max-width:51vw;min-height:53px;padding:8px 11px;font-size:16px!important; }
+ #game-dialog.result-ledger .crest-corner-btn [data-sticker] { width:29px;height:29px; }
+ #game-dialog.result-ledger .btn-stats { left:16px; }
+ #game-dialog.result-ledger .btn-continue { right:16px; }
+ #game-dialog.result-ledger .crest-return-btn { width:56px;height:56px;padding:1px; }
+ #game-dialog.result-ledger .crest-unlock-hint { gap:4px;padding:4px 9px;font-size:12px; }
+ #game-dialog.result-ledger .crest-unlock-pictures [data-sticker] { width:24px;height:24px; }
+ #game-dialog.result-ledger .crest-stats-drawer { top:47%;max-height:78dvh; }
+ #game-dialog.result-ledger .result-summary-grid,#game-dialog.result-ledger .crest-report-body .loot-tray { grid-template-columns:1fr; }
+ #game-dialog.result-ledger .crest-report-body { padding:12px; }
+ #game-dialog.result-ledger .roster-unlock-celebration { gap:8px;padding:10px; }
+ #game-dialog.result-ledger .roster-unlock-celebration>[data-sticker] { width:44px;height:44px; }
+ #game-dialog.pause-ledger .pause-header { padding-left:69px;padding-right:50px; }
+ #game-dialog.pause-ledger .ledger-mascot { left:6px; }
+ #game-dialog.pause-ledger .pause-storybook-board { gap:10px;padding:12px; }
+ #game-dialog.pause-ledger .pause-storybook-board>.pause-status-strip,#game-dialog.pause-ledger .pause-storybook-board>section { padding:10px; }
+ #game-dialog.pause-ledger .pause-storybook-board>.pause-status-strip { gap:9px; }
+ #game-dialog.pause-ledger .pause-storybook-actions>div { gap:5px; }
+ #game-dialog.pause-ledger .pause-storybook-actions>div>button { padding:7px 3px;font-size:13px!important; }
+}
+@media(max-height:500px) and (orientation:landscape) {
+ #game-dialog.result-ledger .crest-stage { width:min(57vw,calc(100dvh - 44px));margin-top:-8px; }
+ #game-dialog.result-ledger .crest-ribbon-title { -webkit-text-stroke-width:3px; }
+ #game-dialog.result-ledger .crest-corner-btn { min-height:48px;max-width:30vw;padding:7px 12px;gap:5px;font-size:17px!important; }
+ #game-dialog.result-ledger .crest-corner-btn [data-sticker] { width:30px;height:30px; }
+ #game-dialog.result-ledger .crest-return-btn { top:10px;left:14px;width:49px;height:49px;padding:0; }
+ #game-dialog.result-ledger .crest-return-btn [data-sticker] { width:46px;height:46px; }
+ #game-dialog.result-ledger .crest-unlock-hint { top:96%;min-height:29px;padding:3px 9px;font-size:11px; }
+ #game-dialog.result-ledger .crest-unlock-pictures [data-sticker] { width:22px;height:22px; }
+ #game-dialog.result-ledger .crest-stats-drawer { top:48%;width:min(78vw,680px);max-height:89dvh; }
+ #game-dialog.result-ledger .crest-drawer-header { padding:5px 12px; }
+ #game-dialog.result-ledger .crest-drawer-header h3 { font-size:19px!important; }
+ #game-dialog.result-ledger .crest-drawer-header h3 [data-sticker] { width:29px;height:29px; }
+ #game-dialog.result-ledger .crest-stats-close { width:33px;height:33px;font-size:24px; }
+ #game-dialog.result-ledger .crest-report-body { padding:11px; }
+ #game-dialog.pause-ledger .pause-header { min-height:59px;padding:4px 75px 10px; }
+ #game-dialog.pause-ledger .ledger-heading h2 { font-size:26px!important;-webkit-text-stroke-width:4px; }
+ #game-dialog.pause-ledger .ledger-mascot,#game-dialog.pause-ledger .ledger-mascot>[data-sticker] { width:63px;height:63px; }
+ #game-dialog.pause-ledger .pause-header .ledger-close { top:8px;width:34px;height:34px;min-width:34px;font-size:25px!important; }
+ #game-dialog.pause-ledger .pause-storybook-board { gap:8px;padding:10px 12px; }
+ #game-dialog.pause-ledger .pause-storybook-board>.pause-status-strip,#game-dialog.pause-ledger .pause-storybook-board>section { padding:8px 10px; }
+ #game-dialog.pause-ledger .pause-storybook-board>.pause-status-strip { grid-template-columns:54px minmax(0,1fr);gap:10px; }
+ #game-dialog.pause-ledger .storybook-frame { width:54px;height:54px; }
+ #game-dialog.pause-ledger .storybook-frame>[data-sticker] { width:48px;height:48px; }
+ #game-dialog.pause-ledger .pause-storybook-board h3 { font-size:16px!important;margin-bottom:4px; }
+ #game-dialog.pause-ledger .pause-storybook-board>section h3 { font-size:14px!important; }
+ #game-dialog.pause-ledger .pause-status-copy p,#game-dialog.pause-ledger .pause-status-copy p>span { font-size:14px!important; }
+ #game-dialog.pause-ledger .pause-storybook-board .loot-empty { font-size:13px!important; }
+ #game-dialog.pause-ledger .pause-storybook-actions { gap:7px;padding-top:9px; }
+ #game-dialog.pause-ledger .pause-storybook-actions>.button-teal { min-height:40px;padding:6px 10px;font-size:17px!important; }
+ #game-dialog.pause-ledger .pause-storybook-actions>div>button { min-height:34px;padding:5px 8px;font-size:13px!important; }
+}
+@keyframes crest-arrive { 0% { opacity:0;transform:scale(.72); } 75% { opacity:1;transform:scale(1.04); } 100% { opacity:1;transform:scale(1); } }
+@keyframes crest-star-pop { 0% { opacity:0;transform:scale(.35) rotate(-12deg); } 75% { opacity:1;transform:scale(1.15) rotate(3deg); } 100% { opacity:1;transform:scale(1) rotate(0); } }
+@media(prefers-reduced-motion:reduce) { #game-dialog.result-ledger .crest-stage,#game-dialog.result-ledger .crest-star.is-lit>[data-sticker] { animation:none; } }

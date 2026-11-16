@@ -64,9 +64,9 @@ describe('P10 native map bath fusion',()=>{
  });
 });
 describe('P10 art assets and transparent offline fallbacks',()=>{
- it('ships 209 unique PNGs and the four exact transparent art sizes',()=>{
+ it('ships 221 unique PNGs and the four exact transparent art sizes',()=>{
   const root='public/assets/sprites/',ids=JSON.parse(readFileSync(root+'manifest.json','utf8')) as string[];
-  expect(ids).toHaveLength(209);expect(new Set(ids).size).toBe(209);expect(readdirSync(root).filter(f=>f.endsWith('.png'))).toHaveLength(209);
+  expect(ids).toHaveLength(221);expect(new Set(ids).size).toBe(221);expect(readdirSync(root).filter(f=>f.endsWith('.png'))).toHaveLength(221);
   expect(P10_SCENE_IDS).toEqual(['capybara_soak','capybara_soak_dizzy','ui_compendium_peek_capy','ui_storybook_check']);
   for(const id of P10_SCENE_IDS){expect(ids).toContain(id);const png=readFileSync(root+id+'.png'),size=id==='ui_storybook_check'?128:256;
    expect([png.readUInt32BE(16),png.readUInt32BE(20),png[25]]).toEqual([size,size,6]);}

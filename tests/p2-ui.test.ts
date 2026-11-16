@@ -21,6 +21,7 @@ class Element {
   fire(name:string,event:any){for(const fn of this.listeners[name]??[])fn(event);}
   setAttribute(name:string,value:string){this.attrs[name]=value;}
   querySelector(){return new Element();} querySelectorAll(){return [];}
+  closest(){return null;}
   contains(){return false;} focus(){} insertAdjacentHTML(_where:string,html:string){this.innerHTML+=html;}
   setPointerCapture(){} hasPointerCapture(){return false;} releasePointerCapture(){}
   getBoundingClientRect(){return {left:0,top:0,width:390,height:741,right:390,bottom:741};}

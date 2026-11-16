@@ -17,7 +17,7 @@ describe('P3 visual compendium',()=>{
     expect(html).toContain('data-matrix-cell="shiba:hat_wizard"');
     expect(html).toContain('data-action="compendium-hero:kungfu_po"');
     expect(html).toContain('data-sticker="ui_compendium_book"');
-    expect(html).toContain('⚔️ 38');expect(html).toContain('⚡ 1.4/s');expect(html).toContain('🎯 1.6');expect(html).toContain('🔋 8');
+    expect(html).toContain('⚔️ 50');expect(html).toContain('⚡ 1.4/s');expect(html).toContain('🎯 1.8');expect(html).toContain('🔋 8');
   });
   it('selects matrix details without leaving the matrix, and routes exact book targets',()=>{
     const book=new Compendium();
@@ -44,12 +44,12 @@ describe('P3 visual compendium',()=>{
         book.openTo('kungfu_po');const detail=book.markup(profile);
         expect(detail.match(/data-weapon-role="signature"/g)).toHaveLength(1);
         expect(detail.match(/data-weapon-role="recommendation"/g)).toHaveLength(2);
-        expect(detail).toContain('<td>249</td>');
+        expect(detail).toContain('<td>328</td>');
         expect(book.closeDetail()).toBe('kungfu_po');
         expect(book.markup(profile).match(/data-entry=/g)).toHaveLength(12);
       }
     }
-    book.openTo('hamster');expect(book.markup(profile)).toContain('<td>19</td>');expect(book.markup(profile)).toContain('1.4');
+    book.openTo('hamster');expect(book.markup(profile)).toContain('<td>25</td>');expect(book.markup(profile)).toContain('1.4');
     book.openTo('panda');expect(book.markup(profile).match(/data-growth-unavailable=/g)).toHaveLength(4);
     book.openTo('bee');const bee=book.markup(profile);
     expect(bee.match(/data-growth-unavailable=/g)).toHaveLength(2);expect(bee).toContain('+2 / 7s');
@@ -75,7 +75,7 @@ describe('P3 live unit card',()=>{
     unit.location={zone:'board',col:6,row:1};unit.statuses.WET=4;unit.energy=3;
     const html=render();expect(html).toContain('id="live-unit-card" class="live-unit-card dock-left"');
     expect(html).toContain('data-action="inspect-book:kungfu_po"');expect(html).toContain('data-action="clear"');
-    expect(html).toContain('data-live-stat="damage">⚔️ 60');expect(html).toContain('data-live-stat="rate">⚡ 0.77/s');expect(html).toContain('data-live-stat="range">🎯 1.6');
+    expect(html).toContain('data-live-stat="damage">⚔️ 79');expect(html).toContain('data-live-stat="rate">⚡ 0.77/s');expect(html).toContain('data-live-stat="range">🎯 1.8');
     expect(html).toContain('data-sticker="m10_bamboo_staff"');expect(html).toContain('Wet');expect(html).toContain('3/8');
     expect(html).toContain('data-live-energy-value>🔋 Energy 3/8');expect(html).toContain('aria-valuenow="3"');expect(html).toContain('width:37.5%');
     expect(html).toContain('data-sticker="ui_compendium_book"');
@@ -90,9 +90,9 @@ describe('P3 live unit card',()=>{
   });
   it('shows matching-level basic upgrades, actual P3 next stats, and MAX',async()=>{
     const {engine,unit,render}=await setup('hamster');const id=engine.grant('hamster').unitId!,other=engine.state.units.find(u=>u.id===id)!;
-    expect(render()).toContain('partner-ready');expect(render()).toContain('⚔️ 12 → 19');expect(render()).toContain('⚡ 1.25 → 1.4/s');
+    expect(render()).toContain('partner-ready');expect(render()).toContain('⚔️ 16 → 25');expect(render()).toContain('⚡ 1.25 → 1.4/s');
     other.level=2;expect(render()).not.toContain('partner-ready');unit.level=5;expect(render()).toContain('MAX');
-    expect(getBaseUnitStats('hamster',5).damage).toBeCloseTo(51.6);
+    expect(getBaseUnitStats('hamster',5).damage).toBeCloseTo(68.8);
   });
   it('marks feedable hero parts only when the selected hero can actually accept them',async()=>{
     const {engine,unit,render}=await setup('kungfu_po');engine.grant('panda');

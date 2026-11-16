@@ -1,0 +1,69 @@
+/* Stage-local coordinates preserve the 1280 × 720 battlefield on every viewport. */
+#battle-props button { touch-action:none;user-select:none;-webkit-user-select:none; }
+#battle-props button :is(span,img,svg,b) { pointer-events:none;user-select:none;-webkit-user-drag:none; }
+#battle-props .passive-icons { display:none; }
+#hud-speed[data-speed="1"] { background:#d6e1c3;color:#24351e; }
+#hud-speed[data-speed="2"] { background:#f6d68b;color:#43280b; }
+#hud-speed[data-speed="3"] { background:#f5a962;color:#47220d;box-shadow:0 0 0 2px #ffe69b,0 0 12px #f2ad4880; }
+.resource-dock .wave-pill.endless-wave { background:linear-gradient(135deg,#ffdf7d,#f5a65f);border-color:#9b5225; }
+.resource-dock .wave-pill.endless-wave strong { color:#3b1f0b; }
+.endless-wave #hud-wave { display:flex;align-items:center;gap:.2cqw;white-space:nowrap; }
+.endless-wave #hud-wave [data-sticker] { display:block;width:2.2cqw;height:2.2cqw; }
+#early-wave-button b { font-size:max(12px,1.16cqw);font-weight:900; }
+#early-wave-button.early-coached { position:relative;z-index:27;outline:3px solid #ffdd64;outline-offset:3px;animation:early-bonus-pulse 1.5s ease-in-out infinite; }
+@keyframes early-bonus-pulse { 50% { box-shadow:0 0 0 8px #ffd85b50,0 0 22px #ffc843a0; } }
+#early-wave-coachmark { position:absolute;inset:0;z-index:26;pointer-events:none; }
+#early-wave-coachmark[hidden],#passive-rail[hidden] { display:none; }
+.early-tip-bubble { position:absolute;width:clamp(250px,30cqw,400px);max-width:42%;background:#fff5df;color:#342319;border:2.5px solid #795437;border-radius:20px;padding:12px 16px;box-shadow:0 5px 0 #52331b44,0 12px 30px #49321c40;pointer-events:auto;font-weight:800; }
+.early-tip-heading { display:flex;align-items:center;gap:8px; }
+.early-tip-heading>span { flex:none; }
+.early-tip-heading :is(img,svg) { display:block;width:4cqw;height:4cqw;min-width:36px;min-height:36px; }
+.early-tip-heading strong { font-size:clamp(16px,1.5cqw,21px); }
+.early-tip-bubble p { font-size:clamp(13px,1.18cqw,17px);line-height:1.5;margin:8px 0 12px; }
+.early-tip-actions { display:flex;flex-wrap:wrap;gap:6px; }
+.early-tip-actions button { cursor:pointer;border:2px solid #6c5136;border-radius:999px;background:#f3dfaa;color:#2f2116;font-size:clamp(12px,1.08cqw,16px);font-weight:900;padding:7px 11px; }
+.early-tip-actions button:first-child { background:#315f3c;color:#fffdf5; }
+.early-tip-pointer { position:absolute;display:block;transform:rotate(-22deg);animation:early-pointer-bob 1s ease-in-out infinite;filter:drop-shadow(0 2px 2px #543a2966); }
+.early-tip-pointer :is(img,svg) { width:3.3cqw;height:3.3cqw;min-width:26px;min-height:26px; }
+@keyframes early-pointer-bob { 50% { transform:translateY(5px) rotate(-22deg); } }
+#passive-rail { position:absolute;right:1.35%;top:18%;z-index:15;display:flex;flex-direction:column;align-items:center;gap:.48cqw;width:4.4cqw; }
+.passive-rail-heading { display:flex;flex-direction:column;align-items:center;gap:1px; }
+.passive-rail-heading :is(img,svg) { width:2.2cqw;height:2.2cqw; }
+.passive-rail-heading b { padding:1px 5px;background:#ecf0d9e8;border:1px solid #6c7653;border-radius:10px;font-size:max(9px,.82cqw);color:#293c29;font-weight:900; }
+.passive-slot-pill { position:relative;flex:none;display:grid;place-items:center;width:3.6cqw;height:3.6cqw;padding:.16cqw;border:2px solid #6b5047;border-radius:1cqw;background:#fff8eb;box-shadow:0 2px 5px #00000038;color:#2e2019;cursor:pointer; }
+.passive-slot-pill>span:first-child :is(img,svg) { display:block;width:2.9cqw;height:2.9cqw; }
+.passive-slot-pill>small { position:absolute;right:-.35cqw;bottom:-.18cqw;border:1px solid #5d6350;border-radius:6px;background:#e3eac9;color:#263b20;font-size:max(8px,.72cqw);font-weight:900;padding:0 3px;line-height:1.3;pointer-events:none; }
+.passive-slot-pill.passive-empty { background:#fff8eb88;border-style:dashed;border-color:#6b5047aa;font-size:2cqw;box-shadow:none; }
+.passive-slot-pill:is(:focus-visible,.is-expanded) { outline:3px solid #e3bc5b;outline-offset:2px; }
+.passive-tooltip { display:none;position:absolute;right:calc(100% + 10px);top:0;width:clamp(180px,20cqw,280px);padding:10px 12px;border:2px solid #63513d;border-radius:12px;background:#fff9e9;color:#291d13;box-shadow:0 4px 14px #33201244;text-align:left;pointer-events:none;z-index:2; }
+.passive-tooltip strong { display:block;font-size:max(13px,1.1cqw);font-weight:900;margin-bottom:4px; }
+.passive-tooltip>span { display:block;font-size:max(12px,1cqw);font-weight:700;line-height:1.45; }
+.passive-slot-pill:is(:focus-visible,.is-expanded) .passive-tooltip { display:block; }
+@media(hover:hover) { .passive-slot-pill:hover .passive-tooltip { display:block; } }
+.passive-none { font-size:max(9px,.8cqw);font-weight:800;white-space:nowrap;background:#f7e9cfbb;color:#463625;border-radius:8px;padding:3px; }
+.page-shell #live-unit-card:not(.dock-left) { right:5.8cqw; }
+@media(max-height:500px) and (orientation:landscape) {
+ .early-tip-bubble { padding:7px 10px;border-radius:14px;width:285px;max-width:43%; }
+ .early-tip-heading strong { font-size:14px; }
+ .early-tip-heading :is(img,svg) { min-width:28px;min-height:28px; }
+ .early-tip-bubble p { font-size:12px;line-height:1.3;margin:5px 0 7px; }
+ .early-tip-actions button { font-size:12px;padding:5px 7px; }
+ #passive-rail { gap:.55cqw; }
+ .passive-slot-pill { width:4cqw;height:4cqw;border-width:1.5px; }
+ .passive-slot-pill>span:first-child :is(img,svg) { width:3.2cqw;height:3.2cqw; }
+}
+@media(max-width:760px) and (orientation:portrait) {
+ .early-tip-bubble { width:calc(100vw - 28px);max-width:none;left:14px;top:auto;bottom:calc(100% + 46px);font-size:14px; }
+ .early-tip-heading strong { font-size:16px; }
+ .early-tip-bubble p { font-size:14px; }
+ .early-tip-actions button { font-size:13px;min-height:38px; }
+ #passive-rail { right:.5%;width:5cqw;top:19%;gap:1.3cqw; }
+ .passive-slot-pill { width:4.8cqw;height:4.8cqw;border-width:1px; }
+ .passive-slot-pill>span:first-child :is(img,svg) { width:4cqw;height:4cqw; }
+ .passive-rail-heading b { font-size:7px;padding:0 2px; }
+ .passive-rail-heading :is(img,svg) { width:3.5cqw;height:3.5cqw; }
+ .passive-slot-pill>small { font-size:7px;right:-1px;bottom:-4px;padding:0 2px; }
+ .passive-tooltip { width:200px;top:-20px; }
+ .page-shell #live-unit-card:not(.dock-left) { right:5.8cqw; }
+}
+@media(prefers-reduced-motion:reduce) { #early-wave-button.early-coached,.early-tip-pointer { animation:none; } }
