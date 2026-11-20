@@ -144,6 +144,23 @@ Object.assign(tools,{
  ui_streak_flame:p('M0 36 C-26 35 -32 8 -14 -10 Q-12 2 -4 4 C-10 -16 0 -30 10 -38 Q6 -20 15 -12 Q19 -18 18 -25 C35 -6 30 36 0 36Z','#f39a2e','#3a2618',3)+p('M0 32 C-12 31 -15 18 -6 8 Q-4 15 1 16 C-2 6 4 -2 8 -6 Q8 6 12 10 C18 18 12 32 0 32Z','#ffd45c','none',0)+p('M-33 -26 L-30 -19 -22 -18 -28 -13 -26 -5 -33 -9 -40 -5 -38 -13 -44 -18 -36 -19Z','#f2c14e','#3a2618',1.8)+p('M33 -34 L35 -29 41 -28 37 -24 38 -18 33 -21 28 -18 29 -24 25 -28 31 -29Z','#f2c14e','#3a2618',1.8),
  ui_clock_sand:r(-27,-36,54,9,'#c98f55',4)+r(-27,27,54,9,'#c98f55',4)+r(-25,-28,6,56,'#a8733f',3)+r(19,-28,6,56,'#a8733f',3)+p('M-14 -27 C-14 -9 -3 -6 -3 0 C-3 6 -14 9 -14 27 L14 27 C14 9 3 6 3 0 C3 -6 14 -9 14 -27Z','#eef8fa','#3a2618',2.2)+p('M-10 -18 Q0 -14 10 -18 C8 -10 2 -7 0 -2 C-2 -7 -8 -10 -10 -18Z','#f2c14e','none',0)+p('M-13 26 Q0 10 13 26Z','#f2b739','none',0)+p('M0 -2 V20','none','#f2b739',1.6),
 });
+export const P16_SCENE_IDS=['bg_onsen_village','fac_bamboo_pool','fac_fish_stall','fac_yuzu_tree','fac_cat_nap','fac_sakura_pavilion','ui_village_peek_capy','ui_village_gate','ui_harvest_basket','res_onsen_wood','res_yuzu_essence','ui_pet_heart','ui_sleep_zzz'] as const;
+// P16 Onsen Village: borderless stand-ins until each PNG decodes.
+Object.assign(tools,{
+ bg_onsen_village:r(-46,-27,92,54,'#a9cc80',4)+p('M0 27 V2 M0 2 H-28 M0 2 H28 M0 -8 H-26 M0 -8 H26','none','#e9d5aa',4)+e(0,-9,13,6,'#d9d3c6')+e(-26,-9,10,5,'#9a6d48')+e(26,-9,11,5,'#d9a36a')+e(-24,13,12,5,'#c9e39c')+e(24,13,11,5,'#bdb7ab')+p('M-46 -21 H46','none','#a8733f',3),
+ fac_bamboo_pool:p('M-30 8 V-34 M-22 8 V-40 M24 8 V-32','none','#6fa94f',5)+e(0,14,34,16,'#bdb7ab')+e(0,12,25,10,'#8ed9d2')+p('M-8 2 Q-12 -10 -8 -18 M6 0 Q2 -14 6 -24','none','#ffffff',2.4),
+ fac_fish_stall:r(-28,4,56,20,'#d9a36a',4)+e(-17,27,7,7,'#8a5a3a')+e(17,27,7,7,'#8a5a3a')+p('M-32 -14 L-24 -28 H24 L32 -14Z','#d9543a','#3a2618',2.5)+p('M-22 -2 Q-14 -8 -6 -2 Q-14 4 -22 -2Z M2 -2 Q10 -8 18 -2 Q10 4 2 -2Z','#f2b45a','#3a2618',2)+e(31,-4,5,7,'#f27a4a'),
+ fac_yuzu_tree:e(0,26,26,8,'#8a6040')+p('M-4 26 Q-2 8 -6 -4 H6 Q2 8 4 26Z','#a8733f','#3a2618',2.5)+e(0,-16,28,22,'#7db356')+e(-11,-12,5,5,'#f6c84c')+e(9,-20,5,5,'#f6c84c')+e(6,-4,5,5,'#f6c84c'),
+ fac_cat_nap:r(-30,24,48,7,'#c98f55',3)+r(-22,-22,7,46,'#e9d3a8',3)+r(4,-4,7,28,'#e9d3a8',3)+e(-18,-24,15,5,'#f2b38f')+e(8,-6,13,5,'#f2b38f')+e(26,24,16,8,'#f8c9a8')+e(-36,28,6,6,'#f4a6b8'),
+ fac_sakura_pavilion:r(-30,22,60,8,'#c9c3b7',3)+p('M-22 22 V-6 M22 22 V-6','none','#8a5a3a',4)+p('M-38 -6 Q-20 -10 -16 -20 Q0 -32 16 -20 Q20 -10 38 -6Z','#6f5a4e','#3a2618',2.5)+e(0,14,9,3,'#7cb369')+e(-34,-32,6,6,'#ffe0e6')+e(-24,-36,5,5,'#ffe0e6')+e(-28,-26,4,4,'#ffe0e6'),
+ ui_village_peek_capy:peekBody+p('M-30 -12 Q0 -22 30 -12 Q24 -6 0 -6 Q-24 -6 -30 -12Z','#e2b866','#462e27',2)+p('M-14 -14 Q0 -34 14 -14Z','#f6dc94','#462e27',2)+p('M8 -18 Q12 -28 18 -26 Q14 -20 8 -18Z','#7db356','#462e27',1.2)+r(20,24,14,12,'#7cc3e8',3)+peekPaws,
+ ui_village_gate:p('M-24 34 V-6 M24 34 V-6','none','#8a5a3a',6)+p('M-40 -6 Q-22 -10 -18 -22 Q0 -38 18 -22 Q22 -10 40 -6Z','#e6c47e','#3a2618',2.5)+r(-18,-4,36,14,'#4f7aa8',2)+e(0,22,8,9,'#f5b53a')+p('M20 -30 Q16 -38 20 -44','none','#fff8ec',3),
+ ui_harvest_basket:p('M-34 -2 H34 Q30 30 20 32 H-20 Q-30 30 -34 -2Z','#d9a35f','#3a2618',2.5)+p('M-24 0 Q0 -40 24 0','none','#a8733f',4)+e(-12,-6,8,6,'#f6d77d')+e(4,-10,8,6,'#f6d77d')+r(10,-16,14,12,'#f7a6b8',2)+p('M-10 12 H10 M-14 20 H14','none','#b07a3e',2),
+ res_onsen_wood:p('M-34 14 L30 -6 M-34 2 L30 -18 M-34 26 L30 6','none','#c98f55',11)+p('M-12 -16 L-6 28 M12 -22 L18 22','none','#e9d3a8',4)+p('M26 -26 Q36 -32 38 -22 Q30 -20 26 -26Z','#7db356','#3a2618',1.4),
+ res_yuzu_essence:e(0,10,26,26,'#eef8fa')+p('M-22 14 Q0 6 22 14 Q20 34 0 36 Q-20 34 -22 14Z','#f6c84c','none',0)+r(-8,-28,16,12,'#c98f55',3)+p('M-14 -6 Q-20 6 -16 18','none','#ffffff',3),
+ ui_pet_heart:p('M0 30 C-38 6 -34 -26 -14 -28 C-5 -28 0 -21 0 -15 C0 -21 5 -28 14 -28 C34 -26 38 6 0 30Z','#ff7b89','#3a2618',3)+e(-14,-12,4,7,'#ffd3da'),
+ ui_sleep_zzz:p('M-30 12 Q-40 0 -26 -8 Q-24 -24 -6 -20 Q6 -32 20 -20 Q36 -20 34 -2 Q42 14 26 18 H-22 Q-34 18 -30 12Z','#e3f1ff','#3a2618',2.5)+p('M-2 -12 A10 10 0 1 0 8 6 A8 8 0 1 1 -2 -12Z','#f5c343','#3a2618',1.8)+e(-30,30,4,4,'#e3f1ff'),
+});
 export const P9_SCENE_IDS=['npc_shop_raccoon','npc_blacksmith_capy','ui_gacha_machine','ui_trunk_crate','ui_battle_clash_crest','ui_crossed_blades','ui_alert_siren','ui_unlock_chest'] as const;
 Object.assign(tools,{
  npc_shop_raccoon:coon+r(-32,22,64,19,'#8eb09a')+p('M-34 -23 H34 L25 -39 H-23Z','#d0a66d'),
@@ -197,9 +214,9 @@ export function unitSticker(kind:string,size=40):string {
   if(['hamster','squirrel','bee'].includes(key))return avatarSticker(key,n);
   return `<span role="img" aria-label="${key}" data-sticker="${key}" style="display:inline-grid;place-items:center;width:${n}px;height:${n}px;font-size:${Math.round(n*.63)}px">${escapeHtml(UNIT_ICONS[key])}</span>`;
 }
-export function sceneSticker(id:typeof P15_SCENE_IDS[number]|typeof P14_SCENE_IDS[number]|typeof P13_SCENE_IDS[number]|typeof P12_SCENE_IDS[number]|typeof P11_SCENE_IDS[number]|typeof P10_SCENE_IDS[number]|typeof P9_SCENE_IDS[number]|'menu_banner'|'logo_capy'|'sprinkler'|'shovel'|'ui_compendium_book'|'ui_fish_food'|'ui_bell_summon'|'ui_shop_bag'|'orange'|'ui_trophy_rank'|'ui_map_sign'|'ui_header_compendium'|'ui_header_armory'|'ui_header_market'|'ui_header_rank'|'ui_header_profile'|'ui_header_settings'|'ui_tutorial_pointer'|'ui_tutorial_capy'|'ui_coin_gold'|'ui_star_rank'|'ui_ticket_gacha'|'ui_skull_threat'|'ui_result_victory'|'ui_result_defeat'|'ui_header_pause'|'ui_mvp_crown'|'ui_lock_closed'|'ui_lock_open'|'ui_wave_horn'|'ui_merge_sparkle',fallback:string,size?:number):string {
+export function sceneSticker(id:typeof P16_SCENE_IDS[number]|typeof P15_SCENE_IDS[number]|typeof P14_SCENE_IDS[number]|typeof P13_SCENE_IDS[number]|typeof P12_SCENE_IDS[number]|typeof P11_SCENE_IDS[number]|typeof P10_SCENE_IDS[number]|typeof P9_SCENE_IDS[number]|'menu_banner'|'logo_capy'|'sprinkler'|'shovel'|'ui_compendium_book'|'ui_fish_food'|'ui_bell_summon'|'ui_shop_bag'|'orange'|'ui_trophy_rank'|'ui_map_sign'|'ui_header_compendium'|'ui_header_armory'|'ui_header_market'|'ui_header_rank'|'ui_header_profile'|'ui_header_settings'|'ui_tutorial_pointer'|'ui_tutorial_capy'|'ui_coin_gold'|'ui_star_rank'|'ui_ticket_gacha'|'ui_skull_threat'|'ui_result_victory'|'ui_result_defeat'|'ui_header_pause'|'ui_mvp_crown'|'ui_lock_closed'|'ui_lock_open'|'ui_wave_horn'|'ui_merge_sparkle',fallback:string,size?:number):string {
   const n=sizeOf(size??(id==='menu_banner'?400:64),64);
-  return image(id,n)||(Object.hasOwn(tools,id)?geometry(id,tools[id],n,![...P10_SCENE_IDS,...P11_SCENE_IDS,...P12_SCENE_IDS,...P14_SCENE_IDS,...P15_SCENE_IDS].some(key=>key===id)):fallback);
+  return image(id,n)||(Object.hasOwn(tools,id)?geometry(id,tools[id],n,![...P10_SCENE_IDS,...P11_SCENE_IDS,...P12_SCENE_IDS,...P14_SCENE_IDS,...P15_SCENE_IDS,...P16_SCENE_IDS].some(key=>key===id)):fallback);
 }
 
 type ArtStickerId='title_logo_zh'|'title_logo_en'|'ui_btn_start_zh'|'ui_btn_start_en';

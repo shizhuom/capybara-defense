@@ -2,6 +2,7 @@ import { FRAGMENTS } from '../config/enemies';
 import { createProfile, grantWeaponFragments, normalizeProfile, unlockAllProfile } from '../core/MetaProgression';
 import { applyBattleProgress,recordMergedHeroes } from '../core/PlayerProgression';
 import { grantIngredients } from '../core/KitchenProgression';
+import { grantVillageResources } from '../core/VillageProgression';
 import type { BattleResult, Profile } from '../core/types';
 
 export const STORAGE_PREFIX = 'capybara_defense_v1:';
@@ -52,6 +53,7 @@ export function awardBattle(profile: Profile, battleId: string, result: BattleRe
   const granted=grantWeaponFragments(p,won ? [...result.loot,...legacy.map(()=>'m01_swatter')] : []);
   // Ingredients are banked on victory and as defeat salvage, under this same receipt.
   const ingredients=grantIngredients(p,Array.isArray(result.ingredientLoot)?result.ingredientLoot:[]).ingredients;
+  const village=grantVillageResources(p,Array.isArray(result.villageLoot)?result.villageLoot:[]).village;
   return {
     awarded: true,
     newWeapons:granted.newWeapons,
@@ -61,7 +63,7 @@ export function awardBattle(profile: Profile, battleId: string, result: BattleRe
       wins: profile.wins + (won ? 1 : 0), matches: profile.matches + 1,
       fragments: [...p.fragments, ...legacy],
       awardedBattles: [...profile.awardedBattles, battleId],
-      freeLotteryTickets:p.freeLotteryTickets+(won?1:0),ingredients,
+      freeLotteryTickets:p.freeLotteryTickets+(won?1:0),ingredients,village,
     },won,result.mergedHeroes),
   };
 }
@@ -77,13 +79,15 @@ export function awardEndless(profile:Profile,battleId:string,result:BattleResult
     !Array.isArray(loot)||!loot.every(id=>typeof id==='string'))return rejected;
   const harvest=result.endlessIngredientLoot;
   if(harvest!==undefined&&(!Array.isArray(harvest)||!harvest.every(id=>typeof id==='string')))return rejected;
+  const materials=result.endlessVillageLoot;
+  if(materials!==undefined&&(!Array.isArray(materials)||!materials.every(id=>typeof id==='string')))return rejected;
   const coins=p.coins+bonus;
   if(!Number.isSafeInteger(coins))return rejected;
   const legacy=loot.filter(id=>validFragments.has(id));
   const granted=grantWeaponFragments(p,[...loot,...legacy.map(()=>'m01_swatter')]);
   const heroes=Array.isArray(result.mergedHeroes)?result.mergedHeroes.filter(id=>typeof id==='string'):[];
-  const ingredients=grantIngredients(p,harvest??[]).ingredients;
-  return {awarded:true,newWeapons:granted.newWeapons,profile:recordMergedHeroes({...granted.profile,coins,ingredients,
+  const ingredients=grantIngredients(p,harvest??[]).ingredients,village=grantVillageResources(p,materials??[]).village;
+  return {awarded:true,newWeapons:granted.newWeapons,profile:recordMergedHeroes({...granted.profile,coins,ingredients,village,
     fragments:[...p.fragments,...legacy],awardedBattles:[...p.awardedBattles,receipt],
     bestEndlessWave:Math.max(p.bestEndlessWave??0,wave)},heroes)};
 }

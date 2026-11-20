@@ -4,6 +4,8 @@ import { PROPS,META_PRICES } from '../config/props';
 import { HEROES } from '../config/heroes';
 import { AVATARS, DEFAULT_AVATARS } from '../config/avatars';
 import { BROTH_IDS, INGREDIENT_IDS, INGREDIENT_STACK_LIMIT, clampBrothLevel, isBrothId, isIngredientId } from '../config/kitchen';
+import { FACILITY_IDS } from '../config/village';
+import { copyVillage, createVillage, normalizeVillage } from './VillageState';
 import { DEFAULT_SETTINGS, getUnlockedMaps, unlockAchievements, updateSettings } from './PlayerProgression';
 import type { Profile } from './types';
 
@@ -21,7 +23,8 @@ const copy = (profile:Profile):Profile => ({...profile,fragments:[...profile.fra
   ownedProps:{...profile.ownedProps},equippedActiveProps:[...profile.equippedActiveProps],equippedPassiveProps:[...profile.equippedPassiveProps],
   unlockedAvatars:[...profile.unlockedAvatars],mergedHeroes:[...profile.mergedHeroes],settings:{...profile.settings},
   shop:profile.shop ? {...profile.shop,offers:[...profile.shop.offers]} : null,
-  ingredients:{...(profile.ingredients??{})},unlockedBroths:[...(profile.unlockedBroths??[])],brothLevels:{...(profile.brothLevels??{})},activeBrothId:profile.activeBrothId??null});
+  ingredients:{...(profile.ingredients??{})},unlockedBroths:[...(profile.unlockedBroths??[])],brothLevels:{...(profile.brothLevels??{})},activeBrothId:profile.activeBrothId??null,
+  village:profile.village?copyVillage(profile.village):createVillage()});
 const fail = (profile:Profile,key:string):MetaResult => ({profile:copy(profile),ok:false,key});
 const success = (profile:Profile,key:string,amount?:number):MetaResult => ({profile:unlockAchievements(profile),ok:true,key,...(amount===undefined?{}:{amount})});
 
@@ -30,7 +33,9 @@ export function createProfile():Profile {
     weaponFragments:{},unlockedWeapons:[],equippedWeapons:{},ownedProps:{},equippedActiveProps:[],equippedPassiveProps:[],freeLotteryTickets:0,shop:null,
     stars:0,highestStars:0,winStreak:0,bestWinStreak:0,selectedMap:'auto',avatarId:'capybara',unlockedAvatars:[...DEFAULT_AVATARS],mergedHeroes:[],settings:{...DEFAULT_SETTINGS},
     // The chef's welcome gift: exactly one Yuzu Calm Soak. No broth is brewed or equipped, so battles stay unchanged.
-    ingredients:{...STARTER_INGREDIENTS},unlockedBroths:[],brothLevels:{},activeBrothId:null};
+    ingredients:{...STARTER_INGREDIENTS},unlockedBroths:[],brothLevels:{},activeBrothId:null,
+    // P16: the starter pool, 6 wood, 2 essence and a 15-minute welcome harvest.
+    village:createVillage()};
 }
 /** Granted to brand-new saves and once to pre-P14 saves that never had an `ingredients` field. */
 export const STARTER_INGREDIENTS:Readonly<Record<string,number>>=Object.freeze({ing_yuzu:2});
@@ -84,6 +89,8 @@ export function normalizeProfile(raw:unknown):Profile {
   const shop=object(data.shop);
   if(typeof shop.day==='string'&&/^\d{4}-\d{2}-\d{2}$/.test(shop.day)) p.shop={day:shop.day,offers:unique(strings(shop.offers).filter(id=>has(PROPS,id))).slice(0,3)};
   normalizeKitchen(p,data);
+  // An absent village (new or pre-P16 save) receives the welcome gift; an existing one is never re-gifted.
+  p.village=normalizeVillage(data.village);
   return unlockAchievements(p);
 }
 export function grantWeaponFragments(profile:Profile,ids:string[]):{profile:Profile;newWeapons:string[]} {
@@ -203,5 +210,6 @@ export function unlockAllProfile(profile:Profile):Profile {
   p.ingredients=Object.fromEntries(INGREDIENT_IDS.map(id=>[id,99]));
   // Keep an explicitly chosen soak only; unlocking everything must not equip one for test battles.
   p.activeBrothId=profile.activeBrothId??null;
+  p.village={...p.village,wood:99,essence:99,facilities:Object.fromEntries(FACILITY_IDS.map(id=>[id,3])),lastHarvestAt:Date.now()-6*3600_000};
   return unlockAchievements(p);
 }

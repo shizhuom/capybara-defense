@@ -8,6 +8,17 @@ import { escapeHtml as esc } from './art';
 import { artSticker, sceneSticker } from './stickers';
 import { BROTHS, BROTH_IDS, isBrothId } from '../config/kitchen';
 import { canBrewOrUpgradeAnyBroth, getBrothLevel } from '../core/KitchenProgression';
+import { villageBadge, villageStars } from '../core/VillageProgression';
+import { VILLAGE_MAX_STARS } from '../config/village';
+
+/** Village medallion: `Harvest!` when the basket is ripe, `Build!` when something is affordable, else total stars. */
+export function villageDockMarkup(profile: Profile, now = Date.now()): string {
+  const badge = villageBadge(profile, now);
+  const small = badge === 'harvest' ? `<small class="village-harvest-badge">${esc(t('p16.harvestBadge'))}</small>`
+    : badge === 'build' ? `<small class="village-build-badge">${esc(t('p16.buildBadge'))}</small>`
+    : `<small class="village-stars-badge">★${villageStars(profile)}/${VILLAGE_MAX_STARS}</small>`;
+  return `<button type="button" class="village-dock-button" data-action="village"><span class="medallion" aria-hidden="true">${sceneSticker('ui_village_gate','',48)}</span><b>${esc(t('p16.dock'))}</b>${small}</button>`;
+}
 
 /** Kitchen medallion: a glowing `Brew!` badge whenever a new broth can be brewed, otherwise progress. */
 export function kitchenDockMarkup(profile: Profile): string {
@@ -25,7 +36,7 @@ export function activeBrothPillMarkup(profile: Profile): string {
 }
 
 /** Small corner controls leave the animal-gathering panorama unobstructed. */
-export function courtyardMarkup(profile: Profile): string {
+export function courtyardMarkup(profile: Profile, now = Date.now()): string {
   const tr=(key:string)=>esc(t(key)), unlocked=getUnlockedMaps(profile), rank=getRank(profile.stars);
   const maps=['auto',...MAP_IDS].map(id=>{
     const locked=id!=='auto'&&!unlocked.includes(id as typeof MAP_IDS[number]);
@@ -38,5 +49,5 @@ export function courtyardMarkup(profile: Profile): string {
     <nav class="map-chips" aria-label="${tr('m3.map')}"><span aria-hidden="true">${sceneSticker('ui_map_sign','',24)}</span>${maps}</nav>
     <button type="button" class="start-button" data-action="start" aria-label="${tr('menu.start')}">${artSticker(getLanguage()==='zh-CN'?'ui_btn_start_zh':'ui_btn_start_en',t('menu.start'))}</button>
     <nav class="hub-dock hub-dock-left"><button type="button" data-action="recipes"><span class="medallion" aria-hidden="true">${sceneSticker('ui_compendium_book','',56)}</span><b>${tr('p3.guide')}</b></button><button type="button" data-action="armory"><span class="medallion" aria-hidden="true">${weaponSticker('m10_bamboo_staff',56)}</span><b>${tr('p3.armory')}</b><small>${profile.unlockedWeapons.length}/36</small></button>${kitchenDockMarkup(profile)}</nav>${activeBrothPillMarkup(profile)}
-    <nav class="hub-dock hub-dock-right"><button type="button" data-action="market"><span class="medallion" aria-hidden="true">${sceneSticker('ui_shop_bag','',56)}</span><b>${tr('p3.shop')}</b>${profile.freeLotteryTickets?`<small class="ticket-badge">${sceneSticker('ui_ticket_gacha','',18)} ${profile.freeLotteryTickets}</small>`:''}</button><button type="button" data-action="leaderboard"><span class="medallion" aria-hidden="true">${sceneSticker('ui_trophy_rank','',56)}</span><b>${tr('p3.rank')}</b></button></nav>`;
+    <nav class="hub-dock hub-dock-right">${villageDockMarkup(profile, now)}<button type="button" data-action="market"><span class="medallion" aria-hidden="true">${sceneSticker('ui_shop_bag','',56)}</span><b>${tr('p3.shop')}</b>${profile.freeLotteryTickets?`<small class="ticket-badge">${sceneSticker('ui_ticket_gacha','',18)} ${profile.freeLotteryTickets}</small>`:''}</button><button type="button" data-action="leaderboard"><span class="medallion" aria-hidden="true">${sceneSticker('ui_trophy_rank','',56)}</span><b>${tr('p3.rank')}</b></button></nav>`;
 }

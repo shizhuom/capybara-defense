@@ -1,0 +1,1198 @@
+{
+  "passed": true,
+  "checks": [
+    "desktop: left 3 + right 3 docks without overlap; Build!/Harvest! badges; courtyard plots and residents inside the panorama; harvest claim; pet heart +5; focus → build; full village 5 residents; materials on pause tray and report shelf",
+    "mobile-landscape: left 3 + right 3 docks without overlap; Build!/Harvest! badges; courtyard plots and residents inside the panorama; harvest claim; pet heart +5; focus → build; full village 5 residents; materials on pause tray and report shelf",
+    "mobile-portrait: left 3 + right 3 docks without overlap; Build!/Harvest! badges; courtyard plots and residents inside the panorama; harvest claim; pet heart +5; focus → build; full village 5 residents; materials on pause tray and report shelf"
+  ],
+  "layouts": [
+    {
+      "label": "desktop build badge start",
+      "buttons": [
+        {
+          "a": "recipes",
+          "dock": "hub-dock hub-dock-left",
+          "x": 27.625,
+          "y": 629.65625,
+          "right": 112.265625,
+          "bottom": 746.484375
+        },
+        {
+          "a": "armory",
+          "dock": "hub-dock hub-dock-left",
+          "x": 132.734375,
+          "y": 629.65625,
+          "right": 217.375,
+          "bottom": 746.484375
+        },
+        {
+          "a": "kitchen",
+          "dock": "hub-dock hub-dock-left",
+          "x": 237.84375,
+          "y": 629.65625,
+          "right": 322.484375,
+          "bottom": 746.484375
+        },
+        {
+          "a": "village",
+          "dock": "hub-dock hub-dock-right",
+          "x": 1043.5,
+          "y": 629.65625,
+          "right": 1128.140625,
+          "bottom": 746.484375
+        },
+        {
+          "a": "market",
+          "dock": "hub-dock hub-dock-right",
+          "x": 1148.609375,
+          "y": 629.65625,
+          "right": 1233.25,
+          "bottom": 746.484375
+        },
+        {
+          "a": "leaderboard",
+          "dock": "hub-dock hub-dock-right",
+          "x": 1253.71875,
+          "y": 629.65625,
+          "right": 1338.359375,
+          "bottom": 746.484375
+        }
+      ]
+    },
+    {
+      "label": "desktop harvest badge start",
+      "buttons": [
+        {
+          "a": "recipes",
+          "dock": "hub-dock hub-dock-left",
+          "x": 27.625,
+          "y": 629.65625,
+          "right": 112.265625,
+          "bottom": 746.484375
+        },
+        {
+          "a": "armory",
+          "dock": "hub-dock hub-dock-left",
+          "x": 132.734375,
+          "y": 629.65625,
+          "right": 217.375,
+          "bottom": 746.484375
+        },
+        {
+          "a": "kitchen",
+          "dock": "hub-dock hub-dock-left",
+          "x": 237.84375,
+          "y": 629.65625,
+          "right": 322.484375,
+          "bottom": 746.484375
+        },
+        {
+          "a": "village",
+          "dock": "hub-dock hub-dock-right",
+          "x": 1043.5,
+          "y": 629.65625,
+          "right": 1128.140625,
+          "bottom": 746.484375
+        },
+        {
+          "a": "market",
+          "dock": "hub-dock hub-dock-right",
+          "x": 1148.609375,
+          "y": 629.65625,
+          "right": 1233.25,
+          "bottom": 746.484375
+        },
+        {
+          "a": "leaderboard",
+          "dock": "hub-dock hub-dock-right",
+          "x": 1253.71875,
+          "y": 629.65625,
+          "right": 1338.359375,
+          "bottom": 746.484375
+        }
+      ]
+    },
+    {
+      "label": "desktop courtyard starter",
+      "box": {
+        "x": 361.9375,
+        "y": 202.90625,
+        "right": 1004.0625,
+        "bottom": 564.09375
+      },
+      "items": [
+        {
+          "cls": "village-spot is-built spot-fac_bamboo_pool",
+          "x": 616.421875,
+          "y": 225.78561401367188,
+          "right": 749.578125,
+          "bottom": 358.9418640136719
+        },
+        {
+          "cls": "village-spot is-empty",
+          "x": 806.7578125,
+          "y": 315.9921875,
+          "right": 901.6484375,
+          "bottom": 345.0390625
+        },
+        {
+          "cls": "village-spot is-empty",
+          "x": 457.9921875,
+          "y": 312.4609375,
+          "right": 552.8828125,
+          "bottom": 341.5078125
+        },
+        {
+          "cls": "village-spot is-empty",
+          "x": 471,
+          "y": 432.5390625,
+          "right": 577.9375,
+          "bottom": 461.5859375
+        },
+        {
+          "cls": "village-spot is-empty",
+          "x": 806.4375,
+          "y": 432.5390625,
+          "right": 889.28125,
+          "bottom": 461.5859375
+        },
+        {
+          "cls": "village-pet pose-soak",
+          "x": 624.015625,
+          "y": 285.79998779296875,
+          "right": 678.546875,
+          "bottom": 340.33123779296875
+        },
+        {
+          "cls": "village-pet pose-soak",
+          "x": 687.4375,
+          "y": 289.33123779296875,
+          "right": 741.96875,
+          "bottom": 343.86248779296875
+        }
+      ],
+      "overflow": [],
+      "dialog": {
+        "x": 303,
+        "y": 38.40625,
+        "right": 1063,
+        "bottom": 729.59375
+      },
+      "viewport": {
+        "w": 1366,
+        "h": 768
+      },
+      "broken": [],
+      "raw": false
+    },
+    {
+      "label": "desktop pet bubble",
+      "box": {
+        "x": 361.9375,
+        "y": 202.90625,
+        "right": 1004.0625,
+        "bottom": 564.09375
+      },
+      "items": [
+        {
+          "cls": "village-spot is-built spot-fac_bamboo_pool",
+          "x": 616.421875,
+          "y": 225.78561401367188,
+          "right": 749.578125,
+          "bottom": 358.9418640136719
+        },
+        {
+          "cls": "village-spot is-empty",
+          "x": 806.7578125,
+          "y": 315.9921875,
+          "right": 901.6484375,
+          "bottom": 345.0390625
+        },
+        {
+          "cls": "village-spot is-empty",
+          "x": 457.9921875,
+          "y": 312.4609375,
+          "right": 552.8828125,
+          "bottom": 341.5078125
+        },
+        {
+          "cls": "village-spot is-empty",
+          "x": 471,
+          "y": 432.5390625,
+          "right": 577.9375,
+          "bottom": 461.5859375
+        },
+        {
+          "cls": "village-spot is-empty",
+          "x": 806.4375,
+          "y": 432.5390625,
+          "right": 889.28125,
+          "bottom": 461.5859375
+        },
+        {
+          "cls": "village-pet pose-soak is-happy",
+          "x": 624.015625,
+          "y": 285.79998779296875,
+          "right": 678.546875,
+          "bottom": 340.33123779296875
+        },
+        {
+          "cls": "village-pet pose-soak",
+          "x": 687.4375,
+          "y": 289.33123779296875,
+          "right": 741.96875,
+          "bottom": 343.86248779296875
+        }
+      ],
+      "overflow": [],
+      "dialog": {
+        "x": 303,
+        "y": 38.40625,
+        "right": 1063,
+        "bottom": 729.59375
+      },
+      "viewport": {
+        "w": 1366,
+        "h": 768
+      },
+      "broken": [],
+      "raw": false
+    },
+    {
+      "label": "desktop build tab",
+      "box": null,
+      "items": [],
+      "overflow": [],
+      "dialog": {
+        "x": 303,
+        "y": 38.40625,
+        "right": 1063,
+        "bottom": 729.59375
+      },
+      "viewport": {
+        "w": 1366,
+        "h": 768
+      },
+      "broken": [],
+      "raw": false
+    },
+    {
+      "label": "desktop full courtyard",
+      "box": {
+        "x": 361.9375,
+        "y": 202.90625,
+        "right": 1004.0625,
+        "bottom": 564.09375
+      },
+      "items": [
+        {
+          "cls": "village-spot is-built spot-fac_bamboo_pool",
+          "x": 616.421875,
+          "y": 225.78561401367188,
+          "right": 749.578125,
+          "bottom": 358.9418640136719
+        },
+        {
+          "cls": "village-spot is-built spot-fac_fish_stall",
+          "x": 787.625,
+          "y": 229.31686401367188,
+          "right": 920.78125,
+          "bottom": 362.4731140136719
+        },
+        {
+          "cls": "village-spot is-built spot-fac_yuzu_tree",
+          "x": 438.859375,
+          "y": 225.78561401367188,
+          "right": 572.015625,
+          "bottom": 358.9418640136719
+        },
+        {
+          "cls": "village-spot is-built spot-fac_cat_nap",
+          "x": 457.890625,
+          "y": 345.8637390136719,
+          "right": 591.046875,
+          "bottom": 479.0199890136719
+        },
+        {
+          "cls": "village-spot is-built spot-fac_sakura_pavilion",
+          "x": 781.28125,
+          "y": 345.8637390136719,
+          "right": 914.4375,
+          "bottom": 479.0199890136719
+        },
+        {
+          "cls": "village-pet pose-soak",
+          "x": 624.015625,
+          "y": 285.79998779296875,
+          "right": 678.546875,
+          "bottom": 340.33123779296875
+        },
+        {
+          "cls": "village-pet pose-stand",
+          "x": 750.84375,
+          "y": 317.58123779296875,
+          "right": 805.375,
+          "bottom": 372.11248779296875
+        },
+        {
+          "cls": "village-pet pose-stand",
+          "x": 547.921875,
+          "y": 310.51873779296875,
+          "right": 602.453125,
+          "bottom": 365.04998779296875
+        },
+        {
+          "cls": "village-pet pose-nap",
+          "x": 541.578125,
+          "y": 405.87811279296875,
+          "right": 596.109375,
+          "bottom": 460.40936279296875
+        },
+        {
+          "cls": "village-pet pose-stand",
+          "x": 750.84375,
+          "y": 434.14373779296875,
+          "right": 805.375,
+          "bottom": 488.67498779296875
+        }
+      ],
+      "overflow": [],
+      "dialog": {
+        "x": 303,
+        "y": 38.40625,
+        "right": 1063,
+        "bottom": 729.59375
+      },
+      "viewport": {
+        "w": 1366,
+        "h": 768
+      },
+      "broken": [],
+      "raw": false
+    },
+    {
+      "label": "desktop full build",
+      "box": null,
+      "items": [],
+      "overflow": [],
+      "dialog": {
+        "x": 303,
+        "y": 38.40625,
+        "right": 1063,
+        "bottom": 729.59375
+      },
+      "viewport": {
+        "w": 1366,
+        "h": 768
+      },
+      "broken": [],
+      "raw": false
+    },
+    {
+      "label": "mobile-landscape build badge start",
+      "buttons": [
+        {
+          "a": "recipes",
+          "dock": "hub-dock hub-dock-left",
+          "x": 89.1875,
+          "y": 314.640625,
+          "right": 139.1875,
+          "bottom": 386.09375
+        },
+        {
+          "a": "armory",
+          "dock": "hub-dock hub-dock-left",
+          "x": 149.578125,
+          "y": 314.640625,
+          "right": 199.578125,
+          "bottom": 386.09375
+        },
+        {
+          "a": "kitchen",
+          "dock": "hub-dock hub-dock-left",
+          "x": 209.96875,
+          "y": 314.640625,
+          "right": 259.96875,
+          "bottom": 386.09375
+        },
+        {
+          "a": "village",
+          "dock": "hub-dock hub-dock-right",
+          "x": 584.015625,
+          "y": 314.640625,
+          "right": 634.015625,
+          "bottom": 386.09375
+        },
+        {
+          "a": "market",
+          "dock": "hub-dock hub-dock-right",
+          "x": 644.40625,
+          "y": 314.640625,
+          "right": 694.40625,
+          "bottom": 386.09375
+        },
+        {
+          "a": "leaderboard",
+          "dock": "hub-dock hub-dock-right",
+          "x": 704.796875,
+          "y": 314.640625,
+          "right": 754.796875,
+          "bottom": 386.09375
+        }
+      ]
+    },
+    {
+      "label": "mobile-landscape harvest badge start",
+      "buttons": [
+        {
+          "a": "recipes",
+          "dock": "hub-dock hub-dock-left",
+          "x": 89.1875,
+          "y": 314.640625,
+          "right": 139.1875,
+          "bottom": 386.09375
+        },
+        {
+          "a": "armory",
+          "dock": "hub-dock hub-dock-left",
+          "x": 149.578125,
+          "y": 314.640625,
+          "right": 199.578125,
+          "bottom": 386.09375
+        },
+        {
+          "a": "kitchen",
+          "dock": "hub-dock hub-dock-left",
+          "x": 209.96875,
+          "y": 314.640625,
+          "right": 259.96875,
+          "bottom": 386.09375
+        },
+        {
+          "a": "village",
+          "dock": "hub-dock hub-dock-right",
+          "x": 584.015625,
+          "y": 314.640625,
+          "right": 634.015625,
+          "bottom": 386.09375
+        },
+        {
+          "a": "market",
+          "dock": "hub-dock hub-dock-right",
+          "x": 644.40625,
+          "y": 314.640625,
+          "right": 694.40625,
+          "bottom": 386.09375
+        },
+        {
+          "a": "leaderboard",
+          "dock": "hub-dock hub-dock-right",
+          "x": 704.796875,
+          "y": 314.640625,
+          "right": 754.796875,
+          "bottom": 386.09375
+        }
+      ]
+    },
+    {
+      "label": "mobile-landscape courtyard starter",
+      "box": {
+        "x": 87,
+        "y": 126.4375,
+        "right": 443.4375,
+        "bottom": 326.921875
+      },
+      "items": [
+        {
+          "cls": "village-spot is-built spot-fac_bamboo_pool",
+          "x": 228.4296875,
+          "y": 139.62750244140625,
+          "right": 302.0078125,
+          "bottom": 213.20562744140625
+        },
+        {
+          "cls": "village-spot is-empty",
+          "x": 315.4453125,
+          "y": 183.625,
+          "right": 404.2109375,
+          "bottom": 211.375
+        },
+        {
+          "cls": "village-spot is-empty",
+          "x": 122.7109375,
+          "y": 181.671875,
+          "right": 211.4765625,
+          "bottom": 209.421875
+        },
+        {
+          "cls": "village-spot is-empty",
+          "x": 127.7265625,
+          "y": 247.796875,
+          "right": 227.4921875,
+          "bottom": 275.546875
+        },
+        {
+          "cls": "village-spot is-empty",
+          "x": 317.4453125,
+          "y": 247.796875,
+          "right": 395.2109375,
+          "bottom": 275.546875
+        },
+        {
+          "cls": "village-pet pose-soak",
+          "x": 232.625,
+          "y": 172.79750061035156,
+          "right": 262.75,
+          "bottom": 202.92250061035156
+        },
+        {
+          "cls": "village-pet pose-soak",
+          "x": 267.671875,
+          "y": 174.73500061035156,
+          "right": 297.796875,
+          "bottom": 204.86000061035156
+        }
+      ],
+      "overflow": [],
+      "dialog": {
+        "x": 72,
+        "y": 9.75,
+        "right": 772,
+        "bottom": 380.25
+      },
+      "viewport": {
+        "w": 844,
+        "h": 390
+      },
+      "broken": [],
+      "raw": false
+    },
+    {
+      "label": "mobile-landscape pet bubble",
+      "box": {
+        "x": 87,
+        "y": 126.4375,
+        "right": 443.4375,
+        "bottom": 326.921875
+      },
+      "items": [
+        {
+          "cls": "village-spot is-built spot-fac_bamboo_pool",
+          "x": 228.4296875,
+          "y": 139.62750244140625,
+          "right": 302.0078125,
+          "bottom": 213.20562744140625
+        },
+        {
+          "cls": "village-spot is-empty",
+          "x": 315.4453125,
+          "y": 183.625,
+          "right": 404.2109375,
+          "bottom": 211.375
+        },
+        {
+          "cls": "village-spot is-empty",
+          "x": 122.7109375,
+          "y": 181.671875,
+          "right": 211.4765625,
+          "bottom": 209.421875
+        },
+        {
+          "cls": "village-spot is-empty",
+          "x": 127.7265625,
+          "y": 247.796875,
+          "right": 227.4921875,
+          "bottom": 275.546875
+        },
+        {
+          "cls": "village-spot is-empty",
+          "x": 317.4453125,
+          "y": 247.796875,
+          "right": 395.2109375,
+          "bottom": 275.546875
+        },
+        {
+          "cls": "village-pet pose-soak is-happy",
+          "x": 232.625,
+          "y": 172.79750061035156,
+          "right": 262.75,
+          "bottom": 202.92250061035156
+        },
+        {
+          "cls": "village-pet pose-soak",
+          "x": 267.671875,
+          "y": 174.73500061035156,
+          "right": 297.796875,
+          "bottom": 204.86000061035156
+        }
+      ],
+      "overflow": [],
+      "dialog": {
+        "x": 72,
+        "y": 9.75,
+        "right": 772,
+        "bottom": 380.25
+      },
+      "viewport": {
+        "w": 844,
+        "h": 390
+      },
+      "broken": [],
+      "raw": false
+    },
+    {
+      "label": "mobile-landscape build tab",
+      "box": null,
+      "items": [],
+      "overflow": [],
+      "dialog": {
+        "x": 72,
+        "y": 9.75,
+        "right": 772,
+        "bottom": 380.25
+      },
+      "viewport": {
+        "w": 844,
+        "h": 390
+      },
+      "broken": [],
+      "raw": false
+    },
+    {
+      "label": "mobile-landscape full courtyard",
+      "box": {
+        "x": 87,
+        "y": 126.4375,
+        "right": 443.4375,
+        "bottom": 326.921875
+      },
+      "items": [
+        {
+          "cls": "village-spot is-built spot-fac_bamboo_pool",
+          "x": 228.4296875,
+          "y": 139.62750244140625,
+          "right": 302.0078125,
+          "bottom": 213.20562744140625
+        },
+        {
+          "cls": "village-spot is-built spot-fac_fish_stall",
+          "x": 323.0390625,
+          "y": 141.58062744140625,
+          "right": 396.6171875,
+          "bottom": 215.15875244140625
+        },
+        {
+          "cls": "village-spot is-built spot-fac_yuzu_tree",
+          "x": 130.3046875,
+          "y": 139.62750244140625,
+          "right": 203.8828125,
+          "bottom": 213.20562744140625
+        },
+        {
+          "cls": "village-spot is-built spot-fac_cat_nap",
+          "x": 140.8203125,
+          "y": 205.75250244140625,
+          "right": 214.3984375,
+          "bottom": 279.33062744140625
+        },
+        {
+          "cls": "village-spot is-built spot-fac_sakura_pavilion",
+          "x": 319.5390625,
+          "y": 205.75250244140625,
+          "right": 393.1171875,
+          "bottom": 279.33062744140625
+        },
+        {
+          "cls": "village-pet pose-soak",
+          "x": 232.625,
+          "y": 172.79750061035156,
+          "right": 262.75,
+          "bottom": 202.92250061035156
+        },
+        {
+          "cls": "village-pet pose-stand",
+          "x": 302.71875,
+          "y": 190.29750061035156,
+          "right": 332.84375,
+          "bottom": 220.42250061035156
+        },
+        {
+          "cls": "village-pet pose-stand",
+          "x": 190.578125,
+          "y": 186.40687561035156,
+          "right": 220.703125,
+          "bottom": 216.53187561035156
+        },
+        {
+          "cls": "village-pet pose-nap",
+          "x": 187.0625,
+          "y": 238.92250061035156,
+          "right": 217.1875,
+          "bottom": 269.0474853515625
+        },
+        {
+          "cls": "village-pet pose-stand",
+          "x": 302.71875,
+          "y": 254.48500061035156,
+          "right": 332.84375,
+          "bottom": 284.6099853515625
+        }
+      ],
+      "overflow": [],
+      "dialog": {
+        "x": 72,
+        "y": 9.75,
+        "right": 772,
+        "bottom": 380.25
+      },
+      "viewport": {
+        "w": 844,
+        "h": 390
+      },
+      "broken": [],
+      "raw": false
+    },
+    {
+      "label": "mobile-landscape full build",
+      "box": null,
+      "items": [],
+      "overflow": [],
+      "dialog": {
+        "x": 72,
+        "y": 9.75,
+        "right": 772,
+        "bottom": 380.25
+      },
+      "viewport": {
+        "w": 844,
+        "h": 390
+      },
+      "broken": [],
+      "raw": false
+    },
+    {
+      "label": "mobile-portrait build badge start",
+      "buttons": [
+        {
+          "a": "recipes",
+          "dock": "hub-dock hub-dock-left",
+          "x": 7.796875,
+          "y": 505.359375,
+          "right": 57.796875,
+          "bottom": 575.296875
+        },
+        {
+          "a": "armory",
+          "dock": "hub-dock hub-dock-left",
+          "x": 67.796875,
+          "y": 505.359375,
+          "right": 117.796875,
+          "bottom": 575.296875
+        },
+        {
+          "a": "kitchen",
+          "dock": "hub-dock hub-dock-left",
+          "x": 127.796875,
+          "y": 505.359375,
+          "right": 177.796875,
+          "bottom": 575.296875
+        },
+        {
+          "a": "village",
+          "dock": "hub-dock hub-dock-right",
+          "x": 212.203125,
+          "y": 505.359375,
+          "right": 262.203125,
+          "bottom": 575.296875
+        },
+        {
+          "a": "market",
+          "dock": "hub-dock hub-dock-right",
+          "x": 272.203125,
+          "y": 505.359375,
+          "right": 322.203125,
+          "bottom": 575.296875
+        },
+        {
+          "a": "leaderboard",
+          "dock": "hub-dock hub-dock-right",
+          "x": 332.203125,
+          "y": 505.359375,
+          "right": 382.203125,
+          "bottom": 575.296875
+        }
+      ]
+    },
+    {
+      "label": "mobile-portrait harvest badge start",
+      "buttons": [
+        {
+          "a": "recipes",
+          "dock": "hub-dock hub-dock-left",
+          "x": 7.796875,
+          "y": 505.359375,
+          "right": 57.796875,
+          "bottom": 575.296875
+        },
+        {
+          "a": "armory",
+          "dock": "hub-dock hub-dock-left",
+          "x": 67.796875,
+          "y": 505.359375,
+          "right": 117.796875,
+          "bottom": 575.296875
+        },
+        {
+          "a": "kitchen",
+          "dock": "hub-dock hub-dock-left",
+          "x": 127.796875,
+          "y": 505.359375,
+          "right": 177.796875,
+          "bottom": 575.296875
+        },
+        {
+          "a": "village",
+          "dock": "hub-dock hub-dock-right",
+          "x": 212.203125,
+          "y": 505.359375,
+          "right": 262.203125,
+          "bottom": 575.296875
+        },
+        {
+          "a": "market",
+          "dock": "hub-dock hub-dock-right",
+          "x": 272.203125,
+          "y": 505.359375,
+          "right": 322.203125,
+          "bottom": 575.296875
+        },
+        {
+          "a": "leaderboard",
+          "dock": "hub-dock hub-dock-right",
+          "x": 332.203125,
+          "y": 505.359375,
+          "right": 382.203125,
+          "bottom": 575.296875
+        }
+      ]
+    },
+    {
+      "label": "mobile-portrait courtyard starter",
+      "box": {
+        "x": 24.703125,
+        "y": 191.484375,
+        "right": 365.296875,
+        "bottom": 383.0625
+      },
+      "items": [
+        {
+          "cls": "village-spot is-built spot-fac_bamboo_pool",
+          "x": 159.875,
+          "y": 204.18812561035156,
+          "right": 230.125,
+          "bottom": 274.4381103515625
+        },
+        {
+          "cls": "village-spot is-empty",
+          "x": 245.9453125,
+          "y": 248.546875,
+          "right": 324.7109375,
+          "bottom": 270.296875
+        },
+        {
+          "cls": "village-spot is-empty",
+          "x": 61.9296875,
+          "y": 246.703125,
+          "right": 140.6953125,
+          "bottom": 268.453125
+        },
+        {
+          "cls": "village-spot is-empty",
+          "x": 66.4609375,
+          "y": 309.796875,
+          "right": 156.2265625,
+          "bottom": 331.546875
+        },
+        {
+          "cls": "village-spot is-empty",
+          "x": 248.1015625,
+          "y": 309.796875,
+          "right": 315.8671875,
+          "bottom": 331.546875
+        },
+        {
+          "cls": "village-pet pose-soak",
+          "x": 161.5390625,
+          "y": 231.9903106689453,
+          "right": 194.9921875,
+          "bottom": 265.44342041015625
+        },
+        {
+          "cls": "village-pet pose-soak",
+          "x": 194.9921875,
+          "y": 233.8496856689453,
+          "right": 228.4453125,
+          "bottom": 267.30279541015625
+        }
+      ],
+      "overflow": [],
+      "dialog": {
+        "x": 11.703125,
+        "y": 37.984375,
+        "right": 378.296875,
+        "bottom": 806.015625
+      },
+      "viewport": {
+        "w": 390,
+        "h": 844
+      },
+      "broken": [],
+      "raw": false
+    },
+    {
+      "label": "mobile-portrait pet bubble",
+      "box": {
+        "x": 24.703125,
+        "y": 191.484375,
+        "right": 365.296875,
+        "bottom": 383.0625
+      },
+      "items": [
+        {
+          "cls": "village-spot is-built spot-fac_bamboo_pool",
+          "x": 159.875,
+          "y": 204.18812561035156,
+          "right": 230.125,
+          "bottom": 274.4381103515625
+        },
+        {
+          "cls": "village-spot is-empty",
+          "x": 245.9453125,
+          "y": 248.546875,
+          "right": 324.7109375,
+          "bottom": 270.296875
+        },
+        {
+          "cls": "village-spot is-empty",
+          "x": 61.9296875,
+          "y": 246.703125,
+          "right": 140.6953125,
+          "bottom": 268.453125
+        },
+        {
+          "cls": "village-spot is-empty",
+          "x": 66.4609375,
+          "y": 309.796875,
+          "right": 156.2265625,
+          "bottom": 331.546875
+        },
+        {
+          "cls": "village-spot is-empty",
+          "x": 248.1015625,
+          "y": 309.796875,
+          "right": 315.8671875,
+          "bottom": 331.546875
+        },
+        {
+          "cls": "village-pet pose-soak is-happy",
+          "x": 161.5390625,
+          "y": 231.9903106689453,
+          "right": 194.9921875,
+          "bottom": 265.44342041015625
+        },
+        {
+          "cls": "village-pet pose-soak",
+          "x": 194.9921875,
+          "y": 233.8496856689453,
+          "right": 228.4453125,
+          "bottom": 267.30279541015625
+        }
+      ],
+      "overflow": [],
+      "dialog": {
+        "x": 11.703125,
+        "y": 37.984375,
+        "right": 378.296875,
+        "bottom": 806.015625
+      },
+      "viewport": {
+        "w": 390,
+        "h": 844
+      },
+      "broken": [],
+      "raw": false
+    },
+    {
+      "label": "mobile-portrait build tab",
+      "box": null,
+      "items": [],
+      "overflow": [],
+      "dialog": {
+        "x": 11.703125,
+        "y": 37.984375,
+        "right": 378.296875,
+        "bottom": 806.015625
+      },
+      "viewport": {
+        "w": 390,
+        "h": 844
+      },
+      "broken": [],
+      "raw": false
+    },
+    {
+      "label": "mobile-portrait full courtyard",
+      "box": {
+        "x": 24.703125,
+        "y": 191.484375,
+        "right": 365.296875,
+        "bottom": 383.0625
+      },
+      "items": [
+        {
+          "cls": "village-spot is-built spot-fac_bamboo_pool",
+          "x": 159.875,
+          "y": 204.18812561035156,
+          "right": 230.125,
+          "bottom": 274.4381103515625
+        },
+        {
+          "cls": "village-spot is-built spot-fac_fish_stall",
+          "x": 250.203125,
+          "y": 206.03187561035156,
+          "right": 320.453125,
+          "bottom": 276.2818603515625
+        },
+        {
+          "cls": "village-spot is-built spot-fac_yuzu_tree",
+          "x": 66.1875,
+          "y": 204.18812561035156,
+          "right": 136.4375,
+          "bottom": 274.4381103515625
+        },
+        {
+          "cls": "village-spot is-built spot-fac_cat_nap",
+          "x": 76.21875,
+          "y": 267.2818603515625,
+          "right": 146.46875,
+          "bottom": 337.5318603515625
+        },
+        {
+          "cls": "village-spot is-built spot-fac_sakura_pavilion",
+          "x": 246.859375,
+          "y": 267.2818603515625,
+          "right": 317.109375,
+          "bottom": 337.5318603515625
+        },
+        {
+          "cls": "village-pet pose-soak",
+          "x": 161.5390625,
+          "y": 231.9903106689453,
+          "right": 194.9921875,
+          "bottom": 265.44342041015625
+        },
+        {
+          "cls": "village-pet pose-stand",
+          "x": 228.4609375,
+          "y": 248.6934356689453,
+          "right": 261.9140625,
+          "bottom": 282.14654541015625
+        },
+        {
+          "cls": "village-pet pose-stand",
+          "x": 121.3828125,
+          "y": 244.9903106689453,
+          "right": 154.8359375,
+          "bottom": 278.44342041015625
+        },
+        {
+          "cls": "village-pet pose-nap",
+          "x": 118.0390625,
+          "y": 295.09967041015625,
+          "right": 151.4921875,
+          "bottom": 328.55279541015625
+        },
+        {
+          "cls": "village-pet pose-stand",
+          "x": 228.4609375,
+          "y": 309.94342041015625,
+          "right": 261.9140625,
+          "bottom": 343.39654541015625
+        }
+      ],
+      "overflow": [],
+      "dialog": {
+        "x": 11.703125,
+        "y": 37.984375,
+        "right": 378.296875,
+        "bottom": 806.015625
+      },
+      "viewport": {
+        "w": 390,
+        "h": 844
+      },
+      "broken": [],
+      "raw": false
+    },
+    {
+      "label": "mobile-portrait full build",
+      "box": null,
+      "items": [],
+      "overflow": [],
+      "dialog": {
+        "x": 11.703125,
+        "y": 37.984375,
+        "right": 378.296875,
+        "bottom": 806.015625
+      },
+      "viewport": {
+        "w": 390,
+        "h": 844
+      },
+      "broken": [],
+      "raw": false
+    }
+  ],
+  "shots": [
+    "p16-desktop-1a-start-build-badge.png",
+    "p16-desktop-1b-start-harvest-badge.png",
+    "p16-desktop-2a-courtyard-starter.png",
+    "p16-desktop-2b-harvested.png",
+    "p16-desktop-3-pet-bubble.png",
+    "p16-desktop-4a-build-tab.png",
+    "p16-desktop-4b-built-stall.png",
+    "p16-desktop-4c-courtyard-with-stall.png",
+    "p16-desktop-5a-courtyard-full.png",
+    "p16-desktop-5b-full-pet-bubble.png",
+    "p16-desktop-5c-build-maxed.png",
+    "p16-desktop-6a-pause-materials.png",
+    "p16-desktop-6b-report-materials.png",
+    "p16-mobile-landscape-1a-start-build-badge.png",
+    "p16-mobile-landscape-1b-start-harvest-badge.png",
+    "p16-mobile-landscape-2a-courtyard-starter.png",
+    "p16-mobile-landscape-2b-harvested.png",
+    "p16-mobile-landscape-3-pet-bubble.png",
+    "p16-mobile-landscape-4a-build-tab.png",
+    "p16-mobile-landscape-4b-built-stall.png",
+    "p16-mobile-landscape-4c-courtyard-with-stall.png",
+    "p16-mobile-landscape-5a-courtyard-full.png",
+    "p16-mobile-landscape-5b-full-pet-bubble.png",
+    "p16-mobile-landscape-5c-build-maxed.png",
+    "p16-mobile-landscape-6a-pause-materials.png",
+    "p16-mobile-landscape-6b-report-materials.png",
+    "p16-mobile-portrait-1a-start-build-badge.png",
+    "p16-mobile-portrait-1b-start-harvest-badge.png",
+    "p16-mobile-portrait-2a-courtyard-starter.png",
+    "p16-mobile-portrait-2b-harvested.png",
+    "p16-mobile-portrait-3-pet-bubble.png",
+    "p16-mobile-portrait-4a-build-tab.png",
+    "p16-mobile-portrait-4b-built-stall.png",
+    "p16-mobile-portrait-4c-courtyard-with-stall.png",
+    "p16-mobile-portrait-5a-courtyard-full.png",
+    "p16-mobile-portrait-5b-full-pet-bubble.png",
+    "p16-mobile-portrait-5c-build-maxed.png",
+    "p16-mobile-portrait-6a-pause-materials.png",
+    "p16-mobile-portrait-6b-report-materials.png"
+  ],
+  "errors": []
+}

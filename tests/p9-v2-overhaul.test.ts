@@ -52,8 +52,8 @@ describe('P9 labels, assets and deterministic random maps',()=>{
  it('keeps all player strings wholesome',()=>{
   for(const dir of ['src/i18n','src/config'])for(const file of readdirSync(dir).filter(f=>f.endsWith('.ts')))expect(readFileSync(`${dir}/${file}`,'utf8'),file).not.toMatch(/涩涩|色色|不许涩|Bonk|bonk|绝育|绿茶|疯批|舔狗|鸡你太/i);
  });
- it('loads 255 sprites with the eight new v2 IDs',()=>{
-  const ids=JSON.parse(readFileSync('public/assets/sprites/manifest.json','utf8'));expect(ids).toHaveLength(255);
+ it('loads 268 sprites with the eight new v2 IDs',()=>{
+  const ids=JSON.parse(readFileSync('public/assets/sprites/manifest.json','utf8'));expect(ids).toHaveLength(268);
   for(const id of ['npc_shop_raccoon','npc_blacksmith_capy','ui_gacha_machine','ui_trunk_crate','ui_battle_clash_crest','ui_crossed_blades','ui_alert_siren','ui_unlock_chest'])expect(ids).toContain(id);
  });
 });

@@ -49,9 +49,9 @@ describe('P15 synced art',()=>{
     ui_weapon_fragment:[160,160],ui_rank_protect_shield:[160,160],ui_streak_flame:[160,160],ui_clock_sand:[160,160],
     ...Object.fromEntries(MAPS.map(id=>[`tub_rim_${id}`,[GUARDIAN_BATH_SPOTS[id].rim.dw,GUARDIAN_BATH_SPOTS[id].rim.dh] as [number,number]])),
   };
-  it('ships 255 unique sprites with every new or repainted P15 PNG at its exact RGBA size',()=>{
+  it('ships 268 unique sprites with every new or repainted P15 PNG at its exact RGBA size',()=>{
     const ids=JSON.parse(readFileSync('public/assets/sprites/manifest.json','utf8')) as string[];
-    expect(ids).toHaveLength(255);expect(new Set(ids).size).toBe(255);
+    expect(ids).toHaveLength(268);expect(new Set(ids).size).toBe(268);
     for(const [id,[w,h]] of Object.entries(sizes)){expect(ids).toContain(id);const png=sprite(id);expect([png.readUInt32BE(16),png.readUInt32BE(20),png[25]]).toEqual([w,h,6]);}
   });
   it('removes every cyan water ring from all six soak frames; only the bottom chest arc remains',()=>{

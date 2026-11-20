@@ -7,6 +7,7 @@ import {HEROES} from '../config/heroes';
 import {RECIPES} from '../config/recipes';
 import {getMap} from '../config/maps';
 import {clampBrothLevel,getBrothEffect,isBrothId} from '../config/kitchen';
+import {FACILITY_IDS,clampFacilityLevel,getVillageBuff} from '../config/village';
 import {GridSystem} from './GridSystem';
 import {isValidPropRoad,propUnitTargetError,type PropTarget} from './PropTargets';
 
@@ -21,7 +22,11 @@ export function copyLoadout(input:Partial<BattleLoadout>={}):BattleLoadout {
   const slots=(ids:string[]|undefined,type:'active'|'passive',limit:number)=>[...new Set(Array.isArray(ids)?ids:[])].filter(id=>typeof id==='string'&&Object.hasOwn(ownedProps,id)&&PROPS[id]?.type===type).slice(0,limit);
   const equippedWeapons:Record<string,string>={},used=new Set<string>();
   for(const [hero,id] of entries(input.equippedWeapons))if(typeof id==='string'&&Object.hasOwn(WEAPONS,id)&&Object.hasOwn(HERO_FAMILIES,hero)&&HERO_FAMILIES[hero]===WEAPONS[id].family&&!used.has(id)){equippedWeapons[hero]=id;used.add(id);}
-  const loadout:BattleLoadout={ownedProps,equippedWeapons,equippedActiveProps:slots(input.equippedActiveProps,'active',2),equippedPassiveProps:slots(input.equippedPassiveProps,'passive',6)};
+  const base:BattleLoadout={ownedProps,equippedWeapons,equippedActiveProps:slots(input.equippedActiveProps,'active',2),equippedPassiveProps:slots(input.equippedPassiveProps,'passive',6)};
+  // P16: village levels travel only when supplied, so earlier loadouts keep their exact shape.
+  const rawVillage=input.villageFacilities&&typeof input.villageFacilities==='object'&&!Array.isArray(input.villageFacilities)?input.villageFacilities:{};
+  const villageFacilities=Object.fromEntries(FACILITY_IDS.map(id=>[id,clampFacilityLevel(rawVillage[id])]).filter(([,level])=>Number(level)>0));
+  const loadout:BattleLoadout=Object.keys(villageFacilities).length?{...base,villageFacilities}:base;
   // P14: brewed broths travel with the snapshot only when present, so P13 loadouts keep their exact shape.
   const unlockedBroths=[...new Set(Array.isArray(input.unlockedBroths)?input.unlockedBroths:[])].filter(isBrothId);
   if(!unlockedBroths.length)return loadout;
@@ -30,38 +35,38 @@ export function copyLoadout(input:Partial<BattleLoadout>={}):BattleLoadout {
   const activeBrothId=typeof input.activeBrothId==='string'&&unlockedBroths.some(id=>id===input.activeBrothId)?input.activeBrothId:null;
   return{...loadout,unlockedBroths,brothLevels,activeBrothId};
 }
-/** Extra starting oranges from passive props and the equipped broth. */
+/** Extra starting oranges from passive props, the equipped broth and the village yuzu tree. */
 export function orangeBonus(loadout:BattleLoadout):number {
-  return(loadout.equippedPassiveProps.includes('extra_oranges')?2:0)+(loadout.equippedPassiveProps.includes('shared_oranges')?4:0)+getBrothEffect(loadout,'startOranges');
+  return(loadout.equippedPassiveProps.includes('extra_oranges')?2:0)+(loadout.equippedPassiveProps.includes('shared_oranges')?4:0)+getBrothEffect(loadout,'startOranges')+getVillageBuff(loadout,'startOranges');
 }
-/** Extra starting fish food from the equipped broth (Yuzu Calm Soak / Imperial Onsen Feast). */
-export const brothFoodBonus=(loadout:BattleLoadout):number=>getBrothEffect(loadout,'startFood');
+/** Extra starting fish food from the equipped broth and the village fish stall. */
+export const bonusFood=(loadout:BattleLoadout):number=>getBrothEffect(loadout,'startFood')+getVillageBuff(loadout,'startFood');
 
 export class PropSystem {
   private trapSequence=1;
   private beeFoodGranted=false;
   private orangeDeficit=0;
-  /** Broth food currently credited to the player, and broth food that could not be taken back yet. */
-  private brothFood=0;
-  private brothFoodDeficit=0;
+  /** Bonus food (broth + fish stall) currently credited to the player, and bonus food not yet taken back. */
+  private bonusFoodCredit=0;
+  private bonusFoodDeficit=0;
   constructor(private engine:BattleEngine,private random:()=>number){}
   has(side:Side,id:string):boolean {return this.engine.state.sides[side].loadout.equippedPassiveProps.includes(id);}
   initialize():void {
     const sides=this.engine.state.sides;
     for(const side of ['player'] as Side[]){
       sides[side].oranges+=orangeBonus(sides[side].loadout);
-      this.brothFood=brothFoodBonus(sides[side].loadout);sides[side].food+=this.brothFood;
+      this.bonusFoodCredit=bonusFood(sides[side].loadout);sides[side].food+=this.bonusFoodCredit;
       this.grantBeeFood();
     }
   }
   syncPreparationLoadout(loadout:BattleLoadout):void {
     const resources=this.engine.state.sides.player;
-    const delta=orangeBonus(loadout)-orangeBonus(resources.loadout),food=brothFoodBonus(loadout);
+    const delta=orangeBonus(loadout)-orangeBonus(resources.loadout),food=bonusFood(loadout);
     resources.loadout=loadout;this.adjustOranges(delta);
     // Swapping soups during Wave 1 preparation only moves the difference. Food already spent
     // stays owed, so toggling a broth off and on can never mint extra fish.
-    const balance=resources.food-this.brothFoodDeficit+food-this.brothFood;
-    this.brothFoodDeficit=Math.max(0,-balance);resources.food=Math.max(0,balance);this.brothFood=food;
+    const balance=resources.food-this.bonusFoodDeficit+food-this.bonusFoodCredit;
+    this.bonusFoodDeficit=Math.max(0,-balance);resources.food=Math.max(0,balance);this.bonusFoodCredit=food;
     this.grantBeeFood();
   }
   adjustOranges(delta:number):void {

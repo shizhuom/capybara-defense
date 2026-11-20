@@ -26,10 +26,12 @@ export interface BattleLoadout {
   equippedActiveProps: string[]; equippedPassiveProps: string[];
   /** P14 Onsen Kitchen snapshot. Absent/empty keeps every battle number identical to P13. */
   unlockedBroths?: string[]; brothLevels?: Record<string, number>; activeBrothId?: string | null;
+  /** P16 village facility levels. Absent, or only the starter pool at Lv.1, keeps every battle number identical to P15. */
+  villageFacilities?: Record<string, number>;
 }
 export interface SideState {
   lockedBenchSlot?:number|null;
-  food: number; summons:number; oranges: number; shovels: number; shovelTimer:number; kills: number; damage: number; loot: string[]; ingredientLoot: string[]; fog: number;
+  food: number; summons:number; oranges: number; shovels: number; shovelTimer:number; kills: number; damage: number; loot: string[]; ingredientLoot: string[]; villageLoot: string[]; fog: number;
   loadout:BattleLoadout; propCooldowns:Record<string,number>; sprinklerUsed:boolean; giantCatUses:number; catnipTime:number;
 }
 export interface Trap extends Point { id:number; side:Side; charges:number; hitIds:number[] }
@@ -52,6 +54,8 @@ export interface BattleResult { winner: Side; reason: 'oranges' | 'waves' | 'sur
   endless?:boolean;endlessWave?:number;endlessCoins?:number;endlessLoot?:string[];
   /** Ingredients banked by this receipt (victory: all; defeat: salvage); endless adds only the post-wave-10 share. */
   ingredientLoot?:string[];endlessIngredientLoot?:string[];
+  /** Village building materials (`res_onsen_wood` / `res_yuzu_essence`), banked with the same victory/salvage rules. */
+  villageLoot?:string[];endlessVillageLoot?:string[];
 }
 export interface BattleState {
   opponent?:OpponentIdentity;
@@ -74,6 +78,16 @@ export interface Profile extends BattleLoadout {
   stars:number; highestStars:number; winStreak:number; bestWinStreak:number;
   selectedMap:'auto'|MapId; avatarId:string; unlockedAvatars:string[]; mergedHeroes:string[]; settings:GameSettings;
   ingredients:Record<string,number>; unlockedBroths:string[]; brothLevels:Record<string,number>; activeBrothId:string|null;
+  village:VillageState;
+}
+export interface VillageState {
+  wood:number; essence:number;
+  /** Facility levels; the bamboo pool always starts at Lv.1. */
+  facilities:Record<string,number>;
+  /** Last offline-harvest anchor (ms since epoch). */
+  lastHarvestAt:number;
+  /** `YYYY-MM-DD` of the current pet-tap allowance and how many paid taps were used that day. */
+  petTapDay:string; petTapCount:number;
 }
 export interface StageRect { x:number; y:number; w:number; h:number }
 export interface Interaction { draggingId?: number; previewSourceId?:number; pointer?: { x: number; y: number }; shovel?: boolean; hover?: Point; selectedId?: number; propId?:string; showDamageNumbers?:boolean; allowBenchLock?:boolean; mergeAvoidRects?:StageRect[] }

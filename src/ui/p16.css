@@ -1,0 +1,149 @@
+/* P16 Capybara Onsen Village. The dialog also carries .meta-dialog, so the P11 cocoa folder shell applies. */
+
+/* ── Start screen: third right medallion (left 3 + right 3) ─────────────────────────────── */
+#menu-screen .hub-dock .village-dock-button .medallion { background:radial-gradient(circle at 50% 42%,#fffaf0 0%,#f6e6c4 72%,#e9cf9b 100%); }
+#menu-screen .hub-dock small.village-harvest-badge { right:-1.1cqw;background:#f6c84c;color:#4a2c10;border-color:#a8771f;font-weight:900;white-space:nowrap;animation:village-badge-glow 1.9s ease-in-out infinite; }
+#menu-screen .hub-dock small.village-build-badge { right:-1.1cqw;background:#cfe9a8;color:#2f5124;border-color:#7f9a52;font-weight:900;white-space:nowrap; }
+#menu-screen .hub-dock small.village-stars-badge { white-space:nowrap; }
+@keyframes village-badge-glow {
+  0%,100% { box-shadow:0 0 0 0 rgba(246,200,76,0),0 1px 0 #a8771f;transform:scale(1); }
+  50% { box-shadow:0 0 9px 3px rgba(255,214,102,.85),0 1px 0 #a8771f;transform:scale(1.06); }
+}
+
+/* ── Village ledger ─────────────────────────────────────────────────────────────────────── */
+#game-dialog.meta-dialog.village-dialog { width:min(94vw,760px); }
+#game-dialog.village-dialog .village-materials-badge>span { display:inline-flex;align-items:center;gap:3px;white-space:nowrap; }
+#game-dialog.village-dialog .village-materials-badge [data-sticker] { width:18px;height:18px; }
+#game-dialog.village-dialog .storybook-frame.tone-village { background:#eef3e0; }
+
+/* Panorama: the courtyard art fills a wood-framed 16:9 stage; plots and pets are positioned in percent. */
+#game-dialog.village-dialog .village-courtyard { display:flex;flex-direction:column;align-items:center;gap:10px; }
+/* Short screens size the panorama from the dialog height so the harvest basket stays in view. */
+#game-dialog.village-dialog .village-diorama {
+  position:relative;aspect-ratio:16/9;width:min(100%,calc((min(90dvh,830px) - 330px) * 16 / 9));flex:none;overflow:hidden;border:4px solid #8a5a3a;border-radius:16px;
+  background:linear-gradient(#a9cc80,#93bd6c);box-shadow:inset 0 0 0 3px #e9c79a,0 4px 0 #6b4a2e55;container-type:inline-size;isolation:isolate;
+}
+#game-dialog.village-dialog .village-diorama-bg>[data-sticker] { position:absolute;inset:0;width:100%;height:100%;object-fit:cover;pointer-events:none; }
+#game-dialog.village-dialog .ledger-body .village-spot { position:absolute;z-index:2;margin:0;padding:0;border:0;background:none;box-shadow:none;min-height:0;cursor:pointer; }
+#game-dialog.village-dialog .village-spot.is-built { width:21%;transform:translate(-50%,-76%); }
+#game-dialog.village-dialog .village-spot-art { display:block;transform-origin:50% 92%; }
+#game-dialog.village-dialog .village-spot-art>[data-sticker] { display:block;width:100%;height:auto;aspect-ratio:1;filter:drop-shadow(0 3px 2px #3a261833); }
+#game-dialog.village-dialog .village-spot:hover .village-spot-art { transform:translateY(-2px) scale(1.03); }
+#game-dialog.village-dialog .spot-fac_yuzu_tree .village-spot-art { animation:village-sway 4.6s ease-in-out infinite; }
+#game-dialog.village-dialog .spot-fac_sakura_pavilion .village-spot-art { animation:village-sway 6s ease-in-out infinite reverse; }
+#game-dialog.village-dialog .spot-fac_bamboo_pool::after,#game-dialog.village-dialog .spot-fac_fish_stall::after {
+  content:'';position:absolute;left:46%;top:22%;width:14%;aspect-ratio:1;border-radius:50%;background:radial-gradient(#ffffffd0,#ffffff00 70%);animation:village-steam 3.2s ease-in infinite;pointer-events:none;
+}
+#game-dialog.village-dialog .spot-fac_fish_stall::after { left:30%;top:30%;background:radial-gradient(#fff6e8c0,#ffffff00 70%); }
+#game-dialog.village-dialog .ledger-body .village-level-tag { position:absolute;z-index:4;transform:translate(-50%,-50%);pointer-events:none;padding:0 7px;border:1.5px solid #8a6a3f;border-radius:999px;background:#fff4d6;color:#4a2c10!important;font-size:clamp(10px,1.6cqw,13px)!important;font-weight:900;line-height:1.5;white-space:nowrap; }
+#game-dialog.village-dialog .ledger-body .village-level { position:absolute;left:50%;bottom:4%;transform:translateX(-50%);padding:0 7px;border:1.5px solid #8a6a3f;border-radius:999px;background:#fff4d6;color:#4a2c10!important;font-size:clamp(10px,1.6cqw,13px)!important;font-weight:900;line-height:1.5;white-space:nowrap; }
+#game-dialog.village-dialog .ledger-body .village-spot.is-empty {
+  transform:translate(-50%,-50%);padding:5px 10px;border:2px dashed #6b8f48;border-radius:12px;background:#f7fbe9d9;color:#3d5a2b!important;
+  font-size:clamp(11px,1.9cqw,15px)!important;font-weight:900;line-height:1.25;white-space:nowrap;box-shadow:0 2px 0 #6b8f4840;
+}
+#game-dialog.village-dialog .ledger-body .village-spot.is-empty:hover { background:#fffef4;transform:translate(-50%,-52%); }
+
+/* Residents. */
+#game-dialog.village-dialog .ledger-body .village-pet { position:absolute;z-index:3;width:8.6%;margin:0;padding:0;border:0;background:none;box-shadow:none;min-height:0;transform:translate(-50%,-82%);cursor:pointer; }
+#game-dialog.village-dialog .village-pet-art { position:relative;display:block;transform-origin:50% 100%;animation:village-idle 3.4s ease-in-out var(--pet-delay,0s) infinite; }
+#game-dialog.village-dialog .village-pet-art>[data-sticker] { display:block;width:100%!important;height:auto!important;aspect-ratio:1;font-size:6cqw!important;filter:drop-shadow(0 2px 1px #3a26182e); }
+#game-dialog.village-dialog .village-pet.pose-soak .village-pet-art { animation:village-soak 2.8s ease-in-out var(--pet-delay,0s) infinite; }
+#game-dialog.village-dialog .village-pet.pose-soak .village-pet-art::after { content:'';position:absolute;left:-14%;right:-14%;bottom:-8%;height:44%;border-radius:50%;background:radial-gradient(ellipse at 50% 30%,#c9f3eee6,#7ccfc9e6 70%,#56afabd0);box-shadow:0 -1px 0 #ffffffb0; }
+#game-dialog.village-dialog .village-pet.pose-nap .village-pet-art { animation:village-nap 4s ease-in-out var(--pet-delay,0s) infinite; }
+#game-dialog.village-dialog .village-zzz { position:absolute;right:-38%;top:-36%;width:52%;animation:village-zzz 3s ease-in-out infinite;pointer-events:none; }
+#game-dialog.village-dialog .village-zzz>[data-sticker] { display:block;width:100%;height:auto; }
+#game-dialog.village-dialog .ledger-body .village-pet.is-happy { z-index:6; }
+#game-dialog.village-dialog .village-pet.is-happy .village-pet-art { animation:village-hop .55s cubic-bezier(.3,1.6,.5,1) 2; }
+#game-dialog.village-dialog .village-pet-bubble {
+  position:absolute;z-index:4;left:50%;bottom:104%;display:flex;flex-direction:column;align-items:center;gap:1px;width:max-content;max-width:min(230px,52cqw);
+  padding:6px 10px 7px;border:2px solid #6b4a2e;border-radius:14px;background:#fffaf0;box-shadow:0 3px 0 #6b4a2e40;transform:translateX(-50%);animation:village-bubble 1.9s ease-out both;pointer-events:none;
+}
+#game-dialog.village-dialog .village-pet-bubble.bubble-below { bottom:auto;top:92%; }
+#game-dialog.village-dialog .village-pet-bubble.bubble-right { left:0;transform:none; }
+#game-dialog.village-dialog .village-pet-bubble.bubble-left { left:auto;right:0;transform:none; }
+#game-dialog.village-dialog .village-pet-bubble [data-sticker] { width:30px;height:30px; }
+#game-dialog.village-dialog .ledger-body .village-pet-quote { color:#3e2822!important;font-size:clamp(11px,1.9cqw,14px)!important;font-weight:900;line-height:1.3;text-align:center;white-space:normal; }
+#game-dialog.village-dialog .ledger-body .village-pet-coins { color:#9a5a0c!important;font-size:clamp(13px,2.2cqw,17px)!important;font-weight:950; }
+@keyframes village-idle { 0%,62%,100% { transform:translateY(0) scale(1); } 70% { transform:translateY(-9%) scale(1.02,.98); } 78% { transform:translateY(0) scale(1.04,.96); } }
+@keyframes village-soak { 0%,100% { transform:translateY(0); } 50% { transform:translateY(5%); } }
+@keyframes village-nap { 0%,100% { transform:scale(1,1); } 50% { transform:scale(1.03,.97); } }
+@keyframes village-zzz { 0%,100% { transform:translateY(0);opacity:.85; } 50% { transform:translateY(-12%);opacity:1; } }
+@keyframes village-hop { 0% { transform:translateY(0) scale(1); } 45% { transform:translateY(-34%) scale(.94,1.08); } 100% { transform:translateY(0) scale(1.05,.95); } }
+@keyframes village-bubble { 0% { opacity:0;transform:translate(-50%,12px) scale(.7); } 14% { opacity:1;transform:translate(-50%,0) scale(1.04); } 82% { opacity:1; } 100% { opacity:0;transform:translate(-50%,-12px); } }
+#game-dialog.village-dialog .village-pet-bubble:is(.bubble-left,.bubble-right) { animation-name:village-bubble-side; }
+@keyframes village-bubble-side { 0% { opacity:0;transform:translateY(12px) scale(.7); } 14% { opacity:1;transform:translateY(0) scale(1.04); } 82% { opacity:1; } 100% { opacity:0;transform:translateY(-12px); } }
+@keyframes village-sway { 0%,100% { transform:rotate(-1.4deg); } 50% { transform:rotate(1.4deg); } }
+@keyframes village-steam { 0% { opacity:0;transform:translateY(0) scale(.6); } 30% { opacity:.9; } 100% { opacity:0;transform:translateY(-120%) scale(1.4); } }
+
+#game-dialog.village-dialog .village-status { position:absolute;z-index:5;left:1.6%;right:1.6%;bottom:2.4%;display:flex;justify-content:space-between;gap:8px;margin:0;pointer-events:none; }
+#game-dialog.village-dialog .ledger-body .village-status span { padding:1px 9px;border-radius:999px;background:#fffaf0e0;box-shadow:inset 0 0 0 1.5px #c9a46a;color:#4a2c10!important;font-size:clamp(10px,1.7cqw,13px)!important;font-weight:900;line-height:1.5;white-space:nowrap; }
+
+/* Offline harvest basket. */
+#game-dialog.village-dialog .village-harvest-bar { display:grid;grid-template-columns:56px minmax(0,1fr) auto;align-items:center;gap:12px;width:100%;box-sizing:border-box;padding:7px 14px;background:linear-gradient(90deg,#fbe9c9,#f8efdf);border:1.5px solid #d9b98a;border-radius:12px;box-shadow:0 3px 0 #7a5f5224; }
+#game-dialog.village-dialog .village-basket [data-sticker] { display:block;width:54px;height:54px; }
+#game-dialog.village-dialog .village-harvest-head { display:flex;align-items:baseline;flex-wrap:wrap;gap:2px 10px; }
+#game-dialog.village-dialog .village-harvest-copy { display:flex;flex-direction:column;gap:3px;min-width:0; }
+#game-dialog.village-dialog .ledger-body .village-harvest-copy strong { color:#3e2822!important;font-size:16px!important;font-weight:900; }
+#game-dialog.village-dialog .ledger-body .village-harvest-time { color:#6b4a2e!important;font-size:13px!important;font-weight:800;font-variant-numeric:tabular-nums; }
+#game-dialog.village-dialog .village-harvest-progress { height:7px;background:#e3d2b6; }
+#game-dialog.village-dialog .village-harvest-progress>i { background:linear-gradient(90deg,#f6c84c,#e9a93a); }
+#game-dialog.village-dialog .village-harvest-preview { display:flex;flex-wrap:wrap;gap:4px 10px; }
+#game-dialog.village-dialog .village-preview-item { display:inline-flex;align-items:center;gap:2px; }
+#game-dialog.village-dialog .village-preview-item [data-sticker] { width:22px;height:22px; }
+#game-dialog.village-dialog .ledger-body .village-preview-item b { color:#5a3412!important;font-size:14px!important;font-weight:950; }
+#game-dialog.village-dialog .ledger-body .village-harvest-btn { min-height:48px;padding:8px 16px;border:2px solid #9a6a1f;border-radius:999px;background:linear-gradient(180deg,#f8dd94,#f0c763);color:#4a2c10!important;font-size:16px!important;font-weight:950;box-shadow:0 3px 0 #9a6a1f66;white-space:nowrap; }
+#game-dialog.village-dialog .ledger-body .village-harvest-btn:not(:disabled):hover { filter:brightness(1.05);transform:translateY(-1px); }
+#game-dialog.village-dialog .ledger-body .village-harvest-btn:disabled { border-color:#c4ae8c;background:#efe5d4;color:#7a6a5e!important;box-shadow:none;font-size:14px!important;cursor:default; }
+
+/* Build tab rows. */
+#game-dialog.village-dialog .village-row { display:grid;grid-template-columns:82px minmax(0,1fr) 108px;align-items:center;gap:14px;padding:12px 14px; }
+#game-dialog.village-dialog .village-row.is-focused { border-color:#c9a24a;background:#fff7e5;box-shadow:0 0 0 3px #f3d27a,0 3px 0 #b8862e33; }
+#game-dialog.village-dialog .ledger-body .village-row .village-level { position:static;transform:none;display:inline-block;margin-left:4px;padding:1px 8px;border:0;background:#e8eccc;color:#3d5a2b!important;font-size:12.5px!important;vertical-align:3px; }
+#game-dialog.village-dialog .ledger-body .village-row .village-level.is-locked { background:#ebe2d6;color:#6f5a4e!important; }
+#game-dialog.village-dialog .ledger-body .village-next { color:#7a5a3f!important;font-size:12.5px!important;font-weight:800;line-height:1.4; }
+#game-dialog.village-dialog .village-cost-chips { display:flex;flex-wrap:wrap;gap:5px;margin-top:2px; }
+#game-dialog.village-dialog .ledger-body .village-cost-chip { display:inline-flex;align-items:center;gap:3px;padding:1px 8px 1px 3px;border:1px solid;border-radius:999px;font-size:12.5px!important;font-weight:900;line-height:1.3; }
+#game-dialog.village-dialog .village-cost-chip>span { display:flex; }
+#game-dialog.village-dialog .village-cost-chip [data-sticker] { width:20px;height:20px; }
+#game-dialog.village-dialog .ledger-body .village-cost-chip.is-ready { background:#e4efd2;border-color:#8fa86a;color:#2f5124!important; }
+#game-dialog.village-dialog .ledger-body .village-cost-chip.is-short { background:#f4e5d6;border-color:#c49a78;color:#7a4a2e!important; }
+#game-dialog.village-dialog .ledger-body .village-cost-chip b { color:inherit!important;font-size:inherit!important; }
+#game-dialog.village-dialog .ledger-body .village-build-btn { background:linear-gradient(180deg,#e3f2c4,#bfdc8c);border-color:#6b8f48;color:#2f4a1d!important;font-weight:900;box-shadow:0 2px 0 #6b8f4866; }
+#game-dialog.village-dialog .ledger-body .village-build-btn.is-upgrade { background:linear-gradient(180deg,#f8dd94,#f0c763);border-color:#9a6a1f;color:#4a2c10!important;box-shadow:0 2px 0 #9a6a1f66; }
+#game-dialog.village-dialog .ledger-body .village-build-btn:disabled { opacity:.55;filter:saturate(.5);cursor:not-allowed;box-shadow:none; }
+#game-dialog.village-dialog .ledger-body .village-maxed { display:inline-flex;align-items:center;min-height:34px;padding:4px 12px;border-radius:999px;background:#7e9455;color:#fffdf5!important;font-size:13.5px!important;font-weight:900;white-space:nowrap; }
+#game-dialog.village-dialog .ledger-body .village-free { color:#6b8f48!important;font-size:12.5px!important;font-weight:900; }
+
+/* Pause tray icon for materials. */
+#game-dialog.pause-ledger .pause-materials h3 [data-sticker] { width:30px;height:30px; }
+
+@media (max-height:500px) and (orientation:landscape) {
+  #game-dialog.meta-dialog.village-dialog { width:min(92vw,700px); }
+  /* Side by side: the panorama fills the board height, the basket becomes a slim column. */
+  #game-dialog.village-dialog .village-courtyard { flex-direction:row;align-items:stretch;gap:10px; }
+  #game-dialog.village-dialog .village-diorama { width:calc((95dvh - 170px) * 16 / 9);max-width:72%;border-width:3px;border-radius:12px; }
+  #game-dialog.village-dialog .village-harvest-bar { grid-template-columns:1fr;align-content:center;justify-items:center;gap:6px;padding:8px;text-align:center;min-width:0; }
+  #game-dialog.village-dialog .village-harvest-head { flex-direction:column;align-items:center; }
+  #game-dialog.village-dialog .village-harvest-preview { justify-content:center; }
+  #game-dialog.village-dialog .village-basket [data-sticker] { width:40px;height:40px; }
+  #game-dialog.village-dialog .ledger-body .village-harvest-btn { width:100%;min-height:38px;padding:5px 8px;font-size:13.5px!important;white-space:normal; }
+  #game-dialog.village-dialog .village-row { grid-template-columns:68px minmax(0,1fr) 98px;gap:12px;padding:9px 12px; }
+}
+@media (max-width:600px) and (orientation:portrait) {
+  #menu-screen .hub-dock small:is(.village-harvest-badge,.village-build-badge) { right:-6px;top:-7px;padding:0 3px; }
+  #game-dialog.village-dialog .village-diorama { width:100%;border-width:3px;border-radius:12px; }
+  #game-dialog.village-dialog .ledger-body .village-pet { width:10%; }
+  #game-dialog.village-dialog .ledger-body .village-spot.is-empty { padding:3px 6px;border-width:1.5px; }
+  #game-dialog.village-dialog .village-harvest-bar { grid-template-columns:48px minmax(0,1fr);gap:8px;padding:9px 10px; }
+  #game-dialog.village-dialog .village-basket [data-sticker] { width:46px;height:46px; }
+  #game-dialog.village-dialog .ledger-body .village-harvest-btn { grid-column:1 / -1;width:100%;min-height:44px; }
+  #game-dialog.village-dialog .village-row { grid-template-columns:60px minmax(0,1fr) 78px;gap:9px;padding:11px 9px; }
+  #game-dialog.village-dialog .ledger-body .village-cost-chip { font-size:11.5px!important;padding:1px 6px 1px 2px; }
+  #game-dialog.village-dialog .village-cost-chip [data-sticker] { width:18px;height:18px; }
+  #game-dialog.village-dialog .ledger-body .village-build-btn { padding:6px;font-size:12.5px!important; }
+}
+@media (prefers-reduced-motion:reduce) {
+  #menu-screen .hub-dock small.village-harvest-badge,
+  #game-dialog.village-dialog :is(.village-spot-art,.village-pet-art,.village-zzz,.village-pet-bubble),
+  #game-dialog.village-dialog .village-spot::after { animation:none!important; }
+}

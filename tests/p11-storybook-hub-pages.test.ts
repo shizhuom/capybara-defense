@@ -13,9 +13,9 @@ describe('P11 shared illustrated folder',()=>{
   expect(Object.keys(p11Zh).sort()).toEqual(Object.keys(p11En).sort());
   for(const lang of ['zh-CN','en'] as const){setLanguage(lang);for(const key of Object.keys(p11Zh)){expect(t(key)).not.toBe(key);expect(t(key).length).toBeGreaterThan(0);}}
  });
- it('ships 255 synchronized sprites with four transparent, borderless peeking mascots',()=>{
+ it('ships 268 synchronized sprites with four transparent, borderless peeking mascots',()=>{
   const root='public/assets/sprites/',ids=JSON.parse(readFileSync(root+'manifest.json','utf8')) as string[];
-  expect(ids).toHaveLength(255);expect(new Set(ids).size).toBe(255);expect(readdirSync(root).filter(f=>f.endsWith('.png'))).toHaveLength(255);
+  expect(ids).toHaveLength(268);expect(new Set(ids).size).toBe(268);expect(readdirSync(root).filter(f=>f.endsWith('.png'))).toHaveLength(268);
   expect(P11_SCENE_IDS).toEqual(['ui_armory_peek_capy','ui_market_peek_raccoon','ui_rank_peek_capy','ui_profile_peek_capy']);
   vi.spyOn(assets,'get').mockReturnValue(undefined);
   const fallbacks=P11_SCENE_IDS.map(id=>{expect(ids).toContain(id);const png=readFileSync(root+id+'.png');expect([png.readUInt32BE(16),png.readUInt32BE(20),png[25]]).toEqual([256,256,6]);return sceneSticker(id,'',78);});

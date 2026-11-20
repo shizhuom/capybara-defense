@@ -7,6 +7,7 @@ import {weaponSticker,avatarSticker} from '../render/M3Art';
 import {sceneSticker,unitSticker} from './stickers';
 import {escapeHtml as esc} from './art';
 import {INGREDIENT_IDS,isIngredientId,type IngredientId} from '../config/kitchen';
+import {VILLAGE_RESOURCE_IDS,type VillageResourceId} from '../config/village';
 const tr=(key:string,vars?:Record<string,string|number>)=>esc(t(key,vars));
 const clock=(seconds:number)=>`${Math.floor(seconds/60)}:${String(Math.floor(seconds%60)).padStart(2,'0')}`;
 const reportClock=(seconds:number)=>`${String(Math.floor(seconds/60)).padStart(2,'0')}:${String(Math.floor(seconds%60)).padStart(2,'0')}`;
@@ -25,6 +26,14 @@ export function ingredientLootMarkup(ids:readonly string[]|undefined):string {
  const counts=ingredientCounts(ids);
  return counts.length?`<ul class="loot-list loot-tray ingredient-tray">${counts.map(([id,count])=>`<li>${sceneSticker(id,'',44)}<span>${tr(`ingredient.${id}`)}</span><b>×${count}</b></li>`).join('')}</ul>`:'';
 }
+/** Village materials in a fixed order (wood, essence) with counts. */
+export function villageMaterialCounts(ids:readonly string[]|undefined):[VillageResourceId,number][] {
+ return VILLAGE_RESOURCE_IDS.map(id=>[id,(ids??[]).filter(item=>item===id).length] as [VillageResourceId,number]).filter(([,n])=>n>0);
+}
+export function villageLootMarkup(ids:readonly string[]|undefined):string {
+ const counts=villageMaterialCounts(ids);
+ return counts.length?`<ul class="loot-list loot-tray village-tray">${counts.map(([id,count])=>`<li>${sceneSticker(id,'',44)}<span>${tr(id==='res_onsen_wood'?'p16.wood':'p16.essence')}</span><b>×${count}</b></li>`).join('')}</ul>`:'';
+}
 export function pauseMarkup(state:BattleState):string {
  const fragments=state.sides.player.loot;
  return `<div class="ledger-shell pause-shell">
@@ -32,6 +41,7 @@ export function pauseMarkup(state:BattleState):string {
   <div class="ledger-body pause-storybook-board" tabindex="0">
    <article class="pause-status-strip"><div class="storybook-frame" aria-hidden="true">${sceneSticker('ui_map_sign','',58)}</div><div class="pause-status-copy"><h3>${tr(`map.${state.mapId}`)}</h3><p><span>${tr(state.endless?'p13.endlessWave':'p12.pauseWave',{wave:state.wave})}</span><span>${tr('p12.pauseTime',{time:clock(state.time)})}</span><span>${tr('p12.pauseOranges',{count:state.sides.player.oranges})}</span></p></div></article>
    <section><h3>${tr('p12.pauseLoot')}</h3>${fragments.length?lootMarkup(fragments):`<p class="loot-empty">${tr('p12.pauseEmpty')}</p>`}</section>
+   ${state.sides.player.villageLoot?.length?`<section class="pause-ingredients pause-materials"><h3>${sceneSticker('ui_village_gate','',30)}${tr('p16.pauseMaterials')}</h3>${villageLootMarkup(state.sides.player.villageLoot)}</section>`:''}
    ${state.sides.player.ingredientLoot?.length?`<section class="pause-ingredients"><h3>${sceneSticker('ui_kitchen_pot','',30)}${tr('p14.pauseIngredients')}</h3>${ingredientLootMarkup(state.sides.player.ingredientLoot)}</section>`:''}
   </div>
   <footer class="settlement-actions pause-actions pause-storybook-actions"><button type="button" class="button button-teal" data-action="resume" autofocus><span aria-hidden="true">▶</span> ${tr('p12.resume')}</button><div><button type="button" data-action="profile">🪪 ${tr('p12.profile')}</button><button type="button" data-action="settings">⚙ ${tr('p12.settings')}</button><button type="button" class="surrender-button" data-action="surrender">${state.endless?'♾':'🏳'} ${tr(state.endless?'p13.settleEndless':'p12.surrender')}</button></div></footer>
@@ -84,7 +94,8 @@ export function resultMarkup({state,profile,savedResult,resultStars,previousRank
  const treasure=(picture:string,quantity:string,label:string,extra='')=>`<figure class="visual-treasure-item${extra}" title="${label}"><span class="visual-treasure-art" aria-hidden="true">${picture}</span><figcaption><b>${quantity}</b><span class="settlement-sr-only">${label}</span></figcaption></figure>`;
  const treasureItems=treasure(sceneSticker('ui_coin_gold','',72),`+${count(coins)}`,tr('profile.coins'))+(won?treasure(sceneSticker('ui_ticket_gacha','',72),'+1',tr('p5.tickets')):'')
   +[...fragments].map(([id,quantity])=>treasure(WEAPONS[id]?weaponSticker(id,72):sceneSticker('ui_weapon_fragment','',72),`×${quantity}`,tr(`fragment.${id}`))).join('')
-  +ingredients.map(([id,quantity])=>treasure(sceneSticker(id,'',72),`×${quantity}`,`${tr(`ingredient.${id}`)} ×${quantity}`,' is-ingredient')).join('');
+  +ingredients.map(([id,quantity])=>treasure(sceneSticker(id,'',72),`×${quantity}`,`${tr(`ingredient.${id}`)} ×${quantity}`,' is-ingredient')).join('')
+  +villageMaterialCounts(result.villageLoot).map(([id,quantity])=>treasure(sceneSticker(id,'',72),`×${quantity}`,`${tr(id==='res_onsen_wood'?'p16.wood':'p16.essence')} ×${quantity}`,' is-material')).join('');
  const salvage=ingredientTotal&&!won?`<p class="ingredient-salvage-note">${sceneSticker('ui_kitchen_pot','',28)}<span>${tr('p14.salvageNote')}</span></p>`:'';
  const newFriend=(picture:string,label:string)=>`<figure class="visual-new-friend" title="${label}">${picture}<span aria-hidden="true">NEW!</span><figcaption class="settlement-sr-only">${label}</figcaption></figure>`;
  const newFriends=[...(won&&newRoster?[...newRoster.units,...newRoster.heroes].map(id=>newFriend(unitSticker(id,60),tr(`${HEROES[id]?'hero':'unit'}.${id}`))):[]),...newWeapons.map(id=>newFriend(weaponSticker(id,60),tr(`weapon.${id}`))),...newAvatars.map(id=>newFriend(avatarSticker(id,60),tr(`avatar.${id}`)))];
