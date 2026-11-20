@@ -6,6 +6,7 @@ import {UNITS,DRAW_POOL,SHOVEL_PRODUCTION} from '../config/units';
 import {HEROES} from '../config/heroes';
 import {RECIPES} from '../config/recipes';
 import {getMap} from '../config/maps';
+import {clampBrothLevel,getBrothEffect,isBrothId} from '../config/kitchen';
 import {GridSystem} from './GridSystem';
 import {isValidPropRoad,propUnitTargetError,type PropTarget} from './PropTargets';
 
@@ -20,28 +21,47 @@ export function copyLoadout(input:Partial<BattleLoadout>={}):BattleLoadout {
   const slots=(ids:string[]|undefined,type:'active'|'passive',limit:number)=>[...new Set(Array.isArray(ids)?ids:[])].filter(id=>typeof id==='string'&&Object.hasOwn(ownedProps,id)&&PROPS[id]?.type===type).slice(0,limit);
   const equippedWeapons:Record<string,string>={},used=new Set<string>();
   for(const [hero,id] of entries(input.equippedWeapons))if(typeof id==='string'&&Object.hasOwn(WEAPONS,id)&&Object.hasOwn(HERO_FAMILIES,hero)&&HERO_FAMILIES[hero]===WEAPONS[id].family&&!used.has(id)){equippedWeapons[hero]=id;used.add(id);}
-  return{ownedProps,equippedWeapons,equippedActiveProps:slots(input.equippedActiveProps,'active',2),equippedPassiveProps:slots(input.equippedPassiveProps,'passive',6)};
+  const loadout:BattleLoadout={ownedProps,equippedWeapons,equippedActiveProps:slots(input.equippedActiveProps,'active',2),equippedPassiveProps:slots(input.equippedPassiveProps,'passive',6)};
+  // P14: brewed broths travel with the snapshot only when present, so P13 loadouts keep their exact shape.
+  const unlockedBroths=[...new Set(Array.isArray(input.unlockedBroths)?input.unlockedBroths:[])].filter(isBrothId);
+  if(!unlockedBroths.length)return loadout;
+  const levels=input.brothLevels&&typeof input.brothLevels==='object'&&!Array.isArray(input.brothLevels)?input.brothLevels:{};
+  const brothLevels=Object.fromEntries(unlockedBroths.map(id=>[id,clampBrothLevel(levels[id])]));
+  const activeBrothId=typeof input.activeBrothId==='string'&&unlockedBroths.some(id=>id===input.activeBrothId)?input.activeBrothId:null;
+  return{...loadout,unlockedBroths,brothLevels,activeBrothId};
 }
+/** Extra starting oranges from passive props and the equipped broth. */
+export function orangeBonus(loadout:BattleLoadout):number {
+  return(loadout.equippedPassiveProps.includes('extra_oranges')?2:0)+(loadout.equippedPassiveProps.includes('shared_oranges')?4:0)+getBrothEffect(loadout,'startOranges');
+}
+/** Extra starting fish food from the equipped broth (Yuzu Calm Soak / Imperial Onsen Feast). */
+export const brothFoodBonus=(loadout:BattleLoadout):number=>getBrothEffect(loadout,'startFood');
 
 export class PropSystem {
   private trapSequence=1;
   private beeFoodGranted=false;
   private orangeDeficit=0;
+  /** Broth food currently credited to the player, and broth food that could not be taken back yet. */
+  private brothFood=0;
+  private brothFoodDeficit=0;
   constructor(private engine:BattleEngine,private random:()=>number){}
   has(side:Side,id:string):boolean {return this.engine.state.sides[side].loadout.equippedPassiveProps.includes(id);}
   initialize():void {
     const sides=this.engine.state.sides;
     for(const side of ['player'] as Side[]){
-      if(this.has(side,'extra_oranges'))sides[side].oranges+=2;
-      if(this.has(side,'shared_oranges'))sides[side].oranges+=4;
+      sides[side].oranges+=orangeBonus(sides[side].loadout);
+      this.brothFood=brothFoodBonus(sides[side].loadout);sides[side].food+=this.brothFood;
       this.grantBeeFood();
     }
   }
   syncPreparationLoadout(loadout:BattleLoadout):void {
     const resources=this.engine.state.sides.player;
-    const orangeBonus=(value:BattleLoadout)=>(value.equippedPassiveProps.includes('extra_oranges')?2:0)+(value.equippedPassiveProps.includes('shared_oranges')?4:0);
-    const delta=orangeBonus(loadout)-orangeBonus(resources.loadout);
+    const delta=orangeBonus(loadout)-orangeBonus(resources.loadout),food=brothFoodBonus(loadout);
     resources.loadout=loadout;this.adjustOranges(delta);
+    // Swapping soups during Wave 1 preparation only moves the difference. Food already spent
+    // stays owed, so toggling a broth off and on can never mint extra fish.
+    const balance=resources.food-this.brothFoodDeficit+food-this.brothFood;
+    this.brothFoodDeficit=Math.max(0,-balance);resources.food=Math.max(0,balance);this.brothFood=food;
     this.grantBeeFood();
   }
   adjustOranges(delta:number):void {
@@ -55,7 +75,11 @@ export class PropSystem {
     if(this.beeFoodGranted||!this.has('player','bee_overtime'))return;
     this.engine.state.sides.player.food+=10;this.beeFoodGranted=true;
   }
-  shovelRules(side:Side):{interval:number;maxStored:number}{return this.has(side,'auto_shovel')?{interval:30,maxStored:6}:{interval:SHOVEL_PRODUCTION.interval,maxStored:SHOVEL_PRODUCTION.maxStored};}
+  shovelRules(side:Side):{interval:number;maxStored:number}{
+    const rules=this.has(side,'auto_shovel')?{interval:30,maxStored:6}:{interval:SHOVEL_PRODUCTION.interval,maxStored:SHOVEL_PRODUCTION.maxStored};
+    const speed=getBrothEffect(this.engine.state.sides[side].loadout,'shovelSpeed');
+    return speed?{...rules,interval:rules.interval*(1-speed)}:rules;
+  }
   haste(side:Side):number {
     return(this.has(side,'hyper_party')?.38:0)+(this.engine.state.sides[side].catnipTime>0?.45:0);
   }

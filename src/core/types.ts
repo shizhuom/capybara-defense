@@ -24,10 +24,12 @@ export interface Enemy {
 export interface BattleLoadout {
   equippedWeapons: Record<string,string>; ownedProps: Record<string,number>;
   equippedActiveProps: string[]; equippedPassiveProps: string[];
+  /** P14 Onsen Kitchen snapshot. Absent/empty keeps every battle number identical to P13. */
+  unlockedBroths?: string[]; brothLevels?: Record<string, number>; activeBrothId?: string | null;
 }
 export interface SideState {
   lockedBenchSlot?:number|null;
-  food: number; summons:number; oranges: number; shovels: number; shovelTimer:number; kills: number; damage: number; loot: string[]; fog: number;
+  food: number; summons:number; oranges: number; shovels: number; shovelTimer:number; kills: number; damage: number; loot: string[]; ingredientLoot: string[]; fog: number;
   loadout:BattleLoadout; propCooldowns:Record<string,number>; sprinklerUsed:boolean; giantCatUses:number; catnipTime:number;
 }
 export interface Trap extends Point { id:number; side:Side; charges:number; hitIds:number[] }
@@ -48,6 +50,8 @@ export interface BattleMVP {kind:string;level:number;damage:number;kills:number}
 export interface BattleResult { winner: Side; reason: 'oranges' | 'waves' | 'surrender'; loot: string[]; playerLoot: string[]; aiLoot: string[]; coins: number; elapsed: number; rankIndex?:number; mergedHeroes?:string[];mvp?:BattleMVP;
   /** Display totals stay in coins/loot; these fields contain only the additional award. */
   endless?:boolean;endlessWave?:number;endlessCoins?:number;endlessLoot?:string[];
+  /** Ingredients banked by this receipt (victory: all; defeat: salvage); endless adds only the post-wave-10 share. */
+  ingredientLoot?:string[];endlessIngredientLoot?:string[];
 }
 export interface BattleState {
   opponent?:OpponentIdentity;
@@ -69,6 +73,7 @@ export interface Profile extends BattleLoadout {
   shop:{day:string;offers:string[]}|null;
   stars:number; highestStars:number; winStreak:number; bestWinStreak:number;
   selectedMap:'auto'|MapId; avatarId:string; unlockedAvatars:string[]; mergedHeroes:string[]; settings:GameSettings;
+  ingredients:Record<string,number>; unlockedBroths:string[]; brothLevels:Record<string,number>; activeBrothId:string|null;
 }
 export interface StageRect { x:number; y:number; w:number; h:number }
 export interface Interaction { draggingId?: number; previewSourceId?:number; pointer?: { x: number; y: number }; shovel?: boolean; hover?: Point; selectedId?: number; propId?:string; showDamageNumbers?:boolean; allowBenchLock?:boolean; mergeAvoidRects?:StageRect[] }

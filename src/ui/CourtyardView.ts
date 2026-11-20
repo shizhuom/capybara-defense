@@ -6,6 +6,23 @@ import { avatarSticker, weaponSticker } from '../render/M3Art';
 import { getLanguage, t } from '../i18n/i18n';
 import { escapeHtml as esc } from './art';
 import { artSticker, sceneSticker } from './stickers';
+import { BROTHS, BROTH_IDS, isBrothId } from '../config/kitchen';
+import { canBrewOrUpgradeAnyBroth, getBrothLevel } from '../core/KitchenProgression';
+
+/** Kitchen medallion: a glowing `Brew!` badge whenever a new broth can be brewed, otherwise progress. */
+export function kitchenDockMarkup(profile: Profile): string {
+  const brewable = canBrewOrUpgradeAnyBroth(profile).brewable.length > 0;
+  const unlocked = (profile.unlockedBroths ?? []).filter(isBrothId).length;
+  const badge = brewable ? `<small class="kitchen-brew-badge">${esc(t('p14.brewBadge'))}</small>` : `<small class="kitchen-progress-badge">${unlocked}/${BROTH_IDS.length}</small>`;
+  return `<button type="button" class="kitchen-dock-button" data-action="kitchen"><span class="medallion" aria-hidden="true">${sceneSticker('ui_kitchen_pot','',48)}</span><b>${esc(t('p14.dock'))}</b>${badge}</button>`;
+}
+/** Compact pill for today's soak; it opens the kitchen to switch broths. */
+export function activeBrothPillMarkup(profile: Profile): string {
+  const id = profile.activeBrothId, level = id && isBrothId(id) ? getBrothLevel(profile, id) : 0;
+  if (!id || !isBrothId(id) || !level) return '';
+  const name = t(`broth.${id}`);
+  return `<button type="button" class="active-broth-pill" data-action="kitchen" style="--broth-color:${BROTHS[id].bathColor}" title="${esc(t('p14.activeTitle'))}: ${esc(name)} Lv.${level}" aria-label="${esc(t('p14.activeTitle'))}: ${esc(name)} Lv.${level}"><span aria-hidden="true">${sceneSticker(id,'',24)}</span><span class="active-broth-name">${esc(name)}</span><b>Lv.${level}</b></button>`;
+}
 
 /** Small corner controls leave the animal-gathering panorama unobstructed. */
 export function courtyardMarkup(profile: Profile): string {
@@ -20,6 +37,6 @@ export function courtyardMarkup(profile: Profile): string {
     <h1 class="art-title" aria-label="${tr('app.title')}">${artSticker(getLanguage()==='zh-CN'?'title_logo_zh':'title_logo_en',t('app.title'))}</h1>
     <nav class="map-chips" aria-label="${tr('m3.map')}"><span aria-hidden="true">${sceneSticker('ui_map_sign','',24)}</span>${maps}</nav>
     <button type="button" class="start-button" data-action="start" aria-label="${tr('menu.start')}">${artSticker(getLanguage()==='zh-CN'?'ui_btn_start_zh':'ui_btn_start_en',t('menu.start'))}</button>
-    <nav class="hub-dock hub-dock-left"><button type="button" data-action="recipes"><span class="medallion" aria-hidden="true">${sceneSticker('ui_compendium_book','',56)}</span><b>${tr('p3.guide')}</b></button><button type="button" data-action="armory"><span class="medallion" aria-hidden="true">${weaponSticker('m10_bamboo_staff',56)}</span><b>${tr('p3.armory')}</b><small>${profile.unlockedWeapons.length}/36</small></button></nav>
+    <nav class="hub-dock hub-dock-left"><button type="button" data-action="recipes"><span class="medallion" aria-hidden="true">${sceneSticker('ui_compendium_book','',56)}</span><b>${tr('p3.guide')}</b></button><button type="button" data-action="armory"><span class="medallion" aria-hidden="true">${weaponSticker('m10_bamboo_staff',56)}</span><b>${tr('p3.armory')}</b><small>${profile.unlockedWeapons.length}/36</small></button>${kitchenDockMarkup(profile)}</nav>${activeBrothPillMarkup(profile)}
     <nav class="hub-dock hub-dock-right"><button type="button" data-action="market"><span class="medallion" aria-hidden="true">${sceneSticker('ui_shop_bag','',56)}</span><b>${tr('p3.shop')}</b>${profile.freeLotteryTickets?`<small class="ticket-badge">${sceneSticker('ui_ticket_gacha','',18)} ${profile.freeLotteryTickets}</small>`:''}</button><button type="button" data-action="leaderboard"><span class="medallion" aria-hidden="true">${sceneSticker('ui_trophy_rank','',56)}</span><b>${tr('p3.rank')}</b></button></nav>`;
 }

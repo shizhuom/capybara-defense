@@ -1,0 +1,79 @@
+/* P15: wide-belly result shields — pictures twice as big, words cut to the bone. Loaded last. */
+#game-dialog.result-ledger .crest-stage { aspect-ratio:1;width:min(92vw,640px,calc(100dvh - 104px)); }
+#game-dialog.result-ledger .crest-stars-arc { top:-6%;left:22%;right:22%;height:22%; }
+/* The ribbon art follows this SVG arc exactly (380×100 box at 7.9% / 19.3%, 84.2% wide). */
+#game-dialog.result-ledger .crest-ribbon-title { top:19.3%;left:7.9%;right:7.9%; }
+#game-dialog.result-ledger .crest-ribbon-svg text { font-size:44px; }
+
+/* Plaque: block 1 (rank + bar) on top, block 2 (big rewards) at the bottom of the cream belly. */
+#game-dialog.result-ledger .crest-plaque-body { left:23%;right:23%;top:43%;height:39%;padding:1.4cqw 0 .6cqw;gap:1.2cqw;justify-content:space-evenly; }
+#game-dialog.result-ledger .crest-plaque-body :is(span,b) { color:#3E2822!important;text-shadow:none; }
+#game-dialog.result-ledger .crest-rank-block { display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:1.3cqw 1.2cqw;width:90%;min-width:0; }
+#game-dialog.result-ledger .crest-rank-line { grid-column:1/-1;display:flex;align-items:center;justify-content:center;flex-wrap:nowrap;gap:1.4cqw;width:100%;min-width:0; }
+#game-dialog.result-ledger .crest-rank-line .crest-rank-name {
+ flex:0 1 auto;min-width:0;color:#3E2822!important;-webkit-text-stroke:0;text-shadow:none;font-size:clamp(15px,3.3cqw,21px)!important;
+ line-height:1.2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-wrap:nowrap;
+}
+#game-dialog.result-ledger .crest-rank-line .crest-rank-delta {
+ display:inline-flex;align-items:center;gap:.45cqw;flex:none;padding:.3cqw 1.3cqw;border-radius:999px;background:#FBE5B4;
+ box-shadow:inset 0 0 0 1.5px #D7A957;-webkit-text-stroke:0;line-height:1;font-size:inherit!important;
+}
+#game-dialog.result-ledger .crest-rank-line .crest-rank-delta:has([data-sticker]) { padding-left:.4cqw; }
+#game-dialog.result-ledger .crest-rank-delta>[data-sticker] { width:clamp(22px,5cqw,28px);height:clamp(22px,5cqw,28px);flex:none;object-fit:contain; }
+#game-dialog.result-ledger .crest-plaque-body .crest-rank-delta b { color:#7A3E10!important;font-size:clamp(14px,3cqw,19px)!important;font-weight:950!important;letter-spacing:-.02em; }
+#game-dialog.result-ledger .crest-exp-bar { width:100%;height:clamp(12px,2.5cqw,16px);border-width:max(2px,.4cqw);background:#5B463C; }
+#game-dialog.result-ledger .crest-plaque-body .crest-exp-count { color:#6B4A2E!important;font-size:clamp(11px,2.3cqw,14px)!important;font-weight:900!important;font-variant-numeric:tabular-nums;white-space:nowrap; }
+#game-dialog.result-ledger .crest-endless-record { grid-column:1/-1;display:flex;justify-content:center;width:100%;margin:0;font-size:clamp(11px,2.4cqw,14px)!important;text-shadow:none; }
+#game-dialog.result-ledger .crest-endless-capsule { display:inline-flex;align-items:center;gap:.6cqw;max-width:100%;padding:.3cqw 1.5cqw .3cqw .4cqw;border-radius:999px;background:#FFE1AE;box-shadow:inset 0 0 0 1.5px #E0954A; }
+#game-dialog.result-ledger .crest-endless-capsule>[data-sticker] { width:clamp(20px,4.4cqw,24px);height:clamp(20px,4.4cqw,24px);flex:none; }
+#game-dialog.result-ledger .crest-plaque-body .crest-endless-capsule b { color:#6B2A12!important;font-size:inherit;white-space:nowrap; }
+
+#game-dialog.result-ledger .crest-core-rewards { display:flex;justify-content:center;align-items:flex-end;flex-wrap:nowrap;gap:2.4cqw;width:100%;margin-top:0;padding:0;white-space:nowrap; }
+#game-dialog.result-ledger .crest-core-rewards>.crest-reward { display:flex;flex-direction:column;align-items:center;gap:.3cqw;min-width:0;max-width:none; }
+#game-dialog.result-ledger .crest-reward>[data-sticker] { width:clamp(38px,9cqw,56px);height:clamp(38px,9cqw,56px);flex:none;object-fit:contain;filter:drop-shadow(0 2px 1px #7a52281f); }
+#game-dialog.result-ledger .crest-coin>[data-sticker] { width:clamp(42px,10.5cqw,66px);height:clamp(42px,10.5cqw,66px); }
+#game-dialog.result-ledger .crest-plaque-body .crest-reward>b,#game-dialog.result-ledger .crest-coin>b,#game-dialog.result-ledger .crest-bonus>b {
+ color:#5A3412!important;font-size:clamp(18px,3.8cqw,24px)!important;font-weight:950!important;line-height:1;letter-spacing:-.02em;white-space:nowrap;overflow-wrap:normal;
+}
+#game-dialog.result-ledger .crest-unlock-hint { top:98%; }
+
+/* Corner buttons: bigger pictures, one short word. */
+#game-dialog.result-ledger .crest-corner-btn [data-sticker] { width:44px;height:44px;object-fit:contain; }
+#game-dialog.result-ledger .btn-continue [data-sticker] { width:46px;height:46px; }
+
+/* Report drawer: giant icons and numbers, explanations moved to screen-reader text. */
+#game-dialog.result-ledger .visual-mvp-portrait { width:146px;min-height:126px; }
+#game-dialog.result-ledger .visual-mvp-portrait>[data-sticker] { width:116px;height:116px; }
+#game-dialog.result-ledger .visual-medal dt>[data-sticker] { width:64px;height:64px; }
+#game-dialog.result-ledger .visual-medal dd { font-size:clamp(30px,3.6vw,46px); }
+#game-dialog.result-ledger .visual-treasure-items { gap:12px 16px; }
+#game-dialog.result-ledger .visual-treasure-item { min-width:76px;max-width:112px; }
+#game-dialog.result-ledger .visual-treasure-art { width:78px;height:78px; }
+#game-dialog.result-ledger .visual-treasure-art>[data-sticker] { width:72px;height:72px;max-width:72px;max-height:72px; }
+#game-dialog.result-ledger .visual-treasure-item figcaption { position:relative;margin-top:-6px;min-width:46px;padding:2px 11px;background:#F6E2B8;box-shadow:inset 0 0 0 1.5px #D7B270; }
+#game-dialog.result-ledger .visual-treasure-item figcaption>b { font-size:20px; }
+#game-dialog.result-ledger .visual-new-friend>[data-sticker] { width:60px;height:60px; }
+#game-dialog.result-ledger .visual-footprint-strip [data-sticker] { width:34px;height:34px; }
+#game-dialog.result-ledger .visual-footprint-strip b { font-size:14px; }
+#game-dialog.result-ledger .crest-report-body .save-check { display:flex;justify-content:center;margin:10px 0 0; }
+#game-dialog.result-ledger .crest-report-body .save-check>span[aria-hidden] { display:grid;place-items:center;width:26px;height:26px;border-radius:50%;background:#DCEFC6;box-shadow:inset 0 0 0 1.5px #8EB36B;color:#3D6B22!important;font-size:15px;font-weight:950; }
+
+@media (max-width:600px) and (orientation:portrait) {
+ #game-dialog.result-ledger .crest-stage { width:min(96vw,640px,calc(100dvh - 180px)); }
+ #game-dialog.result-ledger .crest-corner-btn [data-sticker] { width:38px;height:38px; }
+ #game-dialog.result-ledger .visual-mvp-stage { grid-template-columns:132px minmax(0,1fr); }
+ #game-dialog.result-ledger .visual-mvp-portrait { width:128px; }
+ #game-dialog.result-ledger .visual-mvp-portrait>[data-sticker] { width:104px;height:104px; }
+ #game-dialog.result-ledger .visual-medal dt>[data-sticker] { width:54px;height:54px; }
+ #game-dialog.result-ledger .visual-treasure-art { width:66px;height:66px; }
+ #game-dialog.result-ledger .visual-treasure-art>[data-sticker] { width:62px;height:62px; }
+}
+@media (max-height:500px) and (orientation:landscape) {
+ #game-dialog.result-ledger .crest-stage { width:min(56vw,calc(100dvh - 40px));margin-top:-4px; }
+ #game-dialog.result-ledger .crest-reward>[data-sticker] { width:clamp(30px,9cqw,56px);height:clamp(30px,9cqw,56px); }
+ #game-dialog.result-ledger .crest-coin>[data-sticker] { width:clamp(34px,10.5cqw,66px);height:clamp(34px,10.5cqw,66px); }
+ #game-dialog.result-ledger .crest-plaque-body .crest-reward>b,#game-dialog.result-ledger .crest-coin>b,#game-dialog.result-ledger .crest-bonus>b { font-size:clamp(15px,3.8cqw,24px)!important; }
+ #game-dialog.result-ledger .crest-rank-line .crest-rank-name { font-size:clamp(13px,3.3cqw,21px)!important; }
+ #game-dialog.result-ledger .crest-corner-btn [data-sticker] { width:34px;height:34px; }
+ #game-dialog.result-ledger .crest-unlock-hint { top:97%; }
+}

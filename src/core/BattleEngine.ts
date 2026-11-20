@@ -8,6 +8,7 @@ import {progressionFor,getUnlockedBossIds,getUnlockedMinionIds} from '../config/
 import {RANKS,getRankDifficulty} from '../config/ranks';
 import {applyNewBossMechanic} from './BossMechanics';
 import {rollWeapon} from '../config/weapons';
+import {ELITE_ENEMY_IDS,INGREDIENT_IDS,MAP_SIGNATURE_INGREDIENT,getActiveBroth,getBrothEffect,getKitchenCollectionAura,getUnitCombatFamily,type BrothEffectKey,type IngredientId} from '../config/kitchen';
 import { FIRST_WAVE_PREPARATION, WAVE_DURATION,bossesForWave,waveEnemyCount,minionForWave,getWaveConfig } from '../config/waves';
 import { MergeSystem } from './MergeSystem';
 import {CombatRecords} from './CombatRecords';
@@ -23,6 +24,8 @@ export class BattleEngine {
   state:BattleState;
   private sequence=1;
   private random:Random;
+  /** P14 ingredient drops draw only from this stream; `random` keeps its exact P13 sequence. */
+  private ingredientRandom:Random;
   private props:PropSystem;
   private weapons:WeaponSystem;
   private enemyEverSpawned=false;
@@ -39,6 +42,7 @@ export class BattleEngine {
   constructor(public options:EngineOptions={}) {
     const seed=options.seed??Math.floor(Math.random()*0xffffffff);
     this.random=new Random(seed);
+    this.ingredientRandom=new Random(((seed^0x27d4eb2d)>>>0)||1);
     const mapId=getMap(options.mapId).id,rankIndex=Number.isFinite(options.rankIndex)?Math.max(0,Math.min(53,Math.trunc(options.rankIndex!))):0;
     this.bossSeed=((seed^0x6d2b79f5)>>>0)||1;
     const scheduleRandom=new Random(this.bossSeed);
@@ -47,7 +51,7 @@ export class BattleEngine {
       const originals=bossesForWave(mapId,rankIndex,i+1,()=>scheduleRandom.next());
       return Object.freeze(this.restrictBosses(originals,i+1));
     });
-    const side=(side:Side):SideState=>({lockedBenchSlot:null,food:ECONOMY.initialFood,summons:0,oranges:ECONOMY.initialOranges,shovels:ECONOMY.initialShovels,shovelTimer:0,kills:0,damage:0,loot:[],fog:0,loadout:copyLoadout(side==='player'?options.loadouts?.player:undefined),propCooldowns:{},sprinklerUsed:false,giantCatUses:0,catnipTime:0});
+    const side=(side:Side):SideState=>({lockedBenchSlot:null,food:ECONOMY.initialFood,summons:0,oranges:ECONOMY.initialOranges,shovels:ECONOMY.initialShovels,shovelTimer:0,kills:0,damage:0,loot:[],ingredientLoot:[],fog:0,loadout:copyLoadout(side==='player'?options.loadouts?.player:undefined),propCooldowns:{},sprinklerUsed:false,giantCatUses:0,catnipTime:0});
     this.state={id:`${Date.now()}-${++battleSequence}`,phase:'ready',time:0,wave:0,waveTime:0,nextSpawn:0,spawned:0,mapId,rankIndex,mergedHeroes:{player:[],ai:[]},grid:GridSystem.create(mapId),craterHits:{},sides:{player:side('player'),ai:side('ai')},units:[],enemies:[],events:[],traps:[],result:null};
     this.props=new PropSystem(this,()=>this.random.next());this.props.initialize();this.weapons=new WeaponSystem(this,()=>this.random.next());
   }
@@ -61,7 +65,8 @@ export class BattleEngine {
     if(s.phase!=='finished'||s.endless||s.wave!==10||s.sides.player.oranges<=0||
       !result||result.winner!=='player'||result.reason!=='waves'||result.endless)return{ok:false,key:'hint.invalid'};
     s.standardResult={...result,loot:[...result.loot],playerLoot:[...result.playerLoot],aiLoot:[...result.aiLoot],
-      mergedHeroes:result.mergedHeroes?[...result.mergedHeroes]:undefined,mvp:result.mvp?{...result.mvp}:undefined};
+      mergedHeroes:result.mergedHeroes?[...result.mergedHeroes]:undefined,mvp:result.mvp?{...result.mvp}:undefined,
+      ingredientLoot:result.ingredientLoot?Object.freeze([...result.ingredientLoot]) as string[]:undefined};
     Object.freeze(s.standardResult.loot);Object.freeze(s.standardResult.playerLoot);Object.freeze(s.standardResult.aiLoot);
     if(s.standardResult.mergedHeroes)Object.freeze(s.standardResult.mergedHeroes);
     if(s.standardResult.mvp)Object.freeze(s.standardResult.mvp);
@@ -233,6 +238,8 @@ export class BattleEngine {
         if(HEROES[outcome.unit.kind]&&!this.state.mergedHeroes[source.side].includes(outcome.unit.kind))this.state.mergedHeroes[source.side].push(outcome.unit.kind);
         const legendary=!!HEROES[outcome.unit.kind]&&!HEROES[source.kind]&&!HEROES[occupant.kind];
         this.event({type:'purge',side:source.side,...position,textKey:'hint.purged',effect:legendary?'legendary':undefined,unitId:outcome.unit.id,duration:1.4});
+        const refund=legendary?this.broth('heroRefund'):0;
+        if(refund){this.state.sides[source.side].food+=refund;this.event({type:'food',side:source.side,...position,value:refund,textKey:'hint.food',duration:1.1});}
         return{ok:true,key:outcome.key,unitId:outcome.unit.id};
       }
       if(outcome.swap){const from=source.location;source.location={...target};occupant.location={...from};source.animation=1;occupant.animation=1;this.validateBenchLock();}
@@ -384,7 +391,7 @@ export class BattleEngine {
       if(enemy.boss){enemy.abilityCooldown-=dt;if(enemy.abilityCooldown<=0){this.bossAbility(enemy);enemy.abilityCooldown=ENEMIES[enemy.kind].interval*getRankDifficulty(this.state.rankIndex).bossCooldownScale;}}
       if(enemy.hp<=0)continue;
       const hasteDuration=Math.min(dt,Math.max(0,enemy.hasteTime??0));enemy.hasteTime=Math.max(0,(enemy.hasteTime??0)-dt);
-      if(enemy.stun<=0)enemy.progress+=enemy.speed*(dt+.3*hasteDuration)*(enemy.slow>0?enemy.slowFactor:1)*(this.props.has(enemy.side,'banana_peel')?.88:1);
+      if(enemy.stun<=0)enemy.progress+=enemy.speed*(dt+.3*hasteDuration)*(enemy.slow>0?enemy.slowFactor:1)*(this.props.has(enemy.side,'banana_peel')?.88:1)*this.brothEnemySpeed(enemy);
       Object.assign(enemy,GridSystem.pathPosition(enemy.side,enemy.progress,this.state.mapId));
       this.props.onEnemy(enemy);if(enemy.hp<=0)continue;
       if(enemy.progress>=getMap(this.state.mapId).paths.player.length-1){
@@ -404,7 +411,10 @@ export class BattleEngine {
     const s=this.state;
     if(!s.endless||s.wave<11||s.sides.player.oranges<=0||s.spawned<this.currentWaveTargetCount()||this.pendingBosses.length||s.enemies.some(enemy=>enemy.hp>0))return false;
     if(s.wave>(s.endlessClearedWave??10)){
-      s.endlessCoins=(s.endlessCoins??0)+15*(s.wave-10);s.endlessClearedWave=s.wave;
+      const coins=15*(s.wave-10),bonus=this.broth('coinBonus');
+      s.endlessCoins=(s.endlessCoins??0)+(bonus?Math.round(coins*(1+bonus)):coins);s.endlessClearedWave=s.wave;
+      // Every banked endless wave guarantees a truffle and one rarer spice/blossom/shoot.
+      this.harvest('ing_mushroom',this.pickIngredient(['ing_sakura','ing_chili','ing_bamboo']));this.goldenFeastRoll();
     }
     return true;
   }
@@ -412,8 +422,9 @@ export class BattleEngine {
     this.announcedElites.clear();
     this.state.wave=wave;this.state.waveTime=0;this.state.nextSpawn=wave===1?FIRST_WAVE_PREPARATION:1;this.state.spawned=0;
     for(const side of ['player'] as Side[]){
-      if(wave>1&&grantIncome)this.state.sides[side].food+=ECONOMY.waveIncome;
+      if(wave>1&&grantIncome)this.state.sides[side].food+=ECONOMY.waveIncome+this.broth('waveIncome');
     }
+    if(wave===4||wave===7)this.waveClearIngredients(wave-1);
     this.event({type:'bubble',side:'player',col:3.5,row:4.5,textKey:'hint.wave',value:wave,duration:1.8});
     const bosses=this.bossesForCurrentSchedule(wave);
     this.pendingBosses=bosses.slice(1).map((kind,index)=>({kind,at:5*(index+1)}));if(bosses[0])this.spawnBoss(bosses[0]);
@@ -437,7 +448,54 @@ export class BattleEngine {
   getUnitStats(unit:Unit):UnitStats {
     const base=getBaseUnitStats(unit.kind,unit.level);
     if(!UNITS[unit.kind]&&!HEROES[unit.kind]||unit.kind==='shovel')return base;
-    return this.weapons.stats(unit,{...base,rate:base.rate*(1+this.props.haste(unit.side))});
+    return this.kitchenStats(unit,this.weapons.stats(unit,{...base,rate:base.rate*(1+this.props.haste(unit.side))}));
+  }
+  /** Permanent collection aura plus today's broth. With nothing brewed the stats are returned untouched. */
+  private kitchenStats(unit:Unit,stats:UnitStats):UnitStats {
+    const loadout=this.state.sides[unit.side].loadout,aura=getKitchenCollectionAura(loadout),active=getActiveBroth(loadout);
+    if(!aura.unlockedCount&&!active)return stats;
+    let damage=stats.damage*(1+aura.damageBonus),rate=stats.rate*(1+aura.rateBonus);
+    if(active){
+      const family=getUnitCombatFamily(unit.kind),fx=(key:BrothEffectKey)=>getBrothEffect(loadout,key);
+      if(family==='melee'){damage*=1+fx('meleeDamage');rate*=1+fx('meleeRate');}
+      else if(family==='ranged')damage*=1+fx('rangedDamage');
+      else if(family==='magic')damage*=1+fx('magicDamage');
+      if(UNITS[unit.kind]?.category==='basic'&&unit.level>=3)damage*=1+fx('veteranDamage');
+      damage*=1+fx('allDamage');rate*=1+fx('allRate');
+    }
+    return{...stats,damage,rate};
+  }
+  private broth(key:BrothEffectKey):number {return getBrothEffect(this.state.sides.player.loadout,key);}
+  /** Chill Melon slows the whole lane; Sakura Milk slows the last 3.5 cells before the tub. */
+  private brothEnemySpeed(enemy:Enemy):number {
+    const global=this.broth('globalSlow'),tub=this.broth('tubSlow');
+    if(!global&&!tub)return 1;
+    const nearTub=tub&&enemy.progress>=getMap(this.state.mapId).paths.player.length-1-3.5;
+    return(1-global)*(nearTub?1-tub:1);
+  }
+  private harvest(...ids:IngredientId[]):void {this.state.sides.player.ingredientLoot.push(...ids);}
+  private pickIngredient(pool:readonly IngredientId[]):IngredientId {
+    return pool[Math.min(pool.length-1,Math.floor(this.ingredientRandom.next()*pool.length))];
+  }
+  /** Golden Seafood Feast: one extra random ingredient on boss kills and wave rewards. */
+  private goldenFeastRoll():void {
+    const chance=this.broth('dropBonus');
+    if(chance&&this.ingredientRandom.next()<chance)this.harvest(this.pickIngredient(INGREDIENT_IDS));
+  }
+  private waveClearIngredients(wave:3|6|10|number):void {
+    this.harvest(wave===3?'ing_yuzu':wave===6?'ing_honey':MAP_SIGNATURE_INGREDIENT[this.state.mapId]);this.goldenFeastRoll();
+  }
+  private dropKillIngredients(enemy:Enemy):void {
+    const signature=MAP_SIGNATURE_INGREDIENT[this.state.mapId];
+    if(enemy.boss){
+      this.harvest(signature,this.pickIngredient(this.state.wave>=7?['ing_mushroom','ing_chili','ing_sakura']:['ing_bamboo','ing_chili','ing_sakura','ing_honey']));
+      this.goldenFeastRoll();return;
+    }
+    const elite=ELITE_ENEMY_IDS.includes(enemy.kind);
+    if(this.ingredientRandom.next()>=(elite?.35:.1))return;
+    const roll=this.ingredientRandom.next();
+    if(elite)this.harvest(roll<.45?'ing_bamboo':roll<.8?'ing_honey':signature);
+    else this.harvest(roll<.55?signature:(['ing_yuzu','ing_honey','ing_bamboo'] as const)[Math.min(2,Math.floor((roll-.55)/.45*3))]);
   }
   getEffectiveUnitStats(unit:Unit):UnitStats {
     const stats=this.getUnitStats(unit);
@@ -450,7 +508,8 @@ export class BattleEngine {
   }
   hurt(enemy:Enemy,amount:number,unit?:Unit,critical=false,weaponHooks=true,trueDamage=false,periodic=false):void {
     if(enemy.side!=='player'||unit?.side==='ai'||enemy.hp<=0||amount<=0)return;
-    const damage=amount*(unit?this.weapons.damageMultiplier(unit,enemy):1)*(trueDamage||(enemy.armorBreak??0)>0?1:1-enemy.armor),actual=Math.min(enemy.hp,damage);enemy.hp-=damage;
+    const bossBonus=unit&&enemy.boss?this.broth('bossDamage'):0;
+    const damage=amount*(unit?this.weapons.damageMultiplier(unit,enemy):1)*(bossBonus?1+bossBonus:1)*(trueDamage||(enemy.armorBreak??0)>0?1:1-enemy.armor),actual=Math.min(enemy.hp,damage);enemy.hp-=damage;
     if(amount>=3){
       enemy.hitFlash=.14;const source=unit?this.unitPosition(unit):{col:enemy.col,row:enemy.row+1},dx=enemy.col-source.col,dy=enemy.row-source.row,len=Math.hypot(dx,dy)||1;
       enemy.knockX=dx/len*5;enemy.knockY=dy/len*5;
@@ -465,6 +524,7 @@ export class BattleEngine {
     }
     if(enemy.hp<=0){
       const owner=this.state.sides[enemy.side];owner.kills++;
+      this.dropKillIngredients(enemy);
       if(enemy.boss){
         const count=1+Math.floor(this.random.next()*2);
         for(let i=0;i<count;i++)owner.loot.push(this.rollWeaponFragment());
@@ -476,6 +536,9 @@ export class BattleEngine {
       this.event({type:'burst',side:enemy.side,col:enemy.col,row:enemy.row,duration:.5,color:enemy.boss?'#f9bd56':'#c4dec7'});
       if(unit&&weaponHooks)this.weapons.onKill(unit);
     }
+    // Spicy Hotpot: every direct hit leaves a short two-second burn on survivors.
+    const burn=unit&&!periodic&&enemy.hp>0?this.broth('burnRatio'):0;
+    if(burn)this.applyDot(enemy,'burn',2,this.stats(unit!).damage*burn,unit!);
     if(unit&&weaponHooks&&!periodic)this.weapons.onHit(unit,enemy,amount);
   }
   private splash(unit:Unit,center:Point,radius:number,damage:number,critical=false):void {
@@ -593,12 +656,19 @@ export class BattleEngine {
     if(this.state.endless)this.recordEndlessClear();
     const playerLoot=[...this.state.sides.player.loot],aiLoot:string[]=[];
     if(this.state.endless&&this.state.standardResult){
-      const standard=this.state.standardResult,endlessCoins=this.state.endlessCoins??0;
+      const standard=this.state.standardResult,endlessCoins=this.state.endlessCoins??0,harvest=[...this.state.sides.player.ingredientLoot];
       this.state.result={winner:'player',reason,loot:[...playerLoot],playerLoot,aiLoot,coins:standard.coins+endlessCoins,
         elapsed:this.state.time,rankIndex:this.state.rankIndex,mergedHeroes:[...this.state.mergedHeroes.player],mvp:this.combatRecords.mvp(this.state.units),
-        endless:true,endlessWave:this.state.wave,endlessCoins,endlessLoot:playerLoot.slice(standard.playerLoot.length)};
+        endless:true,endlessWave:this.state.wave,endlessCoins,endlessLoot:playerLoot.slice(standard.playerLoot.length),
+        // The standard receipt already banked its share; endless keeps 100% of every later ingredient.
+        ingredientLoot:harvest,endlessIngredientLoot:harvest.slice(standard.ingredientLoot?.length??0)};
       this.state.phase='finished';return;
     }
-    this.state.result={winner,reason,loot:winner==='player'?[...playerLoot]:[],playerLoot,aiLoot,coins:winner==='player'?RANKS[this.state.rankIndex].winCoins+Math.min(45,Math.floor(this.state.sides.player.food*.5)):0,elapsed:this.state.time,rankIndex:this.state.rankIndex,mergedHeroes:[...this.state.mergedHeroes.player],mvp:this.combatRecords.mvp(this.state.units)};this.state.phase='finished';
+    const won=winner==='player';
+    if(won&&reason==='waves')this.waveClearIngredients(10);
+    // Anti-frustration salvage: a loss or surrender still carries home at least half (rounded up).
+    const harvest=[...this.state.sides.player.ingredientLoot],ingredientLoot=won?harvest:harvest.slice(0,Math.ceil(harvest.length/2));
+    const baseCoins=RANKS[this.state.rankIndex].winCoins+Math.min(45,Math.floor(this.state.sides.player.food*.5)),coinBonus=this.broth('coinBonus');
+    this.state.result={winner,reason,loot:won?[...playerLoot]:[],playerLoot,aiLoot,coins:won?(coinBonus?Math.round(baseCoins*(1+coinBonus)):baseCoins):0,elapsed:this.state.time,rankIndex:this.state.rankIndex,mergedHeroes:[...this.state.mergedHeroes.player],mvp:this.combatRecords.mvp(this.state.units),ingredientLoot};this.state.phase='finished';
   }
 }

@@ -1,5 +1,6 @@
 import {HEROES} from '../config/heroes';
 import {BEE_PRODUCTION,UNITS} from '../config/units';
+import {getBrothEffect} from '../config/kitchen';
 import type {BattleLoadout} from './types';
 
 export const LEVEL_MULTIPLIERS = [1,1.55,2.25,3.15,4.3] as const;
@@ -16,6 +17,7 @@ export function getBaseUnitStats(kind:string,level:number):UnitStats {
 }
 
 export function getBeeProduction(level:number,loadout?:BattleLoadout):{amount:number;interval:number} {
-  const production=BEE_PRODUCTION[validLevel(level,3)-1];
-  return{amount:production.amount,interval:production.interval*(loadout?.equippedPassiveProps.includes('bee_overtime')?.75:1)};
+  const production=BEE_PRODUCTION[validLevel(level,3)-1],speed=getBrothEffect(loadout,'beeSpeed');
+  const interval=production.interval*(loadout?.equippedPassiveProps.includes('bee_overtime')?.75:1);
+  return{amount:production.amount,interval:speed?interval*(1-speed):interval};
 }

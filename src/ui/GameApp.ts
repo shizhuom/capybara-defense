@@ -13,6 +13,7 @@ import { waveStrategyMarkup, wavePreviewTip } from './WaveStrategyView';
 import { getLanguage, onLanguageChange, setLanguage, t } from '../i18n/i18n';
 import { awardBattle, awardEndless, emptyProfile, loadProfile, resetOwnStorage, saveProfile, enableTestProfile, restoreNormalProfile, isTestProfile } from './storage';
 import { MetaScreens, propSlots, type MetaScreen } from './MetaScreens';
+import { KitchenScreen } from './KitchenScreen';
 import { PROPS } from '../config/props';
 import { setPropSlots } from '../core/MetaProgression';
 import './m2.css';
@@ -37,14 +38,14 @@ import { ProfileScreens, type ProfileScreen } from './ProfileScreens';
 import { SoundManager } from './SoundManager';
 import { capyLogo, escapeHtml as esc } from './art';
 import { onAssetsReady } from '../render/AssetRegistry';
-import { propSticker, sceneSticker, unitSticker, P9_SCENE_IDS, P10_SCENE_IDS, P11_SCENE_IDS, P12_SCENE_IDS, P13_SCENE_IDS } from './stickers';
+import { propSticker, sceneSticker, unitSticker, P9_SCENE_IDS, P10_SCENE_IDS, P11_SCENE_IDS, P12_SCENE_IDS, P13_SCENE_IDS, P14_SCENE_IDS, P15_SCENE_IDS } from './stickers';
 import { Compendium } from './Compendium';
 import { getBossHUD, getWaveHUD, getMusicMode, isDeveloperMode } from './BattleHUD';
 import { advanceTutorial, finishTutorial, replayTutorial, type TutorialAction, type TutorialStep } from '../core/Tutorial';
 import { tutorialMarkup, tutorialTargets, placeTutorialBubble, tutorialCardDock, type TutorialRect } from './TutorialView';
 
 type Hit = HitTarget;
-type DialogKind = 'pause' | 'recipes' | 'result' | 'endless-offer' | MetaScreen | ProfileScreen;
+type DialogKind = 'pause' | 'recipes' | 'result' | 'endless-offer' | 'kitchen' | MetaScreen | ProfileScreen;
 type Drag = { pointerId: number; start: { x: number; y: number }; point: { x: number; y: number }; id?: number; shovel: boolean; moved: boolean };
 const tr = (key: string, vars?: Record<string, string | number>) => esc(t(key, vars));
 const unitName = (kind: string) => t(`${HEROES[kind] ? 'hero' : 'unit'}.${kind}`);
@@ -78,6 +79,7 @@ export class GameApp {
   private newWeapons: string[] = [];
   private meta: MetaScreens;
   private profileScreens: ProfileScreens;
+  private kitchen: KitchenScreen;
   private sound = new SoundManager(this.profile.settings);
   private compendium = new Compendium();
   private tutorialStep: TutorialStep = 'done';
@@ -111,6 +113,8 @@ export class GameApp {
     this.meta = new MetaScreens(() => this.profile, profile => {
       this.acceptPersistedProfile(profile);
     }, () => { if (this.dialogKind === 'armory' || this.dialogKind === 'market') this.renderDialog(); }, (key, error, vars) => this.notify(key, error, vars), cue => this.sound.play(cue));
+    this.kitchen = new KitchenScreen(() => this.profile, profile => this.acceptPersistedProfile(profile),
+      () => { if (this.dialogKind === 'kitchen') this.renderDialog(); }, (key, error, vars) => this.notify(key, error, vars), cue => this.sound.play(cue));
     this.profileScreens = new ProfileScreens(() => this.profile, profile => this.persistProfile(profile), () => this.refresh(true), key => this.notify(key));
     this.root.innerHTML = this.shell();
     this.canvas = this.element<HTMLCanvasElement>('battle-canvas');
@@ -355,7 +359,7 @@ export class GameApp {
       this.assetsDirty=false; force=true;
       this.quickStamp=''; this.battlePropsStamp=''; this.bossStamp='';this.tutorialStamp='';this.waveStrategyStamp='';this.liveStamp='';this.earlyTipStamp='';this.passiveStamp='';
       this.root.querySelector('.brand-mark')!.innerHTML=sceneSticker('logo_capy',capyLogo,54);
-      const ids=['ui_fish_food','ui_bell_summon','ui_compendium_book','ui_shop_bag','orange','ui_trophy_rank','ui_map_sign','ui_header_compendium','ui_header_armory','ui_header_market','ui_header_rank','ui_header_profile','ui_header_settings','ui_tutorial_pointer','ui_tutorial_capy','ui_coin_gold','ui_star_rank','ui_ticket_gacha','ui_skull_threat','ui_result_victory','ui_result_defeat','ui_header_pause','ui_mvp_crown','ui_lock_closed','ui_lock_open','ui_wave_horn','ui_merge_sparkle',...P9_SCENE_IDS,...P10_SCENE_IDS,...P11_SCENE_IDS,...P12_SCENE_IDS,...P13_SCENE_IDS] as const;
+      const ids=['ui_fish_food','ui_bell_summon','ui_compendium_book','ui_shop_bag','orange','ui_trophy_rank','ui_map_sign','ui_header_compendium','ui_header_armory','ui_header_market','ui_header_rank','ui_header_profile','ui_header_settings','ui_tutorial_pointer','ui_tutorial_capy','ui_coin_gold','ui_star_rank','ui_ticket_gacha','ui_skull_threat','ui_result_victory','ui_result_defeat','ui_header_pause','ui_mvp_crown','ui_lock_closed','ui_lock_open','ui_wave_horn','ui_merge_sparkle',...P9_SCENE_IDS,...P10_SCENE_IDS,...P11_SCENE_IDS,...P12_SCENE_IDS,...P13_SCENE_IDS,...P14_SCENE_IDS,...P15_SCENE_IDS] as const;
       for(const id of ids)this.root.querySelectorAll<HTMLElement>(`#stage [data-sticker="${id}"]`).forEach(el=>{el.outerHTML=sceneSticker(id,'',Number(el.getAttribute('width'))||34);});
     }
     const developer = isDeveloperMode(location.search,this.profile.settings);
@@ -735,8 +739,8 @@ export class GameApp {
     const active=typeof document!=='undefined'&&typeof HTMLElement!=='undefined'&&document.activeElement instanceof HTMLElement&&this.dialog.contains(document.activeElement)?document.activeElement:undefined;
     const focused=active?.dataset.action,rarityFocus=active?.dataset.rarity;
     const propRowFocus=active?.closest<HTMLElement>('.prop-row')?.dataset.propId;
-    const ledgerPage=!!kind&&['recipes','armory','market','profile','leaderboard','settings','pause','result'].includes(kind);
-    const stamp=JSON.stringify([kind,kind==='recipes'?this.compendium.viewKey:kind==='market'||kind==='armory'?this.meta.viewKey:null]);
+    const ledgerPage=!!kind&&['recipes','armory','market','profile','leaderboard','settings','pause','result','kitchen'].includes(kind);
+    const stamp=JSON.stringify([kind,kind==='recipes'?this.compendium.viewKey:kind==='market'||kind==='armory'?this.meta.viewKey:kind==='kitchen'?this.kitchen.viewKey:null]);
     const scrolls=['.ledger-body'].map(selector=>({selector,top:stamp===this.ledgerStamp?this.dialog.querySelector<HTMLElement>(selector)?.scrollTop??0:0}));
     this.ledgerStamp=stamp;
     this.dialog.classList.toggle('ledger-dialog',ledgerPage);
@@ -745,7 +749,8 @@ export class GameApp {
     this.dialog.classList.toggle('endless-offer-ledger',kind==='endless-offer');
     this.dialog.classList.toggle('settings-dialog',kind==='settings');
     this.dialog.classList.toggle('recipe-dialog', kind === 'recipes');
-    this.dialog.classList.toggle('meta-dialog', kind === 'armory' || kind === 'market');
+    this.dialog.classList.toggle('meta-dialog', kind === 'armory' || kind === 'market' || kind === 'kitchen');
+    this.dialog.classList.toggle('kitchen-dialog', kind === 'kitchen');
     this.dialog.classList.toggle('profile-dialog', kind === 'profile' || kind === 'leaderboard');
     this.dialog.setAttribute('aria-labelledby', 'dialog-title');
     if (kind === 'profile' || kind === 'leaderboard' || kind === 'settings') {
@@ -753,6 +758,8 @@ export class GameApp {
       if(kind==='settings')this.dialog.querySelector<HTMLInputElement>('[data-setting="developerMode"]')!.checked=isDeveloperMode(location.search,this.profile.settings);
     } else if (kind === 'armory' || kind === 'market') {
       this.dialog.innerHTML = this.meta.markup(kind,!!this.engine,!!this.engine?.canSyncPreparationLoadout());
+    } else if (kind === 'kitchen') {
+      this.dialog.innerHTML = this.kitchen.markup(!!this.engine,!!this.engine?.canSyncPreparationLoadout());
     } else if (kind === 'pause' && this.engine) {
       this.dialog.innerHTML=pauseMarkup(this.engine.state);
     } else if (kind === 'recipes') {
@@ -805,7 +812,7 @@ export class GameApp {
     this.renderMenu();
   }
 
-  private openModal(kind: 'recipes' | MetaScreen): void {
+  private openModal(kind: 'recipes' | 'kitchen' | MetaScreen): void {
     if (!this.modalReturn) {
       const playing=this.engine?.state.phase==='playing';
       this.modalReturn = { dialog: this.dialogKind, resume: playing };
@@ -1130,6 +1137,7 @@ export class GameApp {
       else if (this.dialogKind === 'pause') this.action('resume');
       else if (this.dialogKind === 'recipes') this.action('close-recipes');
       else if (this.dialogKind === 'armory' || this.dialogKind === 'market') this.action('close-meta');
+      else if (this.dialogKind === 'kitchen') this.action('close-kitchen');
       else if (this.dialogKind === 'profile' || this.dialogKind === 'leaderboard' || this.dialogKind === 'settings') this.action('close-profile');
       else this.menu();
     });
@@ -1169,6 +1177,10 @@ export class GameApp {
     if(action==='dismiss-early-tip'){this.markEarlyTipSeen();this.refresh();return;}
     if(action==='passive-backpack'){
       if(this.engine?.canSyncPreparationLoadout()){this.meta.open('market');this.meta.tab='backpack';this.openModal('market');}
+      return;
+    }
+    if(action==='broth-info'){
+      if(this.engine?.state.sides.player.loadout.activeBrothId){this.passiveInfoId=this.passiveInfoId==='broth'?undefined:'broth';this.renderPassives();}
       return;
     }
     if(action.startsWith('passive-info:')){
@@ -1236,6 +1248,7 @@ export class GameApp {
     if (action.startsWith('compendium-hero:')) { this.compendium.selectHero(action.slice(16)); this.renderDialog(); return; }
     if (action === 'store-shovel') { if(this.canInteract() && this.selectedId) this.apply(this.engine!.storeShovel(this.selectedId)); this.refresh(); return; }
     if (action === 'battle-shop' || action.startsWith('battle-shop:')) { const screen=action === 'battle-shop:armory'?'armory':'market'; this.meta.open(screen); this.openModal(screen); return; }
+    const previousDish=action==='kitchen-back'?this.kitchen.detail:undefined;
     const previousWeapon=action==='meta-weapon-back'?this.dialog.querySelector<HTMLElement>('.storybook-detail-sheet')?.dataset.weaponId:undefined;
     if (this.meta.action(action)) {
       const focusAction=action.startsWith('meta-weapon:')?'meta-weapon-back':previousWeapon?`meta-weapon:${previousWeapon}`:undefined;
@@ -1246,6 +1259,15 @@ export class GameApp {
       return;
     }
     if (action === 'armory' || action === 'market') { this.meta.open(action); this.openModal(action); return; }
+    if (action === 'kitchen') { this.kitchen.open(); this.openModal('kitchen'); return; }
+    if (action === 'close-kitchen') { this.closeModal(); return; }
+    if (this.dialogKind === 'kitchen' && this.kitchen.action(action)) {
+      // Detail entry focuses its back button; returning restores focus to the dish row.
+      const focusAction = action.startsWith('kitchen-dish:') ? 'kitchen-back' : action === 'kitchen-back' ? `kitchen-dish:${previousDish ?? ''}` : undefined;
+      if (focusAction) { const target = this.dialog.querySelector<HTMLElement>(`.kitchen-row [data-action="${CSS.escape(focusAction)}"], .compendium-detail-bar [data-action="${CSS.escape(focusAction)}"]`); target?.focus({ preventScroll: true }); target?.scrollIntoView?.({ block: 'nearest' }); }
+      if (action.startsWith('kitchen-tab:') || action.startsWith('kitchen-dish:') || action === 'kitchen-back') { const body = this.dialog.querySelector<HTMLElement>('.ledger-body'); if (body && action !== 'kitchen-back') body.scrollTop = 0; }
+      return;
+    }
     if (action === 'close-meta') { this.closeModal(); return; }
     if (action === 'test-enable' || action === 'test-restore') {
       const wasTestProfile = isTestProfile();

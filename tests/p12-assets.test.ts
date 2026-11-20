@@ -4,9 +4,9 @@ import {sceneSticker} from '../src/ui/stickers';
 import * as registry from '../src/render/AssetRegistry';
 const ids=['ui_victory_shield_wings','ui_defeat_shield_wings','ui_victory_star_lit','ui_victory_star_dim','ui_pause_peek_capy','ui_btn_return_arrow','ui_stats_scroll','ui_horn_continue'] as const;
 afterEach(()=>vi.restoreAllMocks());
-it('synchronizes all 221 sprites and exact P12 transparent dimensions',()=>{
+it('synchronizes all 255 sprites and exact P12 transparent dimensions',()=>{
  const manifest=JSON.parse(readFileSync('public/assets/sprites/manifest.json','utf8'));
- expect(manifest).toHaveLength(221);expect(new Set(manifest).size).toBe(221);
+ expect(manifest).toHaveLength(255);expect(new Set(manifest).size).toBe(255);
  for(const [i,id] of ids.entries()){
   expect(manifest).toContain(id);const png=readFileSync(`public/assets/sprites/${id}.png`),size=i<2?512:i<4?192:i===4?256:160;
   expect([png.readUInt32BE(16),png.readUInt32BE(20),png[25]]).toEqual([size,size,6]);

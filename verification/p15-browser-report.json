@@ -1,0 +1,1090 @@
+{
+  "passed": true,
+  "checks": [
+    "desktop: built app bath close-ups animate across three captures; rims, soup and capybara composed live",
+    "desktop: streak victory, endless victory and protected defeat shields keep every icon/number inside the cream belly; drawers use clock sand, no emoji",
+    "mobile-landscape: built app bath close-ups animate across three captures; rims, soup and capybara composed live",
+    "mobile-landscape: streak victory, endless victory and protected defeat shields keep every icon/number inside the cream belly; drawers use clock sand, no emoji",
+    "mobile-portrait: built app bath close-ups animate across three captures; rims, soup and capybara composed live",
+    "mobile-portrait: streak victory, endless victory and protected defeat shields keep every icon/number inside the cream belly; drawers use clock sand, no emoji"
+  ],
+  "layouts": [
+    {
+      "label": "desktop victory",
+      "plaque": {
+        "x": 510.1875,
+        "y": 339.1875,
+        "right": 855.8125,
+        "bottom": 588.78125,
+        "width": 345.625,
+        "height": 249.59375
+      },
+      "stage": {
+        "x": 363,
+        "y": 64,
+        "right": 1003,
+        "bottom": 704,
+        "width": 640,
+        "height": 640
+      },
+      "parts": [
+        {
+          "cls": "crest-rank-name",
+          "x": 597.328125,
+          "y": 377.484375,
+          "right": 681.328125,
+          "bottom": 402.671875,
+          "width": 84,
+          "height": 25.1875
+        },
+        {
+          "cls": "crest-rank-delta is-streak",
+          "x": 690.28125,
+          "y": 374.171875,
+          "right": 768.65625,
+          "bottom": 405.984375,
+          "width": 78.375,
+          "height": 31.8125
+        },
+        {
+          "cls": "crest-exp-bar",
+          "x": 527.46875,
+          "y": 415.796875,
+          "right": 802.859375,
+          "bottom": 431.796875,
+          "width": 275.390625,
+          "height": 16
+        },
+        {
+          "cls": "crest-exp-count",
+          "x": 810.53125,
+          "y": 414.296875,
+          "right": 838.53125,
+          "bottom": 433.296875,
+          "width": 28,
+          "height": 19
+        },
+        {
+          "cls": "crest-reward crest-coin",
+          "x": 542.953125,
+          "y": 467,
+          "right": 608.953125,
+          "bottom": 558.90625,
+          "width": 66,
+          "height": 91.90625
+        },
+        {
+          "cls": "crest-reward crest-bonus crest-ticket",
+          "x": 624.3125,
+          "y": 477,
+          "right": 680.3125,
+          "bottom": 558.90625,
+          "width": 56,
+          "height": 81.90625
+        },
+        {
+          "cls": "crest-reward crest-bonus crest-fragments",
+          "x": 695.671875,
+          "y": 477,
+          "right": 751.671875,
+          "bottom": 558.90625,
+          "width": 56,
+          "height": 81.90625
+        },
+        {
+          "cls": "crest-reward crest-bonus crest-ingredients",
+          "x": 767.03125,
+          "y": 477,
+          "right": 823.03125,
+          "bottom": 558.90625,
+          "width": 56,
+          "height": 81.90625
+        }
+      ],
+      "truncated": false,
+      "overflow": [],
+      "viewport": {
+        "w": 1366,
+        "h": 768
+      },
+      "broken": [],
+      "emoji": false
+    },
+    {
+      "label": "desktop victory drawer",
+      "drawer": {
+        "x": 313,
+        "y": 61.4296875,
+        "right": 1053,
+        "bottom": 675.8203125
+      },
+      "viewport": {
+        "w": 1366,
+        "h": 768
+      },
+      "clock": true,
+      "emoji": false,
+      "overflow": []
+    },
+    {
+      "label": "desktop endless",
+      "plaque": {
+        "x": 510.1875,
+        "y": 339.1875,
+        "right": 855.8125,
+        "bottom": 588.78125,
+        "width": 345.625,
+        "height": 249.59375
+      },
+      "stage": {
+        "x": 363,
+        "y": 64,
+        "right": 1003,
+        "bottom": 704,
+        "width": 640,
+        "height": 640
+      },
+      "parts": [
+        {
+          "cls": "crest-rank-name",
+          "x": 597.328125,
+          "y": 366.515625,
+          "right": 681.328125,
+          "bottom": 391.703125,
+          "width": 84,
+          "height": 25.1875
+        },
+        {
+          "cls": "crest-rank-delta is-streak",
+          "x": 690.28125,
+          "y": 363.203125,
+          "right": 768.65625,
+          "bottom": 395.015625,
+          "width": 78.375,
+          "height": 31.8125
+        },
+        {
+          "cls": "crest-exp-bar",
+          "x": 527.46875,
+          "y": 404.828125,
+          "right": 802.859375,
+          "bottom": 420.828125,
+          "width": 275.390625,
+          "height": 16
+        },
+        {
+          "cls": "crest-exp-count",
+          "x": 810.53125,
+          "y": 403.328125,
+          "right": 838.53125,
+          "bottom": 422.328125,
+          "width": 28,
+          "height": 19
+        },
+        {
+          "cls": "crest-endless-capsule",
+          "x": 611.8125,
+          "y": 430.640625,
+          "right": 754.171875,
+          "bottom": 458.453125,
+          "width": 142.359375,
+          "height": 27.8125
+        },
+        {
+          "cls": "crest-reward crest-coin",
+          "x": 542.953125,
+          "y": 477.984375,
+          "right": 608.953125,
+          "bottom": 569.890625,
+          "width": 66,
+          "height": 91.90625
+        },
+        {
+          "cls": "crest-reward crest-bonus crest-ticket",
+          "x": 624.3125,
+          "y": 487.984375,
+          "right": 680.3125,
+          "bottom": 569.890625,
+          "width": 56,
+          "height": 81.90625
+        },
+        {
+          "cls": "crest-reward crest-bonus crest-fragments",
+          "x": 695.671875,
+          "y": 487.984375,
+          "right": 751.671875,
+          "bottom": 569.890625,
+          "width": 56,
+          "height": 81.90625
+        },
+        {
+          "cls": "crest-reward crest-bonus crest-ingredients",
+          "x": 767.03125,
+          "y": 487.984375,
+          "right": 823.03125,
+          "bottom": 569.890625,
+          "width": 56,
+          "height": 81.90625
+        }
+      ],
+      "truncated": false,
+      "overflow": [],
+      "viewport": {
+        "w": 1366,
+        "h": 768
+      },
+      "broken": [],
+      "emoji": false
+    },
+    {
+      "label": "desktop endless drawer",
+      "drawer": {
+        "x": 313,
+        "y": 42.2265625,
+        "right": 1053,
+        "bottom": 695.0234375
+      },
+      "viewport": {
+        "w": 1366,
+        "h": 768
+      },
+      "clock": true,
+      "emoji": false,
+      "overflow": []
+    },
+    {
+      "label": "desktop defeat",
+      "plaque": {
+        "x": 510.1875,
+        "y": 339.1875,
+        "right": 855.8125,
+        "bottom": 588.78125,
+        "width": 345.625,
+        "height": 249.59375
+      },
+      "stage": {
+        "x": 363,
+        "y": 64,
+        "right": 1003,
+        "bottom": 704,
+        "width": 640,
+        "height": 640
+      },
+      "parts": [
+        {
+          "cls": "crest-rank-name",
+          "x": 580.265625,
+          "y": 378.484375,
+          "right": 709.140625,
+          "bottom": 403.671875,
+          "width": 128.875,
+          "height": 25.1875
+        },
+        {
+          "cls": "crest-rank-delta is-protected",
+          "x": 718.09375,
+          "y": 375.171875,
+          "right": 785.71875,
+          "bottom": 406.984375,
+          "width": 67.625,
+          "height": 31.8125
+        },
+        {
+          "cls": "crest-exp-bar",
+          "x": 527.46875,
+          "y": 415.296875,
+          "right": 808.984375,
+          "bottom": 431.296875,
+          "width": 281.515625,
+          "height": 16
+        },
+        {
+          "cls": "crest-exp-count",
+          "x": 816.65625,
+          "y": 415.296875,
+          "right": 838.53125,
+          "bottom": 431.296875,
+          "width": 21.875,
+          "height": 16
+        },
+        {
+          "cls": "crest-reward crest-coin",
+          "x": 614.3125,
+          "y": 466,
+          "right": 680.3125,
+          "bottom": 557.90625,
+          "width": 66,
+          "height": 91.90625
+        },
+        {
+          "cls": "crest-reward crest-bonus crest-ingredients",
+          "x": 695.671875,
+          "y": 476,
+          "right": 751.671875,
+          "bottom": 557.90625,
+          "width": 56,
+          "height": 81.90625
+        }
+      ],
+      "truncated": false,
+      "overflow": [],
+      "viewport": {
+        "w": 1366,
+        "h": 768
+      },
+      "broken": [],
+      "emoji": false
+    },
+    {
+      "label": "desktop defeat drawer",
+      "drawer": {
+        "x": 313,
+        "y": 98.53125,
+        "right": 1053,
+        "bottom": 638.71875
+      },
+      "viewport": {
+        "w": 1366,
+        "h": 768
+      },
+      "clock": true,
+      "emoji": false,
+      "overflow": []
+    },
+    {
+      "label": "mobile-landscape victory",
+      "plaque": {
+        "x": 327.5,
+        "y": 168.5,
+        "right": 516.5,
+        "bottom": 305,
+        "width": 189,
+        "height": 136.5
+      },
+      "stage": {
+        "x": 247,
+        "y": 18,
+        "right": 597,
+        "bottom": 368,
+        "width": 350,
+        "height": 350
+      },
+      "parts": [
+        {
+          "cls": "crest-rank-name",
+          "x": 365.296875,
+          "y": 187.265625,
+          "right": 417.296875,
+          "bottom": 202.859375,
+          "width": 52,
+          "height": 15.59375
+        },
+        {
+          "cls": "crest-rank-delta is-streak",
+          "x": 422.1875,
+          "y": 183.015625,
+          "right": 478.6875,
+          "bottom": 207.109375,
+          "width": 56.5,
+          "height": 24.09375
+        },
+        {
+          "cls": "crest-exp-bar",
+          "x": 336.953125,
+          "y": 213.15625,
+          "right": 480.859375,
+          "bottom": 225.15625,
+          "width": 143.90625,
+          "height": 12
+        },
+        {
+          "cls": "crest-exp-count",
+          "x": 485.046875,
+          "y": 211.65625,
+          "right": 507.046875,
+          "bottom": 226.65625,
+          "width": 22,
+          "height": 15
+        },
+        {
+          "cls": "crest-reward crest-coin",
+          "x": 343.78125,
+          "y": 240.46875,
+          "right": 380.53125,
+          "bottom": 293.265625,
+          "width": 36.75,
+          "height": 52.796875
+        },
+        {
+          "cls": "crest-reward crest-bonus crest-ticket",
+          "x": 388.921875,
+          "y": 245.71875,
+          "right": 420.421875,
+          "bottom": 293.265625,
+          "width": 31.5,
+          "height": 47.546875
+        },
+        {
+          "cls": "crest-reward crest-bonus crest-fragments",
+          "x": 428.8125,
+          "y": 245.71875,
+          "right": 460.3125,
+          "bottom": 293.265625,
+          "width": 31.5,
+          "height": 47.546875
+        },
+        {
+          "cls": "crest-reward crest-bonus crest-ingredients",
+          "x": 468.703125,
+          "y": 245.71875,
+          "right": 500.203125,
+          "bottom": 293.265625,
+          "width": 31.5,
+          "height": 47.546875
+        }
+      ],
+      "truncated": false,
+      "overflow": [],
+      "viewport": {
+        "w": 844,
+        "h": 390
+      },
+      "broken": [],
+      "emoji": false
+    },
+    {
+      "label": "mobile-landscape victory drawer",
+      "drawer": {
+        "x": 59.0859375,
+        "y": 11.6875,
+        "right": 784.9140625,
+        "bottom": 362.6875
+      },
+      "viewport": {
+        "w": 844,
+        "h": 390
+      },
+      "clock": true,
+      "emoji": false,
+      "overflow": []
+    },
+    {
+      "label": "mobile-landscape endless",
+      "plaque": {
+        "x": 327.5,
+        "y": 168.5,
+        "right": 516.5,
+        "bottom": 305,
+        "width": 189,
+        "height": 136.5
+      },
+      "stage": {
+        "x": 247,
+        "y": 18,
+        "right": 597,
+        "bottom": 368,
+        "width": 350,
+        "height": 350
+      },
+      "parts": [
+        {
+          "cls": "crest-rank-name",
+          "x": 365.296875,
+          "y": 178.96875,
+          "right": 417.296875,
+          "bottom": 194.5625,
+          "width": 52,
+          "height": 15.59375
+        },
+        {
+          "cls": "crest-rank-delta is-streak",
+          "x": 422.1875,
+          "y": 174.71875,
+          "right": 478.6875,
+          "bottom": 198.8125,
+          "width": 56.5,
+          "height": 24.09375
+        },
+        {
+          "cls": "crest-exp-bar",
+          "x": 336.953125,
+          "y": 204.859375,
+          "right": 480.859375,
+          "bottom": 216.859375,
+          "width": 143.90625,
+          "height": 12
+        },
+        {
+          "cls": "crest-exp-count",
+          "x": 485.046875,
+          "y": 203.359375,
+          "right": 507.046875,
+          "bottom": 218.359375,
+          "width": 22,
+          "height": 15
+        },
+        {
+          "cls": "crest-endless-capsule",
+          "x": 367.40625,
+          "y": 222.90625,
+          "right": 476.59375,
+          "bottom": 245,
+          "width": 109.1875,
+          "height": 22.09375
+        },
+        {
+          "cls": "crest-reward crest-coin",
+          "x": 343.78125,
+          "y": 248.765625,
+          "right": 380.53125,
+          "bottom": 301.5625,
+          "width": 36.75,
+          "height": 52.796875
+        },
+        {
+          "cls": "crest-reward crest-bonus crest-ticket",
+          "x": 388.921875,
+          "y": 254.015625,
+          "right": 420.421875,
+          "bottom": 301.5625,
+          "width": 31.5,
+          "height": 47.546875
+        },
+        {
+          "cls": "crest-reward crest-bonus crest-fragments",
+          "x": 428.8125,
+          "y": 254.015625,
+          "right": 460.3125,
+          "bottom": 301.5625,
+          "width": 31.5,
+          "height": 47.546875
+        },
+        {
+          "cls": "crest-reward crest-bonus crest-ingredients",
+          "x": 468.703125,
+          "y": 254.015625,
+          "right": 500.203125,
+          "bottom": 301.5625,
+          "width": 31.5,
+          "height": 47.546875
+        }
+      ],
+      "truncated": false,
+      "overflow": [],
+      "viewport": {
+        "w": 844,
+        "h": 390
+      },
+      "broken": [],
+      "emoji": false
+    },
+    {
+      "label": "mobile-landscape endless drawer",
+      "drawer": {
+        "x": 59.0859375,
+        "y": 11.6875,
+        "right": 784.9140625,
+        "bottom": 362.6875
+      },
+      "viewport": {
+        "w": 844,
+        "h": 390
+      },
+      "clock": true,
+      "emoji": false,
+      "overflow": []
+    },
+    {
+      "label": "mobile-landscape defeat",
+      "plaque": {
+        "x": 327.5,
+        "y": 168.5,
+        "right": 516.5,
+        "bottom": 305,
+        "width": 189,
+        "height": 136.5
+      },
+      "stage": {
+        "x": 247,
+        "y": 18,
+        "right": 597,
+        "bottom": 368,
+        "width": 350,
+        "height": 350
+      },
+      "parts": [
+        {
+          "cls": "crest-rank-name",
+          "x": 355.375,
+          "y": 188.265625,
+          "right": 435.15625,
+          "bottom": 203.859375,
+          "width": 79.78125,
+          "height": 15.59375
+        },
+        {
+          "cls": "crest-rank-delta is-protected",
+          "x": 440.046875,
+          "y": 184.015625,
+          "right": 488.625,
+          "bottom": 208.109375,
+          "width": 48.578125,
+          "height": 24.09375
+        },
+        {
+          "cls": "crest-exp-bar",
+          "x": 336.953125,
+          "y": 212.65625,
+          "right": 485.671875,
+          "bottom": 224.65625,
+          "width": 148.71875,
+          "height": 12
+        },
+        {
+          "cls": "crest-exp-count",
+          "x": 489.859375,
+          "y": 212.65625,
+          "right": 507.046875,
+          "bottom": 224.65625,
+          "width": 17.1875,
+          "height": 12
+        },
+        {
+          "cls": "crest-reward crest-coin",
+          "x": 383.671875,
+          "y": 239.46875,
+          "right": 420.421875,
+          "bottom": 292.265625,
+          "width": 36.75,
+          "height": 52.796875
+        },
+        {
+          "cls": "crest-reward crest-bonus crest-ingredients",
+          "x": 428.8125,
+          "y": 244.71875,
+          "right": 460.3125,
+          "bottom": 292.265625,
+          "width": 31.5,
+          "height": 47.546875
+        }
+      ],
+      "truncated": false,
+      "overflow": [],
+      "viewport": {
+        "w": 844,
+        "h": 390
+      },
+      "broken": [],
+      "emoji": false
+    },
+    {
+      "label": "mobile-landscape defeat drawer",
+      "drawer": {
+        "x": 59.0859375,
+        "y": 11.6875,
+        "right": 784.9140625,
+        "bottom": 362.6875
+      },
+      "viewport": {
+        "w": 844,
+        "h": 390
+      },
+      "clock": true,
+      "emoji": false,
+      "overflow": []
+    },
+    {
+      "label": "mobile-portrait victory",
+      "plaque": {
+        "x": 93.90625,
+        "y": 395.78125,
+        "right": 296.078125,
+        "bottom": 541.78125,
+        "width": 202.171875,
+        "height": 146
+      },
+      "stage": {
+        "x": 7.796875,
+        "y": 234.796875,
+        "right": 382.1875,
+        "bottom": 609.1875,
+        "width": 374.390625,
+        "height": 374.390625
+      },
+      "parts": [
+        {
+          "cls": "crest-rank-name",
+          "x": 133.859375,
+          "y": 413.734375,
+          "right": 193.859375,
+          "bottom": 431.734375,
+          "width": 60,
+          "height": 18
+        },
+        {
+          "cls": "crest-rank-delta is-streak",
+          "x": 199.09375,
+          "y": 410.625,
+          "right": 256.109375,
+          "bottom": 434.84375,
+          "width": 57.015625,
+          "height": 24.21875
+        },
+        {
+          "cls": "crest-exp-bar",
+          "x": 104.015625,
+          "y": 441.203125,
+          "right": 259.484375,
+          "bottom": 453.203125,
+          "width": 155.46875,
+          "height": 12
+        },
+        {
+          "cls": "crest-exp-count",
+          "x": 263.96875,
+          "y": 439.703125,
+          "right": 285.96875,
+          "bottom": 454.703125,
+          "width": 22,
+          "height": 15
+        },
+        {
+          "cls": "crest-reward crest-coin",
+          "x": 103.515625,
+          "y": 468.8125,
+          "right": 145.515625,
+          "bottom": 529.921875,
+          "width": 42,
+          "height": 61.109375
+        },
+        {
+          "cls": "crest-reward crest-bonus crest-ticket",
+          "x": 154.5,
+          "y": 472.8125,
+          "right": 192.5,
+          "bottom": 529.921875,
+          "width": 38,
+          "height": 57.109375
+        },
+        {
+          "cls": "crest-reward crest-bonus crest-fragments",
+          "x": 201.484375,
+          "y": 472.8125,
+          "right": 239.484375,
+          "bottom": 529.921875,
+          "width": 38,
+          "height": 57.109375
+        },
+        {
+          "cls": "crest-reward crest-bonus crest-ingredients",
+          "x": 248.46875,
+          "y": 472.8125,
+          "right": 286.46875,
+          "bottom": 529.921875,
+          "width": 38,
+          "height": 57.109375
+        }
+      ],
+      "truncated": false,
+      "overflow": [],
+      "viewport": {
+        "w": 390,
+        "h": 844
+      },
+      "broken": [],
+      "emoji": false
+    },
+    {
+      "label": "mobile-portrait victory drawer",
+      "drawer": {
+        "x": 15.6015625,
+        "y": 46.4140625,
+        "right": 374.3984375,
+        "bottom": 763.8046875
+      },
+      "viewport": {
+        "w": 390,
+        "h": 844
+      },
+      "clock": true,
+      "emoji": false,
+      "overflow": []
+    },
+    {
+      "label": "mobile-portrait endless",
+      "plaque": {
+        "x": 93.90625,
+        "y": 395.78125,
+        "right": 296.078125,
+        "bottom": 541.78125,
+        "width": 202.171875,
+        "height": 146
+      },
+      "stage": {
+        "x": 7.796875,
+        "y": 234.796875,
+        "right": 382.1875,
+        "bottom": 609.1875,
+        "width": 374.390625,
+        "height": 374.390625
+      },
+      "parts": [
+        {
+          "cls": "crest-rank-name",
+          "x": 133.859375,
+          "y": 405.34375,
+          "right": 193.859375,
+          "bottom": 423.34375,
+          "width": 60,
+          "height": 18
+        },
+        {
+          "cls": "crest-rank-delta is-streak",
+          "x": 199.09375,
+          "y": 402.234375,
+          "right": 256.109375,
+          "bottom": 426.453125,
+          "width": 57.015625,
+          "height": 24.21875
+        },
+        {
+          "cls": "crest-exp-bar",
+          "x": 104.015625,
+          "y": 432.8125,
+          "right": 259.484375,
+          "bottom": 444.8125,
+          "width": 155.46875,
+          "height": 12
+        },
+        {
+          "cls": "crest-exp-count",
+          "x": 263.96875,
+          "y": 431.3125,
+          "right": 285.96875,
+          "bottom": 446.3125,
+          "width": 22,
+          "height": 15
+        },
+        {
+          "cls": "crest-endless-capsule",
+          "x": 140.09375,
+          "y": 451.171875,
+          "right": 249.875,
+          "bottom": 473.390625,
+          "width": 109.78125,
+          "height": 22.21875
+        },
+        {
+          "cls": "crest-reward crest-coin",
+          "x": 103.515625,
+          "y": 477.21875,
+          "right": 145.515625,
+          "bottom": 538.328125,
+          "width": 42,
+          "height": 61.109375
+        },
+        {
+          "cls": "crest-reward crest-bonus crest-ticket",
+          "x": 154.5,
+          "y": 481.21875,
+          "right": 192.5,
+          "bottom": 538.328125,
+          "width": 38,
+          "height": 57.109375
+        },
+        {
+          "cls": "crest-reward crest-bonus crest-fragments",
+          "x": 201.484375,
+          "y": 481.21875,
+          "right": 239.484375,
+          "bottom": 538.328125,
+          "width": 38,
+          "height": 57.109375
+        },
+        {
+          "cls": "crest-reward crest-bonus crest-ingredients",
+          "x": 248.46875,
+          "y": 481.21875,
+          "right": 286.46875,
+          "bottom": 538.328125,
+          "width": 38,
+          "height": 57.109375
+        }
+      ],
+      "truncated": false,
+      "overflow": [],
+      "viewport": {
+        "w": 390,
+        "h": 844
+      },
+      "broken": [],
+      "emoji": false
+    },
+    {
+      "label": "mobile-portrait endless drawer",
+      "drawer": {
+        "x": 15.6015625,
+        "y": 46.4140625,
+        "right": 374.3984375,
+        "bottom": 763.8046875
+      },
+      "viewport": {
+        "w": 390,
+        "h": 844
+      },
+      "clock": true,
+      "emoji": false,
+      "overflow": []
+    },
+    {
+      "label": "mobile-portrait defeat",
+      "plaque": {
+        "x": 93.90625,
+        "y": 395.78125,
+        "right": 296.078125,
+        "bottom": 541.78125,
+        "width": 202.171875,
+        "height": 146
+      },
+      "stage": {
+        "x": 7.796875,
+        "y": 234.796875,
+        "right": 382.1875,
+        "bottom": 609.1875,
+        "width": 374.390625,
+        "height": 374.390625
+      },
+      "parts": [
+        {
+          "cls": "crest-rank-name",
+          "x": 121.796875,
+          "y": 414.734375,
+          "right": 213.84375,
+          "bottom": 432.734375,
+          "width": 92.046875,
+          "height": 18
+        },
+        {
+          "cls": "crest-rank-delta is-protected",
+          "x": 219.078125,
+          "y": 411.625,
+          "right": 268.171875,
+          "bottom": 435.84375,
+          "width": 49.09375,
+          "height": 24.21875
+        },
+        {
+          "cls": "crest-exp-bar",
+          "x": 104.015625,
+          "y": 440.703125,
+          "right": 264.296875,
+          "bottom": 452.703125,
+          "width": 160.28125,
+          "height": 12
+        },
+        {
+          "cls": "crest-exp-count",
+          "x": 268.78125,
+          "y": 440.703125,
+          "right": 285.96875,
+          "bottom": 452.703125,
+          "width": 17.1875,
+          "height": 12
+        },
+        {
+          "cls": "crest-reward crest-coin",
+          "x": 150.5,
+          "y": 467.8125,
+          "right": 192.5,
+          "bottom": 528.921875,
+          "width": 42,
+          "height": 61.109375
+        },
+        {
+          "cls": "crest-reward crest-bonus crest-ingredients",
+          "x": 201.484375,
+          "y": 471.8125,
+          "right": 239.484375,
+          "bottom": 528.921875,
+          "width": 38,
+          "height": 57.109375
+        }
+      ],
+      "truncated": false,
+      "overflow": [],
+      "viewport": {
+        "w": 390,
+        "h": 844
+      },
+      "broken": [],
+      "emoji": false
+    },
+    {
+      "label": "mobile-portrait defeat drawer",
+      "drawer": {
+        "x": 15.6015625,
+        "y": 87.515625,
+        "right": 374.3984375,
+        "bottom": 722.703125
+      },
+      "viewport": {
+        "w": 390,
+        "h": 844
+      },
+      "clock": true,
+      "emoji": false,
+      "overflow": []
+    }
+  ],
+  "shots": [
+    "p15-desktop-bath-sunny_backyard-dish_yuzu_bath-0.png",
+    "p15-desktop-bath-sunny_backyard-dish_yuzu_bath-1.png",
+    "p15-desktop-bath-sunny_backyard-dish_yuzu_bath-2.png",
+    "p15-desktop-bath-midnight_kitchen-dish_spicy_hotpot-0.png",
+    "p15-desktop-bath-midnight_kitchen-dish_spicy_hotpot-1.png",
+    "p15-desktop-bath-midnight_kitchen-dish_spicy_hotpot-2.png",
+    "p15-desktop-bath-sakura_onsen-dish_sakura_milk-0.png",
+    "p15-desktop-bath-sakura_onsen-dish_sakura_milk-1.png",
+    "p15-desktop-bath-sakura_onsen-dish_sakura_milk-2.png",
+    "p15-desktop-bath-battlefield.png",
+    "p15-desktop-bath-cat_tower_maze-dish_matcha_tea-0.png",
+    "p15-desktop-bath-cat_tower_maze-dish_matcha_tea-1.png",
+    "p15-desktop-bath-cat_tower_maze-dish_matcha_tea-2.png",
+    "p15-desktop-bath-sunny_backyard-clear-0.png",
+    "p15-desktop-bath-sunny_backyard-clear-1.png",
+    "p15-desktop-bath-sunny_backyard-clear-2.png",
+    "p15-desktop-victory-shield.png",
+    "p15-desktop-victory-report.png",
+    "p15-desktop-endless-shield.png",
+    "p15-desktop-endless-report.png",
+    "p15-desktop-defeat-shield.png",
+    "p15-desktop-defeat-report.png",
+    "p15-mobile-landscape-bath-sunny_backyard-dish_yuzu_bath-0.png",
+    "p15-mobile-landscape-bath-sunny_backyard-dish_yuzu_bath-1.png",
+    "p15-mobile-landscape-bath-sunny_backyard-dish_yuzu_bath-2.png",
+    "p15-mobile-landscape-bath-sakura_onsen-dish_sakura_milk-0.png",
+    "p15-mobile-landscape-bath-sakura_onsen-dish_sakura_milk-1.png",
+    "p15-mobile-landscape-bath-sakura_onsen-dish_sakura_milk-2.png",
+    "p15-mobile-landscape-bath-battlefield.png",
+    "p15-mobile-landscape-victory-shield.png",
+    "p15-mobile-landscape-victory-report.png",
+    "p15-mobile-landscape-endless-shield.png",
+    "p15-mobile-landscape-endless-report.png",
+    "p15-mobile-landscape-defeat-shield.png",
+    "p15-mobile-landscape-defeat-report.png",
+    "p15-mobile-portrait-bath-sunny_backyard-dish_yuzu_bath-0.png",
+    "p15-mobile-portrait-bath-sunny_backyard-dish_yuzu_bath-1.png",
+    "p15-mobile-portrait-bath-sunny_backyard-dish_yuzu_bath-2.png",
+    "p15-mobile-portrait-bath-sakura_onsen-dish_sakura_milk-0.png",
+    "p15-mobile-portrait-bath-sakura_onsen-dish_sakura_milk-1.png",
+    "p15-mobile-portrait-bath-sakura_onsen-dish_sakura_milk-2.png",
+    "p15-mobile-portrait-bath-battlefield.png",
+    "p15-mobile-portrait-victory-shield.png",
+    "p15-mobile-portrait-victory-report.png",
+    "p15-mobile-portrait-endless-shield.png",
+    "p15-mobile-portrait-endless-report.png",
+    "p15-mobile-portrait-defeat-shield.png",
+    "p15-mobile-portrait-defeat-report.png"
+  ],
+  "errors": []
+}

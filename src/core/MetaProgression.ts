@@ -3,6 +3,7 @@ import { HERO_FAMILIES, RARITY_RULES, WEAPONS, rollWeapon } from '../config/weap
 import { PROPS,META_PRICES } from '../config/props';
 import { HEROES } from '../config/heroes';
 import { AVATARS, DEFAULT_AVATARS } from '../config/avatars';
+import { BROTH_IDS, INGREDIENT_IDS, INGREDIENT_STACK_LIMIT, clampBrothLevel, isBrothId, isIngredientId } from '../config/kitchen';
 import { DEFAULT_SETTINGS, getUnlockedMaps, unlockAchievements, updateSettings } from './PlayerProgression';
 import type { Profile } from './types';
 
@@ -19,14 +20,29 @@ const copy = (profile:Profile):Profile => ({...profile,fragments:[...profile.fra
   weaponFragments:{...profile.weaponFragments},unlockedWeapons:[...profile.unlockedWeapons],equippedWeapons:{...profile.equippedWeapons},
   ownedProps:{...profile.ownedProps},equippedActiveProps:[...profile.equippedActiveProps],equippedPassiveProps:[...profile.equippedPassiveProps],
   unlockedAvatars:[...profile.unlockedAvatars],mergedHeroes:[...profile.mergedHeroes],settings:{...profile.settings},
-  shop:profile.shop ? {...profile.shop,offers:[...profile.shop.offers]} : null});
+  shop:profile.shop ? {...profile.shop,offers:[...profile.shop.offers]} : null,
+  ingredients:{...(profile.ingredients??{})},unlockedBroths:[...(profile.unlockedBroths??[])],brothLevels:{...(profile.brothLevels??{})},activeBrothId:profile.activeBrothId??null});
 const fail = (profile:Profile,key:string):MetaResult => ({profile:copy(profile),ok:false,key});
 const success = (profile:Profile,key:string,amount?:number):MetaResult => ({profile:unlockAchievements(profile),ok:true,key,...(amount===undefined?{}:{amount})});
 
 export function createProfile():Profile {
   return {coins:0,wins:0,matches:0,fragments:[],awardedBattles:[],schemaVersion:2,tutorialCompleted:false,tutorialRewardClaimed:false,earlyWaveTipSeen:false,bestEndlessWave:0,
     weaponFragments:{},unlockedWeapons:[],equippedWeapons:{},ownedProps:{},equippedActiveProps:[],equippedPassiveProps:[],freeLotteryTickets:0,shop:null,
-    stars:0,highestStars:0,winStreak:0,bestWinStreak:0,selectedMap:'auto',avatarId:'capybara',unlockedAvatars:[...DEFAULT_AVATARS],mergedHeroes:[],settings:{...DEFAULT_SETTINGS}};
+    stars:0,highestStars:0,winStreak:0,bestWinStreak:0,selectedMap:'auto',avatarId:'capybara',unlockedAvatars:[...DEFAULT_AVATARS],mergedHeroes:[],settings:{...DEFAULT_SETTINGS},
+    // The chef's welcome gift: exactly one Yuzu Calm Soak. No broth is brewed or equipped, so battles stay unchanged.
+    ingredients:{...STARTER_INGREDIENTS},unlockedBroths:[],brothLevels:{},activeBrothId:null};
+}
+/** Granted to brand-new saves and once to pre-P14 saves that never had an `ingredients` field. */
+export const STARTER_INGREDIENTS:Readonly<Record<string,number>>=Object.freeze({ing_yuzu:2});
+function normalizeKitchen(p:Profile,data:Record<string,unknown>):void {
+  if(has(data,'ingredients')){
+    const stock=Object.entries(object(data.ingredients)).filter(([id,n])=>isIngredientId(id)&&count(n)>0);
+    p.ingredients=Object.fromEntries(stock.map(([id,n])=>[id,Math.min(INGREDIENT_STACK_LIMIT,count(n))]));
+  }
+  p.unlockedBroths=unique(strings(data.unlockedBroths).filter(isBrothId));
+  const levels=object(data.brothLevels);
+  p.brothLevels=Object.fromEntries(p.unlockedBroths.map(id=>[id,clampBrothLevel(levels[id])]));
+  p.activeBrothId=typeof data.activeBrothId==='string'&&p.unlockedBroths.includes(data.activeBrothId)?data.activeBrothId:null;
 }
 export function normalizeProfile(raw:unknown):Profile {
   const data=object(raw);const p=createProfile();
@@ -67,6 +83,7 @@ export function normalizeProfile(raw:unknown):Profile {
   p.freeLotteryTickets=count(data.freeLotteryTickets);
   const shop=object(data.shop);
   if(typeof shop.day==='string'&&/^\d{4}-\d{2}-\d{2}$/.test(shop.day)) p.shop={day:shop.day,offers:unique(strings(shop.offers).filter(id=>has(PROPS,id))).slice(0,3)};
+  normalizeKitchen(p,data);
   return unlockAchievements(p);
 }
 export function grantWeaponFragments(profile:Profile,ids:string[]):{profile:Profile;newWeapons:string[]} {
@@ -182,5 +199,9 @@ export function unlockAllProfile(profile:Profile):Profile {
   p.ownedProps=Object.fromEntries(Object.values(PROPS).map(prop=>[prop.id,prop.maxLevel]));
   p.equippedActiveProps=['washer','clay'];p.equippedPassiveProps=['gold_doge','auto_shovel','giant_orange_cat','vip_poster','extra_oranges','promo_badge'];
   if(p.shop) p.shop.offers=[];
+  p.unlockedBroths=[...BROTH_IDS];p.brothLevels=Object.fromEntries(BROTH_IDS.map(id=>[id,3]));
+  p.ingredients=Object.fromEntries(INGREDIENT_IDS.map(id=>[id,99]));
+  // Keep an explicitly chosen soak only; unlocking everything must not equip one for test battles.
+  p.activeBrothId=profile.activeBrothId??null;
   return unlockAchievements(p);
 }

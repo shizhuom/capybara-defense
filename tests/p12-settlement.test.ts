@@ -57,10 +57,11 @@ it('keeps keyboard focus within an open report by making the underlying crest co
 it.each(['zh-CN','en'] as const)('renders bilingual corner controls, status, and loss protection without raw keys (%s)',language=>{
  setLanguage(language);
  const won=resultMarkup(resultInput()),loss=resultMarkup(resultInput(false));
- const expected=language==='en'?['VICTORY','Stats','Continue Challenge','Back to Courtyard']:['守卫成功','数据','继续挑战','返回庭院'];
+ // P15 shortens the corner buttons to one glanceable word each.
+ const expected=language==='en'?['VICTORY','Report','Continue','Back to Courtyard']:['守卫成功','战报','继续出征','返回庭院'];
  for(const text of expected)expect(won).toContain(text);
  expect(loss).toContain(language==='en'?'DEFEAT':'澡盆失守');
- expect(loss).toContain(language==='en'?'Try Again':'再战一局');
+ expect(loss).toContain(language==='en'?'Try Again':'再来一局');
  expect(loss).toContain(t('m3.protected'));
  expect(loss).not.toContain('ui_ticket_gacha');
  expect(loss).toContain(t('result.reason.waves'));

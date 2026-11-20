@@ -1,0 +1,1233 @@
+{
+  "passed": true,
+  "checks": [
+    "desktop: brewable badge, chef mascot flush on tab, 12 cream rows, live brew persisted + auto-equip + aura badge",
+    "desktop: detail ladder, pantry six rows, 60-coin basket opened 3, start pill without overlap",
+    "desktop: tinted tub water, broth pill above passive rail, tooltip expanded inside viewport",
+    "desktop: pause ingredient tray, victory crest +ingredients and shelf, defeat salvage +3 with note",
+    "mobile-landscape: brewable badge, chef mascot flush on tab, 12 cream rows, live brew persisted + auto-equip + aura badge",
+    "mobile-landscape: detail ladder, pantry six rows, 60-coin basket opened 3, start pill without overlap",
+    "mobile-landscape: tinted tub water, broth pill above passive rail, tooltip expanded inside viewport",
+    "mobile-landscape: pause ingredient tray, victory crest +ingredients and shelf, defeat salvage +3 with note",
+    "mobile-portrait: brewable badge, chef mascot flush on tab, 12 cream rows, live brew persisted + auto-equip + aura badge",
+    "mobile-portrait: detail ladder, pantry six rows, 60-coin basket opened 3, start pill without overlap",
+    "mobile-portrait: tinted tub water, broth pill above passive rail, tooltip expanded inside viewport",
+    "mobile-portrait: pause ingredient tray, victory crest +ingredients and shelf, defeat salvage +3 with note"
+  ],
+  "layouts": [
+    {
+      "label": "desktop start fresh start boxes",
+      "boxes": {
+        ".profile-pill": {
+          "x": 19.4375,
+          "y": 13.8125,
+          "right": 275.21875,
+          "bottom": 92.78125,
+          "width": 255.78125,
+          "height": 78.96875
+        },
+        ".menu-system": {
+          "x": 1184.625,
+          "y": 13.8125,
+          "right": 1346.546875,
+          "bottom": 68.390625,
+          "width": 161.921875,
+          "height": 54.578125
+        },
+        ".art-title": {
+          "x": 259.734375,
+          "y": 4.844228744506836,
+          "right": 1106.234375,
+          "bottom": 287.00047874450684,
+          "width": 846.5,
+          "height": 282.15625
+        },
+        ".start-button": {
+          "x": 471.359375,
+          "y": 497.640625,
+          "right": 894.609375,
+          "bottom": 676.703125,
+          "width": 423.25,
+          "height": 179.0625
+        },
+        ".map-chips": {
+          "x": 483.4140625,
+          "y": 711.21875,
+          "right": 882.5546875,
+          "bottom": 752.625,
+          "width": 399.140625,
+          "height": 41.40625
+        },
+        ".hub-dock-left": {
+          "x": 27.625,
+          "y": 629.65625,
+          "right": 322.484375,
+          "bottom": 746.484375,
+          "width": 294.859375,
+          "height": 116.828125
+        },
+        ".hub-dock-right": {
+          "x": 1148.609375,
+          "y": 629.65625,
+          "right": 1338.359375,
+          "bottom": 746.484375,
+          "width": 189.75,
+          "height": 116.828125
+        },
+        ".active-broth-pill": null,
+        "[data-action=\"kitchen\"].kitchen-dock-button": {
+          "x": 237.84375,
+          "y": 629.65625,
+          "right": 322.484375,
+          "bottom": 746.484375,
+          "width": 84.640625,
+          "height": 116.828125
+        }
+      },
+      "buttons": [
+        {
+          "a": "recipes",
+          "x": 27.625,
+          "y": 629.65625,
+          "right": 112.265625,
+          "bottom": 746.484375
+        },
+        {
+          "a": "armory",
+          "x": 132.734375,
+          "y": 629.65625,
+          "right": 217.375,
+          "bottom": 746.484375
+        },
+        {
+          "a": "kitchen",
+          "x": 237.84375,
+          "y": 629.65625,
+          "right": 322.484375,
+          "bottom": 746.484375
+        },
+        {
+          "a": "market",
+          "x": 1148.609375,
+          "y": 629.65625,
+          "right": 1233.25,
+          "bottom": 746.484375
+        },
+        {
+          "a": "leaderboard",
+          "x": 1253.71875,
+          "y": 629.65625,
+          "right": 1338.359375,
+          "bottom": 746.484375
+        }
+      ]
+    },
+    {
+      "label": "desktop kitchen broths",
+      "width": 1366,
+      "height": 768,
+      "overflow": [],
+      "boxes": [
+        {
+          "sel": "#game-dialog[open]",
+          "x": 343,
+          "y": 38.40625,
+          "right": 1023,
+          "bottom": 729.59375
+        },
+        {
+          "sel": "#game-dialog[open] .ledger-body",
+          "x": 343,
+          "y": 182.90625,
+          "right": 1023,
+          "bottom": 677
+        },
+        {
+          "sel": "#game-dialog[open] .storybook-footer-tip",
+          "x": 343,
+          "y": 677,
+          "right": 1023,
+          "bottom": 729.59375
+        }
+      ],
+      "broken": [],
+      "raw": false
+    },
+    {
+      "label": "desktop dish detail",
+      "width": 1366,
+      "height": 768,
+      "overflow": [],
+      "boxes": [
+        {
+          "sel": "#game-dialog[open] .ledger-body",
+          "x": 343,
+          "y": 182.90625,
+          "right": 1023,
+          "bottom": 677
+        }
+      ],
+      "broken": [],
+      "raw": false
+    },
+    {
+      "label": "desktop pantry basket",
+      "width": 1366,
+      "height": 768,
+      "overflow": [],
+      "boxes": [
+        {
+          "sel": "#game-dialog[open] .ledger-body",
+          "x": 343,
+          "y": 182.90625,
+          "right": 1023,
+          "bottom": 677
+        }
+      ],
+      "broken": [],
+      "raw": false
+    },
+    {
+      "label": "desktop start with pill start boxes",
+      "boxes": {
+        ".profile-pill": {
+          "x": 19.4375,
+          "y": 13.8125,
+          "right": 275.21875,
+          "bottom": 92.78125,
+          "width": 255.78125,
+          "height": 78.96875
+        },
+        ".menu-system": {
+          "x": 1184.625,
+          "y": 13.8125,
+          "right": 1346.546875,
+          "bottom": 68.390625,
+          "width": 161.921875,
+          "height": 54.578125
+        },
+        ".art-title": {
+          "x": 259.734375,
+          "y": 6.019674777984619,
+          "right": 1106.234375,
+          "bottom": 288.1759247779846,
+          "width": 846.5,
+          "height": 282.15625
+        },
+        ".start-button": {
+          "x": 471.359375,
+          "y": 497.640625,
+          "right": 894.609375,
+          "bottom": 676.703125,
+          "width": 423.25,
+          "height": 179.0625
+        },
+        ".map-chips": {
+          "x": 483.4140625,
+          "y": 711.21875,
+          "right": 882.5546875,
+          "bottom": 752.625,
+          "width": 399.140625,
+          "height": 41.40625
+        },
+        ".hub-dock-left": {
+          "x": 27.625,
+          "y": 629.65625,
+          "right": 322.484375,
+          "bottom": 746.484375,
+          "width": 294.859375,
+          "height": 116.828125
+        },
+        ".hub-dock-right": {
+          "x": 1148.609375,
+          "y": 629.65625,
+          "right": 1338.359375,
+          "bottom": 746.484375,
+          "width": 189.75,
+          "height": 116.828125
+        },
+        ".active-broth-pill": {
+          "x": 19.4375,
+          "y": 93.6875,
+          "right": 201.625,
+          "bottom": 136.640625,
+          "width": 182.1875,
+          "height": 42.953125
+        },
+        "[data-action=\"kitchen\"].kitchen-dock-button": {
+          "x": 237.84375,
+          "y": 629.65625,
+          "right": 322.484375,
+          "bottom": 746.484375,
+          "width": 84.640625,
+          "height": 116.828125
+        },
+        "letters": {
+          "x": 471.359375,
+          "y": 6.019674777984619,
+          "right": 1063.909375,
+          "bottom": 288.1759247779846,
+          "width": 846.5,
+          "height": 282.15625
+        },
+        "rotate": {
+          "x": 0,
+          "y": 0,
+          "right": 0,
+          "bottom": 0,
+          "width": 0,
+          "height": 0
+        }
+      },
+      "buttons": [
+        {
+          "a": "recipes",
+          "x": 27.625,
+          "y": 629.65625,
+          "right": 112.265625,
+          "bottom": 746.484375
+        },
+        {
+          "a": "armory",
+          "x": 132.734375,
+          "y": 629.65625,
+          "right": 217.375,
+          "bottom": 746.484375
+        },
+        {
+          "a": "kitchen",
+          "x": 237.84375,
+          "y": 629.65625,
+          "right": 322.484375,
+          "bottom": 746.484375
+        },
+        {
+          "a": "market",
+          "x": 1148.609375,
+          "y": 629.65625,
+          "right": 1233.25,
+          "bottom": 746.484375
+        },
+        {
+          "a": "leaderboard",
+          "x": 1253.71875,
+          "y": 629.65625,
+          "right": 1338.359375,
+          "bottom": 746.484375
+        }
+      ]
+    },
+    {
+      "label": "desktop battle rail",
+      "width": 1366,
+      "height": 768,
+      "overflow": [],
+      "boxes": [
+        {
+          "sel": "#passive-rail",
+          "x": 1287.171875,
+          "y": 138.234375,
+          "right": 1347.234375,
+          "bottom": 585.578125
+        }
+      ],
+      "broken": [],
+      "raw": false
+    },
+    {
+      "label": "desktop pause",
+      "width": 1366,
+      "height": 768,
+      "overflow": [],
+      "boxes": [
+        {
+          "sel": "#game-dialog[open] .pause-storybook-board",
+          "x": 413,
+          "y": 203.875,
+          "right": 953,
+          "bottom": 534.125
+        }
+      ],
+      "broken": [],
+      "raw": false
+    },
+    {
+      "label": "desktop report",
+      "width": 1366,
+      "height": 768,
+      "overflow": [],
+      "boxes": [
+        {
+          "sel": "#game-dialog[open] .crest-stats-drawer",
+          "x": 313,
+          "y": 120.28125,
+          "right": 1053,
+          "bottom": 616.96875
+        }
+      ],
+      "broken": [],
+      "raw": false
+    },
+    {
+      "label": "desktop defeat report",
+      "width": 1366,
+      "height": 768,
+      "overflow": [],
+      "boxes": [
+        {
+          "sel": "#game-dialog[open] .crest-stats-drawer",
+          "x": 313,
+          "y": 107.1875,
+          "right": 1053,
+          "bottom": 630.0625
+        }
+      ],
+      "broken": [],
+      "raw": false
+    },
+    {
+      "label": "desktop kitchen en",
+      "width": 1366,
+      "height": 768,
+      "overflow": [],
+      "boxes": [
+        {
+          "sel": "#game-dialog[open] .ledger-body",
+          "x": 343,
+          "y": 182.90625,
+          "right": 1023,
+          "bottom": 677
+        }
+      ],
+      "broken": [],
+      "raw": false
+    },
+    {
+      "label": "mobile-landscape start fresh start boxes",
+      "boxes": {
+        ".profile-pill": {
+          "x": 85.03125,
+          "y": 7.015625,
+          "right": 251.0625,
+          "bottom": 61.328125,
+          "width": 166.03125,
+          "height": 54.3125
+        },
+        ".menu-system": {
+          "x": 665.40625,
+          "y": 7.015625,
+          "right": 758.953125,
+          "bottom": 41.109375,
+          "width": 93.546875,
+          "height": 34.09375
+        },
+        ".art-title": {
+          "x": 207.0546875,
+          "y": 1.7561501264572144,
+          "right": 636.9140625,
+          "bottom": 145.03740012645721,
+          "width": 429.859375,
+          "height": 143.28125
+        },
+        ".start-button": {
+          "x": 314.5234375,
+          "y": 252.703125,
+          "right": 529.4453125,
+          "bottom": 343.625,
+          "width": 214.921875,
+          "height": 90.921875
+        },
+        ".map-chips": {
+          "x": 284.34375,
+          "y": 353.15625,
+          "right": 559.625,
+          "bottom": 382.1875,
+          "width": 275.28125,
+          "height": 29.03125
+        },
+        ".hub-dock-left": {
+          "x": 89.1875,
+          "y": 314.640625,
+          "right": 259.96875,
+          "bottom": 386.09375,
+          "width": 170.78125,
+          "height": 71.453125
+        },
+        ".hub-dock-right": {
+          "x": 644.40625,
+          "y": 314.640625,
+          "right": 754.796875,
+          "bottom": 386.09375,
+          "width": 110.390625,
+          "height": 71.453125
+        },
+        ".active-broth-pill": null,
+        "[data-action=\"kitchen\"].kitchen-dock-button": {
+          "x": 209.96875,
+          "y": 314.640625,
+          "right": 259.96875,
+          "bottom": 386.09375,
+          "width": 50,
+          "height": 71.453125
+        }
+      },
+      "buttons": [
+        {
+          "a": "recipes",
+          "x": 89.1875,
+          "y": 314.640625,
+          "right": 139.1875,
+          "bottom": 386.09375
+        },
+        {
+          "a": "armory",
+          "x": 149.578125,
+          "y": 314.640625,
+          "right": 199.578125,
+          "bottom": 386.09375
+        },
+        {
+          "a": "kitchen",
+          "x": 209.96875,
+          "y": 314.640625,
+          "right": 259.96875,
+          "bottom": 386.09375
+        },
+        {
+          "a": "market",
+          "x": 644.40625,
+          "y": 314.640625,
+          "right": 694.40625,
+          "bottom": 386.09375
+        },
+        {
+          "a": "leaderboard",
+          "x": 704.796875,
+          "y": 314.640625,
+          "right": 754.796875,
+          "bottom": 386.09375
+        }
+      ]
+    },
+    {
+      "label": "mobile-landscape kitchen broths",
+      "width": 844,
+      "height": 390,
+      "overflow": [],
+      "boxes": [
+        {
+          "sel": "#game-dialog[open]",
+          "x": 92,
+          "y": 9.75,
+          "right": 752,
+          "bottom": 380.25
+        },
+        {
+          "sel": "#game-dialog[open] .ledger-body",
+          "x": 92,
+          "y": 111.4375,
+          "right": 752,
+          "bottom": 344.375
+        },
+        {
+          "sel": "#game-dialog[open] .storybook-footer-tip",
+          "x": 92,
+          "y": 344.375,
+          "right": 752,
+          "bottom": 380.25
+        }
+      ],
+      "broken": [],
+      "raw": false
+    },
+    {
+      "label": "mobile-landscape dish detail",
+      "width": 844,
+      "height": 390,
+      "overflow": [],
+      "boxes": [
+        {
+          "sel": "#game-dialog[open] .ledger-body",
+          "x": 92,
+          "y": 111.4375,
+          "right": 752,
+          "bottom": 344.375
+        }
+      ],
+      "broken": [],
+      "raw": false
+    },
+    {
+      "label": "mobile-landscape pantry basket",
+      "width": 844,
+      "height": 390,
+      "overflow": [],
+      "boxes": [
+        {
+          "sel": "#game-dialog[open] .ledger-body",
+          "x": 92,
+          "y": 111.4375,
+          "right": 752,
+          "bottom": 344.375
+        }
+      ],
+      "broken": [],
+      "raw": false
+    },
+    {
+      "label": "mobile-landscape start with pill start boxes",
+      "boxes": {
+        ".profile-pill": {
+          "x": 85.03125,
+          "y": 7.015625,
+          "right": 251.0625,
+          "bottom": 61.328125,
+          "width": 166.03125,
+          "height": 54.3125
+        },
+        ".menu-system": {
+          "x": 665.40625,
+          "y": 7.015625,
+          "right": 758.953125,
+          "bottom": 41.109375,
+          "width": 93.546875,
+          "height": 34.09375
+        },
+        ".art-title": {
+          "x": 207.0546875,
+          "y": 3.0065829753875732,
+          "right": 636.9140625,
+          "bottom": 146.28783297538757,
+          "width": 429.859375,
+          "height": 143.28125
+        },
+        ".start-button": {
+          "x": 314.5234375,
+          "y": 252.703125,
+          "right": 529.4453125,
+          "bottom": 343.625,
+          "width": 214.921875,
+          "height": 90.921875
+        },
+        ".map-chips": {
+          "x": 284.34375,
+          "y": 353.15625,
+          "right": 559.625,
+          "bottom": 382.1875,
+          "width": 275.28125,
+          "height": 29.03125
+        },
+        ".hub-dock-left": {
+          "x": 89.1875,
+          "y": 314.640625,
+          "right": 259.96875,
+          "bottom": 386.09375,
+          "width": 170.78125,
+          "height": 71.453125
+        },
+        ".hub-dock-right": {
+          "x": 644.40625,
+          "y": 314.640625,
+          "right": 754.796875,
+          "bottom": 386.09375,
+          "width": 110.390625,
+          "height": 71.453125
+        },
+        ".active-broth-pill": {
+          "x": 85.03125,
+          "y": 66,
+          "right": 215.703125,
+          "bottom": 96,
+          "width": 130.671875,
+          "height": 30
+        },
+        "[data-action=\"kitchen\"].kitchen-dock-button": {
+          "x": 209.96875,
+          "y": 314.640625,
+          "right": 259.96875,
+          "bottom": 386.09375,
+          "width": 50,
+          "height": 71.453125
+        },
+        "letters": {
+          "x": 314.51953125,
+          "y": 3.0065829753875732,
+          "right": 615.42109375,
+          "bottom": 146.28783297538757,
+          "width": 429.859375,
+          "height": 143.28125
+        },
+        "rotate": {
+          "x": 0,
+          "y": 0,
+          "right": 0,
+          "bottom": 0,
+          "width": 0,
+          "height": 0
+        }
+      },
+      "buttons": [
+        {
+          "a": "recipes",
+          "x": 89.1875,
+          "y": 314.640625,
+          "right": 139.1875,
+          "bottom": 386.09375
+        },
+        {
+          "a": "armory",
+          "x": 149.578125,
+          "y": 314.640625,
+          "right": 199.578125,
+          "bottom": 386.09375
+        },
+        {
+          "a": "kitchen",
+          "x": 209.96875,
+          "y": 314.640625,
+          "right": 259.96875,
+          "bottom": 386.09375
+        },
+        {
+          "a": "market",
+          "x": 644.40625,
+          "y": 314.640625,
+          "right": 694.40625,
+          "bottom": 386.09375
+        },
+        {
+          "a": "leaderboard",
+          "x": 704.796875,
+          "y": 314.640625,
+          "right": 754.796875,
+          "bottom": 386.09375
+        }
+      ]
+    },
+    {
+      "label": "mobile-landscape battle rail",
+      "width": 844,
+      "height": 390,
+      "overflow": [],
+      "boxes": [
+        {
+          "sel": "#passive-rail",
+          "x": 728.796875,
+          "y": 70.1875,
+          "right": 759.296875,
+          "bottom": 324.1875
+        }
+      ],
+      "broken": [],
+      "raw": false
+    },
+    {
+      "label": "mobile-landscape pause",
+      "width": 844,
+      "height": 390,
+      "overflow": [],
+      "boxes": [
+        {
+          "sel": "#game-dialog[open] .pause-storybook-board",
+          "x": 152,
+          "y": 78.5,
+          "right": 692,
+          "bottom": 277.5
+        }
+      ],
+      "broken": [],
+      "raw": false
+    },
+    {
+      "label": "mobile-landscape report",
+      "width": 844,
+      "height": 390,
+      "overflow": [],
+      "boxes": [
+        {
+          "sel": "#game-dialog[open] .crest-stats-drawer",
+          "x": 59.0859375,
+          "y": 11.6875,
+          "right": 784.9140625,
+          "bottom": 362.6875
+        }
+      ],
+      "broken": [],
+      "raw": false
+    },
+    {
+      "label": "mobile-landscape defeat report",
+      "width": 844,
+      "height": 390,
+      "overflow": [],
+      "boxes": [
+        {
+          "sel": "#game-dialog[open] .crest-stats-drawer",
+          "x": 59.0859375,
+          "y": 11.6875,
+          "right": 784.9140625,
+          "bottom": 362.6875
+        }
+      ],
+      "broken": [],
+      "raw": false
+    },
+    {
+      "label": "mobile-landscape kitchen en",
+      "width": 844,
+      "height": 390,
+      "overflow": [],
+      "boxes": [
+        {
+          "sel": "#game-dialog[open] .ledger-body",
+          "x": 92,
+          "y": 111.4375,
+          "right": 752,
+          "bottom": 344.375
+        }
+      ],
+      "broken": [],
+      "raw": false
+    },
+    {
+      "label": "mobile-portrait start fresh start boxes",
+      "boxes": {
+        ".profile-pill": {
+          "x": 5.453125,
+          "y": 260.3125,
+          "right": 161.46875,
+          "bottom": 304.3125,
+          "width": 156.015625,
+          "height": 44
+        },
+        ".menu-system": {
+          "x": 279.234375,
+          "y": 260.3125,
+          "right": 384.546875,
+          "bottom": 304.3125,
+          "width": 105.3125,
+          "height": 44
+        },
+        ".art-title": {
+          "x": 74.1015625,
+          "y": 312.8177490234375,
+          "right": 315.8984375,
+          "bottom": 393.4114990234375,
+          "width": 241.796875,
+          "height": 80.59375
+        },
+        ".start-button": {
+          "x": 134.5546875,
+          "y": 454.453125,
+          "right": 255.4453125,
+          "bottom": 505.59375,
+          "width": 120.890625,
+          "height": 51.140625
+        },
+        ".map-chips": {
+          "x": 86.5,
+          "y": 581.6875,
+          "right": 303.5,
+          "bottom": 621.6875,
+          "width": 217,
+          "height": 40
+        },
+        ".hub-dock-left": {
+          "x": 7.796875,
+          "y": 505.359375,
+          "right": 177.796875,
+          "bottom": 575.296875,
+          "width": 170,
+          "height": 69.9375
+        },
+        ".hub-dock-right": {
+          "x": 272.203125,
+          "y": 505.359375,
+          "right": 382.203125,
+          "bottom": 575.296875,
+          "width": 110,
+          "height": 69.9375
+        },
+        ".active-broth-pill": null,
+        "[data-action=\"kitchen\"].kitchen-dock-button": {
+          "x": 127.796875,
+          "y": 505.359375,
+          "right": 177.796875,
+          "bottom": 575.296875,
+          "width": 50,
+          "height": 69.9375
+        }
+      },
+      "buttons": [
+        {
+          "a": "recipes",
+          "x": 7.796875,
+          "y": 505.359375,
+          "right": 57.796875,
+          "bottom": 575.296875
+        },
+        {
+          "a": "armory",
+          "x": 67.796875,
+          "y": 505.359375,
+          "right": 117.796875,
+          "bottom": 575.296875
+        },
+        {
+          "a": "kitchen",
+          "x": 127.796875,
+          "y": 505.359375,
+          "right": 177.796875,
+          "bottom": 575.296875
+        },
+        {
+          "a": "market",
+          "x": 272.203125,
+          "y": 505.359375,
+          "right": 322.203125,
+          "bottom": 575.296875
+        },
+        {
+          "a": "leaderboard",
+          "x": 332.203125,
+          "y": 505.359375,
+          "right": 382.203125,
+          "bottom": 575.296875
+        }
+      ]
+    },
+    {
+      "label": "mobile-portrait kitchen broths",
+      "width": 390,
+      "height": 844,
+      "overflow": [],
+      "boxes": [
+        {
+          "sel": "#game-dialog[open]",
+          "x": 11.703125,
+          "y": 37.984375,
+          "right": 378.296875,
+          "bottom": 806.015625
+        },
+        {
+          "sel": "#game-dialog[open] .ledger-body",
+          "x": 11.703125,
+          "y": 176.484375,
+          "right": 378.296875,
+          "bottom": 745.625
+        },
+        {
+          "sel": "#game-dialog[open] .storybook-footer-tip",
+          "x": 11.703125,
+          "y": 745.625,
+          "right": 378.296875,
+          "bottom": 806.015625
+        }
+      ],
+      "broken": [],
+      "raw": false
+    },
+    {
+      "label": "mobile-portrait dish detail",
+      "width": 390,
+      "height": 844,
+      "overflow": [],
+      "boxes": [
+        {
+          "sel": "#game-dialog[open] .ledger-body",
+          "x": 11.703125,
+          "y": 176.484375,
+          "right": 378.296875,
+          "bottom": 745.625
+        }
+      ],
+      "broken": [],
+      "raw": false
+    },
+    {
+      "label": "mobile-portrait pantry basket",
+      "width": 390,
+      "height": 844,
+      "overflow": [],
+      "boxes": [
+        {
+          "sel": "#game-dialog[open] .ledger-body",
+          "x": 11.703125,
+          "y": 176.484375,
+          "right": 378.296875,
+          "bottom": 745.625
+        }
+      ],
+      "broken": [],
+      "raw": false
+    },
+    {
+      "label": "mobile-portrait start with pill start boxes",
+      "boxes": {
+        ".profile-pill": {
+          "x": 5.453125,
+          "y": 260.3125,
+          "right": 161.46875,
+          "bottom": 304.3125,
+          "width": 156.015625,
+          "height": 44
+        },
+        ".menu-system": {
+          "x": 279.234375,
+          "y": 260.3125,
+          "right": 384.546875,
+          "bottom": 304.3125,
+          "width": 105.3125,
+          "height": 44
+        },
+        ".art-title": {
+          "x": 74.1015625,
+          "y": 313.9585266113281,
+          "right": 315.8984375,
+          "bottom": 394.5522766113281,
+          "width": 241.796875,
+          "height": 80.59375
+        },
+        ".start-button": {
+          "x": 134.5546875,
+          "y": 454.453125,
+          "right": 255.4453125,
+          "bottom": 505.59375,
+          "width": 120.890625,
+          "height": 51.140625
+        },
+        ".map-chips": {
+          "x": 86.5,
+          "y": 581.6875,
+          "right": 303.5,
+          "bottom": 621.6875,
+          "width": 217,
+          "height": 40
+        },
+        ".hub-dock-left": {
+          "x": 7.796875,
+          "y": 505.359375,
+          "right": 177.796875,
+          "bottom": 575.296875,
+          "width": 170,
+          "height": 69.9375
+        },
+        ".hub-dock-right": {
+          "x": 272.203125,
+          "y": 505.359375,
+          "right": 382.203125,
+          "bottom": 575.296875,
+          "width": 110,
+          "height": 69.9375
+        },
+        ".active-broth-pill": {
+          "x": 128.7421875,
+          "y": 625.6875,
+          "right": 261.2578125,
+          "bottom": 657.6875,
+          "width": 132.515625,
+          "height": 32
+        },
+        "[data-action=\"kitchen\"].kitchen-dock-button": {
+          "x": 127.796875,
+          "y": 505.359375,
+          "right": 177.796875,
+          "bottom": 575.296875,
+          "width": 50,
+          "height": 69.9375
+        },
+        "letters": {
+          "x": 134.55078125,
+          "y": 313.9585266113281,
+          "right": 303.80859375,
+          "bottom": 394.5522766113281,
+          "width": 241.796875,
+          "height": 80.59375
+        },
+        "rotate": {
+          "x": 8,
+          "y": 669.6875,
+          "right": 382,
+          "bottom": 709.6875,
+          "width": 374,
+          "height": 40
+        }
+      },
+      "buttons": [
+        {
+          "a": "recipes",
+          "x": 7.796875,
+          "y": 505.359375,
+          "right": 57.796875,
+          "bottom": 575.296875
+        },
+        {
+          "a": "armory",
+          "x": 67.796875,
+          "y": 505.359375,
+          "right": 117.796875,
+          "bottom": 575.296875
+        },
+        {
+          "a": "kitchen",
+          "x": 127.796875,
+          "y": 505.359375,
+          "right": 177.796875,
+          "bottom": 575.296875
+        },
+        {
+          "a": "market",
+          "x": 272.203125,
+          "y": 505.359375,
+          "right": 322.203125,
+          "bottom": 575.296875
+        },
+        {
+          "a": "leaderboard",
+          "x": 332.203125,
+          "y": 505.359375,
+          "right": 382.203125,
+          "bottom": 575.296875
+        }
+      ]
+    },
+    {
+      "label": "mobile-portrait battle rail",
+      "width": 390,
+      "height": 844,
+      "overflow": [],
+      "boxes": [
+        {
+          "sel": "#passive-rail",
+          "x": 368.5625,
+          "y": 353.984375,
+          "right": 388.0625,
+          "bottom": 556.0625
+        }
+      ],
+      "broken": [],
+      "raw": false
+    },
+    {
+      "label": "mobile-portrait pause",
+      "width": 390,
+      "height": 844,
+      "overflow": [],
+      "boxes": [
+        {
+          "sel": "#game-dialog[open] .pause-storybook-board",
+          "x": 19.5,
+          "y": 204,
+          "right": 370.5,
+          "bottom": 610
+        }
+      ],
+      "broken": [],
+      "raw": false
+    },
+    {
+      "label": "mobile-portrait report",
+      "width": 390,
+      "height": 844,
+      "overflow": [],
+      "boxes": [
+        {
+          "sel": "#game-dialog[open] .crest-stats-drawer",
+          "x": 15.6015625,
+          "y": 46.4140625,
+          "right": 374.3984375,
+          "bottom": 763.8046875
+        }
+      ],
+      "broken": [],
+      "raw": false
+    },
+    {
+      "label": "mobile-portrait defeat report",
+      "width": 390,
+      "height": 844,
+      "overflow": [],
+      "boxes": [
+        {
+          "sel": "#game-dialog[open] .crest-stats-drawer",
+          "x": 15.6015625,
+          "y": 92.171875,
+          "right": 374.3984375,
+          "bottom": 718.046875
+        }
+      ],
+      "broken": [],
+      "raw": false
+    },
+    {
+      "label": "mobile-portrait kitchen en",
+      "width": 390,
+      "height": 844,
+      "overflow": [],
+      "boxes": [
+        {
+          "sel": "#game-dialog[open] .ledger-body",
+          "x": 11.703125,
+          "y": 176.484375,
+          "right": 378.296875,
+          "bottom": 728.828125
+        }
+      ],
+      "broken": [],
+      "raw": false
+    }
+  ],
+  "shots": [
+    "p14-desktop-1-start-brewable.png",
+    "p14-desktop-2a-kitchen-broths.png",
+    "p14-desktop-2b-kitchen-brewed-yuzu.png",
+    "p14-desktop-3a-dish-detail.png",
+    "p14-desktop-3b-dish-detail-ladder.png",
+    "p14-desktop-3c-pantry.png",
+    "p14-desktop-3d-basket-opened.png",
+    "p14-desktop-1b-start-active-pill.png",
+    "p14-desktop-4a-battle-sakura-water.png",
+    "p14-desktop-4b-broth-tooltip.png",
+    "p14-desktop-4d-pause-ingredients.png",
+    "p14-desktop-5a-victory-shield.png",
+    "p14-desktop-5b-victory-report-shelf.png",
+    "p14-desktop-5c-defeat-shield.png",
+    "p14-desktop-5d-defeat-report-salvage.png",
+    "p14-desktop-6-kitchen-en.png",
+    "p14-desktop-4c-battle-dish_yuzu_bath.png",
+    "p14-desktop-4c-battle-dish_herbal_tonic.png",
+    "p14-mobile-landscape-1-start-brewable.png",
+    "p14-mobile-landscape-2a-kitchen-broths.png",
+    "p14-mobile-landscape-2b-kitchen-brewed-yuzu.png",
+    "p14-mobile-landscape-3a-dish-detail.png",
+    "p14-mobile-landscape-3b-dish-detail-ladder.png",
+    "p14-mobile-landscape-3c-pantry.png",
+    "p14-mobile-landscape-3d-basket-opened.png",
+    "p14-mobile-landscape-1b-start-active-pill.png",
+    "p14-mobile-landscape-4a-battle-sakura-water.png",
+    "p14-mobile-landscape-4b-broth-tooltip.png",
+    "p14-mobile-landscape-4d-pause-ingredients.png",
+    "p14-mobile-landscape-5a-victory-shield.png",
+    "p14-mobile-landscape-5b-victory-report-shelf.png",
+    "p14-mobile-landscape-5c-defeat-shield.png",
+    "p14-mobile-landscape-5d-defeat-report-salvage.png",
+    "p14-mobile-landscape-6-kitchen-en.png",
+    "p14-mobile-portrait-1-start-brewable.png",
+    "p14-mobile-portrait-2a-kitchen-broths.png",
+    "p14-mobile-portrait-2b-kitchen-brewed-yuzu.png",
+    "p14-mobile-portrait-3a-dish-detail.png",
+    "p14-mobile-portrait-3b-dish-detail-ladder.png",
+    "p14-mobile-portrait-3c-pantry.png",
+    "p14-mobile-portrait-3d-basket-opened.png",
+    "p14-mobile-portrait-1b-start-active-pill.png",
+    "p14-mobile-portrait-4a-battle-sakura-water.png",
+    "p14-mobile-portrait-4b-broth-tooltip.png",
+    "p14-mobile-portrait-4d-pause-ingredients.png",
+    "p14-mobile-portrait-5a-victory-shield.png",
+    "p14-mobile-portrait-5b-victory-report-shelf.png",
+    "p14-mobile-portrait-5c-defeat-shield.png",
+    "p14-mobile-portrait-5d-defeat-report-salvage.png",
+    "p14-mobile-portrait-6-kitchen-en.png"
+  ],
+  "errors": []
+}

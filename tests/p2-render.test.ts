@@ -195,5 +195,5 @@ describe('P2 captured combat effects and bench tools',()=>{
   expect(calls.find(c=>c.name==='drawImage'&&c.args[0]===art)?.filter).toBe('brightness(0) invert(1)');
  });
  it('draws no projectile geometry for a captured melee kind',()=>{const {c,calls}=surface();expect(drawCombatEvent(c,{id:1,type:'projectile',side:'player',col:1,row:1,targetCol:2,targetRow:1,effect:'corgi',age:.1,duration:.25},[])).toBe(true);expect(calls.filter(c=>!['save','restore'].includes(c.name))).toHaveLength(0);});
- it('ships exactly the 221 safe optional sprite IDs',()=>{const ids=JSON.parse(readFileSync('public/assets/sprites/manifest.json','utf8'));expect(ids).toHaveLength(221);for(const id of [...Object.values(DEFAULT_HELD_WEAPONS),'vfx_slash_spin','vfx_muzzle_flash'])expect(ids).toContain(id);});
+ it('ships exactly the 255 safe optional sprite IDs',()=>{const ids=JSON.parse(readFileSync('public/assets/sprites/manifest.json','utf8'));expect(ids).toHaveLength(255);for(const id of [...Object.values(DEFAULT_HELD_WEAPONS),'vfx_slash_spin','vfx_muzzle_flash'])expect(ids).toContain(id);});
 });

@@ -35,18 +35,25 @@ describe('P10 native map bath fusion',()=>{
   vi.spyOn(assets,'get').mockImplementation(id=>({capybara_soak:soak,orange,capybara:old}[id]));
   const {renderer,calls}=surface();renderer.drawGuardian(spot.id,3,0);
   const art=calls.filter(c=>c.name==='drawImage');expect(art.filter(c=>c.args[0]===soak)).toHaveLength(1);
-  const body=art.find(c=>c.args[0]===soak)!;expect(body.matrix).toEqual([1,0,0,1,spot.x,spot.y]);
+  // P15: the guardian now breathes (bob, squash, slow tilt) but stays anchored on the painted water centre.
+  const body=art.find(c=>c.args[0]===soak)!;expect(Math.abs(body.matrix[4]-spot.x)).toBeLessThan(1);expect(Math.abs(body.matrix[5]-spot.y)).toBeLessThan(1);
+  for(const [value,ideal] of [[body.matrix[0],1],[body.matrix[3],1],[body.matrix[1],0],[body.matrix[2],0]])expect(Math.abs(value-ideal)).toBeLessThan(.035);
   expect(body.args.slice(1)).toEqual([-spot.size/2,-spot.size/2,spot.size,spot.size]);expect(art.some(c=>c.args[0]===old)).toBe(false);
-  const fruit=art.filter(c=>c.args[0]===orange);expect(fruit.map(c=>c.matrix[5])).toEqual([spot.orangeY,spot.orangeY-15,spot.orangeY-30]);
-  expect(calls.some(c=>c.name==='ellipse'&&c.args[1]===spot.size*.22)).toBe(true);
+  const fruit=art.filter(c=>c.args[0]===orange);expect(fruit).toHaveLength(3);
+  fruit.forEach((c,i)=>expect(Math.abs(c.matrix[5]-(spot.orangeY-15*i))).toBeLessThan(2));
+  const water=GUARDIAN_BATH_SPOTS[spot.id].water;
+  expect(calls.some(c=>c.name==='ellipse'&&c.args[0]===water.x&&c.args[1]===water.y&&c.args[2]===water.rx+1&&c.args[3]===water.ry+1)).toBe(true);
+  expect(calls.some(c=>c.name==='clip')).toBe(true);
   expect(GUARDIAN_BATH_SPOTS[spot.id]).toMatchObject({x:spot.x,y:spot.y,size:spot.size,orangeBaseY:spot.orangeY-spot.y});
  });
  it.each(expected)('keeps the dizzy guardian upright inside the $id water',spot=>{
   const dizzy=image('capybara_soak_dizzy');vi.spyOn(assets,'get').mockImplementation(id=>id==='capybara_soak_dizzy'?dizzy:undefined);
   const{renderer,calls}=surface();renderer.drawGuardian(spot.id,0,1);
   const body=calls.find(c=>c.name==='drawImage'&&c.args[0]===dizzy)!;
-  expect(body.matrix.slice(0,4)).toEqual([1,0,0,1]);expect(body.matrix[4]).toBeCloseTo(spot.x+Math.sin(6)*1.2);expect(body.matrix[5]).toBe(spot.y+1);
-  expect(calls.some(c=>c.name==='rotate')).toBe(false);
+  // A gentle dizzy sway (≤0.05 rad) replaces the old rigid shake; the guardian never tips over.
+  expect(Math.abs(body.matrix[1])).toBeLessThan(.06);expect(Math.abs(body.matrix[2])).toBeLessThan(.06);
+  expect(Math.abs(body.matrix[4]-spot.x)).toBeLessThan(2.5);expect(Math.abs(body.matrix[5]-spot.y)).toBeLessThan(3);
+  expect(calls.filter(c=>c.name==='rotate').every(c=>Math.abs(Number(c.args[0]))<=.06)).toBe(true);
  });
  it.each(expected)('starts orange loss and gain from the aligned $id stack',spot=>{
   const state=new BattleEngine({mapId:spot.id,autoWaves:false}).state,{renderer}=surface();state.sides.player.oranges=3;
@@ -60,13 +67,13 @@ describe('P10 native map bath fusion',()=>{
   const{renderer,calls}=surface();renderer.drawGuardian('sakura_onsen',0,0);
   expect(calls.some(c=>c.name==='drawImage')).toBe(false);expect(calls.some(c=>c.name==='ellipse')).toBe(true);
   expect(calls.some(c=>c.name==='stroke'&&Number(c.lineWidth)>4)).toBe(false);
-  expect(calls.some(c=>c.name==='rotate')).toBe(false);
+  expect(calls.filter(c=>c.name==='rotate').every(c=>Math.abs(Number(c.args[0]))<=.06)).toBe(true);
  });
 });
 describe('P10 art assets and transparent offline fallbacks',()=>{
- it('ships 221 unique PNGs and the four exact transparent art sizes',()=>{
+ it('ships 255 unique PNGs and the four exact transparent art sizes',()=>{
   const root='public/assets/sprites/',ids=JSON.parse(readFileSync(root+'manifest.json','utf8')) as string[];
-  expect(ids).toHaveLength(221);expect(new Set(ids).size).toBe(221);expect(readdirSync(root).filter(f=>f.endsWith('.png'))).toHaveLength(221);
+  expect(ids).toHaveLength(255);expect(new Set(ids).size).toBe(255);expect(readdirSync(root).filter(f=>f.endsWith('.png'))).toHaveLength(255);
   expect(P10_SCENE_IDS).toEqual(['capybara_soak','capybara_soak_dizzy','ui_compendium_peek_capy','ui_storybook_check']);
   for(const id of P10_SCENE_IDS){expect(ids).toContain(id);const png=readFileSync(root+id+'.png'),size=id==='ui_storybook_check'?128:256;
    expect([png.readUInt32BE(16),png.readUInt32BE(20),png[25]]).toEqual([size,size,6]);}

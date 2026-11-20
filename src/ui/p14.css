@@ -1,0 +1,196 @@
+/* P14 Onsen Kitchen. The dialog also carries .meta-dialog, so the P11 cocoa folder shell applies untouched. */
+
+/* ── Start screen: third left medallion + today's soak pill ─────────────────────────── */
+#menu-screen .hub-dock .kitchen-dock-button .medallion { background:radial-gradient(circle at 50% 42%,#fff8e6 0%,#fbe7c0 72%,#f2d39b 100%); }
+#menu-screen .hub-dock small.kitchen-brew-badge { right:-1.1cqw;background:#f6c84c;color:#4a2c10;border-color:#a8771f;font-weight:900;white-space:nowrap;animation:kitchen-brew-glow 1.9s ease-in-out infinite; }
+#menu-screen .hub-dock small.kitchen-progress-badge { white-space:nowrap; }
+@keyframes kitchen-brew-glow {
+  0%,100% { box-shadow:0 0 0 0 rgba(246,200,76,.0),0 1px 0 #a8771f; transform:scale(1); }
+  50% { box-shadow:0 0 9px 3px rgba(255,214,102,.85),0 1px 0 #a8771f; transform:scale(1.06); }
+}
+#menu-screen .active-broth-pill {
+  position:absolute;left:1.4%;top:12.2%;z-index:1;display:flex;align-items:center;gap:.45cqw;max-width:21%;min-height:0;
+  padding:.3cqw .85cqw .3cqw .35cqw;border:1.5px solid #8a6a3f;border-radius:999px;background:rgba(255,246,224,.92);
+  box-shadow:0 .25cqw 0 rgba(68,45,25,.28);color:#3e2822;font-size:max(12px,1.2cqw);font-weight:900;line-height:1.2;
+}
+#menu-screen .active-broth-pill>span:first-child { display:grid;place-items:center;flex:none;width:max(24px,2.4cqw);height:max(24px,2.4cqw);border-radius:50%;background:color-mix(in srgb,var(--broth-color,#f6c84c) 42%,#fffaf0); }
+#menu-screen .active-broth-pill :is(svg,img) { width:max(22px,2.2cqw);height:max(22px,2.2cqw); }
+#menu-screen .active-broth-pill .active-broth-name { min-width:0;overflow:hidden;white-space:nowrap;text-overflow:ellipsis; }
+#menu-screen .active-broth-pill>b { flex:none;padding:0 .4cqw;border-radius:999px;background:#e8eccc;color:#3d5a2b;font-size:max(11px,1cqw); }
+#menu-screen .active-broth-pill:hover { background:#fff8e6;transform:translateY(-1px); }
+
+/* ── Kitchen ledger ─────────────────────────────────────────────────────────────────── */
+#game-dialog.kitchen-dialog .kitchen-aura-badge [data-sticker] { width:18px;height:18px; }
+#game-dialog.kitchen-dialog .storybook-frame.tone-kitchen { background:#f6ecdc; }
+#game-dialog.kitchen-dialog .storybook-frame.tone-kitchen.is-active { border-color:#b8862e;background:#fff3d6;box-shadow:0 0 0 3px #f3d27a; }
+#game-dialog.kitchen-dialog .ledger-body .kitchen-level { display:inline-block;margin-left:4px;padding:1px 8px;border-radius:999px;background:#e8eccc;color:#3d5a2b!important;font-size:12.5px!important;font-weight:900;line-height:1.35;vertical-align:3px;white-space:nowrap; }
+#game-dialog.kitchen-dialog .ledger-body .kitchen-level.is-locked { background:#ebe2d6;color:#6f5a4e!important; }
+
+/* Today's soak strip */
+#game-dialog.kitchen-dialog .kitchen-active-strip {
+  display:grid;grid-template-columns:56px minmax(0,1fr) auto;align-items:center;gap:12px;margin:0 0 14px;padding:10px 14px;
+  background:linear-gradient(90deg,#fbe9c9,#f8efdf);border:1.5px solid #d9b98a;border-radius:12px;box-shadow:0 3px 0 #7a5f5224;
+}
+#game-dialog.kitchen-dialog .kitchen-active-strip.is-empty { grid-template-columns:56px minmax(0,1fr); }
+#game-dialog.kitchen-dialog .kitchen-active-art { display:grid;place-items:center;width:56px;height:56px;border-radius:50%;background:radial-gradient(circle,#fffaf0 30%,color-mix(in srgb,var(--broth-color,#f6c84c) 38%,#fffaf0) 100%); }
+#game-dialog.kitchen-dialog .kitchen-active-art [data-sticker] { width:50px;height:50px; }
+#game-dialog.kitchen-dialog .kitchen-active-copy { display:flex;flex-direction:column;gap:2px;min-width:0; }
+#game-dialog.kitchen-dialog .ledger-body .kitchen-active-copy small { color:#7a5a3f!important;font-size:12.5px!important;font-weight:900; }
+#game-dialog.kitchen-dialog .ledger-body .kitchen-active-copy strong { color:#3e2822!important;font-size:17px!important;font-weight:900;line-height:1.3; }
+#game-dialog.kitchen-dialog .ledger-body .kitchen-active-copy :is(span,p) { margin:0;color:#594039!important;font-size:14px!important;font-weight:700;line-height:1.4;overflow-wrap:break-word; }
+#game-dialog.kitchen-dialog .ledger-body .kitchen-unequip { min-height:34px;padding:6px 14px;border:1.5px solid #8a6a3f;border-radius:999px;background:#fffaf0;color:#5a3d2a!important;font-size:13.5px!important;font-weight:900;box-shadow:none;white-space:nowrap; }
+
+/* Recipe rows: one open-detail button plus an independent action column (no nested buttons). */
+#game-dialog.kitchen-dialog .kitchen-row { display:grid;grid-template-columns:minmax(0,1fr) 104px;align-items:center; }
+#game-dialog.kitchen-dialog .kitchen-row.is-active { background:#fff7e5;border-color:#d4b062;box-shadow:0 3px 0 #b8862e33; }
+#game-dialog.kitchen-dialog .ledger-body .kitchen-row-open {
+  display:grid;grid-template-columns:82px minmax(0,1fr);align-items:center;gap:14px;min-width:0;min-height:106px;margin:0;padding:12px 4px 12px 14px;
+  border:0;border-radius:11px 0 0 11px;background:none;box-shadow:none;color:inherit;text-align:left;font:inherit;cursor:pointer;
+}
+#game-dialog.kitchen-dialog .ledger-body .kitchen-row-open:hover { background:#f7f0e6; }
+#game-dialog.kitchen-dialog .ledger-body .kitchen-row-open:focus-visible { outline-offset:-4px; }
+#game-dialog.kitchen-dialog .kitchen-row .storybook-action-col { padding:10px 12px 10px 4px; }
+#game-dialog.kitchen-dialog .kitchen-cost-chips { display:flex;flex-wrap:wrap;gap:5px;margin-top:1px; }
+#game-dialog.kitchen-dialog .ledger-body .kitchen-cost-chip { display:inline-flex;align-items:center;gap:3px;padding:1px 8px 1px 3px;border:1px solid;border-radius:999px;font-size:12.5px!important;font-weight:900;line-height:1.3; }
+#game-dialog.kitchen-dialog .kitchen-cost-chip>span { display:flex; }
+#game-dialog.kitchen-dialog .kitchen-cost-chip [data-sticker] { width:20px;height:20px; }
+#game-dialog.kitchen-dialog .ledger-body .kitchen-cost-chip.is-ready { background:#e4efd2;border-color:#8fa86a;color:#2f5124!important; }
+#game-dialog.kitchen-dialog .ledger-body .kitchen-cost-chip.is-short { background:#f4e5d6;border-color:#c49a78;color:#7a4a2e!important; }
+#game-dialog.kitchen-dialog .ledger-body .kitchen-cost-chip b { color:inherit!important;font-size:inherit!important; }
+#game-dialog.kitchen-dialog .ledger-body .kitchen-mastered { color:#8a6a2e!important;font-size:13px!important;font-weight:900; }
+#game-dialog.kitchen-dialog .ledger-body .kitchen-short-label { display:inline-flex;align-items:center;justify-content:center;min-height:32px;padding:4px 10px;border-radius:999px;background:#e9e3da;color:#7a6a5e!important;font-size:13px!important;font-weight:800; }
+#game-dialog.kitchen-dialog .ledger-body .kitchen-brew-btn { background:linear-gradient(180deg,#f3e08f,#d6dc8c);border-color:#7f7a2c;color:#3b3a0f!important;font-weight:900;box-shadow:0 2px 0 #7f7a2c66; }
+#game-dialog.kitchen-dialog .ledger-body .kitchen-brew-btn:not(:disabled):hover { filter:brightness(1.05);transform:translateY(-1px); }
+#game-dialog.kitchen-dialog .ledger-body .kitchen-equip-btn.equipped { background:#7e9455;border-color:#55683a;color:#fffdf5!important; }
+#game-dialog.kitchen-dialog .ledger-body .kitchen-upgrade-tag { min-height:0;padding:2px 8px;border:1px dashed #b8862e;border-radius:999px;background:#fff3d2;color:#8a5a12!important;font-size:12px!important;font-weight:900;box-shadow:none;white-space:nowrap; }
+
+/* Dish detail sheet */
+#game-dialog.kitchen-dialog .storybook-detail-showcase>.storybook-frame { background:radial-gradient(circle,#fffaf0 35%,color-mix(in srgb,var(--broth-color,#f6c84c) 30%,#fffaf0) 100%); }
+#game-dialog.kitchen-dialog .kitchen-detail-tags { display:flex;flex-wrap:wrap;justify-content:center;gap:6px; }
+#game-dialog.kitchen-dialog .ledger-body .kitchen-detail-tags span { padding:2px 10px;border-radius:999px;background:#f6ecd8;color:#5a3d2a!important;font-size:13px!important;font-weight:900; }
+#game-dialog.kitchen-dialog .ledger-body .kitchen-story { max-width:470px;margin:0;color:#594039!important;font-size:15.5px!important;line-height:1.55; }
+#game-dialog.kitchen-dialog .ledger-body .kitchen-ladder h4,#game-dialog.kitchen-dialog .ledger-body .kitchen-source-hint h4 { margin:0 0 8px;color:#3e2822!important;font-size:16px!important;text-align:center; }
+#game-dialog.kitchen-dialog .kitchen-ladder ol { display:flex;flex-direction:column;gap:8px;margin:0;padding:0;list-style:none; }
+#game-dialog.kitchen-dialog .kitchen-ladder-step { display:flex;flex-direction:column;gap:5px;padding:10px 12px;border:1.5px solid #e5dbd0;border-radius:10px;background:#f7f1e8; }
+#game-dialog.kitchen-dialog .kitchen-ladder-step.is-reached { background:#eef2de;border-color:#b9c793; }
+#game-dialog.kitchen-dialog .kitchen-ladder-step.is-current { border-color:#c9a24a;box-shadow:inset 0 0 0 1.5px #f3d27a; }
+#game-dialog.kitchen-dialog .kitchen-ladder-head { display:flex;align-items:center;gap:8px; }
+#game-dialog.kitchen-dialog .ledger-body .kitchen-ladder-head b { padding:1px 8px;border-radius:999px;background:#5e4636;color:#fffaf0!important;font-size:12.5px!important; }
+#game-dialog.kitchen-dialog .ledger-body .kitchen-ladder-head>span { color:#3e2822!important;font-size:14.5px!important;font-weight:900; }
+#game-dialog.kitchen-dialog .kitchen-ladder-head [data-sticker] { width:20px;height:20px;margin-left:auto; }
+#game-dialog.kitchen-dialog .ledger-body .kitchen-ladder-effect { color:#594039!important;font-size:14px!important;font-weight:700;line-height:1.45; }
+#game-dialog.kitchen-dialog .kitchen-detail-actions { display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:10px; }
+#game-dialog.kitchen-dialog .ledger-body .kitchen-detail-actions .storybook-equip-btn { min-width:min(100%,190px);min-height:42px;font-size:15.5px!important; }
+#game-dialog.kitchen-dialog .ledger-body .kitchen-detail-actions .kitchen-upgrade-btn { background:linear-gradient(180deg,#f8d98f,#f0c46a);border-color:#9a6a1f;color:#4a2c10!important;font-weight:900; }
+#game-dialog.kitchen-dialog .ledger-body .kitchen-detail-actions button:disabled { opacity:.6;filter:saturate(.6);cursor:not-allowed; }
+#game-dialog.kitchen-dialog .kitchen-source-hint { padding:10px 12px;border-radius:10px;background:#f4ece1; }
+#game-dialog.kitchen-dialog .kitchen-source-hint ul { display:flex;flex-direction:column;gap:6px;margin:0;padding:0;list-style:none; }
+#game-dialog.kitchen-dialog .kitchen-source-hint li { display:flex;align-items:center;gap:10px; }
+#game-dialog.kitchen-dialog .kitchen-source-hint li [data-sticker] { width:34px;height:34px;flex:none; }
+#game-dialog.kitchen-dialog .kitchen-source-hint li>span { display:flex;flex-direction:column;min-width:0; }
+#game-dialog.kitchen-dialog .ledger-body .kitchen-source-hint b { color:#3e2822!important;font-size:14px!important; }
+#game-dialog.kitchen-dialog .ledger-body .kitchen-source-hint small { color:#594039!important;font-size:13px!important;line-height:1.4; }
+
+/* Pantry & mystery basket */
+#game-dialog.kitchen-dialog .kitchen-ingredient-row { display:grid;grid-template-columns:72px minmax(0,1fr) 70px;align-items:center;gap:14px;padding:12px 14px; }
+#game-dialog.kitchen-dialog .kitchen-ingredient-row>.storybook-frame { width:72px;height:72px; }
+#game-dialog.kitchen-dialog .kitchen-ingredient-row>.storybook-frame [data-sticker] { width:60px;height:60px; }
+#game-dialog.kitchen-dialog .ledger-body .kitchen-source { color:#6b4e3f!important;font-weight:800; }
+#game-dialog.kitchen-dialog .kitchen-stock { display:flex;flex-direction:column;align-items:center;gap:0; }
+#game-dialog.kitchen-dialog .ledger-body .kitchen-stock small { color:#7a5a3f!important;font-size:12px!important;font-weight:800; }
+#game-dialog.kitchen-dialog .ledger-body .kitchen-stock b { color:#3e2822!important;font-size:25px!important;font-weight:900;line-height:1.1;font-variant-numeric:tabular-nums; }
+#game-dialog.kitchen-dialog .kitchen-ingredient-row.unowned .kitchen-stock b { color:#a08a7c!important; }
+#game-dialog.kitchen-dialog .kitchen-basket-card { margin:14px 0 0;padding:16px;background:linear-gradient(180deg,#fff6e3,#fcefd6);border:1.5px solid #e2c99b;border-radius:12px;box-shadow:0 3px 0 #7a5f5224; }
+#game-dialog.kitchen-dialog .kitchen-basket-heading { display:flex;align-items:center;gap:14px; }
+#game-dialog.kitchen-dialog .kitchen-basket-heading>.storybook-frame { width:76px;height:76px; }
+#game-dialog.kitchen-dialog .kitchen-basket-heading>.storybook-frame [data-sticker] { width:64px;height:64px; }
+#game-dialog.kitchen-dialog .ledger-body .kitchen-basket-heading h3 { margin:0; }
+#game-dialog.kitchen-dialog .kitchen-basket-result { margin:12px 0 0;padding:10px;border:1.5px dashed #d9b98a;border-radius:12px;background:#fffaf0;text-align:center; }
+#game-dialog.kitchen-dialog .ledger-body .kitchen-basket-result p { margin:0 0 6px;color:#5a3d2a!important;font-size:14px!important;font-weight:900; }
+#game-dialog.kitchen-dialog .kitchen-basket-result ul { display:flex;flex-wrap:wrap;justify-content:center;gap:12px;margin:0;padding:0;list-style:none; }
+#game-dialog.kitchen-dialog .kitchen-basket-result li { display:flex;flex-direction:column;align-items:center;gap:3px;min-width:72px;animation:kitchen-basket-pop .42s cubic-bezier(.2,.9,.3,1.4) both; }
+#game-dialog.kitchen-dialog .kitchen-basket-result li:nth-child(2) { animation-delay:.08s; }
+#game-dialog.kitchen-dialog .kitchen-basket-result li:nth-child(3) { animation-delay:.16s; }
+#game-dialog.kitchen-dialog .kitchen-basket-result li [data-sticker] { width:52px;height:52px; }
+#game-dialog.kitchen-dialog .ledger-body .kitchen-basket-result li>span { color:#3e2822!important;font-size:13px!important;font-weight:900; }
+@keyframes kitchen-basket-pop { from { opacity:0;transform:translateY(8px) scale(.7); } to { opacity:1;transform:none; } }
+#game-dialog.kitchen-dialog .kitchen-basket-buy { display:flex;flex-direction:column;align-items:center;gap:6px;margin-top:12px; }
+#game-dialog.kitchen-dialog .ledger-body .kitchen-basket-btn { width:min(100%,360px);min-height:44px;background:linear-gradient(180deg,#f8dd94,#f0c763);border-color:#9a6a1f;color:#4a2c10!important;font-size:15.5px!important;font-weight:900;box-shadow:0 2px 0 #9a6a1f66; }
+#game-dialog.kitchen-dialog .ledger-body .kitchen-basket-btn:disabled { opacity:.6;filter:saturate(.5); }
+#game-dialog.kitchen-dialog .ledger-body .kitchen-basket-buy small { display:flex;align-items:center;gap:4px;color:#6b4e3f!important;font-size:13px!important;font-weight:800; }
+#game-dialog.kitchen-dialog .kitchen-basket-buy small [data-sticker] { width:18px;height:18px; }
+
+/* ── Battle: today's soak above the passive rail ─────────────────────────────────── */
+.broth-rail-pill { position:relative;flex:none;display:grid;place-items:center;width:3.9cqw;height:3.9cqw;margin-bottom:.25cqw;padding:.16cqw;border:2px solid #8a6a3f;border-radius:50%;
+  background:radial-gradient(circle,#fffaf0 40%,color-mix(in srgb,var(--broth-color,#f6c84c) 45%,#fffaf0) 100%);box-shadow:0 0 0 2px #fff6dfcc,0 2px 6px #00000040;color:#2e2019;cursor:pointer; }
+.broth-rail-pill>span:first-child :is(img,svg) { display:block;width:3.2cqw;height:3.2cqw; }
+.broth-rail-pill>small { position:absolute;right:-.45cqw;bottom:-.25cqw;border:1px solid #8a6a3f;border-radius:6px;background:#fff1c9;color:#4a2c10;font-size:max(8px,.72cqw);font-weight:900;padding:0 3px;line-height:1.3;pointer-events:none; }
+.broth-rail-pill.broth-empty { border-style:dashed;background:#fff8eb99;box-shadow:none; }
+.broth-rail-pill.broth-empty>span:first-child :is(img,svg) { width:2.7cqw;height:2.7cqw;opacity:.82; }
+.broth-rail-pill.broth-empty>small { right:-.2cqw;bottom:-.2cqw;background:#fff8eb;font-size:max(10px,.9cqw); }
+.broth-rail-pill:is(:focus-visible,.is-expanded) { outline:3px solid #e3bc5b;outline-offset:2px; }
+.broth-rail-pill .broth-tooltip em { display:block;margin-bottom:2px;color:#8a5a12;font-style:normal;font-size:max(11px,.9cqw);font-weight:900; }
+.broth-rail-pill .broth-tooltip .broth-tooltip-live { margin-top:6px;padding-top:5px;border-top:1px dashed #c9b28d;color:#4e6a35;font-size:max(11px,.9cqw); }
+.broth-rail-pill:is(:focus-visible,.is-expanded) .passive-tooltip { display:block; }
+@media(hover:hover) { .broth-rail-pill:hover .passive-tooltip { display:block; } }
+
+/* ── Pause & settlement ingredients ──────────────────────────────────────────────── */
+#game-dialog.pause-ledger .pause-ingredients h3 { display:flex;align-items:center;gap:6px; }
+#game-dialog.pause-ledger .pause-ingredients h3 [data-sticker] { width:30px;height:30px; }
+#game-dialog.result-ledger .crest-ingredients>[data-sticker] { object-fit:contain; }
+#game-dialog.result-ledger .ingredient-salvage-note { display:flex;align-items:center;justify-content:center;gap:6px;margin:8px auto 0;max-width:420px;color:#5a3d2a;font-size:13.5px;font-weight:800;line-height:1.4;text-align:left; }
+#game-dialog.result-ledger .ingredient-salvage-note [data-sticker] { width:28px;height:28px;flex:none; }
+
+@media (max-height:500px) and (orientation:landscape) {
+  /* The profile pill stops shrinking at ~54px here; sit just beneath it, clear of the title art. */
+  #menu-screen .active-broth-pill { top:66px;max-width:24%;padding:2px 9px 2px 3px;font-size:12px; }
+  #game-dialog.kitchen-dialog .kitchen-active-strip { grid-template-columns:44px minmax(0,1fr) auto;gap:10px;padding:7px 10px;margin-bottom:10px; }
+  #game-dialog.kitchen-dialog .kitchen-active-strip.is-empty { grid-template-columns:44px minmax(0,1fr); }
+  #game-dialog.kitchen-dialog .kitchen-active-art { width:44px;height:44px; }
+  #game-dialog.kitchen-dialog .kitchen-active-art [data-sticker] { width:40px;height:40px; }
+  #game-dialog.kitchen-dialog .ledger-body .kitchen-active-copy strong { font-size:15px!important; }
+  #game-dialog.kitchen-dialog .ledger-body .kitchen-active-copy :is(span,p) { font-size:12.5px!important; }
+  #game-dialog.kitchen-dialog .kitchen-row { grid-template-columns:minmax(0,1fr) 96px; }
+  #game-dialog.kitchen-dialog .ledger-body .kitchen-row-open { grid-template-columns:68px minmax(0,1fr);gap:12px;min-height:88px;padding:9px 4px 9px 12px; }
+  #game-dialog.kitchen-dialog .kitchen-ingredient-row { grid-template-columns:62px minmax(0,1fr) 60px;gap:12px;padding:9px 12px; }
+  #game-dialog.kitchen-dialog .kitchen-ingredient-row>.storybook-frame { width:62px;height:62px; }
+  #game-dialog.kitchen-dialog .kitchen-ingredient-row>.storybook-frame [data-sticker] { width:52px;height:52px; }
+  #game-dialog.kitchen-dialog .kitchen-basket-card { padding:12px; }
+}
+@media (max-width:600px) and (orientation:portrait) {
+  #game-dialog.kitchen-dialog .kitchen-active-strip { grid-template-columns:44px minmax(0,1fr);gap:9px;padding:9px 10px; }
+  #game-dialog.kitchen-dialog .kitchen-active-art { width:44px;height:44px; }
+  #game-dialog.kitchen-dialog .kitchen-active-art [data-sticker] { width:40px;height:40px; }
+  #game-dialog.kitchen-dialog .ledger-body .kitchen-unequip { grid-column:1 / -1;justify-self:end;min-height:30px;padding:4px 12px; }
+  #game-dialog.kitchen-dialog .ledger-body .kitchen-active-copy strong { font-size:15.5px!important; }
+  #game-dialog.kitchen-dialog .ledger-body .kitchen-active-copy :is(span,p) { font-size:13px!important; }
+  #game-dialog.kitchen-dialog .kitchen-row { grid-template-columns:minmax(0,1fr) 78px; }
+  #game-dialog.kitchen-dialog .ledger-body .kitchen-row-open { grid-template-columns:60px minmax(0,1fr);gap:9px;min-height:102px;padding:11px 2px 11px 9px; }
+  #game-dialog.kitchen-dialog .kitchen-row .storybook-action-col { padding:8px 8px 8px 2px; }
+  #game-dialog.kitchen-dialog .ledger-body .kitchen-level { font-size:11.5px!important;padding:1px 6px; }
+  #game-dialog.kitchen-dialog .ledger-body .kitchen-cost-chip { font-size:11.5px!important;padding:1px 6px 1px 2px; }
+  #game-dialog.kitchen-dialog .kitchen-cost-chip [data-sticker] { width:18px;height:18px; }
+  #game-dialog.kitchen-dialog .ledger-body .kitchen-short-label { font-size:12px!important;padding:4px 6px; }
+  #game-dialog.kitchen-dialog .ledger-body .kitchen-upgrade-tag { font-size:11px!important;padding:2px 5px; }
+  #game-dialog.kitchen-dialog .kitchen-ingredient-row { grid-template-columns:56px minmax(0,1fr) 52px;gap:9px;padding:11px 9px; }
+  #game-dialog.kitchen-dialog .kitchen-ingredient-row>.storybook-frame { width:56px;height:56px; }
+  #game-dialog.kitchen-dialog .kitchen-ingredient-row>.storybook-frame [data-sticker] { width:48px;height:48px; }
+  #game-dialog.kitchen-dialog .ledger-body .kitchen-stock b { font-size:21px!important; }
+  #game-dialog.kitchen-dialog .kitchen-basket-card { padding:12px; }
+  #game-dialog.kitchen-dialog .kitchen-basket-heading { align-items:flex-start;gap:10px; }
+  #game-dialog.kitchen-dialog .kitchen-basket-heading>.storybook-frame { width:60px;height:60px; }
+  #game-dialog.kitchen-dialog .kitchen-basket-heading>.storybook-frame [data-sticker] { width:50px;height:50px; }
+  #game-dialog.kitchen-dialog .kitchen-ladder-step { padding:9px 10px; }
+  .broth-rail-pill { width:4.8cqw;height:4.8cqw;border-width:1.5px; }
+  .broth-rail-pill>span:first-child :is(img,svg) { width:4cqw;height:4cqw; }
+  .broth-rail-pill>small { font-size:7px;right:-1px;bottom:-4px;padding:0 2px; }
+}
+@media (max-width:760px) and (orientation:portrait) {
+  /* Portrait keeps the panorama clean: the soak pill joins the map chips in the lower letterbox. */
+  .page-shell #menu-screen .active-broth-pill { top:calc(100% + 94px);left:50%;max-width:calc(100% - 24px);transform:translateX(-50%);padding:3px 10px 3px 4px;font-size:13px; }
+  .page-shell #menu-screen .active-broth-pill:hover { transform:translateX(-50%) translateY(-1px); }
+  .page-shell:has(#menu-screen:not([hidden]) .active-broth-pill) .rotate-hint { top:calc(50dvh + 28.125vw + 138px); }
+}
+@media (prefers-reduced-motion:reduce) {
+  #menu-screen .hub-dock small.kitchen-brew-badge,#game-dialog.kitchen-dialog .kitchen-basket-result li { animation:none; }
+}

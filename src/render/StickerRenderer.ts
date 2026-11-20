@@ -2,6 +2,8 @@ import type { BattleLoadout, BattleState, Enemy, Interaction, MapId, Side, Stage
 import {combatRange,combatCharge} from '../core/CombatRules';
 import { getMap, STAGE } from '../config/maps';
 import {GUARDIAN_BATH_SPOTS} from '../config/guardianBaths';
+import {getActiveBroth} from '../config/kitchen';
+import {drawGuardianBath,HAPPY_DURATION,rgba} from './GuardianBathRenderer';
 import {EnemyMotion} from './EnemyMotion';
 import {UnitMotion} from './UnitMotion';
 import {drawPuppetSprite} from './SpritePuppetAnimator';
@@ -38,6 +40,8 @@ export class StickerRenderer {
   private pixelRatio = 0;
   private lastSeconds = 0;
   private sceneSeconds = 0;
+  private guardianHappyUntil=Number.NEGATIVE_INFINITY;
+  private guardianMoodEventId=0;
   private battleId = '';
   private readonly unitPositions = new Map<number, Position>();
   private previousOranges: Record<Side,number> | null = null;
@@ -78,6 +82,7 @@ export class StickerRenderer {
     const dt=fresh||state.phase==='paused'?0:clamp(seconds-this.lastSeconds,0,.1); this.lastSeconds=seconds;
     if(this.battleId!==state.id) {
       this.battleId=state.id; this.unitPositions.clear(); this.previousOranges=null; this.orangeMotions=[];this.enemyMotion.clear();this.unitMotion.clear();this.dust=[];
+      this.guardianHappyUntil=Number.NEGATIVE_INFINITY;this.guardianMoodEventId=state.events.reduce((max,event)=>Math.max(max,event.id),0);
       this.sceneSeconds=seconds;
     }
     // Integrate only visible playing frames: resuming must never jump to wall time.
@@ -93,7 +98,8 @@ export class StickerRenderer {
     this.drawBoard(state,seconds);
     this.drawTraps(state);
     this.drawInteractionUnderlay(state,interaction,seconds);
-    this.drawGuardian(state.mapId,state.sides.player.oranges,seconds);
+    this.observeGuardianMood(state,seconds);
+    this.drawGuardian(state.mapId,state.sides.player.oranges,seconds,state.sides.player.loadout.activeBrothId,getActiveBroth(state.sides.player.loadout)?.level??1);
     const source=this.mergeSource(state,interaction),targets=new Map(source?getMergeTargets(state,source.id).map(t=>[t.unitId,t]):[]);
 
     const liveIds=new Set(state.units.map(unit=>unit.id));
@@ -221,34 +227,25 @@ export class StickerRenderer {
 
   }
 
-  private drawGuardian(mapId:MapId,oranges:number,seconds:number):void {
-    const c=this.c,spot=GUARDIAN_BATH_SPOTS[mapId],dizzy=oranges<=0;
-    c.save();c.translate(spot.x,spot.y);
-    // Small expanding water rings stay inside the painted waterline.
-    for(let i=0;i<2;i++){
-      const pulse=(seconds*.23+i*.5)%1;
-      c.beginPath();c.ellipse(0,spot.size*.22,spot.rippleRx*(.8+pulse*.16),spot.rippleRy*(.7+pulse*.18),0,i*.3,Math.PI*1.9+i*.3);
-      c.strokeStyle=i?'rgba(167,225,215,0.36)':'rgba(255,255,255,0.42)';c.lineWidth=1.6;c.stroke();
-    }
-    c.save();c.translate(dizzy?Math.sin(seconds*6)*1.2:0,dizzy?1:Math.sin(seconds*1.5)*1.4);
-    const soak=this.assets.get(dizzy?'capybara_soak_dizzy':'capybara_soak');
-    // Legacy headless canvas consumers may explicitly supply the old image.
-    // A browser with a missing/undecoded new PNG always uses tub-free vector art.
-    const override=soak??(typeof Image==='undefined'?this.assets.get('capybara'):undefined);
-    if(override)this.drawImage(override,spot.size,spot.size);
-    else{c.save();c.scale(spot.size/100,spot.size/100);drawSoakingCapybaraArt(c,dizzy);c.restore();}
-    this.drawOrangeStack(oranges,seconds,spot.orangeBaseY);c.restore();
-    c.strokeStyle='rgba(255,255,255,0.26)';c.lineWidth=1.6;
-    for(let i=0;i<2;i++){
-      const phase=(seconds*.18+i*.5)%1,x=(i?1:-1)*spot.rippleRx*.92,y=-spot.size*.1-phase*19;
-      c.save();c.globalAlpha*=Math.sin(phase*Math.PI);c.beginPath();c.moveTo(x,y);
-      c.bezierCurveTo(x-6,y-5,x+7,y-11,x,y-18);c.stroke();c.restore();
-    }
-    c.restore();
+  /** P15 five-layer bath: the map already holds layer 1; see GuardianBathRenderer for layers 2-5. */
+  private drawGuardian(mapId:MapId,oranges:number,seconds:number,activeBrothId?:string|null,brothLevel=1):void {
+    drawGuardianBath({
+      c:this.c,
+      image:id=>this.assets.get(id),
+      drawImage:(image,width,height,x,y)=>this.drawImage(image,width,height,x,y),
+      orange:(x,y,size,rotation)=>this.drawOrangeArt(x,y,size,rotation),
+      vectorCapybara:dizzy=>drawSoakingCapybaraArt(this.c,dizzy),
+    },{mapId,oranges,seconds,activeBrothId,brothLevel,happyUntil:this.guardianHappyUntil});
   }
 
-  private drawOrangeStack(count:number,seconds:number,baseY:number):void {
-    for(let i=0;i<Math.max(0,Math.floor(count));i++)this.drawOrangeArt(Math.sin(seconds*1.5-i*.38)*(1.5+i*.8),baseY-i*15,10,Math.sin(seconds*1.2-i*.4)*.07*(i+1));
+  /** A cleared wave or a fresh legendary merge earns the guardian a happy beat (scene time, so pauses freeze it). */
+  private observeGuardianMood(state:BattleState,seconds:number):void {
+    for(const event of state.events){
+      if(event.id<=this.guardianMoodEventId)continue;
+      this.guardianMoodEventId=event.id;
+      const cleared=event.type==='bubble'&&event.textKey==='hint.wave'&&(event.value??0)>1;
+      if(cleared||(event.type==='purge'&&event.effect==='legendary'))this.guardianHappyUntil=seconds+HAPPY_DURATION;
+    }
   }
 
   private drawOrangeArt(x:number,y:number,size:number,rotation:number):void {
@@ -762,3 +759,5 @@ export class StickerRenderer {
     }c.restore();
   }
 }
+/** `#RRGGBB` broth colors to translucent canvas paint. */
+export const brothRgba=rgba;
