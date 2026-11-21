@@ -9,6 +9,7 @@ import {RANKS,getRankDifficulty} from '../config/ranks';
 import {applyNewBossMechanic} from './BossMechanics';
 import {rollWeapon} from '../config/weapons';
 import {getVillageBuff,type VillageBuffKey,type VillageResourceId} from '../config/village';
+import {AWAKENED_DAMAGE,AWAKENED_RATE,STANDARD_VICTORY_CRESTS,armorPenetration,bossResist,bossSlayerMultiplier,breakthroughAttackMultiplier,capyShieldCooldown,computeBreakthroughChance,endlessCrestsForWave,getMedallionLevel,momentumMultiplier,type BreakthroughChance,type MedallionId} from '../config/medallions';
 import {ELITE_ENEMY_IDS,INGREDIENT_IDS,MAP_SIGNATURE_INGREDIENT,getActiveBroth,getBrothEffect,getKitchenCollectionAura,getUnitCombatFamily,type BrothEffectKey,type IngredientId} from '../config/kitchen';
 import { FIRST_WAVE_PREPARATION, WAVE_DURATION,bossesForWave,waveEnemyCount,minionForWave,getWaveConfig } from '../config/waves';
 import { MergeSystem } from './MergeSystem';
@@ -29,6 +30,8 @@ export class BattleEngine {
   private ingredientRandom:Random;
   /** P16 building-material drops and pavilion fragment rolls; never touches `random` or `ingredientRandom`. */
   private villageRandom:Random;
+  /** P17 breakthrough rolls and Calm Ward resist checks; only ever drawn in endless with a qualifying action. */
+  private endlessRandom:Random;
   private props:PropSystem;
   private weapons:WeaponSystem;
   private enemyEverSpawned=false;
@@ -47,6 +50,7 @@ export class BattleEngine {
     this.random=new Random(seed);
     this.ingredientRandom=new Random(((seed^0x27d4eb2d)>>>0)||1);
     this.villageRandom=new Random(((seed^0x517cc1b7)>>>0)||1);
+    this.endlessRandom=new Random(((seed^0x9e3779b1)>>>0)||1);
     const mapId=getMap(options.mapId).id,rankIndex=Number.isFinite(options.rankIndex)?Math.max(0,Math.min(53,Math.trunc(options.rankIndex!))):0;
     this.bossSeed=((seed^0x6d2b79f5)>>>0)||1;
     const scheduleRandom=new Random(this.bossSeed);
@@ -55,7 +59,7 @@ export class BattleEngine {
       const originals=bossesForWave(mapId,rankIndex,i+1,()=>scheduleRandom.next());
       return Object.freeze(this.restrictBosses(originals,i+1));
     });
-    const side=(side:Side):SideState=>({lockedBenchSlot:null,food:ECONOMY.initialFood,summons:0,oranges:ECONOMY.initialOranges,shovels:ECONOMY.initialShovels,shovelTimer:0,kills:0,damage:0,loot:[],ingredientLoot:[],villageLoot:[],fog:0,loadout:copyLoadout(side==='player'?options.loadouts?.player:undefined),propCooldowns:{},sprinklerUsed:false,giantCatUses:0,catnipTime:0});
+    const side=(side:Side):SideState=>({lockedBenchSlot:null,food:ECONOMY.initialFood,summons:0,oranges:ECONOMY.initialOranges,shovels:ECONOMY.initialShovels,shovelTimer:0,kills:0,damage:0,loot:[],ingredientLoot:[],villageLoot:[],fog:0,loadout:copyLoadout(side==='player'?options.loadouts?.player:undefined),propCooldowns:{},sprinklerUsed:false,giantCatUses:0,catnipTime:0,capyShieldReady:false,capyShieldTimer:0,endlessCrests:0});
     this.state={id:`${Date.now()}-${++battleSequence}`,phase:'ready',time:0,wave:0,waveTime:0,nextSpawn:0,spawned:0,mapId,rankIndex,mergedHeroes:{player:[],ai:[]},grid:GridSystem.create(mapId),craterHits:{},sides:{player:side('player'),ai:side('ai')},units:[],enemies:[],events:[],traps:[],result:null};
     this.props=new PropSystem(this,()=>this.random.next());this.props.initialize();this.weapons=new WeaponSystem(this,()=>this.random.next());
   }
@@ -77,6 +81,8 @@ export class BattleEngine {
     if(s.standardResult.mvp)Object.freeze(s.standardResult.mvp);
     Object.freeze(s.standardResult);
     s.endless=true;s.endlessCoins=0;s.endlessClearedWave=10;s.result=null;s.phase='playing';
+    // Capybara Bubble Shield: one charge is ready the moment endless begins.
+    s.sides.player.capyShieldReady=this.medallion('med_capy_shield')>0;s.sides.player.capyShieldTimer=0;
     this.tutorialHold=false;this.transitionHold=false;
     this.beginWave(11,false);
     return{ok:true,key:'hint.wave'};
@@ -233,6 +239,12 @@ export class BattleEngine {
     if(source.washing||occupant?.washing)return{ok:false,key:'m2.washing'};
     if(occupant?.id===source.id)return{ok:true,key:'hint.selected',unitId:id};
     if(occupant){
+      // P17: in endless only, a Lv.5 hero fed its part (or an identical twin) rolls a breakthrough instead of "max level".
+      const pair=this.state.endless?MergeSystem.breakthroughPair(source,occupant):null;
+      if(pair){
+        if(pair.locked){this.event({type:'bubble',side:source.side,...this.unitPosition(occupant),textKey:'hint.mergeLocked',unitId:occupant.id,duration:1.6});return{ok:false,key:'hint.mergeLocked',unitId:id};}
+        return this.breakthrough(pair.base,pair.feeder);
+      }
       const outcome=MergeSystem.combine(source,occupant);
       if(outcome.unit){
         this.combatRecords.merge(source,occupant,outcome.unit);
@@ -252,6 +264,45 @@ export class BattleEngine {
       return{ok:outcome.ok,key:outcome.key,unitId:id};
     }
     source.location={...target};source.animation=1;this.validateBenchLock();return{ok:true,key:'hint.deployed',unitId:id};
+  }
+  /** The feeder is always consumed and its records join the hero; a miss is free and adds +5% to the next roll. */
+  private breakthrough(base:Unit,feeder:Unit):CommandResult {
+    const chance=this.getBreakthroughChance(base),roll=this.endlessRandom.next();
+    this.combatRecords.merge(feeder,base,base);
+    this.state.units=this.state.units.filter(u=>u.id!==feeder.id);this.validateBenchLock();
+    const position=this.unitPosition(base);
+    if(roll<chance.total){
+      base.awakened=true;base.statuses={};base.animation=1;
+      this.event({type:'purge',side:base.side,...position,effect:'awakened',unitId:base.id,textKey:'p17.breakthroughSuccess',duration:1.5});
+      return{ok:true,key:'p17.breakthroughSuccess',unitId:base.id};
+    }
+    base.breakthroughFails=(base.breakthroughFails??0)+1;base.animation=.7;
+    const next=Math.round(this.getBreakthroughChance(base).total*100);
+    this.event({type:'bubble',side:base.side,...position,textKey:'p17.breakthroughFail',value:next,unitId:base.id,duration:1.6});
+    return{ok:true,key:'p17.breakthroughFail',unitId:base.id,value:next};
+  }
+  /** Live breakdown shown on the hero card; the roll uses exactly this value. */
+  getBreakthroughChance(unit:Unit):BreakthroughChance {
+    const tally=this.combatRecords.tally(unit);
+    return computeBreakthroughChance({preEndlessKills:tally.preEndlessKills,preEndlessBossKills:tally.preEndlessBossKills,
+      luckMedallionLevel:this.medallion('med_luck_rate'),previousFails:unit.breakthroughFails??0});
+  }
+  /** Battle spirit of the unit's merge lineage (0..200). */
+  getUnitMomentum(unit:Unit):number {return this.combatRecords.momentum(unit);}
+  getKillTally(unit:Unit){return this.combatRecords.tally(unit);}
+  /** The player's medallion level; exactly 0 when the loadout carries none. */
+  medallion(id:MedallionId):number {return getMedallionLevel(this.state.sides.player.loadout,id);}
+  /** Calm Ward shortens boss debuffs in endless; the standard waves keep the exact duration. */
+  resistDuration(duration:number):number {
+    const resist=this.state.endless?bossResist(this.medallion('med_boss_resist')):0;
+    return resist?duration*(1-resist):duration;
+  }
+  /** Calm Ward may shrug off a destructive boss skill in endless (rolled on `endlessRandom` only). */
+  resistBossSkill(at:Point):boolean {
+    const resist=this.state.endless?bossResist(this.medallion('med_boss_resist')):0;
+    if(!resist||this.endlessRandom.next()>=resist)return false;
+    this.event({type:'bubble',side:'player',col:at.col,row:at.row,textKey:'p17.resistBlock',effect:'resist_block',duration:1.3});
+    return true;
   }
   storeShovel(id:number):CommandResult {
     if(!this.actionAllowed())return{ok:false,key:'hint.paused'};
@@ -341,6 +392,10 @@ export class BattleEngine {
     this.validateBenchLock();
     for(const side of ['player'] as Side[]){
       const resources=this.state.sides[side];resources.fog=Math.max(0,resources.fog-dt);
+      if(this.state.endless&&!resources.capyShieldReady&&this.medallion('med_capy_shield')>0){
+        resources.capyShieldTimer=Math.max(0,resources.capyShieldTimer-dt);
+        if(resources.capyShieldTimer<=1e-8){resources.capyShieldReady=true;resources.capyShieldTimer=0;}
+      }
       const rules=this.getShovelRules(side);
       if(resources.shovels>=rules.maxStored){resources.shovelTimer=0;continue;}
       resources.shovelTimer+=dt;
@@ -401,6 +456,7 @@ export class BattleEngine {
       this.props.onEnemy(enemy);if(enemy.hp<=0)continue;
       if(enemy.progress>=getMap(this.state.mapId).paths.player.length-1){
         this.state.enemies=this.state.enemies.filter(e=>e.id!==enemy.id);
+        if(this.blockWithCapyShield(enemy))continue;
         this.adjustOranges(enemy.boss?-2:-1,enemy.side);
         if(this.state.phase==='finished')break;
       }
@@ -412,12 +468,21 @@ export class BattleEngine {
       }else if(this.state.wave===10&&this.state.spawned>=this.currentWaveTargetCount()&&!this.pendingBosses.length&&this.state.enemies.length===0)this.finishByScore();
     }
   }
+  /** Capybara Bubble Shield (endless only): absorbs one whole orange theft, then recharges. */
+  private blockWithCapyShield(enemy:Enemy):boolean {
+    const resources=this.state.sides.player;
+    if(!this.state.endless||enemy.side!=='player'||!resources.capyShieldReady)return false;
+    resources.capyShieldReady=false;resources.capyShieldTimer=capyShieldCooldown(this.medallion('med_capy_shield'));
+    this.event({type:'shield_block',side:'player',...getMap(this.state.mapId).paths.player.at(-1)!,textKey:'p17.shieldBlock',enemyKind:enemy.kind,boss:enemy.boss,duration:.9});
+    return true;
+  }
   private recordEndlessClear():boolean {
     const s=this.state;
     if(!s.endless||s.wave<11||s.sides.player.oranges<=0||s.spawned<this.currentWaveTargetCount()||this.pendingBosses.length||s.enemies.some(enemy=>enemy.hp>0))return false;
     if(s.wave>(s.endlessClearedWave??10)){
       const coins=15*(s.wave-10),multiplier=this.coinMultiplier();
       s.endlessCoins=(s.endlessCoins??0)+(multiplier!==1?Math.round(coins*multiplier):coins);s.endlessClearedWave=s.wave;
+      s.sides.player.endlessCrests+=endlessCrestsForWave(s.wave);
       // Every banked endless wave guarantees a truffle and one rarer spice/blossom/shoot.
       this.harvest('ing_mushroom',this.pickIngredient(['ing_sakura','ing_chili','ing_bamboo']));this.goldenFeastRoll();
       this.gather('res_onsen_wood','res_onsen_wood','res_yuzu_essence');
@@ -454,7 +519,14 @@ export class BattleEngine {
   getUnitStats(unit:Unit):UnitStats {
     const base=getBaseUnitStats(unit.kind,unit.level);
     if(!UNITS[unit.kind]&&!HEROES[unit.kind]||unit.kind==='shovel')return base;
-    return this.kitchenStats(unit,this.weapons.stats(unit,{...base,rate:base.rate*(1+this.props.haste(unit.side))}));
+    return this.endlessStats(unit,this.kitchenStats(unit,this.weapons.stats(unit,{...base,rate:base.rate*(1+this.props.haste(unit.side))})));
+  }
+  /** P17 endless-only hero layer: battle momentum for every hero, plus ×2.5 · 1.235^Lv and +15% speed once awakened. */
+  private endlessStats(unit:Unit,stats:UnitStats):UnitStats {
+    if(!this.state.endless||unit.side!=='player'||!HEROES[unit.kind])return stats;
+    let damage=stats.damage*momentumMultiplier(this.combatRecords.momentum(unit),this.medallion('med_momentum')),rate=stats.rate;
+    if(unit.awakened){damage*=AWAKENED_DAMAGE*breakthroughAttackMultiplier(this.medallion('med_breakthrough_atk'));rate*=AWAKENED_RATE;}
+    return{...stats,damage,rate};
   }
   /** Permanent collection aura plus today's broth. With nothing brewed the stats are returned untouched. */
   private kitchenStats(unit:Unit,stats:UnitStats):UnitStats {
@@ -528,15 +600,18 @@ export class BattleEngine {
   hurt(enemy:Enemy,amount:number,unit?:Unit,critical=false,weaponHooks=true,trueDamage=false,periodic=false):void {
     if(enemy.side!=='player'||unit?.side==='ai'||enemy.hp<=0||amount<=0)return;
     const bossBroth=unit&&enemy.boss?this.broth('bossDamage'):0,bossVillage=unit&&enemy.boss?this.village('bossDamage'):0;
-    const bossBonus=bossBroth||bossVillage?(1+bossBroth)*(1+bossVillage):1;
-    const damage=amount*(unit?this.weapons.damageMultiplier(unit,enemy):1)*bossBonus*(trueDamage||(enemy.armorBreak??0)>0?1:1-enemy.armor),actual=Math.min(enemy.hp,damage);enemy.hp-=damage;
+    // P17 Sovereign Piercer (endless only): extra boss damage and a share of every target's armor ignored.
+    const slayer=unit&&this.state.endless?this.medallion('med_boss_slayer'):0;
+    const bossBonus=(bossBroth||bossVillage?(1+bossBroth)*(1+bossVillage):1)*(slayer&&enemy.boss?bossSlayerMultiplier(slayer):1);
+    const armor=slayer?enemy.armor*(1-armorPenetration(slayer)):enemy.armor;
+    const damage=amount*(unit?this.weapons.damageMultiplier(unit,enemy):1)*bossBonus*(trueDamage||(enemy.armorBreak??0)>0?1:1-armor),actual=Math.min(enemy.hp,damage);enemy.hp-=damage;
     if(amount>=3){
       enemy.hitFlash=.14;const source=unit?this.unitPosition(unit):{col:enemy.col,row:enemy.row+1},dx=enemy.col-source.col,dy=enemy.row-source.row,len=Math.hypot(dx,dy)||1;
       enemy.knockX=dx/len*5;enemy.knockY=dy/len*5;
       this.event({type:'hit',side:enemy.side,col:enemy.col,row:enemy.row,effect:'vfx_hit_burst',duration:.18});
     }
     this.state.sides[enemy.side].damage+=actual;
-    if(unit)this.combatRecords.hit(unit,actual,enemy.hp<=0);
+    if(unit)this.combatRecords.hit(unit,actual,enemy.hp<=0,!!this.state.endless,enemy.boss);
     if(amount>=3){
       const style=unit?COMBAT_STYLES[unit.kind]:undefined;
       const hitCue=critical||unit?.kind==='rocket_coon'?'hit_heavy':periodic||style==='magic_cast'?'hit_magic':style==='ranged_recoil'?'hit_ranged':'hit_melee';
@@ -649,19 +724,25 @@ export class BattleEngine {
         const cells:Point[]=[];
         for(let row=0;row<GRID_ROWS;row++)for(let col=0;col<GRID_COLS;col++)if(GridSystem.owns(enemy.side,col,row)&&this.state.grid[row][col]==='O'&&!units.some(u=>u.location.zone==='board'&&u.location.col===col&&u.location.row===row))cells.push({col,row});
         const cell=cells.sort((a,b)=>GridSystem.distance(enemy,a)-GridSystem.distance(enemy,b))[0];
+        if(cell&&this.resistBossSkill(cell))break;
         if(cell){this.state.grid[cell.row][cell.col]='B';delete this.state.craterHits[cell.col+','+cell.row];this.event({type:'burst',side:enemy.side,...cell,color:'#bd9478',duration:1});}break;
       }
       case 'mega_roomba':{
         const victim=units.filter(u=>UNITS[u.kind]?.category==='basic'&&GridSystem.distance(this.unitPosition(u),enemy)<=1.2).sort((a,b)=>a.level-b.level||a.id-b.id)[0];
+        if(victim&&this.resistBossSkill(this.unitPosition(victim)))break;
         if(victim){this.state.units=this.state.units.filter(u=>u.id!==victim.id);enemy.hp=Math.min(enemy.maxHp,enemy.hp+enemy.maxHp*.2);enemy.size*=1.15;}break;
       }
-      case 'dr_clippers':for(const u of units.filter(u=>GridSystem.distance(this.unitPosition(u),enemy)<=2).sort((a,b)=>b.level-a.level).slice(0,2)){u.level=Math.max(1,u.level-1);u.statuses.MERGE_LOCK=5;u.animation=1;}break;
+      case 'dr_clippers':{
+        const clipped=units.filter(u=>GridSystem.distance(this.unitPosition(u),enemy)<=2).sort((a,b)=>b.level-a.level).slice(0,2);
+        if(clipped.length&&this.resistBossSkill(this.unitPosition(clipped[0])))break;
+        for(const u of clipped){u.level=Math.max(1,u.level-1);u.statuses.MERGE_LOCK=this.resistDuration(5);u.animation=1;}break;
+      }
       case 'box_kraken':{
         const victim=units.sort((a,b)=>b.level-a.level||this.stats(b).damage-this.stats(a).damage)[0];
-        if(victim)victim.statuses.SEALED=18;break;
+        if(victim)victim.statuses.SEALED=this.resistDuration(18);break;
       }
-      case 'sad_rain_frog':for(const u of units)u.statuses.WET=18;break;
-      case 'king_skunk':this.state.sides[enemy.side].fog=6;break;
+      case 'sad_rain_frog':{const wet=this.resistDuration(18);for(const u of units)u.statuses.WET=wet;break;}
+      case 'king_skunk':this.state.sides[enemy.side].fog=this.resistDuration(6);break;
       default:applyNewBossMechanic(this,enemy,units);
     }
     this.event({type:'bubble',side:enemy.side,col:enemy.col,row:enemy.row,textKey:`boss.${enemy.kind}.bubble`,duration:1.5});
@@ -682,7 +763,8 @@ export class BattleEngine {
         endless:true,endlessWave:this.state.wave,endlessCoins,endlessLoot:playerLoot.slice(standard.playerLoot.length),
         // The standard receipt already banked its share; endless keeps 100% of every later ingredient.
         ingredientLoot:harvest,endlessIngredientLoot:harvest.slice(standard.ingredientLoot?.length??0),
-        villageLoot:[...this.state.sides.player.villageLoot],endlessVillageLoot:this.state.sides.player.villageLoot.slice(standard.villageLoot?.length??0)};
+        villageLoot:[...this.state.sides.player.villageLoot],endlessVillageLoot:this.state.sides.player.villageLoot.slice(standard.villageLoot?.length??0),
+        endlessCrests:this.state.sides.player.endlessCrests,awakenedCount:this.state.units.filter(u=>u.side==='player'&&u.awakened).length};
       this.state.phase='finished';return;
     }
     const won=winner==='player';
@@ -694,6 +776,8 @@ export class BattleEngine {
     const salvage=<T,>(list:readonly T[])=>won?[...list]:list.slice(0,Math.ceil(list.length/2));
     const ingredientLoot=salvage(this.state.sides.player.ingredientLoot),villageLoot=salvage(this.state.sides.player.villageLoot);
     const baseCoins=RANKS[this.state.rankIndex].winCoins+Math.min(45,Math.floor(this.state.sides.player.food*.5)),multiplier=this.coinMultiplier();
-    this.state.result={winner,reason,loot:won?[...playerLoot]:[],playerLoot,aiLoot,coins:won?(multiplier!==1?Math.round(baseCoins*multiplier):baseCoins):0,elapsed:this.state.time,rankIndex:this.state.rankIndex,mergedHeroes:[...this.state.mergedHeroes.player],mvp:this.combatRecords.mvp(this.state.units),ingredientLoot,villageLoot};this.state.phase='finished';
+    this.state.result={winner,reason,loot:won?[...playerLoot]:[],playerLoot,aiLoot,coins:won?(multiplier!==1?Math.round(baseCoins*multiplier):baseCoins):0,elapsed:this.state.time,rankIndex:this.state.rankIndex,mergedHeroes:[...this.state.mergedHeroes.player],mvp:this.combatRecords.mvp(this.state.units),ingredientLoot,villageLoot,
+      // P17: clearing the tenth wave always pays the first endless crests, even without entering endless.
+      ...(won&&reason==='waves'?{endlessCrests:STANDARD_VICTORY_CRESTS}:{})};this.state.phase='finished';
   }
 }

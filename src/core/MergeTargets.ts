@@ -3,12 +3,17 @@ import {MergeSystem} from './MergeSystem';
 import {HEROES} from '../config/heroes';
 import {RECIPES} from '../config/recipes';
 
-export interface MergeTarget {unitId:number;kind:'upgrade'|'hero';heroId?:string;nextLevel?:number;feedHero?:boolean}
+export interface MergeTarget {unitId:number;kind:'upgrade'|'hero';heroId?:string;nextLevel?:number;feedHero?:boolean;
+  /** P17 endless: this pairing rolls a breakthrough for the Lv.5 hero `baseId` instead of levelling up. */
+  breakthrough?:boolean;baseId?:number}
 export function getMergeTargets(state:BattleState,sourceId:number):MergeTarget[] {
   const source=state.units.find(unit=>unit.id===sourceId);
   if(!source||source.washing)return [];
-  return state.units.flatMap(candidate=>{
+  return state.units.flatMap((candidate):MergeTarget[]=>{
     if(candidate.id===source.id||candidate.side!==source.side||candidate.washing)return [];
+    // P17: in endless a Lv.5 hero and its part (or twin) light up as a breakthrough pairing.
+    const pair=state.endless?MergeSystem.breakthroughPair(source,candidate):null;
+    if(pair)return pair.locked?[]:[{unitId:candidate.id,kind:'upgrade' as const,nextLevel:5,feedHero:true,breakthrough:true,baseId:pair.base.id}];
     const outcome=MergeSystem.combine(source,candidate);
     if(!outcome.ok||!outcome.unit)return [];
     return [{unitId:candidate.id,kind:HEROES[outcome.unit.kind]?'hero' as const:'upgrade' as const,nextLevel:outcome.unit.level,
@@ -39,6 +44,8 @@ export function getBenchMergeHints(state:BattleState):Array<{unitId:number;slot:
 
 export interface PassiveMergeCallout {
   unitId:number;zone:'board'|'bench';kind:'hero'|'upgrade';heroId?:string;nextLevel?:number;partnerIds:number[];
+  /** P17: the Lv.5 hero whose breakthrough this pairing would roll. */
+  breakthroughBaseId?:number;
 }
 /** A new hero takes priority; feeding an existing hero is an upgrade, not a new recipe. */
 export function getPassiveMergeCallouts(state:BattleState):PassiveMergeCallout[] {
@@ -48,7 +55,7 @@ export function getPassiveMergeCallouts(state:BattleState):PassiveMergeCallout[]
     if(!best)return [];
     const hero=best.kind==='hero'&&!best.feedHero;
     return [{unitId:unit.id,zone:unit.location.zone,kind:hero?'hero' as const:'upgrade' as const,
-      ...(best.heroId?{heroId:best.heroId}:{}),nextLevel:best.nextLevel,
+      ...(best.heroId?{heroId:best.heroId}:{}),nextLevel:best.nextLevel,...(best.breakthrough&&best.baseId!==undefined?{breakthroughBaseId:best.baseId}:{}),
       partnerIds:targets.filter(t=>hero?t.kind==='hero'&&!t.feedHero&&t.heroId===best.heroId:t.feedHero||t.kind==='upgrade').map(t=>t.unitId)}];
   });
 }

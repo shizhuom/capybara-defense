@@ -23,9 +23,9 @@ it.each(['zh-CN','en'] as const)('renders actionable early-wave coaching and all
  expect(full).toContain('data-action="passive-info:auto_shovel"');expect(full).toContain('aria-expanded="true"');
  expect(full).toContain('prop_auto_shovel');expect(full).not.toContain('passive-backpack');
 });
-it('ships exactly 268 synced sprites and four P13 vector fallbacks',()=>{
+it('ships exactly 288 synced sprites and four P13 vector fallbacks',()=>{
  const ids=JSON.parse(readFileSync('public/assets/sprites/manifest.json','utf8'));
- expect(ids).toHaveLength(268);expect(readdirSync('public/assets/sprites').filter(f=>f.endsWith('.png'))).toHaveLength(268);
+ expect(ids).toHaveLength(288);expect(readdirSync('public/assets/sprites').filter(f=>f.endsWith('.png'))).toHaveLength(288);
  expect(P13_SCENE_IDS).toHaveLength(4);
  for(const id of P13_SCENE_IDS){expect(ids).toContain(id);const png=readFileSync(`public/assets/sprites/${id}.png`);expect(png.readUInt32BE(16)).toBe(id==='ui_endless_emblem'?320:160);expect(sceneSticker(id,'',48)).toContain('<svg');}
 });

@@ -49,9 +49,9 @@ function standardWinner(options:EngineOptions={}):BattleEngine {const e=new Batt
 describe('P16 synced art',()=>{
   const sizes:Record<string,[number,number]>={bg_onsen_village:[1280,720],ui_village_peek_capy:[256,256],ui_village_gate:[256,256],ui_harvest_basket:[256,256],
     ...Object.fromEntries(FACILITY_IDS.map(id=>[id,[256,256]])),res_onsen_wood:[160,160],res_yuzu_essence:[160,160],ui_pet_heart:[160,160],ui_sleep_zzz:[160,160]};
-  it('ships 268 unique sprites with the 13 exact RGBA P16 images',()=>{
+  it('ships 288 unique sprites with the 13 exact RGBA P16 images',()=>{
     const ids=JSON.parse(readFileSync('public/assets/sprites/manifest.json','utf8')) as string[];
-    expect(ids).toHaveLength(268);expect(new Set(ids).size).toBe(268);expect(P16_SCENE_IDS).toHaveLength(13);
+    expect(ids).toHaveLength(288);expect(new Set(ids).size).toBe(288);expect(P16_SCENE_IDS).toHaveLength(13);
     for(const [id,[w,h]] of Object.entries(sizes)){expect(ids).toContain(id);const png=sprite(id);expect([png.readUInt32BE(16),png.readUInt32BE(20),png[25]]).toEqual([w,h,6]);}
     expect(Object.keys(sizes).sort()).toEqual([...P16_SCENE_IDS].sort());
     // Bottom-flush paws: the last rows match the established compendium peek mascot pixel for pixel.

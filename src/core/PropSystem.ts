@@ -8,6 +8,7 @@ import {RECIPES} from '../config/recipes';
 import {getMap} from '../config/maps';
 import {clampBrothLevel,getBrothEffect,isBrothId} from '../config/kitchen';
 import {FACILITY_IDS,clampFacilityLevel,getVillageBuff} from '../config/village';
+import {MEDALLION_IDS,clampMedallionLevel} from '../config/medallions';
 import {GridSystem} from './GridSystem';
 import {isValidPropRoad,propUnitTargetError,type PropTarget} from './PropTargets';
 
@@ -26,7 +27,11 @@ export function copyLoadout(input:Partial<BattleLoadout>={}):BattleLoadout {
   // P16: village levels travel only when supplied, so earlier loadouts keep their exact shape.
   const rawVillage=input.villageFacilities&&typeof input.villageFacilities==='object'&&!Array.isArray(input.villageFacilities)?input.villageFacilities:{};
   const villageFacilities=Object.fromEntries(FACILITY_IDS.map(id=>[id,clampFacilityLevel(rawVillage[id])]).filter(([,level])=>Number(level)>0));
-  const loadout:BattleLoadout=Object.keys(villageFacilities).length?{...base,villageFacilities}:base;
+  const villaged:BattleLoadout=Object.keys(villageFacilities).length?{...base,villageFacilities}:base;
+  // P17: endless medallions travel only when at least one is levelled (they act in endless only).
+  const rawMedallions=input.endlessMedallions&&typeof input.endlessMedallions==='object'&&!Array.isArray(input.endlessMedallions)?input.endlessMedallions:{};
+  const endlessMedallions=Object.fromEntries(MEDALLION_IDS.map(id=>[id,clampMedallionLevel(rawMedallions[id])]).filter(([,level])=>Number(level)>0));
+  const loadout:BattleLoadout=Object.keys(endlessMedallions).length?{...villaged,endlessMedallions}:villaged;
   // P14: brewed broths travel with the snapshot only when present, so P13 loadouts keep their exact shape.
   const unlockedBroths=[...new Set(Array.isArray(input.unlockedBroths)?input.unlockedBroths:[])].filter(isBrothId);
   if(!unlockedBroths.length)return loadout;

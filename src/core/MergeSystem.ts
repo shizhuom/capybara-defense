@@ -3,7 +3,23 @@ import { RECIPES } from '../config/recipes';
 import { UNITS } from '../config/units';
 import { HEROES } from '../config/heroes';
 export interface MergeOutcome { ok:boolean; key:string; unit?:Unit; swap?:boolean }
+/** P17 endless breakthrough pairing: the Lv.5 hero that stays (`base`) and the part or twin it eats (`feeder`). */
+export interface BreakthroughPair { base:Unit; feeder:Unit; locked:boolean }
+const canAwaken=(unit:Unit)=>!!HEROES[unit.kind]&&unit.level===5&&!unit.awakened;
 export class MergeSystem {
+  /**
+   * A Lv.5 un-awakened hero plus one of its recipe parts (or an identical Lv.5 twin) qualifies for a
+   * breakthrough roll. Callers must also require `state.endless`; this pure check ignores the wave.
+   */
+  static breakthroughPair(source:Unit,target:Unit):BreakthroughPair|null {
+    if(source.id===target.id||source.side!==target.side||source.kind==='shovel'||target.kind==='shovel')return null;
+    const partOf=(hero:Unit,part:Unit)=>!!RECIPES.find(r=>r.hero===hero.kind)?.parts.some(p=>p===part.kind);
+    let base:Unit|undefined,feeder:Unit|undefined;
+    if(canAwaken(target)&&(partOf(target,source)||(source.kind===target.kind&&canAwaken(source)))){base=target;feeder=source;}
+    else if(canAwaken(source)&&partOf(source,target)){base=source;feeder=target;}
+    if(!base||!feeder)return null;
+    return{base,feeder,locked:(source.statuses.MERGE_LOCK??0)>0||(target.statuses.MERGE_LOCK??0)>0};
+  }
   static combine(source:Unit, target:Unit):MergeOutcome {
     const reject=(key:string):MergeOutcome=>({ok:false,key});
     if(source.id===target.id)return reject('hint.invalid');
@@ -24,7 +40,9 @@ export class MergeSystem {
     if(!recipe&&base.level>=max)return reject('hint.maxLevel');
     return {
       ok:true,key:feedTarget||feedSource?'hint.fed':'hint.merged',
-      unit:{...base,id:target.id,side:target.side,location:{...target.location},kind:recipe?.hero??base.kind,level:recipe?1:base.level+1,statuses:{},cooldown:0,energy:0,production:0,buffTime:0,empowered:0,animation:1},
+      unit:{...base,id:target.id,side:target.side,location:{...target.location},kind:recipe?.hero??base.kind,level:recipe?1:base.level+1,statuses:{},cooldown:0,energy:0,production:0,buffTime:0,empowered:0,animation:1,
+        // An awakened hero clipped below Lv.5 keeps its awakening when the same lineage is fed back up.
+        ...(!recipe&&same&&(source.awakened||target.awakened)?{awakened:true}:{})},
     };
   }
 }

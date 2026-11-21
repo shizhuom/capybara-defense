@@ -1,0 +1,472 @@
+{
+  "passed": true,
+  "checks": [
+    "desktop: medallion pill + 3/3 docks clear; hall rows/upgrade/mascot ledge; board local notice + nickname validation; online Top list + my rank; offer ×1.25 + crest; momentum + chance panel; 可突破 highlight; awakening sticker/ring/badge; shield pop + recharge; result global rank, awakened MVP and crest shelf",
+    "mobile-landscape: medallion pill + 3/3 docks clear; hall rows/upgrade/mascot ledge; board local notice + nickname validation; online Top list + my rank; offer ×1.25 + crest; momentum + chance panel; 可突破 highlight; awakening sticker/ring/badge; shield pop + recharge; result global rank, awakened MVP and crest shelf",
+    "mobile-portrait: medallion pill + 3/3 docks clear; hall rows/upgrade/mascot ledge; board local notice + nickname validation; online Top list + my rank; offer ×1.25 + crest; momentum + chance panel; 可突破 highlight; awakening sticker/ring/badge; shield pop + recharge; result global rank, awakened MVP and crest shelf"
+  ],
+  "layouts": [
+    {
+      "label": "desktop start",
+      "items": [
+        {
+          "a": "profile",
+          "x": 19.4375,
+          "y": 13.8125,
+          "right": 288.015625,
+          "bottom": 92.78125
+        },
+        {
+          "a": "menu-system",
+          "x": 1184.625,
+          "y": 13.8125,
+          "right": 1346.546875,
+          "bottom": 68.390625
+        },
+        {
+          "a": "map-chips",
+          "x": 513.6015625,
+          "y": 711.21875,
+          "right": 852.3671875,
+          "bottom": 752.625
+        },
+        {
+          "a": "start",
+          "x": 471.359375,
+          "y": 497.640625,
+          "right": 894.609375,
+          "bottom": 676.703125
+        },
+        {
+          "a": "recipes",
+          "x": 27.625,
+          "y": 629.65625,
+          "right": 112.265625,
+          "bottom": 746.484375
+        },
+        {
+          "a": "armory",
+          "x": 132.734375,
+          "y": 629.65625,
+          "right": 217.375,
+          "bottom": 746.484375
+        },
+        {
+          "a": "kitchen",
+          "x": 237.84375,
+          "y": 629.65625,
+          "right": 322.484375,
+          "bottom": 746.484375
+        },
+        {
+          "a": "kitchen",
+          "x": 19.4375,
+          "y": 93.6875,
+          "right": 201.625,
+          "bottom": 136.640625
+        },
+        {
+          "a": "medallions",
+          "x": 1118.4375,
+          "y": 93.6875,
+          "right": 1346.546875,
+          "bottom": 136.640625
+        },
+        {
+          "a": "village",
+          "x": 1043.5,
+          "y": 629.65625,
+          "right": 1128.140625,
+          "bottom": 746.484375
+        },
+        {
+          "a": "market",
+          "x": 1148.609375,
+          "y": 629.65625,
+          "right": 1233.25,
+          "bottom": 746.484375
+        },
+        {
+          "a": "leaderboard",
+          "x": 1253.71875,
+          "y": 629.65625,
+          "right": 1338.359375,
+          "bottom": 746.484375
+        }
+      ]
+    },
+    {
+      "label": "desktop medallion hall",
+      "overflow": [],
+      "dialog": {
+        "x": 303,
+        "y": 38.40625,
+        "right": 1063,
+        "bottom": 729.59375
+      },
+      "viewport": {
+        "w": 1366,
+        "h": 768
+      },
+      "broken": [],
+      "raw": false
+    },
+    {
+      "label": "desktop board local",
+      "overflow": [],
+      "dialog": {
+        "x": 343,
+        "y": 38.40625,
+        "right": 1023,
+        "bottom": 729.59375
+      },
+      "viewport": {
+        "w": 1366,
+        "h": 768
+      },
+      "broken": [],
+      "raw": false
+    },
+    {
+      "label": "desktop board online",
+      "overflow": [],
+      "dialog": {
+        "x": 343,
+        "y": 38.40625,
+        "right": 1023,
+        "bottom": 729.59375
+      },
+      "viewport": {
+        "w": 1366,
+        "h": 768
+      },
+      "broken": [],
+      "raw": false
+    },
+    {
+      "label": "mobile-landscape start",
+      "items": [
+        {
+          "a": "profile",
+          "x": 85.03125,
+          "y": 7.015625,
+          "right": 258.359375,
+          "bottom": 61.328125
+        },
+        {
+          "a": "menu-system",
+          "x": 665.40625,
+          "y": 7.015625,
+          "right": 758.953125,
+          "bottom": 41.109375
+        },
+        {
+          "a": "map-chips",
+          "x": 307.796875,
+          "y": 353.15625,
+          "right": 536.171875,
+          "bottom": 382.1875
+        },
+        {
+          "a": "start",
+          "x": 314.5234375,
+          "y": 252.703125,
+          "right": 529.4453125,
+          "bottom": 343.625
+        },
+        {
+          "a": "recipes",
+          "x": 89.1875,
+          "y": 314.640625,
+          "right": 139.1875,
+          "bottom": 386.09375
+        },
+        {
+          "a": "armory",
+          "x": 149.578125,
+          "y": 314.640625,
+          "right": 199.578125,
+          "bottom": 386.09375
+        },
+        {
+          "a": "kitchen",
+          "x": 209.96875,
+          "y": 314.640625,
+          "right": 259.96875,
+          "bottom": 386.09375
+        },
+        {
+          "a": "kitchen",
+          "x": 85.03125,
+          "y": 66,
+          "right": 215.703125,
+          "bottom": 96
+        },
+        {
+          "a": "medallions",
+          "x": 594.953125,
+          "y": 128,
+          "right": 758.953125,
+          "bottom": 158
+        },
+        {
+          "a": "village",
+          "x": 584.015625,
+          "y": 314.640625,
+          "right": 634.015625,
+          "bottom": 386.09375
+        },
+        {
+          "a": "market",
+          "x": 644.40625,
+          "y": 314.640625,
+          "right": 694.40625,
+          "bottom": 386.09375
+        },
+        {
+          "a": "leaderboard",
+          "x": 704.796875,
+          "y": 314.640625,
+          "right": 754.796875,
+          "bottom": 386.09375
+        }
+      ]
+    },
+    {
+      "label": "mobile-landscape medallion hall",
+      "overflow": [],
+      "dialog": {
+        "x": 42,
+        "y": 9.75,
+        "right": 802,
+        "bottom": 380.25
+      },
+      "viewport": {
+        "w": 844,
+        "h": 390
+      },
+      "broken": [],
+      "raw": false
+    },
+    {
+      "label": "mobile-landscape board local",
+      "overflow": [],
+      "dialog": {
+        "x": 92,
+        "y": 9.75,
+        "right": 752,
+        "bottom": 380.25
+      },
+      "viewport": {
+        "w": 844,
+        "h": 390
+      },
+      "broken": [],
+      "raw": false
+    },
+    {
+      "label": "mobile-landscape board online",
+      "overflow": [],
+      "dialog": {
+        "x": 92,
+        "y": 9.75,
+        "right": 752,
+        "bottom": 380.25
+      },
+      "viewport": {
+        "w": 844,
+        "h": 390
+      },
+      "broken": [],
+      "raw": false
+    },
+    {
+      "label": "mobile-portrait start",
+      "items": [
+        {
+          "a": "profile",
+          "x": 5.453125,
+          "y": 260.3125,
+          "right": 169.671875,
+          "bottom": 304.3125
+        },
+        {
+          "a": "menu-system",
+          "x": 279.234375,
+          "y": 260.3125,
+          "right": 384.546875,
+          "bottom": 304.3125
+        },
+        {
+          "a": "map-chips",
+          "x": 86.5,
+          "y": 581.6875,
+          "right": 303.5,
+          "bottom": 621.6875
+        },
+        {
+          "a": "start",
+          "x": 134.5546875,
+          "y": 454.453125,
+          "right": 255.4453125,
+          "bottom": 505.59375
+        },
+        {
+          "a": "recipes",
+          "x": 7.796875,
+          "y": 505.359375,
+          "right": 57.796875,
+          "bottom": 575.296875
+        },
+        {
+          "a": "armory",
+          "x": 67.796875,
+          "y": 505.359375,
+          "right": 117.796875,
+          "bottom": 575.296875
+        },
+        {
+          "a": "kitchen",
+          "x": 127.796875,
+          "y": 505.359375,
+          "right": 177.796875,
+          "bottom": 575.296875
+        },
+        {
+          "a": "kitchen",
+          "x": 58.484375,
+          "y": 625.6875,
+          "right": 191,
+          "bottom": 657.6875
+        },
+        {
+          "a": "medallions",
+          "x": 199,
+          "y": 625.6875,
+          "right": 360.078125,
+          "bottom": 657.6875
+        },
+        {
+          "a": "village",
+          "x": 212.203125,
+          "y": 505.359375,
+          "right": 262.203125,
+          "bottom": 575.296875
+        },
+        {
+          "a": "market",
+          "x": 272.203125,
+          "y": 505.359375,
+          "right": 322.203125,
+          "bottom": 575.296875
+        },
+        {
+          "a": "leaderboard",
+          "x": 332.203125,
+          "y": 505.359375,
+          "right": 382.203125,
+          "bottom": 575.296875
+        }
+      ]
+    },
+    {
+      "label": "mobile-portrait medallion hall",
+      "overflow": [],
+      "dialog": {
+        "x": 11.703125,
+        "y": 37.984375,
+        "right": 378.296875,
+        "bottom": 806.015625
+      },
+      "viewport": {
+        "w": 390,
+        "h": 844
+      },
+      "broken": [],
+      "raw": false
+    },
+    {
+      "label": "mobile-portrait board local",
+      "overflow": [],
+      "dialog": {
+        "x": 11.703125,
+        "y": 37.984375,
+        "right": 378.296875,
+        "bottom": 806.015625
+      },
+      "viewport": {
+        "w": 390,
+        "h": 844
+      },
+      "broken": [],
+      "raw": false
+    },
+    {
+      "label": "mobile-portrait board online",
+      "overflow": [],
+      "dialog": {
+        "x": 11.703125,
+        "y": 37.984375,
+        "right": 378.296875,
+        "bottom": 806.015625
+      },
+      "viewport": {
+        "w": 390,
+        "h": 844
+      },
+      "broken": [],
+      "raw": false
+    }
+  ],
+  "shots": [
+    "p17-desktop-1-start-medallion-pill.png",
+    "p17-desktop-2a-medallion-hall.png",
+    "p17-desktop-2b-medallion-upgraded.png",
+    "p17-desktop-2c-medallion-maxed-and-footer.png",
+    "p17-desktop-3-board-local-mode.png",
+    "p17-desktop-4-board-online.png",
+    "p17-desktop-5a-endless-offer.png",
+    "p17-desktop-5b-breakthrough-panel-and-shield.png",
+    "p17-desktop-5c-can-break-highlight.png",
+    "p17-desktop-5d-awakened-hero-ring-embers.png",
+    "p17-desktop-5e-shield-bubble-ready.png",
+    "p17-desktop-5f-shield-block-pop.png",
+    "p17-desktop-5g-shield-recharge-bar.png",
+    "p17-desktop-6a-endless-result-global-rank.png",
+    "p17-desktop-6b-report-mvp-awakened.png",
+    "p17-desktop-6c-report-crests.png",
+    "p17-mobile-landscape-1-start-medallion-pill.png",
+    "p17-mobile-landscape-2a-medallion-hall.png",
+    "p17-mobile-landscape-2b-medallion-upgraded.png",
+    "p17-mobile-landscape-2c-medallion-maxed-and-footer.png",
+    "p17-mobile-landscape-3-board-local-mode.png",
+    "p17-mobile-landscape-4-board-online.png",
+    "p17-mobile-landscape-5a-endless-offer.png",
+    "p17-mobile-landscape-5b-breakthrough-panel-and-shield.png",
+    "p17-mobile-landscape-5c-can-break-highlight.png",
+    "p17-mobile-landscape-5d-awakened-hero-ring-embers.png",
+    "p17-mobile-landscape-5e-shield-bubble-ready.png",
+    "p17-mobile-landscape-5f-shield-block-pop.png",
+    "p17-mobile-landscape-5g-shield-recharge-bar.png",
+    "p17-mobile-landscape-6a-endless-result-global-rank.png",
+    "p17-mobile-landscape-6b-report-mvp-awakened.png",
+    "p17-mobile-landscape-6c-report-crests.png",
+    "p17-mobile-portrait-1-start-medallion-pill.png",
+    "p17-mobile-portrait-2a-medallion-hall.png",
+    "p17-mobile-portrait-2b-medallion-upgraded.png",
+    "p17-mobile-portrait-2c-medallion-maxed-and-footer.png",
+    "p17-mobile-portrait-3-board-local-mode.png",
+    "p17-mobile-portrait-4-board-online.png",
+    "p17-mobile-portrait-5a-endless-offer.png",
+    "p17-mobile-portrait-5b-breakthrough-panel-and-shield.png",
+    "p17-mobile-portrait-5c-can-break-highlight.png",
+    "p17-mobile-portrait-5d-awakened-hero-ring-embers.png",
+    "p17-mobile-portrait-5e-shield-bubble-ready.png",
+    "p17-mobile-portrait-5f-shield-block-pop.png",
+    "p17-mobile-portrait-5g-shield-recharge-bar.png",
+    "p17-mobile-portrait-6a-endless-result-global-rank.png",
+    "p17-mobile-portrait-6b-report-mvp-awakened.png",
+    "p17-mobile-portrait-6c-report-crests.png"
+  ],
+  "errors": []
+}

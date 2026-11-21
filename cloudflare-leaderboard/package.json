@@ -1,0 +1,19 @@
+{
+  "name": "capybara-endless-leaderboard",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Global endless leaderboard for Capybara: Chill Defense (Cloudflare Workers + D1).",
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy",
+    "db:init:remote": "wrangler d1 execute capybara-endless-db --remote --file=./schema.sql",
+    "db:init:local": "wrangler d1 execute capybara-endless-db --local --file=./schema.sql",
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "wrangler": "^4.0.0",
+    "@cloudflare/workers-types": "^4.20250101.0",
+    "typescript": "6.0.3"
+  }
+}

@@ -4,7 +4,9 @@ import {HEROES} from '../config/heroes';
 import {WEAPONS} from '../config/weapons';
 import {t} from '../i18n/i18n';
 import {weaponSticker,avatarSticker} from '../render/M3Art';
-import {sceneSticker,unitSticker} from './stickers';
+import {heroSticker,sceneSticker,unitSticker} from './stickers';
+import {formatCompactNumber} from '../core/formatNumber';
+import {STANDARD_VICTORY_CRESTS} from '../config/medallions';
 import {escapeHtml as esc} from './art';
 import {INGREDIENT_IDS,isIngredientId,type IngredientId} from '../config/kitchen';
 import {VILLAGE_RESOURCE_IDS,type VillageResourceId} from '../config/village';
@@ -53,19 +55,26 @@ export function endlessOfferMarkup(state:BattleState,savedResult:boolean):string
   <div class="endless-offer-emblem" aria-hidden="true">${sceneSticker('ui_endless_emblem','',148)}</div>
   <h2 id="dialog-title">${tr('p13.endlessOfferTitle')}</h2>
   ${savedResult?`<p class="endless-banked-note" role="status"><span aria-hidden="true">✓</span> ${tr('p13.endlessBanked')}</p>`:`<div class="endless-save-pending" role="status"><p>${tr('p13.savePending')}</p><button type="button" data-action="retry-save-result" autofocus>${tr('p13.retrySave')}</button></div>`}
-  <div class="endless-offer-story"><p>${tr('p13.endlessOfferBody')}</p><div class="endless-growth" role="img" aria-label="${tr('p13.endlessScaling')}"><span aria-hidden="true">×2 <i>→</i> ×4 <i>→</i> ×8 <i>→</i> ×16…</span></div></div>
-  ${savedResult?`<div class="endless-offer-rewards" aria-label="${tr('p13.treasureShelf')}"><span>${sceneSticker('ui_star_rank','',28)}<b>${tr('p13.rankBanked')}</b></span><span>${sceneSticker('ui_coin_gold','',32)}<b>+${result?.coins??0}</b></span><span>${sceneSticker('ui_ticket_gacha','',30)}<b>+1</b></span></div>`:''}
+  <div class="endless-offer-story"><p>${tr('p13.endlessOfferBody')}</p><div class="endless-growth" role="img" aria-label="${tr('p13.endlessScaling')}"><span aria-hidden="true">×1.25 <i>→</i> ×1.56 <i>→</i> ×1.95 <i>→</i> …</span></div></div>
+  ${savedResult?`<div class="endless-offer-rewards" aria-label="${tr('p13.treasureShelf')}"><span>${sceneSticker('ui_star_rank','',28)}<b>${tr('p13.rankBanked')}</b></span><span>${sceneSticker('ui_coin_gold','',32)}<b>+${result?.coins??0}</b></span><span>${sceneSticker('ui_ticket_gacha','',30)}<b>+1</b></span><span class="endless-offer-crest" title="${tr('p17.crests')}">${sceneSticker('ui_endless_crest','',30)}<b>+${result?.endlessCrests??STANDARD_VICTORY_CRESTS}</b></span></div>`:''}
   <footer class="endless-offer-actions"><button type="button" class="endless-decline" data-action="decline-endless"><span aria-hidden="true">🏆</span> ${tr('p13.declineEndless')}</button><button type="button" class="endless-enter" data-action="enter-endless"${savedResult?' autofocus':' disabled'}><span aria-hidden="true">♾</span> ${tr('p13.enterEndless')}</button></footer>
  </div>`;
 }
-export interface ResultViewInput {state:BattleState;profile:Profile;savedResult:boolean;resultStars:number;previousRank:number;newWeapons:readonly string[];newAvatars:readonly string[];newRoster?:{units:readonly string[];heroes:readonly string[]};statsOpen?:boolean}
-export function resultMarkup({state,profile,savedResult,resultStars,previousRank,newWeapons,newAvatars,newRoster,statsOpen=false}:ResultViewInput):string {
+export interface ResultViewInput {state:BattleState;profile:Profile;savedResult:boolean;resultStars:number;previousRank:number;newWeapons:readonly string[];newAvatars:readonly string[];newRoster?:{units:readonly string[];heroes:readonly string[]};statsOpen?:boolean;
+  /** P17: the player's exact global endless rank once the run has synced. */
+  globalRank?:number}
+/** Crests this whole run banked: the standard victory's 3 plus every endless wave's share. */
+export function resultCrests(state:BattleState):number {
+ const result=state.result;if(!result)return 0;
+ return result.endless&&state.standardResult?(state.standardResult.endlessCrests??0)+(result.endlessCrests??0):result.endlessCrests??0;
+}
+export function resultMarkup({state,profile,savedResult,resultStars,previousRank,newWeapons,newAvatars,newRoster,statsOpen=false,globalRank}:ResultViewInput):string {
  const result=state.result!;if(!result)return '';
  const endless=Boolean(result.endless),won=endless||result.winner==='player',rank=getRank(profile.stars),mvp=result.mvp;
  const coins=won?(endless&&state.standardResult?state.standardResult.coins+(result.endlessCoins??0):result.coins):0;
  const loot=won?(endless&&state.standardResult?[...state.standardResult.loot,...(result.endlessLoot??[])]:result.loot):[];
  const endlessWave=result.endlessWave??state.wave,bestEndlessWave=Math.max(endlessWave,profile.bestEndlessWave??0);
- const stars=`${resultStars>0?'+':''}${resultStars}`;
+ const stars=`${resultStars>0?'+':''}${resultStars}`,crests=won?resultCrests(state):0;
  const guardianStars=endless?3:won?Math.min(3,Math.max(1,Math.floor(state.sides.player.oranges))):0;
  const nextRank=RANKS[rank.index+1],progressMax=nextRank?nextRank.minStars-rank.minStars:1;
  const progress=nextRank?Math.min(progressMax,Math.max(0,profile.stars-rank.minStars)):1;
@@ -88,14 +97,16 @@ export function resultMarkup({state,profile,savedResult,resultStars,previousRank
   +(loot.length?reward('crest-bonus crest-fragments',sceneSticker('ui_weapon_fragment','',56),`+${loot.length}`,tr('profile.fragments')):'')
   +(ingredientTotal?reward('crest-bonus crest-ingredients',ingredients.length===1?sceneSticker(ingredients[0][0],'',56):sceneSticker('ui_kitchen_pot','',56),`+${ingredientTotal}`,tr('p14.resultIngredients')):'');
  const endlessFull=tr('p13.endlessRecord',{wave:endlessWave,best:bestEndlessWave});
- const endlessCapsule=endless?`<p class="crest-endless-record" title="${endlessFull}"><span class="crest-endless-capsule" aria-hidden="true">${sceneSticker('ui_endless_emblem','',24)}<b>${tr('p15.endlessCapsule',{wave:endlessWave,best:bestEndlessWave})}</b></span><span class="settlement-sr-only">${endlessFull}</span></p>`:'';
+ const rankBadge=endless&&globalRank&&globalRank>0?`<span class="crest-global-rank" role="status">${tr('p17.globalRank',{rank:globalRank})}</span>`:'';
+ const endlessCapsule=endless?`<p class="crest-endless-record" title="${endlessFull}"><span class="crest-endless-capsule" aria-hidden="true">${sceneSticker('ui_endless_emblem','',24)}<b>${tr('p15.endlessCapsule',{wave:endlessWave,best:bestEndlessWave})}</b></span><span class="settlement-sr-only">${endlessFull}</span>${rankBadge}</p>`:'';
  const medal=(cls:string,icon:string,label:string,value:string)=>`<div class="visual-medal ${cls}"><dt>${sceneSticker(icon as 'ui_stat_damage_burst','',64)}<span class="settlement-sr-only">${label}</span></dt><dd>${value}</dd></div>`;
- const mvpBody=mvp?`<figure class="visual-mvp-hero"><div class="visual-mvp-portrait"><span class="visual-mvp-crown" aria-hidden="true">${sceneSticker('ui_mvp_crown','',48)}</span>${unitSticker(mvp.kind,116)}<span class="visual-mvp-level">Lv.${mvp.level}</span></div><figcaption><b>MVP</b><strong>${tr(`${HEROES[mvp.kind]?'hero':'unit'}.${mvp.kind}`)}</strong></figcaption></figure><dl class="visual-medals">${medal('visual-damage','ui_stat_damage_burst',tr('p13.damage'),count(mvp.damage))}${medal('visual-kills','ui_stat_ko_skull',tr('p13.kills'),`×${count(mvp.kills)}`)}</dl>`:`<div class="visual-team-photo"><div class="lineup-stickers">${units.slice(0,8).map(u=>unitSticker(u.kind,52)).join('')||sceneSticker('ui_tutorial_capy','',104)}</div><p>${tr('p6.noMvp')}</p><span>${tr('p6.lineup',{count:units.length})}</span></div>`;
+ const mvpBody=mvp?`<figure class="visual-mvp-hero"><div class="visual-mvp-portrait"><span class="visual-mvp-crown" aria-hidden="true">${sceneSticker('ui_mvp_crown','',48)}</span>${heroSticker(mvp.kind,116,mvp.awakened===true)}<span class="visual-mvp-level">Lv.${mvp.level}${mvp.awakened?' ★':''}</span></div><figcaption><b>MVP</b><strong>${tr(`${HEROES[mvp.kind]?'hero':'unit'}.${mvp.kind}`)}</strong></figcaption></figure><dl class="visual-medals">${medal('visual-damage','ui_stat_damage_burst',tr('p13.damage'),formatCompactNumber(mvp.damage))}${medal('visual-kills','ui_stat_ko_skull',tr('p13.kills'),`×${count(mvp.kills)}`)}</dl>`:`<div class="visual-team-photo"><div class="lineup-stickers">${units.slice(0,8).map(u=>unitSticker(u.kind,52)).join('')||sceneSticker('ui_tutorial_capy','',104)}</div><p>${tr('p6.noMvp')}</p><span>${tr('p6.lineup',{count:units.length})}</span></div>`;
  const treasure=(picture:string,quantity:string,label:string,extra='')=>`<figure class="visual-treasure-item${extra}" title="${label}"><span class="visual-treasure-art" aria-hidden="true">${picture}</span><figcaption><b>${quantity}</b><span class="settlement-sr-only">${label}</span></figcaption></figure>`;
  const treasureItems=treasure(sceneSticker('ui_coin_gold','',72),`+${count(coins)}`,tr('profile.coins'))+(won?treasure(sceneSticker('ui_ticket_gacha','',72),'+1',tr('p5.tickets')):'')
   +[...fragments].map(([id,quantity])=>treasure(WEAPONS[id]?weaponSticker(id,72):sceneSticker('ui_weapon_fragment','',72),`×${quantity}`,tr(`fragment.${id}`))).join('')
   +ingredients.map(([id,quantity])=>treasure(sceneSticker(id,'',72),`×${quantity}`,`${tr(`ingredient.${id}`)} ×${quantity}`,' is-ingredient')).join('')
-  +villageMaterialCounts(result.villageLoot).map(([id,quantity])=>treasure(sceneSticker(id,'',72),`×${quantity}`,`${tr(id==='res_onsen_wood'?'p16.wood':'p16.essence')} ×${quantity}`,' is-material')).join('');
+  +villageMaterialCounts(result.villageLoot).map(([id,quantity])=>treasure(sceneSticker(id,'',72),`×${quantity}`,`${tr(id==='res_onsen_wood'?'p16.wood':'p16.essence')} ×${quantity}`,' is-material')).join('')
+  +(crests?treasure(sceneSticker('ui_endless_crest','',72),`×${crests}`,tr('p17.resultCrests',{count:crests}),' is-crest'):'');
  const salvage=ingredientTotal&&!won?`<p class="ingredient-salvage-note">${sceneSticker('ui_kitchen_pot','',28)}<span>${tr('p14.salvageNote')}</span></p>`:'';
  const newFriend=(picture:string,label:string)=>`<figure class="visual-new-friend" title="${label}">${picture}<span aria-hidden="true">NEW!</span><figcaption class="settlement-sr-only">${label}</figcaption></figure>`;
  const newFriends=[...(won&&newRoster?[...newRoster.units,...newRoster.heroes].map(id=>newFriend(unitSticker(id,60),tr(`${HEROES[id]?'hero':'unit'}.${id}`))):[]),...newWeapons.map(id=>newFriend(weaponSticker(id,60),tr(`weapon.${id}`))),...newAvatars.map(id=>newFriend(avatarSticker(id,60),tr(`avatar.${id}`)))];

@@ -16,15 +16,17 @@ export const WAVES = [
 export const WAVE_DURATION = 36;
 export const FIRST_WAVE_PREPARATION = 18;
 export interface WaveConfig {count:number;interval:number;hpScale:number;speedScale:number;armorBonus:number}
+/** Endless HP grows by this factor per wave after the tenth (P17: a gentle ×1.25 instead of ×2). */
+export const ENDLESS_HP_GROWTH=1.25;
 /** Standard waves retain their table; endless pressure starts at k=1 on wave 11. */
 export function getWaveConfig(waveNumber:number):WaveConfig {
   const wave=Number.isFinite(waveNumber)?Math.max(1,Math.trunc(waveNumber)):1;
   if(wave<=10)return {...WAVES[wave-1],speedScale:1,armorBonus:0};
   const k=wave-10;
-  // Numerical saturation only: realistic waves retain their exact exponential curve.
-  const hpScale=Math.min(Number.MAX_SAFE_INTEGER,WAVES[9].hpScale*2**Math.min(53,k));
+  // P17 curve: ×1.25 per wave so devoted lineups top out around Wave 70-80; saturation is numerical only.
+  const hpScale=Math.min(Number.MAX_SAFE_INTEGER,WAVES[9].hpScale*Math.pow(ENDLESS_HP_GROWTH,Math.min(200,k)));
   return {count:Math.min(56,26+3*k),interval:Math.max(.55,1.2*Math.pow(.92,k)),hpScale,
-    speedScale:1+Math.min(.75,.06*k),armorBonus:Math.min(.35,.025*k)};
+    speedScale:1+Math.min(.60,.012*k),armorBonus:Math.min(.45,.009*k)};
 }
 const BOSS_WAVES=[4,6,8,9,10];
 export const THEME_BOSSES:Record<MapId,string[]>={

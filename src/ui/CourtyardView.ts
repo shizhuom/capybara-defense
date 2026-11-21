@@ -10,6 +10,8 @@ import { BROTHS, BROTH_IDS, isBrothId } from '../config/kitchen';
 import { canBrewOrUpgradeAnyBroth, getBrothLevel } from '../core/KitchenProgression';
 import { villageBadge, villageStars } from '../core/VillageProgression';
 import { VILLAGE_MAX_STARS } from '../config/village';
+import { upgradeableMedallions } from '../core/MedallionProgression';
+import { formatCompactNumber } from '../core/formatNumber';
 
 /** Village medallion: `Harvest!` when the basket is ripe, `Build!` when something is affordable, else total stars. */
 export function villageDockMarkup(profile: Profile, now = Date.now()): string {
@@ -35,6 +37,14 @@ export function activeBrothPillMarkup(profile: Profile): string {
   return `<button type="button" class="active-broth-pill" data-action="kitchen" style="--broth-color:${BROTHS[id].bathColor}" title="${esc(t('p14.activeTitle'))}: ${esc(name)} Lv.${level}" aria-label="${esc(t('p14.activeTitle'))}: ${esc(name)} Lv.${level}"><span aria-hidden="true">${sceneSticker(id,'',24)}</span><span class="active-broth-name">${esc(name)}</span><b>Lv.${level}</b></button>`;
 }
 
+/** P17: compact warm-gold pill mirroring today's soak; it opens the Endless Medallion Hall. */
+export function endlessHallPillMarkup(profile: Profile): string {
+  const ready = upgradeableMedallions(profile).length > 0, best = profile.bestEndlessWave ?? 0;
+  const crests = formatCompactNumber(profile.endlessCrests ?? 0), title = `${t('p17.title')} · ${t('p17.crests')} ×${crests}${best >= 11 ? ` · ${t('p17.bestWave', { wave: best })}` : ''}`;
+  const badge = ready ? `<b class="endless-hall-ready">${esc(t('p17.canUpgrade'))}</b>` : `<b class="endless-hall-crests">×${crests}</b>`;
+  return `<button type="button" class="endless-hall-pill${ready ? ' is-ready' : ''}" data-action="medallions" title="${esc(title)}" aria-label="${esc(title)}"><span aria-hidden="true">${sceneSticker('ui_endless_crest', '', 24)}</span><span class="endless-hall-name">${esc(t('p17.hallPill'))}</span>${badge}${best >= 11 ? `<small class="endless-hall-best">${esc(t('p17.bestWave', { wave: best }))}</small>` : ''}</button>`;
+}
+
 /** Small corner controls leave the animal-gathering panorama unobstructed. */
 export function courtyardMarkup(profile: Profile, now = Date.now()): string {
   const tr=(key:string)=>esc(t(key)), unlocked=getUnlockedMaps(profile), rank=getRank(profile.stars);
@@ -48,6 +58,6 @@ export function courtyardMarkup(profile: Profile, now = Date.now()): string {
     <h1 class="art-title" aria-label="${tr('app.title')}">${artSticker(getLanguage()==='zh-CN'?'title_logo_zh':'title_logo_en',t('app.title'))}</h1>
     <nav class="map-chips" aria-label="${tr('m3.map')}"><span aria-hidden="true">${sceneSticker('ui_map_sign','',24)}</span>${maps}</nav>
     <button type="button" class="start-button" data-action="start" aria-label="${tr('menu.start')}">${artSticker(getLanguage()==='zh-CN'?'ui_btn_start_zh':'ui_btn_start_en',t('menu.start'))}</button>
-    <nav class="hub-dock hub-dock-left"><button type="button" data-action="recipes"><span class="medallion" aria-hidden="true">${sceneSticker('ui_compendium_book','',56)}</span><b>${tr('p3.guide')}</b></button><button type="button" data-action="armory"><span class="medallion" aria-hidden="true">${weaponSticker('m10_bamboo_staff',56)}</span><b>${tr('p3.armory')}</b><small>${profile.unlockedWeapons.length}/36</small></button>${kitchenDockMarkup(profile)}</nav>${activeBrothPillMarkup(profile)}
+    <nav class="hub-dock hub-dock-left"><button type="button" data-action="recipes"><span class="medallion" aria-hidden="true">${sceneSticker('ui_compendium_book','',56)}</span><b>${tr('p3.guide')}</b></button><button type="button" data-action="armory"><span class="medallion" aria-hidden="true">${weaponSticker('m10_bamboo_staff',56)}</span><b>${tr('p3.armory')}</b><small>${profile.unlockedWeapons.length}/36</small></button>${kitchenDockMarkup(profile)}</nav>${activeBrothPillMarkup(profile)}${endlessHallPillMarkup(profile)}
     <nav class="hub-dock hub-dock-right">${villageDockMarkup(profile, now)}<button type="button" data-action="market"><span class="medallion" aria-hidden="true">${sceneSticker('ui_shop_bag','',56)}</span><b>${tr('p3.shop')}</b>${profile.freeLotteryTickets?`<small class="ticket-badge">${sceneSticker('ui_ticket_gacha','',18)} ${profile.freeLotteryTickets}</small>`:''}</button><button type="button" data-action="leaderboard"><span class="medallion" aria-hidden="true">${sceneSticker('ui_trophy_rank','',56)}</span><b>${tr('p3.rank')}</b></button></nav>`;
 }

@@ -26,14 +26,16 @@ const normal:BattleResult={winner:'player',reason:'waves',loot:['m02_slipper'],p
 const honor:BattleResult={...normal,reason:'oranges',endless:true,endlessWave:13,endlessCoins:45,
   endlessLoot:['m01_swatter','bamboo_blade'],coins:120,loot:['m02_slipper','m01_swatter','bamboo_blade'],mergedHeroes:['kungfu_po']};
 
-describe('P13 exact endless pressure',()=>{
+// P17 rebalance: endless HP grows ×1.25 per wave (was ×2), speed +1.2%/wave (cap +60%), armor +0.9%/wave (cap +45%).
+const hp=(k:number)=>9*Math.pow(1.25,k);
+describe('P13 exact endless pressure (P17 ×1.25 curve)',()=>{
   it.each([
-    [11,29,18,1.104,1.06,.025,1],
-    [12,32,36,1.01568,1.12,.05,1],
-    [13,35,72,.9344256,1.18,.075,2],
-    [15,41,288,.79089782784,1.30,.125,2],
-    [16,44,576,.7276260016128,1.36,.15,3],
-    [24,56,147456,.55,1.75,.35,3],
+    [11,29,hp(1),1.104,1.012,.009,1],
+    [12,32,hp(2),1.01568,1.024,.018,1],
+    [13,35,hp(3),.9344256,1.036,.027,2],
+    [15,41,hp(5),.79089782784,1.06,.045,2],
+    [16,44,hp(6),.7276260016128,1.072,.054,3],
+    [24,56,hp(14),.55,1.168,.126,3],
   ])('wave %i scales HP, pressure and mandatory bosses',(wave,count,hpScale,interval,speedScale,armorBonus,bossCount)=>{
     expect(waves).toHaveProperty('getWaveConfig');
     const config=waves.getWaveConfig(wave);
@@ -48,11 +50,11 @@ describe('P13 exact endless pressure',()=>{
   });
   it('applies wave11 pressure to both a scheduled boss and the first actual minion',()=>{
     const e=endless({progressionStars:0});const boss=e.state.enemies.find(enemy=>enemy.boss)!;
-    expect(boss.maxHp).toBe(700*18);expect(boss.speed).toBeCloseTo(.22*1.06);expect(boss.armor).toBeCloseTo(.075);
+    expect(boss.maxHp).toBe(700*11.25);expect(boss.speed).toBeCloseTo(.22*1.012);expect(boss.armor).toBeCloseTo(.059);
     e.tick(1);const rat=e.state.enemies.find(enemy=>!enemy.boss)!;
-    expect(rat.maxHp).toBe(28*18);expect(rat.speed).toBeCloseTo(.38*1.06);expect(rat.armor).toBeCloseTo(.025);
+    expect(rat.maxHp).toBe(28*11.25);expect(rat.speed).toBeCloseTo(.38*1.012);expect(rat.armor).toBeCloseTo(.009);
     expect(e.currentWaveTargetCount()).toBe(29);e.skipWave();
-    expect(e.state.enemies.find(enemy=>enemy.boss)!.maxHp).toBe(700*36);
+    expect(e.state.enemies.find(enemy=>enemy.boss)!.maxHp).toBe(700*hp(2));
   });
   it('preserves fractional spawn intervals instead of rounding every spawn up to a fixed step',()=>{
     const e=endless({progressionStars:0});
@@ -62,8 +64,8 @@ describe('P13 exact endless pressure',()=>{
   });
   it('applies endless pressure to default direct spawns without scaling explicit HP multipliers twice',()=>{
     const e=endless({progressionStars:0});
-    expect(e.spawnEnemy('rat','player').maxHp).toBe(504);
-    expect(e.spawnEnemy('rat','player',18).maxHp).toBe(504);
+    expect(e.spawnEnemy('rat','player').maxHp).toBe(315);
+    expect(e.spawnEnemy('rat','player',11.25).maxHp).toBe(315);
   });
   it('saturates only the unreachable numeric extreme instead of generating infinite health',()=>{
     expect(waves.getWaveConfig(10000).hpScale).toBe(Number.MAX_SAFE_INTEGER);
@@ -78,9 +80,9 @@ describe('P13 exact endless pressure',()=>{
     const children=e.state.enemies.filter(enemy=>enemy.kind===childKind);
     expect(children).toHaveLength(count);
     for(const child of children){
-      expect(child.maxHp).toBeCloseTo(ENEMIES[childKind].hp*18*hpFactor);
-      expect(child.speed).toBeCloseTo(ENEMIES[childKind].speed*1.06);
-      expect(child.armor).toBeCloseTo(ENEMIES[childKind].armor+.025);
+      expect(child.maxHp).toBeCloseTo(ENEMIES[childKind].hp*11.25*hpFactor);
+      expect(child.speed).toBeCloseTo(ENEMIES[childKind].speed*1.012);
+      expect(child.armor).toBeCloseTo(ENEMIES[childKind].armor+.009);
     }
   });
 });

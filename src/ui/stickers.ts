@@ -161,6 +161,36 @@ Object.assign(tools,{
  ui_pet_heart:p('M0 30 C-38 6 -34 -26 -14 -28 C-5 -28 0 -21 0 -15 C0 -21 5 -28 14 -28 C34 -26 38 6 0 30Z','#ff7b89','#3a2618',3)+e(-14,-12,4,7,'#ffd3da'),
  ui_sleep_zzz:p('M-30 12 Q-40 0 -26 -8 Q-24 -24 -6 -20 Q6 -32 20 -20 Q36 -20 34 -2 Q42 14 26 18 H-22 Q-34 18 -30 12Z','#e3f1ff','#3a2618',2.5)+p('M-2 -12 A10 10 0 1 0 8 6 A8 8 0 1 1 -2 -12Z','#f5c343','#3a2618',1.8)+e(-30,30,4,4,'#e3f1ff'),
 });
+export const P17_AWAKENED_IDS=['kungfu_po_awakened','bamboo_mafia_awakened','zen_master_awakened','puss_in_hat_awakened','meowfia_awakened','purrcerer_awakened','samurai_doge_awakened','doge_wick_awakened','ronin_goose_awakened','ballin_rooster_awakened','rocket_coon_awakened','pepe_king_awakened'] as const;
+export const P17_SCENE_IDS=[...P17_AWAKENED_IDS,'med_breakthrough_atk','med_luck_rate','med_momentum','med_boss_resist','med_boss_slayer','med_capy_shield','ui_endless_crest','ui_medallion_peek_capy'] as const;
+// P17 Endless Awakening: borderless, text-free stand-ins until each PNG decodes.
+const awakenedArt=(body:string,accent:string,emblem:string)=>p('M-30 30 Q-38 -2 -22 -18 Q-20 -6 -12 -4 Q-16 -26 0 -40 Q4 -24 14 -18 Q20 -26 18 -34 Q40 -10 30 30Z','#f6b04a','#3a2618',2.4)
+ +e(0,30,30,8,'#f6d77d')+e(0,8,22,22,body)+e(-8,4,2.5,3.5,'#3a2618')+e(8,4,2.5,3.5,'#3a2618')+p('M-5 14 Q0 18 5 14','none','#3a2618',2)
+ +p('M-20 -10 Q0 -20 20 -10 L18 -4 Q0 -12 -18 -4Z',accent,'#3a2618',2)+emblem;
+const goldStar=(x:number,y:number,r:number)=>p(`M${x} ${y-r} L${x+r*.3} ${y-r*.3} ${x+r} ${y} ${x+r*.3} ${y+r*.3} ${x} ${y+r} ${x-r*.3} ${y+r*.3} ${x-r} ${y} ${x-r*.3} ${y-r*.3}Z`,'#ffe27a','#3a2618',1.4);
+const medal=(rim:string,face:string,emblem:string)=>p('M-16 -44 L-6 -22 M16 -44 L6 -22','none','#c9473b',6)+e(0,6,34,34,rim)+e(0,6,26,26,face)+emblem;
+Object.assign(tools,{
+ kungfu_po_awakened:awakenedArt('#8ebda0','#e2b866',p('M0 -22 V-32','none','#d9543a',4)+goldStar(-22,20,5)),
+ bamboo_mafia_awakened:awakenedArt('#8383a2','#3a3a46',r(-14,0,28,6,'#e2b866',2)+goldStar(24,-6,5)),
+ zen_master_awakened:awakenedArt('#b3a6d2','#7c64b8',e(0,-28,16,5,'rgba(255,214,120,.2)')+goldStar(0,-30,5)),
+ puss_in_hat_awakened:awakenedArt('#e9b280','#5f8a4a',p('M14 -14 Q30 -34 34 -18','none','#f2c14e',3)+goldStar(26,16,4)),
+ meowfia_awakened:awakenedArt('#a6c6be','#2e2e36',p('M-6 24 L0 20 6 24 0 28Z','#d9543a','#3a2618',1.4)+goldStar(-24,18,4)),
+ purrcerer_awakened:awakenedArt('#bb9fd5','#6b4aa8',goldStar(0,-18,5)+e(26,-20,5,5,'#ffd56b')),
+ samurai_doge_awakened:awakenedArt('#e3a56f','#5f8a4a',p('M-18 -8 H18','none','#f2c14e',3)+p('M20 30 L34 -6','none','#9fe0d0',3)),
+ doge_wick_awakened:awakenedArt('#b1ada7','#2e2e36',p('M-4 22 L0 34 4 22Z','#d9543a','#3a2618',1.4)+goldStar(26,14,4)),
+ ronin_goose_awakened:awakenedArt('#efe6c8','#e2b866',p('M-20 -6 V4 M20 -6 V4','none','#d9543a',3)+goldStar(-26,14,4)),
+ ballin_rooster_awakened:awakenedArt('#ea9875','#d9543a',e(26,18,8,8,'#f08a3a')+p('M18 18 Q26 10 34 18','none','#ffe27a',2)),
+ rocket_coon_awakened:awakenedArt('#9cb9ad','#8a6a4a',e(-8,-2,6,4,'#ffd56b')+e(8,-2,6,4,'#ffd56b')+goldStar(26,16,4)),
+ pepe_king_awakened:awakenedArt('#abc479','#e2b866',p('M-14 -14 L-10 -26 -4 -16 0 -28 4 -16 10 -26 14 -14Z','#f2c14e','#3a2618',1.6)+e(0,-20,3,3,'#3fbf8f')),
+ med_breakthrough_atk:medal('#d9a35f','#f6dc94',p('M0 26 C-14 24 -16 10 -6 0 Q-4 8 0 8 C-4 -2 2 -12 6 -16 Q6 -6 10 -2 C16 8 12 26 0 26Z','#f39a2e','#3a2618',2)+p('M-18 22 L-6 10','none','#9aa7b0',3)),
+ med_luck_rate:medal('#3fa66b','#d8f0c8',p('M0 6 Q-18 -10 0 -16 Q18 -10 0 6 Q-18 22 -4 24 M0 6 Q18 22 4 24 M0 6 Q-22 6 -16 -4 M0 6 Q22 6 16 -4','#7db356','#3a2618',2)+goldStar(18,-14,4)),
+ med_momentum:medal('#c9473b','#f7d7b0',p('M-16 -10 L14 22 M16 -10 L-14 22','none','#e2b866',5)+p('M-16 -10 L14 22 M16 -10 L-14 22','none','#3a2618',1.2)),
+ med_boss_resist:p('M0 -36 Q16 -28 30 -28 Q32 6 0 40 Q-32 6 -30 -28 Q-16 -28 0 -36Z','#7fcfb8','#3a2618',3)+p('M0 -24 Q10 -18 20 -18 Q20 4 0 28 Q-20 4 -20 -18 Q-10 -18 0 -24Z','#bdeedd','#e2b866',2)+p('M-12 8 Q-6 2 0 8 Q6 2 12 8','none','#3a8a78',2.4),
+ med_boss_slayer:p('M0 -40 L32 4 0 42 -32 4Z','#e2b866','#3a2618',3)+p('M0 -28 L22 4 0 30 -22 4Z','#3d5fa8','#3a2618',2)+p('M-12 -2 L-8 -12 -2 -4 2 -14 6 -4 12 -12 14 -2Z','#ffe27a','#3a2618',1.4)+p('M-16 22 L16 -18','none','#fff3b0',3),
+ med_capy_shield:e(0,4,36,36,'rgba(255,224,128,.35)')+e(0,4,30,30,'#fff1c2')+e(0,8,14,13,'#f2a03a')+p('M0 -5 Q4 -14 12 -12 Q8 -6 0 -5Z','#7db356','#3a2618',1.4)+e(-14,-12,6,9,'rgba(255,255,255,.75)'),
+ ui_endless_crest:p('M0 -42 L10 -24 30 -30 24 -10 42 0 24 10 30 30 10 24 0 42 -10 24 -30 30 -24 10 -42 0 -24 -10 -30 -30 -10 -24Z','#f2c14e','#3a2618',3)+e(0,0,20,20,'#ffe9a8')+p('M-12 0 C-12 -9 -3 -9 0 0 C3 9 12 9 12 0 C12 -9 3 -9 0 0 C-3 9 -12 9 -12 0Z','none','#b07a1e',3),
+ ui_medallion_peek_capy:peekBody+p('M-30 -8 Q0 -20 30 -8','none','#e2b866',5)+p('M-24 -10 L-30 -18 M24 -10 L30 -18','none','#7db356',3)+e(-4,36,7,7,'#f39a2e')+peekPaws,
+});
 export const P9_SCENE_IDS=['npc_shop_raccoon','npc_blacksmith_capy','ui_gacha_machine','ui_trunk_crate','ui_battle_clash_crest','ui_crossed_blades','ui_alert_siren','ui_unlock_chest'] as const;
 Object.assign(tools,{
  npc_shop_raccoon:coon+r(-32,22,64,19,'#8eb09a')+p('M-34 -23 H34 L25 -39 H-23Z','#d0a66d'),
@@ -214,10 +244,18 @@ export function unitSticker(kind:string,size=40):string {
   if(['hamster','squirrel','bee'].includes(key))return avatarSticker(key,n);
   return `<span role="img" aria-label="${key}" data-sticker="${key}" style="display:inline-grid;place-items:center;width:${n}px;height:${n}px;font-size:${Math.round(n*.63)}px">${escapeHtml(UNIT_ICONS[key])}</span>`;
 }
-export function sceneSticker(id:typeof P16_SCENE_IDS[number]|typeof P15_SCENE_IDS[number]|typeof P14_SCENE_IDS[number]|typeof P13_SCENE_IDS[number]|typeof P12_SCENE_IDS[number]|typeof P11_SCENE_IDS[number]|typeof P10_SCENE_IDS[number]|typeof P9_SCENE_IDS[number]|'menu_banner'|'logo_capy'|'sprinkler'|'shovel'|'ui_compendium_book'|'ui_fish_food'|'ui_bell_summon'|'ui_shop_bag'|'orange'|'ui_trophy_rank'|'ui_map_sign'|'ui_header_compendium'|'ui_header_armory'|'ui_header_market'|'ui_header_rank'|'ui_header_profile'|'ui_header_settings'|'ui_tutorial_pointer'|'ui_tutorial_capy'|'ui_coin_gold'|'ui_star_rank'|'ui_ticket_gacha'|'ui_skull_threat'|'ui_result_victory'|'ui_result_defeat'|'ui_header_pause'|'ui_mvp_crown'|'ui_lock_closed'|'ui_lock_open'|'ui_wave_horn'|'ui_merge_sparkle',fallback:string,size?:number):string {
+export function sceneSticker(id:typeof P17_SCENE_IDS[number]|typeof P16_SCENE_IDS[number]|typeof P15_SCENE_IDS[number]|typeof P14_SCENE_IDS[number]|typeof P13_SCENE_IDS[number]|typeof P12_SCENE_IDS[number]|typeof P11_SCENE_IDS[number]|typeof P10_SCENE_IDS[number]|typeof P9_SCENE_IDS[number]|'menu_banner'|'logo_capy'|'sprinkler'|'shovel'|'ui_compendium_book'|'ui_fish_food'|'ui_bell_summon'|'ui_shop_bag'|'orange'|'ui_trophy_rank'|'ui_map_sign'|'ui_header_compendium'|'ui_header_armory'|'ui_header_market'|'ui_header_rank'|'ui_header_profile'|'ui_header_settings'|'ui_tutorial_pointer'|'ui_tutorial_capy'|'ui_coin_gold'|'ui_star_rank'|'ui_ticket_gacha'|'ui_skull_threat'|'ui_result_victory'|'ui_result_defeat'|'ui_header_pause'|'ui_mvp_crown'|'ui_lock_closed'|'ui_lock_open'|'ui_wave_horn'|'ui_merge_sparkle',fallback:string,size?:number):string {
   const n=sizeOf(size??(id==='menu_banner'?400:64),64);
-  return image(id,n)||(Object.hasOwn(tools,id)?geometry(id,tools[id],n,![...P10_SCENE_IDS,...P11_SCENE_IDS,...P12_SCENE_IDS,...P14_SCENE_IDS,...P15_SCENE_IDS,...P16_SCENE_IDS].some(key=>key===id)):fallback);
+  return image(id,n)||(Object.hasOwn(tools,id)?geometry(id,tools[id],n,![...P10_SCENE_IDS,...P11_SCENE_IDS,...P12_SCENE_IDS,...P14_SCENE_IDS,...P15_SCENE_IDS,...P16_SCENE_IDS,...P17_SCENE_IDS].some(key=>key===id)):fallback);
 }
+
+/** P17: an awakened hero shows its new sticker (or its own stand-in), never another hero's art. */
+export function awakenedSticker(kind:string,size=40):string {
+  const id=`${kind}_awakened`;
+  return (P17_AWAKENED_IDS as readonly string[]).includes(id)?sceneSticker(id as typeof P17_AWAKENED_IDS[number],'',size):unitSticker(kind,size);
+}
+/** Hero picture that follows the breakthrough state. */
+export const heroSticker=(kind:string,size:number,awakened=false)=>awakened?awakenedSticker(kind,size):unitSticker(kind,size);
 
 type ArtStickerId='title_logo_zh'|'title_logo_en'|'ui_btn_start_zh'|'ui_btn_start_en';
 /** Wide transparent art keeps its own silhouette, including before optional PNGs decode. */

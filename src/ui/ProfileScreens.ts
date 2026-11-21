@@ -7,8 +7,37 @@ import { getLeaderboard, getUnlockedMaps, selectAvatar, selectMap, setRank, upda
 import { avatarSticker } from '../render/M3Art';
 import { getLanguage,t } from '../i18n/i18n';
 import { escapeHtml as esc } from './art';
+import { heroSticker } from './stickers';
+import { displayNickname, NICKNAME_MAX } from '../core/PlayerIdentity';
+import { localEntry, type LeaderboardEntry, type LeaderboardSnapshot } from './EndlessLeaderboardClient';
 
-export type ProfileScreen = 'profile' | 'leaderboard' | 'settings';
+export type ProfileScreen = 'profile' | 'leaderboard' | 'endless-board' | 'settings';
+const boardClock = (seconds: number) => `${Math.floor(seconds / 60)}:${String(Math.floor(seconds % 60)).padStart(2, '0')}`;
+
+/** Endless board UI state supplied by the host (the client lives in GameApp). */
+export interface EndlessBoardView { snapshot: LeaderboardSnapshot; loading: boolean; nicknameDraft?: string }
+
+/** P17 global endless board: a warm name card on top, then the Top 100 with the player's row highlighted. */
+export function endlessBoardMarkup(profile: Profile, view: EndlessBoardView): string {
+  const language = getLanguage(), name = displayNickname(profile, language), best = profile.bestEndlessWave ?? 0;
+  const { snapshot } = view, me = snapshot.me, online = snapshot.mode === 'online';
+  const rank = me && me.rank > 0 ? tr('p17.board.rank', { rank: me.rank, total: Math.max(snapshot.totalPlayers, me.rank) }) : '';
+  const status = view.loading ? tr('p17.board.loading') : snapshot.mode === 'unconfigured' ? tr('p17.board.unconfigured') : snapshot.mode === 'offline' ? tr('p17.board.offline') : '';
+  const cached = !online && snapshot.fetchedAt ? `<small class="endless-board-cached">${tr('p17.board.cached', { time: new Date(snapshot.fetchedAt).toLocaleString(language === 'en' ? 'en-US' : 'zh-CN', { month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' }) })}</small>` : '';
+  const card = `<section class="endless-board-card" aria-label="${tr('p17.board.nickname')}"><span class="endless-board-avatar">${avatarSticker(profile.avatarId, 64)}</span><div class="endless-board-identity"><form class="endless-name-form" data-endless-name-form><label class="endless-name-label" for="endless-nickname">${tr('p17.board.nickname')}</label><span class="endless-name-row"><input id="endless-nickname" class="endless-name-input" name="nickname" type="text" maxlength="${NICKNAME_MAX * 2}" autocomplete="off" spellcheck="false" value="${esc(view.nicknameDraft ?? name)}" data-endless-nickname aria-label="${tr('p17.board.nickname')}"><button type="submit" class="storybook-equip-btn endless-name-save" data-action="endless-name-save">${tr('p17.board.save')}</button></span></form><p class="endless-board-best">${best >= 11 ? `<b>${tr('p17.board.best', { wave: best })}</b>${rank ? `<span class="endless-board-rank">${rank}</span>` : `<span class="endless-board-rank is-muted">${tr(online ? 'p17.board.unranked' : 'p17.board.local')}</span>`}` : `<span class="is-muted">${tr('p17.board.noBest')}</span>`}</p></div><div class="endless-board-actions"><button type="button" class="endless-board-refresh" data-action="endless-board-refresh"${view.loading ? ' disabled' : ''}>${tr('p17.board.refresh')}</button><button type="button" class="endless-board-medallions" data-action="medallions">${tr('p17.board.medallions')}</button></div></section>`;
+  const note = status ? `<p class="endless-board-status${online ? '' : ' is-offline'}" role="status">${status}${cached}</p>` : '';
+  const local = localEntry(profile, language);
+  const listed = snapshot.entries.length ? snapshot.entries : !online && local ? [local] : [];
+  const row = (entry: LeaderboardEntry, index: number) => {
+    const mine = entry.playerId === profile.playerId, place = entry.rank || index + 1;
+    const medal = entry.rank > 0 && place <= 3 ? ['🥇', '🥈', '🥉'][place - 1] : entry.rank > 0 ? `#${place}` : '★';
+    return `<li class="storybook-row-card endless-board-row${mine ? ' is-player' : ''}" data-player="${mine}" data-place="${entry.rank > 0 ? place : 0}"><span class="endless-board-place">${medal}</span><span class="storybook-frame tone-heroes">${avatarSticker(entry.avatarId, 40)}</span><span class="storybook-copy"><strong class="portrait-name">${esc(mine ? name : entry.nickname)}${mine ? ` <span class="you-here">${tr('p17.board.me')}</span>` : ''}</strong><span class="storybook-tagline endless-board-meta"><span class="endless-board-mvp" title="${tr(`hero.${entry.mvpKind}`)}">${heroSticker(entry.mvpKind, 30, entry.mvpAwakened)}</span>${entry.awakenedCount ? `<span class="endless-board-awakened">✦${entry.awakenedCount}</span>` : ''}<span>⏱ ${boardClock(entry.elapsedSeconds)}</span></span></span><span class="storybook-status endless-board-wave"><b>${tr('p17.board.wave', { wave: entry.bestWave })}</b></span></li>`;
+  };
+  const meRow = me && online && !snapshot.entries.some(entry => entry.playerId === me.playerId) ? `<li class="endless-board-gap" aria-hidden="true">⋯</li>${row(me, me.rank - 1)}` : '';
+  const heading = `<h3 class="storybook-list-heading endless-board-heading">${tr(online ? 'p17.board.top' : 'p17.board.local', { count: Math.min(100, snapshot.entries.length) })}${online && snapshot.totalPlayers ? ` <small>${tr('p17.board.players', { total: snapshot.totalPlayers })}</small>` : ''}</h3>`;
+  const list = listed.length ? `<ol class="storybook-rank-list endless-board-list" aria-label="${tr('p11.title.endless-board')}">${listed.map(row).join('')}${meRow}</ol>` : `<p class="endless-board-empty">${tr(online ? 'p17.board.empty' : 'p17.board.noBest')}</p>`;
+  return `${card}${note}${heading}${list}`;
+}
 const tr = (key: string, vars?: Record<string, string | number>) => esc(t(key, vars));
 
 export function rankCard(profile: Profile): string {
@@ -23,7 +52,7 @@ export function mapOptions(profile: Profile, includeAuto = true): string {
 }
 
 export class ProfileScreens {
-  constructor(private profile: () => Profile, private persist: (profile: Profile) => boolean, private render: () => void, private notify: (key: string) => void) {}
+  constructor(private profile: () => Profile, private persist: (profile: Profile) => boolean, private render: () => void, private notify: (key: string) => void, private board?: () => EndlessBoardView) {}
   action(action: string): boolean {
     if (!action.startsWith('avatar:')) return false;
     const id = action.slice(7), current = this.profile();
@@ -54,7 +83,7 @@ export class ProfileScreens {
   }
   markup(screen: ProfileScreen): string {
     const profile=this.profile();
-    const body=screen==='settings'?this.settings(profile):screen==='leaderboard'?this.leaderboard(profile):this.passport(profile);
+    const body=screen==='settings'?this.settings(profile):screen==='leaderboard'?this.leaderboard(profile):screen==='endless-board'?endlessBoardMarkup(profile,this.board?.()??{snapshot:{mode:'unconfigured',entries:[],totalPlayers:0,me:null,fetchedAt:null},loading:false}):this.passport(profile);
     return ledger(screen,body,{profile});
   }
   private leaderboard(profile:Profile):string {

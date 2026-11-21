@@ -19,7 +19,9 @@ export interface BathPainter {
   /** Tub-free vector capybara used when no soak PNG is decoded (100-unit art space). */
   vectorCapybara(dizzy:boolean):void;
 }
-export interface GuardianBathInput {mapId:MapId;oranges:number;seconds:number;activeBrothId?:string|null;brothLevel?:number;happyUntil?:number}
+/** P17 Capybara Bubble Shield: a ready charge, recharge progress (0..1) and the age of the latest pop. */
+export interface BathShield {ready:boolean;progress:number;popAge?:number}
+export interface GuardianBathInput {mapId:MapId;oranges:number;seconds:number;activeBrothId?:string|null;brothLevel?:number;happyUntil?:number;shield?:BathShield}
 
 // ── Animation schedule ────────────────────────────────────────────────────────────────────────────────
 export const CALM_SCHEDULE=[['capybara_soak',3.2],['capybara_soak_2',1.4],['capybara_soak',2.4],['capybara_soak_3',1.3]] as const;
@@ -256,4 +258,33 @@ export function drawGuardianBath(p:BathPainter,input:GuardianBathInput):void {
   const rim=p.image(`tub_rim_${input.mapId}`);
   if(rim)c.drawImage(rim,spot.rim.dx,spot.rim.dy,spot.rim.dw,spot.rim.dh);
   c.save();c.translate(spot.x,spot.y);drawSteam(c,spot,pal,input.seconds);c.restore();
+  if(input.shield)drawBathShield(c,spot,input,input.shield);
+}
+
+/**
+ * P17 shield, drawn after the rim so it wraps the whole tub: a thin warm-gold rim light with a faint inner sheen
+ * (the soak animation and soup stay fully visible). While recharging, a 32×4 bar sits just under the tub.
+ */
+export function shieldDome(spot:GuardianBathSpot,oranges:number):{x:number;y:number;rx:number;ry:number} {
+  const top=-spot.size*.62-Math.max(0,Math.min(6,Math.floor(oranges)))*15,bottom=spot.water.y+spot.water.ry*.72;
+  return{x:spot.water.x,y:(top+bottom)/2,rx:Math.max(spot.water.rx*1.08,spot.size*.66),ry:(bottom-top)/2};
+}
+function drawBathShield(c:C,spot:GuardianBathSpot,input:GuardianBathInput,shield:BathShield):void {
+  const dome=shieldDome(spot,input.oranges);
+  c.save();c.translate(spot.x,spot.y);
+  if(shield.ready){
+    const breath=1+Math.sin(input.seconds*1.6)*.012;
+    c.beginPath();c.ellipse(dome.x,dome.y,dome.rx*breath,dome.ry*breath,0,0,Math.PI*2);
+    c.fillStyle='rgba(255, 250, 225, 0.14)';c.fill();
+    c.lineWidth=2.2;c.strokeStyle='rgba(255, 224, 128, 0.75)';c.stroke();
+    // Soft sheen arc on the upper left; no glow, no bloom.
+    c.beginPath();c.ellipse(dome.x,dome.y,dome.rx*.84*breath,dome.ry*.84*breath,0,Math.PI*1.08,Math.PI*1.42);
+    c.lineWidth=3;c.strokeStyle='rgba(255, 250, 225, 0.55)';c.stroke();
+  }else{
+    // Cream track with a hairline cocoa edge so the 32×4 charge bar reads on wood, grass and soup alike.
+    const width=32,height=4,x=dome.x-width/2,y=spot.rim.dy+spot.rim.dh-spot.y+3;
+    c.beginPath();c.roundRect(x-1,y-1,width+2,height+2,3);c.fillStyle='rgba(255, 248, 230, 0.92)';c.fill();c.lineWidth=1;c.strokeStyle='rgba(74, 50, 43, 0.75)';c.stroke();
+    c.beginPath();c.roundRect(x,y,Math.max(2,width*Math.max(0,Math.min(1,shield.progress))),height,2);c.fillStyle='rgba(240, 176, 52, 1)';c.fill();
+  }
+  c.restore();
 }

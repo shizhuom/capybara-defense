@@ -16,6 +16,11 @@ import { MetaScreens, propSlots, type MetaScreen } from './MetaScreens';
 import { KitchenScreen } from './KitchenScreen';
 import { VillageScreen } from './VillageScreen';
 import { villageLoadout } from '../core/VillageProgression';
+import { MedallionScreen } from './MedallionScreen';
+import { EndlessLeaderboardClient } from './EndlessLeaderboardClient';
+import { validateNickname } from '../core/PlayerIdentity';
+import { formatCompactNumber } from '../core/formatNumber';
+import { AWAKENED_DAMAGE, breakthroughAttackMultiplier, getMedallionLevel, momentumMultiplier } from '../config/medallions';
 import { PROPS } from '../config/props';
 import { setPropSlots } from '../core/MetaProgression';
 import './m2.css';
@@ -28,7 +33,7 @@ import './p6.css';
 import {lootMarkup as illustratedLoot, pauseMarkup, resultMarkup, endlessOfferMarkup} from './SettlementView';
 import {earlyWaveCoachmarkMarkup,nextBattleSpeed,passiveRailMarkup,p13WaveMarkup} from './P13HUD';
 import {propTargetKind,resolvePropDrop} from '../core/PropTargets';
-import { liveUnitCardMarkup } from './LiveUnitCard';
+import { liveUnitCardMarkup, momentumText, breakthroughBreakdown } from './LiveUnitCard';
 import { getBeeProduction } from '../core/UnitStats';
 import { courtyardMarkup } from './CourtyardView';
 import { RANKS, getRank } from '../config/ranks';
@@ -40,14 +45,16 @@ import { ProfileScreens, type ProfileScreen } from './ProfileScreens';
 import { SoundManager } from './SoundManager';
 import { capyLogo, escapeHtml as esc } from './art';
 import { onAssetsReady } from '../render/AssetRegistry';
-import { propSticker, sceneSticker, unitSticker, P9_SCENE_IDS, P10_SCENE_IDS, P11_SCENE_IDS, P12_SCENE_IDS, P13_SCENE_IDS, P14_SCENE_IDS, P15_SCENE_IDS, P16_SCENE_IDS } from './stickers';
+import { propSticker, sceneSticker, unitSticker, P9_SCENE_IDS, P10_SCENE_IDS, P11_SCENE_IDS, P12_SCENE_IDS, P13_SCENE_IDS, P14_SCENE_IDS, P15_SCENE_IDS, P16_SCENE_IDS, P17_SCENE_IDS } from './stickers';
 import { Compendium } from './Compendium';
 import { getBossHUD, getWaveHUD, getMusicMode, isDeveloperMode } from './BattleHUD';
 import { advanceTutorial, finishTutorial, replayTutorial, type TutorialAction, type TutorialStep } from '../core/Tutorial';
 import { tutorialMarkup, tutorialTargets, placeTutorialBubble, tutorialCardDock, type TutorialRect } from './TutorialView';
 
 type Hit = HitTarget;
-type DialogKind = 'pause' | 'recipes' | 'result' | 'endless-offer' | 'kitchen' | 'village' | MetaScreen | ProfileScreen;
+type DialogKind = 'pause' | 'recipes' | 'result' | 'endless-offer' | 'kitchen' | 'village' | 'medallions' | MetaScreen | ProfileScreen;
+/** Overlays that share one return point: the profile ledger tabs and the P17 medallion hall. */
+type OverlayScreen = ProfileScreen | 'medallions';
 type Drag = { pointerId: number; start: { x: number; y: number }; point: { x: number; y: number }; id?: number; shovel: boolean; moved: boolean };
 const tr = (key: string, vars?: Record<string, string | number>) => esc(t(key, vars));
 const unitName = (kind: string) => t(`${HEROES[kind] ? 'hero' : 'unit'}.${kind}`);
@@ -83,6 +90,13 @@ export class GameApp {
   private profileScreens: ProfileScreens;
   private kitchen: KitchenScreen;
   private village: VillageScreen;
+  private medallions: MedallionScreen;
+  /** P17 global endless board: shared client, loading flag, unsaved nickname draft and the last synced rank. */
+  private board = new EndlessLeaderboardClient();
+  private boardLoading = false;
+  private boardDraft?: string;
+  private globalRank?: number;
+  private p17EventId = 0;
   private sound = new SoundManager(this.profile.settings);
   private compendium = new Compendium();
   private tutorialStep: TutorialStep = 'done';
@@ -120,7 +134,10 @@ export class GameApp {
       () => { if (this.dialogKind === 'kitchen') this.renderDialog(); }, (key, error, vars) => this.notify(key, error, vars), cue => this.sound.play(cue));
     this.village = new VillageScreen(() => this.profile, profile => this.acceptPersistedProfile(profile),
       () => { if (this.dialogKind === 'village') this.renderDialog(); }, (key, error, vars) => this.notify(key, error, vars), cue => this.sound.play(cue));
-    this.profileScreens = new ProfileScreens(() => this.profile, profile => this.persistProfile(profile), () => this.refresh(true), key => this.notify(key));
+    this.medallions = new MedallionScreen(() => this.profile, profile => this.acceptPersistedProfile(profile),
+      () => { if (this.dialogKind === 'medallions') this.renderDialog(); }, (key, error, vars) => this.notify(key, error, vars), cue => this.sound.play(cue));
+    this.profileScreens = new ProfileScreens(() => this.profile, profile => this.persistProfile(profile), () => this.refresh(true), key => this.notify(key),
+      () => ({ snapshot: this.board.snapshot(), loading: this.boardLoading, nicknameDraft: this.boardDraft }));
     this.root.innerHTML = this.shell();
     this.canvas = this.element<HTMLCanvasElement>('battle-canvas');
     this.dialog = this.element<HTMLDialogElement>('game-dialog');
@@ -212,7 +229,7 @@ export class GameApp {
     this.speed = 1;
     this.completedId = '';
     this.savedResult=true;this.resultStars=0;this.passiveInfoId=undefined;this.earlyTipStamp='';this.passiveStamp='';
-    this.newWeapons = [];
+    this.newWeapons = []; this.globalRank = undefined;
     this.newAvatars = []; this.mergedStamp = '';
     this.newRoster={units:[],heroes:[]};this.alertSeen=new Set();this.alertQueue=[];this.activeAlert=undefined;
     this.element('enemy-alert-banner').hidden=true;
@@ -285,6 +302,7 @@ export class GameApp {
       if(!this.transitionUntil)this.sound.setMode(getMusicMode(state,!!this.dialogKind));
       this.renderEnemyAlerts(now);
       this.sound.consumeBattle(state);
+      this.observeP17Events(state);
       this.sound.setDucked(this.retainedPage || document.hidden || state.phase !== 'playing');
       const merged = state.mergedHeroes.player;
       const mergedStamp = merged.join(',');
@@ -297,6 +315,11 @@ export class GameApp {
       if (state.phase === 'finished' && this.completedId !== this.settlementKey(state)) this.finish(state);
       const interaction: Interaction = { selectedId: this.selectedId, shovel: this.shovelSelected, propId: this.selectedProp, showDamageNumbers: this.profile.settings.showDamageNumbers,allowBenchLock:this.tutorialStep==='done' };
       if(this.drag?.id&&!this.selectedProp&&!this.shovelSelected)interaction.previewSourceId=this.drag.id;
+      if(state.endless){
+        const chances:Record<number,number>={};
+        for(const unit of state.units)if(unit.side==='player'&&HEROES[unit.kind]&&unit.level>=5&&!unit.awakened)chances[unit.id]=this.engine.getBreakthroughChance(unit).total;
+        interaction.breakthroughChances=chances;
+      }
       if (this.drag?.moved) {
         interaction.draggingId = this.drag.id;
         interaction.pointer = this.drag.point;
@@ -342,6 +365,7 @@ export class GameApp {
             if(this.newRoster.heroes.length)this.sound.play('hero_merge');
           }
           this.newAvatars = [...new Set([...(state.endless?this.newAvatars:[]),...this.profile.unlockedAvatars.filter(id => !before.unlockedAvatars.includes(id))])];
+          if(state.endless)this.syncEndlessScore();
         }
       }
     }
@@ -357,6 +381,50 @@ export class GameApp {
     this.refresh(true);
   }
 
+  /** P17 cues reuse existing sounds only: the bubble shield pops with `orange_gain`, Calm Ward clanks with `hit_heavy`. */
+  private observeP17Events(state: BattleState): void {
+    for (const event of state.events) {
+      if (event.id <= this.p17EventId) continue;
+      this.p17EventId = event.id;
+      if (event.type === 'shield_block') this.sound.play('orange_gain');
+      else if (event.type === 'bubble' && event.effect === 'resist_block') this.sound.play('hit_heavy');
+    }
+  }
+  /** Background upload after an endless receipt is saved; the result plaque shows the rank once it arrives. */
+  private syncEndlessScore(): void {
+    const profile = this.profile, board = this.board;
+    if (!board) return;
+    void board.submitScore(profile, getLanguage()).then(outcome => {
+      if (!outcome.ok || !outcome.rank) return;
+      this.globalRank = outcome.rank;
+      if (this.dialogKind === 'result' || this.dialogKind === 'endless-board') this.renderDialog();
+    });
+  }
+  /** Loads the Top 100 (30 s cache unless forced); never throws, and offline keeps the cached board. */
+  private refreshBoard(force = false): void {
+    if (this.boardLoading) return;
+    if (!this.board.configured) { if (this.dialogKind === 'endless-board') this.renderDialog(); return; }
+    if (!force && this.board.fresh()) return;
+    this.boardLoading = true; if (this.dialogKind === 'endless-board') this.renderDialog();
+    void this.board.refresh(this.profile.playerId, force).then(snapshot => {
+      this.boardLoading = false;
+      void snapshot;
+      if (this.dialogKind === 'endless-board') this.renderDialog();
+    });
+  }
+  /** Validates and saves the nickname locally first; a ranked player also re-syncs it to the board. */
+  private saveNickname(): void {
+    const input = this.dialog.querySelector<HTMLInputElement>('[data-endless-nickname]');
+    const check = validateNickname(input?.value ?? this.boardDraft ?? '');
+    if (!check.ok) { this.notify(check.key, true); return; }
+    if (!this.persistProfile({ ...this.profile, nickname: check.value })) return;
+    this.boardDraft = undefined; this.notify('p17.nameSaved'); this.renderDialog();
+    if ((this.profile.bestEndlessWave ?? 0) >= 11 && this.board.configured) void this.board.submitScore(this.profile, getLanguage()).then(outcome => {
+      if (outcome.ok) { this.notify('p17.board.synced'); if (this.dialogKind === 'endless-board') this.refreshBoard(true); }
+      else if (outcome.key === 'p17.board.rateLimited') this.notify(outcome.key, true);
+    });
+  }
+
   private refresh(force = false): void {
     const state = this.engine?.state;
     const active = state?.phase === 'playing';
@@ -364,7 +432,7 @@ export class GameApp {
       this.assetsDirty=false; force=true;
       this.quickStamp=''; this.battlePropsStamp=''; this.bossStamp='';this.tutorialStamp='';this.waveStrategyStamp='';this.liveStamp='';this.earlyTipStamp='';this.passiveStamp='';
       this.root.querySelector('.brand-mark')!.innerHTML=sceneSticker('logo_capy',capyLogo,54);
-      const ids=['ui_fish_food','ui_bell_summon','ui_compendium_book','ui_shop_bag','orange','ui_trophy_rank','ui_map_sign','ui_header_compendium','ui_header_armory','ui_header_market','ui_header_rank','ui_header_profile','ui_header_settings','ui_tutorial_pointer','ui_tutorial_capy','ui_coin_gold','ui_star_rank','ui_ticket_gacha','ui_skull_threat','ui_result_victory','ui_result_defeat','ui_header_pause','ui_mvp_crown','ui_lock_closed','ui_lock_open','ui_wave_horn','ui_merge_sparkle',...P9_SCENE_IDS,...P10_SCENE_IDS,...P11_SCENE_IDS,...P12_SCENE_IDS,...P13_SCENE_IDS,...P14_SCENE_IDS,...P15_SCENE_IDS,...P16_SCENE_IDS] as const;
+      const ids=['ui_fish_food','ui_bell_summon','ui_compendium_book','ui_shop_bag','orange','ui_trophy_rank','ui_map_sign','ui_header_compendium','ui_header_armory','ui_header_market','ui_header_rank','ui_header_profile','ui_header_settings','ui_tutorial_pointer','ui_tutorial_capy','ui_coin_gold','ui_star_rank','ui_ticket_gacha','ui_skull_threat','ui_result_victory','ui_result_defeat','ui_header_pause','ui_mvp_crown','ui_lock_closed','ui_lock_open','ui_wave_horn','ui_merge_sparkle',...P9_SCENE_IDS,...P10_SCENE_IDS,...P11_SCENE_IDS,...P12_SCENE_IDS,...P13_SCENE_IDS,...P14_SCENE_IDS,...P15_SCENE_IDS,...P16_SCENE_IDS,...P17_SCENE_IDS] as const;
       for(const id of ids)this.root.querySelectorAll<HTMLElement>(`#stage [data-sticker="${id}"]`).forEach(el=>{el.outerHTML=sceneSticker(id,'',Number(el.getAttribute('width'))||34);});
     }
     const developer = isDeveloperMode(location.search,this.profile.settings);
@@ -591,7 +659,7 @@ export class GameApp {
       banner.innerHTML=`<div class="boss-portrait">${unitSticker(boss.kind,40)}</div><div class="boss-detail"><div class="boss-heading"><strong>${tr(`boss.${boss.kind}`)}${boss.count>1?` ×${boss.count}`:''}</strong><small class="boss-numbers"></small></div><div class="boss-hp" role="progressbar" aria-valuemin="0"><i></i></div><div class="boss-skill" role="progressbar" aria-valuemin="0" aria-valuemax="100"><i></i><span aria-hidden="true"></span></div></div>`;
     }
     banner.classList.toggle('skill-warning',boss.warning);
-    banner.querySelector('.boss-numbers')!.textContent=`${boss.hp} / ${boss.maxHp}`;
+    banner.querySelector('.boss-numbers')!.textContent=`${formatCompactNumber(boss.hp)} / ${formatCompactNumber(boss.maxHp)}`;
     const hp=banner.querySelector<HTMLElement>('.boss-hp')!;
     hp.setAttribute('aria-valuemax',String(boss.maxHp));hp.setAttribute('aria-valuenow',String(boss.hp));
     hp.setAttribute('aria-label',t('p1.bossHP',{hp:boss.hp,max:boss.maxHp}));
@@ -744,8 +812,11 @@ export class GameApp {
     const active=typeof document!=='undefined'&&typeof HTMLElement!=='undefined'&&document.activeElement instanceof HTMLElement&&this.dialog.contains(document.activeElement)?document.activeElement:undefined;
     const focused=active?.dataset.action,rarityFocus=active?.dataset.rarity;
     const propRowFocus=active?.closest<HTMLElement>('.prop-row')?.dataset.propId;
-    const ledgerPage=!!kind&&['recipes','armory','market','profile','leaderboard','settings','pause','result','kitchen','village'].includes(kind);
-    const stamp=JSON.stringify([kind,kind==='recipes'?this.compendium.viewKey:kind==='market'||kind==='armory'?this.meta.viewKey:kind==='kitchen'?this.kitchen.viewKey:kind==='village'?this.village.viewKey:null]);
+    const ledgerPage=!!kind&&['recipes','armory','market','profile','leaderboard','endless-board','settings','pause','result','kitchen','village','medallions'].includes(kind);
+    const stamp=JSON.stringify([kind,kind==='recipes'?this.compendium.viewKey:kind==='market'||kind==='armory'?this.meta.viewKey:kind==='kitchen'?this.kitchen.viewKey:kind==='village'?this.village.viewKey:kind==='medallions'?this.medallions.viewKey:null]);
+    // P17: keep an unsaved nickname, its caret and focus across board re-renders.
+    const nickname=kind==='endless-board'?this.dialog.querySelector<HTMLInputElement>('[data-endless-nickname]'):null;
+    const typing=!!nickname&&typeof document!=='undefined'&&document.activeElement===nickname,caret=typing?[nickname!.selectionStart,nickname!.selectionEnd]:null;
     const scrolls=['.ledger-body'].map(selector=>({selector,top:stamp===this.ledgerStamp?this.dialog.querySelector<HTMLElement>(selector)?.scrollTop??0:0}));
     this.ledgerStamp=stamp;
     this.dialog.classList.toggle('ledger-dialog',ledgerPage);
@@ -754,13 +825,16 @@ export class GameApp {
     this.dialog.classList.toggle('endless-offer-ledger',kind==='endless-offer');
     this.dialog.classList.toggle('settings-dialog',kind==='settings');
     this.dialog.classList.toggle('recipe-dialog', kind === 'recipes');
-    this.dialog.classList.toggle('meta-dialog', kind === 'armory' || kind === 'market' || kind === 'kitchen' || kind === 'village');
+    this.dialog.classList.toggle('meta-dialog', kind === 'armory' || kind === 'market' || kind === 'kitchen' || kind === 'village' || kind === 'medallions');
+    this.dialog.classList.toggle('medallion-dialog', kind === 'medallions');
+    this.dialog.classList.toggle('endless-board-dialog', kind === 'endless-board');
     this.dialog.classList.toggle('kitchen-dialog', kind === 'kitchen');
     this.dialog.classList.toggle('village-dialog', kind === 'village');
-    this.dialog.classList.toggle('profile-dialog', kind === 'profile' || kind === 'leaderboard');
+    this.dialog.classList.toggle('profile-dialog', kind === 'profile' || kind === 'leaderboard' || kind === 'endless-board');
     this.dialog.setAttribute('aria-labelledby', 'dialog-title');
-    if (kind === 'profile' || kind === 'leaderboard' || kind === 'settings') {
+    if (kind === 'profile' || kind === 'leaderboard' || kind === 'endless-board' || kind === 'settings') {
       this.dialog.innerHTML = this.profileScreens.markup(kind);
+      if (typing) { const input = this.dialog.querySelector<HTMLInputElement>('[data-endless-nickname]'); input?.focus({ preventScroll: true }); if (input && caret) input.setSelectionRange(caret[0], caret[1]); }
       if(kind==='settings')this.dialog.querySelector<HTMLInputElement>('[data-setting="developerMode"]')!.checked=isDeveloperMode(location.search,this.profile.settings);
     } else if (kind === 'armory' || kind === 'market') {
       this.dialog.innerHTML = this.meta.markup(kind,!!this.engine,!!this.engine?.canSyncPreparationLoadout());
@@ -768,6 +842,8 @@ export class GameApp {
       this.dialog.innerHTML = this.kitchen.markup(!!this.engine,!!this.engine?.canSyncPreparationLoadout());
     } else if (kind === 'village') {
       this.dialog.innerHTML = this.village.markup(!!this.engine,!!this.engine?.canSyncPreparationLoadout());
+    } else if (kind === 'medallions') {
+      this.dialog.innerHTML = this.medallions.markup(!!this.engine,!!this.engine?.canSyncPreparationLoadout());
     } else if (kind === 'pause' && this.engine) {
       this.dialog.innerHTML=pauseMarkup(this.engine.state);
     } else if (kind === 'recipes') {
@@ -775,7 +851,7 @@ export class GameApp {
     } else if (kind === 'endless-offer' && this.engine?.state.result) {
       this.dialog.innerHTML=endlessOfferMarkup(this.engine.state,this.savedResult);
     } else if (kind === 'result' && this.engine?.state.result) {
-      this.dialog.innerHTML=resultMarkup({state:this.engine.state,profile:this.profile,savedResult:this.savedResult,resultStars:this.resultStars,previousRank:this.previousRank,newWeapons:this.newWeapons,newAvatars:this.newAvatars,newRoster:this.newRoster,statsOpen:this.resultStatsOpen});
+      this.dialog.innerHTML=resultMarkup({state:this.engine.state,profile:this.profile,savedResult:this.savedResult,resultStars:this.resultStars,previousRank:this.previousRank,newWeapons:this.newWeapons,newAvatars:this.newAvatars,newRoster:this.newRoster,statsOpen:this.resultStatsOpen,globalRank:this.engine.state.endless?this.globalRank:undefined});
     }
     for(const {selector,top} of scrolls){
       const body=this.dialog.querySelector<HTMLElement>(selector);
@@ -844,12 +920,18 @@ export class GameApp {
     const stats=this.engine!.getEffectiveUnitStats(unit),loadout=state.sides.player.loadout;
     // Energy and countdowns change independently of recipe and button structure.
     const allowBenchLock=this.tutorialStep==='done';
-    const stamp=JSON.stringify([getLanguage(),unit.id,unit.kind,unit.level,unit.location,loadout,allowBenchLock,state.sides.player.lockedBenchSlot,
+    const endless=this.liveEndlessInfo(unit);
+    const stamp=JSON.stringify([getLanguage(),unit.id,unit.kind,unit.level,unit.location,loadout,allowBenchLock,state.sides.player.lockedBenchSlot,!!state.endless,!!unit.awakened,unit.breakthroughFails??0,
       state.grid,state.units.map(u=>[u.id,u.kind,u.level,u.location,!!u.washing,!!u.statuses.SEALED,!!u.statuses.MERGE_LOCK])]);
-    if(stamp!==this.liveStamp){host.innerHTML=liveUnitCardMarkup({unit,state,stats,loadout,allowBenchLock});this.liveStamp=stamp;}
+    if(stamp!==this.liveStamp){host.innerHTML=liveUnitCardMarkup({unit,state,stats,loadout,allowBenchLock,endless});this.liveStamp=stamp;}
     host.querySelector('#live-unit-card')?.classList.toggle('dock-left',unit.location.zone==='board'&&unit.location.col>=6);
     const text=(selector:string,value:string)=>{const el=host.querySelector<HTMLElement>(selector);if(el&&el.textContent!==value)el.textContent=value;};
-    text('[data-live-stat="damage"]',`⚔️ ${Math.round(stats.damage)}`);
+    text('[data-live-stat="damage"]',`⚔️ ${formatCompactNumber(stats.damage)}`);
+    if(endless){
+      text('[data-live-momentum]',momentumText(endless.momentum));
+      if(endless.chance){text('[data-live-chance]',t('p17.breakthroughChance',{pct:Math.round(endless.chance.total*100)}));text('[data-live-breakdown]',breakthroughBreakdown(endless.chance));}
+      if(endless.awakenedPower)text('[data-live-power]',t('p17.awakenedPower',{value:formatCompactNumber(endless.awakenedPower)}));
+    }
     text('[data-live-stat="rate"]',`⚡ ${Number(stats.rate.toFixed(2))}/s`);
     text('[data-live-stat="range"]',`🎯 ${Number(stats.range.toFixed(1))}`);
     text('[data-live-stat="production"]',t('p3.productionValue',getBeeProduction(unit.level,loadout)));
@@ -862,7 +944,16 @@ export class GameApp {
     if(statuses){const html=Object.entries(unit.statuses).filter(([,time])=>(time??0)>0).map(([id,time])=>`<span class="live-status">${tr(`status.${id}`)} ${Math.ceil(time!)}s</span>`).join('')+(unit.washing?`<span class="live-status">${tr('m2.washing')}</span>`:'');if(statuses.innerHTML!==html)statuses.innerHTML=html;}
   }
 
-  private openProfileScreen(screen: ProfileScreen): void {
+  /** P17 hero card extras: momentum, the live breakthrough chance (endless Lv.5) and an awakened hero's endless power. */
+  private liveEndlessInfo(unit: Unit): {momentum:number;chance?:ReturnType<BattleEngine['getBreakthroughChance']>;awakenedPower?:number}|undefined {
+    const engine=this.engine;if(!engine||!HEROES[unit.kind])return undefined;
+    const momentum=engine.getUnitMomentum(unit),endless=!!engine.state.endless,loadout=engine.state.sides.player.loadout;
+    return{momentum,
+      ...(endless&&unit.level>=5&&!unit.awakened?{chance:engine.getBreakthroughChance(unit)}:{}),
+      ...(unit.awakened?{awakenedPower:AWAKENED_DAMAGE*breakthroughAttackMultiplier(getMedallionLevel(loadout,'med_breakthrough_atk'))*momentumMultiplier(momentum,getMedallionLevel(loadout,'med_momentum'))}:{})};
+  }
+
+  private openProfileScreen(screen: OverlayScreen): void {
     if (!this.overlayReturn) {
       const playing=this.engine?.state.phase==='playing';
       this.overlayReturn = { dialog: this.dialogKind, resume: playing };
@@ -870,6 +961,7 @@ export class GameApp {
     }
     this.cancelDrag(); this.cancelPropDrag();
     this.showDialog(screen); this.refresh();
+    if (screen === 'endless-board') this.refreshBoard();
   }
 
   private closeProfileScreen(): void {
@@ -906,13 +998,15 @@ export class GameApp {
     const dug = result.key === 'hint.dig' || result.key === 'hint.repaired' || result.key === 'hint.repairProgress';
     if (result.ok && dug) this.sound.play('shovel');
     if (result.ok && result.key === 'hint.merged' && result.unitId && this.engine?.state.units.some(unit => unit.id === result.unitId && !!HEROES[unit.kind] && unit.level === 1)) this.sound.play('merge_hero');
+    if (result.key === 'p17.breakthroughSuccess') this.sound.play('merge_hero');
+    else if (result.key === 'p17.breakthroughFail') this.sound.play('merge_upgrade');
     if (result.ok && result.unitId) {
       this.selectedId = result.key==='hint.deployed'?undefined:result.unitId;
       this.shovelSelected = false;
     }
     if (result.ok && this.selectedId && !this.engine?.state.units.some(unit => unit.id === this.selectedId && unit.side === 'player')) this.selectedId = undefined;
     const cost = this.engine ? getSummonCost(this.engine.state.sides.player.summons) : ECONOMY.summonCost;
-    this.notify(result.key, !result.ok, result.key === 'hint.noFood' ? { cost, count: Math.max(0, Math.ceil(cost - (this.engine?.state.sides.player.food ?? 0))) } : {});
+    this.notify(result.key, !result.ok, result.key === 'hint.noFood' ? { cost, count: Math.max(0, Math.ceil(cost - (this.engine?.state.sides.player.food ?? 0))) } : result.value !== undefined ? { value: result.value } : {});
     if(result.ok){
       if(dug)this.progressTutorial('dig');
       if(result.key==='hint.deployed'&&this.engine?.state.units.some(unit=>unit.id===result.unitId&&unit.side==='player'&&unit.location.zone==='board')){
@@ -1023,6 +1117,12 @@ export class GameApp {
     this.root.addEventListener('keydown', () => { void this.sound.unlock().catch(() => undefined); });
     this.root.addEventListener('input', event => {
       if (event.target instanceof HTMLInputElement && event.target.type === 'range') this.profileScreens.change(event.target);
+      if (event.target instanceof HTMLInputElement && event.target.dataset.endlessNickname !== undefined) this.boardDraft = event.target.value;
+    });
+    // Enter in the nickname field saves it instead of submitting (and navigating) the form.
+    this.root.addEventListener('submit', event => {
+      if (!(event.target instanceof HTMLFormElement) || event.target.dataset.endlessNameForm === undefined) return;
+      event.preventDefault(); this.action('endless-name-save');
     });
     this.root.addEventListener('change', event => {
       const element = event.target;
@@ -1147,7 +1247,8 @@ export class GameApp {
       else if (this.dialogKind === 'armory' || this.dialogKind === 'market') this.action('close-meta');
       else if (this.dialogKind === 'kitchen') this.action('close-kitchen');
       else if (this.dialogKind === 'village') this.action('close-village');
-      else if (this.dialogKind === 'profile' || this.dialogKind === 'leaderboard' || this.dialogKind === 'settings') this.action('close-profile');
+      else if (this.dialogKind === 'profile' || this.dialogKind === 'leaderboard' || this.dialogKind === 'endless-board' || this.dialogKind === 'settings') this.action('close-profile');
+      else if (this.dialogKind === 'medallions') this.action('close-medallions');
       else this.menu();
     });
     document.addEventListener('keydown', event => {
@@ -1245,8 +1346,17 @@ export class GameApp {
       this.start(true);return;
     }
     if (this.profileScreens.action(action)) return;
-    if (action === 'profile' || action === 'leaderboard' || action === 'settings' || action === 'brand') { this.openProfileScreen(action === 'brand' ? 'profile' : action); return; }
+    if (action === 'profile' || action === 'leaderboard' || action === 'endless-board' || action === 'settings' || action === 'brand') { this.openProfileScreen(action === 'brand' ? 'profile' : action); return; }
     if (action === 'close-profile') { this.closeProfileScreen(); return; }
+    // P17 medallion hall shares the profile overlay, so hall ↔ board ↔ rank tabs return to the same place.
+    if (action === 'medallions') { this.medallions.open(); this.openProfileScreen('medallions'); return; }
+    if (action === 'close-medallions') { this.closeProfileScreen(); return; }
+    if (action === 'endless-board-refresh') { this.refreshBoard(true); return; }
+    if (action === 'endless-name-save') { this.saveNickname(); return; }
+    if (this.dialogKind === 'medallions' && this.medallions.action(action)) {
+      const id = action.split(':')[1]; this.dialog.querySelector<HTMLElement>(`.medallion-row[data-medallion-id="${CSS.escape(id ?? '')}"] [data-action^="medallion-up"]`)?.focus({ preventScroll: true });
+      return;
+    }
     if (action === 'dismiss-rotate') { this.rotateDismissed = true; this.refresh(); return; }
     if (action === 'fullscreen') { void document.documentElement.requestFullscreen?.().catch(() => undefined); return; }
     if (action.startsWith('select-map:')) {

@@ -6,6 +6,10 @@ import { AVATARS, DEFAULT_AVATARS } from '../config/avatars';
 import { BROTH_IDS, INGREDIENT_IDS, INGREDIENT_STACK_LIMIT, clampBrothLevel, isBrothId, isIngredientId } from '../config/kitchen';
 import { FACILITY_IDS } from '../config/village';
 import { copyVillage, createVillage, normalizeVillage } from './VillageState';
+import { MEDALLION_IDS, MEDALLION_MAX_LEVEL } from '../config/medallions';
+import { normalizeMedallions } from './MedallionProgression';
+import { SESSION_PLAYER_ID, normalizePlayerId, validateNickname } from './PlayerIdentity';
+import { HEROES as HERO_TABLE } from '../config/heroes';
 import { DEFAULT_SETTINGS, getUnlockedMaps, unlockAchievements, updateSettings } from './PlayerProgression';
 import type { Profile } from './types';
 
@@ -24,7 +28,8 @@ const copy = (profile:Profile):Profile => ({...profile,fragments:[...profile.fra
   unlockedAvatars:[...profile.unlockedAvatars],mergedHeroes:[...profile.mergedHeroes],settings:{...profile.settings},
   shop:profile.shop ? {...profile.shop,offers:[...profile.shop.offers]} : null,
   ingredients:{...(profile.ingredients??{})},unlockedBroths:[...(profile.unlockedBroths??[])],brothLevels:{...(profile.brothLevels??{})},activeBrothId:profile.activeBrothId??null,
-  village:profile.village?copyVillage(profile.village):createVillage()});
+  village:profile.village?copyVillage(profile.village):createVillage(),
+  endlessMedallions:normalizeMedallions(profile.endlessMedallions)});
 const fail = (profile:Profile,key:string):MetaResult => ({profile:copy(profile),ok:false,key});
 const success = (profile:Profile,key:string,amount?:number):MetaResult => ({profile:unlockAchievements(profile),ok:true,key,...(amount===undefined?{}:{amount})});
 
@@ -35,7 +40,9 @@ export function createProfile():Profile {
     // The chef's welcome gift: exactly one Yuzu Calm Soak. No broth is brewed or equipped, so battles stay unchanged.
     ingredients:{...STARTER_INGREDIENTS},unlockedBroths:[],brothLevels:{},activeBrothId:null,
     // P16: the starter pool, 6 wood, 2 essence and a 15-minute welcome harvest.
-    village:createVillage()};
+    village:createVillage(),
+    // P17: no crests, six Lv.0 medallions and an anonymous global-board id (stable for this session until saved).
+    endlessCrests:0,endlessMedallions:normalizeMedallions(null),playerId:SESSION_PLAYER_ID,nickname:''};
 }
 /** Granted to brand-new saves and once to pre-P14 saves that never had an `ingredients` field. */
 export const STARTER_INGREDIENTS:Readonly<Record<string,number>>=Object.freeze({ing_yuzu:2});
@@ -48,6 +55,21 @@ function normalizeKitchen(p:Profile,data:Record<string,unknown>):void {
   const levels=object(data.brothLevels);
   p.brothLevels=Object.fromEntries(p.unlockedBroths.map(id=>[id,clampBrothLevel(levels[id])]));
   p.activeBrothId=typeof data.activeBrothId==='string'&&p.unlockedBroths.includes(data.activeBrothId)?data.activeBrothId:null;
+}
+/** P17 fields are optional in old saves: zero crests, Lv.0 medallions, a fresh id and the default nickname. */
+function normalizeEndless(p:Profile,data:Record<string,unknown>):void {
+  p.endlessCrests=count(data.endlessCrests);
+  p.endlessMedallions=normalizeMedallions(data.endlessMedallions);
+  p.playerId=normalizePlayerId(data.playerId);
+  const name=validateNickname(data.nickname);p.nickname=name.ok?name.value:'';
+  // Best-run metadata only travels with a real endless record.
+  if((p.bestEndlessWave??0)>=11){
+    const time=data.bestEndlessTime,awakened=data.bestEndlessAwakened,mvp=data.bestEndlessMvp;
+    if(typeof time==='number'&&Number.isSafeInteger(time)&&time>=0&&time<=864_000)p.bestEndlessTime=time;
+    if(typeof mvp==='string'&&has(HERO_TABLE,mvp))p.bestEndlessMvp=mvp;
+    if(p.bestEndlessMvp&&data.bestEndlessMvpAwakened===true)p.bestEndlessMvpAwakened=true;
+    if(typeof awakened==='number'&&Number.isSafeInteger(awakened)&&awakened>=0&&awakened<=40)p.bestEndlessAwakened=awakened;
+  }
 }
 export function normalizeProfile(raw:unknown):Profile {
   const data=object(raw);const p=createProfile();
@@ -91,6 +113,7 @@ export function normalizeProfile(raw:unknown):Profile {
   normalizeKitchen(p,data);
   // An absent village (new or pre-P16 save) receives the welcome gift; an existing one is never re-gifted.
   p.village=normalizeVillage(data.village);
+  normalizeEndless(p,data);
   return unlockAchievements(p);
 }
 export function grantWeaponFragments(profile:Profile,ids:string[]):{profile:Profile;newWeapons:string[]} {
@@ -211,5 +234,7 @@ export function unlockAllProfile(profile:Profile):Profile {
   // Keep an explicitly chosen soak only; unlocking everything must not equip one for test battles.
   p.activeBrothId=profile.activeBrothId??null;
   p.village={...p.village,wood:99,essence:99,facilities:Object.fromEntries(FACILITY_IDS.map(id=>[id,3])),lastHarvestAt:Date.now()-6*3600_000};
+  // P17: every medallion at Lv.50 plus a crest stash; they only act in endless, so the ten standard waves are unchanged.
+  p.endlessMedallions=Object.fromEntries(MEDALLION_IDS.map(id=>[id,MEDALLION_MAX_LEVEL]));p.endlessCrests=Math.max(99_999,p.endlessCrests);
   return unlockAchievements(p);
 }

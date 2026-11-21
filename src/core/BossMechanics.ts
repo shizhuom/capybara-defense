@@ -18,6 +18,8 @@ export function applyNewBossMechanic(engine:BattleEngine,boss:Enemy,units:Unit[]
   switch(boss.kind){
     case 'diva_kitty':{
       const victim=units.filter(u=>UNITS[u.kind]?.category==='basic'&&(u.kind!=='bee'||u.level===1)).sort((a,b)=>a.level-b.level||a.id-b.id)[0];
+      // P17 Calm Ward may shrug off the charm in endless (no RNG is drawn in the standard waves).
+      if(victim&&engine.resistBossSkill(engine.unitPosition(victim)))break;
       if(victim){targets.push(engine.unitPosition(victim));engine.state.units=engine.state.units.filter(u=>u.id!==victim.id);summon('charmed_rat',0);}break;
     }
     case 'buff_roo':
@@ -25,7 +27,7 @@ export function applyNewBossMechanic(engine:BattleEngine,boss:Enemy,units:Unit[]
       const knock=boss.kind==='buff_roo',range=knock?2:2.2;
       for(const unit of units.filter(u=>GridSystem.distance(engine.unitPosition(u),boss)<=range)
         .sort((a,b)=>GridSystem.distance(engine.unitPosition(a),boss)-GridSystem.distance(engine.unitPosition(b),boss)||a.id-b.id).slice(0,2)){
-        unit.statuses[knock?'KNOCKDOWN':'CONFUSED']=knock?9:6.5;targets.push(engine.unitPosition(unit));
+        unit.statuses[knock?'KNOCKDOWN':'CONFUSED']=engine.resistDuration(knock?9:6.5);targets.push(engine.unitPosition(unit));
       }break;
     }
     case 'hornet_queen':for(const offset of [.3,.6,.9])summon('killer_bee',offset);break;

@@ -1,0 +1,538 @@
+import {afterEach,describe,expect,it,vi} from 'vitest';
+import {readFileSync,readdirSync} from 'node:fs';
+import {inflateSync} from 'node:zlib';
+import {BattleEngine,type EngineOptions} from '../src/core/BattleEngine';
+import {CombatRecords,computeUnitMomentum} from '../src/core/CombatRecords';
+import {MergeSystem} from '../src/core/MergeSystem';
+import {getMergeTargets} from '../src/core/MergeTargets';
+import {copyLoadout} from '../src/core/PropSystem';
+import {formatCompactNumber} from '../src/core/formatNumber';
+import {createProfile,normalizeProfile,unlockAllProfile} from '../src/core/MetaProgression';
+import {upgradeMedallion,upgradeableMedallions,grantEndlessCrests,normalizeMedallions} from '../src/core/MedallionProgression';
+import {SESSION_PLAYER_ID,defaultNickname,generatePlayerId,isValidPlayerId,validateNickname} from '../src/core/PlayerIdentity';
+import {
+  AWAKENED_DAMAGE,AWAKENED_RATE,LATE_CREST_COSTS,MEDALLION_IDS,MOMENTUM_CAP,STANDARD_VICTORY_CRESTS,armorPenetration,bossResist,bossSlayerMultiplier,
+  breakthroughAttackMultiplier,capyShieldCooldown,computeBreakthroughChance,endlessCrestsForWave,endlessCrestsThroughWave,endlessDamageMultiplier,
+  estimateEndlessCeilingWave,luckBonus,medallionCrestsBetween,medallionUpgradeCost,momentumMultiplier,type MedallionId,
+} from '../src/config/medallions';
+import {ENDLESS_HP_GROWTH,WAVES,getWaveConfig} from '../src/config/waves';
+import {getMap} from '../src/config/maps';
+import {awardBattle,awardEndless,loadProfile,saveProfile} from '../src/ui/storage';
+import {P17_AWAKENED_IDS,P17_SCENE_IDS,sceneSticker,awakenedSticker} from '../src/ui/stickers';
+import {courtyardMarkup,endlessHallPillMarkup} from '../src/ui/CourtyardView';
+import {MedallionScreen,medallionEffectText} from '../src/ui/MedallionScreen';
+import {endlessBoardMarkup} from '../src/ui/ProfileScreens';
+import {ledgerTabs} from '../src/ui/LedgerView';
+import {liveUnitCardMarkup} from '../src/ui/LiveUnitCard';
+import {endlessOfferMarkup,resultMarkup,resultCrests} from '../src/ui/SettlementView';
+import {EndlessLeaderboardClient,parseLeaderboard,submissionFromProfile,BOARD_CACHE_KEY} from '../src/ui/EndlessLeaderboardClient';
+import {
+  compareRows,handleRequest,memoryStore,mergeScore,minimumElapsed,rateLimitDecision,sanitizeNickname,validateScore,type Env,type ScoreStore,
+} from '../cloudflare-leaderboard/src/index';
+import {setLanguage,t} from '../src/i18n/i18n';
+import {p17En,p17Zh} from '../src/i18n/p17';
+import type {BattleLoadout,BattleResult,Profile,Unit} from '../src/core/types';
+
+afterEach(()=>{vi.restoreAllMocks();vi.unstubAllGlobals();setLanguage('zh-CN');});
+const UNKIND=String.fromCharCode(0x7eff,0x8336);// one of the blocked words, built at runtime
+const sprite=(id:string)=>readFileSync(`public/assets/sprites/${id}.png`);
+function alphaRow(buffer:Buffer,row:number):number[] {
+  let offset=8,width=0;const idat:Buffer[]=[];
+  while(offset<buffer.length){const length=buffer.readUInt32BE(offset),kind=buffer.toString('ascii',offset+4,offset+8),data=buffer.subarray(offset+8,offset+8+length);
+    if(kind==='IHDR')width=data.readUInt32BE(0);if(kind==='IDAT')idat.push(data);offset+=12+length;}
+  const stride=width*4,raw=inflateSync(Buffer.concat(idat)),rows:Uint8Array[]=[];
+  for(let y=0;y<=row;y++){const f=raw[y*(stride+1)],src=raw.subarray(y*(stride+1)+1,(y+1)*(stride+1)),out=new Uint8Array(stride),up=rows[y-1];
+    for(let i=0;i<stride;i++){const a=i>=4?out[i-4]:0,b=up?up[i]:0,c=up&&i>=4?up[i-4]:0,p=a+b-c,pa=Math.abs(p-a),pb=Math.abs(p-b),pc=Math.abs(p-c);
+      out[i]=(src[i]+(f===1?a:f===2?b:f===3?(a+b)>>1:f===4?(pa<=pb&&pa<=pc?a:pb<=pc?b:c):0))&255;}rows.push(out);}
+  return Array.from({length:width},(_,x)=>rows[row][x*4+3]);
+}
+const base:BattleLoadout={ownedProps:{},equippedWeapons:{},equippedActiveProps:[],equippedPassiveProps:[]};
+const all=(level:number)=>Object.fromEntries(MEDALLION_IDS.map(id=>[id,level])) as Record<MedallionId,number>;
+const medals=(levels:Partial<Record<MedallionId,number>>):BattleLoadout=>({...base,endlessMedallions:levels});
+const unit=(e:BattleEngine,kind:string,level=1)=>{const r=e.grant(kind);const u=e.state.units.find(x=>x.id===r.unitId)!;u.level=level;return u;};
+/** Standard ten-wave victory (no auto waves), then endless at Wave 11. */
+function endless(loadout:BattleLoadout=base,options:EngineOptions={}):BattleEngine {
+  const e=new BattleEngine({seed:41,autoWaves:false,loadouts:{player:loadout},...options});e.start();
+  while(e.state.phase!=='finished')e.skipWave();expect(e.enterEndless().ok).toBe(true);return e;
+}
+function standard(loadout:BattleLoadout=base):BattleEngine {const e=new BattleEngine({seed:41,autoWaves:false,loadouts:{player:loadout}});e.start();e.skipWave();return e;}
+function script(e:BattleEngine,stream:'endlessRandom'|'random'|'ingredientRandom'|'villageRandom',values:number[]):void {
+  let i=0;(e as unknown as Record<string,{next():number}>)[stream]={next:()=>values[i++%values.length]};
+}
+const stream=(e:BattleEngine,name:string,n=6)=>Array.from({length:n},()=>(e as unknown as Record<string,{next():number}>)[name].next());
+const killRat=(e:BattleEngine,by:Unit,boss=false)=>e.hurt(e.spawnEnemy(boss?'husky_wrecker':'rat','player'),1e12,by,false,false,true);
+function memoryStorage():Storage {
+  const data=new Map<string,string>();
+  return {get length(){return data.size;},key:i=>[...data.keys()][i]??null,getItem:key=>data.get(key)??null,
+    setItem:(key,value)=>{data.set(key,value);},removeItem:key=>{data.delete(key);},clear:()=>data.clear()};
+}
+
+describe('P17 assets: 288 sprites with twenty exact RGBA P17 stickers',()=>{
+  const sizes:Record<string,[number,number]>={...Object.fromEntries(P17_AWAKENED_IDS.map(id=>[id,[256,256]])),
+    med_breakthrough_atk:[160,160],med_luck_rate:[160,160],med_momentum:[160,160],med_boss_resist:[160,160],med_boss_slayer:[160,160],med_capy_shield:[160,160],
+    ui_endless_crest:[160,160],ui_medallion_peek_capy:[256,256]};
+  it('ships 288 unique synced sprites including every P17 id at its exact size',()=>{
+    const ids=JSON.parse(readFileSync('public/assets/sprites/manifest.json','utf8')) as string[];
+    expect(ids).toHaveLength(288);expect(new Set(ids).size).toBe(288);expect(readdirSync('public/assets/sprites').filter(f=>f.endsWith('.png'))).toHaveLength(288);
+    expect(P17_SCENE_IDS).toHaveLength(20);expect(new Set(P17_SCENE_IDS).size).toBe(20);expect(Object.keys(sizes).sort()).toEqual([...P17_SCENE_IDS].sort());
+    for(const [id,[w,h]] of Object.entries(sizes)){expect(ids).toContain(id);const png=sprite(id);expect([png.readUInt32BE(16),png.readUInt32BE(20),png[24],png[25]]).toEqual([w,h,8,6]);}
+    // Transparent corners on every sticker; the master copy in design/assets matches the synced file byte for byte.
+    for(const id of P17_SCENE_IDS){expect(alphaRow(sprite(id),0)[0]).toBe(0);expect(readFileSync(`../../design/assets/sprites/${id}.png`).equals(sprite(id))).toBe(true);}
+  });
+  it('keeps the medallion mascot bottom-flush with the established peek capybara',()=>{
+    for(const row of [253,254,255])expect(alphaRow(sprite('ui_medallion_peek_capy'),row)).toEqual(alphaRow(sprite('ui_compendium_peek_capy'),row));
+    expect(Math.max(...alphaRow(sprite('ui_medallion_peek_capy'),254))).toBeGreaterThan(200);
+  });
+  it('renders twenty distinct borderless, text-free SVG fallbacks before the PNGs decode',()=>{
+    const svgs=P17_SCENE_IDS.map(id=>sceneSticker(id,'',64));
+    for(const svg of svgs){expect(svg).toContain('<svg');expect(svg).not.toContain('<text');expect(svg).not.toContain('stroke="#fffdf6"');}
+    expect(new Set(svgs.map(s=>s.replace(/data-sticker="[^"]*"|aria-label="[^"]*"/g,''))).size).toBe(20);
+    expect(awakenedSticker('kungfu_po',40)).toContain('kungfu_po_awakened');expect(awakenedSticker('hamster',40)).not.toContain('_awakened');
+  });
+  it('archives five magenta raw sheets and the dark checkerboard preview',()=>{
+    const raw=readdirSync('../../design/assets/raw_sheets');
+    for(const file of ['61_p17_awakened_heroes_a.png','62_p17_awakened_heroes_b.png','63_p17_awakened_heroes_c.png','64_p17_medallions_a.png','65_p17_medallions_b_and_ui.png'])expect(raw).toContain(file);
+    expect(readdirSync('../../design/assets/previews')).toContain('33_p17_endless_awakening_and_medallions.png');
+  });
+});
+
+describe('P17 endless curve ×1.25 and the Wave 70-80 sweet spot',()=>{
+  it.each([[11,11.25],[20,83.82],[45,22186],[70,5872774],[80,54694467]])('wave %i scales HP to %f',(wave,expected)=>{
+    const config=getWaveConfig(wave),k=wave-10;
+    expect(config.hpScale).toBe(WAVES[9].hpScale*Math.pow(ENDLESS_HP_GROWTH,k));
+    expect(config.hpScale/expected).toBeCloseTo(1,3);
+    expect(config.speedScale).toBeCloseTo(1+Math.min(.6,.012*k),10);expect(config.armorBonus).toBeCloseTo(Math.min(.45,.009*k),10);
+  });
+  it('caps speed and armor at Wave 60 and keeps the first ten waves untouched',()=>{
+    for(const wave of [60,95]){expect(getWaveConfig(wave).speedScale).toBeCloseTo(1.6,12);expect(getWaveConfig(wave).armorBonus).toBeCloseTo(.45,12);}
+    expect(getWaveConfig(95).armorBonus).toBe(.45);
+    for(let w=1;w<=10;w++)expect(getWaveConfig(w)).toEqual({...WAVES[w-1],speedScale:1,armorBonus:0});
+    expect(getWaveConfig(100_000).hpScale).toBe(Number.MAX_SAFE_INTEGER);
+  });
+  it('lands newcomers, first breakthroughs and 50h / 100h / 300h lineups in their bands, with 100% at Wave 70-80',()=>{
+    expect(estimateEndlessCeilingWave({momentum:0})).toBeGreaterThanOrEqual(13);expect(estimateEndlessCeilingWave({momentum:200})).toBeLessThanOrEqual(15);
+    const first=estimateEndlessCeilingWave({awakened:true,momentum:80});expect(first).toBeGreaterThanOrEqual(17);expect(first).toBeLessThanOrEqual(20);
+    const half=estimateEndlessCeilingWave({awakened:true,momentum:MOMENTUM_CAP,levels:all(25)});expect(half).toBeGreaterThanOrEqual(42);expect(half).toBeLessThanOrEqual(50);
+    const eighty=estimateEndlessCeilingWave({awakened:true,momentum:MOMENTUM_CAP,levels:all(40)});expect(eighty).toBeGreaterThanOrEqual(56);expect(eighty).toBeLessThanOrEqual(66);
+    const full=estimateEndlessCeilingWave({awakened:true,momentum:MOMENTUM_CAP,levels:all(50)});expect(full).toBeGreaterThanOrEqual(70);expect(full).toBeLessThanOrEqual(80);
+    expect(half).toBeLessThan(eighty);expect(eighty).toBeLessThan(full);
+    // The model's multiplier is exactly the product BattleEngine applies (awakening × momentum × boss-weighted slayer).
+    expect(endlessDamageMultiplier({awakened:true,momentum:200,levels:all(50)})).toBeCloseTo(AWAKENED_DAMAGE*AWAKENED_RATE*breakthroughAttackMultiplier(50)*4.8/(.5+.5/5),0);
+  });
+});
+
+describe('P17 crest economy: 50h / 100h / 300h medallion costs',()=>{
+  it('prices every level exactly and totals 2,600 + 5,400 + 26,500 = 34,500 per medallion (207,000 for six)',()=>{
+    expect(medallionUpgradeCost(0)).toEqual({crests:8,coins:16});expect(medallionUpgradeCost(24)).toEqual({crests:200,coins:400});
+    expect(medallionUpgradeCost(25)).toEqual({crests:220,coins:440});expect(medallionUpgradeCost(39)).toEqual({crests:500,coins:1000});
+    expect(medallionUpgradeCost(40)).toEqual({crests:800,coins:1600});expect(medallionUpgradeCost(49)).toEqual({crests:4850,coins:9700});
+    for(const bad of [50,-1,1.5,NaN])expect(medallionUpgradeCost(bad)).toBeNull();
+    expect(medallionCrestsBetween(0,25)).toBe(2600);expect(medallionCrestsBetween(25,40)).toBe(5400);expect(medallionCrestsBetween(40,50)).toBe(26500);
+    expect(LATE_CREST_COSTS.reduce((a,b)=>a+b,0)).toBe(26500);
+    expect(medallionCrestsBetween(0,50)).toBe(34500);expect(medallionCrestsBetween(0,50)*6).toBe(207000);
+    expect(medallionCrestsBetween(0,25)*6).toBe(15600);expect(medallionCrestsBetween(0,40)*6).toBe(48000);
+  });
+  it('drops 3 crests for clearing Wave 10 and 1..7 per endless wave',()=>{
+    expect(STANDARD_VICTORY_CRESTS).toBe(3);
+    expect([10,11,20,21,30,31,50,51,61,70,71,120].map(endlessCrestsForWave)).toEqual([0,1,1,2,2,3,4,5,6,6,7,7]);
+    expect(endlessCrestsThroughWave(10)).toBe(0);expect(endlessCrestsThroughWave(20)).toBe(10);expect(endlessCrestsThroughWave(30)).toBe(30);
+  });
+  it('upgrades one level at a time, spends crests and coins, and never goes past Lv.50',()=>{
+    const p={...createProfile(),coins:100,endlessCrests:20};
+    const r=upgradeMedallion(p,'med_luck_rate');expect(r).toMatchObject({ok:true,key:'p17.medallionUpgraded',level:1,cost:{crests:8,coins:16}});
+    expect(r.profile).toMatchObject({coins:84,endlessCrests:12});expect(r.profile.endlessMedallions.med_luck_rate).toBe(1);expect(p.endlessMedallions.med_luck_rate).toBe(0);
+    expect(upgradeMedallion(r.profile,'med_luck_rate')).toMatchObject({ok:false,key:'p17.noCrests'});
+    expect(upgradeMedallion({...r.profile,endlessCrests:999,coins:0},'med_luck_rate')).toMatchObject({ok:false,key:'meta.insufficientCoins'});
+    expect(upgradeMedallion({...p,endlessMedallions:all(50)},'med_luck_rate')).toMatchObject({ok:false,key:'p17.medallionMax'});
+    expect(upgradeMedallion(p,'not_a_medal')).toMatchObject({ok:false,key:'p17.invalidMedallion'});
+    expect(upgradeableMedallions({...createProfile(),coins:16,endlessCrests:8})).toEqual([...MEDALLION_IDS]);
+    expect(grantEndlessCrests(p,5).endlessCrests).toBe(25);expect(grantEndlessCrests(p,-5).endlessCrests).toBe(20);
+  });
+});
+
+describe('P17 medallion effect formulas',()=>{
+  it('matches the spec table at Lv.25 / Lv.40 / Lv.50 and is exactly neutral at Lv.0',()=>{
+    expect(breakthroughAttackMultiplier(0)).toBe(1);expect(breakthroughAttackMultiplier(25)).toBeCloseTo(195.75,1);
+    expect(breakthroughAttackMultiplier(40)/4642).toBeCloseTo(1,2);expect(breakthroughAttackMultiplier(50)/38330).toBeCloseTo(1,2);
+    expect([luckBonus(0),luckBonus(25),luckBonus(40),luckBonus(50)].map(v=>+v.toFixed(3))).toEqual([0,.35,.56,.7]);
+    expect([momentumMultiplier(200,0),momentumMultiplier(200,25),momentumMultiplier(200,40),momentumMultiplier(200,50)].map(v=>+v.toFixed(3))).toEqual([1.2,3,4.08,4.8]);
+    expect(momentumMultiplier(0,50)).toBe(1);expect(momentumMultiplier(999,0)).toBeCloseTo(1.2);
+    expect([bossResist(25),bossResist(40),bossResist(50)].map(v=>+v.toFixed(3))).toEqual([.45,.72,.9]);
+    expect([bossSlayerMultiplier(25),bossSlayerMultiplier(40),bossSlayerMultiplier(50)].map(v=>+v.toFixed(3))).toEqual([3,4.2,5]);
+    expect([armorPenetration(25),armorPenetration(50)].map(v=>+v.toFixed(3))).toEqual([.45,.9]);
+    expect([capyShieldCooldown(0),capyShieldCooldown(1),capyShieldCooldown(25),capyShieldCooldown(40),capyShieldCooldown(50)]).toEqual([Infinity,20,11.67,6.47,3]);
+  });
+  it('computes the breakthrough chance as base + pre-ten spirit (cap 30%) + clover luck + 5% per miss, capped at 100%',()=>{
+    expect(computeBreakthroughChance({preEndlessKills:0,preEndlessBossKills:0,luckMedallionLevel:0,previousFails:0}).total).toBeCloseTo(.3);
+    const c=computeBreakthroughChance({preEndlessKills:0,preEndlessBossKills:8,luckMedallionLevel:10,previousFails:0});
+    expect([c.base,c.preTenBonus,c.medallionBonus,c.failBonus].map(v=>+v.toFixed(3))).toEqual([.3,.24,.14,0]);expect(c.total).toBeCloseTo(.68);
+    expect(computeBreakthroughChance({preEndlessKills:500,preEndlessBossKills:50,luckMedallionLevel:0,previousFails:0}).preTenBonus).toBe(.3);
+    expect(computeBreakthroughChance({preEndlessKills:0,preEndlessBossKills:0,luckMedallionLevel:0,previousFails:3}).total).toBeCloseTo(.45);
+    expect(computeBreakthroughChance({preEndlessKills:200,preEndlessBossKills:20,luckMedallionLevel:50,previousFails:9}).total).toBe(1);
+  });
+  it('formats hall effects as current → next values',()=>{
+    expect(medallionEffectText('med_boss_resist',25)).toBe('45%');expect(medallionEffectText('med_boss_resist',26)).toBe('46.8%');
+    expect(medallionEffectText('med_breakthrough_atk',25)).toBe('×196');expect(medallionEffectText('med_momentum',25)).toBe('×3');
+    expect(medallionEffectText('med_boss_slayer',50)).toBe('×5 / 90%');expect(medallionEffectText('med_capy_shield',25)).toBe('11.67s');
+    expect(medallionEffectText('med_capy_shield',0)).toBe(t('p17.effect.none'));expect(medallionEffectText('med_luck_rate',50)).toBe('+70%');
+  });
+});
+
+describe('P17 battle spirit (momentum) records',()=>{
+  it('weights standard-wave kills 1.0 / boss 5.0 against endless 0.08 / 0.5 and caps at 200',()=>{
+    expect(computeUnitMomentum({preEndlessKills:10,preEndlessBossKills:2,endlessKills:25,endlessBossKills:4})).toBeCloseTo(10+10+2+2);
+    expect(computeUnitMomentum({preEndlessKills:1,preEndlessBossKills:0,endlessKills:0,endlessBossKills:0})).toBe(computeUnitMomentum({preEndlessKills:0,preEndlessBossKills:0,endlessKills:12.5,endlessBossKills:0}));
+    expect(computeUnitMomentum({preEndlessKills:500,preEndlessBossKills:0,endlessKills:0,endlessBossKills:0})).toBe(200);
+  });
+  it('splits kills by wave phase and carries every tally through merges',()=>{
+    const records=new CombatRecords(),a={id:1,side:'player',kind:'panda'} as Unit,b={id:2,side:'player',kind:'hat_bamboo'} as Unit,hero={id:2,side:'player',kind:'kungfu_po',level:1} as Unit;
+    records.hit(a,10,true);records.hit(a,10,true,false,true);records.hit(b,10,true,true);records.hit(b,10,true,true,true);records.hit(b,10,false,true);
+    records.merge(a,b,hero);
+    expect(records.tally(hero)).toEqual({preEndlessKills:1,preEndlessBossKills:1,endlessKills:1,endlessBossKills:1});
+    expect(records.momentum(hero)).toBeCloseTo(1+5+.08+.5);expect(records.mvp([hero])).toMatchObject({kind:'kungfu_po',damage:50,kills:4});
+    expect(records.mvp([{...hero,awakened:true}])).toMatchObject({awakened:true});expect(records.mvp([hero])).not.toHaveProperty('awakened');
+  });
+  it('lets standard-wave kills drive the engine momentum, applied only once endless begins',()=>{
+    const e=new BattleEngine({seed:41,autoWaves:false});e.start();
+    const hero=unit(e,'kungfu_po',5);hero.location={zone:'board',col:2,row:1};
+    for(let i=0;i<40;i++)killRat(e,hero);killRat(e,hero,true);
+    expect(e.getUnitMomentum(hero)).toBe(45);
+    const before=e.getUnitStats(hero).damage;
+    while(e.state.phase!=='finished')e.skipWave();expect(e.enterEndless().ok).toBe(true);
+    expect(e.getUnitStats(hero).damage/before).toBeCloseTo(momentumMultiplier(45,0),10);
+    expect(e.getKillTally(hero)).toMatchObject({preEndlessKills:40,preEndlessBossKills:1,endlessKills:0});
+    killRat(e,hero);expect(e.getKillTally(hero).endlessKills).toBe(1);expect(e.getUnitMomentum(hero)).toBeCloseTo(45.08);
+  });
+});
+
+describe('P17 Lv.5 endless breakthrough',()=>{
+  it('keeps "max level" in the ten standard waves, even with every medallion at Lv.50',()=>{
+    const e=standard(medals(all(50))),hero=unit(e,'kungfu_po',5),part=unit(e,'panda');
+    expect(MergeSystem.breakthroughPair(part,hero)).toMatchObject({base:hero,feeder:part,locked:false});
+    expect(e.move(part.id,{...hero.location})).toMatchObject({ok:false,key:'hint.maxLevel'});
+    expect(e.state.units).toContain(part);expect(hero.awakened).toBeUndefined();
+    expect(getMergeTargets(e.state,part.id).some(target=>target.breakthrough)).toBe(false);
+  });
+  it('rolls on endlessRandom: a miss is free (+5% pity), a hit awakens the hero in place and absorbs the feeder',()=>{
+    const e=endless(),hero=unit(e,'kungfu_po',5),part=unit(e,'panda'),place={...hero.location};
+    expect(getMergeTargets(e.state,part.id)).toEqual([expect.objectContaining({unitId:hero.id,breakthrough:true,baseId:hero.id})]);
+    script(e,'endlessRandom',[.99]);
+    expect(e.move(part.id,{...hero.location})).toEqual({ok:true,key:'p17.breakthroughFail',unitId:hero.id,value:35});
+    expect(hero).toMatchObject({level:5,breakthroughFails:1,location:place});expect(hero.awakened).toBeUndefined();
+    expect(e.state.units.some(u=>u.id===part.id)).toBe(false);
+    expect(e.state.events.at(-1)).toMatchObject({type:'bubble',textKey:'p17.breakthroughFail',value:35,unitId:hero.id});
+    // Feeding the hero itself onto a part works too: the hero stays where it is.
+    const second=unit(e,'hat_bamboo');script(e,'endlessRandom',[.34]);
+    expect(e.move(hero.id,{...second.location})).toEqual({ok:true,key:'p17.breakthroughSuccess',unitId:hero.id});
+    expect(hero).toMatchObject({awakened:true,level:5,location:place,statuses:{}});expect(e.state.units.some(u=>u.id===second.id)).toBe(false);
+    expect(e.state.events.find(ev=>ev.effect==='awakened')).toMatchObject({type:'purge',textKey:'p17.breakthroughSuccess',unitId:hero.id,duration:1.5});
+    // Once awakened, further feeding is the ordinary max-level refusal.
+    const third=unit(e,'panda');expect(e.move(third.id,{...hero.location})).toMatchObject({ok:false,key:'hint.maxLevel'});
+  });
+  it('accepts an identical un-awakened Lv.5 twin, respects merge locks and adds clover luck to the roll',()=>{
+    const e=endless(medals({med_luck_rate:25})),hero=unit(e,'meowfia',5),twin=unit(e,'meowfia',5);
+    expect(e.getBreakthroughChance(hero).total).toBeCloseTo(.65);
+    twin.statuses.MERGE_LOCK=3;expect(e.move(twin.id,{...hero.location})).toMatchObject({ok:false,key:'hint.mergeLocked'});
+    delete twin.statuses.MERGE_LOCK;script(e,'endlessRandom',[.6]);
+    expect(e.move(twin.id,{...hero.location})).toMatchObject({ok:true,key:'p17.breakthroughSuccess',unitId:hero.id});
+  });
+  it('multiplies an awakened hero by ×2.5 · 1.235^Lv and +15% speed in endless only',()=>{
+    const e=endless(medals({med_breakthrough_atk:50})),hero=unit(e,'kungfu_po',5);
+    const plain=e.getUnitStats(hero);hero.awakened=true;const woke=e.getUnitStats(hero);
+    expect(woke.damage/plain.damage).toBeCloseTo(AWAKENED_DAMAGE*breakthroughAttackMultiplier(50),6);expect(woke.rate/plain.rate).toBeCloseTo(AWAKENED_RATE,10);
+    const s=standard(medals(all(50))),other=unit(s,'kungfu_po',5),before=s.getUnitStats(other);other.awakened=true;expect(s.getUnitStats(other)).toEqual(before);
+  });
+});
+
+describe('P17 Sovereign Piercer, Calm Ward and the capybara bubble shield',()=>{
+  it('boosts boss damage ×(1+0.08·Lv) and ignores 1.8%·Lv armor in endless',()=>{
+    const hit=(lv:number)=>{const e=endless(medals({med_boss_slayer:lv})),hero=unit(e,'kungfu_po',5),boss=e.spawnEnemy('king_skunk','player');
+      boss.hp=boss.maxHp=1e15;e.hurt(boss,1000,hero);return{dealt:1e15-boss.hp,armor:boss.armor};};
+    const plain=hit(0),full=hit(50);
+    expect(full.dealt/plain.dealt).toBeCloseTo(5*(1-full.armor*.1)/(1-plain.armor),6);
+  });
+  it('shortens boss debuffs by 90% at Lv.50 and wards off destructive skills with a 90% roll on endlessRandom',()=>{
+    const wet=(lv:number)=>{const e=endless(medals({med_boss_resist:lv})),hero=unit(e,'kungfu_po',3);hero.location={zone:'board',col:2,row:1};
+      e.spawnEnemy('sad_rain_frog','player');return hero.statuses.WET;};
+    expect(wet(0)).toBe(18);expect(wet(50)).toBeCloseTo(1.8,10);
+    const crater=(roll:number)=>{const e=endless(medals({med_boss_resist:50}));e.state.enemies=[];script(e,'endlessRandom',[roll]);
+      const boss=e.spawnEnemy('husky_wrecker','player');boss.abilityCooldown=.01;boss.speed=0;e.tick(.05);
+      return{broken:e.state.grid.flat().filter(t=>t==='B').length,warded:e.state.events.some(ev=>ev.textKey==='p17.resistBlock')};};
+    const before=endless().state.grid.flat().filter(t=>t==='B').length;
+    expect(crater(.5)).toEqual({broken:before,warded:true});expect(crater(.95)).toEqual({broken:before+1,warded:false});
+  });
+  it('grants one shield on entering endless, blocks one orange theft, recharges 20s → 3s and never stacks',()=>{
+    const theft=(e:BattleEngine,n=1)=>{const end=getMap(e.state.mapId).paths.player.length-1;
+      for(let i=0;i<n;i++){const rat=e.spawnEnemy('rat','player');rat.progress=end-.001;}e.tick(.05);};
+    const none=endless();expect(none.state.sides.player.capyShieldReady).toBe(false);const o0=none.state.sides.player.oranges;theft(none);expect(none.state.sides.player.oranges).toBe(o0-1);
+    const e=endless(medals({med_capy_shield:1})),player=e.state.sides.player,oranges=player.oranges;
+    expect(player.capyShieldReady).toBe(true);
+    theft(e);expect(player.oranges).toBe(oranges);expect(player.capyShieldReady).toBe(false);expect(player.capyShieldTimer).toBe(20);
+    expect(e.state.events.some(ev=>ev.type==='shield_block'&&ev.textKey==='p17.shieldBlock')).toBe(true);
+    theft(e);expect(player.oranges).toBe(oranges-1);
+    e.state.enemies=[];e.tick(19.8);expect(player.capyShieldReady).toBe(false);e.tick(.2);expect(player.capyShieldReady).toBe(true);
+    e.tick(60);theft(e,2);expect(player.oranges).toBe(oranges-2);// two arrivals, one charge
+    const fast=endless(medals({med_capy_shield:50}));theft(fast);fast.state.enemies=[];fast.tick(2.9);expect(fast.state.sides.player.capyShieldReady).toBe(false);fast.tick(.1);expect(fast.state.sides.player.capyShieldReady).toBe(true);
+  });
+});
+
+describe('P17 RNG isolation and the untouched ten standard waves',()=>{
+  it('draws breakthrough and resist rolls only from endlessRandom',()=>{
+    const a=endless(medals({med_boss_resist:50})),b=endless(medals({med_boss_resist:50}));
+    const hero=unit(a,'kungfu_po',5),part=unit(a,'panda');unit(b,'kungfu_po',5);unit(b,'panda');
+    a.move(part.id,{...hero.location});a.spawnEnemy('mega_roomba','player');b.spawnEnemy('mega_roomba','player');
+    for(const name of ['random','ingredientRandom','villageRandom'])expect(stream(a,name)).toEqual(stream(b,name));
+    expect(stream(a,'endlessRandom')).not.toEqual(stream(b,'endlessRandom'));
+  });
+  it('plays a full ten-wave battle bit-identically with all six medallions at Lv.50',()=>{
+    const run=(loadout:BattleLoadout)=>{
+      const e=new BattleEngine({seed:7,loadouts:{player:loadout}});e.start();
+      for(const [kind,level,col,row] of [['kungfu_po',5,1,1],['rocket_coon',5,2,2],['purrcerer',4,3,1],['hamster',3,4,2],['bee',2,1,3]] as const){const u=unit(e,kind,level);u.location={zone:'board',col,row};}
+      for(let i=0;i<8000&&e.state.phase!=='finished';i++)e.tick(.1);return e;
+    };
+    const plain=run(base),medalled=run(medals(all(50)));
+    expect(medalled.state.sides.player.loadout.endlessMedallions).toEqual(all(50));
+    const strip=(e:BattleEngine)=>JSON.stringify({...e.state,id:'',sides:{...e.state.sides,player:{...e.state.sides.player,loadout:null}}});
+    expect(plain.state.phase).toBe('finished');expect(strip(medalled)).toBe(strip(plain));
+    expect(medalled.state.result).toEqual(plain.state.result);
+  });
+  it('only carries medallions in a loadout snapshot when one is levelled',()=>{
+    expect(copyLoadout(base)).not.toHaveProperty('endlessMedallions');expect(copyLoadout(medals(all(0)))).not.toHaveProperty('endlessMedallions');
+    expect(copyLoadout(medals({med_luck_rate:60,med_momentum:2.7,bogus:5} as never)).endlessMedallions).toEqual({med_luck_rate:50,med_momentum:2});
+  });
+});
+
+describe('P17 crests and receipts',()=>{
+  it('pays 3 crests on a Wave 10 victory, banks endless crests per clear and reports awakened heroes',()=>{
+    const win=new BattleEngine({seed:41,autoWaves:false});win.start();while(win.state.phase!=='finished')win.skipWave();
+    expect(win.state.result).toMatchObject({winner:'player',reason:'waves',endlessCrests:3});
+    const loss=new BattleEngine({seed:41});loss.start();loss.surrender();expect(loss.state.result).not.toHaveProperty('endlessCrests');
+    const e=endless(),hero=unit(e,'kungfu_po',5);hero.awakened=true;
+    e.state.spawned=e.currentWaveTargetCount();e.state.enemies=[];expect(e.callEarlyWave().ok).toBe(true);expect(e.state.sides.player.endlessCrests).toBe(1);
+    e.surrender();expect(e.state.result).toMatchObject({endless:true,endlessCrests:1,awakenedCount:1});
+    expect(resultCrests(e.state)).toBe(4);
+  });
+  it('banks crests atomically with each receipt and rejects impossible crest claims',()=>{
+    const normal:BattleResult={winner:'player',reason:'waves',loot:[],playerLoot:[],aiLoot:[],coins:75,elapsed:350,endlessCrests:3};
+    const banked=awardBattle(createProfile(),'run',normal).profile;expect(banked.endlessCrests).toBe(3);
+    expect(awardBattle(createProfile(),'lost',{...normal,winner:'ai',reason:'oranges'}).profile.endlessCrests).toBe(0);
+    const honor:BattleResult={...normal,reason:'surrender',endless:true,endlessWave:22,endlessCoins:60,endlessLoot:[],endlessCrests:12,awakenedCount:2,elapsed:1450.4,
+      mvp:{kind:'kungfu_po',level:5,damage:9e6,kills:80,awakened:true}};
+    const bonus=awardEndless(banked,'run',honor);
+    expect(bonus.awarded).toBe(true);expect(bonus.profile).toMatchObject({endlessCrests:15,bestEndlessWave:22,bestEndlessTime:1450,bestEndlessMvp:'kungfu_po',bestEndlessMvpAwakened:true,bestEndlessAwakened:2});
+    expect(awardEndless(banked,'run',{...honor,endlessCrests:endlessCrestsThroughWave(22)+1}).awarded).toBe(false);
+    expect(awardEndless(banked,'run',{...honor,endlessCrests:-1}).awarded).toBe(false);
+    // A shorter wave keeps the record; the same wave in less time refreshes it.
+    const slower=awardEndless({...bonus.profile,awardedBattles:[...bonus.profile.awardedBattles,'r2']},'r2',{...honor,endlessWave:22,elapsed:2000,endlessCrests:0}).profile;
+    expect(slower.bestEndlessTime).toBe(1450);
+    const faster=awardEndless({...bonus.profile,awardedBattles:[...bonus.profile.awardedBattles,'r3']},'r3',{...honor,endlessWave:22,elapsed:1200,endlessCrests:0,mvp:undefined,awakenedCount:0}).profile;
+    expect(faster).toMatchObject({bestEndlessTime:1200,bestEndlessAwakened:0});expect(faster).not.toHaveProperty('bestEndlessMvp');
+  });
+});
+
+describe('P17 profile, identity and save compatibility',()=>{
+  it('starts with zero crests, six Lv.0 medallions, a stable anonymous id and no nickname',()=>{
+    const p=createProfile();
+    expect(p).toMatchObject({endlessCrests:0,nickname:'',playerId:SESSION_PLAYER_ID});expect(p.endlessMedallions).toEqual(all(0));
+    expect(isValidPlayerId(p.playerId)).toBe(true);expect(p.playerId).toMatch(/^capy_[a-z0-9]{12}$/);
+    expect(normalizeProfile(null)).toEqual(createProfile());expect(generatePlayerId(()=>.5)).toMatch(/^capy_/);
+  });
+  it('migrates pre-P17 saves and sanitizes every new field',()=>{
+    const old=normalizeProfile({coins:50,matches:3,wins:2,bestEndlessWave:16});
+    expect(old).toMatchObject({endlessCrests:0,nickname:'',coins:50,bestEndlessWave:16});expect(old.endlessMedallions).toEqual(all(0));
+    const odd=normalizeProfile({endlessCrests:-4,endlessMedallions:{med_luck_rate:99,med_momentum:'5',bogus:3},playerId:'x',nickname:UNKIND+'水豚',bestEndlessWave:9,bestEndlessTime:500,bestEndlessMvp:'kungfu_po'});
+    expect(odd.endlessCrests).toBe(0);expect(odd.endlessMedallions).toEqual({...all(0),med_luck_rate:50});expect(odd.playerId).toBe(SESSION_PLAYER_ID);expect(odd.nickname).toBe('');
+    expect(odd).not.toHaveProperty('bestEndlessTime');expect(odd).not.toHaveProperty('bestEndlessMvp');
+    const kept=normalizeProfile({playerId:'capy_keepme1234',nickname:'  泡汤 水豚  ',bestEndlessWave:30,bestEndlessTime:900,bestEndlessMvp:'rocket_coon',bestEndlessMvpAwakened:true,bestEndlessAwakened:3});
+    expect(kept).toMatchObject({playerId:'capy_keepme1234',nickname:'泡汤 水豚',bestEndlessTime:900,bestEndlessMvp:'rocket_coon',bestEndlessMvpAwakened:true,bestEndlessAwakened:3});
+    const db=memoryStorage();saveProfile(kept,db);expect(loadProfile(db)).toEqual(kept);
+    expect(normalizeMedallions({med_capy_shield:7.9})).toEqual({...all(0),med_capy_shield:7});
+  });
+  it('maxes every medallion and the crest stash for the developer test profile',()=>{
+    const p=unlockAllProfile(createProfile());expect(p.endlessMedallions).toEqual(all(50));expect(p.endlessCrests).toBe(99_999);
+  });
+  it('validates nicknames: 2-14 characters, no control characters or brackets, wholesome only',()=>{
+    expect(validateNickname('泡汤水豚')).toEqual({ok:true,value:'泡汤水豚',key:'p17.nameSaved'});
+    expect(validateNickname(' <b>Capy</b>\u0007 ')).toMatchObject({ok:true,value:'bCapy/b'});
+    expect(validateNickname('水')).toMatchObject({ok:false,key:'p17.nameTooShort'});expect(validateNickname('一二三四五六七八九十一二三四五')).toMatchObject({ok:false,key:'p17.nameTooLong'});
+    expect(validateNickname(`小${UNKIND}猫`)).toMatchObject({ok:false,key:'p17.nameUnkind'});expect(validateNickname('B o n k')).toMatchObject({ok:false,key:'p17.nameUnkind'});
+    expect(defaultNickname('capy_abcdefgh1234','zh-CN')).toBe('泡汤水豚#1234');expect(defaultNickname('capy_abcdefghwxyz','en')).toBe('ChillCapy#WXYZ');
+  });
+});
+
+describe('P17 compact numbers',()=>{
+  it('keeps <10,000 exact and compacts K / M / B',()=>{
+    expect([0,79,1234,9999,12_500,125_000,999_960,3_420_000,54_694_467,1_850_000_000,-12_500,NaN,Infinity].map(formatCompactNumber))
+      .toEqual(['0','79','1,234','9,999','12.5K','125K','1M','3.42M','54.69M','1.85B','-12.5K','0','0']);
+  });
+});
+
+describe('P17 UI: courtyard pill, medallion hall, hero card, board tab and settlement',()=>{
+  it('adds a warm-gold medallion pill without touching the 3 + 3 hub docks',()=>{
+    const p={...createProfile(),coins:16,endlessCrests:8,bestEndlessWave:23},html=courtyardMarkup(p,0);
+    expect(html.match(/class="endless-hall-pill[^"]*" data-action="medallions"/g)).toHaveLength(1);
+    expect(endlessHallPillMarkup(p)).toContain(t('p17.canUpgrade'));expect(endlessHallPillMarkup(p)).toContain('W23');
+    expect(endlessHallPillMarkup(createProfile())).toContain('×0');expect(endlessHallPillMarkup(createProfile())).not.toContain('endless-hall-best');
+    const left=html.match(/<nav class="hub-dock hub-dock-left">[\s\S]*?<\/nav>/)![0],right=html.match(/<nav class="hub-dock hub-dock-right">[\s\S]*?<\/nav>/)![0];
+    expect(left.match(/<button /g)).toHaveLength(3);expect(right.match(/<button /g)).toHaveLength(3);expect(left+right).not.toContain('endless-hall-pill');
+  });
+  it('renders six cream medallion rows with endless-only copy, current → next values and dual-currency chips',()=>{
+    const p={...createProfile(),coins:500,endlessCrests:30,endlessMedallions:{...all(0),med_boss_resist:25,med_capy_shield:50}};
+    const screen=new MedallionScreen(()=>p,()=>{},()=>{},()=>{});const html=screen.markup();
+    expect(html).toContain('data-ledger-page="medallions"');expect(html).toContain('ui_medallion_peek_capy');expect(html).toContain(t('p17.endlessOnly'));
+    expect(html.match(/class="storybook-row-card medallion-row/g)).toHaveLength(6);expect(html).toContain('data-action="endless-board"');
+    expect(html).toContain('45%</b><i aria-hidden="true">→</i><b class="medallion-next">46.8%');expect(html).toContain(t('p17.maxed'));
+    expect(html).toContain('medallion-cost-chip is-ready');expect(html).toContain('medallion-cost-chip is-short');
+    expect(html).toContain(t('p17.totalLevel',{sum:75,max:300}));expect(html).not.toContain('<text');
+  });
+  it('upgrades through the hall with a saved profile, a cue and a toast',()=>{
+    const saved=new Map<string,string>();vi.stubGlobal('window',{localStorage:{getItem:(k:string)=>saved.get(k)??null,setItem:(k:string,v:string)=>{saved.set(k,v);},removeItem:(k:string)=>{saved.delete(k);}}});
+    let p:Profile={...createProfile(),coins:100,endlessCrests:20};const cues:string[]=[],toasts:string[]=[];
+    const screen=new MedallionScreen(()=>p,next=>{p=next;},()=>{},key=>{toasts.push(key);},cue=>{cues.push(cue);});
+    expect(screen.action('medallion-up:med_momentum')).toBe(true);
+    expect(p.endlessMedallions.med_momentum).toBe(1);expect(p.endlessCrests).toBe(12);expect(cues).toEqual(['merge_upgrade']);expect(toasts).toEqual(['p17.medallionUpgraded']);
+    expect(JSON.parse(saved.get('capybara_defense_v1:profile')!).endlessMedallions.med_momentum).toBe(1);
+    expect(screen.action('medallion-up:med_momentum')).toBe(true);expect(toasts.at(-1)).toBe('p17.noCrests');expect(screen.action('village-harvest')).toBe(false);
+  });
+  it('shows momentum, the live breakthrough breakdown and the awakened badge on the hero card',()=>{
+    const e=endless(),hero=unit(e,'kungfu_po',5),loadout=e.state.sides.player.loadout,stats=e.getEffectiveUnitStats(hero);
+    const chance=computeBreakthroughChance({preEndlessKills:0,preEndlessBossKills:8,luckMedallionLevel:10,previousFails:0});
+    const html=liveUnitCardMarkup({unit:hero,state:e.state,stats,loadout,endless:{momentum:82,chance}});
+    expect(html).toContain('🔥 战意 82/200');expect(html).toContain(t('p17.momentumHint'));expect(html).toContain('成功率 68%');
+    expect(html).toContain('基础 30% + 战意 24% + 勋章 14% + 保底 0%');expect(html).not.toContain('class="live-max"');
+    hero.awakened=true;const woke=liveUnitCardMarkup({unit:hero,state:e.state,stats,loadout,endless:{momentum:200,awakenedPower:12_345_678}});
+    expect(woke).toContain('✦ 已觉醒突破');expect(woke).toContain('×12.35M');expect(woke).toContain('kungfu_po_awakened');
+    const s=standard(),h=unit(s,'kungfu_po',5),std=liveUnitCardMarkup({unit:h,state:s.state,stats:s.getEffectiveUnitStats(h),loadout:s.state.sides.player.loadout,endless:{momentum:3}});
+    expect(std).toContain('class="live-max"');expect(std).toContain(t('p17.breakLater'));
+  });
+  it('adds the global endless board tab and renders online, offline and empty states',()=>{
+    expect(ledgerTabs('leaderboard').match(/data-action="([\w-]+)"/g)).toEqual(['data-action="leaderboard"','data-action="endless-board"','data-action="profile"','data-action="settings"']);
+    const p={...createProfile(),playerId:'capy_me000000000',nickname:'泡汤队长',bestEndlessWave:31,bestEndlessTime:1500,bestEndlessMvp:'rocket_coon',bestEndlessMvpAwakened:true};
+    const row=(rank:number,id:string,wave:number)=>({rank,playerId:id,nickname:`玩家${rank}`,avatarId:'capybara',bestWave:wave,elapsedSeconds:1800,mvpKind:'kungfu_po',mvpAwakened:rank===1,awakenedCount:rank===1?3:0,medallionTotal:10,updatedAt:1});
+    const online=endlessBoardMarkup(p,{loading:false,snapshot:{mode:'online',fetchedAt:1,totalPlayers:7,entries:[row(1,'capy_top000000000',58),row(2,'capy_me000000000',31)],me:row(2,'capy_me000000000',31)}});
+    expect(online).toContain('全球第 #2 名 / 共 7 人');expect(online).toContain('data-player="true"');expect(online).toContain('🥇');expect(online).toContain('第 58 波');
+    expect(online).toContain('kungfu_po_awakened');expect(online).toContain('value="泡汤队长"');expect(online).toContain('data-action="medallions"');expect(online).toContain('data-action="endless-board-refresh"');
+    const offline=endlessBoardMarkup(p,{loading:false,snapshot:{mode:'offline',fetchedAt:null,totalPlayers:0,entries:[],me:null}});
+    expect(offline).toContain(t('p17.board.offline'));expect(offline).toContain('rocket_coon_awakened');expect(offline).toContain('第 31 波');
+    const fresh=endlessBoardMarkup(createProfile(),{loading:false,snapshot:{mode:'unconfigured',fetchedAt:null,totalPlayers:0,entries:[],me:null}});
+    expect(fresh).toContain(t('p17.board.unconfigured'));expect(fresh).toContain(t('p17.board.noBest'));expect(fresh).toContain(defaultNickname(SESSION_PLAYER_ID,'zh-CN'));
+  });
+  it('puts crests on the report shelf, shows the global rank and an awakened MVP, and updates the endless offer',()=>{
+    const win=new BattleEngine({seed:41});win.start();while(win.state.phase!=='finished')win.skipWave();
+    const offer=endlessOfferMarkup(win.state,true);expect(offer).toContain('×1.25');expect(offer).not.toContain('×16');expect(offer).toContain('ui_endless_crest');expect(offer).toContain('+3');
+    const input={profile:createProfile(),savedResult:true,resultStars:1,previousRank:0,newWeapons:[],newAvatars:[],statsOpen:true};
+    const standardHtml=resultMarkup({...input,state:win.state});expect(standardHtml).toMatch(/visual-treasure-item is-crest[\s\S]*?×3/);
+    win.enterEndless();win.state.sides.player.endlessCrests=5;win.surrender();
+    win.state.result!.mvp={kind:'kungfu_po',level:5,damage:12_345_678,kills:9,awakened:true};
+    const html=resultMarkup({...input,state:win.state,globalRank:42});
+    expect(html).toContain('🌍 全球第 #42 名');expect(html).toMatch(/is-crest[\s\S]*?×8/);expect(html).toContain('kungfu_po_awakened');expect(html).toContain('12.35M');
+    const plaque=html.match(/<div class="crest-core-rewards">[\s\S]*?<\/div>/)![0];expect(plaque).not.toContain('ui_endless_crest');
+  });
+  it('ships complete, wholesome zh-CN / en P17 copy',()=>{
+    expect(Object.keys(p17En).sort()).toEqual(Object.keys(p17Zh).sort());
+    for(const value of [...Object.values(p17Zh),...Object.values(p17En)])expect(value.trim().length).toBeGreaterThan(0);
+    setLanguage('en');expect(t('p17.title')).toBe('Endless Medallions');expect(t('p13.endlessScaling')).toContain('1.25');
+  });
+  it('keeps every new P17 source file wholesome',()=>{
+    const files=['src/config/medallions.ts','src/i18n/p17.ts','src/core/formatNumber.ts','src/core/MedallionProgression.ts','src/core/PlayerIdentity.ts',
+      'src/ui/MedallionScreen.ts','src/ui/EndlessLeaderboardClient.ts','src/ui/p17.css',
+      ...readdirSync('cloudflare-leaderboard').filter(f=>/\.(md|json|toml|sql)$/.test(f)).map(f=>`cloudflare-leaderboard/${f}`),
+      ...readdirSync('cloudflare-leaderboard/src').map(f=>`cloudflare-leaderboard/src/${f}`)];
+    for(const file of files)expect(readFileSync(file,'utf8'),file).not.toMatch(/涩涩|色色|不许涩|Bonk|bonk|绝育|绿茶|疯批|舔狗|鸡你太/i);
+  });
+});
+
+describe('P17 Cloudflare Worker: validation, monotone upsert, ranking, CORS and rate limits',()=>{
+  const env:Env={DB:undefined as never,ALLOWED_ORIGINS:'https://shizhuom.github.io,http://127.0.0.1:4175'};
+  const score=(patch:Record<string,unknown>={})=>({playerId:'capy_alpha0000001',nickname:'泡汤水豚',avatarId:'capybara',bestWave:30,elapsedSeconds:1500,mvpKind:'kungfu_po',mvpAwakened:true,awakenedCount:1,medallionTotal:20,...patch});
+  const post=(store:ScoreStore,body:unknown,now=1000,ip='1.2.3.4',origin='https://shizhuom.github.io')=>handleRequest(new Request('https://board.test/api/score',
+    {method:'POST',headers:{'content-type':'application/json','CF-Connecting-IP':ip,Origin:origin},body:JSON.stringify(body)}),env,{store,now:()=>now});
+  const get=(store:ScoreStore,query='')=>handleRequest(new Request(`https://board.test/api/leaderboard${query}`,{headers:{Origin:'https://shizhuom.github.io'}}),env,{store});
+  it('validates ids, nicknames, waves 11-120, real play time and plausible power',()=>{
+    expect(validateScore(score())).toMatchObject({ok:true,score:{best_wave:30,mvp_awakened:1,avatar_id:'capybara'}});
+    expect(validateScore(score({bestWave:999}))).toEqual({ok:false,error:'invalid_score'});expect(validateScore(score({bestWave:10}))).toEqual({ok:false,error:'invalid_score'});
+    expect(validateScore(score({bestWave:80,elapsedSeconds:1}))).toEqual({ok:false,error:'invalid_score'});expect(minimumElapsed(80)).toBe(420);
+    expect(validateScore(score({elapsedSeconds:86_401}))).toEqual({ok:false,error:'invalid_score'});
+    expect(validateScore(score({playerId:'bad id!'}))).toEqual({ok:false,error:'invalid_player'});
+    expect(validateScore(score({nickname:`${UNKIND}${UNKIND}`}))).toEqual({ok:false,error:'invalid_nickname'});expect(validateScore(score({nickname:'a'}))).toEqual({ok:false,error:'invalid_nickname'});
+    expect(validateScore(score({bestWave:50,elapsedSeconds:3000,medallionTotal:0,awakenedCount:0}))).toEqual({ok:false,error:'implausible_score'});
+    expect(validateScore(score({bestWave:50,elapsedSeconds:3000,medallionTotal:30,awakenedCount:0})).ok).toBe(true);
+    expect(validateScore(score({avatarId:'nope',mvpKind:'nope',medallionTotal:301}))).toEqual({ok:false,error:'invalid_score'});
+    expect(validateScore(score({avatarId:'nope',mvpKind:'nope'}))).toMatchObject({ok:true,score:{avatar_id:'capybara',mvp_kind:'kungfu_po'}});
+    expect(sanitizeNickname('<泡汤>')).toEqual({ok:true,value:'泡汤'});
+  });
+  it('keeps the best record, refreshes the nickname and ranks by wave, then time, then first arrival',()=>{
+    const incoming=validateScore(score()) as {ok:true;score:Parameters<typeof mergeScore>[1]};
+    const first=mergeScore(null,incoming.score,10);expect(first.improved).toBe(true);
+    const lower=mergeScore(first.row,{...incoming.score,best_wave:20,nickname:'新名字'},20);expect(lower).toMatchObject({improved:false,row:{best_wave:30,nickname:'新名字',updated_at:20}});
+    expect(mergeScore(first.row,{...incoming.score,elapsed_seconds:1400},30).improved).toBe(true);
+    const rows=[{best_wave:30,elapsed_seconds:900,updated_at:5},{best_wave:31,elapsed_seconds:3000,updated_at:9},{best_wave:30,elapsed_seconds:900,updated_at:2}].sort(compareRows);
+    expect(rows.map(r=>[r.best_wave,r.updated_at])).toEqual([[31,9],[30,2],[30,5]]);
+    expect(rateLimitDecision(null,0)).toEqual({allowed:true,windowStart:0,hits:1});expect(rateLimitDecision({window_start:0,hits:20},59_999).allowed).toBe(false);
+    expect(rateLimitDecision({window_start:0,hits:20},60_000)).toEqual({allowed:true,windowStart:60_000,hits:1});
+  });
+  it('serves health, Top N and exact ranks end to end, blocks a 999-wave cheat and rate limits 20 writes per minute',async()=>{
+    const store=memoryStore();
+    expect(await (await handleRequest(new Request('https://board.test/api/health'),env,{store})).json()).toEqual({ok:true,service:'capybara-endless-leaderboard'});
+    const a=await post(store,score());expect(a.status).toBe(200);expect(a.headers.get('Access-Control-Allow-Origin')).toBe('https://shizhuom.github.io');
+    expect(await a.json()).toEqual({ok:true,rank:1,totalPlayers:1,bestWave:30,improved:true});
+    expect(await (await post(store,score({playerId:'capy_bravo0000001',bestWave:40,elapsedSeconds:2400}),1001,'5.6.7.8')).json()).toMatchObject({rank:1,totalPlayers:2});
+    expect(await (await post(store,score({bestWave:12,nickname:'改名啦'}),1002)).json()).toMatchObject({rank:2,bestWave:30,improved:false});
+    expect(store.rows.get('capy_alpha0000001')).toMatchObject({nickname:'改名啦',best_wave:30});
+    const cheat=await post(store,score({bestWave:999}),1003);expect(cheat.status).toBe(400);expect(await cheat.json()).toEqual({ok:false,error:'invalid_score'});
+    const board=await (await get(store,'?playerId=capy_alpha0000001&limit=500')).json() as {entries:{rank:number;playerId:string}[];me:{rank:number};totalPlayers:number};
+    expect(board.entries.map(e=>[e.rank,e.playerId])).toEqual([[1,'capy_bravo0000001'],[2,'capy_alpha0000001']]);expect(board.me.rank).toBe(2);expect(board.totalPlayers).toBe(2);
+    for(let i=0;i<17;i++)expect((await post(store,score(),2000+i)).status).toBe(200);
+    const limited=await post(store,score(),2100);expect(limited.status).toBe(429);expect(await limited.json()).toEqual({ok:false,error:'rate_limited'});
+    expect((await post(store,score(),2100,'9.9.9.9')).status).toBe(200);expect((await post(store,score(),70_000)).status).toBe(200);
+    expect([...store.rows.keys()].some(k=>k.includes('1.2.3.4'))).toBe(false);
+  });
+  it('answers CORS preflights only for whitelisted origins',async()=>{
+    const store=memoryStore(),pre=(origin:string)=>handleRequest(new Request('https://board.test/api/score',{method:'OPTIONS',headers:{Origin:origin}}),env,{store});
+    const ok=await pre('http://127.0.0.1:4175');expect(ok.status).toBe(204);expect(ok.headers.get('Access-Control-Allow-Methods')).toContain('POST');
+    const bad=await pre('https://evil.example');expect(bad.status).toBe(403);expect(bad.headers.get('Access-Control-Allow-Origin')).toBeNull();
+    expect((await post(store,score(),1,'1.1.1.1','https://evil.example')).status).toBe(403);
+    expect((await handleRequest(new Request('https://board.test/nope'),env,{store})).status).toBe(404);
+  });
+});
+
+describe('P17 EndlessLeaderboardClient: online, cached offline and unconfigured',()=>{
+  const env:Env={DB:undefined as never,ALLOWED_ORIGINS:''};
+  const ranked:Profile={...createProfile(),playerId:'capy_client000001',nickname:'泡汤水豚',bestEndlessWave:33,bestEndlessTime:1600,bestEndlessMvp:'pepe_king',bestEndlessMvpAwakened:true,bestEndlessAwakened:2,endlessMedallions:{...all(0),med_luck_rate:12}};
+  const viaWorker=(store:ScoreStore)=>vi.fn((url:string|URL|Request,init?:RequestInit)=>handleRequest(new Request(String(url),init),env,{store,now:()=>5000}));
+  it('builds a submission only for profiles with an endless record',()=>{
+    expect(submissionFromProfile(createProfile())).toBeNull();
+    expect(submissionFromProfile(ranked)).toEqual({playerId:'capy_client000001',nickname:'泡汤水豚',avatarId:'capybara',bestWave:33,elapsedSeconds:1600,mvpKind:'pepe_king',mvpAwakened:true,awakenedCount:2,medallionTotal:12});
+    expect(submissionFromProfile({...ranked,nickname:''},'en')!.nickname).toBe('ChillCapy#0001');
+  });
+  it('submits, refreshes with a 30 s cache and caches the board for offline use',async()=>{
+    const store=memoryStore(),fetch=viaWorker(store),storage=memoryStorage();let now=0;
+    const client=new EndlessLeaderboardClient({baseUrl:'https://board.test/',fetch:fetch as unknown as typeof globalThis.fetch,storage,now:()=>now});
+    expect(client.configured).toBe(true);
+    expect(await client.submitScore(ranked)).toMatchObject({ok:true,mode:'online',rank:1,totalPlayers:1,improved:true});
+    const snap=await client.refresh(ranked.playerId);expect(snap).toMatchObject({mode:'online',totalPlayers:1,me:{rank:1,bestWave:33}});expect(snap.entries[0].mvpAwakened).toBe(true);
+    const calls=fetch.mock.calls.length;now=10_000;await client.refresh(ranked.playerId);expect(fetch.mock.calls.length).toBe(calls);
+    await client.refresh(ranked.playerId,true);expect(fetch.mock.calls.length).toBe(calls+1);
+    expect(String(fetch.mock.calls.at(-1)![0])).toBe('https://board.test/api/leaderboard?limit=100&playerId=capy_client000001');
+    expect(JSON.parse(storage.getItem(`capybara_defense_v1:${BOARD_CACHE_KEY}`)!).entries).toHaveLength(1);
+    // A new client that cannot reach the network serves the cached board, without throwing.
+    const offline=new EndlessLeaderboardClient({baseUrl:'https://board.test',fetch:(()=>Promise.reject(new TypeError('offline'))) as unknown as typeof globalThis.fetch,storage});
+    expect(offline.snapshot()).toMatchObject({mode:'offline',totalPlayers:1});const after=await offline.refresh(ranked.playerId,true);
+    expect(after.mode).toBe('offline');expect(after.entries[0].playerId).toBe('capy_client000001');
+    expect(await offline.submitScore(ranked)).toMatchObject({ok:false,mode:'offline',key:'p17.board.offline'});
+  });
+  it('degrades quietly when unconfigured, times out after the limit and reports 429 and rejections',async()=>{
+    const fetch=vi.fn();const local=new EndlessLeaderboardClient({baseUrl:'',fetch:fetch as unknown as typeof globalThis.fetch,storage:memoryStorage()});
+    expect(local.configured).toBe(false);expect(await local.refresh('capy_client000001')).toMatchObject({mode:'unconfigured',entries:[]});
+    expect(await local.submitScore(ranked)).toMatchObject({ok:false,mode:'unconfigured'});expect(fetch).not.toHaveBeenCalled();
+    const hang=(_:unknown,init?:RequestInit)=>new Promise<Response>((_,reject)=>init?.signal?.addEventListener('abort',()=>reject(new Error('aborted'))));
+    const slow=new EndlessLeaderboardClient({baseUrl:'https://board.test',fetch:hang as unknown as typeof globalThis.fetch,storage:memoryStorage(),timeoutMs:15});
+    expect(await slow.refresh()).toMatchObject({mode:'offline'});
+    const busy=new EndlessLeaderboardClient({baseUrl:'https://board.test',fetch:(async()=>new Response('{"ok":false,"error":"rate_limited"}',{status:429})) as unknown as typeof globalThis.fetch,storage:memoryStorage()});
+    expect(await busy.submitScore(ranked)).toMatchObject({ok:false,key:'p17.board.rateLimited'});
+    const store=memoryStore(),strict=new EndlessLeaderboardClient({baseUrl:'https://board.test',fetch:viaWorker(store) as unknown as typeof globalThis.fetch,storage:memoryStorage()});
+    expect(await strict.submitScore({...ranked,bestEndlessWave:60,bestEndlessTime:3000,bestEndlessAwakened:0,endlessMedallions:all(0)})).toMatchObject({ok:false,key:'p17.board.rejected'});
+    expect(parseLeaderboard({ok:true,entries:[{player_id:'capy_snake0000001',best_wave:20,nickname:'x'},{playerId:'bad'}],totalPlayers:2})!.entries).toEqual([expect.objectContaining({rank:1,playerId:'capy_snake0000001',bestWave:20})]);
+    expect(parseLeaderboard({ok:false})).toBeNull();
+  });
+});

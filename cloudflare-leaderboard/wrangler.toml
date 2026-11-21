@@ -1,0 +1,11 @@
+name = "capybara-endless-leaderboard"
+main = "src/index.ts"
+compatibility_date = "2026-01-01"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "capybara-endless-db"
+database_id = "118138ea-7cc4-4595-8810-441583aa7d8e"
+
+[vars]
+ALLOWED_ORIGINS = "https://shizhuom.github.io,http://127.0.0.1:4175,http://localhost:4175,http://localhost:5173"

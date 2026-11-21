@@ -4,6 +4,8 @@ import { applyBattleProgress,recordMergedHeroes } from '../core/PlayerProgressio
 import { grantIngredients } from '../core/KitchenProgression';
 import { grantVillageResources } from '../core/VillageProgression';
 import type { BattleResult, Profile } from '../core/types';
+import { HEROES } from '../config/heroes';
+import { STANDARD_VICTORY_CRESTS, endlessCrestsThroughWave } from '../config/medallions';
 
 export const STORAGE_PREFIX = 'capybara_defense_v1:';
 const validFragments = new Set<string>(FRAGMENTS);
@@ -64,6 +66,8 @@ export function awardBattle(profile: Profile, battleId: string, result: BattleRe
       fragments: [...p.fragments, ...legacy],
       awardedBattles: [...profile.awardedBattles, battleId],
       freeLotteryTickets:p.freeLotteryTickets+(won?1:0),ingredients,village,
+      // P17: clearing the tenth wave always banks the first endless crests under this same receipt.
+      endlessCrests:p.endlessCrests+(won&&result.reason==='waves'?STANDARD_VICTORY_CRESTS:0),
     },won,result.mergedHeroes),
   };
 }
@@ -83,13 +87,37 @@ export function awardEndless(profile:Profile,battleId:string,result:BattleResult
   if(materials!==undefined&&(!Array.isArray(materials)||!materials.every(id=>typeof id==='string')))return rejected;
   const coins=p.coins+bonus;
   if(!Number.isSafeInteger(coins))return rejected;
+  // P17 crests: optional on older receipts, never more than the cleared waves can pay.
+  const crests=result.endlessCrests??0;
+  if(typeof crests!=='number'||!Number.isSafeInteger(crests)||crests<0||crests>endlessCrestsThroughWave(wave))return rejected;
   const legacy=loot.filter(id=>validFragments.has(id));
   const granted=grantWeaponFragments(p,[...loot,...legacy.map(()=>'m01_swatter')]);
   const heroes=Array.isArray(result.mergedHeroes)?result.mergedHeroes.filter(id=>typeof id==='string'):[];
   const ingredients=grantIngredients(p,harvest??[]).ingredients,village=grantVillageResources(p,materials??[]).village;
-  return {awarded:true,newWeapons:granted.newWeapons,profile:recordMergedHeroes({...granted.profile,coins,ingredients,village,
+  const next:Profile={...granted.profile,coins,ingredients,village,
     fragments:[...p.fragments,...legacy],awardedBattles:[...p.awardedBattles,receipt],
-    bestEndlessWave:Math.max(p.bestEndlessWave??0,wave)},heroes)};
+    bestEndlessWave:Math.max(p.bestEndlessWave??0,wave),endlessCrests:p.endlessCrests+crests};
+  const record=bestEndlessRecord(p,wave,result);
+  if(record){
+    // A new best replaces the whole record, so an older MVP never lingers beside a newer wave.
+    delete next.bestEndlessTime;delete next.bestEndlessMvp;delete next.bestEndlessMvpAwakened;delete next.bestEndlessAwakened;
+    Object.assign(next,record);
+  }
+  return {awarded:true,newWeapons:granted.newWeapons,profile:recordMergedHeroes(next,heroes)};
+}
+
+/** A higher wave (or the same wave in less time) refreshes the run metadata the global board shows. */
+function bestEndlessRecord(p:Profile,wave:number,result:BattleResult):Partial<Profile>|null {
+  const elapsed=typeof result.elapsed==='number'&&Number.isFinite(result.elapsed)&&result.elapsed>=0?Math.round(result.elapsed):undefined;
+  const best=p.bestEndlessWave??0,faster=wave===best&&elapsed!==undefined&&(p.bestEndlessTime===undefined||elapsed<p.bestEndlessTime);
+  if(wave<=best&&!faster)return null;
+  const record:Partial<Profile>={};
+  if(elapsed!==undefined)record.bestEndlessTime=elapsed;
+  const mvp=result.mvp?.kind;
+  if(typeof mvp==='string'&&Object.hasOwn(HEROES,mvp)){record.bestEndlessMvp=mvp;if(result.mvp?.awakened===true)record.bestEndlessMvpAwakened=true;}
+  const awakened=result.awakenedCount;
+  record.bestEndlessAwakened=typeof awakened==='number'&&Number.isSafeInteger(awakened)&&awakened>=0?Math.min(40,awakened):0;
+  return record;
 }
 
 export function isTestProfile(storage = browserStorage()):boolean {

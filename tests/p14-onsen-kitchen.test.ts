@@ -53,9 +53,9 @@ function memory(){
 }
 
 describe('P14 synced art and offline fallbacks',()=>{
-  it('ships 268 sprites with the twenty exact RGBA P14 stickers',()=>{
+  it('ships 288 sprites with the twenty exact RGBA P14 stickers',()=>{
     const ids=JSON.parse(readFileSync('public/assets/sprites/manifest.json','utf8')) as string[];
-    expect(ids).toHaveLength(268);expect(new Set(ids).size).toBe(268);expect(P14_SCENE_IDS).toHaveLength(20);
+    expect(ids).toHaveLength(288);expect(new Set(ids).size).toBe(288);expect(P14_SCENE_IDS).toHaveLength(20);
     for(const id of P14_SCENE_IDS){
       expect(ids).toContain(id);const png=readFileSync(`public/assets/sprites/${id}.png`),size=id.startsWith('ing_')?160:256;
       expect([png.readUInt32BE(16),png.readUInt32BE(20),png[25]]).toEqual([size,size,6]);

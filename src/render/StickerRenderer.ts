@@ -3,7 +3,7 @@ import {combatRange,combatCharge} from '../core/CombatRules';
 import { getMap, STAGE } from '../config/maps';
 import {GUARDIAN_BATH_SPOTS} from '../config/guardianBaths';
 import {getActiveBroth} from '../config/kitchen';
-import {drawGuardianBath,HAPPY_DURATION,rgba} from './GuardianBathRenderer';
+import {drawGuardianBath,HAPPY_DURATION,rgba,shieldDome} from './GuardianBathRenderer';
 import {EnemyMotion} from './EnemyMotion';
 import {UnitMotion} from './UnitMotion';
 import {drawPuppetSprite} from './SpritePuppetAnimator';
@@ -22,6 +22,8 @@ import {drawHeldWeapon} from './HeldWeaponRenderer';
 import {drawCombatEvent} from './CombatEffects';
 import {drawSplashScene} from './SplashScene';
 import {placeMergeCallout} from './MergeCalloutLayout';
+import {formatCompactNumber} from '../core/formatNumber';
+import {capyShieldCooldown,getMedallionLevel} from '../config/medallions';
 
 export type HitTarget = { kind: 'cell'; col: number; row: number } | { kind: 'bench'; slot: number } | { kind:'bench-lock';slot:number } | { kind: 'shovel' };
 type Position = { x: number; y: number };
@@ -49,7 +51,11 @@ export class StickerRenderer {
   private readonly enemyMotion=new EnemyMotion();
   private readonly unitMotion=new UnitMotion();
   private animationPaused=false;
+  private battleMap:MapId='sunny_backyard';
   private dust:{id:number;x:number;y:number;dir:number;age:number}[]=[];
+  /** P17: live breakthrough chances supplied by the host for the 「可突破 x%」 labels. */
+  private chances:Record<number,number>={};
+  private readonly reducedMotion=typeof window!=='undefined'&&typeof window.matchMedia==='function'&&window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
   constructor(private readonly canvas: HTMLCanvasElement) {
     const context = canvas.getContext('2d');
@@ -88,7 +94,7 @@ export class StickerRenderer {
     // Integrate only visible playing frames: resuming must never jump to wall time.
     this.sceneSeconds+=dt;
     seconds=this.sceneSeconds;
-    this.animationPaused=state.phase==='paused';
+    this.animationPaused=state.phase==='paused';this.battleMap=state.mapId;
     this.observeOranges(state,dt);
     const c=this.c;
     c.setTransform(this.pixelRatio,0,0,this.pixelRatio,0,0);
@@ -99,7 +105,8 @@ export class StickerRenderer {
     this.drawTraps(state);
     this.drawInteractionUnderlay(state,interaction,seconds);
     this.observeGuardianMood(state,seconds);
-    this.drawGuardian(state.mapId,state.sides.player.oranges,seconds,state.sides.player.loadout.activeBrothId,getActiveBroth(state.sides.player.loadout)?.level??1);
+    this.chances=interaction.breakthroughChances??{};
+    this.drawGuardian(state.mapId,state.sides.player.oranges,seconds,state.sides.player.loadout.activeBrothId,getActiveBroth(state.sides.player.loadout)?.level??1,this.capyShield(state));
     const source=this.mergeSource(state,interaction),targets=new Map(source?getMergeTargets(state,source.id).map(t=>[t.unitId,t]):[]);
 
     const liveIds=new Set(state.units.map(unit=>unit.id));
@@ -227,15 +234,21 @@ export class StickerRenderer {
 
   }
 
+  /** P17 Capybara Bubble Shield state for the bath (endless with the medallion only). */
+  private capyShield(state:BattleState):{ready:boolean;progress:number;popAge?:number}|undefined {
+    const level=state.endless?getMedallionLevel(state.sides.player.loadout,'med_capy_shield'):0;if(!level)return undefined;
+    const player=state.sides.player,cooldown=capyShieldCooldown(level),pop=state.events.filter(event=>event.type==='shield_block').at(-1);
+    return{ready:player.capyShieldReady,progress:player.capyShieldReady?1:clamp(1-player.capyShieldTimer/cooldown,0,1),...(pop?{popAge:pop.age}:{})};
+  }
   /** P15 five-layer bath: the map already holds layer 1; see GuardianBathRenderer for layers 2-5. */
-  private drawGuardian(mapId:MapId,oranges:number,seconds:number,activeBrothId?:string|null,brothLevel=1):void {
+  private drawGuardian(mapId:MapId,oranges:number,seconds:number,activeBrothId?:string|null,brothLevel=1,shield?:{ready:boolean;progress:number;popAge?:number}):void {
     drawGuardianBath({
       c:this.c,
       image:id=>this.assets.get(id),
       drawImage:(image,width,height,x,y)=>this.drawImage(image,width,height,x,y),
       orange:(x,y,size,rotation)=>this.drawOrangeArt(x,y,size,rotation),
       vectorCapybara:dizzy=>drawSoakingCapybaraArt(this.c,dizzy),
-    },{mapId,oranges,seconds,activeBrothId,brothLevel,happyUntil:this.guardianHappyUntil});
+    },{mapId,oranges,seconds,activeBrothId,brothLevel,happyUntil:this.guardianHappyUntil,...(shield?{shield}:{})});
   }
 
   /** A cleared wave or a fresh legendary merge earns the guardian a happy beat (scene time, so pauses freeze it). */
@@ -244,7 +257,7 @@ export class StickerRenderer {
       if(event.id<=this.guardianMoodEventId)continue;
       this.guardianMoodEventId=event.id;
       const cleared=event.type==='bubble'&&event.textKey==='hint.wave'&&(event.value??0)>1;
-      if(cleared||(event.type==='purge'&&event.effect==='legendary'))this.guardianHappyUntil=seconds+HAPPY_DURATION;
+      if(cleared||(event.type==='purge'&&(event.effect==='legendary'||event.effect==='awakened'))||event.type==='shield_block')this.guardianHappyUntil=seconds+HAPPY_DURATION;
     }
   }
 
@@ -273,11 +286,13 @@ export class StickerRenderer {
       ellipse(c,0,24,32,12,'#f3d58a','#bb9146',2.3);
       ellipse(c,0,24,27,8,hero.color,'#ffeab0',1.8);
       if(unit.energy>=requiredCharge-1) {c.save();c.globalAlpha*=.4+.15*Math.sin(seconds*5);ellipse(c,0,1,33,33,'rgba(255,255,255,0)','#f1c966',2);c.restore();}
+      if(unit.awakened)this.drawAwakenedRing(seconds,unit.id);
     }
     c.restore();
     c.save();c.translate(pose.x,pose.y-2-Math.max(0,unit.animation)*3);c.scale(scale*(1+wave*.018)*pose.scaleX*(motion?.visualFacing??1)*(motion?.spawnScale??1),scale*(1-wave*.025)*pose.scaleY*(motion?.spawnScale??1));
     if(unit.statuses.KNOCKDOWN)c.rotate(-.55);
-    const override=this.assets.get(unit.kind);
+    // P17: an awakened hero wears its new sticker; until it decodes the original art stands in.
+    const override=(unit.awakened?this.assets.get(`${unit.kind}_awakened`):undefined)??this.assets.get(unit.kind);
     if(override){if(motion){c.save();c.translate(0,-3);drawPuppetSprite(c,override,88,motion.rig);c.restore();}else this.drawImage(override,77,77,0,-3);}else {if(!onBench)c.scale(88/77,88/77);drawUnitArt(c,unit.kind,seconds);}
     if(unit.buffTime>0){star(c,-30,-24+Math.sin(seconds*4)*2,5,'#efcf72',1);star(c,31,10,3.5,'#f9e19b',1);}
     c.restore();
@@ -286,7 +301,9 @@ export class StickerRenderer {
     if(!drag) {
       c.save();if(!onBench)c.scale(1.2,1.2);
       const badgeColor=hero?'#f1cc7d':'#fff7e3';
-      round(c,14,-31,22,18,6,badgeColor,INK,1.6);this.label(String(unit.level),25,-21,14,INK,'center',800);
+      // P17: awakened heroes trade the gold "5" for a caramel-red badge with a warm gold star.
+      if(unit.awakened){round(c,14,-31,22,18,6,'#b5462e',INK,1.6);this.label('★',25,-21,14,'#ffd66b','center',900);}
+      else{round(c,14,-31,22,18,6,badgeColor,INK,1.6);this.label(String(unit.level),25,-21,14,INK,'center',800);}
       if(hero){
         round(c,-24,30,48,6,3,'#ded6c3',INK,1);const fill=clamp(unit.energy/requiredCharge,0,1);
         if(fill>0)round(c,-23,31,46*fill,4,2,hero.color,hero.color,0);
@@ -296,6 +313,21 @@ export class StickerRenderer {
     c.restore();
   }
 
+  /**
+   * Restrained awakening aura (no glow balls, no white flashes): one thin warm-gold double ring that breathes
+   * between 0.55 and 0.78 alpha, and three small embers drifting 28px up. Paused or reduced motion freezes both.
+   */
+  private drawAwakenedRing(seconds:number,id:number):void {
+    const c=this.c,still=this.reducedMotion,t=still?0:seconds,breath=.665+.115*Math.sin(t*2.2+id);
+    c.save();c.globalAlpha*=breath;c.lineWidth=2;c.strokeStyle='rgba(255, 206, 92, 0.72)';
+    c.beginPath();c.ellipse(0,24,36,13,0,0,Math.PI*2);c.stroke();
+    c.setLineDash([4,5]);c.lineDashOffset=-t*6;c.beginPath();c.ellipse(0,24,41,16,0,0,Math.PI*2);c.stroke();c.restore();
+    for(let i=0;i<3;i++){
+      const phase=still?(i+.5)/3:(t*.42+i/3+id*.137)%1,x=Math.sin(i*2.1+id)*16+(still?0:Math.sin(t*1.3+i)*2),y=22-phase*28;
+      c.save();c.globalAlpha*=Math.min(.65,.65*Math.sin(phase*Math.PI));
+      ellipse(c,x,y,1.25+.25*(i%3),1.25+.25*(i%3),i===1?'#ffd36b':'#f6a04a','',0);c.restore();
+    }
+  }
   private drawStatus(unit:Unit,seconds:number):void {
     const c=this.c;
     if(unit.washing&&unit.washing>0)drawWasher(c,seconds,unit.washing);
@@ -427,7 +459,7 @@ export class StickerRenderer {
       if(hero)ellipse(c,p.x,p.y,radius+4,radius*.92+4,'transparent','#fff5ad',1.8);
       c.shadowBlur=0;
       this.drawBenchBadge('ui_merge_sparkle',p.x+(unit.location.zone==='board'?-38:38),p.y+(unit.location.zone==='board'?-29:0),hero?26:20);
-      const label=t(hero?'p8.merge':'p8.upgrade');c.font=`900 13px ${FONT}`;
+      const label=hint.breakthroughBaseId!==undefined?t('p17.canBreak',{pct:Math.round((this.chances[hint.breakthroughBaseId]??0)*100)}):t(hero?'p8.merge':'p8.upgrade');c.font=`900 13px ${FONT}`;
       const width=c.measureText(label).width+(hero?34:18),height=24;
       const rect=placeMergeCallout(p,width,height,interaction.mergeAvoidRects??[],used,34);used.push(rect);
       round(c,rect.x,rect.y,width,height,9,hero?'#ffd84d':'#7ef2ad',hero?'#5c3408':'#145c32',2);
@@ -459,7 +491,7 @@ export class StickerRenderer {
       ellipse(c,p.x,p.y,radius+4,radius*.93+4,'transparent',light,1.8);
       for(let i=0;i<3;i++){const a=seconds*.9+i*Math.PI*2/3;star(c,p.x+Math.cos(a)*(radius+4),p.y+Math.sin(a)*(radius+1),5.5,light,1);}
       c.shadowBlur=0;
-      const label=hero?`→ ${t('hero.'+target.heroId)}`:t(target.feedHero?'p7.feed':'p7.upgrade',{level:target.nextLevel??unit.level+1});
+      const label=target.breakthrough?t('p17.canBreak',{pct:Math.round((this.chances[target.baseId??-1]??0)*100)}):hero?`→ ${t('hero.'+target.heroId)}`:t(target.feedHero?'p7.feed':'p7.upgrade',{level:target.nextLevel??unit.level+1});
       c.font=`900 15px ${FONT}`;
       const width=Math.min(290,c.measureText(label).width+(hero?46:22)),height=32;
       const placed=placeMergeCallout(p,width,height,obstacles,used),{x,y}=placed;used.push(placed);
@@ -523,7 +555,7 @@ export class StickerRenderer {
       const hot=hovered?.kind==='bench'&&hovered.slot===slot&&interaction.draggingId!==undefined;
       const source=state.units.find(candidate=>candidate.id===interaction.draggingId);
       const benchSwap=source?.location.zone==='bench'&&(source.kind==='shovel'||unit?.kind==='shovel');
-      const invalid=hot&&source&&unit&&(source.washing||unit.washing||source.statuses.MERGE_LOCK||unit.statuses.MERGE_LOCK||(source.id!==unit.id&&!benchSwap&&!MergeSystem.combine(source,unit).ok));
+      const invalid=hot&&source&&unit&&(source.washing||unit.washing||source.statuses.MERGE_LOCK||unit.statuses.MERGE_LOCK||(source.id!==unit.id&&!benchSwap&&!MergeSystem.combine(source,unit).ok&&!(state.endless&&MergeSystem.breakthroughPair(source,unit))));
       const selected=unit&&unit.id===interaction.selectedId;
       c.save();c.shadowColor='rgba(93,80,54,.12)';c.shadowOffsetY=5;
       round(c,x,y,w,w,19,invalid?'#efd7c6':hot?'#efe8bf':unit?'#fff9e8':'#eee4cf',invalid?CORAL:selected||hot?TEAL:'#bbaa8a',selected||hot?2.8:1.9);c.restore();
@@ -594,7 +626,7 @@ export class StickerRenderer {
 
   private drawEvents(state:BattleState,seconds:number,foreground=false,showDamageNumbers=true):void {
     for(const event of state.events) {
-      const isForeground=event.type==='bubble'||event.type==='purge';
+      const isForeground=event.type==='bubble'||event.type==='purge'||event.type==='shield_block';
       if(isForeground!==foreground)continue;
       if(event.type==='damage'&&!showDamageNumbers)continue;
       if(event.side!=='player')continue;
@@ -605,14 +637,16 @@ export class StickerRenderer {
       const eventUnit=isForeground?state.units.find(unit=>unit.id===event.unitId):undefined;
       const p=clamp(event.age/event.duration,0,1),from=eventUnit?this.position(eventUnit):cellCenter(event.col,event.row),c=this.c;
       if(event.type==='orange')continue; // Count observation also covers debug additions/removals.
+      if(event.type==='shield_block'){this.drawShieldBlock(event,from,state.sides.player.oranges);continue;}
       c.save();
       if(event.type==='damage') {
         c.globalAlpha=1-p;const value=event.value??0;
-        const text=`${value>0?'−':''}${Math.abs(Math.round(value))}`;c.font=`900 ${value>=100?20:15}px ${FONT}`;c.textAlign='center';c.strokeStyle=event.color==='#fff7da'?INK:PAPER;c.lineWidth=3.5;c.strokeText(text,from.x,from.y-20-p*29);c.fillStyle=event.color||'#bd7862';c.fillText(text,from.x,from.y-20-p*29);
+        const text=`${value>0?'−':''}${formatCompactNumber(Math.abs(value))}`;c.font=`900 ${value>=100?20:15}px ${FONT}`;c.textAlign='center';c.strokeStyle=event.color==='#fff7da'?INK:PAPER;c.lineWidth=3.5;c.strokeText(text,from.x,from.y-20-p*29);c.fillStyle=event.color||'#bd7862';c.fillText(text,from.x,from.y-20-p*29);
       } else if(event.type==='bubble') {
         this.drawBubble(event,from,p);
       } else {
         if(event.type==='burst'&&this.drawUltimateBurst(state,event,from,p)){c.restore();continue;}
+        if(event.type==='purge'&&event.effect==='awakened'){this.drawAwakenedBurst(event,from);c.restore();continue;}
         const purge=event.type==='purge',radius=(purge?18:10)+p*(purge?43:31);
         c.globalAlpha=(1-p)*.8;ellipse(c,from.x,from.y,radius,radius,'rgba(255,255,255,0)',event.color||(purge?'#e5c05e':'#dab07b'),purge?4:3);
         for(let i=0;i<(purge?8:5);i++){
@@ -625,6 +659,31 @@ export class StickerRenderer {
     void seconds;
   }
 
+  /** Breakthrough success: a single 0.85s warm-gold ripple and six small star glints; never a white flash. */
+  private drawAwakenedBurst(event:VisualEvent,from:Position):void {
+    const c=this.c,ring=clamp(event.age/.85,0,1),fade=clamp(event.age/event.duration,0,1);
+    if(ring<1){
+      const r=20+ring*52;c.globalAlpha=(1-ring)*.75;ellipse(c,from.x,from.y+6,r,r*.82,'rgba(255,255,255,0)','#f2b94a',3);
+      for(let i=0;i<6;i++){const a=i*Math.PI/3+event.id*.4;star(c,from.x+Math.cos(a)*r,from.y+6+Math.sin(a)*r*.82,3.5*(1-ring)+1.5,'#ffd77a',0);}
+    }
+    c.globalAlpha=1-fade;this.label(t(event.textKey||'p17.breakthroughSuccess'),from.x,from.y-48-fade*14,17,'#9a4d16','center',900,180);
+  }
+  /** Bubble shield pop above the tub: a soft ring and droplets for 0.5s, then the floating label. */
+  private drawShieldBlock(event:VisualEvent,from:Position,oranges:number):void {
+    const c=this.c,spot=GUARDIAN_BATH_SPOTS[getMap(this.battleMap).id];
+    const dome=spot?shieldDome(spot,oranges):{x:0,y:-30,rx:46,ry:50},x=(spot?.x??from.x)+dome.x,y=(spot?.y??from.y)+dome.y;
+    const pop=clamp(event.age/.5,0,1),fade=clamp(event.age/event.duration,0,1);
+    c.save();
+    if(pop<1){
+      // The dome itself springs outward and fades, shedding a few soft droplets.
+      const grow=1+pop*.22;c.globalAlpha=(1-pop)*.85;ellipse(c,x,y,dome.rx*grow,dome.ry*grow,'rgba(255,250,225,0)','rgba(255, 224, 128, 0.85)',2.6);
+      for(let i=0;i<6;i++){const a=i*Math.PI/3+.3;ellipse(c,x+Math.cos(a)*dome.rx*grow*1.06,y+Math.sin(a)*dome.ry*grow*1.06,2.6*(1-pop)+.8,2.6*(1-pop)+.8,'rgba(255,240,190,.95)','',0);}
+    }
+    // Label floats above the dome (never across the orange stack), paper-edged for contrast.
+    const text=t(event.textKey||'p17.shieldBlock'),ty=y-dome.ry-14-fade*14;
+    c.globalAlpha=1-fade;c.font=`900 16px ${FONT}`;c.textAlign='center';c.lineWidth=4;c.strokeStyle=PAPER;c.strokeText(text,x,ty);c.fillStyle='#9a5a12';c.fillText(text,x,ty);
+    c.restore();
+  }
   private drawUltimateBurst(state:BattleState,event:VisualEvent,from:Position,p:number):boolean {
     const source=state.units.find(unit=>unit.id===event.unitId)||state.units.find(unit=>unit.side===event.side&&unit.location.zone==='board'&&unit.location.col===event.col&&unit.location.row===event.row);
     if(!source||!HEROES[source.kind])return false;

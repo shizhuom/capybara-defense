@@ -12,6 +12,10 @@ export interface Unit {
   production: number; buffTime: number; empowered: number; animation: number;
   attackAngle?:number; facing?:1|-1; attackAnim?:number;
   washing?: number; haste?: number; hasteTime?: number; powerTime?: number;
+  /** P17 endless breakthrough: a Lv.5 hero fed once more in endless may awaken (permanent for the run). */
+  awakened?: boolean;
+  /** Missed breakthrough rolls; each adds +5% to the next one. */
+  breakthroughFails?: number;
 }
 export interface Enemy {
   id: number; kind: string; side: Side; boss: boolean; hp: number; maxHp: number;
@@ -28,11 +32,15 @@ export interface BattleLoadout {
   unlockedBroths?: string[]; brothLevels?: Record<string, number>; activeBrothId?: string | null;
   /** P16 village facility levels. Absent, or only the starter pool at Lv.1, keeps every battle number identical to P15. */
   villageFacilities?: Record<string, number>;
+  /** P17 endless medallion levels (0..50). Read only in endless (Wave 11+); absent or all-zero changes nothing. */
+  endlessMedallions?: Record<string, number>;
 }
 export interface SideState {
   lockedBenchSlot?:number|null;
   food: number; summons:number; oranges: number; shovels: number; shovelTimer:number; kills: number; damage: number; loot: string[]; ingredientLoot: string[]; villageLoot: string[]; fog: number;
   loadout:BattleLoadout; propCooldowns:Record<string,number>; sprinklerUsed:boolean; giantCatUses:number; catnipTime:number;
+  /** P17 endless-only state: one bubble-shield charge, its recharge countdown (seconds) and crests banked this run. */
+  capyShieldReady:boolean; capyShieldTimer:number; endlessCrests:number;
 }
 export interface Trap extends Point { id:number; side:Side; charges:number; hitIds:number[] }
 /** Captured before attack counters/hooks change; event age remains mutable independently. */
@@ -41,14 +49,14 @@ export interface AttackPresentation {
   readonly empowered:boolean; readonly critical:boolean; readonly enhanced:boolean;
 }
 export interface VisualEvent {
-  id: number; type: 'alert' | 'slash' | 'hit' | 'death' | 'food' | 'projectile' | 'burst' | 'bubble' | 'damage' | 'purge' | 'orange' | 'dash' | 'bounce' | 'sprinkler' | 'giant_cat' | 'weapon' | 'boss_skill';
+  id: number; type: 'alert' | 'slash' | 'hit' | 'death' | 'food' | 'projectile' | 'burst' | 'bubble' | 'damage' | 'purge' | 'orange' | 'dash' | 'bounce' | 'sprinkler' | 'giant_cat' | 'weapon' | 'boss_skill' | 'shield_block';
   side: Side; col: number; row: number; targetCol?: number; targetRow?: number;
   textKey?: string; value?: number; color?: string; age: number; duration: number; unitId?: number;
   points?:Point[]; effect?:string;
   enemyKind?:string; boss?:boolean; hitCue?:'hit_melee'|'hit_ranged'|'hit_magic'|'hit_heavy';
   readonly presentation?:Readonly<AttackPresentation>;
 }
-export interface BattleMVP {kind:string;level:number;damage:number;kills:number}
+export interface BattleMVP {kind:string;level:number;damage:number;kills:number;awakened?:boolean}
 export interface BattleResult { winner: Side; reason: 'oranges' | 'waves' | 'surrender'; loot: string[]; playerLoot: string[]; aiLoot: string[]; coins: number; elapsed: number; rankIndex?:number; mergedHeroes?:string[];mvp?:BattleMVP;
   /** Display totals stay in coins/loot; these fields contain only the additional award. */
   endless?:boolean;endlessWave?:number;endlessCoins?:number;endlessLoot?:string[];
@@ -56,6 +64,8 @@ export interface BattleResult { winner: Side; reason: 'oranges' | 'waves' | 'sur
   ingredientLoot?:string[];endlessIngredientLoot?:string[];
   /** Village building materials (`res_onsen_wood` / `res_yuzu_essence`), banked with the same victory/salvage rules. */
   villageLoot?:string[];endlessVillageLoot?:string[];
+  /** P17: crests from this receipt (standard victory: 3; endless: only the post-wave-10 share) and awakened heroes on the board. */
+  endlessCrests?:number;awakenedCount?:number;
 }
 export interface BattleState {
   opponent?:OpponentIdentity;
@@ -67,7 +77,7 @@ export interface BattleState {
   events: VisualEvent[]; traps:Trap[]; result: BattleResult | null;
   endless?:boolean;standardResult?:BattleResult;endlessCoins?:number;endlessClearedWave?:number;
 }
-export interface CommandResult { ok: boolean; key: string; unitId?: number }
+export interface CommandResult { ok: boolean; key: string; unitId?: number; value?: number }
 export interface WavePreview {wave:number;count:number;bosses:readonly string[];minion:string}
 export interface Profile extends BattleLoadout {
   tutorialCompleted?:boolean; tutorialRewardClaimed?:boolean;
@@ -79,6 +89,11 @@ export interface Profile extends BattleLoadout {
   selectedMap:'auto'|MapId; avatarId:string; unlockedAvatars:string[]; mergedHeroes:string[]; settings:GameSettings;
   ingredients:Record<string,number>; unlockedBroths:string[]; brothLevels:Record<string,number>; activeBrothId:string|null;
   village:VillageState;
+  /** P17 endless crests, medallion levels (6 ids, 0..50) and the anonymous global-board identity. */
+  endlessCrests:number; endlessMedallions:Record<string,number>;
+  playerId:string; nickname:string;
+  /** Metadata of the best endless run (submitted to the global board). */
+  bestEndlessTime?:number; bestEndlessMvp?:string; bestEndlessMvpAwakened?:boolean; bestEndlessAwakened?:number;
 }
 export interface VillageState {
   wood:number; essence:number;
@@ -90,4 +105,6 @@ export interface VillageState {
   petTapDay:string; petTapCount:number;
 }
 export interface StageRect { x:number; y:number; w:number; h:number }
-export interface Interaction { draggingId?: number; previewSourceId?:number; pointer?: { x: number; y: number }; shovel?: boolean; hover?: Point; selectedId?: number; propId?:string; showDamageNumbers?:boolean; allowBenchLock?:boolean; mergeAvoidRects?:StageRect[] }
+export interface Interaction { draggingId?: number; previewSourceId?:number; pointer?: { x: number; y: number }; shovel?: boolean; hover?: Point; selectedId?: number; propId?:string; showDamageNumbers?:boolean; allowBenchLock?:boolean; mergeAvoidRects?:StageRect[];
+  /** P17 endless: live breakthrough chance (0..1) per Lv.5 hero id, for the 「可突破 x%」 labels. */
+  breakthroughChances?:Record<number,number> }
