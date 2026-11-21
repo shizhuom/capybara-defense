@@ -94,6 +94,22 @@ const copy = {
  'p17.nameTaken':['这个昵称已被其他守护者使用，换一个试试吧','That nickname is already taken — please pick another'],
  'p17.nameSaved':['昵称已保存','Nickname saved'],
  'p17.nameSavedOffline':['昵称已保存本机，联网后将校验并同步','Nickname saved locally; it will verify and sync online'],
+ // Global rank leaderboard & cozy location badges
+ 'p17.rankBoard.rank':['全球段位第 #{rank} 名 / 共 {total} 人','Global Rank #{rank} of {total}'],
+ 'p17.rankBoard.unranked':['完成 1 场对局即可登上全球段位榜','Finish 1 match to join the global rank board'],
+ 'p17.rankBoard.tainted':['开发者调星存档不计入全球真实段位榜','Developer-adjusted saves stay off the global rank board'],
+ 'p17.rankBoard.offline':['离线模式 · 联网后自动同步全球真实段位榜','Offline · the global rank board syncs when you reconnect'],
+ 'p17.rankBoard.loading':['正在读取全球段位榜…','Loading the global rank board…'],
+ 'p17.rankBoard.empty':['还没有守护者登上全球段位榜，打一局来抢沙发吧！','No keepers on the global rank board yet: play a match to claim #1!'],
+ 'p17.rankBoard.top':['全球段位 Top {count}','Global Rank Top {count}'],
+ 'p17.location.detect':['开启定位','Locate'],
+ 'p17.location.redetect':['重新定位','Refresh GPS'],
+ 'p17.location.detecting':['定位中…','Locating…'],
+ 'p17.location.reroll':['换个可爱地名','Roll Cozy Spot'],
+ 'p17.location.useFictional':['改用可爱地名','Use Cozy Spot'],
+ 'p17.location.detected':['已定位到「{place}」','Located in {place}'],
+ 'p17.location.denied':['未开启定位，已为你安排可爱地点「{place}」','Location off — using cozy spot "{place}"'],
+ 'p17.location.rerolled':['已切换到「{place}」','Switched spot to "{place}"'],
 } as const;
 export const p17Zh:Record<string,string>=Object.fromEntries(Object.entries(copy).map(([key,value])=>[key,(value as readonly [string,string])[0]]));
 export const p17En:Record<string,string>=Object.fromEntries(Object.entries(copy).map(([key,value])=>[key,(value as readonly [string,string])[1]]));

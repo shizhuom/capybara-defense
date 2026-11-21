@@ -10,6 +10,9 @@ import {formatCompactNumber} from '../src/core/formatNumber';
 import {createProfile,normalizeProfile,unlockAllProfile} from '../src/core/MetaProgression';
 import {upgradeMedallion,upgradeableMedallions,grantEndlessCrests,normalizeMedallions} from '../src/core/MedallionProgression';
 import {SESSION_PLAYER_ID,SESSION_WRITE_SECRET,defaultNickname,generatePlayerId,generateWriteSecret,isValidPlayerId,isValidWriteSecret,validateNickname} from '../src/core/PlayerIdentity';
+import {FICTIONAL_LOCATIONS,fictionalLocationToken,formatLocation,isFictionalLocation,nextFictionalLocationToken,sanitizeLocation} from '../src/core/Location';
+import {coarsenCoord,parseReverseGeocode,resolveBrowserLocation} from '../src/ui/LocationService';
+import {setRank} from '../src/core/PlayerProgression';
 import {
   AWAKENED_DAMAGE,AWAKENED_RATE,LATE_CREST_COSTS,MEDALLION_IDS,MOMENTUM_CAP,STANDARD_VICTORY_CRESTS,armorPenetration,bossResist,bossSlayerMultiplier,
   breakthroughAttackMultiplier,capyShieldCooldown,computeBreakthroughChance,endlessCrestsForWave,endlessCrestsThroughWave,endlessDamageMultiplier,
@@ -27,9 +30,9 @@ import {liveUnitCardMarkup} from '../src/ui/LiveUnitCard';
 import {endlessOfferMarkup,pauseMarkup,resultMarkup,resultCrests} from '../src/ui/SettlementView';
 import {Compendium} from '../src/ui/Compendium';
 import {MetaScreens} from '../src/ui/MetaScreens';
-import {EndlessLeaderboardClient,parseLeaderboard,submissionFromProfile,BOARD_CACHE_KEY} from '../src/ui/EndlessLeaderboardClient';
+import {EndlessLeaderboardClient,parseLeaderboard,parseRankLeaderboard,rankSubmissionFromProfile,submissionFromProfile,BOARD_CACHE_KEY,RANK_BOARD_CACHE_KEY} from '../src/ui/EndlessLeaderboardClient';
 import {
-  compareRows,handleRequest,memoryStore,mergeScore,minimumElapsed,normalizeNicknameKey,rateLimitDecision,sanitizeNickname,validateScore,type Env,type ScoreStore,
+  compareRankRows,compareRows,formatCfGeo,handleRequest,memoryStore,mergeRank,mergeScore,minimumElapsed,normalizeNicknameKey,rateLimitDecision,sanitizeNickname,validateRank,validateScore,type Env,type ScoreStore,
 } from '../cloudflare-leaderboard/src/index';
 import {setLanguage,t} from '../src/i18n/i18n';
 import {p17En,p17Zh} from '../src/i18n/p17';
@@ -470,8 +473,8 @@ describe('P17 UI: courtyard pill, medallion hall, hero card, board tab and settl
     setLanguage('en');expect(t('p17.title')).toBe('Endless Medallions');expect(t('p13.endlessScaling')).toContain('1.25');
   });
   it('keeps every new P17 source file wholesome',()=>{
-    const files=['src/config/medallions.ts','src/i18n/p17.ts','src/core/formatNumber.ts','src/core/MedallionProgression.ts','src/core/PlayerIdentity.ts',
-      'src/ui/MedallionScreen.ts','src/ui/EndlessLeaderboardClient.ts','src/ui/p17.css',
+    const files=['src/config/medallions.ts','src/i18n/p17.ts','src/core/formatNumber.ts','src/core/MedallionProgression.ts','src/core/PlayerIdentity.ts','src/core/Location.ts',
+      'src/ui/MedallionScreen.ts','src/ui/EndlessLeaderboardClient.ts','src/ui/LocationService.ts','src/ui/p17.css',
       ...readdirSync('cloudflare-leaderboard').filter(f=>/\.(md|json|toml|sql)$/.test(f)).map(f=>`cloudflare-leaderboard/${f}`),
       ...readdirSync('cloudflare-leaderboard/src').map(f=>`cloudflare-leaderboard/src/${f}`)];
     for(const file of files)expect(readFileSync(file,'utf8'),file).not.toMatch(/涩涩|色色|不许涩|Bonk|bonk|绝育|绿茶|疯批|舔狗|鸡你太/i);
@@ -501,7 +504,7 @@ describe('P17 Cloudflare Worker: validation, security, unique nicknames, monoton
     expect(normalizeNicknameKey('  ChillCapy  ')).toBe(normalizeNicknameKey('chillcapy'));
   });
   it('keeps the best record, preserves updated_at on rename (no rank demotion) and ranks by wave, time, first arrival',()=>{
-    const incoming=validateScore(score()) as {ok:true;score:{player_id:string;nickname:string;nickname_norm:string;avatar_id:string;best_wave:number;elapsed_seconds:number;mvp_kind:string;mvp_awakened:number;awakened_count:number;medallion_total:number}};
+    const incoming=validateScore(score()) as {ok:true;score:{player_id:string;nickname:string;nickname_norm:string;avatar_id:string;location_label:string;best_wave:number;elapsed_seconds:number;mvp_kind:string;mvp_awakened:number;awakened_count:number;medallion_total:number}};
     const baseRow={...incoming.score,secret_hash:'hash_a'};
     const first=mergeScore(null,baseRow,10);expect(first.improved).toBe(true);
     const lower=mergeScore(first.row,{...baseRow,best_wave:20,nickname:'新名字',nickname_norm:'新名字'},20);
@@ -558,9 +561,9 @@ describe('P17 EndlessLeaderboardClient: online, cached offline and unconfigured'
   const env:Env={DB:undefined as never,ALLOWED_ORIGINS:''};
   const ranked:Profile={...createProfile(),playerId:'capy_client000001',nickname:'泡汤水豚',bestEndlessWave:33,bestEndlessTime:1600,bestEndlessMvp:'pepe_king',bestEndlessMvpAwakened:true,bestEndlessAwakened:2,endlessMedallions:{...all(0),med_luck_rate:12}};
   const viaWorker=(store:ScoreStore)=>vi.fn((url:string|URL|Request,init?:RequestInit)=>handleRequest(new Request(String(url),init),env,{store,now:()=>5000}));
-  it('builds a submission with writeSecret only for profiles with an endless record',()=>{
+  it('builds a submission with writeSecret and location only for profiles with an endless record',()=>{
     expect(submissionFromProfile(createProfile())).toBeNull();
-    expect(submissionFromProfile(ranked)).toEqual({playerId:'capy_client000001',writeSecret:SESSION_WRITE_SECRET,nickname:'泡汤水豚',avatarId:'capybara',bestWave:33,elapsedSeconds:1600,mvpKind:'pepe_king',mvpAwakened:true,awakenedCount:2,medallionTotal:12});
+    expect(submissionFromProfile(ranked)).toEqual({playerId:'capy_client000001',writeSecret:SESSION_WRITE_SECRET,nickname:'泡汤水豚',avatarId:'capybara',location:fictionalLocationToken('capy_client000001'),bestWave:33,elapsedSeconds:1600,mvpKind:'pepe_king',mvpAwakened:true,awakenedCount:2,medallionTotal:12});
     expect(submissionFromProfile({...ranked,nickname:''},'en')!.nickname).toBe('ChillCapy#0001');
   });
   it('submits, checks duplicate nicknames, refreshes with a 30 s cache and caches the board for offline use',async()=>{
@@ -596,5 +599,116 @@ describe('P17 EndlessLeaderboardClient: online, cached offline and unconfigured'
     expect(await strict.submitScore({...ranked,bestEndlessWave:60,bestEndlessTime:3000,bestEndlessAwakened:0,endlessMedallions:all(0)})).toMatchObject({ok:false,key:'p17.board.rejected'});
     expect(parseLeaderboard({ok:true,entries:[{player_id:'capy_snake0000001',best_wave:20,nickname:'x'},{playerId:'bad'}],totalPlayers:2})!.entries).toEqual([expect.objectContaining({rank:1,playerId:'capy_snake0000001',bestWave:20})]);
     expect(parseLeaderboard({ok:false})).toBeNull();
+  });
+});
+
+describe('P17.2 Global Rank Board & Cozy Player Location',()=>{
+  const env:Env={DB:undefined as never,ALLOWED_ORIGINS:'https://shizhuom.github.io'};
+  const viaWorker=(store:ScoreStore,cf?:{city?:string;region?:string;country?:string})=>vi.fn((url:string|URL|Request,init?:RequestInit)=>handleRequest(new Request(String(url),init),env,{store,now:()=>8000,cf}));
+
+  it('sanitizes real cities, formats bilingual fictional locations and cycles cozy spots',()=>{
+    expect(FICTIONAL_LOCATIONS.length).toBeGreaterThanOrEqual(10);
+    const token=fictionalLocationToken('capy_loc_seed_01');
+    expect(isFictionalLocation(token)).toBe(true);
+    expect(formatLocation(token,'zh-CN')).toMatch(/[\u4e00-\u9fff]/);
+    expect(formatLocation(token,'en')).not.toMatch(/[\u3400-\u9fff]/);
+    const next=nextFictionalLocationToken(token,'capy_loc_seed_01');
+    expect(next).not.toBe(token);expect(isFictionalLocation(next)).toBe(true);
+    expect(sanitizeLocation('  上海  ')).toBe('上海');
+    expect(sanitizeLocation('<script>Tokyo</script>')).toBe('scriptTokyo/script');
+    expect(sanitizeLocation(`${UNKIND}城`)).toBe('');
+    expect(formatLocation('Shanghai, CN','en')).toBe('Shanghai, CN');
+    expect(formatCfGeo({city:'Providence',country:'US'})).toBe('Providence, US');
+  });
+
+  it('prompts browser geolocation, reverse-geocodes coarsened coords, falls back to /api/geo or cute fictional spot on denial',async()=>{
+    expect(coarsenCoord(41.824123)).toBe(41.82);
+    expect(parseReverseGeocode({city:'Providence',countryCode:'US'},'en')).toBe('Providence, US');
+    expect(parseReverseGeocode({city:'上海市',countryCode:'CN'},'zh-CN')).toBe('上海市');
+    // Allowed + reverse-geocode succeeds:
+    const allowGeo={getCurrentPosition:(ok:(p:{coords:{latitude:number;longitude:number}})=>void)=>ok({coords:{latitude:31.2304,longitude:121.4737}})};
+    const okFetch=vi.fn(async(_url:string|URL|Request,_init?:RequestInit)=>new Response(JSON.stringify({city:'上海市',countryCode:'CN'}),{status:200}));
+    const real=await resolveBrowserLocation({language:'zh-CN',playerId:'capy_geo_000001',geolocation:allowGeo,fetcher:okFetch as unknown as typeof fetch});
+    expect(real).toEqual({ok:true,mode:'real',label:'上海市',source:'gps'});
+    expect(String(okFetch.mock.calls[0][0])).toContain('latitude=31.23&longitude=121.47');
+    // Allowed + reverse-geocode fails -> falls back to Cloudflare /api/geo:
+    const failFetch=vi.fn(async()=>{throw new Error('offline');});
+    const cf=await resolveBrowserLocation({language:'en',playerId:'capy_geo_000001',geolocation:allowGeo,fetcher:failFetch as unknown as typeof fetch,fallbackGeo:async()=>'Boston, US'});
+    expect(cf).toEqual({ok:true,mode:'real',label:'Boston, US',source:'cf'});
+    // Permission denied -> cute fictional location:
+    const denyGeo={getCurrentPosition:(_ok:unknown,err:(e:{code:number})=>void)=>err({code:1})};
+    const denied=await resolveBrowserLocation({language:'zh-CN',playerId:'capy_geo_000001',geolocation:denyGeo});
+    expect(denied).toEqual({ok:false,mode:'fictional',label:fictionalLocationToken('capy_geo_000001'),reason:'denied'});
+    // Unsupported -> cute fictional location:
+    const unsupported=await resolveBrowserLocation({language:'en',playerId:'capy_geo_000001',geolocation:null});
+    expect(unsupported).toMatchObject({ok:false,mode:'fictional',reason:'unsupported'});
+  });
+
+  it('validates rank scores, blocks dev-mode star jumps, enforces cross-board unique nicknames & secrets and syncs metadata',async()=>{
+    const store=memoryStore();
+    const rankPayload=(patch:Record<string,unknown>={})=>({playerId:'capy_rank_a00001',writeSecret:'sec_rank_secret_token_0001',nickname:'温泉星使',avatarId:'sakura_capy',location:'上海',stars:24,highestStars:26,wins:14,matches:18,bestWinStreak:5,...patch});
+    expect(validateRank(rankPayload()).ok).toBe(true);
+    expect(validateRank(rankPayload({stars:180,highestStars:180,wins:0,matches:0,bestWinStreak:0}))).toEqual({ok:false,error:'implausible_score'});
+    expect(validateRank(rankPayload({stars:0,highestStars:0,wins:0,matches:0,bestWinStreak:0}))).toEqual({ok:false,error:'invalid_score'});
+    const postRank=(body:unknown,now=1000)=>handleRequest(new Request('https://board.test/api/rank',{method:'POST',headers:{'content-type':'application/json',Origin:'https://shizhuom.github.io'},body:JSON.stringify(body)}),env,{store,now:()=>now});
+    const postEndless=(body:unknown,now=1000)=>handleRequest(new Request('https://board.test/api/score',{method:'POST',headers:{'content-type':'application/json',Origin:'https://shizhuom.github.io'},body:JSON.stringify(body)}),env,{store,now:()=>now});
+    // Submit rank A
+    const r1=await postRank(rankPayload(),1000);expect(r1.status).toBe(200);expect(await r1.json()).toEqual({ok:true,rank:1,totalPlayers:1,stars:24,improved:true});
+    // Cross-board duplicate nickname on Endless board is rejected 409!
+    const dupEndless=await postEndless({playerId:'capy_other_b0001',writeSecret:'sec_other_secret_token_0002',nickname:'温泉星使',avatarId:'capybara',location:'fictional:yuzu_town',bestWave:22,elapsedSeconds:1200,mvpKind:'kungfu_po',mvpAwakened:false,awakenedCount:0,medallionTotal:5},1005);
+    expect(dupEndless.status).toBe(409);expect(await dupEndless.json()).toEqual({ok:false,error:'nickname_taken'});
+    // Cross-board secret hijack on Endless board with A's playerId is rejected 403!
+    const hijackEndless=await postEndless({playerId:'capy_rank_a00001',writeSecret:'sec_wrong_secret_token_9999',nickname:'温泉星使',avatarId:'capybara',location:'上海',bestWave:22,elapsedSeconds:1200,mvpKind:'kungfu_po',mvpAwakened:false,awakenedCount:0,medallionTotal:5},1006);
+    expect(hijackEndless.status).toBe(403);
+    // Real owner submits Endless score, then renames & changes location on Rank -> both boards sync and preserve updated_at!
+    expect((await postEndless({playerId:'capy_rank_a00001',writeSecret:'sec_rank_secret_token_0001',nickname:'温泉星使',avatarId:'sakura_capy',location:'上海',bestWave:22,elapsedSeconds:1200,mvpKind:'kungfu_po',mvpAwakened:false,awakenedCount:0,medallionTotal:5},1010)).status).toBe(200);
+    expect((await postRank(rankPayload({nickname:'泡汤冠军',location:'fictional:sakura_bay'}),1050)).status).toBe(200);
+    expect(store.rankRows.get('capy_rank_a00001')).toMatchObject({nickname:'泡汤冠军',location_label:'fictional:sakura_bay',updated_at:1000});
+    expect(store.rows.get('capy_rank_a00001')).toMatchObject({nickname:'泡汤冠军',location_label:'fictional:sakura_bay',updated_at:1010});
+    // Public /api/rank-leaderboard hides playerId and includes location + isMe
+    const res=await handleRequest(new Request('https://board.test/api/rank-leaderboard?playerId=capy_rank_a00001',{headers:{Origin:'https://shizhuom.github.io'}}),env,{store});
+    const raw=await res.text();expect(raw).not.toContain('capy_rank_a00001');expect(raw).not.toContain('secret');
+    const parsed=parseRankLeaderboard(JSON.parse(raw))!;
+    expect(parsed.totalPlayers).toBe(1);expect(parsed.entries[0]).toMatchObject({rank:1,isMe:true,nickname:'泡汤冠军',location:'fictional:sakura_bay',stars:24});
+    // /api/geo returns formatted Cloudflare city
+    const geoRes=await handleRequest(new Request('https://board.test/api/geo',{headers:{Origin:'https://shizhuom.github.io'}}),env,{store,cf:{city:'Tokyo',country:'JP'}});
+    expect(await geoRes.json()).toEqual({ok:true,location:'Tokyo, JP'});
+    // Ranking order helper & mergeRank live star update
+    const sorted=[{stars:10,highest_stars:12,wins:8,updated_at:2},{stars:10,highest_stars:15,wins:9,updated_at:9},{stars:12,highest_stars:12,wins:8,updated_at:5}].sort(compareRankRows);
+    expect(sorted.map(r=>[r.stars,r.highest_stars])).toEqual([[12,12],[10,15],[10,12]]);
+    const r0=mergeRank(null,{player_id:'capy_m000000001',secret_hash:'h',nickname:'A',nickname_norm:'a',avatar_id:'capybara',location_label:'上海',stars:24,highest_stars:24,wins:14,matches:18,best_win_streak:4},100);
+    const drop=mergeRank(r0.row,{...r0.row,stars:23,matches:19},200);
+    expect(drop.row).toMatchObject({stars:23,highest_stars:24,matches:19,updated_at:200});
+  });
+
+  it('client submits/refreshes real Rank Board, skips developer-tainted profiles and renders real players + locations in UI',async()=>{
+    const store=memoryStore(),storage=memoryStorage();
+    const client=new EndlessLeaderboardClient({baseUrl:'https://board.test',fetch:viaWorker(store,{city:'Seoul',country:'KR'}) as unknown as typeof fetch,storage,now:()=>5000});
+    expect(await client.fetchGeoLocation()).toBe('Seoul, KR');
+    const devTainted=setRank(createProfile(),40);
+    expect(devTainted.rankTainted).toBe(true);
+    expect(rankSubmissionFromProfile(devTainted)).toBeNull();
+    const legit:Profile={...createProfile(),playerId:'capy_legit000001',nickname:'星辉水豚',avatarId:'zen_capy',stars:28,highestStars:28,wins:16,matches:20,bestWinStreak:6,locationMode:'real',locationLabel:'京都'};
+    expect(await client.submitRank(legit)).toMatchObject({ok:true,mode:'online',rank:1,totalPlayers:1});
+    const snap=await client.refreshRank(legit.playerId,true);
+    expect(snap).toMatchObject({mode:'online',totalPlayers:1,me:{rank:1,isMe:true,location:'京都',stars:28}});
+    expect(JSON.parse(storage.getItem(`capybara_defense_v1:${RANK_BOARD_CACHE_KEY}`)!).entries).toHaveLength(1);
+    // Online Rank Board UI renders real players + location badges + location controls; offline with no cache falls back to local NPCs
+    const psOnline=new ProfileScreens(()=>legit,()=>true,()=>{},()=>{},undefined,undefined,()=>({snapshot:snap,loading:false}));
+    const htmlZh=psOnline.markup('leaderboard');
+    expect(htmlZh).toContain('星辉水豚');expect(htmlZh).toContain('京都');expect(htmlZh).toContain('data-action="location-request"');expect(htmlZh).toContain('data-action="location-reroll"');
+    expect(htmlZh).not.toContain('情绪稳定祖师爷');
+    // English mode with fictional location stays 100% English (zero Chinese characters)
+    setLanguage('en');
+    const enProfile:Profile={...legit,nickname:'ChillStar',locationMode:'fictional',locationLabel:'fictional:yuzu_town'};
+    const enSnap={...snap,entries:[{...snap.entries[0],nickname:'ChillStar',location:'fictional:yuzu_town'}],me:{...snap.me!,nickname:'ChillStar',location:'fictional:yuzu_town'}};
+    const psEn=new ProfileScreens(()=>enProfile,()=>true,()=>{},()=>{},undefined,undefined,()=>({snapshot:enSnap,loading:false}));
+    const htmlEn=psEn.markup('leaderboard');
+    expect(htmlEn).toContain('Yuzu Onsen Town');
+    expect(htmlEn.replace(/<[^>]+>/g,'')).not.toMatch(/[\u3400-\u9fff]/);
+    // Endless board & passport also render location badge
+    const endlessHtml=endlessBoardMarkup(enProfile,{snapshot:{mode:'online',entries:[{rank:1,isMe:true,nickname:'ChillStar',avatarId:'zen_capy',location:'fictional:yuzu_town',bestWave:25,elapsedSeconds:900,mvpKind:'kungfu_po',mvpAwakened:true,awakenedCount:1,medallionTotal:10,updatedAt:5000}],totalPlayers:1,me:null,fetchedAt:5000},loading:false});
+    expect(endlessHtml).toContain('Yuzu Onsen Town');expect(endlessHtml).toContain('data-action="location-request"');
+    expect(psEn.markup('profile')).toContain('Yuzu Onsen Town');
   });
 });

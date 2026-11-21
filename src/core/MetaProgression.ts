@@ -9,6 +9,7 @@ import { copyVillage, createVillage, normalizeVillage } from './VillageState';
 import { MEDALLION_IDS, MEDALLION_MAX_LEVEL } from '../config/medallions';
 import { normalizeMedallions } from './MedallionProgression';
 import { SESSION_PLAYER_ID, SESSION_WRITE_SECRET, normalizePlayerId, normalizeWriteSecret, validateNickname } from './PlayerIdentity';
+import { isFictionalLocation, sanitizeLocation } from './Location';
 import { HEROES as HERO_TABLE } from '../config/heroes';
 import { DEFAULT_SETTINGS, getUnlockedMaps, unlockAchievements, updateSettings } from './PlayerProgression';
 import type { Profile } from './types';
@@ -42,7 +43,7 @@ export function createProfile():Profile {
     // P16: the starter pool, 6 wood, 2 essence and a 15-minute welcome harvest.
     village:createVillage(),
     // P17: no crests, six Lv.0 medallions and an anonymous global-board id + write secret (stable for this session until saved).
-    endlessCrests:0,endlessMedallions:normalizeMedallions(null),playerId:SESSION_PLAYER_ID,writeSecret:SESSION_WRITE_SECRET,nickname:''};
+    endlessCrests:0,endlessMedallions:normalizeMedallions(null),playerId:SESSION_PLAYER_ID,writeSecret:SESSION_WRITE_SECRET,nickname:'',locationMode:'unset',locationLabel:''};
 }
 /** Granted to brand-new saves and once to pre-P14 saves that never had an `ingredients` field. */
 export const STARTER_INGREDIENTS:Readonly<Record<string,number>>=Object.freeze({ing_yuzu:2});
@@ -63,6 +64,11 @@ function normalizeEndless(p:Profile,data:Record<string,unknown>):void {
   p.playerId=normalizePlayerId(data.playerId);
   p.writeSecret=normalizeWriteSecret(data.writeSecret);
   const name=validateNickname(data.nickname);p.nickname=name.ok?name.value:'';
+  const loc=sanitizeLocation(data.locationLabel);
+  if(data.locationMode==='real'&&loc&&!isFictionalLocation(loc)){p.locationMode='real';p.locationLabel=loc;}
+  else if(data.locationMode==='fictional'){p.locationMode='fictional';p.locationLabel=isFictionalLocation(loc)?loc:'';}
+  else{p.locationMode='unset';p.locationLabel='';}
+  if(data.rankTainted===true)p.rankTainted=true;
   // Best-run metadata only travels with a real endless record.
   if((p.bestEndlessWave??0)>=11){
     const time=data.bestEndlessTime,awakened=data.bestEndlessAwakened,mvp=data.bestEndlessMvp;

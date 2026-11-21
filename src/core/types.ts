@@ -92,6 +92,10 @@ export interface Profile extends BattleLoadout {
   /** P17 endless crests, medallion levels (6 ids, 0..50) and the anonymous global-board identity. */
   endlessCrests:number; endlessMedallions:Record<string,number>;
   playerId:string; writeSecret:string; nickname:string;
+  /** P17.2 location preference for global leaderboards (`unset` prompts once, `real` shows city, `fictional` shows a cozy place). */
+  locationMode?:'unset'|'real'|'fictional'; locationLabel?:string;
+  /** Marked true if Developer Mode manually changed rank stars so dev tests never pollute the real Rank Board. */
+  rankTainted?:boolean;
   /** Metadata of the best endless run (submitted to the global board). */
   bestEndlessTime?:number; bestEndlessMvp?:string; bestEndlessMvpAwakened?:boolean; bestEndlessAwakened?:number;
 }

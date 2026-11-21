@@ -59,7 +59,7 @@ export function updateSettings(profile:Profile,patch:Partial<GameSettings>):Prof
 }
 export function setRank(profile:Profile,index:number):Profile {
   if(!Number.isInteger(index)||index<0||index>=RANKS.length) return profile;
-  let p=unlockAchievements({...profile,stars:RANKS[index].minStars,highestStars:Math.max(profile.highestStars,RANKS[index].minStars)});
+  let p=unlockAchievements({...profile,stars:RANKS[index].minStars,highestStars:Math.max(profile.highestStars,RANKS[index].minStars),rankTainted:true});
   if(p.selectedMap!=='auto'&&!getUnlockedMaps(p).includes(p.selectedMap)) p={...p,selectedMap:'auto'};
   return p;
 }
