@@ -26,6 +26,7 @@ const pairs: Record<string, readonly [string, string]> = {
   'p11.meta.merchant0': ['欢迎来逛！今天的三件好物，都在这里啦。', 'Welcome! Today’s three little finds are right here.'],
   'p11.meta.merchant1': ['橘子要抱稳，小鱼干要花在刀刃上！', 'Keep your oranges safe and spend those fish snacks wisely!'],
   'p11.meta.merchant2': ['今天也要带着好心情出发呀！', 'Take a little good cheer into your next battle!'],
+  'p11.meta.merchantMaxed': ['货架好物全被你升满啦，去幸运扭蛋碰碰运气吧！', 'Every shelf item is maxed! Try Lucky Draw for extra surprises!'],
   'p11.meta.lotteryTitle': ['浣熊幸运扭蛋机', 'Raccoon Capsule Machine'],
   'p11.meta.lotteryRule': ['道具、金币或神兵碎片，每次都有惊喜', 'Every spin brings props, coins or weapon fragments'],
   'p11.meta.ticketSpin': ['免费券扭一发 ({count})', 'Use a ticket ({count})'],

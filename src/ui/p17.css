@@ -19,12 +19,11 @@
   50% { box-shadow:0 0 0 3px rgba(224,83,60,.25); }
 }
 
-/* ── Medallion hall ────────────────────────────────────────────────────────────────────────────────────────── */
-#game-dialog.meta-dialog.medallion-dialog { width:min(94vw,760px); }
-#game-dialog.medallion-dialog .medallion-wallet { display:inline-flex;align-items:center;flex-wrap:wrap;gap:4px 10px; }
-#game-dialog.medallion-dialog .medallion-wallet>span { display:inline-flex;align-items:center;gap:3px;white-space:nowrap; }
-#game-dialog.medallion-dialog .medallion-wallet [data-sticker] { width:20px;height:20px; }
-#game-dialog.medallion-dialog .medallion-board-link { white-space:nowrap; }
+/* ── Medallion hall & dedicated two-tab Endless window ─────────────────────────────────────────────────────── */
+#game-dialog:is(.medallion-dialog,.endless-hub-dialog) { width:min(94vw,720px); }
+#game-dialog:is(.medallion-dialog,.endless-hub-dialog) .medallion-wallet { display:inline-flex;align-items:center;flex-wrap:wrap;gap:4px 10px; }
+#game-dialog:is(.medallion-dialog,.endless-hub-dialog) .medallion-wallet>span { display:inline-flex;align-items:center;gap:3px;white-space:nowrap; }
+#game-dialog:is(.medallion-dialog,.endless-hub-dialog) .medallion-wallet [data-sticker] { width:20px;height:20px; }
 #game-dialog.medallion-dialog .ledger-body .medallion-endless-note { display:flex;align-items:center;gap:8px;margin:0 0 12px;padding:7px 12px;border:1.5px dashed #c9a24a;border-radius:14px;background:#fff6df;color:#5a3d1a!important;font-size:13.5px!important;font-weight:900;line-height:1.35; }
 #game-dialog.medallion-dialog .medallion-endless-note [data-sticker] { width:26px;height:26px;flex:none; }
 #game-dialog.medallion-dialog .medallion-row { display:grid;grid-template-columns:82px minmax(0,1fr) 98px;align-items:center;gap:14px;padding:12px 14px;background:#FCF9F4; }
@@ -32,7 +31,7 @@
 #game-dialog.medallion-dialog .medallion-row.is-focused { box-shadow:0 0 0 3px #f3d27a,0 3px 0 #b8862e33; }
 #game-dialog.medallion-dialog .storybook-frame.tone-medallion { position:relative;width:78px;height:78px;background:#fbf1dc; }
 #game-dialog.medallion-dialog .storybook-frame.tone-medallion [data-sticker] { width:68px;height:68px; }
-#game-dialog.medallion-dialog .ledger-body .medallion-level-tag { position:absolute;left:50%;bottom:-8px;transform:translateX(-50%);padding:0 7px;border:1.5px solid #9a6a1f;border-radius:999px;background:#ffe9a8;color:#4a2c10!important;font-size:11.5px!important;font-weight:900;white-space:nowrap;line-height:1.35; }
+#game-dialog.medallion-dialog .ledger-body .medallion-level-tag { display:inline-block;margin-left:5px;padding:1px 8px;border:1.5px solid #c9993a;border-radius:999px;background:#ffe9a8;color:#4a2c10!important;font-size:12px!important;font-weight:900;white-space:nowrap;line-height:1.35;vertical-align:2px; }
 #game-dialog.medallion-dialog .ledger-body .medallion-effect { display:flex;flex-wrap:wrap;align-items:baseline;gap:2px 8px;color:#6f5a4e!important;font-size:13px!important; }
 #game-dialog.medallion-dialog .medallion-values { display:inline-flex;align-items:baseline;gap:5px;white-space:nowrap; }
 #game-dialog.medallion-dialog .ledger-body .medallion-values b { font-size:15px!important;font-weight:900; }
@@ -67,8 +66,9 @@
 #game-dialog.endless-board-dialog .ledger-body .endless-board-rank { color:#b0561e!important; }
 #game-dialog.endless-board-dialog .ledger-body .is-muted { color:#8a6f58!important;font-weight:800; }
 #game-dialog.endless-board-dialog .endless-board-actions { display:flex;flex-direction:column;gap:6px; }
-#game-dialog.endless-board-dialog .ledger-body .endless-board-actions button { min-height:32px;padding:4px 12px;border:1.5px solid #b79d85;border-radius:999px;background:#fff6df;color:#4a2c10!important;font-size:13px!important;font-weight:900;white-space:nowrap;cursor:pointer; }
+#game-dialog.endless-board-dialog .ledger-body .endless-board-actions button { display:inline-flex;align-items:center;justify-content:center;gap:4px;min-height:32px;padding:4px 12px;border:1.5px solid #b79d85;border-radius:999px;background:#fff6df;color:#4a2c10!important;font-size:13px!important;font-weight:900;white-space:nowrap;cursor:pointer; }
 #game-dialog.endless-board-dialog .ledger-body .endless-board-actions .endless-board-medallions { background:linear-gradient(180deg,#f8dd94,#f0c763);border-color:#9a6a1f; }
+#game-dialog.endless-board-dialog .endless-board-actions [data-sticker] { width:18px;height:18px;flex:none; }
 #game-dialog.endless-board-dialog .ledger-body .endless-board-actions button:disabled { opacity:.6;cursor:progress; }
 #game-dialog.endless-board-dialog .ledger-body .endless-board-status { display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:4px 10px;margin:0 0 10px;padding:6px 12px;border-radius:12px;background:#eef3e0;color:#3d5a2b!important;font-size:13px!important;font-weight:900;text-align:center; }
 #game-dialog.endless-board-dialog .ledger-body .endless-board-status.is-offline { background:#f4e9dc;color:#6f4a2e!important; }
@@ -81,30 +81,35 @@
 #game-dialog.endless-board-dialog .endless-board-row .storybook-frame [data-sticker] { width:42px;height:42px; }
 #game-dialog.endless-board-dialog .ledger-body .endless-board-meta { display:flex;align-items:center;flex-wrap:wrap;gap:2px 8px;font-size:12.5px!important; }
 #game-dialog.endless-board-dialog .endless-board-mvp [data-sticker] { width:30px;height:30px;vertical-align:middle; }
+#game-dialog.endless-board-dialog .endless-board-clock { display:inline-flex;align-items:center;gap:3px; }
+#game-dialog.endless-board-dialog .endless-board-clock [data-sticker] { width:16px;height:16px;flex:none; }
 #game-dialog.endless-board-dialog .ledger-body .endless-board-awakened { color:#b0561e!important;font-weight:900; }
 #game-dialog.endless-board-dialog .ledger-body .endless-board-wave b { color:#4a2c10!important;font-size:17px!important;font-weight:900;white-space:nowrap; }
 #game-dialog.endless-board-dialog .endless-board-gap { text-align:center;color:#a88a68;list-style:none; }
 #game-dialog.endless-board-dialog .ledger-body .endless-board-empty { margin:16px 0;color:#6f5a4e!important;font-weight:800;text-align:center; }
 
 /* ── Live hero card: battle spirit, breakthrough panel and awakened badge ──────────────────────────────────── */
-.live-momentum { display:flex;flex-direction:column;gap:1px;margin:6px 0 0;padding:5px 9px;border-radius:12px;background:#fff1d6;color:#7a3f12;font-weight:900;line-height:1.3; }
-.live-momentum small { color:#8a6a4a;font-size:11.5px;font-weight:800; }
-.live-breakthrough { display:flex;flex-direction:column;gap:3px;margin-top:9px;padding:8px 10px;border:1.5px solid #d9a548;border-radius:14px;background:linear-gradient(180deg,#fff6df,#fde9bd); }
-.live-breakthrough-head { display:flex;align-items:baseline;justify-content:space-between;gap:8px; }
+.live-momentum { display:flex;flex-direction:column;gap:1px;margin:4px 0 0;padding:4px 8px;border-radius:11px;background:#fff1d6;color:#7a3f12;font-weight:900;line-height:1.25; }
+.live-momentum small { color:#8a6a4a;font-size:11px;font-weight:800;line-height:1.25; }
+.live-breakthrough { display:flex;flex-direction:column;gap:2px;margin-top:6px;padding:6px 8px;border:1.5px solid #d9a548;border-radius:12px;background:linear-gradient(180deg,#fff6df,#fde9bd); }
+.live-breakthrough-head { display:flex;align-items:baseline;justify-content:space-between;gap:6px; }
 .live-breakthrough-head b { color:#7a3f12; }
-.live-breakthrough-head strong { color:#b0461e;font-size:18px;font-variant-numeric:tabular-nums; }
-.live-breakthrough-feed { display:flex;align-items:center;justify-content:center;flex-wrap:wrap;gap:4px; }
+.live-breakthrough-head strong { color:#b0461e;font-size:16px;font-variant-numeric:tabular-nums; }
+.live-breakthrough-feed { display:flex;align-items:center;justify-content:center;flex-wrap:wrap;gap:3px; }
 .live-breakthrough-feed>span { display:inline-flex;align-items:center; }
-.live-breakthrough small { color:#7a5a3f;font-size:11.5px;font-weight:800;line-height:1.35;text-align:center; }
-.live-awakened { display:flex;flex-direction:column;align-items:center;gap:2px;margin-top:9px;padding:7px 10px;border-radius:14px;background:#b5462e;color:#ffe9a8;font-weight:900; }
+.live-breakthrough small { color:#7a5a3f;font-size:10px;font-weight:800;line-height:1.3;letter-spacing:-0.015em;text-align:center; }
+.live-awakened { display:flex;flex-direction:column;align-items:center;gap:2px;margin-top:6px;padding:6px 10px;border-radius:12px;background:#b5462e;color:#ffe9a8;font-weight:900; }
 .live-awakened span { color:#fff6dc;font-size:13px; }
 .live-break-later { display:block;margin-top:3px;color:#8a6a4a;font-size:11.5px;text-align:center; }
 .live-awakened-star { color:#c2561e; }
 
 /* ── Settlement: crest on the treasure shelf, global rank badge, endless offer crest ──────────────────────── */
-#game-dialog.result-ledger .crest-global-rank { display:inline-flex;align-items:center;margin-left:6px;padding:1px 10px;border-radius:999px;background:#2f6f8f;color:#fffaf0;font-size:13px;font-weight:900;white-space:nowrap;box-shadow:inset 0 0 0 1.5px #1d4a60; }
+#game-dialog.result-ledger .crest-endless-record { flex-wrap:wrap;align-items:center;gap:.55cqw 1cqw; }
+#game-dialog.result-ledger .crest-plaque-body .crest-global-rank { display:inline-flex;align-items:center;margin-left:0;padding:.2cqw 1.3cqw;border-radius:999px;background:#2f6f8f;color:#fffdf8!important;font-size:clamp(10px,2.2cqw,13px)!important;font-weight:900;line-height:1.3;white-space:nowrap;box-shadow:inset 0 0 0 1.5px #1d4a60; }
 #game-dialog.result-ledger .visual-treasure-item.is-crest .visual-treasure-art [data-sticker] { filter:drop-shadow(0 3px 2px #9a6a1f44); }
 #game-dialog .endless-offer-rewards .endless-offer-crest [data-sticker] { width:30px;height:30px; }
+#game-dialog .endless-offer-actions button { display:inline-flex;align-items:center;justify-content:center;gap:6px; }
+#game-dialog .endless-offer-actions button [data-sticker] { width:22px;height:22px;flex:none; }
 
 @media (max-height:500px) and (orientation:landscape) {
   /* Short landscape: the title art reaches the right edge at this height, so the pill sits just below it. */

@@ -124,6 +124,8 @@
 #game-dialog.meta-dialog .ledger-body .storybook-whisper { display:flex;align-items:center;gap:7px;padding:0;min-width:0;border:0;background:none;box-shadow:none;text-align:left;font-size:14px!important; }
 #game-dialog.meta-dialog .storybook-whisper [data-sticker] { width:36px;height:36px;flex:none; }
 #game-dialog.meta-dialog .storybook-shop-heading>.storybook-pill-btn { flex:none; }
+#game-dialog.meta-dialog .storybook-shop-heading>.storybook-pill-btn [data-sticker],#game-dialog.meta-dialog .storybook-buy-btn [data-sticker] { width:18px;height:18px;flex:none; }
+#game-dialog.meta-dialog .ledger-body .storybook-shop-heading>.storybook-pill-btn:disabled { background:#ddd2c6!important;color:#8a776a!important;opacity:.58;filter:grayscale(.5);cursor:not-allowed; }
 #game-dialog.meta-dialog :is(.shop-row,.prop-row) { display:grid;grid-template-columns:82px minmax(0,1fr) 100px;align-items:center;gap:14px;padding:12px 14px; }
 #game-dialog.meta-dialog .prop-row { grid-template-columns:76px minmax(0,1fr) 92px; }
 #game-dialog.meta-dialog .prop-row>.storybook-frame { width:76px;height:76px; }
@@ -135,15 +137,16 @@
 #game-dialog.meta-dialog .ledger-body .storybook-loadout-strip .prop-slot { position:relative;width:44px;height:44px;min-width:0;min-height:44px;padding:4px;border:1px solid #B79D85;border-radius:9px;background:#EBE0CE;box-shadow:none; }
 #game-dialog.meta-dialog .storybook-loadout-strip .prop-slot [data-sticker] { width:34px;height:34px; }
 #game-dialog.meta-dialog .storybook-loadout-strip .prop-slot :is(small,.slot-remove) { display:none; }
-#game-dialog.meta-dialog .storybook-lottery-heading { display:flex;align-items:center;gap:14px;margin-bottom:16px; }
-#game-dialog.meta-dialog .storybook-lottery-heading .storybook-frame { width:76px;height:76px; }
-#game-dialog.meta-dialog .ledger-body .storybook-lottery-heading h3 { margin:0 0 7px;font-size:22px!important; }
-#game-dialog.meta-dialog .ledger-body .storybook-lottery-heading p { margin:0;font-size:14px!important; }
-#game-dialog.meta-dialog .storybook-lottery-ring { display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;width:100%;max-width:430px;margin:14px auto;padding:0;border:0;background:none;box-shadow:none; }
-#game-dialog.meta-dialog .ledger-body .storybook-lottery-ring :is(.lottery-cell,.lottery-center) { display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;min-height:112px;aspect-ratio:auto;padding:8px;border:1px solid #E5DBD0;border-radius:12px;background:#F4ECE1!important;box-shadow:none; }
-#game-dialog.meta-dialog .storybook-lottery-ring .lottery-cell [data-sticker] { width:56px;height:56px; }
-#game-dialog.meta-dialog .ledger-body .storybook-lottery-ring .lottery-cell small { font-size:13px!important;line-height:1.25; }
-#game-dialog.meta-dialog .ledger-body .storybook-lottery-ring .lottery-center { border:2px solid #8C6E43;background:#E9D39D!important;font-size:20px!important; }
+#game-dialog.meta-dialog .storybook-lottery-heading { display:flex;align-items:center;gap:12px;margin-bottom:10px; }
+#game-dialog.meta-dialog .storybook-lottery-heading .storybook-frame { width:68px;height:68px; }
+#game-dialog.meta-dialog .ledger-body .storybook-lottery-heading h3 { margin:0 0 4px;font-size:20px!important; }
+#game-dialog.meta-dialog .ledger-body .storybook-lottery-heading p { margin:0;font-size:13.5px!important; }
+#game-dialog.meta-dialog .storybook-lottery-ring { display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px;width:100%;max-width:420px;margin:10px auto;padding:0;border:0;background:none;box-shadow:none; }
+#game-dialog.meta-dialog .ledger-body .storybook-lottery-ring :is(.lottery-cell,.lottery-center) { display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;min-height:94px;aspect-ratio:auto;padding:6px;border:1px solid #E5DBD0;border-radius:12px;background:#F4ECE1!important;box-shadow:none; }
+#game-dialog.meta-dialog .storybook-lottery-ring .lottery-cell [data-sticker] { width:50px;height:50px; }
+#game-dialog.meta-dialog .ledger-body .storybook-lottery-ring .lottery-cell small { font-size:12.5px!important;line-height:1.25; }
+#game-dialog.meta-dialog .ledger-body .storybook-lottery-ring .lottery-center { border:2px solid #8C6E43;background:#E9D39D!important;font-size:18px!important; }
+#game-dialog.meta-dialog .ledger-body .storybook-lottery-ring .lottery-center.has-ticket { border-color:#5E7B3A;background:linear-gradient(180deg,#E5F2C6,#C9E097)!important;color:#2E481B!important; }
 #game-dialog.meta-dialog .storybook-lottery-ring .lottery-cell.lit { border-color:#977331;background:#FBE3A8!important;box-shadow:0 0 0 2px #D8B66D; }
 #game-dialog.meta-dialog .storybook-spin-payments { display:flex;justify-content:center;gap:10px; }
 #game-dialog.meta-dialog .ledger-body .storybook-spin-payments button { flex:1;padding:9px;border:1.5px solid #B79D85;border-radius:999px;background:#F0E1CA;font-size:14px!important;box-shadow:none; }

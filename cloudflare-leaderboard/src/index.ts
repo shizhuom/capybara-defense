@@ -2,10 +2,18 @@
  * Capybara: Chill Defense · global endless leaderboard (Cloudflare Workers + D1, zero dependencies).
  *
  *   GET  /api/health                          → { ok, service }
+ *   GET  /api/nickname?name=&playerId=        → { ok, available }
  *   GET  /api/leaderboard?playerId=&limit=100 → { ok, totalPlayers, entries, me }
  *   POST /api/score                           → { ok, rank, totalPlayers, bestWave, improved }
  *
- * Every validation, scoring and ranking rule is a pure exported function so the game's Vitest suite can test it.
+ * Security & fairness guarantees:
+ *   1. Public leaderboard entries NEVER expose any player's raw `player_id` (only `isMe: boolean`).
+ *   2. Every record is bound to a per-device `writeSecret` (stored salted & SHA-256 hashed in `secret_hash`).
+ *      Subsequent updates for an existing `player_id` must prove possession of the matching `writeSecret`.
+ *   3. Nicknames are strictly unique across players (case- & width-insensitive via `nickname_norm`).
+ *      Attempting to claim another player's nickname returns 409 `nickname_taken`.
+ *   4. Non-improving metadata updates (renaming / changing avatar) preserve the original `updated_at`
+ *      so tie-breaker order is never demoted.
  */
 
 // ───────────────────────── Minimal D1 surface (no @cloudflare/workers-types needed) ─────────────────────────
@@ -31,13 +39,15 @@ export const HERO_IDS = ['kungfu_po', 'bamboo_mafia', 'zen_master', 'puss_in_hat
 
 /** One stored row (D1 column names). */
 export interface ScoreRow {
-  player_id: string; nickname: string; avatar_id: string; best_wave: number; elapsed_seconds: number;
-  mvp_kind: string; mvp_awakened: number; awakened_count: number; medallion_total: number; updated_at: number;
+  player_id: string; secret_hash: string; nickname: string; nickname_norm: string; avatar_id: string;
+  best_wave: number; elapsed_seconds: number; mvp_kind: string; mvp_awakened: number;
+  awakened_count: number; medallion_total: number; updated_at: number;
 }
-export type ScoreInput = Omit<ScoreRow, 'updated_at'>;
+export type ScoreInput = Omit<ScoreRow, 'updated_at' | 'secret_hash'> & { write_secret?: string };
 
-// ───────────────────────── Validation ─────────────────────────
+// ───────────────────────── Validation & Crypto ─────────────────────────
 export const isValidPlayerId = (id: unknown): id is string => typeof id === 'string' && /^[A-Za-z0-9_-]{8,64}$/.test(id);
+export const isValidWriteSecret = (secret: unknown): secret is string => typeof secret === 'string' && /^[A-Za-z0-9_-]{16,128}$/.test(secret);
 /** Same word list as the game's wholesome-copy test, stored as escapes so this file itself stays clean. */
 const BLOCKED = /\u6da9\u6da9|\u8272\u8272|\u4e0d\u8bb8\u6da9|\u7edd\u80b2|\u7eff\u8336|\u75af\u6279|\u8214\u72d7|\u9e21\u4f60\u592a|\u0062\u006f\u006e\u006b/i;
 const STRIP = /[\u0000-\u001f\u007f-\u009f\u200b-\u200f\u2028-\u202e\u2060-\u206f\ufeff<>]/g;
@@ -48,15 +58,25 @@ export function sanitizeNickname(raw: unknown): { ok: boolean; value: string; er
   if (BLOCKED.test(value.normalize('NFKC').replace(/[\s._\-*·]/g, ''))) return { ok: false, value, error: 'invalid_nickname' };
   return { ok: true, value };
 }
+/** Case- and width-insensitive unique key so full-width/mixed-case lookalikes cannot impersonate another player. */
+export const normalizeNicknameKey = (nickname: string): string => nickname.normalize('NFKC').replace(/\s+/g, ' ').trim().toLowerCase();
+
 const int = (value: unknown, min: number, max: number): number | null => typeof value === 'number' && Number.isSafeInteger(value) && value >= min && value <= max ? value : null;
 /** Lower bound on real play time: at least a minute, and at least 6 s per endless wave. */
 export const minimumElapsed = (wave: number): number => Math.max(60, (wave - 10) * 6);
+
+export async function hashSecret(playerId: string, secret: string): Promise<string> {
+  const data = new TextEncoder().encode(`capy-secret:${playerId}:${secret}`);
+  const digest = await crypto.subtle.digest('SHA-256', data);
+  return Array.from(new Uint8Array(digest), byte => byte.toString(16).padStart(2, '0')).join('');
+}
 
 /** Validates a score submission. Rejections carry a stable error code for the client. */
 export function validateScore(body: unknown): { ok: true; score: ScoreInput } | { ok: false; error: string } {
   if (!body || typeof body !== 'object' || Array.isArray(body)) return { ok: false, error: 'bad_request' };
   const b = body as Record<string, unknown>;
   if (!isValidPlayerId(b.playerId)) return { ok: false, error: 'invalid_player' };
+  if (b.writeSecret !== undefined && !isValidWriteSecret(b.writeSecret)) return { ok: false, error: 'invalid_secret' };
   const nickname = sanitizeNickname(b.nickname);
   if (!nickname.ok) return { ok: false, error: 'invalid_nickname' };
   const wave = int(b.bestWave, MIN_WAVE, MAX_WAVE);
@@ -68,8 +88,9 @@ export function validateScore(body: unknown): { ok: true; score: ScoreInput } | 
   if (wave >= 45 && medallions < 30 && awakened < 1) return { ok: false, error: 'implausible_score' };
   const avatar = typeof b.avatarId === 'string' && (AVATAR_IDS as readonly string[]).includes(b.avatarId) ? b.avatarId : 'capybara';
   const mvp = typeof b.mvpKind === 'string' && (HERO_IDS as readonly string[]).includes(b.mvpKind) ? b.mvpKind : 'kungfu_po';
-  return { ok: true, score: { player_id: b.playerId, nickname: nickname.value, avatar_id: avatar, best_wave: wave, elapsed_seconds: elapsed,
-    mvp_kind: mvp, mvp_awakened: b.mvpAwakened === true ? 1 : 0, awakened_count: awakened, medallion_total: medallions } };
+  return { ok: true, score: { player_id: b.playerId, nickname: nickname.value, nickname_norm: normalizeNicknameKey(nickname.value),
+    avatar_id: avatar, best_wave: wave, elapsed_seconds: elapsed, mvp_kind: mvp, mvp_awakened: b.mvpAwakened === true ? 1 : 0,
+    awakened_count: awakened, medallion_total: medallions, ...(typeof b.writeSecret === 'string' ? { write_secret: b.writeSecret } : {}) } };
 }
 
 // ───────────────────────── Ranking ─────────────────────────
@@ -79,16 +100,20 @@ export function compareRows(a: Pick<ScoreRow, 'best_wave' | 'elapsed_seconds' | 
 }
 const better = (a: Pick<ScoreRow, 'best_wave' | 'elapsed_seconds'>, b: Pick<ScoreRow, 'best_wave' | 'elapsed_seconds'>) => a.best_wave > b.best_wave || (a.best_wave === b.best_wave && a.elapsed_seconds < b.elapsed_seconds);
 /**
- * Monotone best-score upsert: a better run replaces the record; anything else keeps the historic best and only
- * refreshes nickname, avatar and `updated_at` (so a rename shows up immediately without lowering the record).
+ * Monotone best-score upsert: a better run replaces the record and sets `updated_at = now`;
+ * non-improving metadata edits (nickname/avatar) preserve the original `updated_at` so tie-breaker rank never drops.
  */
-export function mergeScore(existing: ScoreRow | null, incoming: ScoreInput, now: number): { row: ScoreRow; improved: boolean } {
-  if (!existing || better(incoming, existing)) return { row: { ...incoming, updated_at: now }, improved: true };
-  return { row: { ...existing, nickname: incoming.nickname, avatar_id: incoming.avatar_id, updated_at: now }, improved: false };
+export function mergeScore(existing: ScoreRow | null, incoming: Omit<ScoreRow, 'updated_at'>, now: number): { row: ScoreRow; improved: boolean } {
+  if (!existing || better(incoming, existing)) {
+    return { row: { ...incoming, secret_hash: existing?.secret_hash || incoming.secret_hash, updated_at: now }, improved: true };
+  }
+  return { row: { ...existing, secret_hash: existing.secret_hash || incoming.secret_hash, nickname: incoming.nickname, nickname_norm: incoming.nickname_norm, avatar_id: incoming.avatar_id }, improved: false };
 }
-export function toEntry(row: ScoreRow, rank: number) {
-  return { rank, playerId: row.player_id, nickname: row.nickname, avatarId: row.avatar_id, bestWave: row.best_wave, elapsedSeconds: row.elapsed_seconds,
-    mvpKind: row.mvp_kind, mvpAwakened: row.mvp_awakened === 1, awakenedCount: row.awakened_count, medallionTotal: row.medallion_total, updatedAt: row.updated_at };
+/** Public projection: NEVER leaks any player's raw `player_id`; marks the caller's own row via `isMe`. */
+export function toEntry(row: ScoreRow, rank: number, requesterPlayerId?: string | null) {
+  return { rank, isMe: Boolean(requesterPlayerId && row.player_id === requesterPlayerId), nickname: row.nickname, avatarId: row.avatar_id,
+    bestWave: row.best_wave, elapsedSeconds: row.elapsed_seconds, mvpKind: row.mvp_kind, mvpAwakened: row.mvp_awakened === 1,
+    awakenedCount: row.awakened_count, medallionTotal: row.medallion_total, updatedAt: row.updated_at };
 }
 /** Fixed-window limiter: at most `limit` writes per `windowMs` per key. */
 export function rateLimitDecision(current: { window_start: number; hits: number } | null, now: number, limit = RATE_LIMIT, windowMs = RATE_WINDOW_MS) {
@@ -111,6 +136,7 @@ export function corsHeaders(origin: string | null, allowed: readonly string[]): 
 // ───────────────────────── Storage (D1 in production, memory in tests) ─────────────────────────
 export interface ScoreStore {
   get(playerId: string): Promise<ScoreRow | null>;
+  findByNickname(nicknameNorm: string): Promise<ScoreRow | null>;
   put(row: ScoreRow): Promise<void>;
   top(limit: number): Promise<ScoreRow[]>;
   count(): Promise<number>;
@@ -118,15 +144,16 @@ export interface ScoreStore {
   rate(key: string): Promise<{ window_start: number; hits: number } | null>;
   setRate(key: string, windowStart: number, hits: number): Promise<void>;
 }
-const COLUMNS = 'player_id, nickname, avatar_id, best_wave, elapsed_seconds, mvp_kind, mvp_awakened, awakened_count, medallion_total, updated_at';
+const COLUMNS = 'player_id, secret_hash, nickname, nickname_norm, avatar_id, best_wave, elapsed_seconds, mvp_kind, mvp_awakened, awakened_count, medallion_total, updated_at';
 export function d1Store(db: D1Database): ScoreStore {
   return {
     get: id => db.prepare(`SELECT ${COLUMNS} FROM endless_scores WHERE player_id = ?1`).bind(id).first<ScoreRow>(),
-    put: async row => { await db.prepare(`INSERT INTO endless_scores (${COLUMNS}) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10)
-      ON CONFLICT(player_id) DO UPDATE SET nickname = excluded.nickname, avatar_id = excluded.avatar_id, best_wave = excluded.best_wave,
-      elapsed_seconds = excluded.elapsed_seconds, mvp_kind = excluded.mvp_kind, mvp_awakened = excluded.mvp_awakened,
-      awakened_count = excluded.awakened_count, medallion_total = excluded.medallion_total, updated_at = excluded.updated_at`)
-      .bind(row.player_id, row.nickname, row.avatar_id, row.best_wave, row.elapsed_seconds, row.mvp_kind, row.mvp_awakened, row.awakened_count, row.medallion_total, row.updated_at).run(); },
+    findByNickname: norm => db.prepare(`SELECT ${COLUMNS} FROM endless_scores WHERE nickname_norm = ?1 OR LOWER(TRIM(nickname)) = ?1 LIMIT 1`).bind(norm).first<ScoreRow>(),
+    put: async row => { await db.prepare(`INSERT INTO endless_scores (${COLUMNS}) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12)
+      ON CONFLICT(player_id) DO UPDATE SET secret_hash = excluded.secret_hash, nickname = excluded.nickname, nickname_norm = excluded.nickname_norm,
+      avatar_id = excluded.avatar_id, best_wave = excluded.best_wave, elapsed_seconds = excluded.elapsed_seconds, mvp_kind = excluded.mvp_kind,
+      mvp_awakened = excluded.mvp_awakened, awakened_count = excluded.awakened_count, medallion_total = excluded.medallion_total, updated_at = excluded.updated_at`)
+      .bind(row.player_id, row.secret_hash, row.nickname, row.nickname_norm, row.avatar_id, row.best_wave, row.elapsed_seconds, row.mvp_kind, row.mvp_awakened, row.awakened_count, row.medallion_total, row.updated_at).run(); },
     top: async limit => (await db.prepare(`SELECT ${COLUMNS} FROM endless_scores ORDER BY best_wave DESC, elapsed_seconds ASC, updated_at ASC LIMIT ?1`).bind(limit).all<ScoreRow>()).results ?? [],
     count: async () => Number((await db.prepare('SELECT COUNT(*) AS total FROM endless_scores').first<{ total: number }>())?.total ?? 0),
     rankOf: async row => 1 + Number((await db.prepare(`SELECT COUNT(*) AS ahead FROM endless_scores WHERE best_wave > ?1
@@ -143,7 +170,15 @@ export function memoryStore(): ScoreStore & { rows: Map<string, ScoreRow> } {
   return {
     rows,
     get: async id => rows.get(id) ?? null,
-    put: async row => { rows.set(row.player_id, { ...row }); },
+    findByNickname: async norm => [...rows.values()].find(r => (r.nickname_norm || normalizeNicknameKey(r.nickname)) === norm) ?? null,
+    put: async row => {
+      for (const other of rows.values()) {
+        if (other.player_id !== row.player_id && (other.nickname_norm || normalizeNicknameKey(other.nickname)) === row.nickname_norm) {
+          throw new Error('UNIQUE constraint failed: endless_scores.nickname_norm');
+        }
+      }
+      rows.set(row.player_id, { ...row });
+    },
     top: async limit => [...rows.values()].sort(compareRows).slice(0, limit),
     count: async () => rows.size,
     rankOf: async row => 1 + [...rows.values()].filter(other => compareRows(other, row) < 0).length,
@@ -170,12 +205,21 @@ export async function handleRequest(request: Request, env: Env, options: Handler
   try {
     const store = options.store ?? d1Store(env.DB);
     if (request.method === 'GET' && url.pathname === '/api/health') return json({ ok: true, service: SERVICE }, 200, cors);
+    if (request.method === 'GET' && url.pathname === '/api/nickname') {
+      const check = sanitizeNickname(url.searchParams.get('name'));
+      if (!check.ok) return json({ ok: false, available: false, error: 'invalid_nickname' }, 400, cors);
+      const playerId = url.searchParams.get('playerId');
+      const owner = await store.findByNickname(normalizeNicknameKey(check.value));
+      const available = !owner || (isValidPlayerId(playerId) && owner.player_id === playerId);
+      return json({ ok: true, available }, 200, cors);
+    }
     if (request.method === 'GET' && url.pathname === '/api/leaderboard') {
       const limit = parseLimit(url.searchParams.get('limit')), playerId = url.searchParams.get('playerId');
+      const validPlayer = isValidPlayerId(playerId) ? playerId : null;
       const [rows, totalPlayers] = await Promise.all([store.top(limit), store.count()]);
-      const mine = isValidPlayerId(playerId) ? await store.get(playerId) : null;
-      const me = mine ? toEntry(mine, await store.rankOf(mine)) : null;
-      return json({ ok: true, totalPlayers, entries: rows.map((row, i) => toEntry(row, i + 1)), me }, 200, cors);
+      const mine = validPlayer ? await store.get(validPlayer) : null;
+      const me = mine ? toEntry(mine, await store.rankOf(mine), validPlayer) : null;
+      return json({ ok: true, totalPlayers, entries: rows.map((row, i) => toEntry(row, i + 1, validPlayer)), me }, 200, cors);
     }
     if (request.method === 'POST' && url.pathname === '/api/score') {
       const key = await ipKey(request.headers.get('CF-Connecting-IP') ?? 'unknown');
@@ -187,8 +231,24 @@ export async function handleRequest(request: Request, env: Env, options: Handler
       let body: unknown; try { body = JSON.parse(text); } catch { return json({ ok: false, error: 'bad_request' }, 400, cors); }
       const checked = validateScore(body);
       if (!checked.ok) return json({ ok: false, error: checked.error }, 400, cors);
-      const { row, improved } = mergeScore(await store.get(checked.score.player_id), checked.score, now);
-      await store.put(row);
+      const { write_secret: rawSecret, ...cleanScore } = checked.score;
+      const existing = await store.get(cleanScore.player_id);
+      if (!rawSecret) return json({ ok: false, error: 'invalid_secret' }, 400, cors);
+      const secretHash = await hashSecret(cleanScore.player_id, rawSecret);
+      if (existing && existing.secret_hash && existing.secret_hash !== secretHash) {
+        return json({ ok: false, error: 'forbidden_player' }, 403, cors);
+      }
+      const nicknameOwner = await store.findByNickname(cleanScore.nickname_norm);
+      if (nicknameOwner && nicknameOwner.player_id !== cleanScore.player_id) {
+        return json({ ok: false, error: 'nickname_taken' }, 409, cors);
+      }
+      const { row, improved } = mergeScore(existing, { ...cleanScore, secret_hash: secretHash }, now);
+      try {
+        await store.put(row);
+      } catch (err) {
+        if (err instanceof Error && /UNIQUE/i.test(err.message)) return json({ ok: false, error: 'nickname_taken' }, 409, cors);
+        throw err;
+      }
       const [rank, totalPlayers] = await Promise.all([store.rankOf(row), store.count()]);
       return json({ ok: true, rank, totalPlayers, bestWave: row.best_wave, improved }, 200, cors);
     }

@@ -8,7 +8,7 @@ import { PROPS } from '../config/props';
 import type { Profile } from '../core/types';
 import { t } from '../i18n/i18n';
 import { weaponSticker } from '../render/M3Art';
-import { propSticker, sceneSticker, unitSticker } from './stickers';
+import { heroSticker, propSticker, sceneSticker, unitSticker } from './stickers';
 import { escapeHtml as esc } from './art';
 import {ledger} from './LedgerView';
 import {progressionFor,requiredStars} from '../config/progression';
@@ -52,25 +52,30 @@ export class Compendium {
   private selectedHero='kungfu_po';
   private detailId:string|null=null;
   private focusedKind='';
+  private previewAwakened=false;
   private unlocked=new Set<string>();
   private available(id:string):boolean {return !!WEAPONS[id]||!!PROPS[id]||this.unlocked.has(id);}
-  private art(id:string,size:number):string {return `<span class="${this.available(id)?'roster-art':'mystery-art'}">${sticker(id,size)}</span>`;}
+  private art(id:string,size:number,awakened=false):string {
+    const inner=awakened&&own(HEROES,id)?`<span class="book-sticker" role="img" aria-label="${name(id)}"><span aria-hidden="true">${heroSticker(id,size,true)}</span></span>`:sticker(id,size);
+    return `<span class="${this.available(id)?'roster-art':'mystery-art'}">${inner}</span>`;
+  }
   private unlockBadge(id:string,icon=true):string {return `<b class="star-unlock">${icon?sceneSticker('ui_lock_closed','',22):''}${tr('p9.starUnlock',{stars:requiredStars(id)})}</b>`;}
   private lockedMessage(id:string):string {const stars=requiredStars(id);return `<aside class="locked-entry-notice">${sceneSticker('ui_unlock_chest','',72)}<p>${tr('p9.lockedDetail',{stars,rank:t(`rank.${getRank(stars).index}`)})}</p></aside>`;}
   select(tab:string):boolean {
     if(!COMPENDIUM_TABS.includes(tab as CompendiumTab))return false;
-    this.tab=tab as CompendiumTab;this.detailId=null;this.focusedKind='';return true;
+    this.tab=tab as CompendiumTab;this.detailId=null;this.focusedKind='';this.previewAwakened=false;return true;
   }
   openTo(kind:string):void {
     this.inspectEntry(kind);
   }
   inspectEntry(id:string):boolean {
     const tab=owner(id);if(!tab)return false;
-    this.tab=tab;this.detailId=id;this.focusedKind=id;return true;
+    this.tab=tab;this.detailId=id;this.focusedKind=id;this.previewAwakened=false;return true;
   }
   closeDetail():string|null {
-    const previous=this.detailId;this.detailId=null;this.focusedKind='';return previous;
+    const previous=this.detailId;this.detailId=null;this.focusedKind='';this.previewAwakened=false;return previous;
   }
+  toggleAwakened():void {this.previewAwakened=!this.previewAwakened;}
   stepDetail(delta:-1|1):boolean {
     if(!this.detailId||this.tab==='matrix')return false;
     const ids=catalogs[this.tab],index=ids.indexOf(this.detailId);
@@ -82,13 +87,17 @@ export class Compendium {
   selectHero(kind:string):void {
     if(!Object.hasOwn(HEROES,kind))return;
     if(this.tab!=='matrix'){this.inspectEntry(kind);return;}
-    this.selectedHero=kind;this.focusedKind=kind;
+    this.selectedHero=kind;this.focusedKind=kind;this.previewAwakened=false;
+  }
+  private awakenedToggle(id:string):string {
+    if(!own(HEROES,id)||!this.available(id))return '';
+    return `<div class="compendium-awakened-bar"><button type="button" class="compendium-awakened-toggle${this.previewAwakened?' is-awakened':''}" data-action="compendium-awakened-toggle" aria-pressed="${this.previewAwakened}">${tr(this.previewAwakened?'p17.awakenedToggle.awakened':'p17.awakenedToggle.normal')}</button><small class="compendium-awakened-hint">${tr('p17.awakenedHint')}</small></div>`;
   }
   private entry(kind:string):string {return `data-compendium-kind="${kind}"${this.focusedKind===kind?' data-compendium-focused="true"':''} tabindex="-1"`;}
   private heroDetail(kind:string,profile:Profile):string {
     if(!this.available(kind))return `<article class="encyclopedia-card locked-roster" ${this.entry(kind)}><span class="storybook-frame tone-heroes">${this.art(kind,68)}</span><h4>${name(kind)}</h4><p class="storybook-tagline">${this.tagline(kind)}</p>${this.unlockBadge(kind)}${this.lockedMessage(kind)}</article>`;
     const hero=HEROES[kind],recipe=RECIPES.find(r=>r.hero===kind)!;
-    return `<article class="encyclopedia-card rarity-4" ${this.entry(kind)}><div class="book-heading"><span class="storybook-frame tone-heroes">${this.art(kind,68)}</span><div><h4>${name(kind)}</h4>${this.statusTop(kind,profile)}<p class="storybook-tagline">${this.tagline(kind)}</p></div></div><div class="recipe-equation">${equation(recipe.parts,kind)}</div>${statPills(kind)}${growth(kind)}<p><b>${tr(`skill.${kind}`)}</b> · ${tr(`skill.${kind}.desc`,{charge:hero.charge})}</p>${heroWeapons(kind)}</article>`;
+    return `<article class="encyclopedia-card rarity-4" ${this.entry(kind)}><div class="book-heading"><span class="storybook-frame tone-heroes${this.previewAwakened?' is-awakened-frame':''}">${this.art(kind,68,this.previewAwakened)}</span><div><h4>${name(kind)}</h4>${this.statusTop(kind,profile)}<p class="storybook-tagline">${this.tagline(kind)}</p></div></div>${this.awakenedToggle(kind)}<div class="recipe-equation">${equation(recipe.parts,kind)}</div>${statPills(kind)}${growth(kind)}<p><b>${tr(`skill.${kind}`)}</b> · ${tr(`skill.${kind}.desc`,{charge:hero.charge})}</p>${heroWeapons(kind)}</article>`;
   }
   private recipeList(profile:Profile):string {
     return `<div class="storybook-recipe-list" role="list" aria-label="${tr('p10.recipeList')}">${RECIPES.map(r=>`<article class="storybook-recipe-card${this.available(r.hero)?'':' locked-roster'}" role="listitem" data-storybook-recipe="${r.hero}"><button type="button" class="storybook-recipe-button" data-action="compendium-hero:${r.hero}" aria-pressed="${this.selectedHero===r.hero}"><span class="storybook-frame tone-heroes">${this.art(r.hero,68)}</span><span class="storybook-copy"><strong class="portrait-name">${name(r.hero)}</strong><span class="storybook-recipe-parts">${r.parts.map(part=>`<span class="storybook-ingredient">${this.art(part,24)}<span>${name(part)}</span></span>`).join('<b aria-hidden="true">＋</b>')}</span></span>${this.status(r.hero,profile)}</button></article>`).join('')}</div>`;
@@ -118,8 +127,8 @@ export class Compendium {
   }
   private status(id:string,p:Profile):string {return `<span class="storybook-status">${this.statusTop(id,p)}<span class="storybook-mark" aria-hidden="true">${this.statusMark(id,p)}</span></span>`;}
   private family(id:string):string {
-    if(HEROES[id])return tr(`m2.family.${HERO_FAMILIES[id]}`);
-    if(WEAPONS[id])return `${tr(`m2.rarity.${WEAPONS[id].rarity}`)} · ${tr(`m2.family.${WEAPONS[id].family}`)}`;
+    if(HEROES[id])return tr(`p11.meta.family.${HERO_FAMILIES[id]}`);
+    if(WEAPONS[id])return `${tr(`m2.rarity.${WEAPONS[id].rarity}`)} · ${tr(`p11.meta.family.${WEAPONS[id].family}`)}`;
     if(PROPS[id])return tr(`m2.${PROPS[id].type}`);
     if(ENEMIES[id])return tr(ENEMIES[id].boss?'p7.boss':'p7.minion');
     return tr(UNITS[id]?.category==='basic'?'p3.basics':id==='shovel'?'p7.tool':'p3.components');
@@ -134,11 +143,11 @@ export class Compendium {
     const formulas=this.available(id)&&(hero||unit?.category==='component')?RECIPES.filter(r=>r.hero===id||(r.parts as readonly string[]).includes(id)).map(r=>`<button type="button" class="recipe-equation" data-action="compendium-hero:${r.hero}">${this.available(r.hero)?equation(r.parts,r.hero,44):`${this.art(r.hero,44)}${this.unlockBadge(r.hero)}`}</button>`).join(''):'';
     let body='';
     if(hero)body=`${statPills(id)}${growth(id)}<p class="detail-skill"><b>${tr(`skill.${id}`)}</b> · ${tr(`skill.${id}.desc`,{charge:hero.charge})}</p>${heroWeapons(id)}`;
-    else if(unit)body=id==='shovel'?`<p>${tr('inspect.toolBody')}</p>`:`${id==='bee'?`<div class="book-stat-pills"><span>🐟 ${tr('p3.productionValue',getBeeProduction(1))}</span></div>`:statPills(id)}${growth(id)}<p>${tr(unit.category==='basic'?'p3.drawBasic':'p3.drawComponent')}</p>${['shiba','hat_wizard'].includes(id)?`<aside class="locked-pair">${tr('p3.lockedPair')}</aside>`:''}`;
-    else if(enemy)body=`<div class="book-stat-pills"><span>❤️ ${tr('p7.hp',{value:enemy.hp})}</span><span>💨 ${tr('p7.speed',{value:enemy.speed})}</span><span>🛡️ ${tr('p7.armor',{value:Math.round(enemy.armor*100)})}</span>${enemy.boss?`<span>⏱ ${tr('p1.cooldown',{time:enemy.interval})}</span>`:''}</div><p>${tr(enemy.boss?`p1.boss.${id}.mechanic`:`p3.minion.${id}.mechanic`)}</p><aside class="counter-tip"><b>${tr('p1.counter')}</b><p>${tr(enemy.boss?`p1.boss.${id}.tip`:`p3.minion.${id}.tip`)}</p></aside>`;
-    else if(weapon)body=`<div class="book-stat-pills"><span>🧩 ${tr('p1.unlock',{count:RARITY_RULES[weapon.rarity].fragments})}</span><span>⚔️ ${tr('m2.damage',{value:Math.round(RARITY_RULES[weapon.rarity].damageBonus*100)})}</span></div><p>${tr(`weapon.${id}.desc`)}</p>${weapon.signatureHero?`<button type="button" class="signature-link" data-action="compendium-entry:${weapon.signatureHero}">${sticker(weapon.signatureHero,64)}<span>${tr('m2.signature',{hero:t(`hero.${weapon.signatureHero}`)})}</span></button>`:''}`;
-    else if(prop)body=`<div class="book-stat-pills"><span>${tr(`m2.${prop.type}`)}</span><span>🪙 ${tr('p1.price',{price:prop.price})}</span><span>⏱ ${tr(prop.type==='active'?'p1.cooldown':'p1.auto',{time:prop.cooldown})}</span></div><p>${tr(`prop.${id}.desc`)}</p>`;
-    return `<div class="compendium-detail-bar"><button type="button" data-action="compendium-back">${tr('p7.back')}</button><div><button type="button" data-action="compendium-prev" ${index<0?'disabled':''}>◀ ${tr('p7.prev')}</button><span aria-live="polite">${index<0?'—':`${index+1} / ${ids.length}`}</span><button type="button" data-action="compendium-next" ${index<0?'disabled':''}>${tr('p7.next')} ▶</button></div></div><article class="compendium-detail-sheet encyclopedia-card rarity-${this.rarity(id)}" data-entry="${id}" ${this.entry(id)}><div class="detail-showcase"><span class="storybook-frame tone-${tab}">${this.art(id,136)}</span><h4>${name(id)}</h4><p class="storybook-tagline">${this.tagline(id)}</p><span class="detail-family">${this.family(id)}</span>${this.statusTop(id,profile)}${formulas}</div><div class="detail-stats">${this.available(id)?body:this.lockedMessage(id)}</div></article>`;
+    else if(unit)body=id==='shovel'?`<p>${tr('inspect.toolBody')}</p>`:`${id==='bee'?`<div class="book-stat-pills"><span>${sceneSticker('ui_fish_food','',18)} ${tr('p3.productionValue',getBeeProduction(1))}</span></div>`:statPills(id)}${growth(id)}<p>${tr(unit.category==='basic'?'p3.drawBasic':'p3.drawComponent')}</p>${['shiba','hat_wizard'].includes(id)?`<aside class="locked-pair">${tr('p3.lockedPair')}</aside>`:''}`;
+    else if(enemy)body=`<div class="book-stat-pills"><span>❤️ ${tr('p7.hp',{value:enemy.hp})}</span><span>💨 ${tr('p7.speed',{value:enemy.speed})}</span><span>🛡️ ${tr('p7.armor',{value:Math.round(enemy.armor*100)})}</span>${enemy.boss?`<span>${sceneSticker('ui_clock_sand','',16)} ${tr('p1.cooldown',{time:enemy.interval})}</span>`:''}</div><p>${tr(enemy.boss?`p1.boss.${id}.mechanic`:`p3.minion.${id}.mechanic`)}</p><aside class="counter-tip"><b>${tr('p1.counter')}</b><p>${tr(enemy.boss?`p1.boss.${id}.tip`:`p3.minion.${id}.tip`)}</p></aside>`;
+    else if(weapon)body=`<div class="book-stat-pills"><span class="book-pill-sticker">${sceneSticker('ui_weapon_fragment','',18)}${tr('p1.unlock',{count:RARITY_RULES[weapon.rarity].fragments})}</span><span>${tr('m2.damage',{value:Math.round(RARITY_RULES[weapon.rarity].damageBonus*100)})}</span></div><p>${tr(`weapon.${id}.desc`)}</p>${weapon.signatureHero?`<button type="button" class="signature-link" data-action="compendium-entry:${weapon.signatureHero}">${sticker(weapon.signatureHero,64)}<span>${tr('m2.signature',{hero:t(`hero.${weapon.signatureHero}`)})}</span></button>`:''}`;
+    else if(prop)body=`<div class="book-stat-pills"><span>${tr(`m2.${prop.type}`)}</span><span class="book-pill-sticker">${sceneSticker('ui_coin_gold','',18)}${tr('p1.price',{price:prop.price})}</span><span class="book-pill-sticker">${sceneSticker('ui_clock_sand','',16)}${tr(prop.type==='active'?'p1.cooldown':'p1.auto',{time:prop.cooldown})}</span></div><p>${tr(`prop.${id}.desc`)}</p>`;
+    return `<div class="compendium-detail-bar"><button type="button" data-action="compendium-back">${tr('p7.back')}</button><div><button type="button" data-action="compendium-prev" ${index<0?'disabled':''}>◀ ${tr('p7.prev')}</button><span aria-live="polite">${index<0?'—':`${index+1} / ${ids.length}`}</span><button type="button" data-action="compendium-next" ${index<0?'disabled':''}>${tr('p7.next')} ▶</button></div></div><article class="compendium-detail-sheet encyclopedia-card rarity-${this.rarity(id)}" data-entry="${id}" ${this.entry(id)}><div class="detail-showcase"><span class="storybook-frame tone-${tab}${hero&&this.previewAwakened?' is-awakened-frame':''}">${this.art(id,136,!!hero&&this.previewAwakened)}</span>${hero?this.awakenedToggle(id):''}<h4>${name(id)}</h4><p class="storybook-tagline">${this.tagline(id)}</p><span class="detail-family">${this.family(id)}</span>${this.statusTop(id,profile)}${formulas}</div><div class="detail-stats">${this.available(id)?body:this.lockedMessage(id)}</div></article>`;
   }
   markup(profile:Profile,unrestricted=isTestProfile()):string {
     const roster=progressionFor(profile,unrestricted);this.unlocked=new Set([...roster.units,...roster.heroes,...roster.minions,...roster.bosses]);

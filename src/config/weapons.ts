@@ -62,10 +62,9 @@ const magic: WeaponRow[] = [
 export const WEAPONS: Record<string,WeaponDefinition> = Object.fromEntries(
   (Object.entries({melee,ranged,magic}) as [WeaponFamily,WeaponRow[]][]).flatMap(([family,rows]) => rows.map((row,index) => {
     const rarity = (index < 8 ? Math.floor(index/2) : 4) as WeaponDefinition['rarity'];
-    const bonus = Math.round(RARITY_RULES[rarity].damageBonus*100);
     const [id,zh,en,zhDesc,enDesc,signatureHero] = row;
     const definition: WeaponDefinition = {id,family,rarity,name:{'zh-CN':zh,en},
-      description:{'zh-CN':index===0 ? zhDesc : `基础伤害 +${bonus}%。${zhDesc}`,en:index===0 ? enDesc : `Base damage +${bonus}%. ${enDesc}`}};
+      description:{'zh-CN':zhDesc,en:enDesc}};
     if (signatureHero) definition.signatureHero = signatureHero;
     return [id,definition];
   })),

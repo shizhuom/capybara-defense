@@ -7,8 +7,8 @@
 #hud-speed[data-speed="3"] { background:#f5a962;color:#47220d;box-shadow:0 0 0 2px #ffe69b,0 0 12px #f2ad4880; }
 .resource-dock .wave-pill.endless-wave { background:linear-gradient(135deg,#ffdf7d,#f5a65f);border-color:#9b5225; }
 .resource-dock .wave-pill.endless-wave strong { color:#3b1f0b; }
-.endless-wave #hud-wave { display:flex;align-items:center;gap:.2cqw;white-space:nowrap; }
-.endless-wave #hud-wave [data-sticker] { display:block;width:2.2cqw;height:2.2cqw; }
+.endless-wave #hud-wave { display:flex;align-items:center;gap:.18cqw;font-size:1.38cqw;white-space:nowrap; }
+.endless-wave #hud-wave [data-sticker] { display:block;width:2cqw;height:2cqw; }
 #early-wave-button b { font-size:max(12px,1.16cqw);font-weight:900; }
 #early-wave-button.early-coached { position:relative;z-index:27;outline:3px solid #ffdd64;outline-offset:3px;animation:early-bonus-pulse 1.5s ease-in-out infinite; }
 @keyframes early-bonus-pulse { 50% { box-shadow:0 0 0 8px #ffd85b50,0 0 22px #ffc843a0; } }
@@ -57,12 +57,12 @@
  .early-tip-heading strong { font-size:16px; }
  .early-tip-bubble p { font-size:14px; }
  .early-tip-actions button { font-size:13px;min-height:38px; }
- #passive-rail { right:.5%;width:5cqw;top:19%;gap:1.3cqw; }
- .passive-slot-pill { width:4.8cqw;height:4.8cqw;border-width:1px; }
- .passive-slot-pill>span:first-child :is(img,svg) { width:4cqw;height:4cqw; }
- .passive-rail-heading b { font-size:7px;padding:0 2px; }
- .passive-rail-heading :is(img,svg) { width:3.5cqw;height:3.5cqw; }
- .passive-slot-pill>small { font-size:7px;right:-1px;bottom:-4px;padding:0 2px; }
+ #passive-rail { right:.5%;width:4.4cqw;top:10%;gap:.55cqw; }
+ .passive-slot-pill { width:3.9cqw;height:3.9cqw;border-width:1px; }
+ .passive-slot-pill>span:first-child :is(img,svg) { width:3.2cqw;height:3.2cqw; }
+ .passive-rail-heading b { font-size:6.5px;padding:0 2px; }
+ .passive-rail-heading :is(img,svg) { width:2.4cqw;height:2.4cqw; }
+ .passive-slot-pill>small { font-size:6.5px;right:-1px;bottom:-3px;padding:0 2px; }
  .passive-tooltip { width:200px;top:-20px; }
  .page-shell #live-unit-card:not(.dock-left) { right:5.8cqw; }
 }

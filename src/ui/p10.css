@@ -74,6 +74,13 @@
   border:2.5px solid #6B5047;border-radius:12px;background:#E9F0E2;box-shadow:inset 0 0 12px #FFFCF680;
 }
 #game-dialog.recipe-dialog .storybook-frame.tone-heroes { background:#F6ECD8; }
+#game-dialog.recipe-dialog .storybook-frame.is-awakened-frame { border-color:#c98a2e;background:radial-gradient(circle,#fff9e6 35%,#f8dc9c 100%);box-shadow:0 0 0 3px #f3d27a; }
+#game-dialog.recipe-dialog .compendium-awakened-bar { display:flex;flex-direction:column;align-items:center;gap:4px;margin:8px 0 4px; }
+#game-dialog.recipe-dialog .ledger-body .compendium-awakened-toggle { padding:4px 14px;min-height:32px;border:1.5px solid #9a6a1f;border-radius:999px;background:#fff6df;color:#5a3d1a!important;font-size:13px!important;font-weight:900;cursor:pointer; }
+#game-dialog.recipe-dialog .ledger-body .compendium-awakened-toggle.is-awakened { background:#b5462e;border-color:#7a2918;color:#ffe9a8!important; }
+#game-dialog.recipe-dialog .ledger-body .compendium-awakened-hint { color:#7a5a3f!important;font-size:12px!important;font-weight:800;text-align:center;line-height:1.35; }
+#game-dialog.recipe-dialog .book-pill-sticker { display:inline-flex;align-items:center;gap:4px; }
+#game-dialog.recipe-dialog .book-pill-sticker [data-sticker] { width:18px;height:18px;flex:none; }
 #game-dialog.recipe-dialog .storybook-frame.tone-bosses { background:#F3E4E0; }
 #game-dialog.recipe-dialog .storybook-frame.tone-weapons { background:#E5EDF2; }
 #game-dialog.recipe-dialog .storybook-frame.tone-props { background:#F1E9DF; }

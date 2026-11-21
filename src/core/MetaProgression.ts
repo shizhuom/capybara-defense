@@ -8,7 +8,7 @@ import { FACILITY_IDS } from '../config/village';
 import { copyVillage, createVillage, normalizeVillage } from './VillageState';
 import { MEDALLION_IDS, MEDALLION_MAX_LEVEL } from '../config/medallions';
 import { normalizeMedallions } from './MedallionProgression';
-import { SESSION_PLAYER_ID, normalizePlayerId, validateNickname } from './PlayerIdentity';
+import { SESSION_PLAYER_ID, SESSION_WRITE_SECRET, normalizePlayerId, normalizeWriteSecret, validateNickname } from './PlayerIdentity';
 import { HEROES as HERO_TABLE } from '../config/heroes';
 import { DEFAULT_SETTINGS, getUnlockedMaps, unlockAchievements, updateSettings } from './PlayerProgression';
 import type { Profile } from './types';
@@ -41,8 +41,8 @@ export function createProfile():Profile {
     ingredients:{...STARTER_INGREDIENTS},unlockedBroths:[],brothLevels:{},activeBrothId:null,
     // P16: the starter pool, 6 wood, 2 essence and a 15-minute welcome harvest.
     village:createVillage(),
-    // P17: no crests, six Lv.0 medallions and an anonymous global-board id (stable for this session until saved).
-    endlessCrests:0,endlessMedallions:normalizeMedallions(null),playerId:SESSION_PLAYER_ID,nickname:''};
+    // P17: no crests, six Lv.0 medallions and an anonymous global-board id + write secret (stable for this session until saved).
+    endlessCrests:0,endlessMedallions:normalizeMedallions(null),playerId:SESSION_PLAYER_ID,writeSecret:SESSION_WRITE_SECRET,nickname:''};
 }
 /** Granted to brand-new saves and once to pre-P14 saves that never had an `ingredients` field. */
 export const STARTER_INGREDIENTS:Readonly<Record<string,number>>=Object.freeze({ing_yuzu:2});
@@ -56,11 +56,12 @@ function normalizeKitchen(p:Profile,data:Record<string,unknown>):void {
   p.brothLevels=Object.fromEntries(p.unlockedBroths.map(id=>[id,clampBrothLevel(levels[id])]));
   p.activeBrothId=typeof data.activeBrothId==='string'&&p.unlockedBroths.includes(data.activeBrothId)?data.activeBrothId:null;
 }
-/** P17 fields are optional in old saves: zero crests, Lv.0 medallions, a fresh id and the default nickname. */
+/** P17 fields are optional in old saves: zero crests, Lv.0 medallions, a fresh id/secret and the default nickname. */
 function normalizeEndless(p:Profile,data:Record<string,unknown>):void {
   p.endlessCrests=count(data.endlessCrests);
   p.endlessMedallions=normalizeMedallions(data.endlessMedallions);
   p.playerId=normalizePlayerId(data.playerId);
+  p.writeSecret=normalizeWriteSecret(data.writeSecret);
   const name=validateNickname(data.nickname);p.nickname=name.ok?name.value:'';
   // Best-run metadata only travels with a real endless record.
   if((p.bestEndlessWave??0)>=11){

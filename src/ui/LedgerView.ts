@@ -20,9 +20,9 @@ export function ledgerTabs(page:LedgerPage):string {
   const prefix=page==='armory'?'meta-family:':page==='market'?'meta-tab:':'';
   return `<nav class="ledger-tabs ${prefix?'meta-tabs':'profile-navigation'}" aria-label="${tr('p5.notebookTabs')}">${tabs.map(tab=>`<button type="button" data-action="${prefix}${tab}" aria-pressed="${active===tab}" class="${active===tab?'selected':''}">${tr(`p11.tab.${tab}`)}</button>`).join('')}</nav>`;
 }
-export interface LedgerOptions {profile?:Profile;tabs?:string;badges?:string;inBattle?:boolean;preparation?:boolean}
+export interface LedgerOptions {profile?:Profile;tabs?:string;badges?:string;inBattle?:boolean;preparation?:boolean;mascot?:Parameters<typeof sceneSticker>[0]}
 export function ledger(page:LedgerPage,body:string,options:LedgerOptions={}):string {
-  const headerId=({compendium:'ui_compendium_peek_capy',armory:'ui_armory_peek_capy',market:'ui_market_peek_raccoon',leaderboard:'ui_rank_peek_capy',profile:'ui_profile_peek_capy',settings:'ui_profile_peek_capy',kitchen:'ui_kitchen_peek_capy',village:'ui_village_peek_capy',medallions:'ui_medallion_peek_capy','endless-board':'ui_rank_peek_capy'} as const)[page];
+  const headerId=options.mascot??({compendium:'ui_compendium_peek_capy',armory:'ui_armory_peek_capy',market:'ui_market_peek_raccoon',leaderboard:'ui_rank_peek_capy',profile:'ui_profile_peek_capy',settings:'ui_profile_peek_capy',kitchen:'ui_kitchen_peek_capy',village:'ui_village_peek_capy',medallions:'ui_medallion_peek_capy','endless-board':'ui_rank_peek_capy'} as const)[page];
   const close=page==='compendium'?'close-recipes':page==='kitchen'?'close-kitchen':page==='village'?'close-village':page==='medallions'?'close-medallions':page==='armory'||page==='market'?'close-meta':'close-profile';
   const profile=options.profile;
   const summary=!profile||page==='settings'||page==='endless-board'?'':page==='armory'?tr('p11.unlocked',{count:profile.unlockedWeapons.length}):page==='market'?`${sceneSticker('ui_coin_gold','',18)} ${profile.coins} <span aria-hidden="true">·</span> ${sceneSticker('ui_ticket_gacha','',18)} ${profile.freeLotteryTickets}`:`${sceneSticker('ui_star_rank','',18)} ${profile.stars}`;

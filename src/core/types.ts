@@ -91,7 +91,7 @@ export interface Profile extends BattleLoadout {
   village:VillageState;
   /** P17 endless crests, medallion levels (6 ids, 0..50) and the anonymous global-board identity. */
   endlessCrests:number; endlessMedallions:Record<string,number>;
-  playerId:string; nickname:string;
+  playerId:string; writeSecret:string; nickname:string;
   /** Metadata of the best endless run (submitted to the global board). */
   bestEndlessTime?:number; bestEndlessMvp?:string; bestEndlessMvpAwakened?:boolean; bestEndlessAwakened?:number;
 }

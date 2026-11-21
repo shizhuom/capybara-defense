@@ -746,9 +746,17 @@ export class StickerRenderer {
     const c=this.c,text=t(event.textKey||'render.chill',{value:event.value??0}),size=14;
     c.font=`800 ${size}px ${FONT}`;
     const lines=this.wrapText(text,208),width=Math.min(230,Math.max(...lines.map(text=>c.measureText(text).width))+23),height=lines.length*19+15;
-    const x=clamp(from.x-width/2,18,STAGE.width-18-width),y=Math.max(18,from.y-height-45-p*9);
+    const x=clamp(from.x-width/2,18,STAGE.width-18-width);
+    const aboveY=from.y-height-45-p*9;
+    const below=aboveY<STAGE.boardY+6;
+    const y=below?Math.min(STAGE.height-height-18,from.y+42+p*6):aboveY;
     c.globalAlpha=Math.min(1,(1-p)*4);
-    polygon(c,[[clamp(from.x,x+12,x+width-12)-7,y+height-1],[clamp(from.x,x+12,x+width-12)+5,y+height+8],[clamp(from.x,x+12,x+width-12)+9,y+height-1]],'#fffbed',INK,1.7);
+    const tailX=clamp(from.x,x+12,x+width-12);
+    if(below){
+      polygon(c,[[tailX-7,y+1],[tailX+5,y-8],[tailX+9,y+1]],'#fffbed',INK,1.7);
+    }else{
+      polygon(c,[[tailX-7,y+height-1],[tailX+5,y+height+8],[tailX+9,y+height-1]],'#fffbed',INK,1.7);
+    }
     round(c,x,y,width,height,11,'#fffbed',INK,1.8);
     lines.forEach((text,i)=>this.label(text,x+width/2,y+16+i*19,size,INK,'center',800));
   }

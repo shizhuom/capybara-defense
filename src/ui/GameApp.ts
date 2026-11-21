@@ -91,10 +91,11 @@ export class GameApp {
   private kitchen: KitchenScreen;
   private village: VillageScreen;
   private medallions: MedallionScreen;
-  /** P17 global endless board: shared client, loading flag, unsaved nickname draft and the last synced rank. */
+  /** P17 global endless board: shared client, loading flag, unsaved nickname draft, hub-mode lock and last synced rank. */
   private board = new EndlessLeaderboardClient();
   private boardLoading = false;
   private boardDraft?: string;
+  private endlessHubMode = false;
   private globalRank?: number;
   private p17EventId = 0;
   private sound = new SoundManager(this.profile.settings);
@@ -137,7 +138,8 @@ export class GameApp {
     this.medallions = new MedallionScreen(() => this.profile, profile => this.acceptPersistedProfile(profile),
       () => { if (this.dialogKind === 'medallions') this.renderDialog(); }, (key, error, vars) => this.notify(key, error, vars), cue => this.sound.play(cue));
     this.profileScreens = new ProfileScreens(() => this.profile, profile => this.persistProfile(profile), () => this.refresh(true), key => this.notify(key),
-      () => ({ snapshot: this.board.snapshot(), loading: this.boardLoading, nicknameDraft: this.boardDraft }));
+      () => ({ snapshot: this.board.snapshot(), loading: this.boardLoading, nicknameDraft: this.boardDraft, endlessHub: this.endlessHubMode }),
+      () => { if ((this.profile.bestEndlessWave ?? 0) >= 11 && this.board.configured) this.syncEndlessScore(); });
     this.root.innerHTML = this.shell();
     this.canvas = this.element<HTMLCanvasElement>('battle-canvas');
     this.dialog = this.element<HTMLDialogElement>('game-dialog');
@@ -412,17 +414,40 @@ export class GameApp {
       if (this.dialogKind === 'endless-board') this.renderDialog();
     });
   }
-  /** Validates and saves the nickname locally first; a ranked player also re-syncs it to the board. */
-  private saveNickname(): void {
+  /** Validates and saves the nickname; strictly rejects duplicate names on the global board without losing the draft. */
+  private async saveNickname(): Promise<void> {
     const input = this.dialog.querySelector<HTMLInputElement>('[data-endless-nickname]');
     const check = validateNickname(input?.value ?? this.boardDraft ?? '');
     if (!check.ok) { this.notify(check.key, true); return; }
-    if (!this.persistProfile({ ...this.profile, nickname: check.value })) return;
+    const candidate: Profile = { ...this.profile, nickname: check.value };
+    if (this.board.configured) {
+      if ((this.profile.bestEndlessWave ?? 0) >= 11) {
+        const outcome = await this.board.submitScore(candidate, getLanguage());
+        if (outcome.ok) {
+          if (!this.persistProfile(candidate)) return;
+          this.boardDraft = undefined; this.notify('p17.board.synced');
+          if (this.dialogKind === 'endless-board') this.refreshBoard(true); else this.renderDialog();
+          return;
+        }
+        if (outcome.mode === 'offline') {
+          if (!this.persistProfile(candidate)) return;
+          this.boardDraft = undefined; this.notify('p17.nameSavedOffline'); this.renderDialog();
+          return;
+        }
+        this.boardDraft = check.value; this.notify(outcome.key, true); this.renderDialog();
+        return;
+      }
+      const availability = await this.board.checkNickname(check.value, this.profile.playerId);
+      if (!availability.available) {
+        this.boardDraft = check.value; this.notify(availability.key ?? 'p17.nameTaken', true); this.renderDialog();
+        return;
+      }
+      if (!this.persistProfile(candidate)) return;
+      this.boardDraft = undefined; this.notify(availability.mode === 'offline' ? 'p17.nameSavedOffline' : 'p17.nameSaved'); this.renderDialog();
+      return;
+    }
+    if (!this.persistProfile(candidate)) return;
     this.boardDraft = undefined; this.notify('p17.nameSaved'); this.renderDialog();
-    if ((this.profile.bestEndlessWave ?? 0) >= 11 && this.board.configured) void this.board.submitScore(this.profile, getLanguage()).then(outcome => {
-      if (outcome.ok) { this.notify('p17.board.synced'); if (this.dialogKind === 'endless-board') this.refreshBoard(true); }
-      else if (outcome.key === 'p17.board.rateLimited') this.notify(outcome.key, true);
-    });
   }
 
   private refresh(force = false): void {
@@ -828,6 +853,7 @@ export class GameApp {
     this.dialog.classList.toggle('meta-dialog', kind === 'armory' || kind === 'market' || kind === 'kitchen' || kind === 'village' || kind === 'medallions');
     this.dialog.classList.toggle('medallion-dialog', kind === 'medallions');
     this.dialog.classList.toggle('endless-board-dialog', kind === 'endless-board');
+    this.dialog.classList.toggle('endless-hub-dialog', kind === 'medallions' || (kind === 'endless-board' && this.endlessHubMode));
     this.dialog.classList.toggle('kitchen-dialog', kind === 'kitchen');
     this.dialog.classList.toggle('village-dialog', kind === 'village');
     this.dialog.classList.toggle('profile-dialog', kind === 'profile' || kind === 'leaderboard' || kind === 'endless-board');
@@ -967,6 +993,8 @@ export class GameApp {
   private closeProfileScreen(): void {
     const previous = this.overlayReturn;
     this.overlayReturn = null;
+    this.endlessHubMode = false;
+    this.boardDraft = undefined;
     if (previous?.dialog) this.showDialog(previous.dialog);
     else this.closeDialog(previous?.resume ?? false);
     this.refresh();
@@ -1340,19 +1368,25 @@ export class GameApp {
       }
       return;
     }
+    if(action==='compendium-awakened-toggle'){
+      this.compendium.toggleAwakened();this.renderDialog();
+      this.dialog.querySelector<HTMLElement>('[data-action="compendium-awakened-toggle"]')?.focus({preventScroll:true});
+      return;
+    }
     if(action==='tutorial-skip'||action==='tutorial-ack'){this.progressTutorial(action==='tutorial-skip'?'skip':'acknowledge');return;}
     if(action==='tutorial-replay'){
       if(!this.persistProfile(replayTutorial(this.profile)))return;
       this.start(true);return;
     }
     if (this.profileScreens.action(action)) return;
-    if (action === 'profile' || action === 'leaderboard' || action === 'endless-board' || action === 'settings' || action === 'brand') { this.openProfileScreen(action === 'brand' ? 'profile' : action); return; }
+    if (action === 'profile' || action === 'leaderboard' || action === 'settings' || action === 'brand') { this.endlessHubMode = false; this.openProfileScreen(action === 'brand' ? 'profile' : action); return; }
+    if (action === 'endless-board') { this.openProfileScreen('endless-board'); return; }
     if (action === 'close-profile') { this.closeProfileScreen(); return; }
-    // P17 medallion hall shares the profile overlay, so hall ↔ board ↔ rank tabs return to the same place.
-    if (action === 'medallions') { this.medallions.open(); this.openProfileScreen('medallions'); return; }
+    // P17 medallion hall owns a dedicated two-tab Endless window ([ Medallions | Global Board ]).
+    if (action === 'medallions') { this.endlessHubMode = true; this.medallions.open(); this.openProfileScreen('medallions'); return; }
     if (action === 'close-medallions') { this.closeProfileScreen(); return; }
     if (action === 'endless-board-refresh') { this.refreshBoard(true); return; }
-    if (action === 'endless-name-save') { this.saveNickname(); return; }
+    if (action === 'endless-name-save') { void this.saveNickname(); return; }
     if (this.dialogKind === 'medallions' && this.medallions.action(action)) {
       const id = action.split(':')[1]; this.dialog.querySelector<HTMLElement>(`.medallion-row[data-medallion-id="${CSS.escape(id ?? '')}"] [data-action^="medallion-up"]`)?.focus({ preventScroll: true });
       return;

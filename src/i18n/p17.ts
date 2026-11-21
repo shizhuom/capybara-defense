@@ -49,24 +49,28 @@ const copy = {
  'p17.breakthroughPanel':['无尽突破','Endless breakthrough'],
  'p17.breakthroughChance':['成功率 {pct}%','Chance {pct}%'],
  'p17.breakdown':['基础 {base}% + 战意 {spirit}% + 勋章 {medal}% + 保底 {pity}%','Base {base}% + Spirit {spirit}% + Medal {medal}% + Pity {pity}%'],
- 'p17.feedToBreak':['再喂一个组件或同款 Lv.5 即可掷骰突破','Feed a part or a Lv.5 twin to roll'],
+ 'p17.feedToBreak':['再喂组件或同款 Lv.5 掷骰突破','Feed a part or Lv.5 twin to roll'],
  'p17.breakLater':['进入无尽模式后可再合成突破','Breakthrough unlocks in Endless'],
  'p17.awakenedBadge':['✦ 已觉醒突破','✦ Awakened'],
  'p17.awakenedPower':['无尽倍伤 ×{value}','Endless power ×{value}'],
  'p17.canBreak':['可突破 {pct}%','Awaken {pct}%'],
- // Settlement
+ 'p17.awakenedToggle.normal':['普通形态','Standard'],
+ 'p17.awakenedToggle.awakened':['✦ 无尽觉醒','✦ Awakened'],
+ 'p17.awakenedHint':['无尽第 11 波起，Lv.5 再喂一次组件即可觉醒突破','In Endless (Wave 11+), feed Lv.5 one more part to awaken'],
+ // Settlement & Pause
  'p17.resultCrests':['无尽星徽 ×{count}','Endless crests ×{count}'],
+ 'p17.pauseCrests':['本局已获无尽星徽','Endless Crests Earned'],
  'p17.globalRank':['🌍 全球第 #{rank} 名','🌍 Global #{rank}'],
  'p13.endlessScalingShort':['×1.25 → ×1.56 → ×1.95 → …','×1.25 → ×1.56 → ×1.95 → …'],
- // Global endless board (profile ledger tab)
- 'p11.tab.endless-board':['无尽全球榜','Endless Board'],
+ // Global endless board (profile ledger tab & endless hub tab)
+ 'p11.tab.endless-board':['无尽全球榜','Global Board'],
  'p11.title.endless-board':['无尽全球榜','Global Endless Board'],
- 'p11.tip.endless-board.1':['匿名上榜，不用注册；改昵称会同步到全球榜','Join anonymously, no sign-up; a new nickname syncs to the board'],
+ 'p11.tip.endless-board.1':['匿名上榜，不用注册；昵称全服唯一，改名同步上榜','Join anonymously, no sign-up; nicknames are unique globally'],
  'p11.tip.endless-board.2':['无尽每多守一波、用时更短，排名就更靠前','Reach a higher wave, or the same wave faster, to climb'],
  'p17.board.nickname':['昵称','Nickname'],
  'p17.board.save':['保存','Save'],
  'p17.board.refresh':['↻ 刷新','↻ Refresh'],
- 'p17.board.medallions':['🔥 无尽勋章','🔥 Medallions'],
+ 'p17.board.medallions':['无尽勋章','Medallions'],
  'p17.board.best':['最高 第 {wave} 波','Best: Wave {wave}'],
  'p17.board.noBest':['还没有无尽记录，打通第 10 波后挑战无尽吧','No endless record yet: clear Wave 10, then go Endless'],
  'p17.board.rank':['全球第 #{rank} 名 / 共 {total} 人','Global #{rank} of {total}'],
@@ -87,7 +91,9 @@ const copy = {
  'p17.nameTooShort':['昵称至少 2 个字','Nicknames need at least 2 characters'],
  'p17.nameTooLong':['昵称最多 14 个字','Nicknames can be up to 14 characters'],
  'p17.nameUnkind':['换一个更温柔的昵称吧','Please pick a kinder nickname'],
+ 'p17.nameTaken':['这个昵称已被其他守护者使用，换一个试试吧','That nickname is already taken — please pick another'],
  'p17.nameSaved':['昵称已保存','Nickname saved'],
+ 'p17.nameSavedOffline':['昵称已保存本机，联网后将校验并同步','Nickname saved locally; it will verify and sync online'],
 } as const;
 export const p17Zh:Record<string,string>=Object.fromEntries(Object.entries(copy).map(([key,value])=>[key,(value as readonly [string,string])[0]]));
 export const p17En:Record<string,string>=Object.fromEntries(Object.entries(copy).map(([key,value])=>[key,(value as readonly [string,string])[1]]));

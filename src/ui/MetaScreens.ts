@@ -182,10 +182,13 @@ export class MetaScreens {
   }
 
   private shop(profile: Profile): string {
-    return `<div class="storybook-shop-heading"><button type="button" class="storybook-whisper" data-action="meta-merchant">🦝 ${tr(`p11.meta.merchant${this.merchantQuip}`)}</button><button type="button" class="storybook-pill-btn" data-action="meta-refresh">↻ ${tr('p6.refresh')} · 🪙${META_PRICES.shopRefresh}</button></div><div class="storybook-list">${(profile.shop?.offers ?? []).map(id => {
+    const offers = profile.shop?.offers ?? [];
+    const allMaxed = !Object.values(PROPS).some(p => (profile.ownedProps[p.id] ?? 0) < p.maxLevel);
+    const whisper = allMaxed ? tr('p11.meta.merchantMaxed') : tr(`p11.meta.merchant${this.merchantQuip}`);
+    return `<div class="storybook-shop-heading"><button type="button" class="storybook-whisper" data-action="meta-merchant"><span aria-hidden="true">${sceneSticker('ui_market_peek_raccoon','',32)}</span><span>${whisper}</span></button><button type="button" class="storybook-pill-btn" data-action="meta-refresh"${allMaxed ? ' disabled' : ''}>↻ ${tr('p6.refresh')} · ${sceneSticker('ui_coin_gold','',18)}${META_PRICES.shopRefresh}</button></div><div class="storybook-list">${offers.map(id => {
       if (!Object.hasOwn(PROPS,id)) return '';
       const prop = PROPS[id], level = profile.ownedProps[id] ?? 0;
-      return `<article class="storybook-row-card shop-row rarity-${prop.rarity}" data-prop-id="${id}"><span class="storybook-frame tone-props">${propSticker(id,68)}</span><span class="storybook-copy"><strong class="portrait-name">${tr(`prop.${id}`)}</strong><span class="storybook-meta">${tr(`m2.${prop.type}`)} · Lv.${level}/${prop.maxLevel}</span><span class="storybook-tagline">${tr(`prop.${id}.desc`)}</span></span><span class="storybook-action-col">${level >= prop.maxLevel ? `<span class="storybook-status is-owned"><b>${tr('m2.maxed')}</b>${sceneSticker('ui_storybook_check','',24)}</span>` : `<button type="button" class="storybook-buy-btn" data-action="meta-buy:${id}" aria-label="${tr(level ? 'p11.meta.upgradeShort' : 'p11.meta.buyShort')} ${tr(`prop.${id}`)} · ${prop.price}">🪙 ${prop.price}<span>${tr(level ? 'p11.meta.upgradeShort' : 'p11.meta.buyShort')}</span></button>`}</span></article>`;
+      return `<article class="storybook-row-card shop-row rarity-${prop.rarity}" data-prop-id="${id}"><span class="storybook-frame tone-props">${propSticker(id,68)}</span><span class="storybook-copy"><strong class="portrait-name">${tr(`prop.${id}`)}</strong><span class="storybook-meta">${tr(`m2.${prop.type}`)} · Lv.${level}/${prop.maxLevel}</span><span class="storybook-tagline">${tr(`prop.${id}.desc`)}</span></span><span class="storybook-action-col">${level >= prop.maxLevel ? `<span class="storybook-status is-owned"><b>${tr('m2.maxed')}</b>${sceneSticker('ui_storybook_check','',24)}</span>` : `<button type="button" class="storybook-buy-btn" data-action="meta-buy:${id}" aria-label="${tr(level ? 'p11.meta.upgradeShort' : 'p11.meta.buyShort')} ${tr(`prop.${id}`)} · ${prop.price}">${sceneSticker('ui_coin_gold','',18)} ${prop.price}<span>${tr(level ? 'p11.meta.upgradeShort' : 'p11.meta.buyShort')}</span></button>`}</span></article>`;
     }).join('') || `<p class="storybook-empty">${tr('m2.shopEmpty')}</p>`}</div>`;
   }
 
@@ -207,7 +210,11 @@ export class MetaScreens {
   private lottery(): string {
     const profile = this.profile(), positions = [0,1,2,5,8,7,6,3];
     const cells = Array.from({length:9},(_,position) => {
-      if (position === 4) return `<button type="button" class="lottery-center" data-action="meta-spin:coins"${this.spinning || profile.coins < META_PRICES.lottery ? ' disabled' : ''}><b>${tr(this.spinning ? 'm2.spinning' : 'm2.spin')}</b><span class="gacha-price">${sceneSticker('ui_coin_gold','',24)}<strong>${META_PRICES.lottery}</strong></span></button>`;
+      if (position === 4) {
+        const useTicket = profile.freeLotteryTickets > 0;
+        const disabled = this.spinning || (!useTicket && profile.coins < META_PRICES.lottery);
+        return `<button type="button" class="lottery-center${useTicket ? ' has-ticket' : ''}" data-action="meta-spin:${useTicket ? 'ticket' : 'coins'}"${disabled ? ' disabled' : ''}><b>${tr(this.spinning ? 'm2.spinning' : 'm2.spin')}</b><span class="gacha-price">${sceneSticker(useTicket ? 'ui_ticket_gacha' : 'ui_coin_gold','',24)}<strong>${useTicket ? `×${profile.freeLotteryTickets}` : META_PRICES.lottery}</strong></span></button>`;
+      }
       const index = positions.indexOf(position), prize = this.prizes[index];
       return `<div class="lottery-cell ${index === this.highlight ? 'lit' : ''}" title="${prize ? this.prizeText(prize) : ''}"><span>${prize?.type === 'prop' ? propSticker(prize.id!,56) : prize?.type === 'coins' ? sceneSticker('ui_coin_gold','',56) : prize?.id ? weaponSticker(prize.id,56) : '✦'}</span><small>${prize ? this.prizeText(prize) : ''}</small></div>`;
     });

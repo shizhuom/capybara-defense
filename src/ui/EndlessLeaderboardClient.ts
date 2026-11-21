@@ -2,7 +2,7 @@ import type {Profile} from '../core/types';
 import {HEROES} from '../config/heroes';
 import {AVATARS} from '../config/avatars';
 import {medallionTotalLevel} from '../config/medallions';
-import {displayNickname,isValidPlayerId} from '../core/PlayerIdentity';
+import {displayNickname,isValidPlayerId,isValidWriteSecret,SESSION_WRITE_SECRET} from '../core/PlayerIdentity';
 import {readSetting,writeSetting,browserStorage} from './storage';
 
 /**
@@ -18,7 +18,12 @@ export const BOARD_REFRESH_MS=30_000;
 export const DEFAULT_LEADERBOARD_API_URL='';
 
 export interface LeaderboardEntry {
-  rank:number;playerId:string;nickname:string;avatarId:string;bestWave:number;elapsedSeconds:number;
+  rank:number;
+  /** True only for the current player's own row; raw `playerId` is never returned for other players. */
+  isMe?:boolean;
+  /** Optional legacy/local identifier (present only in local offline rows or pre-P17.1 cache). */
+  playerId?:string;
+  nickname:string;avatarId:string;bestWave:number;elapsedSeconds:number;
   mvpKind:string;mvpAwakened:boolean;awakenedCount:number;medallionTotal:number;updatedAt:number;
 }
 export type BoardMode='online'|'offline'|'unconfigured';
@@ -28,10 +33,11 @@ export interface LeaderboardSnapshot {
   fetchedAt:number|null;
 }
 export interface ScoreSubmission {
-  playerId:string;nickname:string;avatarId:string;bestWave:number;elapsedSeconds:number;
+  playerId:string;writeSecret:string;nickname:string;avatarId:string;bestWave:number;elapsedSeconds:number;
   mvpKind:string;mvpAwakened:boolean;awakenedCount:number;medallionTotal:number;
 }
 export interface SubmitOutcome {ok:boolean;mode:BoardMode;rank?:number;totalPlayers?:number;improved?:boolean;key:string}
+export interface NicknameCheckOutcome {available:boolean;mode:BoardMode;key?:string}
 export interface ClientOptions {
   baseUrl?:string;fetch?:typeof fetch;storage?:Storage;timeoutMs?:number;now?:()=>number;
 }
@@ -46,14 +52,21 @@ export function resolveLeaderboardUrl():string {
 
 const int=(value:unknown,min:number,max:number):number|null=>typeof value==='number'&&Number.isSafeInteger(value)&&value>=min&&value<=max?value:null;
 const text=(value:unknown,max:number):string=>typeof value==='string'?value.slice(0,max):'';
-/** Strict parse of one row from the Worker (snake_case from D1 or camelCase); malformed rows are dropped. */
+/** Strict parse of one row from the Worker (secure `isMe` format or legacy `player_id` cache); malformed rows are dropped. */
 export function parseEntry(raw:unknown,fallbackRank=0):LeaderboardEntry|null {
   if(!raw||typeof raw!=='object')return null;
   const r=raw as Record<string,unknown>,pick=(camel:string,snake:string)=>r[camel]??r[snake];
-  const playerId=pick('playerId','player_id'),bestWave=int(pick('bestWave','best_wave'),1,100_000);
-  if(!isValidPlayerId(playerId)||bestWave===null)return null;
+  const rawId=pick('playerId','player_id');
+  const bestWave=int(pick('bestWave','best_wave'),1,100_000);
+  if(bestWave===null)return null;
+  if(rawId!==undefined&&!isValidPlayerId(rawId))return null;
+  const isMe=typeof r.isMe==='boolean'?r.isMe:undefined;
+  if(rawId===undefined&&isMe===undefined&&typeof r.nickname!=='string')return null;
   const mvp=text(pick('mvpKind','mvp_kind'),40),avatar=text(pick('avatarId','avatar_id'),40);
-  return{rank:int(r.rank,1,10_000_000)??fallbackRank,playerId,nickname:text(r.nickname,32)||'Capy',
+  return{rank:int(r.rank,1,10_000_000)??fallbackRank,
+    ...(isMe!==undefined?{isMe}:{}),
+    ...(isValidPlayerId(rawId)?{playerId:rawId}:{}),
+    nickname:text(r.nickname,32)||'Capy',
     avatarId:Object.hasOwn(AVATARS,avatar)?avatar:'capybara',bestWave,
     elapsedSeconds:int(pick('elapsedSeconds','elapsed_seconds'),0,10_000_000)??0,
     mvpKind:Object.hasOwn(HEROES,mvp)?mvp:'kungfu_po',mvpAwakened:Boolean(pick('mvpAwakened','mvp_awakened')),
@@ -72,15 +85,18 @@ export function parseLeaderboard(json:unknown):{entries:LeaderboardEntry[];total
 export function submissionFromProfile(profile:Profile,language:'zh-CN'|'en'='zh-CN'):ScoreSubmission|null {
   const wave=profile.bestEndlessWave??0;
   if(wave<11||!isValidPlayerId(profile.playerId))return null;
+  const writeSecret=isValidWriteSecret(profile.writeSecret)?profile.writeSecret:SESSION_WRITE_SECRET;
   const mvp=profile.bestEndlessMvp&&Object.hasOwn(HEROES,profile.bestEndlessMvp)?profile.bestEndlessMvp:'kungfu_po';
-  return{playerId:profile.playerId,nickname:displayNickname(profile,language),avatarId:Object.hasOwn(AVATARS,profile.avatarId)?profile.avatarId:'capybara',
+  return{playerId:profile.playerId,writeSecret,nickname:displayNickname(profile,language),avatarId:Object.hasOwn(AVATARS,profile.avatarId)?profile.avatarId:'capybara',
     bestWave:wave,elapsedSeconds:Math.max(0,Math.round(profile.bestEndlessTime??0)),mvpKind:mvp,mvpAwakened:profile.bestEndlessMvpAwakened===true,
     awakenedCount:Math.max(0,Math.min(12,profile.bestEndlessAwakened??0)),medallionTotal:medallionTotalLevel(profile)};
 }
 /** This device's own row, shown when the global board is unreachable. */
 export function localEntry(profile:Profile,language:'zh-CN'|'en'='zh-CN'):LeaderboardEntry|null {
   const submission=submissionFromProfile(profile,language);
-  return submission?{...submission,rank:0,updatedAt:0}:null;
+  if(!submission)return null;
+  const {writeSecret:_secret,...pub}=submission;
+  return{...pub,isMe:true,rank:0,updatedAt:0};
 }
 
 export class EndlessLeaderboardClient {
@@ -103,6 +119,16 @@ export class EndlessLeaderboardClient {
   snapshot():LeaderboardSnapshot {return{...this.current,entries:[...this.current.entries]};}
   /** True while a refresh is still inside its 30-second cache window. */
   fresh():boolean {return this.current.mode==='online'&&this.now()-this.lastRefresh<BOARD_REFRESH_MS;}
+
+  /** Checks whether a nickname is available on the global board (even before a player's first Wave 11 run). */
+  async checkNickname(name:string,playerId?:string):Promise<NicknameCheckOutcome> {
+    if(!this.configured)return{available:true,mode:'unconfigured'};
+    const query=new URLSearchParams({name});if(isValidPlayerId(playerId))query.set('playerId',playerId);
+    const data=await this.request(`/api/nickname?${query}`,{method:'GET'}) as Record<string,unknown>|null;
+    if(!data)return{available:true,mode:'offline'};
+    if(data.ok===true)return{available:data.available===true,mode:'online',...(data.available===true?{}:{key:'p17.nameTaken'})};
+    return{available:false,mode:'online',key:data.error==='invalid_nickname'?'p17.nameUnkind':'p17.board.rejected'};
+  }
 
   /** Global Top 100 plus this player's exact rank; cached for 30 s unless `force`. Never rejects. */
   refresh(playerId?:string,force=false):Promise<LeaderboardSnapshot> {
@@ -129,12 +155,15 @@ export class EndlessLeaderboardClient {
     const data=response as Record<string,unknown>|null;
     if(!data||data.ok!==true){
       if(!data)this.current={...this.current,mode:'offline'};
-      return{ok:false,mode:data?'online':'offline',key:!data?'p17.board.offline':data.error==='invalid_nickname'?'p17.nameUnkind':'p17.board.rejected'};
+      const err=data?.error;
+      const key=!data?'p17.board.offline':err==='nickname_taken'?'p17.nameTaken':err==='invalid_nickname'?'p17.nameUnkind':'p17.board.rejected';
+      return{ok:false,mode:data?'online':'offline',key};
     }
     const rank=int(data.rank,1,10_000_000)??undefined,totalPlayers=int(data.totalPlayers,0,Number.MAX_SAFE_INTEGER)??undefined;
     this.lastRefresh=Number.NEGATIVE_INFINITY;// the next visit re-reads the board with the new score
     if(rank!==undefined){
-      const me={...body,rank,updatedAt:this.now()};
+      const {writeSecret:_secret,playerId:_pid,...pub}=body;
+      const me:LeaderboardEntry={...pub,isMe:true,rank,updatedAt:this.now()};
       this.current={...this.current,mode:'online',me,totalPlayers:totalPlayers??this.current.totalPlayers};this.writeCache();
     }
     return{ok:true,mode:'online',rank,totalPlayers,improved:data.improved===true,key:'p17.board.synced'};

@@ -47,7 +47,7 @@
   display:grid;grid-template-columns:82px minmax(0,1fr);align-items:center;gap:14px;min-width:0;min-height:106px;margin:0;padding:12px 4px 12px 14px;
   border:0;border-radius:11px 0 0 11px;background:none;box-shadow:none;color:inherit;text-align:left;font:inherit;cursor:pointer;
 }
-#game-dialog.kitchen-dialog .ledger-body .kitchen-row-open:hover { background:#f7f0e6; }
+#game-dialog.kitchen-dialog .kitchen-row:not(.is-active):hover { background:#f7f0e6; }
 #game-dialog.kitchen-dialog .ledger-body .kitchen-row-open:focus-visible { outline-offset:-4px; }
 #game-dialog.kitchen-dialog .kitchen-row .storybook-action-col { padding:10px 12px 10px 4px; }
 #game-dialog.kitchen-dialog .kitchen-cost-chips { display:flex;flex-wrap:wrap;gap:5px;margin-top:1px; }
@@ -181,9 +181,9 @@
   #game-dialog.kitchen-dialog .kitchen-basket-heading>.storybook-frame { width:60px;height:60px; }
   #game-dialog.kitchen-dialog .kitchen-basket-heading>.storybook-frame [data-sticker] { width:50px;height:50px; }
   #game-dialog.kitchen-dialog .kitchen-ladder-step { padding:9px 10px; }
-  .broth-rail-pill { width:4.8cqw;height:4.8cqw;border-width:1.5px; }
-  .broth-rail-pill>span:first-child :is(img,svg) { width:4cqw;height:4cqw; }
-  .broth-rail-pill>small { font-size:7px;right:-1px;bottom:-4px;padding:0 2px; }
+  .broth-rail-pill { width:4cqw;height:4cqw;margin-bottom:.15cqw;border-width:1.5px; }
+  .broth-rail-pill>span:first-child :is(img,svg) { width:3.3cqw;height:3.3cqw; }
+  .broth-rail-pill>small { font-size:7px;right:-1px;bottom:-3px;padding:0 2px; }
 }
 @media (max-width:760px) and (orientation:portrait) {
   /* Portrait keeps the panorama clean: the soak pill joins the map chips in the lower letterbox. */

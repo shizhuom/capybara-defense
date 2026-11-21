@@ -141,6 +141,8 @@
 #game-dialog.pause-ledger .pause-status-copy p>span { white-space:nowrap;font-size:15px!important; }
 #game-dialog.pause-ledger .pause-status-copy p>span+span::before { content:'·';padding-right:7px; }
 #game-dialog.pause-ledger .pause-storybook-board>section h3 { font-size:15px!important; }
+#game-dialog.pause-ledger .pause-section-head { display:flex;align-items:center;gap:6px; }
+#game-dialog.pause-ledger .pause-section-head [data-sticker] { width:26px;height:26px;flex:none; }
 #game-dialog.pause-ledger .pause-storybook-board .loot-empty { margin:0;padding:0;border:0;background:transparent!important;text-align:left;font-size:15px!important;line-height:1.5; }
 #game-dialog.pause-ledger .pause-storybook-board .loot-tray { display:flex;flex-wrap:wrap;gap:7px;margin:0;padding:0; }
 #game-dialog.pause-ledger .pause-storybook-board .loot-tray li { display:flex;align-items:center;max-width:100%;gap:5px;margin:0;padding:4px 7px;border:1px solid #D8C5A9;border-radius:999px;background:#F3EADB;font-size:14px!important;line-height:1.2; }
@@ -148,7 +150,8 @@
 #game-dialog.pause-ledger .pause-storybook-board .loot-tray li>span { font-size:14px!important;overflow-wrap:anywhere; }
 #game-dialog.pause-ledger .pause-storybook-board .loot-tray li>b { padding:1px 4px;border:0;background:transparent;font-size:14px!important; }
 #game-dialog.pause-ledger .pause-storybook-actions { display:flex;flex-direction:column;gap:10px;flex:none;margin:0;padding:13px 5px 3px;border:0;background:transparent;box-shadow:none; }
-#game-dialog.pause-ledger .pause-storybook-actions button { min-height:42px;margin:0;padding:8px 12px;border:2px solid #6B5047;border-radius:999px;background:#F4ECE1;color:#4A322B!important;box-shadow:0 3px 0 #462E2740;font-size:15px!important;line-height:1.25; }
+#game-dialog.pause-ledger .pause-storybook-actions button { display:inline-flex;align-items:center;justify-content:center;gap:5px;min-height:42px;margin:0;padding:8px 12px;border:2px solid #6B5047;border-radius:999px;background:#F4ECE1;color:#4A322B!important;box-shadow:0 3px 0 #462E2740;font-size:15px!important;line-height:1.25; }
+#game-dialog.pause-ledger .pause-storybook-actions button [data-sticker] { width:20px;height:20px;flex:none; }
 #game-dialog.pause-ledger .pause-storybook-actions>.button-teal { min-height:49px;background:#B9CD8B;border-color:#596A3E;color:#31451F!important;font-size:19px!important;text-shadow:none; }
 #game-dialog.pause-ledger .pause-storybook-actions>.button-teal>span { color:#31451F!important; }
 #game-dialog.pause-ledger .pause-storybook-actions>div { display:flex;gap:8px; }

@@ -16,7 +16,7 @@ export function brothRailMarkup(state:BattleState,preparation:boolean,expanded=f
 
 export const nextBattleSpeed=(speed:1|2|3):1|2|3=>speed===3?1:speed===2?3:2;
 export function p13WaveMarkup(state:BattleState):string {
- return `<span aria-hidden="true">${sceneSticker('ui_endless_emblem','',28)}</span><span>${esc(t('p13.endlessWave',{wave:state.wave}))}</span>`;
+ return `<span aria-hidden="true">${sceneSticker('ui_endless_emblem','',28)}</span><span>${esc(t('p17.board.wave',{wave:state.wave}))}</span>`;
 }
 export function earlyWaveCoachmarkMarkup(food:number):string {
  return `<div class="early-tip-bubble" role="note" aria-labelledby="early-tip-title"><div class="early-tip-heading"><span aria-hidden="true">${sceneSticker('ui_tutorial_capy','',52)}</span><strong id="early-tip-title">${esc(t('p13.earlyTitle'))}</strong></div><p>${esc(t('p13.earlyBody',{food}))}</p><div class="early-tip-actions"><button type="button" data-action="early-wave">${esc(t('p13.earlyNow',{food}))}</button><button type="button" data-action="dismiss-early-tip">${esc(t('p13.earlyDismiss'))}</button></div></div><span class="early-tip-pointer" aria-hidden="true">${sceneSticker('ui_tutorial_pointer','',42)}</span>`;

@@ -9,7 +9,7 @@ import {copyLoadout} from '../src/core/PropSystem';
 import {formatCompactNumber} from '../src/core/formatNumber';
 import {createProfile,normalizeProfile,unlockAllProfile} from '../src/core/MetaProgression';
 import {upgradeMedallion,upgradeableMedallions,grantEndlessCrests,normalizeMedallions} from '../src/core/MedallionProgression';
-import {SESSION_PLAYER_ID,defaultNickname,generatePlayerId,isValidPlayerId,validateNickname} from '../src/core/PlayerIdentity';
+import {SESSION_PLAYER_ID,SESSION_WRITE_SECRET,defaultNickname,generatePlayerId,generateWriteSecret,isValidPlayerId,isValidWriteSecret,validateNickname} from '../src/core/PlayerIdentity';
 import {
   AWAKENED_DAMAGE,AWAKENED_RATE,LATE_CREST_COSTS,MEDALLION_IDS,MOMENTUM_CAP,STANDARD_VICTORY_CRESTS,armorPenetration,bossResist,bossSlayerMultiplier,
   breakthroughAttackMultiplier,capyShieldCooldown,computeBreakthroughChance,endlessCrestsForWave,endlessCrestsThroughWave,endlessDamageMultiplier,
@@ -20,14 +20,16 @@ import {getMap} from '../src/config/maps';
 import {awardBattle,awardEndless,loadProfile,saveProfile} from '../src/ui/storage';
 import {P17_AWAKENED_IDS,P17_SCENE_IDS,sceneSticker,awakenedSticker} from '../src/ui/stickers';
 import {courtyardMarkup,endlessHallPillMarkup} from '../src/ui/CourtyardView';
-import {MedallionScreen,medallionEffectText} from '../src/ui/MedallionScreen';
-import {endlessBoardMarkup} from '../src/ui/ProfileScreens';
+import {MedallionScreen,medallionEffectText,endlessHubTabs} from '../src/ui/MedallionScreen';
+import {ProfileScreens,endlessBoardMarkup} from '../src/ui/ProfileScreens';
 import {ledgerTabs} from '../src/ui/LedgerView';
 import {liveUnitCardMarkup} from '../src/ui/LiveUnitCard';
-import {endlessOfferMarkup,resultMarkup,resultCrests} from '../src/ui/SettlementView';
+import {endlessOfferMarkup,pauseMarkup,resultMarkup,resultCrests} from '../src/ui/SettlementView';
+import {Compendium} from '../src/ui/Compendium';
+import {MetaScreens} from '../src/ui/MetaScreens';
 import {EndlessLeaderboardClient,parseLeaderboard,submissionFromProfile,BOARD_CACHE_KEY} from '../src/ui/EndlessLeaderboardClient';
 import {
-  compareRows,handleRequest,memoryStore,mergeScore,minimumElapsed,rateLimitDecision,sanitizeNickname,validateScore,type Env,type ScoreStore,
+  compareRows,handleRequest,memoryStore,mergeScore,minimumElapsed,normalizeNicknameKey,rateLimitDecision,sanitizeNickname,validateScore,type Env,type ScoreStore,
 } from '../cloudflare-leaderboard/src/index';
 import {setLanguage,t} from '../src/i18n/i18n';
 import {p17En,p17Zh} from '../src/i18n/p17';
@@ -331,10 +333,11 @@ describe('P17 crests and receipts',()=>{
 });
 
 describe('P17 profile, identity and save compatibility',()=>{
-  it('starts with zero crests, six Lv.0 medallions, a stable anonymous id and no nickname',()=>{
+  it('starts with zero crests, six Lv.0 medallions, a stable anonymous id + writeSecret and no nickname',()=>{
     const p=createProfile();
-    expect(p).toMatchObject({endlessCrests:0,nickname:'',playerId:SESSION_PLAYER_ID});expect(p.endlessMedallions).toEqual(all(0));
+    expect(p).toMatchObject({endlessCrests:0,nickname:'',playerId:SESSION_PLAYER_ID,writeSecret:SESSION_WRITE_SECRET});expect(p.endlessMedallions).toEqual(all(0));
     expect(isValidPlayerId(p.playerId)).toBe(true);expect(p.playerId).toMatch(/^capy_[a-z0-9]{12}$/);
+    expect(isValidWriteSecret(p.writeSecret)).toBe(true);expect(generateWriteSecret(()=>.5)).toMatch(/^sec_/);
     expect(normalizeProfile(null)).toEqual(createProfile());expect(generatePlayerId(()=>.5)).toMatch(/^capy_/);
   });
   it('migrates pre-P17 saves and sanitizes every new field',()=>{
@@ -381,6 +384,12 @@ describe('P17 UI: courtyard pill, medallion hall, hero card, board tab and settl
     const screen=new MedallionScreen(()=>p,()=>{},()=>{},()=>{});const html=screen.markup();
     expect(html).toContain('data-ledger-page="medallions"');expect(html).toContain('ui_medallion_peek_capy');expect(html).toContain(t('p17.endlessOnly'));
     expect(html.match(/class="storybook-row-card medallion-row/g)).toHaveLength(6);expect(html).toContain('data-action="endless-board"');
+    expect(html).not.toContain('medallion-board-link');
+    // Level tag sits inline beside the medallion name (never inside overflow:hidden .storybook-frame).
+    const frames=html.match(/<span class="storybook-frame tone-medallion">[\s\S]*?<\/span><\/span>/g)??[];
+    expect(frames).toHaveLength(6);expect(frames.every(f=>!f.includes('medallion-level-tag'))).toBe(true);
+    expect(html).toContain('<strong class="portrait-name">');
+    expect(html).toContain('medallion-level-tag">Lv.25/50</b></strong>');
     expect(html).toContain('45%</b><i aria-hidden="true">→</i><b class="medallion-next">46.8%');expect(html).toContain(t('p17.maxed'));
     expect(html).toContain('medallion-cost-chip is-ready');expect(html).toContain('medallion-cost-chip is-short');
     expect(html).toContain(t('p17.totalLevel',{sum:75,max:300}));expect(html).not.toContain('<text');
@@ -405,28 +414,55 @@ describe('P17 UI: courtyard pill, medallion hall, hero card, board tab and settl
     const s=standard(),h=unit(s,'kungfu_po',5),std=liveUnitCardMarkup({unit:h,state:s.state,stats:s.getEffectiveUnitStats(h),loadout:s.state.sides.player.loadout,endless:{momentum:3}});
     expect(std).toContain('class="live-max"');expect(std).toContain(t('p17.breakLater'));
   });
-  it('adds the global endless board tab and renders online, offline and empty states',()=>{
+  it('adds the global endless board tab, keeps the dedicated 2-tab endless hub intact and renders online/offline/empty states',()=>{
     expect(ledgerTabs('leaderboard').match(/data-action="([\w-]+)"/g)).toEqual(['data-action="leaderboard"','data-action="endless-board"','data-action="profile"','data-action="settings"']);
+    expect(endlessHubTabs('endless-board').match(/data-action="([\w-]+)"/g)).toEqual(['data-action="medallions"','data-action="endless-board"']);
     const p={...createProfile(),playerId:'capy_me000000000',nickname:'泡汤队长',bestEndlessWave:31,bestEndlessTime:1500,bestEndlessMvp:'rocket_coon',bestEndlessMvpAwakened:true};
-    const row=(rank:number,id:string,wave:number)=>({rank,playerId:id,nickname:`玩家${rank}`,avatarId:'capybara',bestWave:wave,elapsedSeconds:1800,mvpKind:'kungfu_po',mvpAwakened:rank===1,awakenedCount:rank===1?3:0,medallionTotal:10,updatedAt:1});
-    const online=endlessBoardMarkup(p,{loading:false,snapshot:{mode:'online',fetchedAt:1,totalPlayers:7,entries:[row(1,'capy_top000000000',58),row(2,'capy_me000000000',31)],me:row(2,'capy_me000000000',31)}});
+    const row=(rank:number,isMe:boolean,wave:number)=>({rank,isMe,nickname:isMe?'泡汤队长':`玩家${rank}`,avatarId:'capybara',bestWave:wave,elapsedSeconds:1800,mvpKind:'kungfu_po',mvpAwakened:rank===1,awakenedCount:rank===1?3:0,medallionTotal:10,updatedAt:1});
+    const online=endlessBoardMarkup(p,{loading:false,snapshot:{mode:'online',fetchedAt:1,totalPlayers:7,entries:[row(1,false,58),row(2,true,31)],me:row(2,true,31)}});
     expect(online).toContain('全球第 #2 名 / 共 7 人');expect(online).toContain('data-player="true"');expect(online).toContain('🥇');expect(online).toContain('第 58 波');
     expect(online).toContain('kungfu_po_awakened');expect(online).toContain('value="泡汤队长"');expect(online).toContain('data-action="medallions"');expect(online).toContain('data-action="endless-board-refresh"');
+    expect(online).toContain('ui_clock_sand');expect(online).not.toContain('⏱');
+    // Inside the dedicated Endless Hall window, switching to Global Board preserves the 2-tab bar & medallion mascot.
+    const screens=new ProfileScreens(()=>p,()=>true,()=>{},()=>{},()=>({loading:false,endlessHub:true,snapshot:{mode:'online',fetchedAt:1,totalPlayers:7,entries:[row(1,false,58),row(2,true,31)],me:row(2,true,31)}}));
+    const hubHtml=screens.markup('endless-board');
+    expect(hubHtml).toContain('ui_medallion_peek_capy');
+    expect(hubHtml).toContain('data-action="medallions"');
+    expect(hubHtml).not.toContain('data-action="leaderboard"');expect(hubHtml).not.toContain('data-action="settings"');
+    expect(hubHtml).not.toContain('endless-board-medallions');
     const offline=endlessBoardMarkup(p,{loading:false,snapshot:{mode:'offline',fetchedAt:null,totalPlayers:0,entries:[],me:null}});
     expect(offline).toContain(t('p17.board.offline'));expect(offline).toContain('rocket_coon_awakened');expect(offline).toContain('第 31 波');
     const fresh=endlessBoardMarkup(createProfile(),{loading:false,snapshot:{mode:'unconfigured',fetchedAt:null,totalPlayers:0,entries:[],me:null}});
     expect(fresh).toContain(t('p17.board.unconfigured'));expect(fresh).toContain(t('p17.board.noBest'));expect(fresh).toContain(defaultNickname(SESSION_PLAYER_ID,'zh-CN'));
   });
-  it('puts crests on the report shelf, shows the global rank and an awakened MVP, and updates the endless offer',()=>{
+  it('puts crests on BOTH the front shield plaque and report shelf, shows crests in pause and supports compendium awakened preview',()=>{
     const win=new BattleEngine({seed:41});win.start();while(win.state.phase!=='finished')win.skipWave();
     const offer=endlessOfferMarkup(win.state,true);expect(offer).toContain('×1.25');expect(offer).not.toContain('×16');expect(offer).toContain('ui_endless_crest');expect(offer).toContain('+3');
     const input={profile:createProfile(),savedResult:true,resultStars:1,previousRank:0,newWeapons:[],newAvatars:[],statsOpen:true};
     const standardHtml=resultMarkup({...input,state:win.state});expect(standardHtml).toMatch(/visual-treasure-item is-crest[\s\S]*?×3/);
-    win.enterEndless();win.state.sides.player.endlessCrests=5;win.surrender();
+    win.enterEndless();win.state.sides.player.endlessCrests=5;
+    expect(pauseMarkup(win.state)).toContain('pause-crests');expect(pauseMarkup(win.state)).toContain('×8');
+    win.surrender();
     win.state.result!.mvp={kind:'kungfu_po',level:5,damage:12_345_678,kills:9,awakened:true};
     const html=resultMarkup({...input,state:win.state,globalRank:42});
     expect(html).toContain('🌍 全球第 #42 名');expect(html).toMatch(/is-crest[\s\S]*?×8/);expect(html).toContain('kungfu_po_awakened');expect(html).toContain('12.35M');
-    const plaque=html.match(/<div class="crest-core-rewards">[\s\S]*?<\/div>/)![0];expect(plaque).not.toContain('ui_endless_crest');
+    const plaque=html.match(/<div class="crest-core-rewards">[\s\S]*?<\/div>/)![0];
+    expect(plaque).toContain('ui_endless_crest');expect(plaque).toContain('+8');
+    // Compendium hero detail toggles between standard and awakened preview art.
+    const book=new Compendium();const unlocked=unlockAllProfile(createProfile());book.inspectEntry('kungfu_po');
+    expect(book.markup(unlocked)).toContain('compendium-awakened-toggle');expect(book.markup(unlocked)).not.toContain('kungfu_po_awakened');
+    book.toggleAwakened();expect(book.markup(unlocked)).toContain('kungfu_po_awakened');
+    // Shop disables refresh when all props maxed; lottery center prioritizes free tickets.
+    const maxed={...unlocked,freeLotteryTickets:2};const meta=new MetaScreens(()=>maxed,()=>{},()=>{},()=>{});
+    expect(meta.markup('market')).toMatch(/data-action="meta-refresh"[^>]*disabled/);
+    expect(meta.markup('market')).toContain(t('p11.meta.merchantMaxed'));
+    meta.action('meta-tab:lottery');
+    expect(meta.markup('market')).toMatch(/class="lottery-center has-ticket" data-action="meta-spin:ticket"/);
+    // Rank board rounds enemy HP multiplier to 2 decimals & displays player nickname; passport displays nickname + endless best.
+    const rankedProfile={...createProfile(),stars:48,nickname:'泡汤大侠',bestEndlessWave:37};
+    const ps=new ProfileScreens(()=>rankedProfile,()=>true,()=>{},()=>{});
+    const lb=ps.markup('leaderboard');expect(lb).toContain('×2.66');expect(lb).not.toContain('2.6556');expect(lb).toContain('泡汤大侠');
+    const pp=ps.markup('profile');expect(pp).toContain('泡汤大侠');expect(pp).toContain('最高 第 37 波');
   });
   it('ships complete, wholesome zh-CN / en P17 copy',()=>{
     expect(Object.keys(p17En).sort()).toEqual(Object.keys(p17Zh).sort());
@@ -442,14 +478,16 @@ describe('P17 UI: courtyard pill, medallion hall, hero card, board tab and settl
   });
 });
 
-describe('P17 Cloudflare Worker: validation, monotone upsert, ranking, CORS and rate limits',()=>{
+describe('P17 Cloudflare Worker: validation, security, unique nicknames, monotone upsert, ranking, CORS and rate limits',()=>{
   const env:Env={DB:undefined as never,ALLOWED_ORIGINS:'https://shizhuom.github.io,http://127.0.0.1:4175'};
-  const score=(patch:Record<string,unknown>={})=>({playerId:'capy_alpha0000001',nickname:'泡汤水豚',avatarId:'capybara',bestWave:30,elapsedSeconds:1500,mvpKind:'kungfu_po',mvpAwakened:true,awakenedCount:1,medallionTotal:20,...patch});
+  const score=(patch:Record<string,unknown>={})=>({playerId:'capy_alpha0000001',writeSecret:'sec_alpha_secret_token_0001',nickname:'泡汤水豚',avatarId:'capybara',bestWave:30,elapsedSeconds:1500,mvpKind:'kungfu_po',mvpAwakened:true,awakenedCount:1,medallionTotal:20,...patch});
   const post=(store:ScoreStore,body:unknown,now=1000,ip='1.2.3.4',origin='https://shizhuom.github.io')=>handleRequest(new Request('https://board.test/api/score',
     {method:'POST',headers:{'content-type':'application/json','CF-Connecting-IP':ip,Origin:origin},body:JSON.stringify(body)}),env,{store,now:()=>now});
   const get=(store:ScoreStore,query='')=>handleRequest(new Request(`https://board.test/api/leaderboard${query}`,{headers:{Origin:'https://shizhuom.github.io'}}),env,{store});
-  it('validates ids, nicknames, waves 11-120, real play time and plausible power',()=>{
-    expect(validateScore(score())).toMatchObject({ok:true,score:{best_wave:30,mvp_awakened:1,avatar_id:'capybara'}});
+  const checkName=(store:ScoreStore,query:string)=>handleRequest(new Request(`https://board.test/api/nickname${query}`,{headers:{Origin:'https://shizhuom.github.io'}}),env,{store});
+  it('validates ids, write secrets, nicknames, waves 11-120, real play time and plausible power',()=>{
+    expect(validateScore(score())).toMatchObject({ok:true,score:{best_wave:30,mvp_awakened:1,avatar_id:'capybara',nickname_norm:'泡汤水豚'}});
+    expect(validateScore(score({writeSecret:'short'}))).toEqual({ok:false,error:'invalid_secret'});
     expect(validateScore(score({bestWave:999}))).toEqual({ok:false,error:'invalid_score'});expect(validateScore(score({bestWave:10}))).toEqual({ok:false,error:'invalid_score'});
     expect(validateScore(score({bestWave:80,elapsedSeconds:1}))).toEqual({ok:false,error:'invalid_score'});expect(minimumElapsed(80)).toBe(420);
     expect(validateScore(score({elapsedSeconds:86_401}))).toEqual({ok:false,error:'invalid_score'});
@@ -460,31 +498,51 @@ describe('P17 Cloudflare Worker: validation, monotone upsert, ranking, CORS and 
     expect(validateScore(score({avatarId:'nope',mvpKind:'nope',medallionTotal:301}))).toEqual({ok:false,error:'invalid_score'});
     expect(validateScore(score({avatarId:'nope',mvpKind:'nope'}))).toMatchObject({ok:true,score:{avatar_id:'capybara',mvp_kind:'kungfu_po'}});
     expect(sanitizeNickname('<泡汤>')).toEqual({ok:true,value:'泡汤'});
+    expect(normalizeNicknameKey('  ChillCapy  ')).toBe(normalizeNicknameKey('chillcapy'));
   });
-  it('keeps the best record, refreshes the nickname and ranks by wave, then time, then first arrival',()=>{
-    const incoming=validateScore(score()) as {ok:true;score:Parameters<typeof mergeScore>[1]};
-    const first=mergeScore(null,incoming.score,10);expect(first.improved).toBe(true);
-    const lower=mergeScore(first.row,{...incoming.score,best_wave:20,nickname:'新名字'},20);expect(lower).toMatchObject({improved:false,row:{best_wave:30,nickname:'新名字',updated_at:20}});
-    expect(mergeScore(first.row,{...incoming.score,elapsed_seconds:1400},30).improved).toBe(true);
+  it('keeps the best record, preserves updated_at on rename (no rank demotion) and ranks by wave, time, first arrival',()=>{
+    const incoming=validateScore(score()) as {ok:true;score:{player_id:string;nickname:string;nickname_norm:string;avatar_id:string;best_wave:number;elapsed_seconds:number;mvp_kind:string;mvp_awakened:number;awakened_count:number;medallion_total:number}};
+    const baseRow={...incoming.score,secret_hash:'hash_a'};
+    const first=mergeScore(null,baseRow,10);expect(first.improved).toBe(true);
+    const lower=mergeScore(first.row,{...baseRow,best_wave:20,nickname:'新名字',nickname_norm:'新名字'},20);
+    expect(lower).toMatchObject({improved:false,row:{best_wave:30,nickname:'新名字',updated_at:10}});
+    expect(mergeScore(first.row,{...baseRow,elapsed_seconds:1400},30)).toMatchObject({improved:true,row:{updated_at:30}});
     const rows=[{best_wave:30,elapsed_seconds:900,updated_at:5},{best_wave:31,elapsed_seconds:3000,updated_at:9},{best_wave:30,elapsed_seconds:900,updated_at:2}].sort(compareRows);
     expect(rows.map(r=>[r.best_wave,r.updated_at])).toEqual([[31,9],[30,2],[30,5]]);
     expect(rateLimitDecision(null,0)).toEqual({allowed:true,windowStart:0,hits:1});expect(rateLimitDecision({window_start:0,hits:20},59_999).allowed).toBe(false);
     expect(rateLimitDecision({window_start:0,hits:20},60_000)).toEqual({allowed:true,windowStart:60_000,hits:1});
   });
-  it('serves health, Top N and exact ranks end to end, blocks a 999-wave cheat and rate limits 20 writes per minute',async()=>{
+  it('hides playerId publicly, blocks hijacks with wrong writeSecret, strictly blocks duplicate nicknames and rate limits',async()=>{
     const store=memoryStore();
     expect(await (await handleRequest(new Request('https://board.test/api/health'),env,{store})).json()).toEqual({ok:true,service:'capybara-endless-leaderboard'});
     const a=await post(store,score());expect(a.status).toBe(200);expect(a.headers.get('Access-Control-Allow-Origin')).toBe('https://shizhuom.github.io');
     expect(await a.json()).toEqual({ok:true,rank:1,totalPlayers:1,bestWave:30,improved:true});
-    expect(await (await post(store,score({playerId:'capy_bravo0000001',bestWave:40,elapsedSeconds:2400}),1001,'5.6.7.8')).json()).toMatchObject({rank:1,totalPlayers:2});
+    // Strict duplicate nickname rejection (including case-insensitive English lookalike).
+    const dup=await post(store,score({playerId:'capy_bravo0000001',writeSecret:'sec_bravo_secret_token_0002',nickname:'泡汤水豚',bestWave:40,elapsedSeconds:2400}),1001,'5.6.7.8');
+    expect(dup.status).toBe(409);expect(await dup.json()).toEqual({ok:false,error:'nickname_taken'});
+    expect(await (await checkName(store,'?name=%E6%B3%A1%E6%B1%A4%E6%B0%B4%E8%B1%9A&playerId=capy_bravo0000001')).json()).toEqual({ok:true,available:false});
+    expect(await (await checkName(store,'?name=%E6%B3%A1%E6%B1%A4%E6%B0%B4%E8%B1%9A&playerId=capy_alpha0000001')).json()).toEqual({ok:true,available:true});
+    // Distinct nickname succeeds.
+    expect(await (await post(store,score({playerId:'capy_bravo0000001',writeSecret:'sec_bravo_secret_token_0002',nickname:'ChillKing',bestWave:40,elapsedSeconds:2400}),1001,'5.6.7.8')).json()).toMatchObject({rank:1,totalPlayers:2});
+    const dupCase=await post(store,score({playerId:'capy_charlie00001',writeSecret:'sec_charlie_secret_token_03',nickname:'chillking',bestWave:20,elapsedSeconds:1200}),1002,'5.6.7.9');
+    expect(dupCase.status).toBe(409);
+    // Hijack attempt: wrong writeSecret for alpha's playerId is rejected 403.
+    const hijack=await post(store,score({writeSecret:'sec_attacker_wrong_secret_9',nickname:'被盗号啦',bestWave:80,elapsedSeconds:2000}),1002,'6.6.6.6');
+    expect(hijack.status).toBe(403);expect(await hijack.json()).toEqual({ok:false,error:'forbidden_player'});
+    expect(store.rows.get('capy_alpha0000001')!.nickname).toBe('泡汤水豚');
+    // Real owner renaming keeps best wave and original updated_at.
     expect(await (await post(store,score({bestWave:12,nickname:'改名啦'}),1002)).json()).toMatchObject({rank:2,bestWave:30,improved:false});
-    expect(store.rows.get('capy_alpha0000001')).toMatchObject({nickname:'改名啦',best_wave:30});
+    expect(store.rows.get('capy_alpha0000001')).toMatchObject({nickname:'改名啦',best_wave:30,updated_at:1000});
     const cheat=await post(store,score({bestWave:999}),1003);expect(cheat.status).toBe(400);expect(await cheat.json()).toEqual({ok:false,error:'invalid_score'});
-    const board=await (await get(store,'?playerId=capy_alpha0000001&limit=500')).json() as {entries:{rank:number;playerId:string}[];me:{rank:number};totalPlayers:number};
-    expect(board.entries.map(e=>[e.rank,e.playerId])).toEqual([[1,'capy_bravo0000001'],[2,'capy_alpha0000001']]);expect(board.me.rank).toBe(2);expect(board.totalPlayers).toBe(2);
-    for(let i=0;i<17;i++)expect((await post(store,score(),2000+i)).status).toBe(200);
-    const limited=await post(store,score(),2100);expect(limited.status).toBe(429);expect(await limited.json()).toEqual({ok:false,error:'rate_limited'});
-    expect((await post(store,score(),2100,'9.9.9.9')).status).toBe(200);expect((await post(store,score(),70_000)).status).toBe(200);
+    // Public leaderboard NEVER leaks playerId or secret_hash; marks caller via isMe.
+    const boardRes=await get(store,'?playerId=capy_alpha0000001&limit=500');
+    const rawBoard=await boardRes.text();
+    expect(rawBoard).not.toContain('capy_bravo0000001');expect(rawBoard).not.toContain('capy_alpha0000001');expect(rawBoard).not.toContain('secret');
+    const board=JSON.parse(rawBoard) as {entries:{rank:number;isMe:boolean;nickname:string}[];me:{rank:number;isMe:boolean};totalPlayers:number};
+    expect(board.entries.map(e=>[e.rank,e.nickname,e.isMe])).toEqual([[1,'ChillKing',false],[2,'改名啦',true]]);expect(board.me).toMatchObject({rank:2,isMe:true});expect(board.totalPlayers).toBe(2);
+    for(let i=0;i<17;i++)expect((await post(store,score({nickname:'改名啦'}),2000+i)).status).toBe(200);
+    const limited=await post(store,score({nickname:'改名啦'}),2100);expect(limited.status).toBe(429);expect(await limited.json()).toEqual({ok:false,error:'rate_limited'});
+    expect((await post(store,score({nickname:'改名啦'}),2100,'9.9.9.9')).status).toBe(200);expect((await post(store,score({nickname:'改名啦'}),70_000)).status).toBe(200);
     expect([...store.rows.keys()].some(k=>k.includes('1.2.3.4'))).toBe(false);
   });
   it('answers CORS preflights only for whitelisted origins',async()=>{
@@ -500,17 +558,21 @@ describe('P17 EndlessLeaderboardClient: online, cached offline and unconfigured'
   const env:Env={DB:undefined as never,ALLOWED_ORIGINS:''};
   const ranked:Profile={...createProfile(),playerId:'capy_client000001',nickname:'泡汤水豚',bestEndlessWave:33,bestEndlessTime:1600,bestEndlessMvp:'pepe_king',bestEndlessMvpAwakened:true,bestEndlessAwakened:2,endlessMedallions:{...all(0),med_luck_rate:12}};
   const viaWorker=(store:ScoreStore)=>vi.fn((url:string|URL|Request,init?:RequestInit)=>handleRequest(new Request(String(url),init),env,{store,now:()=>5000}));
-  it('builds a submission only for profiles with an endless record',()=>{
+  it('builds a submission with writeSecret only for profiles with an endless record',()=>{
     expect(submissionFromProfile(createProfile())).toBeNull();
-    expect(submissionFromProfile(ranked)).toEqual({playerId:'capy_client000001',nickname:'泡汤水豚',avatarId:'capybara',bestWave:33,elapsedSeconds:1600,mvpKind:'pepe_king',mvpAwakened:true,awakenedCount:2,medallionTotal:12});
+    expect(submissionFromProfile(ranked)).toEqual({playerId:'capy_client000001',writeSecret:SESSION_WRITE_SECRET,nickname:'泡汤水豚',avatarId:'capybara',bestWave:33,elapsedSeconds:1600,mvpKind:'pepe_king',mvpAwakened:true,awakenedCount:2,medallionTotal:12});
     expect(submissionFromProfile({...ranked,nickname:''},'en')!.nickname).toBe('ChillCapy#0001');
   });
-  it('submits, refreshes with a 30 s cache and caches the board for offline use',async()=>{
+  it('submits, checks duplicate nicknames, refreshes with a 30 s cache and caches the board for offline use',async()=>{
     const store=memoryStore(),fetch=viaWorker(store),storage=memoryStorage();let now=0;
     const client=new EndlessLeaderboardClient({baseUrl:'https://board.test/',fetch:fetch as unknown as typeof globalThis.fetch,storage,now:()=>now});
     expect(client.configured).toBe(true);
     expect(await client.submitScore(ranked)).toMatchObject({ok:true,mode:'online',rank:1,totalPlayers:1,improved:true});
-    const snap=await client.refresh(ranked.playerId);expect(snap).toMatchObject({mode:'online',totalPlayers:1,me:{rank:1,bestWave:33}});expect(snap.entries[0].mvpAwakened).toBe(true);
+    const other:Profile={...ranked,playerId:'capy_other0000002',writeSecret:'sec_other_client_secret_0002'};
+    expect(await client.submitScore(other)).toMatchObject({ok:false,mode:'online',key:'p17.nameTaken'});
+    expect(await client.checkNickname('泡汤水豚','capy_other0000002')).toMatchObject({available:false,mode:'online',key:'p17.nameTaken'});
+    expect(await client.checkNickname('泡汤水豚','capy_client000001')).toMatchObject({available:true,mode:'online'});
+    const snap=await client.refresh(ranked.playerId);expect(snap).toMatchObject({mode:'online',totalPlayers:1,me:{rank:1,bestWave:33,isMe:true}});expect(snap.entries[0].mvpAwakened).toBe(true);expect(snap.entries[0].playerId).toBeUndefined();
     const calls=fetch.mock.calls.length;now=10_000;await client.refresh(ranked.playerId);expect(fetch.mock.calls.length).toBe(calls);
     await client.refresh(ranked.playerId,true);expect(fetch.mock.calls.length).toBe(calls+1);
     expect(String(fetch.mock.calls.at(-1)![0])).toBe('https://board.test/api/leaderboard?limit=100&playerId=capy_client000001');
@@ -518,7 +580,7 @@ describe('P17 EndlessLeaderboardClient: online, cached offline and unconfigured'
     // A new client that cannot reach the network serves the cached board, without throwing.
     const offline=new EndlessLeaderboardClient({baseUrl:'https://board.test',fetch:(()=>Promise.reject(new TypeError('offline'))) as unknown as typeof globalThis.fetch,storage});
     expect(offline.snapshot()).toMatchObject({mode:'offline',totalPlayers:1});const after=await offline.refresh(ranked.playerId,true);
-    expect(after.mode).toBe('offline');expect(after.entries[0].playerId).toBe('capy_client000001');
+    expect(after.mode).toBe('offline');expect(after.entries[0].isMe).toBe(true);
     expect(await offline.submitScore(ranked)).toMatchObject({ok:false,mode:'offline',key:'p17.board.offline'});
   });
   it('degrades quietly when unconfigured, times out after the limit and reports 429 and rejections',async()=>{
