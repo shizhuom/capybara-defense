@@ -19,7 +19,7 @@ import { villageLoadout } from '../core/VillageProgression';
 import { MedallionScreen } from './MedallionScreen';
 import { EndlessLeaderboardClient, rankSubmissionFromProfile } from './EndlessLeaderboardClient';
 import { validateNickname } from '../core/PlayerIdentity';
-import { formatLocation, nextFictionalLocationToken } from '../core/Location';
+import { fictionalLocationToken, formatLocation } from '../core/Location';
 import { resolveBrowserLocation } from './LocationService';
 import { formatCompactNumber } from '../core/formatNumber';
 import { AWAKENED_DAMAGE, breakthroughAttackMultiplier, getMedallionLevel, momentumMultiplier } from '../config/medallions';
@@ -482,13 +482,13 @@ export class GameApp {
       this.renderDialog();
     }
   }
-  /** Switches to (or cycles through) a cute fictional Capybara Onsen place name. */
-  private cycleFictionalLocation(): void {
+  /** Turns location sharing off and reverts to the player's default cute fictional Onsen spot. */
+  private disableLocation(): void {
     const language = getLanguage();
-    const token = nextFictionalLocationToken(this.profile.locationLabel, this.profile.playerId);
+    const token = fictionalLocationToken(this.profile.playerId);
     const next: Profile = { ...this.profile, locationMode: 'fictional', locationLabel: token };
     if (!this.persistProfile(next)) return;
-    this.notify('p17.location.rerolled', false, { place: formatLocation(token, language, next.playerId) });
+    this.notify('p17.location.turnedOff', false, { place: formatLocation(token, language, next.playerId) });
     this.syncAllBoards();
     if (this.dialogKind === 'endless-board') this.refreshBoard(true);
     else if (this.dialogKind === 'leaderboard') this.refreshRankBoard(true);
@@ -1484,8 +1484,11 @@ export class GameApp {
     if (action === 'close-medallions') { this.closeProfileScreen(); return; }
     if (action === 'endless-board-refresh') { this.refreshBoard(true); return; }
     if (action === 'rank-board-refresh') { this.syncRankScore(); this.refreshRankBoard(true); return; }
-    if (action === 'location-request') { void this.requestLocation(false); return; }
-    if (action === 'location-reroll') { this.cycleFictionalLocation(); return; }
+    if (action === 'location-request') {
+      if (this.profile.locationMode === 'real' && !!this.profile.locationLabel) this.disableLocation();
+      else void this.requestLocation(false);
+      return;
+    }
     if (action === 'endless-name-save') { void this.saveNickname(); return; }
     if (this.dialogKind === 'medallions' && this.medallions.action(action)) {
       const id = action.split(':')[1]; this.dialog.querySelector<HTMLElement>(`.medallion-row[data-medallion-id="${CSS.escape(id ?? '')}"] [data-action^="medallion-up"]`)?.focus({ preventScroll: true });

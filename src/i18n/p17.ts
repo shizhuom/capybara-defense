@@ -14,7 +14,7 @@ const copy = {
  'p17.crests':['无尽星徽','Endless Crests'],
  'p17.totalLevel':['总等级 {sum}/{max}','Total Lv.{sum}/{max}'],
  'p17.boardLink':['无尽全球榜','Global Board'],
- 'p17.endlessOnly':['以下 6 枚勋章仅在无尽模式（第 11 波起）生效，不影响前 10 波难度','These 6 medallions work only in Endless (Wave 11+); the first 10 waves stay the same'],
+ 'p17.endlessOnly':['以下 6 枚勋章仅在无尽模式（第 11 波起）生效','These 6 medallions work only in Endless (Wave 11+)'],
  'p17.level':['Lv.{level}/{max}','Lv.{level}/{max}'],
  'p17.upgrade':['升级','Upgrade'],
  'p17.maxed':['✓ 满级','✓ Max'],
@@ -103,12 +103,14 @@ const copy = {
  'p17.rankBoard.empty':['还没有守护者登上全球段位榜，打一局来抢沙发吧！','No keepers on the global rank board yet: play a match to claim #1!'],
  'p17.rankBoard.top':['全球段位 Top {count}','Global Rank Top {count}'],
  'p17.location.detect':['开启定位','Locate'],
+ 'p17.location.disable':['关闭定位','Location Off'],
  'p17.location.redetect':['重新定位','Refresh GPS'],
  'p17.location.detecting':['定位中…','Locating…'],
  'p17.location.reroll':['换个可爱地名','Roll Cozy Spot'],
  'p17.location.useFictional':['改用可爱地名','Use Cozy Spot'],
  'p17.location.detected':['已定位到「{place}」','Located in {place}'],
  'p17.location.denied':['未开启定位，已为你安排可爱地点「{place}」','Location off — using cozy spot "{place}"'],
+ 'p17.location.turnedOff':['已关闭定位，默认显示「{place}」','Location off — showing "{place}"'],
  'p17.location.rerolled':['已切换到「{place}」','Switched spot to "{place}"'],
 } as const;
 export const p17Zh:Record<string,string>=Object.fromEntries(Object.entries(copy).map(([key,value])=>[key,(value as readonly [string,string])[0]]));

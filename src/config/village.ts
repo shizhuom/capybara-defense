@@ -27,15 +27,15 @@ export interface FacilityDefinition {
 export const FACILITY_IDS=['fac_bamboo_pool','fac_fish_stall','fac_yuzu_tree','fac_cat_nap','fac_sakura_pavilion'] as const satisfies readonly FacilityId[];
 const cost=(wood:number,essence:number,coins:number):VillageCost=>({wood,essence,coins});
 export const FACILITIES:Record<FacilityId,FacilityDefinition>={
-  fac_bamboo_pool:{id:'fac_bamboo_pool',spot:{left:50,top:34},costs:[null,cost(10,3,120),cost(20,8,260)],coinsPerHour:[12,24,40],
+  fac_bamboo_pool:{id:'fac_bamboo_pool',spot:{left:50,top:37},costs:[null,cost(10,3,120),cost(20,8,260)],coinsPerHour:[12,24,40],
     fragmentEveryHours:[0,6,6],ticketEveryHours:[0,0,12],buffs:{damage:[0,.04,.08],rate:[0,0,.04]}},
-  fac_fish_stall:{id:'fac_fish_stall',spot:{left:77,top:35},costs:[cost(5,1,40),cost(10,3,100),cost(18,7,220)],coinsPerHour:[6,12,20],
+  fac_fish_stall:{id:'fac_fish_stall',spot:{left:77,top:36},costs:[cost(5,1,40),cost(10,3,100),cost(18,7,220)],coinsPerHour:[6,12,20],
     buffs:{startFood:[2,4,6]}},
-  fac_yuzu_tree:{id:'fac_yuzu_tree',spot:{left:22,top:34},costs:[cost(6,2,60),cost(12,4,140),cost(22,9,300)],coinsPerHour:[4,8,14],
+  fac_yuzu_tree:{id:'fac_yuzu_tree',spot:{left:24.5,top:40},costs:[cost(6,2,60),cost(12,4,140),cost(22,9,300)],coinsPerHour:[4,8,14],
     yuzuEveryHours:[4,4,4],buffs:{essenceDrop:[.2,.2,.2],startOranges:[0,1,1],coinBonus:[0,0,.1]}},
-  fac_cat_nap:{id:'fac_cat_nap',spot:{left:25,top:68},costs:[cost(5,1,40),cost(11,3,110),cost(19,7,230)],coinsPerHour:[5,10,18],
+  fac_cat_nap:{id:'fac_cat_nap',spot:{left:26,top:75},costs:[cost(5,1,40),cost(11,3,110),cost(19,7,230)],coinsPerHour:[5,10,18],
     residents:[1,2,3],buffs:{rate:[.03,.06,.09]}},
-  fac_sakura_pavilion:{id:'fac_sakura_pavilion',spot:{left:76,top:68},costs:[cost(8,3,80),cost(15,6,180),cost(26,12,360)],coinsPerHour:[8,16,28],
+  fac_sakura_pavilion:{id:'fac_sakura_pavilion',spot:{left:71.5,top:70},costs:[cost(8,3,80),cost(15,6,180),cost(26,12,360)],coinsPerHour:[8,16,28],
     fragmentEveryHours:[12,8,6],ticketEveryHours:[0,0,12],buffs:{bossDamage:[.04,.07,.1],bossFragment:[.15,.25,.35]}},
 };
 export const VILLAGE_RESOURCE_IDS=['res_onsen_wood','res_yuzu_essence'] as const satisfies readonly VillageResourceId[];

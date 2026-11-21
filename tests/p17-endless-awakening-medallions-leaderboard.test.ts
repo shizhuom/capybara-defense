@@ -696,7 +696,8 @@ describe('P17.2 Global Rank Board & Cozy Player Location',()=>{
     // Online Rank Board UI renders real players + location badges + location controls; offline with no cache falls back to local NPCs
     const psOnline=new ProfileScreens(()=>legit,()=>true,()=>{},()=>{},undefined,undefined,()=>({snapshot:snap,loading:false}));
     const htmlZh=psOnline.markup('leaderboard');
-    expect(htmlZh).toContain('星辉水豚');expect(htmlZh).toContain('京都');expect(htmlZh).toContain('data-action="location-request"');expect(htmlZh).toContain('data-action="location-reroll"');
+    expect(htmlZh).toContain('星辉水豚');expect(htmlZh).toContain('京都');expect(htmlZh).toContain('data-action="location-request"');expect(htmlZh).not.toContain('data-action="location-reroll"');
+    expect(htmlZh).toContain('关闭定位');
     expect(htmlZh).not.toContain('情绪稳定祖师爷');
     // English mode with fictional location stays 100% English (zero Chinese characters)
     setLanguage('en');

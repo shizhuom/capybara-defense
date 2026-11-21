@@ -25,9 +25,8 @@ export interface RankBoardView { snapshot: RankLeaderboardSnapshot; loading: boo
 function locationControlMarkup(profile: Profile, language: 'zh-CN' | 'en', locating = false): string {
   const isReal = profile.locationMode === 'real' && !!profile.locationLabel;
   const shown = formatLocation(profile.locationLabel, language, profile.playerId);
-  const locateText = locating ? tr('p17.location.detecting') : tr(isReal ? 'p17.location.redetect' : 'p17.location.detect');
-  const rerollText = tr(isReal ? 'p17.location.useFictional' : 'p17.location.reroll');
-  return `<div class="board-location-strip"><span class="board-location-chip">${sceneSticker('ui_map_sign', '', 16)}<span>${esc(shown)}</span></span><button type="button" class="board-location-btn" data-action="location-request"${locating ? ' disabled' : ''}>${locateText}</button><button type="button" class="board-location-btn is-cozy" data-action="location-reroll"${locating ? ' disabled' : ''}>${rerollText}</button></div>`;
+  const locateText = locating ? tr('p17.location.detecting') : tr(isReal ? 'p17.location.disable' : 'p17.location.detect');
+  return `<div class="board-location-strip"><span class="board-location-chip">${sceneSticker('ui_map_sign', '', 16)}<span>${esc(shown)}</span></span><button type="button" class="board-location-btn${isReal ? ' is-cozy' : ''}" data-action="location-request" aria-pressed="${isReal}"${locating ? ' disabled' : ''}>${locateText}</button></div>`;
 }
 
 /** P17 global endless board: a warm name card on top, then the Top 100 with the player's row highlighted. */

@@ -48,7 +48,6 @@
 #game-dialog.village-dialog .village-pet-art { position:relative;display:block;transform-origin:50% 100%;animation:village-idle 3.4s ease-in-out var(--pet-delay,0s) infinite; }
 #game-dialog.village-dialog .village-pet-art>[data-sticker] { display:block;width:100%!important;height:auto!important;aspect-ratio:1;font-size:6cqw!important;filter:drop-shadow(0 2px 1px #3a26182e); }
 #game-dialog.village-dialog .village-pet.pose-soak .village-pet-art { animation:village-soak 2.8s ease-in-out var(--pet-delay,0s) infinite; }
-#game-dialog.village-dialog .village-pet.pose-soak .village-pet-art::after { content:'';position:absolute;left:-14%;right:-14%;bottom:-8%;height:44%;border-radius:50%;background:radial-gradient(ellipse at 50% 30%,#c9f3eee6,#7ccfc9e6 70%,#56afabd0);box-shadow:0 -1px 0 #ffffffb0; }
 #game-dialog.village-dialog .village-pet.pose-nap .village-pet-art { animation:village-nap 4s ease-in-out var(--pet-delay,0s) infinite; }
 #game-dialog.village-dialog .village-zzz { position:absolute;right:-38%;top:-36%;width:52%;animation:village-zzz 3s ease-in-out infinite;pointer-events:none; }
 #game-dialog.village-dialog .village-zzz>[data-sticker] { display:block;width:100%;height:auto; }

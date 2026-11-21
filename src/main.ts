@@ -12,6 +12,7 @@ import './ui/p14.css';
 import './ui/p15.css';
 import './ui/p16.css';
 import './ui/p17.css';
+import './ui/p18-garden-wood.css';
 
 const root = document.getElementById('app');
 if (!root) throw new Error('Missing #app mount point');
