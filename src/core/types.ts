@@ -49,7 +49,7 @@ export interface AttackPresentation {
   readonly empowered:boolean; readonly critical:boolean; readonly enhanced:boolean;
 }
 export interface VisualEvent {
-  id: number; type: 'alert' | 'slash' | 'hit' | 'death' | 'food' | 'projectile' | 'burst' | 'bubble' | 'damage' | 'purge' | 'orange' | 'dash' | 'bounce' | 'sprinkler' | 'giant_cat' | 'weapon' | 'boss_skill' | 'shield_block';
+  id: number; type: 'alert' | 'slash' | 'hit' | 'death' | 'food' | 'projectile' | 'burst' | 'bubble' | 'damage' | 'purge' | 'orange' | 'dash' | 'bounce' | 'sprinkler' | 'giant_cat' | 'weapon' | 'boss_skill' | 'shield_block' | 'lucky_drop';
   side: Side; col: number; row: number; targetCol?: number; targetRow?: number;
   textKey?: string; value?: number; color?: string; age: number; duration: number; unitId?: number;
   points?:Point[]; effect?:string;
@@ -66,6 +66,8 @@ export interface BattleResult { winner: Side; reason: 'oranges' | 'waves' | 'sur
   villageLoot?:string[];endlessVillageLoot?:string[];
   /** P17: crests from this receipt (standard victory: 3; endless: only the post-wave-10 share) and awakened heroes on the board. */
   endlessCrests?:number;awakenedCount?:number;
+  /** P19: number of lucky crit drops triggered during the battle (for celebration polish). */
+  luckyDrops?:number;
 }
 export interface BattleState {
   opponent?:OpponentIdentity;
@@ -98,6 +100,8 @@ export interface Profile extends BattleLoadout {
   rankTainted?:boolean;
   /** Metadata of the best endless run (submitted to the global board). */
   bestEndlessTime?:number; bestEndlessMvp?:string; bestEndlessMvpAwakened?:boolean; bestEndlessAwakened?:number;
+  /** P19 progressive feature onboarding tokens (`gift:<id>` / `done:<id>`) and 3-win free gacha meter (0..2). */
+  onboardedFeatures?:string[]; gachaWinCounter?:number;
 }
 export interface VillageState {
   wood:number; essence:number;

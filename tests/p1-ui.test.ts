@@ -26,12 +26,12 @@ describe('P1 player presentation selectors', () => {
     boss.hp=0;expect(getMusicMode(engine.state)).toBe('battle');
     engine.state.phase='finished';expect(getMusicMode(engine.state)).toBe('menu');
   });
-  it('defaults to a clean view, accepts only dev=1 or the saved setting', () => {
+  it('defaults to a clean view and enables developer mode only via dev=1 query param', () => {
     expect(isDeveloperMode('', {})).toBe(false);
     expect(isDeveloperMode('?dev=0', {})).toBe(false);
     expect(isDeveloperMode('?dev=true', {})).toBe(false);
     expect(isDeveloperMode('?foo=1&dev=1', {})).toBe(true);
-    expect(isDeveloperMode('', {developerMode:true})).toBe(true);
+    expect(isDeveloperMode('', {developerMode:true})).toBe(false);
   });
   it('selects the nearest live player boss and excludes the other lane', () => {
     const engine = new BattleEngine({seed:34, ai:false, autoWaves:false}); engine.start();
@@ -123,21 +123,21 @@ describe('P1 tutorial command integration', () => {
     Object.assign(app,{engine,tutorialStep:2,refresh:()=>{},notify:()=>{},sound:{play:()=>{}}});
     return app;
   }
-  it('keeps step 2 after a bench merge and empty-bench move, then advances after a real board deployment', () => {
+  it('keeps step 3 after a bench merge and empty-bench move, then advances after a real board deployment', () => {
     const engine=new BattleEngine({seed:74,ai:false,autoWaves:false}); engine.start();
-    const app=appFor(engine);
+    const app=appFor(engine); app.tutorialStep=3;
     const first=engine.grant('hamster').unitId!, second=engine.grant('hamster').unitId!, third=engine.grant('squirrel').unitId!;
     app.apply(engine.move(first,{zone:'bench',slot:1}));
     expect(engine.state.units.some(unit=>unit.id===second&&unit.level===2)).toBe(true);
-    expect(app.tutorialStep).toBe(2);
+    expect(app.tutorialStep).toBe(3);
     const benchMove=engine.move(third,{zone:'bench',slot:0});
     expect(benchMove).toMatchObject({ok:true,key:'hint.deployed'});
-    app.apply(benchMove); expect(app.tutorialStep).toBe(2);
+    app.apply(benchMove); expect(app.tutorialStep).toBe(3);
     const blocked=engine.move(third,{zone:'board',col:0,row:0});
-    expect(blocked.ok).toBe(false); app.apply(blocked); expect(app.tutorialStep).toBe(2);
+    expect(blocked.ok).toBe(false); app.apply(blocked); expect(app.tutorialStep).toBe(3);
     const deployed=engine.move(third,{zone:'board',col:2,row:1});
     expect(deployed).toMatchObject({ok:true,key:'hint.deployed'});
-    app.apply(deployed); expect(app.tutorialStep).toBe(3);
+    app.apply(deployed); expect(app.tutorialStep).toBe(4);
   });
   it('advances step 2 only after digging succeeds', () => {
     const engine=new BattleEngine({seed:75,ai:false,autoWaves:false}); engine.start();

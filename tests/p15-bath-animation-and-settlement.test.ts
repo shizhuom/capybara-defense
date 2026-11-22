@@ -49,9 +49,9 @@ describe('P15 synced art',()=>{
     ui_weapon_fragment:[160,160],ui_rank_protect_shield:[160,160],ui_streak_flame:[160,160],ui_clock_sand:[160,160],
     ...Object.fromEntries(MAPS.map(id=>[`tub_rim_${id}`,[GUARDIAN_BATH_SPOTS[id].rim.dw,GUARDIAN_BATH_SPOTS[id].rim.dh] as [number,number]])),
   };
-  it('ships 288 unique sprites with every new or repainted P15 PNG at its exact RGBA size',()=>{
+  it('ships 290 unique sprites with every new or repainted P15 PNG at its exact RGBA size',()=>{
     const ids=JSON.parse(readFileSync('public/assets/sprites/manifest.json','utf8')) as string[];
-    expect(ids).toHaveLength(288);expect(new Set(ids).size).toBe(288);
+    expect(ids).toHaveLength(290);expect(new Set(ids).size).toBe(290);
     for(const [id,[w,h]] of Object.entries(sizes)){expect(ids).toContain(id);const png=sprite(id);expect([png.readUInt32BE(16),png.readUInt32BE(20),png[25]]).toEqual([w,h,6]);}
   });
   it('removes every cyan water ring from all six soak frames; only the bottom chest arc remains',()=>{
@@ -106,7 +106,7 @@ describe('P15 soaking animation',()=>{
       expect(b.bubbles).toBeGreaterThan(0);signatures.add(`${b.bathCenter}${b.bathColor}${b.bathEdge}`);
       expect(soupPalette(id,3)).toMatchObject({center:b.bathCenter,main:b.bathColor,edge:b.bathEdge,foam:b.foamColor,topping:b.topping,level:3});
     }
-    expect(signatures.size).toBe(12);expect(BROTHS.dish_spicy_hotpot.bubbles).toBeGreaterThan(BROTHS.dish_sakura_milk.bubbles);
+    expect(signatures.size).toBe(14);expect(BROTHS.dish_spicy_hotpot.bubbles).toBeGreaterThan(BROTHS.dish_sakura_milk.bubbles);
   });
 });
 
@@ -151,7 +151,7 @@ describe('P15 five-layer bath pipeline',()=>{
       expect(s.stops).toEqual(expect.arrayContaining([b.bathCenter,b.bathColor,b.bathEdge]));expect(s.stops).not.toContain('#B9F0EC');
       looks.add(JSON.stringify(s.stops.slice(0,4))+s.calls.filter(c=>c.name==='fill').map(c=>String(c.fill)).join());
     }
-    expect(looks.size).toBe(12);
+    expect(looks.size).toBe(14);
     const spicy=surface();spicy.renderer.draw(battle('midnight_kitchen','dish_spicy_hotpot'),0);
     expect(spicy.calls.some(c=>c.name==='fill'&&c.fill==='#D9362B')).toBe(true);
     const sakura=surface();sakura.renderer.draw(battle('sakura_onsen','dish_sakura_milk'),0);
@@ -180,7 +180,7 @@ function resultInput(won=true,oranges=3):ResultViewInput {
   engine.state.sides.player.oranges=oranges;
   Object.assign(engine.state.result!,{winner:won?'player':'ai',reason:'waves',elapsed:125,coins:won?65:0,loot:won?['m01_swatter','m01_swatter','m10_bamboo_staff','fake_fragment']:[],
     ingredientLoot:won?['ing_yuzu','ing_honey']:['ing_sakura','ing_sakura'],mvp:{kind:'kungfu_po',level:3,damage:1234.6,kills:27}});
-  return{state:engine.state,profile:{...createProfile(),stars:5},savedResult:true,resultStars:won?2:0,previousRank:0,newWeapons:[],newAvatars:[]};
+  return{state:engine.state,profile:{...createProfile(),stars:60,highestStars:60,matches:30},savedResult:true,resultStars:won?2:0,previousRank:0,newWeapons:[],newAvatars:[],ticketAwarded:won};
 }
 describe('P15 wide-belly settlement',()=>{
   it.each(['zh-CN','en'] as const)('keeps two clean plaque blocks with big icon rewards and picture-only rank badges (%s)',language=>{
@@ -191,7 +191,7 @@ describe('P15 wide-belly settlement',()=>{
     for(const [id,size] of [['ui_coin_gold',62],['ui_ticket_gacha',56],['ui_weapon_fragment',56],['ui_kitchen_pot',56]] as const)expect(plaque).toMatch(new RegExp(`data-sticker="${id}"[^>]*width="${size}"|width="${size}"[^>]*data-sticker="${id}"`));
     expect(plaque).toContain('+65');expect(plaque).toContain('+4');expect(plaque).toContain('+2');
     expect(plaque).toContain('data-sticker="ui_streak_flame"');expect(plaque).toContain(`title="${t('m3.streakBonus')}"`);expect(plaque).toContain('+2★');
-    expect(win).not.toContain('ui_merge_sparkle');expect(plaque).not.toMatch(/>[^<]{24,}</);
+    expect(win).not.toContain('ui_merge_sparkle');expect(plaque.replace(/<div class="crest-next-hook"[\s\S]*?<\/div>/,'')).not.toMatch(/>[^<]{24,}</);
     const loss=resultMarkup(resultInput(false));
     expect(loss).toContain('data-sticker="ui_rank_protect_shield"');expect(loss).toContain(`title="${t('m3.protected')}"`);expect(loss).toContain('0★');
     expect(loss).toMatch(/class="crest-reward crest-bonus crest-ingredients"[^>]*>[^]*?data-sticker="ing_sakura"/);

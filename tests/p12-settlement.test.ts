@@ -10,7 +10,7 @@ function resultInput(won=true,oranges=3):ResultViewInput {
  const engine=new BattleEngine({autoWaves:false});engine.start();engine.surrender();
  engine.state.sides.player.oranges=oranges;
  Object.assign(engine.state.result!,{winner:won?'player':'ai',reason:'waves',elapsed:125,coins:won?65:0,loot:won?['m01_swatter','m01_swatter','m10_bamboo_staff']:[],mvp:{kind:'kungfu_po',level:3,damage:1234.6,kills:27}});
- return {state:engine.state,profile:{...createProfile(),stars:5},savedResult:true,resultStars:won?2:0,previousRank:0,newWeapons:won?['m10_bamboo_staff']:[],newAvatars:won?['sakura_capy']:[],newRoster:won?{units:['bee'],heroes:['ronin_goose']}:{units:[],heroes:[]}};
+ return {state:engine.state,profile:{...createProfile(),stars:5},savedResult:true,resultStars:won?2:0,previousRank:0,newWeapons:won?['m10_bamboo_staff']:[],newAvatars:won?['sakura_capy']:[],newRoster:won?{units:['bee'],heroes:['ronin_goose']}:{units:[],heroes:[]},ticketAwarded:won};
 }
 
 it.each([[true,1,1,2],[true,2,2,1],[true,3,3,0],[true,7,3,0],[false,3,0,3],[false,0,0,3]] as const)(

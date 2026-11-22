@@ -14,7 +14,11 @@ export function brothRailMarkup(state:BattleState,preparation:boolean,expanded=f
  return `<button type="button" class="broth-rail-pill ${expanded?'is-expanded':''}" data-action="broth-info" data-broth-id="${def.id}" style="--broth-color:${def.bathColor}" aria-expanded="${expanded}" aria-label="${esc(t('p14.railTitle'))}: ${esc(name)} Lv.${level}. ${esc(effect)}" title="${esc(name)} Lv.${level}: ${esc(effect)}"><span aria-hidden="true">${sceneSticker(def.id,'',36)}</span><small>Lv.${level}</small><span class="passive-tooltip broth-tooltip" role="tooltip"><em>${esc(t('p14.railTitle'))}</em><strong>${esc(name)} · Lv.${level}</strong><span>${esc(effect)}</span><span class="broth-tooltip-live">${esc(t('p14.railLive'))} · ${esc(kitchenAuraText(loadout))}</span></span></button>`;
 }
 
-export const nextBattleSpeed=(speed:1|2|3):1|2|3=>speed===3?1:speed===2?3:2;
+export const nextBattleSpeed=(speed:1|2|3,maxSpeed:1|2|3=3):1|2|3=>{
+  if(maxSpeed<=1)return 1;
+  if(maxSpeed===2)return speed===2?1:2;
+  return speed===3?1:speed===2?3:2;
+};
 export function p13WaveMarkup(state:BattleState):string {
  return `<span aria-hidden="true">${sceneSticker('ui_endless_emblem','',28)}</span><span>${esc(t('p17.board.wave',{wave:state.wave}))}</span>`;
 }

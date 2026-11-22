@@ -87,7 +87,8 @@ export class ProfileScreens {
     const before = this.profile();
     if (element.dataset.setting) {
       const key = element.dataset.setting;
-      const patch = key === 'showDamageNumbers' || key === 'developerMode' ? { [key]: (element as HTMLInputElement).checked } : { [key]: Number(element.value) };
+      if (key !== 'showDamageNumbers' && key !== 'musicVolume' && key !== 'soundVolume') return false;
+      const patch = key === 'showDamageNumbers' ? { [key]: (element as HTMLInputElement).checked } : { [key]: Number(element.value) };
       if (this.persist(updateSettings(before, patch))) {
         element.style?.setProperty?.('--range-fill', `${Math.round(Number(element.value)*100)}%`);
         const output = element.closest('label')?.querySelector('output');
@@ -179,7 +180,7 @@ export class ProfileScreens {
       const label=tr(key==='musicVolume'?'p11.profile.musicVolume':'p11.profile.soundVolume'),percent=Math.round(profile.settings[key]*100),id=`profile-setting-${key}`;
       return `<article class="storybook-row-card setting-row setting-volume-row"><label class="storybook-volume-control"><span class="storybook-frame tone-settings setting-icon" aria-hidden="true">${key==='musicVolume'?'♫':'🔊'}</span><span class="storybook-copy"><strong class="portrait-name">${label}</strong><input id="${id}" class="cozy-range" style="--range-fill:${percent}%" type="range" min="0" max="1" step="0.01" value="${profile.settings[key]}" data-setting="${key}" aria-label="${label}"></span><output class="storybook-status" for="${id}">${percent}%</output></label></article>`;
     }).join('');
-    const toggles=(['showDamageNumbers','developerMode'] as const).map(key=>`<label class="storybook-setting-toggle"><span class="storybook-copy"><strong class="portrait-name">${tr(key==='developerMode'?'p1.developer':'m3.damage')}</strong><span class="storybook-tagline">${tr(key==='developerMode'?'p5.developerHint':'p5.damageHint')}</span></span><span class="storybook-toggle"><input class="storybook-toggle-input" type="checkbox" data-setting="${key}"${profile.settings[key]?' checked':''}><i class="storybook-toggle-track" aria-hidden="true"></i></span></label>`).join('');
+    const toggles=(['showDamageNumbers'] as const).map(key=>`<label class="storybook-setting-toggle"><span class="storybook-copy"><strong class="portrait-name">${tr('m3.damage')}</strong><span class="storybook-tagline">${tr('p5.damageHint')}</span></span><span class="storybook-toggle"><input class="storybook-toggle-input" type="checkbox" data-setting="${key}"${profile.settings[key]?' checked':''}><i class="storybook-toggle-track" aria-hidden="true"></i></span></label>`).join('');
     const replay=`<article class="storybook-row-card setting-row setting-tutorial-row"><button type="button" class="storybook-row-button" data-action="tutorial-replay"><span class="storybook-frame tone-heroes">${sceneSticker('ui_tutorial_capy','',64)}</span><span class="storybook-copy"><strong class="portrait-name">${tr('p11.profile.tutorialReplay')}</strong><span class="storybook-tagline">${tr('p11.profile.tutorialHint')}</span></span><span class="storybook-status"><span class="storybook-pill-label">${tr('p11.profile.start')}</span></span></button></article>`;
     return `<div class="storybook-list storybook-settings-list">${volumes}<article class="storybook-row-card setting-row setting-toggle-row">${toggles}</article>${replay}</div>`;
   }

@@ -10,6 +10,7 @@ import {STANDARD_VICTORY_CRESTS} from '../config/medallions';
 import {escapeHtml as esc} from './art';
 import {INGREDIENT_IDS,isIngredientId,type IngredientId} from '../config/kitchen';
 import {VILLAGE_RESOURCE_IDS,type VillageResourceId} from '../config/village';
+import {computeNextGoalHook,type NextGoalHook} from '../core/FeatureUnlocks';
 const tr=(key:string,vars?:Record<string,string|number>)=>esc(t(key,vars));
 const clock=(seconds:number)=>`${Math.floor(seconds/60)}:${String(Math.floor(seconds%60)).padStart(2,'0')}`;
 const reportClock=(seconds:number)=>`${String(Math.floor(seconds/60)).padStart(2,'0')}:${String(Math.floor(seconds%60)).padStart(2,'0')}`;
@@ -51,26 +52,47 @@ export function pauseMarkup(state:BattleState):string {
   <footer class="settlement-actions pause-actions pause-storybook-actions"><button type="button" class="button button-teal" data-action="resume" autofocus><span aria-hidden="true">▶</span> ${tr('p12.resume')}</button><div><button type="button" data-action="profile">${tr('p12.profile')}</button><button type="button" data-action="settings">${tr('p12.settings')}</button><button type="button" class="surrender-button" data-action="surrender">${state.endless?`${sceneSticker('ui_endless_emblem','',20)} `:''}${tr(state.endless?'p13.settleEndless':'p12.surrender')}</button></div></footer>
  </div>`;
 }
-export function endlessOfferMarkup(state:BattleState,savedResult:boolean):string {
+export function endlessOfferMarkup(state:BattleState,savedResult:boolean,firstUnlock=false,ticketAwarded=false,showCrests=true):string {
  const result=state.standardResult??state.result;
+ const crests=showCrests?(result?.endlessCrests??STANDARD_VICTORY_CRESTS):0;
  return `<div class="endless-offer-shell">
   <div class="endless-offer-emblem" aria-hidden="true">${sceneSticker('ui_endless_emblem','',148)}</div>
+  ${firstUnlock?`<span class="endless-first-unlock-pill">${tr('p19.onboard.endless.badge')}</span>`:''}
   <h2 id="dialog-title">${tr('p13.endlessOfferTitle')}</h2>
   ${savedResult?`<p class="endless-banked-note" role="status"><span aria-hidden="true">✓</span> ${tr('p13.endlessBanked')}</p>`:`<div class="endless-save-pending" role="status"><p>${tr('p13.savePending')}</p><button type="button" data-action="retry-save-result" autofocus>${tr('p13.retrySave')}</button></div>`}
   <div class="endless-offer-story"><p>${tr('p13.endlessOfferBody')}</p><div class="endless-growth" role="img" aria-label="${tr('p13.endlessScaling')}"><span aria-hidden="true">×1.25 <i>→</i> ×1.56 <i>→</i> ×1.95 <i>→</i> …</span></div></div>
-  ${savedResult?`<div class="endless-offer-rewards" aria-label="${tr('p13.treasureShelf')}"><span>${sceneSticker('ui_star_rank','',28)}<b>${tr('p13.rankBanked')}</b></span><span>${sceneSticker('ui_coin_gold','',32)}<b>+${result?.coins??0}</b></span><span>${sceneSticker('ui_ticket_gacha','',30)}<b>+1</b></span><span class="endless-offer-crest" title="${tr('p17.crests')}">${sceneSticker('ui_endless_crest','',30)}<b>+${result?.endlessCrests??STANDARD_VICTORY_CRESTS}</b></span></div>`:''}
+  ${savedResult?`<div class="endless-offer-rewards" aria-label="${tr('p13.treasureShelf')}"><span>${sceneSticker('ui_star_rank','',28)}<b>${tr('p13.rankBanked')}</b></span><span>${sceneSticker('ui_coin_gold','',32)}<b>+${result?.coins??0}</b></span>${ticketAwarded?`<span>${sceneSticker('ui_ticket_gacha','',30)}<b>+1</b></span>`:''}${crests?`<span class="endless-offer-crest" title="${tr('p17.crests')}">${sceneSticker('ui_endless_crest','',30)}<b>+${crests}</b></span>`:''}</div>`:''}
   <footer class="endless-offer-actions"><button type="button" class="endless-decline" data-action="decline-endless"><span aria-hidden="true">${sceneSticker('ui_trophy_rank','',22)}</span> ${tr('p13.declineEndless')}</button><button type="button" class="endless-enter" data-action="enter-endless"${savedResult?' autofocus':' disabled'}><span aria-hidden="true">${sceneSticker('ui_endless_emblem','',24)}</span> ${tr('p13.enterEndless')}</button></footer>
  </div>`;
 }
 export interface ResultViewInput {state:BattleState;profile:Profile;savedResult:boolean;resultStars:number;previousRank:number;newWeapons:readonly string[];newAvatars:readonly string[];newRoster?:{units:readonly string[];heroes:readonly string[]};statsOpen?:boolean;
   /** P17: the player's exact global endless rank once the run has synced. */
-  globalRank?:number}
+  globalRank?:number;
+  /** P19: whether this win completed the 3-win free gacha meter. */
+  ticketAwarded?:boolean}
+function nextGoalHookMarkup(hook:NextGoalHook|null):string {
+ if(!hook)return '';
+ let text='';
+ if(hook.kind==='feature'){
+  const name=t(`p19.feature.${hook.id}`);
+  text=hook.target===1&&hook.current===0?tr('p19.hook.featureMatch',{name}):tr('p19.hook.featureStars',{name,need:Math.max(1,hook.target-hook.current),current:hook.current,target:hook.target});
+ }else if(hook.kind==='gacha_ticket'){
+  text=tr('p19.hook.gacha');
+ }else if(hook.kind==='weapon'){
+  text=tr('p19.hook.weapon',{name:t(`weapon.${hook.id}`),need:Math.max(1,hook.target-hook.current),current:hook.current,target:hook.target});
+ }else if(hook.kind==='village'){
+  text=tr('p19.hook.village',{name:t(`facility.${hook.id}`),pct:hook.percent});
+ }else{
+  text=tr('p19.hook.kitchen',{name:t(`broth.${hook.id}`),pct:hook.percent});
+ }
+ return `<div class="crest-next-hook" role="status"><span class="crest-next-hook-text">${text}</span><span class="crest-next-hook-bar" aria-hidden="true"><i style="width:${Math.max(6,Math.min(100,hook.percent))}%"></i></span></div>`;
+}
 /** Crests this whole run banked: the standard victory's 3 plus every endless wave's share. */
 export function resultCrests(state:BattleState):number {
  const result=state.result;if(!result)return 0;
  return result.endless&&state.standardResult?(state.standardResult.endlessCrests??0)+(result.endlessCrests??0):result.endlessCrests??0;
 }
-export function resultMarkup({state,profile,savedResult,resultStars,previousRank,newWeapons,newAvatars,newRoster,statsOpen=false,globalRank}:ResultViewInput):string {
+export function resultMarkup({state,profile,savedResult,resultStars,previousRank,newWeapons,newAvatars,newRoster,statsOpen=false,globalRank,ticketAwarded=false}:ResultViewInput):string {
  const result=state.result!;if(!result)return '';
  const endless=Boolean(result.endless),won=endless||result.winner==='player',rank=getRank(profile.stars),mvp=result.mvp;
  const coins=won?(endless&&state.standardResult?state.standardResult.coins+(result.endlessCoins??0):result.coins):0;
@@ -94,18 +116,20 @@ export function resultMarkup({state,profile,savedResult,resultStars,previousRank
  // Defeat salvage still reaches the shelf; endless results list every ingredient from the whole run.
  const ingredients=ingredientCounts(result.ingredientLoot),ingredientTotal=ingredients.reduce((sum,[,n])=>sum+n,0);
  const reward=(cls:string,picture:string,value:string,label:string)=>`<span class="crest-reward ${cls}" title="${label}" aria-label="${label} ${value}">${picture}<b aria-hidden="true">${value}</b></span>`;
+ const showTicket=won&&ticketAwarded;
  const coreRewards=reward('crest-coin',sceneSticker('ui_coin_gold','',62),`+${count(coins)}`,tr('profile.coins'))
-  +(won?reward('crest-bonus crest-ticket',sceneSticker('ui_ticket_gacha','',56),'+1',tr('p5.tickets')):'')
+  +(showTicket?reward('crest-bonus crest-ticket',sceneSticker('ui_ticket_gacha','',56),'+1',tr('p5.tickets')):'')
   +(crests?reward('crest-bonus crest-crests',sceneSticker('ui_endless_crest','',56),`+${crests}`,tr('p17.crests')):'')
   +(loot.length?reward('crest-bonus crest-fragments',sceneSticker('ui_weapon_fragment','',56),`+${loot.length}`,tr('profile.fragments')):'')
   +(ingredientTotal?reward('crest-bonus crest-ingredients',ingredients.length===1?sceneSticker(ingredients[0][0],'',56):sceneSticker('ui_kitchen_pot','',56),`+${ingredientTotal}`,tr('p14.resultIngredients')):'');
+ const nextHook=savedResult?nextGoalHookMarkup(computeNextGoalHook(profile)):'';
  const endlessFull=tr('p13.endlessRecord',{wave:endlessWave,best:bestEndlessWave});
  const rankBadge=endless&&globalRank&&globalRank>0?`<span class="crest-global-rank" role="status">${tr('p17.globalRank',{rank:globalRank})}</span>`:'';
  const endlessCapsule=endless?`<p class="crest-endless-record" title="${endlessFull}"><span class="crest-endless-capsule" aria-hidden="true">${sceneSticker('ui_endless_emblem','',24)}<b>${tr('p15.endlessCapsule',{wave:endlessWave,best:bestEndlessWave})}</b></span><span class="settlement-sr-only">${endlessFull}</span>${rankBadge}</p>`:'';
  const medal=(cls:string,icon:string,label:string,value:string)=>`<div class="visual-medal ${cls}"><dt>${sceneSticker(icon as 'ui_stat_damage_burst','',64)}<span class="settlement-sr-only">${label}</span></dt><dd>${value}</dd></div>`;
  const mvpBody=mvp?`<figure class="visual-mvp-hero"><div class="visual-mvp-portrait"><span class="visual-mvp-crown" aria-hidden="true">${sceneSticker('ui_mvp_crown','',48)}</span>${heroSticker(mvp.kind,116,mvp.awakened===true)}<span class="visual-mvp-level">Lv.${mvp.level}${mvp.awakened?' ★':''}</span></div><figcaption><b>MVP</b><strong>${tr(`${HEROES[mvp.kind]?'hero':'unit'}.${mvp.kind}`)}</strong></figcaption></figure><dl class="visual-medals">${medal('visual-damage','ui_stat_damage_burst',tr('p13.damage'),formatCompactNumber(mvp.damage))}${medal('visual-kills','ui_stat_ko_skull',tr('p13.kills'),`×${count(mvp.kills)}`)}</dl>`:`<div class="visual-team-photo"><div class="lineup-stickers">${units.slice(0,8).map(u=>u.awakened?heroSticker(u.kind,52,true):unitSticker(u.kind,52)).join('')||sceneSticker('ui_tutorial_capy','',104)}</div><p>${tr('p6.noMvp')}</p><span>${tr('p6.lineup',{count:units.length})}</span></div>`;
  const treasure=(picture:string,quantity:string,label:string,extra='')=>`<figure class="visual-treasure-item${extra}" title="${label}"><span class="visual-treasure-art" aria-hidden="true">${picture}</span><figcaption><b>${quantity}</b><span class="settlement-sr-only">${label}</span></figcaption></figure>`;
- const treasureItems=treasure(sceneSticker('ui_coin_gold','',72),`+${count(coins)}`,tr('profile.coins'))+(won?treasure(sceneSticker('ui_ticket_gacha','',72),'+1',tr('p5.tickets')):'')
+ const treasureItems=treasure(sceneSticker('ui_coin_gold','',72),`+${count(coins)}`,tr('profile.coins'))+(showTicket?treasure(sceneSticker('ui_ticket_gacha','',72),'+1',tr('p5.tickets')):'')
   +[...fragments].map(([id,quantity])=>treasure(WEAPONS[id]?weaponSticker(id,72):sceneSticker('ui_weapon_fragment','',72),`×${quantity}`,tr(`fragment.${id}`))).join('')
   +ingredients.map(([id,quantity])=>treasure(sceneSticker(id,'',72),`×${quantity}`,`${tr(`ingredient.${id}`)} ×${quantity}`,' is-ingredient')).join('')
   +villageMaterialCounts(result.villageLoot).map(([id,quantity])=>treasure(sceneSticker(id,'',72),`×${quantity}`,`${tr(id==='res_onsen_wood'?'p16.wood':'p16.essence')} ×${quantity}`,' is-material')).join('')
@@ -134,6 +158,7 @@ export function resultMarkup({state,profile,savedResult,resultStars,previousRank
      ${endlessCapsule}
     </div>
     <div class="crest-core-rewards">${coreRewards}</div>
+    ${nextHook}
    </div>${savedResult?unlockHint:''}
   </div>
   ${saveRetry}

@@ -43,6 +43,7 @@ export class MetaScreens {
 
   /** List filters and detail entries each keep their own scroll position. */
   get viewKey(): string { return `${this.family}:${this.tab}:${this.detailWeaponId ?? 'list'}`; }
+  get detailWeapon(): string | null { return this.detailWeaponId; }
 
   reset(): void {
     clearTimeout(this.timer); this.timer = undefined;

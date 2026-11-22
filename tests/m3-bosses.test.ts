@@ -94,7 +94,7 @@ describe('M3 complete boss roster and real mechanisms',()=>{
   });
   it('high ranks shift real boss and treasure fragment rarity toward purple/orange',()=>{
     const e=game(false,50);expect(e.rollWeaponFragment).toBeTypeOf('function');
-    const random=vi.spyOn(Random.prototype,'next').mockReturnValue(.7);const high=e.rollWeaponFragment();expect(WEAPONS[high].rarity).toBe(3);
+    const random=vi.spyOn(Random.prototype,'next').mockReturnValue(.65);const high=e.rollWeaponFragment();expect(WEAPONS[high].rarity).toBe(3);
     const low=game();const ordinary=low.rollWeaponFragment();expect(WEAPONS[ordinary].rarity).toBe(2);random.mockRestore();
   });
   it('records actual hero merges once for results, independently of later unit removal',()=>{

@@ -9,7 +9,7 @@ vi.mock('../src/ui/storage',async importOriginal=>({...await importOriginal<type
 function harness(){
  const engine=new BattleEngine({seed:13});engine.start();
  const app:any=Object.create(GameApp.prototype);
- Object.assign(app,{engine,profile:{...createProfile(),tutorialCompleted:true},tutorialStep:'done',speed:1,savedResult:true,
+ Object.assign(app,{engine,profile:{...createProfile(),tutorialCompleted:true,stars:10,highestStars:10,gachaWinCounter:2,onboardedFeatures:['done:endless']},tutorialStep:'done',speed:1,savedResult:true,
   newWeapons:[],newAvatars:[],newRoster:{units:[],heroes:[]},resultStars:0,previousRank:0,
   sound:{play:vi.fn()},refresh:vi.fn(),notify:vi.fn(),clearSelection:vi.fn(),renderDialog:vi.fn(),renderMenu:vi.fn(),
   profileScreens:{action:()=>false},meta:{action:()=>false},canvas:{focus:vi.fn()},dialog:{open:false},
@@ -56,7 +56,7 @@ it('successful early call or dismissal persists coaching without altering the fi
  const guided=harness();guided.app.tutorialStep=4;guided.app.action('early-wave');expect(guided.engine.state.spawned).toBe(0);expect(guided.app.profile.earlyWaveTipSeen).toBe(false);
 });
 it('cycles the real HUD action through 1, 2, 3 and keeps explicit developer speeds',()=>{
- const {app}=harness();for(const expected of [2,3,1]){app.action('speed');expect(app.speed).toBe(expected);}
+ const {app}=harness();app.profile={...app.profile,stars:60,highestStars:60};for(const expected of [2,3,1]){app.action('speed');expect(app.speed).toBe(expected);}
  app.action('speed-3');expect(app.speed).toBe(3);
 });
 it('has symmetric fully translated HUD copy',()=>{

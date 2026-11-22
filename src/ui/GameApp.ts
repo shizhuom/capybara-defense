@@ -39,7 +39,7 @@ import { liveUnitCardMarkup, momentumText, breakthroughBreakdown } from './LiveU
 import { getBeeProduction } from '../core/UnitStats';
 import { courtyardMarkup } from './CourtyardView';
 import { RANKS, getRank } from '../config/ranks';
-import { recordMergedHeroes, resolveMap, pickBattleMap, updateSettings, selectMap } from '../core/PlayerProgression';
+import { recordMergedHeroes, resolveMap, pickBattleMap, selectMap } from '../core/PlayerProgression';
 import {newlyUnlocked} from '../config/progression';
 import {bindAudioGestures} from './AudioGestures';
 import {transitionMarkup,enemyAlertMarkup} from './BattlePresentation';
@@ -52,6 +52,26 @@ import { Compendium } from './Compendium';
 import { getBossHUD, getWaveHUD, getMusicMode, isDeveloperMode } from './BattleHUD';
 import { advanceTutorial, finishTutorial, replayTutorial, type TutorialAction, type TutorialStep } from '../core/Tutorial';
 import { tutorialMarkup, tutorialTargets, placeTutorialBubble, tutorialCardDock, type TutorialRect } from './TutorialView';
+import {
+  buildDebugStageProfile,
+  claimFeatureStarterGift,
+  hasOnboarded,
+  isFeatureUnlocked,
+  markOnboarded,
+  maxBattleSpeed,
+  nextLockedFeature,
+  pendingMenuOnboarding,
+  type FeatureId,
+} from '../core/FeatureUnlocks';
+import {
+  battleLessonMarkup,
+  computeDialogGuideStep,
+  dialogGuideBannerMarkup,
+  isOnboardingKey,
+  menuWelcomeMarkup,
+  nextBattleLesson,
+  type BattleLessonKey,
+} from './OnboardingGuide';
 
 type Hit = HitTarget;
 type DialogKind = 'pause' | 'recipes' | 'result' | 'endless-offer' | 'kitchen' | 'village' | 'medallions' | MetaScreen | ProfileScreen;
@@ -102,6 +122,14 @@ export class GameApp {
   private endlessHubMode = false;
   private globalRank?: number;
   private p17EventId = 0;
+  private ticketAwarded = false;
+  private endlessFirstUnlock = false;
+  private activeMenuOnboarding: FeatureId | null = null;
+  private onboardingMarketSpun = false;
+  private onboardingVillageInteracted = false;
+  private activeBattleLesson: BattleLessonKey | null = null;
+  private battleLessonStamp = '';
+  private menuOnboardStamp = '';
   private sound = new SoundManager(this.profile.settings);
   private compendium = new Compendium();
   private tutorialStep: TutorialStep = 'done';
@@ -181,7 +209,7 @@ export class GameApp {
               <button type="button" class="button button-light" data-action="skip" data-battle><span aria-hidden="true">↠</span> <span data-i18n="dev.skip"></span></button>
               <div class="speed-control"><span data-i18n="dev.speed"></span><div class="segmented"><button type="button" data-action="speed-1" data-battle>1×</button><button type="button" data-action="speed-2" data-battle>2×</button><button type="button" data-action="speed-3" data-battle>3×</button></div></div>
               <div class="dev-live" id="dev-live"></div><p class="control-caption" id="dev-tip"></p>
-              <section class="m2-dev"><strong id="profile-mode"></strong><button type="button" class="button button-peach" data-action="test-enable" data-i18n="m2.testEnable"></button><button type="button" class="button button-light" data-action="test-restore" data-i18n="m2.testRestore"></button><label for="dev-rank" data-i18n="m3.devRank"></label><select id="dev-rank"></select><label for="dev-map" data-i18n="m3.devMap"></label><select id="dev-map"></select><p data-i18n="m2.nextBattle"></p><div id="quick-loadout"></div></section>
+              <section class="m2-dev"><strong id="profile-mode"></strong><button type="button" class="button button-peach" data-action="test-enable" data-i18n="m2.testEnable"></button><button type="button" class="button button-light" data-action="test-restore" data-i18n="m2.testRestore"></button><label for="dev-stage" data-i18n="p19.devStage"></label><div class="button-row"><select id="dev-stage"></select><button type="button" class="button button-light" data-action="dev-stage-apply" data-i18n="p19.devStageApply"></button></div><label for="dev-rank" data-i18n="m3.devRank"></label><select id="dev-rank"></select><label for="dev-map" data-i18n="m3.devMap"></label><select id="dev-map"></select><p data-i18n="m2.nextBattle"></p><div id="quick-loadout"></div></section>
               <details class="paper-card keyboard-card"><summary data-i18n="keyboard.title"></summary><p class="muted" data-i18n="keyboard.help"></p><div id="keyboard-controls"></div></details><div class="reset-control"><button type="button" class="text-button" data-action="reset" data-i18n="dev.reset"></button><p class="control-caption" data-i18n="dev.resetNote"></p></div>
             </div>
           </details>
@@ -202,6 +230,8 @@ export class GameApp {
             <div id="live-card-host"></div>
             <div id="battle-props" hidden></div><div id="sealed-hint" class="sealed-hint" hidden></div>
             <div id="tutorial-overlay" hidden></div>
+            <div id="battle-onboarding-overlay" hidden></div>
+            <div id="onboarding-host" hidden></div>
             <div id="early-wave-coachmark" hidden></div>
             <aside id="passive-rail" hidden></aside>
           </div>
@@ -228,14 +258,33 @@ export class GameApp {
     this.closeDialog(false);
     this.overlayReturn = null; this.modalReturn = null;
     const guided=!this.profile.tutorialCompleted,bestStars=Math.max(this.profile.stars,this.profile.highestStars);
-    this.engine = new BattleEngine({ tutorialGuided:guided, progressionStars:isTestProfile()?undefined:bestStars,progressionHeroes:this.profile.mergedHeroes, mapId: this.devMapOverride ?? (guided?'sunny_backyard':pickBattleMap(this.profile).id), rankIndex: getRank(this.profile.stars).index, loadouts: { player: structuredClone(villageLoadout(this.profile)) } });
+    const allUnlocked=isTestProfile();
+    const featureDrops=allUnlocked
+      ? { armory: true, village: true, kitchen: true, medallions: true }
+      : {
+        armory: isFeatureUnlocked(this.profile, 'armory'),
+        village: isFeatureUnlocked(this.profile, 'village'),
+        kitchen: isFeatureUnlocked(this.profile, 'kitchen'),
+        medallions: isFeatureUnlocked(this.profile, 'medallions'),
+      };
+    this.engine = new BattleEngine({
+      tutorialGuided: guided,
+      progressionStars: allUnlocked ? undefined : bestStars,
+      progressionHeroes: this.profile.mergedHeroes,
+      mapId: this.devMapOverride ?? (guided ? 'sunny_backyard' : pickBattleMap(this.profile).id),
+      rankIndex: getRank(this.profile.stars).index,
+      loadouts: { player: structuredClone(villageLoadout(this.profile)) },
+      featureDrops,
+      unlockedWeapons: this.profile.unlockedWeapons,
+    });
     this.engine.start();
     this.tutorialStep = this.profile.tutorialCompleted ? 'done' : 1;
     this.engine.setTutorialHold(this.tutorialStep!=='done');
     this.tutorialStamp = ''; this.bossStamp = '';
     this.speed = 1;
     this.completedId = '';
-    this.savedResult=true;this.resultStars=0;this.passiveInfoId=undefined;this.earlyTipStamp='';this.passiveStamp='';
+    this.savedResult=true;this.resultStars=0;this.ticketAwarded=false;this.endlessFirstUnlock=false;this.passiveInfoId=undefined;this.earlyTipStamp='';this.passiveStamp='';
+    this.activeBattleLesson=null;this.battleLessonStamp='';this.p17EventId=0;
     this.newWeapons = []; this.globalRank = undefined;
     this.newAvatars = []; this.mergedStamp = '';
     this.newRoster={units:[],heroes:[]};this.alertSeen=new Set();this.alertQueue=[];this.activeAlert=undefined;
@@ -294,6 +343,7 @@ export class GameApp {
     this.overlayReturn = null;
     this.engine = null;
     this.tutorialStep = 'done'; this.tutorialStamp = '';
+    this.activeBattleLesson = null; this.battleLessonStamp = ''; this.menuOnboardStamp = '';
     this.clearSelection();
     this.refresh(true);
     this.root.querySelector<HTMLButtonElement>('[data-action="start"]')?.focus({ preventScroll: true });
@@ -358,6 +408,7 @@ export class GameApp {
   private persistResult(state:BattleState):void {
     if (state.result) {
       const before = this.profile;
+      const hadEndless = isFeatureUnlocked(before, 'endless');
       if(!state.endless&&!before.awardedBattles.includes(state.id))this.previousRank = getRank(before.stars).index;
       const award = state.endless?awardEndless(this.profile,state.id,state.result):awardBattle(this.profile, state.id, state.result);
       const receipt=this.settlementKey(state);
@@ -367,6 +418,8 @@ export class GameApp {
         if(award.awarded){
           this.newWeapons = [...new Set([...(state.endless?this.newWeapons:[]),...award.newWeapons])];
           if(!state.endless){
+            this.ticketAwarded = Boolean('ticketAwarded' in award && award.ticketAwarded);
+            this.endlessFirstUnlock = !hadEndless && isFeatureUnlocked(this.profile, 'endless');
             this.newRoster=state.result.winner==='player'?newlyUnlocked(Math.max(before.stars,before.highestStars),Math.max(this.profile.stars,this.profile.highestStars)):{units:[],heroes:[]};
             this.resultStars = this.profile.stars - before.stars;
             if(this.newRoster.heroes.length)this.sound.play('hero_merge');
@@ -384,18 +437,22 @@ export class GameApp {
     this.clearSelection();
     this.persistResult(state);
     if(state.result)this.sound.play(state.result.winner === 'player' ? 'victory' : 'defeat');
-    const offer=!state.endless&&state.wave===10&&state.result?.winner==='player'&&state.result.reason==='waves';
+    const offer=!state.endless&&state.wave===10&&state.result?.winner==='player'&&state.result.reason==='waves'&&(isTestProfile()||isFeatureUnlocked(this.profile,'endless'));
+    if (offer && !hasOnboarded(this.profile, 'endless')) {
+      this.persistProfile(markOnboarded(this.profile, 'endless'));
+    }
     this.showDialog(offer?'endless-offer':'result');
     this.refresh(true);
   }
 
-  /** P17 cues reuse existing sounds only: the bubble shield pops with `orange_gain`, Calm Ward clanks with `hit_heavy`. */
+  /** P17/P19 cues reuse existing sounds only: bubble shield -> `orange_gain`, Calm Ward -> `hit_heavy`, lucky crit -> `treasure`. */
   private observeP17Events(state: BattleState): void {
     for (const event of state.events) {
       if (event.id <= this.p17EventId) continue;
       this.p17EventId = event.id;
       if (event.type === 'shield_block') this.sound.play('orange_gain');
       else if (event.type === 'bubble' && event.effect === 'resist_block') this.sound.play('hit_heavy');
+      else if (event.type === 'lucky_drop') this.sound.play('treasure');
     }
   }
   /** Background upload after an endless receipt is saved; the result plaque shows the rank once it arrives. */
@@ -565,6 +622,7 @@ export class GameApp {
       this.canvas.setAttribute('aria-label', `${t('hud.map')}. ${t('guide.controls')} ${t('keyboard.help')}`);
       this.updateSelect('dev-unit', Object.keys(UNITS), id => unitName(id));
       this.updateSelect('dev-boss', BOSS_IDS, id => t(`boss.${id}`));
+      this.updateSelect('dev-stage', ['0','1','2','3','4','5','6','7','8'], id => t(`p19.devStage.${id}`));
       this.updateSelect('dev-rank', RANKS.map(rank => String(rank.index)), id => `${id} · ${t(`rank.${id}`)}`);
       this.element<HTMLSelectElement>('dev-rank').value = String(getRank(this.profile.stars).index);
       this.element('dev-map').innerHTML = `<option value="auto">${tr('m3.autoMap', { map: t(`map.${resolveMap(this.profile)}`) })}</option>${MAP_IDS.map(id => `<option value="${id}">${tr(`map.${id}`)}</option>`).join('')}`;
@@ -603,9 +661,15 @@ export class GameApp {
         : t(state.wave === WAVES.length ? 'hud.lastWave' : 'hud.nextWave', { time: Math.floor(state.waveTime), duration: WAVE_DURATION });
     this.element('dev-live').textContent = state ? `${t('dev.units', { count: state.units.filter(unit => unit.side === 'player' && unit.location.zone === 'board').length })} · ${t('dev.enemies', { count: state.enemies.filter(enemy => enemy.side === 'player').length })}` : '';
     this.root.querySelectorAll<HTMLButtonElement>('[data-action^="speed-"]').forEach(button => { button.classList.toggle('selected', button.dataset.action === `speed-${this.speed}`); });
-    this.element('hud-speed').textContent = `${this.speed}×`;
-    this.element('hud-speed').dataset.speed=String(this.speed);
-    this.element<HTMLButtonElement>('hud-speed').disabled = !active;
+    const maxSpeed = isTestProfile() ? 3 : maxBattleSpeed(this.profile);
+    if (this.speed > maxSpeed && !developer) this.speed = maxSpeed;
+    const speedBtn = this.element<HTMLButtonElement>('hud-speed');
+    speedBtn.hidden = maxSpeed <= 1;
+    speedBtn.textContent = `${this.speed}×`;
+    speedBtn.dataset.speed = String(this.speed);
+    speedBtn.disabled = !active;
+    const battleShopBtn = this.root.querySelector<HTMLButtonElement>('#battle-hud [data-action="battle-shop"]');
+    if (battleShopBtn) battleShopBtn.hidden = !isTestProfile() && !isFeatureUnlocked(this.profile, 'market');
     this.element<HTMLButtonElement>('pause-button').disabled = state?.phase !== 'playing';
     if (state) {
       const player = state.sides.player;
@@ -644,6 +708,8 @@ export class GameApp {
     this.renderTutorial();
     this.renderPassives();
     this.renderEarlyWaveTip();
+    this.renderMenuOnboarding();
+    this.renderBattleOnboarding();
     const toast = this.element('toast');
     toast.hidden = !this.toast || performance.now() > this.toast.until;
     if (this.toast) {
@@ -696,32 +762,130 @@ export class GameApp {
 
   private renderMenu(): void {
     this.element('menu-screen').innerHTML = courtyardMarkup(this.profile);
+    this.menuOnboardStamp = '';
   }
 
   private renderBattleProps(): void {
     const player = this.engine?.state.sides.player;
     if (!player) return;
     const active = this.canInteract();
-    const stamp = JSON.stringify([getLanguage(), active, player.loadout, player.sprinklerUsed, this.selectedProp, Object.entries(player.propCooldowns).map(([id, time]) => [id, Math.ceil(time)])]);
+    const showActiveSlots = isTestProfile() || isFeatureUnlocked(this.profile, 'market') || player.loadout.equippedActiveProps.length > 0;
+    const stamp = JSON.stringify([getLanguage(), active, showActiveSlots, player.loadout, player.sprinklerUsed, this.selectedProp, Object.entries(player.propCooldowns).map(([id, time]) => [id, Math.ceil(time)])]);
     if (stamp === this.battlePropsStamp) return;
     this.battlePropsStamp = stamp;
-    const slots = Array.from({ length: 2 }, (_, slot) => {
+    const slots = showActiveSlots ? Array.from({ length: 2 }, (_, slot) => {
       const id = player.loadout.equippedActiveProps[slot]; const prop = PROPS[id];
       const cooldown = Math.ceil(player.propCooldowns[id] ?? 0);
       const name = prop ? t(`prop.${id}`) : t('m2.emptySlot');
       const status = cooldown ? t('m2.cooldown', { time: cooldown }) : t('m2.ready');
       return `<button type="button" class="battle-prop prop-${slot} ${id === this.selectedProp ? 'selected' : ''}" data-action="${prop ? `prop:${id}` : 'battle-shop'}" ${prop ? `data-prop-drag="${id}"` : ''} aria-label="${esc(name)}${prop ? `. ${esc(status)}. ${tr(`prop.${id}.desc`)}` : ''}" title="${prop ? tr(`prop.${id}.desc`) : esc(name)}"${(prop ? !active || cooldown : !this.engine?.canSyncPreparationLoadout()) ? ' disabled' : ''}><span>${prop ? propSticker(id,46) : '+'}</span>${prop ? `<b>${cooldown ? `${cooldown}s` : '1'}</b>` : ''}</button>`;
-    }).join('');
+    }).join('') : '';
     const targetKind=this.selectedProp?propTargetKind(this.selectedProp):undefined;
     this.element('battle-props').innerHTML = `<button type="button" class="sprinkler-button" data-action="sprinkler" data-prop-drag="sprinkler" title="${tr('m2.sprinklerDesc')}" aria-label="${tr('m2.sprinkler')}. ${tr(player.sprinklerUsed ? 'm2.sprinklerUsed' : 'm2.sprinklerReady')}"${!active || player.sprinklerUsed ? ' disabled' : ''}><span>${sceneSticker('sprinkler',propSticker('washer',46),46)}</span><b>${player.sprinklerUsed ? '0' : '1'}</b></button>${slots}${targetKind ? `<p class="prop-target-hint" role="status">${tr(targetKind==='self'?'p13.targetField':targetKind === 'road' ? 'm2.targetRoad' : 'm2.targetUnit')}</p>` : ''}`;
   }
 
   private renderPassives():void {
     const rail=this.element('passive-rail'),state=this.engine?.state;
-    rail.hidden=!state||state.phase==='finished';if(!state||rail.hidden)return;
+    const hasUnlock=isTestProfile()||isFeatureUnlocked(this.profile,'market')||isFeatureUnlocked(this.profile,'kitchen');
+    const hasEquipped=Boolean(state?.sides.player.loadout.equippedPassiveProps.length||state?.sides.player.loadout.activeBrothId);
+    rail.hidden=!state||state.phase==='finished'||(!hasUnlock&&!hasEquipped);if(!state||rail.hidden)return;
     const preparation=!!this.engine?.canSyncPreparationLoadout();
     const stamp=JSON.stringify([getLanguage(),preparation,state.sides.player.loadout,this.passiveInfoId]);
     if(stamp!==this.passiveStamp){rail.innerHTML=passiveRailMarkup(state,preparation,this.passiveInfoId);this.passiveStamp=stamp;}
+  }
+
+  private renderMenuOnboarding(): void {
+    const host = this.element('onboarding-host');
+    const pending = !this.engine && !this.dialogKind && !isTestProfile() ? pendingMenuOnboarding(this.profile) : null;
+    host.hidden = !pending;
+    const stamp = `${getLanguage()}:${pending ?? 'none'}`;
+    if (stamp !== this.menuOnboardStamp) {
+      this.menuOnboardStamp = stamp;
+      host.innerHTML = pending ? menuWelcomeMarkup(pending) : '';
+      this.root.querySelectorAll('#menu-screen .onboarding-pulse').forEach(el => el.classList.remove('onboarding-pulse'));
+      if (pending) {
+        const selector = pending === 'medallions' ? '[data-action="medallions"]' : `[data-action="${pending}"]`;
+        this.root.querySelector(`#menu-screen ${selector}`)?.classList.add('onboarding-pulse');
+      }
+    }
+  }
+
+  private renderBattleOnboarding(): void {
+    const overlay = this.element('battle-onboarding-overlay');
+    const state = this.engine?.state;
+    const eligible = !!state && this.tutorialStep === 'done' && !this.transitionUntil && !this.dialogKind && state.phase !== 'finished' && !isTestProfile();
+    const lesson = eligible
+      ? nextBattleLesson(this.profile, {
+        endless: Boolean(state.endless),
+        hasActiveProp: state.sides.player.loadout.equippedActiveProps.length > 0,
+      })
+      : null;
+
+    if (lesson !== this.activeBattleLesson) {
+      const prev = this.activeBattleLesson;
+      this.activeBattleLesson = lesson;
+      if (prev === 'prop_battle' && this.tutorialStep === 'done') this.engine?.setTutorialHold(false);
+      if (lesson === 'prop_battle') this.engine?.setTutorialHold(true);
+      if (lesson === 'endless_battle' && state?.phase === 'playing') this.engine?.pause(true);
+    }
+
+    overlay.hidden = !lesson;
+    const speedBtn = this.element('hud-speed');
+    speedBtn.classList.toggle('onboarding-pulse', lesson === 'speed2x' || lesson === 'speed3x');
+    this.root.querySelectorAll('#battle-props .battle-prop').forEach(el => {
+      const isFilled = el.getAttribute('data-action')?.startsWith('prop:') ?? false;
+      el.classList.toggle('onboarding-pulse', lesson === 'prop_battle' && isFilled);
+    });
+
+    const stamp = `${getLanguage()}:${lesson ?? 'none'}`;
+    if (stamp !== this.battleLessonStamp) {
+      this.battleLessonStamp = stamp;
+      overlay.innerHTML = lesson ? battleLessonMarkup(lesson) : '';
+    }
+  }
+
+  private completeBattleLesson(key: BattleLessonKey): void {
+    if (!hasOnboarded(this.profile, key)) {
+      this.persistProfile(markOnboarded(this.profile, key));
+    }
+    this.activeBattleLesson = null;
+    this.battleLessonStamp = '';
+    if (key === 'prop_battle' && this.tutorialStep === 'done') this.engine?.setTutorialHold(false);
+    if (key === 'endless_battle' && this.engine?.state.phase === 'paused' && !this.dialogKind) this.engine.pause(false);
+    this.refresh(true);
+  }
+
+  private beginMenuOnboarding(feature: FeatureId): void {
+    if (isTestProfile() || !isFeatureUnlocked(this.profile, feature)) return;
+    const gifted = claimFeatureStarterGift(this.profile, feature);
+    if (gifted.granted) this.persistProfile(gifted.profile);
+    if (!hasOnboarded(this.profile, feature)) {
+      this.activeMenuOnboarding = feature;
+      if (feature === 'market') this.onboardingMarketSpun = false;
+      if (feature === 'village') this.onboardingVillageInteracted = false;
+    }
+  }
+
+  private finishMenuOnboarding(feature: FeatureId): void {
+    const gifted = claimFeatureStarterGift(this.profile, feature);
+    const next = markOnboarded(gifted.profile, feature);
+    this.activeMenuOnboarding = null;
+    this.menuOnboardStamp = '';
+    this.persistProfile(next);
+    if (this.dialogKind) this.renderDialog();
+    this.refresh(true);
+  }
+
+  private currentDialogGuideStep(): ReturnType<typeof computeDialogGuideStep> {
+    if (!this.activeMenuOnboarding || isTestProfile()) return null;
+    return computeDialogGuideStep(this.activeMenuOnboarding, this.profile, {
+      dialogKind: this.dialogKind,
+      detailWeaponId: this.meta.detailWeapon,
+      marketTab: this.meta.tab,
+      marketSpun: this.onboardingMarketSpun,
+      villageTab: this.village.tab,
+      villageInteracted: this.onboardingVillageInteracted,
+    });
   }
 
   private markEarlyTipSeen():void {
@@ -949,7 +1113,6 @@ export class GameApp {
     if (kind === 'profile' || kind === 'leaderboard' || kind === 'endless-board' || kind === 'settings') {
       this.dialog.innerHTML = this.profileScreens.markup(kind);
       if (typing) { const input = this.dialog.querySelector<HTMLInputElement>('[data-endless-nickname]'); input?.focus({ preventScroll: true }); if (input && caret) input.setSelectionRange(caret[0], caret[1]); }
-      if(kind==='settings')this.dialog.querySelector<HTMLInputElement>('[data-setting="developerMode"]')!.checked=isDeveloperMode(location.search,this.profile.settings);
     } else if (kind === 'armory' || kind === 'market') {
       this.dialog.innerHTML = this.meta.markup(kind,!!this.engine,!!this.engine?.canSyncPreparationLoadout());
     } else if (kind === 'kitchen') {
@@ -963,9 +1126,18 @@ export class GameApp {
     } else if (kind === 'recipes') {
       this.dialog.innerHTML=this.compendium.markup(this.profile);
     } else if (kind === 'endless-offer' && this.engine?.state.result) {
-      this.dialog.innerHTML=endlessOfferMarkup(this.engine.state,this.savedResult);
+      this.dialog.innerHTML=endlessOfferMarkup(this.engine.state,this.savedResult,this.endlessFirstUnlock,this.ticketAwarded,isTestProfile()||isFeatureUnlocked(this.profile,'medallions'));
     } else if (kind === 'result' && this.engine?.state.result) {
-      this.dialog.innerHTML=resultMarkup({state:this.engine.state,profile:this.profile,savedResult:this.savedResult,resultStars:this.resultStars,previousRank:this.previousRank,newWeapons:this.newWeapons,newAvatars:this.newAvatars,newRoster:this.newRoster,statsOpen:this.resultStatsOpen,globalRank:this.engine.state.endless?this.globalRank:undefined});
+      this.dialog.innerHTML=resultMarkup({state:this.engine.state,profile:this.profile,savedResult:this.savedResult,resultStars:this.resultStars,previousRank:this.previousRank,newWeapons:this.newWeapons,newAvatars:this.newAvatars,newRoster:this.newRoster,statsOpen:this.resultStatsOpen,globalRank:this.engine.state.endless?this.globalRank:undefined,ticketAwarded:this.ticketAwarded});
+    }
+    const guideStep = this.currentDialogGuideStep();
+    if (guideStep) {
+      const body = this.dialog.querySelector<HTMLElement>('.ledger-body');
+      if (body) body.insertAdjacentHTML('beforebegin', dialogGuideBannerMarkup(guideStep));
+      if (guideStep.pulseSelector) {
+        const pulseTarget = this.dialog.querySelector<HTMLElement>(guideStep.pulseSelector);
+        pulseTarget?.classList.add('onboarding-pulse');
+      }
     }
     for(const {selector,top} of scrolls){
       const body=this.dialog.querySelector<HTMLElement>(selector);
@@ -1021,6 +1193,9 @@ export class GameApp {
   }
 
   private closeModal(): void {
+    const doneGuide = this.currentDialogGuideStep();
+    if (doneGuide?.done) this.finishMenuOnboarding(doneGuide.feature);
+    else this.activeMenuOnboarding = null;
     const previous=this.modalReturn; this.modalReturn=null;
     if(previous?.dialog) this.showDialog(previous.dialog);
     else this.closeDialog(previous?.resume ?? false);
@@ -1088,13 +1263,16 @@ export class GameApp {
   }
 
   private closeProfileScreen(): void {
+    const doneGuide = this.currentDialogGuideStep();
+    if (doneGuide?.done) this.finishMenuOnboarding(doneGuide.feature);
+    else this.activeMenuOnboarding = null;
     const previous = this.overlayReturn;
     this.overlayReturn = null;
     this.endlessHubMode = false;
     this.boardDraft = undefined;
     if (previous?.dialog) this.showDialog(previous.dialog);
     else this.closeDialog(previous?.resume ?? false);
-    this.refresh();
+    this.refresh(true);
   }
 
   private pause(): void {
@@ -1137,7 +1315,7 @@ export class GameApp {
       if(result.key==='hint.deployed'&&this.engine?.state.units.some(unit=>unit.id===result.unitId&&unit.side==='player'&&unit.location.zone==='board')){
         this.progressTutorial('deploy');
       }
-      if((result.key==='hint.merged'||result.key==='hint.fed')&&(this.tutorialStep!==4||this.engine?.state.units.some(unit=>unit.id===result.unitId&&!!HEROES[unit.kind])))this.progressTutorial('merge');
+      if((result.key==='hint.merged'||result.key==='hint.fed')&&(this.tutorialStep!==5||this.engine?.state.units.some(unit=>unit.id===result.unitId&&!!HEROES[unit.kind])))this.progressTutorial('merge');
     }
   }
 
@@ -1170,7 +1348,10 @@ export class GameApp {
       const unit = this.unitAt(hit);
       const result = this.engine.useProp(this.selectedProp, prop.target === 'road' && hit.kind === 'cell' ? { col: hit.col, row: hit.row } : { unitId: unit?.id });
       if(tap&&!result.ok&&['m2.invalidTarget','hint.toolOnly','hint.maxLevel'].includes(result.key)){this.clearSelection();this.refresh();return;}
-      if (result.ok) this.selectedProp = undefined;
+      if (result.ok) {
+        this.selectedProp = undefined;
+        if (this.activeBattleLesson === 'prop_battle') this.completeBattleLesson('prop_battle');
+      }
       this.apply(result); this.refresh(); return;
     }
     if (hit.kind === 'shovel') {
@@ -1252,14 +1433,6 @@ export class GameApp {
     this.root.addEventListener('change', event => {
       const element = event.target;
       if (!(element instanceof HTMLInputElement || element instanceof HTMLSelectElement)) return;
-      if(element.dataset.setting==='developerMode'){
-        const enabled=(element as HTMLInputElement).checked;
-        if(this.persistProfile(updateSettings(this.profile,{developerMode:enabled}))){
-          if(!enabled){const url=new URL(location.href);url.searchParams.delete('dev');history.replaceState(null,'',url);}
-          this.refresh(true);
-        }else this.renderDialog();
-        return;
-      }
       if (element.id === 'dev-map') {
         this.devMapOverride = MAP_IDS.includes(element.value as MapId) ? element.value as MapId : undefined;
         this.refresh(true); return;
@@ -1301,7 +1474,11 @@ export class GameApp {
       }else{
         this.selectedProp=undefined;
         const target=this.engine&&this.canInteract()?resolvePropDrop(this.engine.state,drag.id,point):null;
-        if(target!==null)this.apply(drag.id==='sprinkler'?this.engine!.useSprinkler():this.engine!.useProp(drag.id,target));
+        if(target!==null){
+          const outcome = drag.id==='sprinkler'?this.engine!.useSprinkler():this.engine!.useProp(drag.id,target);
+          this.apply(outcome);
+          if (outcome.ok && drag.id !== 'sprinkler' && this.activeBattleLesson === 'prop_battle') this.completeBattleLesson('prop_battle');
+        }
       }
       this.suppressPropClick = true; setTimeout(() => { this.suppressPropClick = false; }, 0);
       this.refresh();
@@ -1396,6 +1573,61 @@ export class GameApp {
   private action(action: string): void {
     if(!['summon','sprinkler','grant','boss','food','orange-plus','orange-minus','skip'].includes(action)&&!action.startsWith('prop:'))this.sound.play('ui_click');
     if (action === 'zh-CN' || action === 'en') { setLanguage(action); return; }
+    if (action.startsWith('locked-feature:')) {
+      const id = action.slice('locked-feature:'.length) as FeatureId;
+      const preview = nextLockedFeature(this.profile, false);
+      const name = t(`p19.feature.${id}`);
+      if (id === 'armory' && (this.profile.matches ?? 0) === 0) {
+        this.notify('p19.lockedMatchToast', false, { name });
+      } else {
+        const stars = preview?.id === id ? preview.targetStars : ({ armory: 1, speed2x: 2, market: 5, endless: 10, village: 16, kitchen: 23, medallions: 32, speed3x: 60 }[id] ?? 1);
+        const need = Math.max(1, stars - Math.max(this.profile.stars, this.profile.highestStars));
+        this.notify('p19.lockedToast', false, { name, stars, need });
+      }
+      return;
+    }
+    if (action.startsWith('onboard-go:')) {
+      const id = action.slice('onboard-go:'.length) as FeatureId;
+      this.beginMenuOnboarding(id);
+      if (id === 'armory' || id === 'market') {
+        this.meta.open(id);
+        if (id === 'market') this.meta.tab = 'lottery';
+        this.openModal(id);
+      } else if (id === 'village') {
+        this.village.open();
+        this.village.tab = 'build';
+        this.openModal('village');
+      } else if (id === 'kitchen') {
+        this.kitchen.open();
+        this.openModal('kitchen');
+      } else if (id === 'medallions') {
+        this.endlessHubMode = true;
+        this.medallions.open();
+        this.openProfileScreen('medallions');
+      }
+      return;
+    }
+    if (action.startsWith('onboard-done:') || action.startsWith('onboard-skip:')) {
+      const id = action.split(':')[1] as FeatureId;
+      if (isOnboardingKey(id)) this.finishMenuOnboarding(id as FeatureId);
+      return;
+    }
+    if (action.startsWith('battle-lesson-ack:')) {
+      const key = action.slice('battle-lesson-ack:'.length) as BattleLessonKey;
+      if (isOnboardingKey(key)) this.completeBattleLesson(key);
+      return;
+    }
+    if (action === 'dev-stage-apply') {
+      const stage = Number(this.element<HTMLSelectElement>('dev-stage').value) || 0;
+      const base = { ...emptyProfile(), settings: { ...this.profile.settings }, playerId: this.profile.playerId, nickname: this.profile.nickname };
+      const staged = buildDebugStageProfile(base, stage);
+      if (!this.persistProfile(staged)) return;
+      this.activeMenuOnboarding = null;
+      this.activeBattleLesson = null;
+      this.menu();
+      this.notify('p19.devStageDone', false, { stage });
+      return;
+    }
     if(action==='retry-save-result'){
       if(this.engine?.state.result){this.persistResult(this.engine.state);this.renderDialog();if(!this.savedResult)this.notify('hint.storage',true);}
       return;
@@ -1480,7 +1712,7 @@ export class GameApp {
     if (action === 'endless-board') { this.openProfileScreen('endless-board'); return; }
     if (action === 'close-profile') { this.closeProfileScreen(); return; }
     // P17 medallion hall owns a dedicated two-tab Endless window ([ Medallions | Global Board ]).
-    if (action === 'medallions') { this.endlessHubMode = true; this.medallions.open(); this.openProfileScreen('medallions'); return; }
+    if (action === 'medallions') { this.beginMenuOnboarding('medallions'); this.endlessHubMode = true; this.medallions.open(); this.openProfileScreen('medallions'); return; }
     if (action === 'close-medallions') { this.closeProfileScreen(); return; }
     if (action === 'endless-board-refresh') { this.refreshBoard(true); return; }
     if (action === 'rank-board-refresh') { this.syncRankScore(); this.refreshRankBoard(true); return; }
@@ -1507,6 +1739,7 @@ export class GameApp {
     const previousDish=action==='kitchen-back'?this.kitchen.detail:undefined;
     const previousWeapon=action==='meta-weapon-back'?this.dialog.querySelector<HTMLElement>('.storybook-detail-sheet')?.dataset.weaponId:undefined;
     if (this.meta.action(action)) {
+      if (action.startsWith('meta-spin')) { this.onboardingMarketSpun = true; if (this.dialogKind === 'market') this.renderDialog(); }
       const focusAction=action.startsWith('meta-weapon:')?'meta-weapon-back':previousWeapon?`meta-weapon:${previousWeapon}`:undefined;
       if(focusAction){
         const target=this.dialog.querySelector<HTMLElement>(`[data-action="${CSS.escape(focusAction)}"]`);
@@ -1514,11 +1747,12 @@ export class GameApp {
       }
       return;
     }
-    if (action === 'armory' || action === 'market') { this.meta.open(action); this.openModal(action); return; }
-    if (action === 'kitchen') { this.kitchen.open(); this.openModal('kitchen'); return; }
-    if (action === 'village') { this.village.open(); this.openModal('village'); return; }
+    if (action === 'armory' || action === 'market') { this.beginMenuOnboarding(action); this.meta.open(action); this.openModal(action); return; }
+    if (action === 'kitchen') { this.beginMenuOnboarding('kitchen'); this.kitchen.open(); this.openModal('kitchen'); return; }
+    if (action === 'village') { this.beginMenuOnboarding('village'); this.village.open(); this.openModal('village'); return; }
     if (action === 'close-village') { this.closeModal(); return; }
     if (this.dialogKind === 'village' && this.village.action(action)) {
+      if (action.startsWith('village-pet:') || action === 'village-harvest') { this.onboardingVillageInteracted = true; this.renderDialog(); }
       if (action.startsWith('village-focus:') || action.startsWith('village-build:')) {
         const row = this.dialog.querySelector<HTMLElement>(`.village-row[data-facility-id="${CSS.escape(action.split(':')[1])}"]`);
         row?.scrollIntoView?.({ block: 'nearest' });(row?.querySelector<HTMLElement>('button') ?? row)?.focus?.({ preventScroll: true });
@@ -1555,7 +1789,12 @@ export class GameApp {
     if (action.startsWith('prop:')) {
       if (this.suppressPropClick || !this.canInteract() || !this.engine) return;
       const id = action.slice(5); const prop = PROPS[id]; if (!prop) return;
-      if (prop.target === 'self') { this.selectedProp = undefined; this.apply(this.engine.useProp(id)); }
+      if (prop.target === 'self') {
+        this.selectedProp = undefined;
+        const outcome = this.engine.useProp(id);
+        this.apply(outcome);
+        if (outcome.ok && this.activeBattleLesson === 'prop_battle') this.completeBattleLesson('prop_battle');
+      }
       else { this.selectedProp = this.selectedProp === id ? undefined : id; this.selectedId = undefined; this.shovelSelected = false; }
       this.refresh(); return;
     }
@@ -1566,7 +1805,7 @@ export class GameApp {
     if (action === 'clear') { this.clearSelection(); this.refresh(); return; }
     if (action === 'pause') { this.pause(); return; }
     if (action === 'resume') { this.closeDialog(true); this.refresh(); this.canvas.focus({ preventScroll: true }); return; }
-    if (action === 'recipes') { if(this.tutorialStep===5)this.progressTutorial('open-compendium');this.openModal('recipes'); return; }
+    if (action === 'recipes') { if(this.tutorialStep===6)this.progressTutorial('open-compendium');this.openModal('recipes'); return; }
     if (action === 'close-recipes') { this.closeModal(); return; }
     if (action === 'surrender') {
       if (this.engine?.state.phase === 'paused') { this.closeDialog(false); this.engine.surrender(); if (this.engine.state.result) this.finish(this.engine.state); }
@@ -1601,7 +1840,13 @@ export class GameApp {
     else if (action === 'boss') this.apply(this.engine.spawnBoss(this.element<HTMLSelectElement>('dev-boss').value));
     else if (action === 'orange-plus' || action === 'orange-minus') { this.engine.adjustOranges(action === 'orange-plus' ? 1 : -1); this.notify(action === 'orange-plus' ? 'hint.orangeAdded' : 'hint.orangeLost'); }
     else if (action === 'skip') { this.engine.skipWave(); this.notify('hint.waveSkipped'); }
-    else if (action === 'speed') this.speed = nextBattleSpeed(this.speed);
+    else if (action === 'speed') {
+      const maxSpeed = isTestProfile() ? 3 : maxBattleSpeed(this.profile);
+      this.speed = nextBattleSpeed(this.speed, maxSpeed);
+      if (this.activeBattleLesson === 'speed2x' || this.activeBattleLesson === 'speed3x') {
+        this.completeBattleLesson(this.activeBattleLesson);
+      }
+    }
     else if (action === 'speed-1') this.speed = 1;
     else if (action === 'speed-2') this.speed = 2;
     else if (action === 'speed-3') this.speed = 3;

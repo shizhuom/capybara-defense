@@ -80,7 +80,7 @@ describe('真正的攻击与12英雄大招',()=>{
     expect(m.hp).toBeLessThan(9999);expect(e.state.units.find(u=>u.id===hero.id)?.statuses).toEqual({});
   });
   it('Boss被击杀掉8食物和1至2片战利品',()=>{
-    const e=game();put(e,'samurai_doge');const boss=target(e,2,'husky_wrecker');boss.hp=1;e.tick(.1);
+    const e=game();e.state.wave=10;put(e,'samurai_doge');const boss=target(e,2,'husky_wrecker');boss.hp=1;e.tick(.1);
     expect(e.state.sides.player.food).toBe(30);expect(e.state.sides.player.loot.length).toBeGreaterThanOrEqual(1);expect(e.state.sides.player.loot.length).toBeLessThanOrEqual(2);
   });
 });

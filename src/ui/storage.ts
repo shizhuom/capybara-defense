@@ -6,6 +6,7 @@ import { grantVillageResources } from '../core/VillageProgression';
 import type { BattleResult, Profile } from '../core/types';
 import { HEROES } from '../config/heroes';
 import { STANDARD_VICTORY_CRESTS, endlessCrestsThroughWave } from '../config/medallions';
+import { isFeatureUnlocked } from '../core/FeatureUnlocks';
 
 export const STORAGE_PREFIX = 'capybara_defense_v1:';
 const validFragments = new Set<string>(FRAGMENTS);
@@ -47,7 +48,7 @@ export function saveProfile(profile: Profile, storage = browserStorage()): boole
 }
 
 /** A receipt and its rewards are saved together, so revisiting a result cannot pay twice. */
-export function awardBattle(profile: Profile, battleId: string, result: BattleResult): { profile: Profile; awarded: boolean; newWeapons:string[] } {
+export function awardBattle(profile: Profile, battleId: string, result: BattleResult): { profile: Profile; awarded: boolean; newWeapons:string[]; ticketAwarded?:boolean } {
   if (!battleId || result?.endless || profile.awardedBattles.includes(battleId)) return { profile, awarded: false, newWeapons:[] };
   const won = result.winner === 'player';
   const p=normalizeProfile(profile);
@@ -56,18 +57,26 @@ export function awardBattle(profile: Profile, battleId: string, result: BattleRe
   // Ingredients are banked on victory and as defeat salvage, under this same receipt.
   const ingredients=grantIngredients(p,Array.isArray(result.ingredientLoot)?result.ingredientLoot:[]).ingredients;
   const village=grantVillageResources(p,Array.isArray(result.villageLoot)?result.villageLoot:[]).village;
+  // P19: free lottery tickets unlock with Market (5★) and pay 1 ticket every 3 wins (keeping a visible 0..2/3 progress hook).
+  const marketReady=isFeatureUnlocked(p,'market');
+  let gachaWinCounter=p.gachaWinCounter??0,ticketAwarded=false;
+  if(won&&marketReady){
+    gachaWinCounter+=1;
+    if(gachaWinCounter>=3){gachaWinCounter=0;ticketAwarded=true;}
+  }
+  const crestsGain=won&&result.reason==='waves'?(result.endlessCrests!==undefined?counter(result.endlessCrests):(isFeatureUnlocked(p,'medallions')?STANDARD_VICTORY_CRESTS:0)):0;
   return {
     awarded: true,
     newWeapons:granted.newWeapons,
+    ticketAwarded,
     profile: applyBattleProgress({
       ...granted.profile,
       coins: profile.coins + (won ? counter(result.coins) : 0),
       wins: profile.wins + (won ? 1 : 0), matches: profile.matches + 1,
       fragments: [...p.fragments, ...legacy],
       awardedBattles: [...profile.awardedBattles, battleId],
-      freeLotteryTickets:p.freeLotteryTickets+(won?1:0),ingredients,village,
-      // P17: clearing the tenth wave always banks the first endless crests under this same receipt.
-      endlessCrests:p.endlessCrests+(won&&result.reason==='waves'?STANDARD_VICTORY_CRESTS:0),
+      freeLotteryTickets:p.freeLotteryTickets+(ticketAwarded?1:0),gachaWinCounter,ingredients,village,
+      endlessCrests:p.endlessCrests+crestsGain,
     },won,result.mergedHeroes),
   };
 }

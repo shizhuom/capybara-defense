@@ -192,9 +192,9 @@ describe('P13 safe distinct endless receipts',()=>{
   });
   it('pays only the extra reward once across save/reload without a second star, match, win or ticket',()=>{
     expect(storage).toHaveProperty('awardEndless');
-    const banked=storage.awardBattle({...createProfile(),winStreak:2,bestWinStreak:2},'run',normal).profile;
+    const banked=storage.awardBattle({...createProfile(),stars:5,highestStars:5,gachaWinCounter:2,winStreak:2,bestWinStreak:2},'run',normal).profile;
     const bonus=storage.awardEndless(banked,'run',honor);
-    expect(bonus.awarded).toBe(true);expect(bonus.profile).toMatchObject({coins:120,matches:1,wins:1,stars:2,winStreak:3,bestWinStreak:3,freeLotteryTickets:1,bestEndlessWave:13});
+    expect(bonus.awarded).toBe(true);expect(bonus.profile).toMatchObject({coins:120,matches:1,wins:1,stars:7,winStreak:3,bestWinStreak:3,freeLotteryTickets:1,bestEndlessWave:13});
     expect(bonus.profile.awardedBattles).toEqual(['run','run:endless']);
     expect(bonus.profile.weaponFragments).toEqual({m02_slipper:1,m01_swatter:2});expect(bonus.profile.fragments).toEqual(['bamboo_blade']);
     expect(bonus.newWeapons).toEqual(['m01_swatter']);

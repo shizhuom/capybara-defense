@@ -20,7 +20,6 @@ export function normalizeVillage(raw:unknown,now=VILLAGE_EPOCH):VillageState {
   if(!raw||typeof raw!=='object'||Array.isArray(raw))return createVillage(now);
   const data=object(raw),levels=object(data.facilities),facilities:Record<string,number>={};
   for(const id of FACILITY_IDS){const level=clampFacilityLevel(levels[id]);if(level)facilities[id]=level;}
-  facilities.fac_bamboo_pool=Math.max(1,facilities.fac_bamboo_pool??0);
   const anchor=data.lastHarvestAt;
   const petTapDay=typeof data.petTapDay==='string'&&/^\d{4}-\d{2}-\d{2}$/.test(data.petTapDay)?data.petTapDay:'';
   return{wood:count(data.wood),essence:count(data.essence),facilities,

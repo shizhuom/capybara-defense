@@ -11,7 +11,7 @@ function dialog(kind:'pause'|'result',won=false,withMvp=true){
  const engine=new BattleEngine({autoWaves:false});engine.start();engine.state.sides.player.loot=['m01_swatter','m01_swatter','m10_bamboo_staff'];engine.state.sides.ai.loot=['w12_rain_crown_scepter'];
  if(kind==='result'){engine.surrender();Object.assign(engine.state.result!,{winner:won?'player':'ai',reason:'waves',loot:won?[...engine.state.sides.player.loot]:[],coins:won?65:0,mvp:withMvp?{kind:'kungfu_po',level:3,damage:1234.6,kills:27}:undefined});}
  const app:any=Object.create(GameApp.prototype),node={innerHTML:'',classList:{toggle(){}},setAttribute(){},querySelector(){return null;},insertAdjacentHTML(_where:string,html:string){this.innerHTML+=html;}};
- Object.assign(app,{dialog:node,dialogKind:kind,engine,profile:{...createProfile(),stars:5},savedResult:true,resultStars:won?2:0,previousRank:0,newWeapons:won?['m10_bamboo_staff']:[],newAvatars:won?['sakura_capy']:[]});app.renderDialog();return node.innerHTML;
+ Object.assign(app,{dialog:node,dialogKind:kind,engine,profile:{...createProfile(),stars:5},savedResult:true,resultStars:won?2:0,previousRank:0,newWeapons:won?['m10_bamboo_staff']:[],newAvatars:won?['sakura_capy']:[],ticketAwarded:won});app.renderDialog();return node.innerHTML;
 }
 it.each(['zh-CN','en'] as const)('renders a pause ledger with exactly one bare player-loot section and illustrated counts (%s)',lang=>{
  setLanguage(lang);const html=dialog('pause');expect(html).toContain('ledger-shell');expect(html).toContain('ui_pause_peek_capy');expect(html.match(/<section>/g)).toHaveLength(1);

@@ -20,7 +20,8 @@ import {copyLoadout,PropSystem,type PropTarget} from './PropSystem';
 import {WeaponSystem} from './WeaponSystem';
 import {getBaseUnitStats,getBeeProduction,type UnitStats} from './UnitStats';
 import type { BattleLoadout,BattleState, CommandResult, Enemy, Point, Side, Unit, UnitLocation, VisualEvent,SideState,MapId,WavePreview } from './types';
-export interface EngineOptions { seed?:number; autoWaves?:boolean; ai?:boolean; loadouts?:Partial<Record<Side,Partial<BattleLoadout>>>; mapId?:MapId; rankIndex?:number; aiOverrides?:Partial<OpponentTuning>; tutorialGuided?:boolean; progressionStars?:number; progressionHeroes?:string[] }
+export interface FeatureDropFlags { armory?:boolean; village?:boolean; kitchen?:boolean; medallions?:boolean }
+export interface EngineOptions { seed?:number; autoWaves?:boolean; ai?:boolean; loadouts?:Partial<Record<Side,Partial<BattleLoadout>>>; mapId?:MapId; rankIndex?:number; aiOverrides?:Partial<OpponentTuning>; tutorialGuided?:boolean; progressionStars?:number; progressionHeroes?:string[]; featureDrops?:FeatureDropFlags; unlockedWeapons?:readonly string[] }
 let battleSequence=0;
 export class BattleEngine {
   state:BattleState;
@@ -44,6 +45,7 @@ export class BattleEngine {
   private bossSeed:number;
   private lockedBenchUnit?:Unit;
   private combatRecords=new CombatRecords();
+  private luckyDrops=0;
   private effectOwners=new WeakMap<Enemy,Partial<Record<'burn'|'poison'|'bleed',Unit>>>();
   constructor(public options:EngineOptions={}) {
     const seed=options.seed??Math.floor(Math.random()*0xffffffff);
@@ -183,7 +185,8 @@ export class BattleEngine {
     this.props.syncPreparationLoadout(copyLoadout(input));
     return{ok:true,key:'hint.selected'};
   }
-  rollWeaponFragment():string{return rollWeapon(()=>this.random.next(),undefined,RANKS[this.state.rankIndex].fragmentMultiplier);}
+  private dropEnabled(key:keyof FeatureDropFlags):boolean {return this.options.featureDrops?.[key]??true;}
+  rollWeaponFragment(rarities?:number[]):string{return rollWeapon(()=>this.random.next(),rarities,RANKS[this.state.rankIndex].fragmentMultiplier,this.options.unlockedWeapons);}
   applyDot(enemy:Enemy,effect:'burn'|'poison'|'bleed',duration:number,dps:number,unit:Unit):void {
     if(enemy.side!=='player'||unit.side!=='player')return;
     const field=effect==='burn'?'burnDps':effect==='poison'?'poisonDps':'bleedDps';
@@ -283,12 +286,15 @@ export class BattleEngine {
   }
   /** Live breakdown shown on the hero card; the roll uses exactly this value. */
   getBreakthroughChance(unit:Unit):BreakthroughChance {
-    const tally=this.combatRecords.tally(unit);
-    return computeBreakthroughChance({preEndlessKills:tally.preEndlessKills,preEndlessBossKills:tally.preEndlessBossKills,
+    const tally=this.combatRecords.tally(unit),boost=1+this.broth('momentumBonus');
+    return computeBreakthroughChance({preEndlessKills:tally.preEndlessKills*boost,preEndlessBossKills:tally.preEndlessBossKills*boost,
       luckMedallionLevel:this.medallion('med_luck_rate'),previousFails:unit.breakthroughFails??0});
   }
-  /** Battle spirit of the unit's merge lineage (0..200). */
-  getUnitMomentum(unit:Unit):number {return this.combatRecords.momentum(unit);}
+  /** Battle spirit of the unit's merge lineage (0..200), accelerated by Starlight Celestial Spring. */
+  getUnitMomentum(unit:Unit):number {
+    const raw=this.combatRecords.momentum(unit),boost=this.broth('momentumBonus');
+    return boost?Math.min(200,raw*(1+boost)):raw;
+  }
   getKillTally(unit:Unit){return this.combatRecords.tally(unit);}
   /** The player's medallion level; exactly 0 when the loadout carries none. */
   medallion(id:MedallionId):number {return getMedallionLevel(this.state.sides.player.loadout,id);}
@@ -482,10 +488,21 @@ export class BattleEngine {
     if(s.wave>(s.endlessClearedWave??10)){
       const coins=15*(s.wave-10),multiplier=this.coinMultiplier();
       s.endlessCoins=(s.endlessCoins??0)+(multiplier!==1?Math.round(coins*multiplier):coins);s.endlessClearedWave=s.wave;
-      s.sides.player.endlessCrests+=endlessCrestsForWave(s.wave);
-      // Every banked endless wave guarantees a truffle and one rarer spice/blossom/shoot.
-      this.harvest('ing_mushroom',this.pickIngredient(['ing_sakura','ing_chili','ing_bamboo']));this.goldenFeastRoll();
-      this.gather('res_onsen_wood','res_onsen_wood','res_yuzu_essence');
+      if(this.dropEnabled('medallions'))s.sides.player.endlessCrests+=endlessCrestsForWave(s.wave);
+      const k=s.wave-10;
+      // P19 rebalanced endless drops: 1 fragment every 3 waves; 1 ingredient every 2 waves (+ truffle every 5 waves); 1 wood / 3 waves & 1 essence / 5 waves.
+      if(this.dropEnabled('armory')&&k%3===0)s.sides.player.loot.push(this.rollWeaponFragment());
+      if(this.dropEnabled('kitchen')){
+        if(k%2===0)this.harvest(this.pickIngredient(['ing_sakura','ing_chili','ing_bamboo','ing_honey']));
+        if(k%5===0)this.harvest('ing_mushroom');
+        this.goldenFeastRoll();
+      }
+      if(this.dropEnabled('village')){
+        if(k%3===0)this.gather('res_onsen_wood');
+        if(k%5===0)this.gather('res_yuzu_essence');
+        const dropBonus=this.broth('dropBonus');
+        if(dropBonus&&k%3===0&&this.villageRandom.next()<dropBonus)this.gather('res_onsen_wood');
+      }
     }
     return true;
   }
@@ -495,7 +512,7 @@ export class BattleEngine {
     for(const side of ['player'] as Side[]){
       if(wave>1&&grantIncome)this.state.sides[side].food+=ECONOMY.waveIncome+this.broth('waveIncome');
     }
-    if(wave===4||wave===7){this.waveClearIngredients(wave-1);this.gather('res_onsen_wood');}
+    if(wave===7&&this.dropEnabled('village'))this.gather('res_onsen_wood');
     this.event({type:'bubble',side:'player',col:3.5,row:4.5,textKey:'hint.wave',value:wave,duration:1.8});
     const bosses=this.bossesForCurrentSchedule(wave);
     this.pendingBosses=bosses.slice(1).map((kind,index)=>({kind,at:5*(index+1)}));if(bosses[0])this.spawnBoss(bosses[0]);
@@ -524,7 +541,7 @@ export class BattleEngine {
   /** P17 endless-only hero layer: battle momentum for every hero, plus ×2.5 · 1.235^Lv and +15% speed once awakened. */
   private endlessStats(unit:Unit,stats:UnitStats):UnitStats {
     if(!this.state.endless||unit.side!=='player'||!HEROES[unit.kind])return stats;
-    let damage=stats.damage*momentumMultiplier(this.combatRecords.momentum(unit),this.medallion('med_momentum')),rate=stats.rate;
+    let damage=stats.damage*momentumMultiplier(this.getUnitMomentum(unit),this.medallion('med_momentum')),rate=stats.rate;
     if(unit.awakened){damage*=AWAKENED_DAMAGE*breakthroughAttackMultiplier(this.medallion('med_breakthrough_atk'));rate*=AWAKENED_RATE;}
     return{...stats,damage,rate};
   }
@@ -548,13 +565,15 @@ export class BattleEngine {
   private broth(key:BrothEffectKey):number {return getBrothEffect(this.state.sides.player.loadout,key);}
   private village(key:VillageBuffKey):number {return getVillageBuff(this.state.sides.player.loadout,key);}
   private gather(...ids:VillageResourceId[]):void {this.state.sides.player.villageLoot.push(...ids);}
-  /** Boss: one wood, a 60% (+20% with a yuzu tree) essence and the sakura pavilion's bonus fragment roll. */
+  /** Boss: sakura pavilion bonus fragment roll (when armory unlocked) & rare essence boost. */
   private dropVillageKill(enemy:Enemy):void {
     if(!enemy.boss)return;
-    this.gather('res_onsen_wood');
-    if(this.villageRandom.next()<.6+this.village('essenceDrop'))this.gather('res_yuzu_essence');
     const bonus=this.village('bossFragment');
-    if(bonus&&this.villageRandom.next()<bonus)this.state.sides[enemy.side].loot.push(rollWeapon(()=>this.villageRandom.next(),undefined,RANKS[this.state.rankIndex].fragmentMultiplier));
+    if(bonus&&this.dropEnabled('armory')&&this.villageRandom.next()<bonus)this.state.sides[enemy.side].loot.push(rollWeapon(()=>this.villageRandom.next(),undefined,RANKS[this.state.rankIndex].fragmentMultiplier,this.options.unlockedWeapons));
+    if(this.dropEnabled('village')&&this.state.wave===10){
+      const extra=this.village('essenceDrop')+this.broth('dropBonus')*.35;
+      if(extra>0&&this.villageRandom.next()<extra)this.gather('res_yuzu_essence');
+    }
   }
   private coinMultiplier():number {return(1+this.broth('coinBonus'))*(1+this.village('coinBonus'));}
   /** Chill Melon slows the whole lane; Sakura Milk slows the last 3.5 cells before the tub. */
@@ -564,29 +583,39 @@ export class BattleEngine {
     const nearTub=tub&&enemy.progress>=getMap(this.state.mapId).paths.player.length-1-3.5;
     return(1-global)*(nearTub?1-tub:1);
   }
-  private harvest(...ids:IngredientId[]):void {this.state.sides.player.ingredientLoot.push(...ids);}
+  private harvest(...ids:IngredientId[]):void {if(this.dropEnabled('kitchen'))this.state.sides.player.ingredientLoot.push(...ids);}
   private pickIngredient(pool:readonly IngredientId[]):IngredientId {
     return pool[Math.min(pool.length-1,Math.floor(this.ingredientRandom.next()*pool.length))];
   }
-  /** Golden Seafood Feast: one extra random ingredient on boss kills and wave rewards. */
+  /** Golden Seafood Feast / Hundred-Fruit Golden Spring: chance for one extra random ingredient. */
   private goldenFeastRoll():void {
     const chance=this.broth('dropBonus');
-    if(chance&&this.ingredientRandom.next()<chance)this.harvest(this.pickIngredient(INGREDIENT_IDS));
+    if(chance&&this.dropEnabled('kitchen')&&this.ingredientRandom.next()<chance)this.harvest(this.pickIngredient(INGREDIENT_IDS));
   }
   private waveClearIngredients(wave:3|6|10|number):void {
+    if(!this.dropEnabled('kitchen'))return;
     this.harvest(wave===3?'ing_yuzu':wave===6?'ing_honey':MAP_SIGNATURE_INGREDIENT[this.state.mapId]);this.goldenFeastRoll();
   }
   private dropKillIngredients(enemy:Enemy):void {
+    if(!this.dropEnabled('kitchen'))return;
     const signature=MAP_SIGNATURE_INGREDIENT[this.state.mapId];
     if(enemy.boss){
-      this.harvest(signature,this.pickIngredient(this.state.wave>=7?['ing_mushroom','ing_chili','ing_sakura']:['ing_bamboo','ing_chili','ing_sakura','ing_honey']));
-      this.goldenFeastRoll();return;
+      // P19: bosses at W6/W8/W10 drop 1 curated ingredient; W10 & endless bosses also have a 5% Lucky Crit Truffle roll.
+      if(!this.state.endless&&[6,8,10].includes(this.state.wave)){
+        this.harvest(this.pickIngredient(this.state.wave>=8?['ing_mushroom','ing_chili','ing_sakura',signature]:['ing_bamboo','ing_honey','ing_yuzu',signature]));
+        this.goldenFeastRoll();
+      }
+      if((this.state.wave===10||this.state.endless)&&this.ingredientRandom.next()<.05){
+        this.harvest('ing_mushroom');
+        this.luckyDrops++;
+        this.event({type:'lucky_drop',side:'player',col:enemy.col,row:enemy.row,textKey:'p19.luckyTruffle',color:'#ffe27a',duration:1.8});
+      }
+      return;
     }
     const elite=ELITE_ENEMY_IDS.includes(enemy.kind);
-    if(this.ingredientRandom.next()>=(elite?.35:.1))return;
+    if(!elite||this.ingredientRandom.next()>=.04)return;
     const roll=this.ingredientRandom.next();
-    if(elite)this.harvest(roll<.45?'ing_bamboo':roll<.8?'ing_honey':signature);
-    else this.harvest(roll<.55?signature:(['ing_yuzu','ing_honey','ing_bamboo'] as const)[Math.min(2,Math.floor((roll-.55)/.45*3))]);
+    this.harvest(roll<.45?'ing_bamboo':roll<.8?'ing_honey':signature);
   }
   getEffectiveUnitStats(unit:Unit):UnitStats {
     const stats=this.getUnitStats(unit);
@@ -620,9 +649,17 @@ export class BattleEngine {
     if(enemy.hp<=0){
       const owner=this.state.sides[enemy.side];owner.kills++;
       this.dropKillIngredients(enemy);this.dropVillageKill(enemy);
-      if(enemy.boss){
-        const count=1+Math.floor(this.random.next()*2);
-        for(let i=0;i<count;i++)owner.loot.push(this.rollWeaponFragment());
+      if(enemy.boss&&this.dropEnabled('armory')){
+        // P19 rebalanced weapon fragment drops (~2.2-2.4/win) + 5% Lucky Crit Legendary drop on W10/Endless bosses.
+        if(!this.state.endless){
+          const chance=this.state.wave===10?1:this.state.wave===8?.65:this.state.wave===6?.55:this.state.wave===9?.35:.30;
+          if(this.random.next()<chance)owner.loot.push(this.rollWeaponFragment());
+        }
+        if((this.state.wave===10||this.state.endless)&&this.random.next()<.05){
+          owner.loot.push(this.rollWeaponFragment([4]));
+          this.luckyDrops++;
+          this.event({type:'lucky_drop',side:'player',col:enemy.col,row:enemy.row,textKey:'p19.luckyLegendary',color:'#ffd45c',duration:1.9});
+        }
       }
       const food=enemy.boss?ECONOMY.bossKillFood:ECONOMY.killFood;owner.food+=food;
       this.event({type:'food',side:enemy.side,col:enemy.col,row:enemy.row,value:food,textKey:'hint.food',duration:1.1});
@@ -764,20 +801,25 @@ export class BattleEngine {
         // The standard receipt already banked its share; endless keeps 100% of every later ingredient.
         ingredientLoot:harvest,endlessIngredientLoot:harvest.slice(standard.ingredientLoot?.length??0),
         villageLoot:[...this.state.sides.player.villageLoot],endlessVillageLoot:this.state.sides.player.villageLoot.slice(standard.villageLoot?.length??0),
-        endlessCrests:this.state.sides.player.endlessCrests,awakenedCount:this.state.units.filter(u=>u.side==='player'&&u.awakened).length};
+        endlessCrests:this.state.sides.player.endlessCrests,awakenedCount:this.state.units.filter(u=>u.side==='player'&&u.awakened).length,
+        ...(this.luckyDrops?{luckyDrops:this.luckyDrops}:{})};
       this.state.phase='finished';return;
     }
     const won=winner==='player';
     if(won&&reason==='waves'){
-      this.waveClearIngredients(10);this.gather('res_onsen_wood','res_onsen_wood');
-      if(this.state.sides.player.oranges>=2)this.gather('res_yuzu_essence');
+      this.waveClearIngredients(10);
+      if(this.dropEnabled('village')){
+        // W10 win pays 2 wood total (1 at W7 + 1 at W10) + 60% chance of 1 essence.
+        this.gather('res_onsen_wood');
+        if(this.villageRandom.next()<.6)this.gather('res_yuzu_essence');
+      }
     }
     // Anti-frustration salvage: a loss or surrender still carries home at least half (rounded up).
     const salvage=<T,>(list:readonly T[])=>won?[...list]:list.slice(0,Math.ceil(list.length/2));
     const ingredientLoot=salvage(this.state.sides.player.ingredientLoot),villageLoot=salvage(this.state.sides.player.villageLoot);
     const baseCoins=RANKS[this.state.rankIndex].winCoins+Math.min(45,Math.floor(this.state.sides.player.food*.5)),multiplier=this.coinMultiplier();
     this.state.result={winner,reason,loot:won?[...playerLoot]:[],playerLoot,aiLoot,coins:won?(multiplier!==1?Math.round(baseCoins*multiplier):baseCoins):0,elapsed:this.state.time,rankIndex:this.state.rankIndex,mergedHeroes:[...this.state.mergedHeroes.player],mvp:this.combatRecords.mvp(this.state.units),ingredientLoot,villageLoot,
-      // P17: clearing the tenth wave always pays the first endless crests, even without entering endless.
-      ...(won&&reason==='waves'?{endlessCrests:STANDARD_VICTORY_CRESTS}:{})};this.state.phase='finished';
+      ...(won&&reason==='waves'&&this.dropEnabled('medallions')?{endlessCrests:STANDARD_VICTORY_CRESTS}:{}),
+      ...(this.luckyDrops?{luckyDrops:this.luckyDrops}:{})};this.state.phase='finished';
   }
 }

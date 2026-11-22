@@ -101,9 +101,9 @@ describe('P11 rank, profile and settings rows',()=>{
       expect(rows[index]).toMatch(/<label\b[\s\S]*<input\b[^>]*type="range"[\s\S]*<output\b[\s\S]*<\/label>/);
       expect(text(rows[index])).toContain(value);
     }
-    expect(rows[2].match(/type="checkbox"/g)).toHaveLength(2);
+    expect(rows[2].match(/type="checkbox"/g)).toHaveLength(1);
     expect(rows[2]).toMatch(/data-setting="showDamageNumbers"[^>]*checked/);
-    expect(rows[2]).toContain('data-setting="developerMode"');
+    expect(rows[2]).not.toContain('data-setting="developerMode"');
     expect(rows[3]).toContain('data-action="tutorial-replay"');expect(rows[3]).toContain('data-sticker="ui_tutorial_capy"');
     expect(rows[3]).toContain('storybook-frame');
     expect(html).not.toMatch(/wood-slider|toggle-setting-card|tutorial-replay-card|capsule-setting/);
@@ -124,13 +124,13 @@ describe('P11 rank, profile and settings rows',()=>{
     expect(row).toContain('value="0.5"');expect(text(row)).toContain('50%');
   });
 
-  it('persists both toggle values without replacing the other settings',()=>{
+  it('persists showDamageNumbers toggle and ignores developerMode setting changes',()=>{
     const state=screen();
-    for(const [key,checked] of [['showDamageNumbers',false],['developerMode',true]] as const){
-      const input={dataset:{setting:key},checked,value:'on',closest:()=>null} as unknown as HTMLInputElement;
-      expect(state.screens.change(input)).toBe(true);
-    }
-    expect(state.profile.settings).toEqual({musicVolume:.5,soundVolume:.75,showDamageNumbers:false,developerMode:true});
+    const damageInput={dataset:{setting:'showDamageNumbers'},checked:false,value:'on',closest:()=>null} as unknown as HTMLInputElement;
+    expect(state.screens.change(damageInput)).toBe(true);
+    const devInput={dataset:{setting:'developerMode'},checked:true,value:'on',closest:()=>null} as unknown as HTMLInputElement;
+    expect(state.screens.change(devInput)).toBe(false);
+    expect(state.profile.settings).toEqual({musicVolume:.5,soundVolume:.75,showDamageNumbers:false,developerMode:false});
   });
 
   it.each(['zh-CN','en'] as const)('resolves all page text without raw translation keys (%s)',language=>{

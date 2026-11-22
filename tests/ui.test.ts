@@ -43,7 +43,7 @@ describe('isolated profile persistence', () => {
     expect(loadProfile(storage)).toEqual({
       ...emptyProfile(), tutorialCompleted:true, tutorialRewardClaimed:true,
       coins: 0, matches: 3, wins: 3, fragments: ['orange_wand'], awardedBattles: ['battle-1'],
-      weaponFragments:{m01_swatter:1},unlockedWeapons:['m01_swatter'],
+      weaponFragments:{m01_swatter:1},unlockedWeapons:[],
       stars:3,highestStars:3,unlockedAvatars:['capybara','hamster','squirrel','bee','cat_swordsman'],
     });
   });

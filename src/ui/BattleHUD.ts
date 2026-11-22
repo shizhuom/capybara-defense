@@ -8,8 +8,8 @@ export function getMusicMode(state?:BattleState, browsing=false):'menu'|'battle'
   return state.enemies.some(enemy=>enemy.boss&&enemy.hp>0)?'boss':'battle';
 }
 
-export function isDeveloperMode(search: string, settings: Partial<GameSettings>): boolean {
-  return new URLSearchParams(search).get('dev') === '1' || settings.developerMode === true;
+export function isDeveloperMode(search: string, _settings?: Partial<GameSettings>): boolean {
+  return new URLSearchParams(search).get('dev') === '1';
 }
 
 export function getBossHUD(state: BattleState) {

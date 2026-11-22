@@ -49,9 +49,9 @@ function standardWinner(options:EngineOptions={}):BattleEngine {const e=new Batt
 describe('P16 synced art',()=>{
   const sizes:Record<string,[number,number]>={bg_onsen_village:[1280,720],ui_village_peek_capy:[256,256],ui_village_gate:[256,256],ui_harvest_basket:[256,256],
     ...Object.fromEntries(FACILITY_IDS.map(id=>[id,[256,256]])),res_onsen_wood:[160,160],res_yuzu_essence:[160,160],ui_pet_heart:[160,160],ui_sleep_zzz:[160,160]};
-  it('ships 288 unique sprites with the 13 exact RGBA P16 images',()=>{
+  it('ships 290 unique sprites with the 13 exact RGBA P16 images',()=>{
     const ids=JSON.parse(readFileSync('public/assets/sprites/manifest.json','utf8')) as string[];
-    expect(ids).toHaveLength(288);expect(new Set(ids).size).toBe(288);expect(P16_SCENE_IDS).toHaveLength(13);
+    expect(ids).toHaveLength(290);expect(new Set(ids).size).toBe(290);expect(P16_SCENE_IDS).toHaveLength(13);
     for(const [id,[w,h]] of Object.entries(sizes)){expect(ids).toContain(id);const png=sprite(id);expect([png.readUInt32BE(16),png.readUInt32BE(20),png[25]]).toEqual([w,h,6]);}
     expect(Object.keys(sizes).sort()).toEqual([...P16_SCENE_IDS].sort());
     // Bottom-flush paws: the last rows match the established compendium peek mascot pixel for pixel.
@@ -68,18 +68,18 @@ describe('P16 synced art',()=>{
 });
 
 describe('P16 profile migration and welcome gift',()=>{
-  it('gives new and pre-P16 saves the starter pool, 6 wood, 2 essence and a 15-minute welcome harvest',()=>{
-    const gift={wood:6,essence:2,facilities:{fac_bamboo_pool:1},lastHarvestAt:VILLAGE_EPOCH-VILLAGE_WELCOME_MS,petTapDay:'',petTapCount:0};
-    expect(createProfile().village).toEqual(gift);expect(normalizeProfile(null)).toEqual(createProfile());
-    const legacy=normalizeProfile({coins:80,wins:2,matches:3,schemaVersion:2,ingredients:{}});expect(legacy.village).toEqual(gift);
+  it('starts new saves with an empty courtyard until Village onboarding gifts starter materials at 16★',()=>{
+    const emptyVillage={wood:0,essence:0,facilities:{},lastHarvestAt:VILLAGE_EPOCH-VILLAGE_WELCOME_MS,petTapDay:'',petTapCount:0};
+    expect(createProfile().village).toEqual(emptyVillage);expect(normalizeProfile(null)).toEqual(createProfile());
+    const legacy=normalizeProfile({coins:80,wins:2,matches:3,schemaVersion:2,ingredients:{}});expect(legacy.village).toEqual(emptyVillage);
     expect(normalizeProfile(JSON.parse(JSON.stringify(legacy)))).toEqual(legacy);
-    expect(computeOfflineHarvest(createProfile(),VILLAGE_EPOCH)).toMatchObject({coins:3,elapsedMs:VILLAGE_WELCOME_MS});
+    expect(computeOfflineHarvest(village({},{lastHarvestAt:VILLAGE_EPOCH-VILLAGE_WELCOME_MS}),VILLAGE_EPOCH)).toMatchObject({coins:2,elapsedMs:VILLAGE_WELCOME_MS});
   });
   it('never re-gifts an existing village and sanitizes forged values',()=>{
     const spent=normalizeProfile({village:{wood:0,essence:0,facilities:{fac_bamboo_pool:1},lastHarvestAt:NOW,petTapDay:'2026-11-19',petTapCount:4}});
     expect(spent.village).toEqual({wood:0,essence:0,facilities:{fac_bamboo_pool:1},lastHarvestAt:NOW,petTapDay:'2026-11-19',petTapCount:4});
     const forged=normalizeVillage({wood:-3,essence:1.5,facilities:{fac_fish_stall:9,fac_fake:3,fac_yuzu_tree:-1,fac_bamboo_pool:0},lastHarvestAt:'soon',petTapDay:'tuesday',petTapCount:99},NOW);
-    expect(forged).toEqual({wood:0,essence:0,facilities:{fac_bamboo_pool:1,fac_fish_stall:3},lastHarvestAt:NOW-VILLAGE_WELCOME_MS,petTapDay:'',petTapCount:0});
+    expect(forged).toEqual({wood:0,essence:0,facilities:{fac_fish_stall:3},lastHarvestAt:NOW-VILLAGE_WELCOME_MS,petTapDay:'',petTapCount:0});
     expect(createVillage(NOW).lastHarvestAt).toBe(NOW-VILLAGE_WELCOME_MS);
   });
   it('fills the developer test village to Lv.3 with 99 materials and a six-hour basket',()=>{
@@ -103,51 +103,53 @@ describe('P16 twelve-hour offline harvest',()=>{
   it('accrues from 0 minutes through 3 hours and clamps at 12 hours, including clock rollbacks',()=>{
     const p=village({});
     expect(computeOfflineHarvest(p,NOW)).toEqual({elapsedMs:0,coins:0,fragments:0,yuzu:0,tickets:0,full:false});
-    expect(computeOfflineHarvest(p,NOW+3*HOUR)).toMatchObject({coins:36,fragments:0,full:false});
-    expect(computeOfflineHarvest(p,NOW+12*HOUR)).toMatchObject({elapsedMs:12*HOUR,coins:144,full:true});
+    expect(computeOfflineHarvest(p,NOW+3*HOUR)).toMatchObject({coins:24,fragments:0,full:false});
+    expect(computeOfflineHarvest(p,NOW+12*HOUR)).toMatchObject({elapsedMs:12*HOUR,coins:96,full:true});
     expect(computeOfflineHarvest(p,NOW+24*HOUR)).toEqual(computeOfflineHarvest(p,NOW+12*HOUR));
     expect(computeOfflineHarvest(p,NOW-5*HOUR)).toEqual({elapsedMs:0,coins:0,fragments:0,yuzu:0,tickets:0,full:false});
     expect(settleVillageClock(p,NOW-5*HOUR).village.lastHarvestAt).toBe(NOW-5*HOUR);expect(settleVillageClock(p,NOW+HOUR)).toBe(p);
   });
-  it('pays a fully built village coins, weapon fragments, golden yuzu and two tickets per 12 hours — exactly once',()=>{
+  it('pays a fully built village coins, weapon fragments and golden yuzu per 12 hours — exactly once',()=>{
     const full=village(Object.fromEntries(FACILITY_IDS.map(id=>[id,3])));
     const h=computeOfflineHarvest(full,NOW+12*HOUR);
-    expect(h).toEqual({elapsedMs:12*HOUR,coins:(40+20+14+18+28)*12,fragments:2+2,yuzu:3,tickets:2,full:true});
+    expect(h).toEqual({elapsedMs:12*HOUR,coins:(28+20+16+20+26)*12,fragments:1+1,yuzu:1,tickets:0,full:true});
     const claimed=claimOfflineHarvest({...full,ingredients:{}},NOW+12*HOUR,()=>.3);
     expect(claimed).toMatchObject({ok:true,key:'p16.harvested'});
-    expect(claimed.profile.coins).toBe(full.coins+1440);expect(claimed.profile.freeLotteryTickets).toBe(full.freeLotteryTickets+2);
-    expect(claimed.profile.ingredients.ing_yuzu).toBe(3);expect(Object.values(claimed.profile.weaponFragments).reduce((a,b)=>a+b,0)).toBe(4);
+    expect(claimed.profile.coins).toBe(full.coins+1320);expect(claimed.profile.freeLotteryTickets).toBe(full.freeLotteryTickets);
+    expect(claimed.profile.ingredients.ing_yuzu).toBe(1);expect(Object.values(claimed.profile.weaponFragments).reduce((a,b)=>a+b,0)).toBe(2);
     expect(claimed.profile.village.lastHarvestAt).toBe(NOW+12*HOUR);
     expect(claimOfflineHarvest(claimed.profile,NOW+12*HOUR)).toMatchObject({ok:false,key:'p16.nothingToHarvest'});
     const mid=computeOfflineHarvest(village({fac_sakura_pavilion:1,fac_yuzu_tree:1}),NOW+8*HOUR);
-    expect(mid).toMatchObject({coins:(12+8+4)*8,fragments:0,yuzu:2,tickets:0});
+    expect(mid).toMatchObject({coins:(8+8+5)*8,fragments:0,yuzu:0,tickets:0});
   });
 });
 
 describe('P16 building, residents and petting',()=>{
   it('builds and upgrades every facility to Lv.3, spending wood, essence and coins',()=>{
-    // A full build-out costs 187 wood, 69 essence and 2,240 coins.
-    let p={...village({}),coins:2240};
-    expect(buildFacility(p,'fac_bamboo_pool')).toMatchObject({ok:true,key:'p16.upgraded',level:2});
+    const totalWood=FACILITY_IDS.reduce((s,id)=>s+FACILITIES[id].costs.reduce((a,c)=>a+(c?.wood??0),0),0);
+    const totalEssence=FACILITY_IDS.reduce((s,id)=>s+FACILITIES[id].costs.reduce((a,c)=>a+(c?.essence??0),0),0);
+    const totalCoins=FACILITY_IDS.reduce((s,id)=>s+FACILITIES[id].costs.reduce((a,c)=>a+(c?.coins??0),0),0);
+    let p:Profile={...createProfile(),coins:totalCoins,village:{...createProfile().village,wood:totalWood,essence:totalEssence,facilities:{},lastHarvestAt:NOW}};
+    expect(buildFacility(p,'fac_bamboo_pool')).toMatchObject({ok:true,key:'p16.built',level:1});
     for(const id of FACILITY_IDS){
-      for(let level=FACILITIES[id].costs[0]?0:1;level<3;level++){
+      for(let level=0;level<3;level++){
         const cost=facilityUpgradeCost(id,level)!,before=p,result=buildFacility(p,id);
         expect(result).toMatchObject({ok:true,level:level+1});p=result.profile;
         expect([before.village.wood-p.village.wood,before.village.essence-p.village.essence,before.coins-p.coins]).toEqual([cost.wood,cost.essence,cost.coins]);
       }
       expect(buildFacility(p,id)).toMatchObject({ok:false,key:'p16.maxLevel'});
     }
-    expect(villageStars(p)).toBe(15);expect(p.coins).toBe(0);expect(facilityUpgradeCost('fac_fish_stall',3)).toBeNull();
+    expect(villageStars(p)).toBe(15);expect(p.coins).toBe(0);expect(p.village.wood).toBe(0);expect(p.village.essence).toBe(0);expect(facilityUpgradeCost('fac_fish_stall',3)).toBeNull();
     expect(buildFacility({...createProfile(),coins:0},'fac_fish_stall')).toMatchObject({ok:false,key:'p16.missingMaterials'});
     expect(buildFacility(createProfile(),'fac_fake')).toMatchObject({ok:false,key:'p16.invalidFacility'});
   });
   it('shows Harvest!, then Build!, then stars on the courtyard badge',()=>{
-    const p={...createProfile(),coins:500};
+    const p={...village({},{wood:130,essence:45,lastHarvestAt:VILLAGE_EPOCH-VILLAGE_WELCOME_MS}),stars:16,highestStars:16,matches:16,coins:800};
     expect(buildableFacilities(p)).toEqual(['fac_fish_stall','fac_yuzu_tree','fac_cat_nap']);
     expect(villageBadge(p,VILLAGE_EPOCH)).toBe('build');
     expect(villageBadge(p,VILLAGE_EPOCH+12*HOUR)).toBe('harvest');
     expect(villageBadge({...p,coins:0},VILLAGE_EPOCH)).toBe('stars');
-    expect(villageBadge(village({},{lastHarvestAt:NOW}),NOW+50*60_000)).toBe('harvest');
+    expect(villageBadge(village({},{lastHarvestAt:NOW}),NOW+90*60_000)).toBe('harvest');
     const html=courtyardMarkup({...p,coins:0},VILLAGE_EPOCH);
     expect(html.match(/hub-dock-right[\s\S]*?<\/nav>/)![0].match(/data-action="(\w+)"/g)).toEqual(['data-action="village"','data-action="market"','data-action="leaderboard"']);
     expect(html).toContain('ui_village_gate');expect(html).toContain('★1/15');
@@ -179,7 +181,8 @@ describe('P16 battle drops and gentle buffs',()=>{
   it('draws building materials from an isolated stream that never shifts combat or ingredient randomness',()=>{
     const run=(swap:boolean)=>{const e=engine(withVillage({fac_sakura_pavilion:3,fac_yuzu_tree:1}));if(swap)(e as unknown as {villageRandom:Random}).villageRandom=new Random(4242);
       e.start();e.state.sides.player.food=999;
-      for(let w=0;w<6;w++){e.skipWave();e.summon();for(let i=0;i<8;i++)e.hurt(e.spawnEnemy(i%2?'rat':'crab','player'),1e9,undefined,false,false,true);for(const b of e.state.enemies.filter(x=>x.boss))e.hurt(b,1e9,undefined,false,false,true);}
+      for(let w=0;w<10;w++){e.skipWave();e.summon();for(let i=0;i<8;i++)e.hurt(e.spawnEnemy(i%2?'rat':'crab','player'),1e9,undefined,false,false,true);for(const b of e.state.enemies.filter(x=>x.boss))e.hurt(b,1e9,undefined,false,false,true);}
+      e.skipWave();
       return e.state;};
     const a=run(false),b=run(true);
     expect(b.units.map(u=>`${u.kind}:${u.level}`)).toEqual(a.units.map(u=>`${u.kind}:${u.level}`));
@@ -189,32 +192,35 @@ describe('P16 battle drops and gentle buffs',()=>{
     scripted(e,[0]);e.hurt(rat,1e9,undefined,false,false,true);expect(JSON.stringify((e as unknown as {random:Random}).random)).toBe(before);
     expect(e.state.sides.player.villageLoot).toEqual([]);
   });
-  it('drops wood and essence from bosses (yuzu tree +20%), and the pavilion adds bonus fragments',()=>{
-    const plain=engine(base);scripted(plain,[.7]);plain.hurt(plain.spawnEnemy('husky_wrecker','player'),1e9);
-    expect(plain.state.sides.player.villageLoot).toEqual(['res_onsen_wood']);
-    const lucky=engine(base);scripted(lucky,[.5]);lucky.hurt(lucky.spawnEnemy('husky_wrecker','player'),1e9);
-    expect(lucky.state.sides.player.villageLoot).toEqual(['res_onsen_wood','res_yuzu_essence']);
-    const tree=engine(withVillage({fac_yuzu_tree:1}));scripted(tree,[.7]);tree.hurt(tree.spawnEnemy('husky_wrecker','player'),1e9);
-    expect(tree.state.sides.player.villageLoot).toEqual(['res_onsen_wood','res_yuzu_essence']);
-    const pavilion=engine(withVillage({fac_sakura_pavilion:2}));scripted(pavilion,[.9,.2,.5]);const before=pavilion.state.sides.player.loot.length;
-    pavilion.hurt(pavilion.spawnEnemy('husky_wrecker','player'),1e9);expect(pavilion.state.sides.player.loot.length).toBeGreaterThan(before+1);
+  it('grants yuzu-tree essence on wave-10 boss kills and pavilion bonus fragments on boss kills',()=>{
+    const plain=engine(base);plain.state.wave=10;scripted(plain,[.1]);plain.hurt(plain.spawnEnemy('husky_wrecker','player'),1e9);
+    expect(plain.state.sides.player.villageLoot).toEqual([]);
+    const tree=engine(withVillage({fac_yuzu_tree:1}));tree.state.wave=10;scripted(tree,[.1]);tree.hurt(tree.spawnEnemy('husky_wrecker','player'),1e9);
+    expect(tree.state.sides.player.villageLoot).toEqual(['res_yuzu_essence']);
+    const pavilion=engine(withVillage({fac_sakura_pavilion:2}));pavilion.state.wave=10;scripted(pavilion,[.2,.5]);const before=pavilion.state.sides.player.loot.length;
+    pavilion.hurt(pavilion.spawnEnemy('husky_wrecker','player'),1e9);expect(pavilion.state.sides.player.loot.length).toBeGreaterThanOrEqual(before+2);
   });
-  it('rewards waves 3, 6 and 10 (with ≥2 oranges an extra essence) and every endless wave',()=>{
-    const e=standardWinner();expect(e.state.result!.villageLoot).toEqual(['res_onsen_wood','res_onsen_wood','res_onsen_wood','res_onsen_wood','res_yuzu_essence']);
-    const hurt=new BattleEngine({seed:41});hurt.start();while(hurt.state.wave<10)hurt.skipWave();hurt.state.sides.player.oranges=1;hurt.skipWave();
-    expect(hurt.state.result!.villageLoot).toEqual(['res_onsen_wood','res_onsen_wood','res_onsen_wood','res_onsen_wood']);
-    e.enterEndless();e.state.enemies=[];e.state.spawned=e.currentWaveTargetCount();(e as unknown as {pendingBosses:unknown[]}).pendingBosses=[];e.pause();e.surrender();
-    expect(e.state.result!.endlessVillageLoot).toEqual(['res_onsen_wood','res_onsen_wood','res_yuzu_essence']);
+  it('rewards wave 7 & 10 wood (plus 60% essence) and endless materials every 3/5 waves',()=>{
+    const e=standardWinner();scripted(e,[.1]);
+    expect(e.state.result!.villageLoot!.filter(id=>id==='res_onsen_wood')).toHaveLength(2);
+    const rich=new BattleEngine({seed:41});rich.start();scripted(rich,[.1]);while(rich.state.phase!=='finished')rich.skipWave();
+    expect(rich.state.result!.villageLoot).toEqual(['res_onsen_wood','res_onsen_wood','res_yuzu_essence']);
+    const dry=new BattleEngine({seed:41});dry.start();scripted(dry,[.9]);while(dry.state.phase!=='finished')dry.skipWave();
+    expect(dry.state.result!.villageLoot).toEqual(['res_onsen_wood','res_onsen_wood']);
+    rich.enterEndless();rich.skipWave();rich.skipWave();// Wave 13 (k=3) drops 1 wood
+    rich.state.enemies=[];rich.state.spawned=rich.currentWaveTargetCount();(rich as unknown as {pendingBosses:unknown[]}).pendingBosses=[];rich.pause();rich.surrender();
+    expect(rich.state.result!.endlessVillageLoot).toEqual(['res_onsen_wood']);
   });
   it('salvages half of the materials on defeat and banks them idempotently through both receipts',()=>{
     for(const [n,kept] of [[0,0],[1,1],[5,3]] as const){const e=engine(base);e.start();e.state.sides.player.villageLoot=Array.from({length:n},(_,i)=>i%2?'res_yuzu_essence':'res_onsen_wood');
       e.pause();e.surrender();expect(e.state.result!.villageLoot).toEqual(e.state.sides.player.villageLoot.slice(0,kept));}
     const loss:BattleResult={winner:'ai',reason:'oranges',loot:[],playerLoot:[],aiLoot:[],coins:0,elapsed:9,villageLoot:['res_onsen_wood','res_yuzu_essence','fake']};
     const p=createProfile(),first=awardBattle(p,'p16-loss',loss);
-    expect(first.profile.village).toMatchObject({wood:7,essence:3});expect(awardBattle(first.profile,'p16-loss',loss).awarded).toBe(false);
-    const e=standardWinner(),banked=awardBattle(p,e.state.id,e.state.result!);expect(banked.profile.village).toMatchObject({wood:10,essence:3});
-    e.enterEndless();e.state.enemies=[];e.state.spawned=e.currentWaveTargetCount();(e as unknown as {pendingBosses:unknown[]}).pendingBosses=[];e.pause();e.surrender();
-    const bonus=awardEndless(banked.profile,e.state.id,e.state.result!);expect(bonus.profile.village).toMatchObject({wood:12,essence:4});
+    expect(first.profile.village).toMatchObject({wood:1,essence:1});expect(awardBattle(first.profile,'p16-loss',loss).awarded).toBe(false);
+    const e=new BattleEngine({seed:41});e.start();scripted(e,[.1]);while(e.state.phase!=='finished')e.skipWave();
+    const banked=awardBattle(p,e.state.id,e.state.result!);expect(banked.profile.village).toMatchObject({wood:2,essence:1});
+    e.enterEndless();e.skipWave();e.skipWave();e.state.enemies=[];e.state.spawned=e.currentWaveTargetCount();(e as unknown as {pendingBosses:unknown[]}).pendingBosses=[];e.pause();e.surrender();
+    const bonus=awardEndless(banked.profile,e.state.id,e.state.result!);expect(bonus.profile.village).toMatchObject({wood:3,essence:1});
     expect(awardEndless(bonus.profile,e.state.id,e.state.result!).awarded).toBe(false);
   });
   it('applies all five facility buffs: fish, oranges, ATK, SPD, boss damage and battle coins',()=>{
@@ -258,13 +264,13 @@ describe('P16 village screen and settlement',()=>{
     let html=h.screen.markup();
     expect(html).toContain('data-ledger-page="village"');expect(html).toContain('ui_village_peek_capy');expect(html).toContain(t('p16.title'));
     expect(html).toContain('bg_onsen_village');expect(html.match(/class="village-spot is-empty"/g)).toHaveLength(4);
-    expect(html.match(/class="village-pet /g)).toHaveLength(2);expect(html).toContain('data-action="village-harvest"');expect(html).toContain('+36');
+    expect(html.match(/class="village-pet /g)).toHaveLength(2);expect(html).toContain('data-action="village-harvest"');expect(html).toContain('+24');
     expect(html).toContain('★1/15');expect(html).toContain('data-action="close-village"');
     h.screen.action('village-pet:0');html=h.screen.markup();
     expect(html).toContain('village-pet-bubble');expect(html).toContain('ui_pet_heart');expect(html).toContain('+5🪙');
     expect(h.get().coins).toBe(2005);expect(h.sound).toHaveBeenLastCalledWith('treasure');
     vi.advanceTimersByTime(2000);expect(h.screen.markup()).not.toContain('village-pet-bubble');
-    h.screen.action('village-harvest');expect(h.get().coins).toBe(2041);expect(h.sound).toHaveBeenLastCalledWith('lottery_win');
+    h.screen.action('village-harvest');expect(h.get().coins).toBe(2029);expect(h.sound).toHaveBeenLastCalledWith('lottery_win');
     expect(h.screen.markup()).toContain('data-action="village-harvest" disabled');
     h.screen.action('village-focus:fac_cat_nap');html=h.screen.markup();
     expect(html).toContain('village-row unbuilt is-focused" data-facility-id="fac_cat_nap"');expect(html.match(/class="storybook-row-card village-row /g)).toHaveLength(5);
@@ -277,10 +283,11 @@ describe('P16 village screen and settlement',()=>{
     const e=engine(base);e.start();expect(pauseMarkup(e.state)).not.toContain('pause-materials');
     e.state.sides.player.villageLoot=['res_onsen_wood','res_onsen_wood','res_yuzu_essence'];
     const pause=pauseMarkup(e.state);expect(pause).toContain('pause-materials');expect(pause).toContain('res_onsen_wood');expect(pause).toContain('×2');
-    const win=standardWinner(),html=resultMarkup({state:win.state,profile:createProfile(),savedResult:true,resultStars:1,previousRank:0,newWeapons:[],newAvatars:[],statsOpen:true});
+    const win=new BattleEngine({seed:41});win.start();scripted(win,[.1]);while(win.state.phase!=='finished')win.skipWave();
+    const html=resultMarkup({state:win.state,profile:createProfile(),savedResult:true,resultStars:1,previousRank:0,newWeapons:[],newAvatars:[],statsOpen:true});
     expect(html.match(/visual-treasure-item is-material/g)).toHaveLength(2);
     expect(html).toMatch(/is-material[^]*?data-sticker="res_onsen_wood"[^>]*width="72"|is-material[^]*?width="72"[^>]*data-sticker="res_onsen_wood"/);
-    expect(html).toContain('×4');
+    expect(html).toContain('×2');
     const plaque=html.match(/<div class="crest-core-rewards">[\s\S]*?<\/div>/)![0];expect(plaque).not.toContain('res_onsen_wood');
   });
 });

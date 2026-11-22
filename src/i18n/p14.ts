@@ -4,7 +4,7 @@ const copy = {
  'p14.title':['温泉料理屋','Onsen Kitchen'],
  'p14.dock':['料理屋','Kitchen'],
  'p14.brewBadge':['可熬制!','Brew!'],
- 'p14.collection':['配方 {count}/12 · 全员攻击 +{damage}% 攻速 +{rate}%','Recipes {count}/12 · Team ATK +{damage}% SPD +{rate}%'],
+ 'p14.collection':['配方 {count}/{total} · 全员攻击 +{damage}% 攻速 +{rate}%','Recipes {count}/{total} · Team ATK +{damage}% SPD +{rate}%'],
  'p14.tab.broths':['汤浴配方','Bath Broths'],
  'p14.tab.pantry':['食材储藏室','Pantry'],
  'p14.footer1':['每熬好 1 道汤：全队攻击 +2%、攻速 +1%；每升 1 星再 +0.5% 攻击，无需装备永久生效','Each brewed broth: team ATK +2% & SPD +1%; every star adds +0.5% ATK — always on'],
@@ -142,6 +142,14 @@ const copy = {
  'broth.dish_imperial_onsen.style':['终极全能汤底','Grand All-Rounder'],
  'broth.dish_imperial_onsen.effect':['全员攻击 +{allDamage}%、攻速 +{allRate}%；开局 +{startFood} 烤鱼干、+{startOranges} 颗橘子','Team ATK +{allDamage}%, SPD +{allRate}%; start with +{startFood} fish and +{startOranges} oranges'],
  'broth.dish_imperial_onsen.story':['六种食材全都放进金边瓷碗，主厨压箱底的温泉大餐。','All six ingredients in a gold-rimmed bowl — the chef\'s grandest onsen feast.'],
+ 'broth.dish_starlight_spring':['星河瑶池仙汤','Starlight Celestial Spring'],
+ 'broth.dish_starlight_spring.style':['全系大招无尽冲榜流','Celestial Endless Surge'],
+ 'broth.dish_starlight_spring.effect':['全英雄大招充能 -{chargeReduction}（至少 3）；对首领伤害 +{bossDamage}%；无尽战意获取 +{momentumBonus}%','All hero ultimates -{chargeReduction} charge (min 3); Boss DMG +{bossDamage}%; Endless momentum +{momentumBonus}%'],
+ 'broth.dish_starlight_spring.story':['映着银河星光的仙雾瑶池，每一口热汤都让英雄蓄满必杀战意。','A twilight celestial broth flecked with starlight — every hero charges ultimates and battle spirit in a flash.'],
+ 'broth.dish_golden_orchard':['百果神泉金浴','Hundred-Fruit Golden Spring'],
+ 'broth.dish_golden_orchard.style':['极速发育打宝养老流','Golden Harvest Rush'],
+ 'broth.dish_golden_orchard.effect':['开局 +{startFood}、每波 +{waveIncome} 烤鱼干；战后金币 +{coinBonus}%；食材与山庄建料额外掉率 +{dropBonus}%','Start +{startFood} & +{waveIncome}/wave fish; +{coinBonus}% coins; +{dropBonus}% bonus ingredient & village drops'],
+ 'broth.dish_golden_orchard.story':['黄金柚子、鲜桃与百花蜜熬出的丰收金泉，泡一局就满载而归。','Golden yuzu, ripe peaches, and wildflower honey simmered into a bountiful spring for rapid growth and loot.'],
 } satisfies Record<string,readonly [string,string]>;
 export const p14Zh:Record<string,string>=Object.fromEntries(Object.entries(copy).map(([key,value])=>[key,value[0]]));
 export const p14En:Record<string,string>=Object.fromEntries(Object.entries(copy).map(([key,value])=>[key,value[1]]));

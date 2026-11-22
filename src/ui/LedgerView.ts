@@ -4,6 +4,7 @@ import {getRank,getRankDifficulty} from '../config/ranks';
 import {bossCountForWave} from '../config/waves';
 import {sceneSticker} from './stickers';
 import {escapeHtml as esc} from './art';
+import {isFeatureUnlocked} from '../core/FeatureUnlocks';
 
 export type LedgerPage='compendium'|'armory'|'market'|'profile'|'leaderboard'|'settings'|'kitchen'|'village'|'medallions'|'endless-board';
 const tr=(key:string,vars?:Record<string,string|number>)=>esc(t(key,vars));
@@ -13,9 +14,10 @@ export function languagePills():string {
 export function ledgerWallet(profile:Profile):string {
   return `<div class="ledger-wallet"><span title="${tr('profile.coins')}">${sceneSticker('ui_coin_gold','',26)}<b>${profile.coins}</b></span><span title="${tr('p5.tickets')}">${sceneSticker('ui_ticket_gacha','',26)}<b>${profile.freeLotteryTickets}</b></span></div>`;
 }
-export function ledgerTabs(page:LedgerPage):string {
-  // P17: the global endless board sits between the rank board and the passport.
-  const tabs=page==='armory'?['all','melee','ranged','magic','recycle']:page==='market'?['shop','backpack','lottery']:['leaderboard','endless-board','profile','settings'];
+export function ledgerTabs(page:LedgerPage,profile?:Profile):string {
+  // P17/P19: the global endless board sits between the rank board and the passport once Endless unlocks at 10★.
+  const showEndless=!profile||isFeatureUnlocked(profile,'endless');
+  const tabs=page==='armory'?['all','melee','ranged','magic','recycle']:page==='market'?['shop','backpack','lottery']:showEndless?['leaderboard','endless-board','profile','settings']:['leaderboard','profile','settings'];
   const active=page==='armory'?'all':page==='market'?'shop':page;
   const prefix=page==='armory'?'meta-family:':page==='market'?'meta-tab:':'';
   return `<nav class="ledger-tabs ${prefix?'meta-tabs':'profile-navigation'}" aria-label="${tr('p5.notebookTabs')}">${tabs.map(tab=>`<button type="button" data-action="${prefix}${tab}" aria-pressed="${active===tab}" class="${active===tab?'selected':''}">${tr(`p11.tab.${tab}`)}</button>`).join('')}</nav>`;
@@ -28,11 +30,12 @@ export function ledger(page:LedgerPage,body:string,options:LedgerOptions={}):str
   const summary=!profile||page==='settings'||page==='endless-board'?'':page==='armory'?tr('p11.unlocked',{count:profile.unlockedWeapons.length}):page==='market'?`${sceneSticker('ui_coin_gold','',18)} ${profile.coins} <span aria-hidden="true">·</span> ${sceneSticker('ui_ticket_gacha','',18)} ${profile.freeLotteryTickets}`:`${sceneSticker('ui_star_rank','',18)} ${profile.stars}`;
   const badge=options.badges??(summary?`<span class="collection-badge">${summary}</span>`:'');
   const switchPage=page==='armory'?'market':'armory';
-  const link=options.inBattle&&(page==='armory'||page==='market')?`<button type="button" class="storybook-switch" data-action="battle-shop:${switchPage}">${tr(`p11.switch.${switchPage}`)} ›</button>`:'';
+  const canSwitch=!profile||isFeatureUnlocked(profile,switchPage);
+  const link=options.inBattle&&(page==='armory'||page==='market')&&canSwitch?`<button type="button" class="storybook-switch" data-action="battle-shop:${switchPage}">${tr(`p11.switch.${switchPage}`)} ›</button>`:'';
   const kitchen=page==='kitchen',village=page==='village',own=kitchen?'p14':village?'p16':page==='medallions'?'p17':'';
   const tip1=page==='compendium'?'p10.footerTip1':own?`${own}.footer1`:`p11.tip.${page}.1`;
   const tip2=page==='compendium'?'p10.footerTip2':options.inBattle?(own?(options.preparation?`${own}.footerPreparation`:`${own}.footerNextBattle`):options.preparation?'p11.preparation':'p11.nextBattle'):own?`${own}.footer2`:`p11.tip.${page}.2`;
-  return `<div class="ledger-shell" data-ledger-page="${page}"><header class="ledger-header"><div class="ledger-mascot">${sceneSticker(headerId,'',78)}</div><div class="ledger-heading"><h2 id="dialog-title">${tr(page==='compendium'?'p10.title':own?`${own}.title`:`p11.title.${page}`)}</h2>${badge||link?`<div class="storybook-heading-note">${badge}${link}</div>`:''}</div><div class="ledger-header-end"><div class="compendium-toolbar"><button type="button" class="ledger-close dialog-close icon-button" data-action="${close}" aria-label="${tr('m3.close')}">×</button></div></div></header>${options.tabs??ledgerTabs(page)}<div class="ledger-body" tabindex="0">${body}</div><footer class="storybook-footer-tip"><p>${tr(tip1)}</p><p${options.inBattle?' role="status"':''}>${tr(tip2)}</p></footer></div>`;
+  return `<div class="ledger-shell" data-ledger-page="${page}"><header class="ledger-header"><div class="ledger-mascot">${sceneSticker(headerId,'',78)}</div><div class="ledger-heading"><h2 id="dialog-title">${tr(page==='compendium'?'p10.title':own?`${own}.title`:`p11.title.${page}`)}</h2>${badge||link?`<div class="storybook-heading-note">${badge}${link}</div>`:''}</div><div class="ledger-header-end"><div class="compendium-toolbar"><button type="button" class="ledger-close dialog-close icon-button" data-action="${close}" aria-label="${tr('m3.close')}">×</button></div></div></header>${options.tabs??ledgerTabs(page,profile)}<div class="ledger-body" tabindex="0">${body}</div><footer class="storybook-footer-tip"><p>${tr(tip1)}</p><p${options.inBattle?' role="status"':''}>${tr(tip2)}</p></footer></div>`;
 }
 export function threatBanner(profile:Profile,compact=false):string {
   const rank=getRank(profile.stars),d=getRankDifficulty(rank.index),doubles=[6,8,9,10].filter(w=>bossCountForWave(w,rank.index)===2);

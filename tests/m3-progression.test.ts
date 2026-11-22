@@ -36,11 +36,11 @@ describe('M3 ranks', () => {
     expect(m.RANKS).toHaveLength(54);
     m.RANKS.forEach((rank,i)=>{
       expect(rank.winCoins).toBe(Math.round(60+160*i/53));
-      expect(rank.fragmentMultiplier).toBe(i>=50?2.2:i>=45?1.8:i>=40?1.5:1);
+      expect(rank.fragmentMultiplier).toBe(i>=50?1.75:i>=45?1.5:i>=40?1.3:1);
       if(i>0)expect(rank.hpMultiplier).toBeGreaterThan(m.RANKS[i-1].hpMultiplier);
       if(i<50)expect(rank.name.en).toContain(['I','II','III','IV','V'][i%5]);
     });
-    expect(m.RANKS[53]).toMatchObject({hpMultiplier:6.2,winCoins:220,fragmentMultiplier:2.2});
+    expect(m.RANKS[53]).toMatchObject({hpMultiplier:6.2,winCoins:220,fragmentMultiplier:1.75});
     expect(m.getRank(-10).index).toBe(0); expect(m.getRank(NaN).index).toBe(0); expect(m.getRank(10000).index).toBe(53);
     expect(m.RANKS.slice(40).map(r=>r.mapId)).toEqual(['sunny_backyard','sakura_onsen','midnight_kitchen','cat_tower_maze','sunny_backyard','sakura_onsen','midnight_kitchen','cat_tower_maze','sunny_backyard','sakura_onsen','midnight_kitchen','cat_tower_maze','sunny_backyard','sakura_onsen']);
   });
@@ -154,9 +154,9 @@ describe('M3 avatars and local leaderboard',()=>{
     expect(buyProp(p,'catnip').profile.unlockedAvatars).toContain('market_coon');
     const prizes=createLotteryPrizes(p,()=>0);prizes[0]={type:'prop',id:'catnip',amount:1};
     expect(spinLottery(p,prizes,()=>0).profile.unlockedAvatars).toContain('market_coon');
-    expect(grantWeaponFragments(createProfile(),Array(5).fill('m09_cat_blade')).profile.unlockedAvatars).toContain('bamboo_master');
+    expect(grantWeaponFragments(createProfile(),Array(16).fill('m09_cat_blade')).profile.unlockedAvatars).toContain('bamboo_master');
     const eleven={...createProfile(),unlockedWeapons:Object.keys(WEAPONS).slice(0,11)};
-    expect(grantWeaponFragments(eleven,Array(5).fill('m12_iron_wok')).profile.unlockedAvatars).toContain('salted_fish');
+    expect(grantWeaponFragments(eleven,Array(16).fill('m12_iron_wok')).profile.unlockedAvatars).toContain('salted_fish');
   });
   it('provides 16 bilingual avatars with transparent requirements',async()=>{
     const catalog=await import('../src/config/avatars').catch(()=>undefined);expect(catalog).toBeDefined();if(!catalog)return;

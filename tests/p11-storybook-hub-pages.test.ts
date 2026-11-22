@@ -13,9 +13,9 @@ describe('P11 shared illustrated folder',()=>{
   expect(Object.keys(p11Zh).sort()).toEqual(Object.keys(p11En).sort());
   for(const lang of ['zh-CN','en'] as const){setLanguage(lang);for(const key of Object.keys(p11Zh)){expect(t(key)).not.toBe(key);expect(t(key).length).toBeGreaterThan(0);}}
  });
- it('ships 288 synchronized sprites with four transparent, borderless peeking mascots',()=>{
+ it('ships 290 synchronized sprites with four transparent, borderless peeking mascots',()=>{
   const root='public/assets/sprites/',ids=JSON.parse(readFileSync(root+'manifest.json','utf8')) as string[];
-  expect(ids).toHaveLength(288);expect(new Set(ids).size).toBe(288);expect(readdirSync(root).filter(f=>f.endsWith('.png'))).toHaveLength(288);
+  expect(ids).toHaveLength(290);expect(new Set(ids).size).toBe(290);expect(readdirSync(root).filter(f=>f.endsWith('.png'))).toHaveLength(290);
   expect(P11_SCENE_IDS).toEqual(['ui_armory_peek_capy','ui_market_peek_raccoon','ui_rank_peek_capy','ui_profile_peek_capy']);
   vi.spyOn(assets,'get').mockReturnValue(undefined);
   const fallbacks=P11_SCENE_IDS.map(id=>{expect(ids).toContain(id);const png=readFileSync(root+id+'.png');expect([png.readUInt32BE(16),png.readUInt32BE(20),png[25]]).toEqual([256,256,6]);return sceneSticker(id,'',78);});
@@ -34,7 +34,7 @@ describe('P11 shared illustrated folder',()=>{
   }
  });
  it('keeps preparation notices and cross-page links out of the sole top tab bar',()=>{
-  const profile=createProfile();
+  const profile={...createProfile(),stars:5,highestStars:5,matches:5};
   const tabs='<nav class="ledger-tabs"><button>全部</button></nav>';
   const prep=ledger('armory','body',{profile,tabs,inBattle:true,preparation:true});
   expect(prep).toContain('data-action="battle-shop:market"');expect(prep).toContain('本局立即生效');expect(prep.match(/class="ledger-tabs/g)).toHaveLength(1);

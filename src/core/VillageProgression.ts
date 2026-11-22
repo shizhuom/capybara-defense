@@ -39,7 +39,7 @@ export function claimOfflineHarvest(profile:Profile,nowMs:number,random:()=>numb
   let p=withVillage({...profile,coins:profile.coins+harvest.coins,freeLotteryTickets:profile.freeLotteryTickets+harvest.tickets},{lastHarvestAt:nowMs});
   if(harvest.yuzu)p=grantIngredients(p,Array.from({length:harvest.yuzu},()=>'ing_yuzu'));
   let newWeapons:string[]=[];
-  if(harvest.fragments){const granted=grantWeaponFragments(p,Array.from({length:harvest.fragments},()=>rollWeapon(random)));p={...granted.profile,village:p.village};newWeapons=granted.newWeapons;}
+  if(harvest.fragments){const granted=grantWeaponFragments(p,Array.from({length:harvest.fragments},()=>rollWeapon(random,undefined,1,p.unlockedWeapons)));p={...granted.profile,village:p.village};newWeapons=granted.newWeapons;}
   return{profile:p,ok:true,key:'p16.harvested',harvest,newWeapons};
 }
 /** A clock that jumped backwards leaves the anchor in the future; re-anchor so the basket starts filling again. */
@@ -87,6 +87,7 @@ export function getVillageResidents(profile:Profile):VillageResident[] {
   const basics=RESIDENT_BASICS.filter(id=>unlocked.has(id));
   const pets=[...heroes,...(basics.length?basics:['hamster','squirrel'])].slice(0,residentCapacity(profile));
   const built=FACILITY_IDS.filter(id=>level(profile,id)>0);
+  if(!built.length)return [];
   return pets.map((id,i)=>{const facility=built[i%built.length];
     return{id,hero:Object.hasOwn(HEROES,id),facility,slot:Math.floor(i/built.length),pose:facility==='fac_bamboo_pool'?'soak':facility==='fac_cat_nap'?'nap':'stand'};});
 }

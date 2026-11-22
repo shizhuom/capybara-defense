@@ -626,7 +626,7 @@ export class StickerRenderer {
 
   private drawEvents(state:BattleState,seconds:number,foreground=false,showDamageNumbers=true):void {
     for(const event of state.events) {
-      const isForeground=event.type==='bubble'||event.type==='purge'||event.type==='shield_block';
+      const isForeground=event.type==='bubble'||event.type==='purge'||event.type==='shield_block'||event.type==='lucky_drop';
       if(isForeground!==foreground)continue;
       if(event.type==='damage'&&!showDamageNumbers)continue;
       if(event.side!=='player')continue;
@@ -638,6 +638,17 @@ export class StickerRenderer {
       const p=clamp(event.age/event.duration,0,1),from=eventUnit?this.position(eventUnit):cellCenter(event.col,event.row),c=this.c;
       if(event.type==='orange')continue; // Count observation also covers debug additions/removals.
       if(event.type==='shield_block'){this.drawShieldBlock(event,from,state.sides.player.oranges);continue;}
+      if(event.type==='lucky_drop'){
+        c.save();
+        const ring=clamp(event.age/.65,0,1);
+        if(ring<1){
+          const r=16+ring*48;c.globalAlpha=(1-ring)*.85;ellipse(c,from.x,from.y,r,r*.82,'rgba(255,255,255,0)','#ffd24c',3);
+          for(let i=0;i<6;i++){const a=i*Math.PI/3+event.id*.5;star(c,from.x+Math.cos(a)*r,from.y+Math.sin(a)*r*.82,4.2*(1-ring)+1.5,'#ffe885',0);}
+        }
+        const text=t(event.textKey||'p19.luckyLegendary'),ty=from.y-36-p*34;
+        c.globalAlpha=Math.min(1,(1-p)*2.4);c.font=`900 17px ${FONT}`;c.textAlign='center';c.lineWidth=4.2;c.strokeStyle='#5a2b08';c.strokeText(text,from.x,ty);c.fillStyle='#ffe270';c.fillText(text,from.x,ty);
+        c.restore();continue;
+      }
       c.save();
       if(event.type==='damage') {
         c.globalAlpha=1-p;const value=event.value??0;

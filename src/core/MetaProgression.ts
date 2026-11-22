@@ -12,6 +12,7 @@ import { SESSION_PLAYER_ID, SESSION_WRITE_SECRET, normalizePlayerId, normalizeWr
 import { isFictionalLocation, sanitizeLocation } from './Location';
 import { HEROES as HERO_TABLE } from '../config/heroes';
 import { DEFAULT_SETTINGS, getUnlockedMaps, unlockAchievements, updateSettings } from './PlayerProgression';
+import { allOnboardedTokens, sanitizeOnboardedFeatures } from './FeatureUnlocks';
 import type { Profile } from './types';
 
 export interface MetaResult { profile:Profile; ok:boolean; key:string; amount?:number; newWeapons?:string[] }
@@ -30,7 +31,8 @@ const copy = (profile:Profile):Profile => ({...profile,fragments:[...profile.fra
   shop:profile.shop ? {...profile.shop,offers:[...profile.shop.offers]} : null,
   ingredients:{...(profile.ingredients??{})},unlockedBroths:[...(profile.unlockedBroths??[])],brothLevels:{...(profile.brothLevels??{})},activeBrothId:profile.activeBrothId??null,
   village:profile.village?copyVillage(profile.village):createVillage(),
-  endlessMedallions:normalizeMedallions(profile.endlessMedallions)});
+  endlessMedallions:normalizeMedallions(profile.endlessMedallions),
+  onboardedFeatures:[...(profile.onboardedFeatures??[])],gachaWinCounter:profile.gachaWinCounter??0});
 const fail = (profile:Profile,key:string):MetaResult => ({profile:copy(profile),ok:false,key});
 const success = (profile:Profile,key:string,amount?:number):MetaResult => ({profile:unlockAchievements(profile),ok:true,key,...(amount===undefined?{}:{amount})});
 
@@ -38,15 +40,14 @@ export function createProfile():Profile {
   return {coins:0,wins:0,matches:0,fragments:[],awardedBattles:[],schemaVersion:2,tutorialCompleted:false,tutorialRewardClaimed:false,earlyWaveTipSeen:false,bestEndlessWave:0,
     weaponFragments:{},unlockedWeapons:[],equippedWeapons:{},ownedProps:{},equippedActiveProps:[],equippedPassiveProps:[],freeLotteryTickets:0,shop:null,
     stars:0,highestStars:0,winStreak:0,bestWinStreak:0,selectedMap:'auto',avatarId:'capybara',unlockedAvatars:[...DEFAULT_AVATARS],mergedHeroes:[],settings:{...DEFAULT_SETTINGS},
-    // The chef's welcome gift: exactly one Yuzu Calm Soak. No broth is brewed or equipped, so battles stay unchanged.
+    // P19: ingredients, village materials & crests are gifted on each system's unlock milestone.
     ingredients:{...STARTER_INGREDIENTS},unlockedBroths:[],brothLevels:{},activeBrothId:null,
-    // P16: the starter pool, 6 wood, 2 essence and a 15-minute welcome harvest.
     village:createVillage(),
-    // P17: no crests, six Lv.0 medallions and an anonymous global-board id + write secret (stable for this session until saved).
-    endlessCrests:0,endlessMedallions:normalizeMedallions(null),playerId:SESSION_PLAYER_ID,writeSecret:SESSION_WRITE_SECRET,nickname:'',locationMode:'unset',locationLabel:''};
+    endlessCrests:0,endlessMedallions:normalizeMedallions(null),playerId:SESSION_PLAYER_ID,writeSecret:SESSION_WRITE_SECRET,nickname:'',locationMode:'unset',locationLabel:'',
+    onboardedFeatures:[],gachaWinCounter:0};
 }
-/** Granted to brand-new saves and once to pre-P14 saves that never had an `ingredients` field. */
-export const STARTER_INGREDIENTS:Readonly<Record<string,number>>=Object.freeze({ing_yuzu:2});
+/** P19: starter kitchen ingredients are granted interactively when Kitchen unlocks at 23★. */
+export const STARTER_INGREDIENTS:Readonly<Record<string,number>>=Object.freeze({});
 function normalizeKitchen(p:Profile,data:Record<string,unknown>):void {
   if(has(data,'ingredients')){
     const stock=Object.entries(object(data.ingredients)).filter(([id,n])=>isIngredientId(id)&&count(n)>0);
@@ -121,6 +122,8 @@ export function normalizeProfile(raw:unknown):Profile {
   // An absent village (new or pre-P16 save) receives the welcome gift; an existing one is never re-gifted.
   p.village=normalizeVillage(data.village);
   normalizeEndless(p,data);
+  p.onboardedFeatures=sanitizeOnboardedFeatures(data.onboardedFeatures);
+  p.gachaWinCounter=Math.min(2,count(data.gachaWinCounter));
   return unlockAchievements(p);
 }
 export function grantWeaponFragments(profile:Profile,ids:string[]):{profile:Profile;newWeapons:string[]} {
@@ -198,11 +201,11 @@ export function buyProp(profile:Profile,id:string):MetaResult {
   replaceCappedShopOffer(p,id);
   return success(p,'meta.purchased',-definition.price);
 }
-export function createLotteryPrizes(_profile:Profile,random:()=>number):LotteryPrize[] {
+export function createLotteryPrizes(profile:Profile,random:()=>number):LotteryPrize[] {
   const pool=Object.keys(PROPS);const prizes:LotteryPrize[]=[];
   for(let i=0;i<3;i++) {const id=choose(pool,random);pool.splice(pool.indexOf(id),1);prizes.push({type:'prop',id,amount:1});}
   prizes.push(...[40,80,160].map(amount=>({type:'coins' as const,amount})),
-    {type:'fragment',id:rollWeapon(random,[3]),amount:1},{type:'fragment',id:rollWeapon(random,[4]),amount:1});
+    {type:'fragment',id:rollWeapon(random,[3],1,profile.unlockedWeapons),amount:1},{type:'fragment',id:rollWeapon(random,[4],1,profile.unlockedWeapons),amount:1});
   return prizes;
 }
 export type LotteryPayment = 'auto' | 'ticket' | 'coins';
@@ -226,7 +229,8 @@ export function spinLottery(profile:Profile,prizes:LotteryPrize[],random:()=>num
 export function unlockAllProfile(profile:Profile):Profile {
   const p=copy(profile);p.coins=9999;p.unlockedWeapons=Object.keys(WEAPONS);
   p.tutorialCompleted=true;p.tutorialRewardClaimed=true;
-  p.stars=Math.max(180,p.stars);p.highestStars=Math.max(p.highestStars,p.stars);
+  p.stars=Math.max(180,p.stars);p.highestStars=Math.max(p.highestStars,p.stars);p.matches=Math.max(30,p.matches);
+  p.onboardedFeatures=allOnboardedTokens();
   p.unlockedAvatars=Object.keys(AVATARS);p.mergedHeroes=Object.keys(HEROES);
   p.equippedWeapons={};
   for(const weapon of Object.values(WEAPONS)) {

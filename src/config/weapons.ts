@@ -10,11 +10,11 @@ export const HERO_FAMILIES: Record<string, WeaponFamily> = {
   zen_master:'magic', purrcerer:'magic', ballin_rooster:'magic', pepe_king:'magic',
 };
 export const RARITY_RULES = [
-  {fragments:1,damageBonus:.12,recycle:8,weight:30},
-  {fragments:2,damageBonus:.20,recycle:15,weight:28},
-  {fragments:3,damageBonus:.30,recycle:30,weight:22},
-  {fragments:4,damageBonus:.42,recycle:60,weight:13},
-  {fragments:5,damageBonus:.58,recycle:120,weight:7},
+  {fragments:2,damageBonus:.12,recycle:8,weight:22},
+  {fragments:4,damageBonus:.20,recycle:15,weight:24},
+  {fragments:6,damageBonus:.30,recycle:30,weight:24},
+  {fragments:8,damageBonus:.42,recycle:60,weight:22},
+  {fragments:16,damageBonus:.58,recycle:120,weight:8},
 ];
 type WeaponRow = [string,string,string,string,string,string?];
 const melee: WeaponRow[] = [
@@ -69,14 +69,38 @@ export const WEAPONS: Record<string,WeaponDefinition> = Object.fromEntries(
     return [id,definition];
   })),
 );
-export function rollWeapon(random:()=>number, rarities:number[]=[0,1,2,3,4],epicMultiplier=1): string {
+/** Hidden internal legendary focus order: melee → ranged → magic (auto-advances as each family completes). */
+export function hiddenLegendaryFocus(unlockedWeapons?: readonly string[]): WeaponFamily | null {
+  const owned = new Set(unlockedWeapons ?? []);
+  const order: readonly WeaponFamily[] = ['melee', 'ranged', 'magic'];
+  for (const family of order) {
+    const legIds = Object.values(WEAPONS).filter(w => w.rarity === 4 && w.family === family);
+    if (legIds.some(w => !owned.has(w.id))) return family;
+  }
+  return null;
+}
+
+export function rollWeapon(random:()=>number, rarities:number[]=[0,1,2,3,4],epicMultiplier=1,unlockedWeapons?:readonly string[]): string {
   const allowed = [...new Set(rarities)].filter(r => Number.isInteger(r) && r >= 0 && r <= 4);
   if (!allowed.length) throw new RangeError('At least one valid weapon rarity is required');
   const sample = () => Math.max(0, Math.min(.999999999999, Number(random()) || 0));
   const boost=Number.isFinite(epicMultiplier)&&epicMultiplier>0?epicMultiplier:1;
-  const weight=(rarity:number)=>RARITY_RULES[rarity].weight*(rarity>=3?boost:1);
+  const owned = unlockedWeapons ? new Set(unlockedWeapons) : null;
+  const allNonLegendaryOwned = owned !== null && Object.values(WEAPONS).every(w => w.rarity === 4 || owned.has(w.id));
+  const weight=(rarity:number)=>RARITY_RULES[rarity].weight*(rarity>=3?boost:1)*(rarity===4&&allNonLegendaryOwned?2:1);
   let roll = sample()*allowed.reduce((sum,r) => sum+weight(r),0);
   const rarity = allowed.find(r => (roll -= weight(r)) < 0) ?? allowed[allowed.length-1];
   const candidates = Object.values(WEAPONS).filter(w => w.rarity === rarity);
-  return candidates[Math.floor(sample()*candidates.length)].id;
+  const focus = rarity === 4 ? hiddenLegendaryFocus(unlockedWeapons) : null;
+  const familyWeight = (family: WeaponFamily): number => {
+    if (!focus) return 1;
+    if (focus === 'melee') return family === 'melee' ? 78 : family === 'ranged' ? 13 : 9;
+    if (focus === 'ranged') return family === 'ranged' ? 78 : family === 'magic' ? 14 : 8;
+    return family === 'magic' ? 82 : 9;
+  };
+  const unownedMult = rarity === 4 ? 4 : 2;
+  const weights = candidates.map(w => familyWeight(w.family) * (owned && !owned.has(w.id) ? unownedMult : 1));
+  let pick = sample() * weights.reduce((a, b) => a + b, 0);
+  const chosen = candidates.find((_, i) => (pick -= weights[i]) < 0) ?? candidates[candidates.length - 1];
+  return chosen.id;
 }

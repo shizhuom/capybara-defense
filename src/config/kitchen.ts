@@ -8,7 +8,8 @@ export type IngredientId='ing_yuzu'|'ing_bamboo'|'ing_honey'|'ing_chili'|'ing_sa
 export type BrothId=
   |'dish_yuzu_bath'|'dish_bamboo_broth'|'dish_honey_osmanthus'|'dish_ginger_soak'
   |'dish_spicy_hotpot'|'dish_sakura_milk'|'dish_matcha_tea'|'dish_herbal_tonic'
-  |'dish_truffle_ramen'|'dish_chill_melon'|'dish_golden_feast'|'dish_imperial_onsen';
+  |'dish_truffle_ramen'|'dish_chill_melon'|'dish_golden_feast'|'dish_imperial_onsen'
+  |'dish_starlight_spring'|'dish_golden_orchard';
 export type BrothLevel=1|2|3;
 export type IngredientCost=Partial<Record<IngredientId,number>>;
 export type CombatFamily='melee'|'ranged'|'magic';
@@ -26,7 +27,7 @@ export const INGREDIENTS:Record<IngredientId,IngredientDefinition>={
 export const MAP_SIGNATURE_INGREDIENT:Record<MapId,IngredientId>={
   sunny_backyard:'ing_yuzu',sakura_onsen:'ing_sakura',midnight_kitchen:'ing_chili',cat_tower_maze:'ing_mushroom',
 };
-export const INGREDIENT_BASKET_PRICE=60;
+export const INGREDIENT_BASKET_PRICE=180;
 export const INGREDIENT_BASKET_SIZE=3;
 /** Stored counts are clamped so repeated grants can never overflow a save. */
 export const INGREDIENT_STACK_LIMIT=9999;
@@ -40,7 +41,7 @@ export const ELITE_ENEMY_IDS:readonly string[]=['crab','killer_bee','charmed_rat
 export type BrothEffectKey=
   |'startFood'|'waveIncome'|'meleeDamage'|'meleeRate'|'heroRefund'|'rangedDamage'|'rangedRange'
   |'bossDamage'|'burnRatio'|'startOranges'|'tubSlow'|'magicDamage'|'chargeReduction'
-  |'shovelSpeed'|'beeSpeed'|'veteranDamage'|'globalSlow'|'coinBonus'|'dropBonus'|'allDamage'|'allRate';
+  |'shovelSpeed'|'beeSpeed'|'veteranDamage'|'globalSlow'|'coinBonus'|'dropBonus'|'allDamage'|'allRate'|'momentumBonus';
 export const WHOLE_NUMBER_EFFECTS:readonly BrothEffectKey[]=['startFood','waveIncome','heroRefund','startOranges','chargeReduction'];
 type Triple=readonly [number,number,number];
 export interface BrothDefinition {
@@ -54,64 +55,59 @@ export interface BrothDefinition {
   topping:BrothTopping; bubbles:number;
   effects:Partial<Record<BrothEffectKey,Triple>>;
 }
-export type BrothTopping='yuzu'|'scallion'|'osmanthus'|'ginger'|'chili'|'sakura'|'matcha'|'herbal'|'truffle'|'melon'|'feast'|'imperial';
+export type BrothTopping='yuzu'|'scallion'|'osmanthus'|'ginger'|'chili'|'sakura'|'matcha'|'herbal'|'truffle'|'melon'|'feast'|'imperial'|'starlight'|'orchard';
 /** The clear hot spring used when no broth is equipped. */
 export const CLEAR_SPRING={bathCenter:'#B9F0EC',bathColor:'#7FD5D0',bathEdge:'#53A9A8',foamColor:'#FFFFFF',steamColor:'#FFFFFF',bubbles:.7} as const;
 const every=(n:number):IngredientCost=>Object.fromEntries(INGREDIENT_IDS.map(id=>[id,n])) as IngredientCost;
 export const BROTH_IDS=[
   'dish_yuzu_bath','dish_bamboo_broth','dish_honey_osmanthus','dish_ginger_soak',
   'dish_spicy_hotpot','dish_sakura_milk','dish_matcha_tea','dish_herbal_tonic',
-  'dish_truffle_ramen','dish_chill_melon','dish_golden_feast','dish_imperial_onsen',
+  'dish_truffle_ramen','dish_chill_melon','dish_golden_feast',
+  'dish_imperial_onsen','dish_starlight_spring','dish_golden_orchard',
 ] as const satisfies readonly BrothId[];
 export const BROTHS:Record<BrothId,BrothDefinition>={
   dish_yuzu_bath:{id:'dish_yuzu_bath',tier:1,bathColor:'#F6C84C',steamColor:'#FFF3B8',bathCenter:'#FFE891',bathEdge:'#C98C22',foamColor:'#FFF6D2',topping:'yuzu',bubbles:1,
-    
-    costs:[{ing_yuzu:2},{ing_yuzu:3,ing_honey:1},{ing_yuzu:4,ing_honey:2}],
+    costs:[{ing_yuzu:4},{ing_yuzu:14,ing_honey:6},{ing_yuzu:28,ing_honey:16}],
     effects:{startFood:[6,9,12],waveIncome:[2,3,4]}},
   dish_bamboo_broth:{id:'dish_bamboo_broth',tier:1,bathColor:'#CBE08D',steamColor:'#EFF8D1',bathCenter:'#F2F8D8',bathEdge:'#8DAA4E',foamColor:'#FBFFF0',topping:'scallion',bubbles:1,
-    
-    costs:[{ing_bamboo:2},{ing_bamboo:3,ing_yuzu:1},{ing_bamboo:4,ing_yuzu:2}],
+    costs:[{ing_bamboo:5},{ing_bamboo:15,ing_yuzu:6},{ing_bamboo:30,ing_yuzu:16}],
     effects:{meleeDamage:[.18,.26,.35],meleeRate:[.12,.16,.20]}},
   dish_honey_osmanthus:{id:'dish_honey_osmanthus',tier:1,bathColor:'#F5B249',steamColor:'#FFE7B3',bathCenter:'#FFD98A',bathEdge:'#C27A1E',foamColor:'#FFF1CF',topping:'osmanthus',bubbles:0.8,
-    
-    costs:[{ing_honey:2,ing_yuzu:1},{ing_honey:3,ing_yuzu:2},{ing_honey:4,ing_yuzu:3}],
+    costs:[{ing_honey:4,ing_yuzu:2},{ing_honey:14,ing_yuzu:8},{ing_honey:28,ing_yuzu:18}],
     effects:{heroRefund:[8,11,14]}},
   dish_ginger_soak:{id:'dish_ginger_soak',tier:1,bathColor:'#E69F52',steamColor:'#FCE0BA',bathCenter:'#F8C58A',bathEdge:'#B0672A',foamColor:'#FDEBD2',topping:'ginger',bubbles:1.1,
-    
-    costs:[{ing_yuzu:2,ing_bamboo:1},{ing_yuzu:3,ing_bamboo:2},{ing_yuzu:4,ing_bamboo:3}],
+    costs:[{ing_yuzu:4,ing_bamboo:2},{ing_yuzu:14,ing_bamboo:8},{ing_yuzu:28,ing_bamboo:18}],
     effects:{rangedDamage:[.18,.26,.35],rangedRange:[.4,.55,.7]}},
   dish_spicy_hotpot:{id:'dish_spicy_hotpot',tier:2,bathColor:'#E25B45',steamColor:'#FFC3B2',bathCenter:'#F7866E',bathEdge:'#9E2A1E',foamColor:'#FFD0B8',topping:'chili',bubbles:1.8,
-    
-    costs:[{ing_chili:2,ing_bamboo:1},{ing_chili:3,ing_bamboo:2},{ing_chili:4,ing_bamboo:3}],
+    costs:[{ing_chili:8,ing_bamboo:6},{ing_chili:22,ing_bamboo:16},{ing_chili:44,ing_bamboo:32}],
     effects:{bossDamage:[.22,.32,.45],burnRatio:[.06,.09,.12]}},
   dish_sakura_milk:{id:'dish_sakura_milk',tier:2,bathColor:'#F8BBD0',steamColor:'#FFEAF1',bathCenter:'#FFE6EF',bathEdge:'#D98AA6',foamColor:'#FFFFFF',topping:'sakura',bubbles:0.55,
-    
-    costs:[{ing_sakura:2,ing_honey:1},{ing_sakura:3,ing_honey:2},{ing_sakura:4,ing_honey:3}],
+    costs:[{ing_sakura:8,ing_honey:6},{ing_sakura:22,ing_honey:16},{ing_sakura:44,ing_honey:32}],
     effects:{startOranges:[1,2,2],tubSlow:[.18,.24,.30]}},
   dish_matcha_tea:{id:'dish_matcha_tea',tier:2,bathColor:'#7CB369',steamColor:'#DCF4CE',bathCenter:'#B9DDA0',bathEdge:'#4E7F3F',foamColor:'#E6F5D8',topping:'matcha',bubbles:0.6,
-    
-    costs:[{ing_bamboo:2,ing_honey:2},{ing_bamboo:3,ing_sakura:2},{ing_bamboo:4,ing_sakura:3}],
+    costs:[{ing_bamboo:8,ing_honey:6},{ing_bamboo:22,ing_sakura:16},{ing_bamboo:42,ing_sakura:32}],
     effects:{magicDamage:[.20,.28,.38],chargeReduction:[1,1,2]}},
   dish_herbal_tonic:{id:'dish_herbal_tonic',tier:2,bathColor:'#84B88E',steamColor:'#D7F5DF',bathCenter:'#B8DDBF',bathEdge:'#4F8059',foamColor:'#E8F7EC',topping:'herbal',bubbles:0.9,
-    
-    costs:[{ing_yuzu:2,ing_sakura:2},{ing_yuzu:3,ing_mushroom:2},{ing_yuzu:4,ing_mushroom:3}],
+    costs:[{ing_yuzu:8,ing_sakura:6},{ing_yuzu:24,ing_mushroom:8},{ing_yuzu:46,ing_mushroom:16}],
     effects:{shovelSpeed:[.25,.35,.45],beeSpeed:[.20,.28,.35]}},
   dish_truffle_ramen:{id:'dish_truffle_ramen',tier:3,bathColor:'#C98D52',steamColor:'#F4DEC0',bathCenter:'#E8B784',bathEdge:'#8A5528',foamColor:'#FBEBD3',topping:'truffle',bubbles:1,
-    
-    costs:[{ing_mushroom:2,ing_bamboo:2},{ing_mushroom:3,ing_chili:2},{ing_mushroom:4,ing_chili:3}],
+    costs:[{ing_mushroom:16,ing_bamboo:20},{ing_mushroom:34,ing_chili:42},{ing_mushroom:62,ing_chili:72}],
     effects:{veteranDamage:[.28,.40,.55]}},
   dish_chill_melon:{id:'dish_chill_melon',tier:3,bathColor:'#7FD3C2',steamColor:'#D7FAF2',bathCenter:'#BDF0E4',bathEdge:'#3F9C8C',foamColor:'#F0FFFB',topping:'melon',bubbles:0.5,
-    
-    costs:[{ing_mushroom:2,ing_yuzu:2,ing_sakura:1},{ing_mushroom:3,ing_sakura:2},{ing_mushroom:4,ing_sakura:3}],
+    costs:[{ing_mushroom:18,ing_yuzu:16,ing_sakura:10},{ing_mushroom:36,ing_sakura:44},{ing_mushroom:66,ing_sakura:76}],
     effects:{globalSlow:[.10,.14,.18]}},
   dish_golden_feast:{id:'dish_golden_feast',tier:3,bathColor:'#F4C144',steamColor:'#FFF2B2',bathCenter:'#FFE28A',bathEdge:'#B87D19',foamColor:'#FFF5CC',topping:'feast',bubbles:1.3,
-    
-    costs:[{ing_chili:2,ing_honey:2,ing_mushroom:2},{ing_chili:3,ing_mushroom:3},{ing_chili:4,ing_mushroom:4}],
+    costs:[{ing_chili:14,ing_honey:14,ing_mushroom:18},{ing_chili:44,ing_mushroom:38},{ing_chili:78,ing_mushroom:68}],
     effects:{coinBonus:[.30,.45,.60],dropBonus:[.25,.40,.55]}},
   dish_imperial_onsen:{id:'dish_imperial_onsen',tier:4,bathColor:'#FFE07D',steamColor:'#FFF9D6',bathCenter:'#FFF1B5',bathEdge:'#C99A2E',foamColor:'#FFFBE6',topping:'imperial',bubbles:1,
-    
-    costs:[every(2),every(3),every(4)],
+    costs:[every(24),every(50),every(90)],
     effects:{allDamage:[.15,.22,.30],allRate:[.10,.15,.20],startFood:[4,6,8],startOranges:[1,1,2]}},
+  dish_starlight_spring:{id:'dish_starlight_spring',tier:4,bathColor:'#5659A8',steamColor:'#E5DCFF',bathCenter:'#8387D8',bathEdge:'#2D3070',foamColor:'#ECE8FF',topping:'starlight',bubbles:1.15,
+    costs:[{ing_mushroom:26,ing_sakura:34,ing_bamboo:36,ing_honey:24},{ing_mushroom:52,ing_sakura:68,ing_bamboo:72,ing_honey:48},{ing_mushroom:90,ing_sakura:115,ing_bamboo:120,ing_honey:80}],
+    effects:{chargeReduction:[1,1,2],bossDamage:[.24,.36,.50],momentumBonus:[.30,.45,.60]}},
+  dish_golden_orchard:{id:'dish_golden_orchard',tier:4,bathColor:'#ECA32B',steamColor:'#FFEBAD',bathCenter:'#FFD56B',bathEdge:'#B06710',foamColor:'#FFF4CF',topping:'orchard',bubbles:1.25,
+    costs:[{ing_mushroom:22,ing_chili:34,ing_yuzu:40,ing_honey:36},{ing_mushroom:46,ing_chili:68,ing_yuzu:80,ing_honey:72},{ing_mushroom:82,ing_chili:115,ing_yuzu:135,ing_honey:120}],
+    effects:{startFood:[10,16,22],waveIncome:[3,5,7],coinBonus:[.35,.50,.70],dropBonus:[.25,.40,.55]}},
 };
 
 export const isIngredientId=(id:unknown):id is IngredientId=>typeof id==='string'&&Object.hasOwn(INGREDIENTS,id);

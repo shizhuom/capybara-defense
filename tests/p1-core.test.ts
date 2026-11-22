@@ -91,9 +91,12 @@ describe('P1 tutorial and migrations',()=>{
   it('advances ordered real actions, skip and done idempotently',async()=>{
     const m=await import('../src/core/Tutorial');
     expect(m.advanceTutorial(1,'deploy')).toBe(1);expect(m.advanceTutorial(1,'summon')).toBe(2);expect(m.advanceTutorial(2,'merge')).toBe(2);
-    for(const a of ['deploy','dig'] as const)expect(m.advanceTutorial(2,a)).toBe(3);
-    for(const a of ['merge','acknowledge'] as const)expect(m.advanceTutorial(3,a)).toBe(4);
-    for(const step of [1,2,3,'done'] as const){expect(m.advanceTutorial(step,'skip')).toBe('done');expect(m.advanceTutorial('done','summon')).toBe('done');}
+    expect(m.advanceTutorial(2,'dig')).toBe(3);expect(m.advanceTutorial(2,'acknowledge')).toBe(3);
+    expect(m.advanceTutorial(3,'deploy')).toBe(4);
+    for(const a of ['merge','acknowledge'] as const)expect(m.advanceTutorial(4,a)).toBe(5);
+    for(const a of ['merge','acknowledge'] as const)expect(m.advanceTutorial(5,a)).toBe(6);
+    for(const a of ['open-compendium','acknowledge'] as const)expect(m.advanceTutorial(6,a)).toBe('done');
+    for(const step of [1,2,3,4,5,6,'done'] as const){expect(m.advanceTutorial(step,'skip')).toBe('done');expect(m.advanceTutorial('done','summon')).toBe('done');}
   });
   it('awards twenty once on completion including replay after skip, without mutating input',async()=>{
     const m=await import('../src/core/Tutorial'),p=createProfile(),before=JSON.stringify(p),done=m.finishTutorial(p,true);

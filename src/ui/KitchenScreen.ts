@@ -31,7 +31,7 @@ export const brothEffectText=(id:BrothId,level:BrothLevel)=>t(`broth.${id}.effec
 /** `配方 n/12 · 全员攻击 +d% 攻速 +s%` from the permanent collection aura. */
 export function kitchenAuraText(profile:Partial<Pick<Profile,'unlockedBroths'|'brothLevels'>>):string {
   const aura=getKitchenCollectionAura(profile);
-  return t('p14.collection',{count:aura.unlockedCount,damage:percent(aura.damageBonus),rate:percent(aura.rateBonus)});
+  return t('p14.collection',{count:aura.unlockedCount,total:BROTH_IDS.length,damage:percent(aura.damageBonus),rate:percent(aura.rateBonus)});
 }
 const owned=(profile:Profile,id:IngredientId)=>profile.ingredients?.[id]??0;
 export function ingredientChips(profile:Profile,cost:IngredientCost):string {

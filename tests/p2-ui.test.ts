@@ -185,18 +185,18 @@ describe('P2 solo UI',()=>{
   });
   it('anchors tutorial spots to the solo board and safely finds an open mat',()=>{
     const {engine}=harness();
-    const html=tutorialMarkup(2,engine.state);
+    const html=tutorialMarkup(3,engine.state);
     expect(html).toContain('left:29.6875%');expect(html).toContain('top:24.444444444444443%');
     expect(html).toContain('width:8.125%');
     const first=tutorialMarkup(1,engine.state);expect(first).toContain('top:84.72222222222221%');
   });
   it('keeps tutorial pending after failed saving and awards once after save, replay and reload',()=>{
-    const {app}=harness();app.refresh=()=>{};app.renderMenu=()=>{};app.tutorialStep=5;
+    const {app}=harness();app.refresh=()=>{};app.renderMenu=()=>{};app.tutorialStep=6;
     const storage=memoryStorage();window.localStorage={...storage,setItem:()=>{throw new Error('quota');}};
-    app.progressTutorial('acknowledge');expect(app.tutorialStep).toBe(5);expect(app.profile.coins).toBe(0);
+    app.progressTutorial('acknowledge');expect(app.tutorialStep).toBe(6);expect(app.profile.coins).toBe(0);
     window.localStorage=storage;app.progressTutorial('acknowledge');
     expect(app.tutorialStep).toBe('done');expect(loadProfile(storage).coins).toBe(20);
-    app.profile=replayTutorial(loadProfile(storage));app.tutorialStep=5;app.progressTutorial('acknowledge');
+    app.profile=replayTutorial(loadProfile(storage));app.tutorialStep=6;app.progressTutorial('acknowledge');
     expect(loadProfile(storage).coins).toBe(20);
   });
   it('persists tutorial skipping without paying a completion reward',()=>{

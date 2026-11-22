@@ -44,7 +44,7 @@ export const RANKS:RankDefinition[]=Array.from({length:54},(_,index)=>{
   return {index,name:god?{'zh-CN':'水豚真神',en:'Capybara God'}:{'zh-CN':`${tier.zh} ${roman}`,en:`${tier.en} ${roman}`},
     minStars:god?[100,125,150,180][index-50]:index*2,
     hpMultiplier:getRankDifficulty(index).hpMultiplier,
-    winCoins:Math.round(60+160*index/53),fragmentMultiplier:god?2.2:index>=45?1.8:index>=40?1.5:1,
+    winCoins:Math.round(60+160*index/53),fragmentMultiplier:god?1.75:index>=45?1.5:index>=40?1.3:1,
     mapId:index>=40?maps[(index-40)%4]:maps[Math.min(3,Math.floor(index/10))]};
 });
 export function getRank(stars:number):RankDefinition {

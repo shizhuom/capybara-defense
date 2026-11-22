@@ -9,7 +9,7 @@ afterEach(()=>{vi.restoreAllMocks();setLanguage('zh-CN');});
 describe('P4 localized art and menu controls',()=>{
  it.each([['zh-CN','zh'],['en','en']] as const)('uses matching title and Start artwork with semantic accessible labels in %s', (language,suffix)=>{
   setLanguage(language);vi.spyOn(assets,'url').mockImplementation(id=>`./sprites/${id}.png`);
-  const html=courtyardMarkup(createProfile());
+  const html=courtyardMarkup({...createProfile(),stars:5,highestStars:5,matches:5});
   expect(html).toContain(`<h1 class="art-title" aria-label="${t('app.title')}">`);
   for(const id of [`title_logo_${suffix}`,`ui_btn_start_${suffix}`])expect(html).toContain(`src="./sprites/${id}.png"`);
   expect(html).toContain(`data-action="start" aria-label="${t('menu.start')}"`);
@@ -33,7 +33,7 @@ describe('P4 localized art and menu controls',()=>{
   expect(html).toContain(`<svg`);expect(html).toContain(`data-sticker="${id}"`);expect(html).not.toContain('missing');
  });
  it('retains all action routes and map unlock state in paired corner medallions',()=>{
-  const p=createProfile();p.freeLotteryTickets=3;
+  const p={...createProfile(),stars:5,highestStars:5,matches:5,freeLotteryTickets:3};
   const html=courtyardMarkup(p);
   expect(html).toContain('hub-dock-left');expect(html).toContain('hub-dock-right');
   for(const action of ['profile','settings','recipes','armory','market','leaderboard','start','select-map:auto','select-map:sunny_backyard','select-map:sakura_onsen','select-map:midnight_kitchen','select-map:cat_tower_maze'])expect(html).toContain(`data-action="${action}"`);

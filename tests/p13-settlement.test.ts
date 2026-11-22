@@ -12,7 +12,7 @@ function victory():ResultViewInput {
  Object.assign(engine.state,{wave:10,time:125});
  engine.state.sides.player.oranges=3;
  Object.assign(engine.state.result!,{winner:'player',reason:'waves',elapsed:125,coins:65,loot:['m01_swatter','m01_swatter','m10_bamboo_staff'],mvp:{kind:'kungfu_po',level:3,damage:1234.6,kills:27}});
- return {state:engine.state,profile:{...createProfile(),stars:5},savedResult:true,resultStars:2,previousRank:0,newWeapons:['m10_bamboo_staff'],newAvatars:['sakura_capy'],newRoster:{units:['bee'],heroes:['ronin_goose']}};
+ return {state:engine.state,profile:{...createProfile(),stars:5},savedResult:true,resultStars:2,previousRank:0,newWeapons:['m10_bamboo_staff'],newAvatars:['sakura_capy'],newRoster:{units:['bee'],heroes:['ronin_goose']},ticketAwarded:true};
 }
 
 it.each(['zh-CN','en'] as const)('keeps the result heading accessible while setting its title along the ribbon (%s)',language=>{

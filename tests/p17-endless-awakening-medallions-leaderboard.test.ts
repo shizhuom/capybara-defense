@@ -76,9 +76,9 @@ describe('P17 assets: 288 sprites with twenty exact RGBA P17 stickers',()=>{
   const sizes:Record<string,[number,number]>={...Object.fromEntries(P17_AWAKENED_IDS.map(id=>[id,[256,256]])),
     med_breakthrough_atk:[160,160],med_luck_rate:[160,160],med_momentum:[160,160],med_boss_resist:[160,160],med_boss_slayer:[160,160],med_capy_shield:[160,160],
     ui_endless_crest:[160,160],ui_medallion_peek_capy:[256,256]};
-  it('ships 288 unique synced sprites including every P17 id at its exact size',()=>{
+  it('ships 290 unique synced sprites including every P17 id at its exact size',()=>{
     const ids=JSON.parse(readFileSync('public/assets/sprites/manifest.json','utf8')) as string[];
-    expect(ids).toHaveLength(288);expect(new Set(ids).size).toBe(288);expect(readdirSync('public/assets/sprites').filter(f=>f.endsWith('.png'))).toHaveLength(288);
+    expect(ids).toHaveLength(290);expect(new Set(ids).size).toBe(290);expect(readdirSync('public/assets/sprites').filter(f=>f.endsWith('.png'))).toHaveLength(290);
     expect(P17_SCENE_IDS).toHaveLength(20);expect(new Set(P17_SCENE_IDS).size).toBe(20);expect(Object.keys(sizes).sort()).toEqual([...P17_SCENE_IDS].sort());
     for(const [id,[w,h]] of Object.entries(sizes)){expect(ids).toContain(id);const png=sprite(id);expect([png.readUInt32BE(16),png.readUInt32BE(20),png[24],png[25]]).toEqual([w,h,8,6]);}
     // Transparent corners on every sticker; the master copy in design/assets matches the synced file byte for byte.
@@ -319,8 +319,9 @@ describe('P17 crests and receipts',()=>{
   });
   it('banks crests atomically with each receipt and rejects impossible crest claims',()=>{
     const normal:BattleResult={winner:'player',reason:'waves',loot:[],playerLoot:[],aiLoot:[],coins:75,elapsed:350,endlessCrests:3};
-    const banked=awardBattle(createProfile(),'run',normal).profile;expect(banked.endlessCrests).toBe(3);
-    expect(awardBattle(createProfile(),'lost',{...normal,winner:'ai',reason:'oranges'}).profile.endlessCrests).toBe(0);
+    const veteran={...createProfile(),stars:32,highestStars:32,matches:30};
+    const banked=awardBattle(veteran,'run',normal).profile;expect(banked.endlessCrests).toBe(3);
+    expect(awardBattle(veteran,'lost',{...normal,winner:'ai',reason:'oranges'}).profile.endlessCrests).toBe(0);
     const honor:BattleResult={...normal,reason:'surrender',endless:true,endlessWave:22,endlessCoins:60,endlessLoot:[],endlessCrests:12,awakenedCount:2,elapsed:1450.4,
       mvp:{kind:'kungfu_po',level:5,damage:9e6,kills:80,awakened:true}};
     const bonus=awardEndless(banked,'run',honor);
@@ -375,7 +376,7 @@ describe('P17 compact numbers',()=>{
 
 describe('P17 UI: courtyard pill, medallion hall, hero card, board tab and settlement',()=>{
   it('adds a warm-gold medallion pill without touching the 3 + 3 hub docks',()=>{
-    const p={...createProfile(),coins:16,endlessCrests:8,bestEndlessWave:23},html=courtyardMarkup(p,0);
+    const p={...createProfile(),stars:32,highestStars:32,matches:30,coins:16,endlessCrests:8,bestEndlessWave:23},html=courtyardMarkup(p,0);
     expect(html.match(/class="endless-hall-pill[^"]*" data-action="medallions"/g)).toHaveLength(1);
     expect(endlessHallPillMarkup(p)).toContain(t('p17.canUpgrade'));expect(endlessHallPillMarkup(p)).toContain('W23');
     expect(endlessHallPillMarkup(createProfile())).toContain('×0');expect(endlessHallPillMarkup(createProfile())).not.toContain('endless-hall-best');

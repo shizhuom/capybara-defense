@@ -27,23 +27,24 @@ export interface FacilityDefinition {
 export const FACILITY_IDS=['fac_bamboo_pool','fac_fish_stall','fac_yuzu_tree','fac_cat_nap','fac_sakura_pavilion'] as const satisfies readonly FacilityId[];
 const cost=(wood:number,essence:number,coins:number):VillageCost=>({wood,essence,coins});
 export const FACILITIES:Record<FacilityId,FacilityDefinition>={
-  fac_bamboo_pool:{id:'fac_bamboo_pool',spot:{left:50,top:37},costs:[null,cost(10,3,120),cost(20,8,260)],coinsPerHour:[12,24,40],
-    fragmentEveryHours:[0,6,6],ticketEveryHours:[0,0,12],buffs:{damage:[0,.04,.08],rate:[0,0,.04]}},
-  fac_fish_stall:{id:'fac_fish_stall',spot:{left:77,top:36},costs:[cost(5,1,40),cost(10,3,100),cost(18,7,220)],coinsPerHour:[6,12,20],
+  fac_bamboo_pool:{id:'fac_bamboo_pool',spot:{left:50,top:37},costs:[cost(10,3,0),cost(200,65,1200),cost(420,140,2600)],coinsPerHour:[8,16,28],
+    fragmentEveryHours:[0,12,8],ticketEveryHours:[0,0,24],buffs:{damage:[0,.04,.08],rate:[0,0,.04]}},
+  fac_fish_stall:{id:'fac_fish_stall',spot:{left:77,top:36},costs:[cost(70,20,300),cost(220,70,1300),cost(450,150,2800)],coinsPerHour:[6,12,20],
     buffs:{startFood:[2,4,6]}},
-  fac_yuzu_tree:{id:'fac_yuzu_tree',spot:{left:24.5,top:40},costs:[cost(6,2,60),cost(12,4,140),cost(22,9,300)],coinsPerHour:[4,8,14],
-    yuzuEveryHours:[4,4,4],buffs:{essenceDrop:[.2,.2,.2],startOranges:[0,1,1],coinBonus:[0,0,.1]}},
-  fac_cat_nap:{id:'fac_cat_nap',spot:{left:26,top:75},costs:[cost(5,1,40),cost(11,3,110),cost(19,7,230)],coinsPerHour:[5,10,18],
+  fac_yuzu_tree:{id:'fac_yuzu_tree',spot:{left:24.5,top:40},costs:[cost(100,30,500),cost(250,85,1500),cost(500,170,3200)],coinsPerHour:[5,10,16],
+    yuzuEveryHours:[12,10,8],buffs:{essenceDrop:[.2,.2,.2],startOranges:[0,1,1],coinBonus:[0,0,.1]}},
+  fac_cat_nap:{id:'fac_cat_nap',spot:{left:26,top:75},costs:[cost(125,40,750),cost(280,95,1700),cost(540,185,3600)],coinsPerHour:[6,12,20],
     residents:[1,2,3],buffs:{rate:[.03,.06,.09]}},
-  fac_sakura_pavilion:{id:'fac_sakura_pavilion',spot:{left:71.5,top:70},costs:[cost(8,3,80),cost(15,6,180),cost(26,12,360)],coinsPerHour:[8,16,28],
-    fragmentEveryHours:[12,8,6],ticketEveryHours:[0,0,12],buffs:{bossDamage:[.04,.07,.1],bossFragment:[.15,.25,.35]}},
+  fac_sakura_pavilion:{id:'fac_sakura_pavilion',spot:{left:71.5,top:70},costs:[cost(155,50,1000),cost(320,110,2000),cost(600,210,4200)],coinsPerHour:[8,16,26],
+    fragmentEveryHours:[12,10,8],ticketEveryHours:[0,0,24],buffs:{bossDamage:[.04,.07,.1],bossFragment:[.15,.25,.35]}},
 };
 export const VILLAGE_RESOURCE_IDS=['res_onsen_wood','res_yuzu_essence'] as const satisfies readonly VillageResourceId[];
 export const VILLAGE_OFFLINE_CAP_MS=12*3600_000;
 export const VILLAGE_WELCOME_MS=15*60_000;
 export const VILLAGE_MAX_LEVEL=3;
 export const VILLAGE_MAX_STARS=FACILITY_IDS.length*VILLAGE_MAX_LEVEL;
-export const VILLAGE_STARTER={wood:6,essence:2,facilities:{fac_bamboo_pool:1}} as const;
+/** P19: new saves start empty until the Village unlocks at 16★ and gifts the materials to build the starter pool by hand. */
+export const VILLAGE_STARTER={wood:0,essence:0,facilities:{}} as const;
 export const VILLAGE_STOCK_LIMIT=99999;
 export const PET_TAP_DAILY_LIMIT=10;
 export const PET_TAP_COINS=5;

@@ -106,7 +106,8 @@ Object.assign(tools,{
 });
 export const P14_SCENE_IDS=['ui_kitchen_peek_capy','ui_kitchen_pot','ing_yuzu','ing_bamboo','ing_honey','ing_chili','ing_sakura','ing_mushroom',
  'dish_yuzu_bath','dish_bamboo_broth','dish_honey_osmanthus','dish_ginger_soak','dish_spicy_hotpot','dish_sakura_milk',
- 'dish_matcha_tea','dish_herbal_tonic','dish_truffle_ramen','dish_chill_melon','dish_golden_feast','dish_imperial_onsen'] as const;
+ 'dish_matcha_tea','dish_herbal_tonic','dish_truffle_ramen','dish_chill_melon','dish_golden_feast','dish_imperial_onsen',
+ 'dish_starlight_spring','dish_golden_orchard'] as const;
 // P14 Onsen Kitchen: borderless hand-inked vectors that stand in until each PNG decodes.
 const cocoa='#4a2c20';
 const steam=(x:number,color='#f7ead7')=>p(`M${x} -22 Q${x-7} -30 ${x} -37 Q${x+7} -44 ${x} -50`,'none',color,3.5);
@@ -135,6 +136,8 @@ Object.assign(tools,{
  dish_chill_melon:p('M-40 -4 Q-44 14 -34 22 Q-30 34 -16 32 Q-8 40 0 36 Q8 40 16 32 Q30 34 34 22 Q44 14 40 -4Z','#9bd8a8','#2f6a4a',2.6)+p('M-22 0 Q-24 20 -16 30 M0 2 V34 M22 0 Q24 20 16 30','none','#6fbf86',2)+e(0,-4,40,10,'#b9ebc4')+e(0,-5,34,7,'#7fd3c2')+e(-12,-5,4.5,4,'#effcf6')+e(4,-3,4.5,4,'#effcf6')+e(16,-6,4,3.5,'#effcf6')+p('M-4 -10 Q2 -18 8 -10 Q2 -6 -4 -10Z','#5f9a4c','#2f5a2a',1.2),
  dish_golden_feast:p('M-38 -26 Q-30 -34 -20 -26 Q-30 -22 -38 -26Z','#7fb35c','#3f6a33',1.4)+bowl('#c8352c','#e9c25a','#f4c144',p('M-20 -8 Q-12 -18 -2 -10 Q-10 -6 -20 -8Z','#f08a5a','#8a3a20',1.4)+r(6,-11,8,10,'#f6d34a',2)+p('M7 -8 H13 M7 -4 H13','none','#c99b25',1)+e(20,-6,6,3.5,'#e8e2d2')+e(-24,-2,5,3,'#e8e2d2'),'#9a2a22'),
  dish_imperial_onsen:p('M-32 -34 L-30 -28 -24 -26 -30 -24 -32 -18 -34 -24 -40 -26 -34 -28Z M34 -40 L36 -35 41 -33 36 -31 34 -26 32 -31 27 -33 32 -35Z','#f6d063','#a3732a',1.2)+bowl('#fffaf0','#e7c65a','#ffe07d',citrus(-12,-6,7,3.5)+flower(10,-8,.55,'#f7c6d2')+p('M0 -2 Q8 0 18 -4 M8 -1 L4 4 M14 -3 L16 3','none','#c8955a',2.2)+e(-22,-3,2,1.6,'#d1453a')+e(-2,-1,2,1.6,'#d1453a'),'#d9b45a')+p('M-38 8 Q0 18 38 8','none','#d9b45a',2),
+ dish_starlight_spring:steam(-14,'#e5dcff')+steam(14,'#e5dcff')+bowl('#31367a','#e9c25a','#5659a8',p('M-16 -6 L-13 -11 -10 -6 -5 -6 -9 -3 -7 2 -13 -1 -19 2 -17 -3 -21 -6Z','#ffe87c','#a3732a',1.2)+flower(12,-7,.65,'#fbd8e0')+e(0,-2,2.2,2.2,'#fff9d2')+e(-24,-4,1.8,1.8,'#fff9d2'),'#24265c'),
+ dish_golden_orchard:steam(-12,'#ffebad')+steam(14,'#ffebad')+p('M-40 -6 L-36 30 Q0 36 36 30 L40 -6Z','#d9912e',cocoa,2.6)+p('M-39 8 Q0 16 39 8 M-37 22 Q0 30 37 22','none','#8e5114',2.6)+e(0,-6,40,10,'#f2ba49')+e(0,-7,34,7,'#eca32b')+citrus(-12,-7,8,4)+e(12,-6,9,4.5,'#ff9f7a')+e(4,-2,2.5,2,'#d1453a')+p('M-2 -11 Q4 -18 10 -11 Q4 -7 -2 -11Z','#6fa842','#3b6324',1.2),
 });
 export const P15_SCENE_IDS=['ui_weapon_fragment','ui_rank_protect_shield','ui_streak_flame','ui_clock_sand'] as const;
 // P15 settlement icons: big, readable, borderless stand-ins until the PNGs decode.

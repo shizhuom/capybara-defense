@@ -30,7 +30,7 @@ describe('P11 armory navigation',()=>{
     expect(html.match(/data-action="meta-family:/g)).toHaveLength(5);
     expect(html).toMatch(/data-action="meta-family:all"[^>]*aria-selected="true"[^>]*aria-pressed="true"/);
     expect(html).toContain('class="slim-progress"');
-    expect(html).toContain('2/5');
+    expect(html).toContain('2/16');
     expect(html).not.toMatch(/meta-equip:|<select|<details|p9-armory-toolbar|p9-anvil/);
   });
 
@@ -103,7 +103,7 @@ describe('P11 armory navigation',()=>{
   });
 
   it('isolates recycling in its own tab and recycles only the chosen unlocked surplus',()=>{
-    const h=host({unlockedWeapons:['m01_swatter','m10_bamboo_staff'],weaponFragments:{m01_swatter:3,m10_bamboo_staff:7}});
+    const h=host({unlockedWeapons:['m01_swatter','m10_bamboo_staff'],weaponFragments:{m01_swatter:4,m10_bamboo_staff:18}});
     h.meta.action('meta-weapon:m10_bamboo_staff');h.meta.action('meta-family:recycle');
     const html=h.meta.markup('armory');
     expect(html.match(/type="checkbox" data-rarity=/g)).toHaveLength(5);
@@ -111,7 +111,7 @@ describe('P11 armory navigation',()=>{
     expect(html).not.toMatch(/meta-equip:|meta-weapon:|<details/);
     h.meta.change({dataset:{rarity:'4'},checked:false} as unknown as HTMLInputElement);
     h.meta.action('meta-recycle');
-    expect(loadProfile()).toMatchObject({coins:516,weaponFragments:{m01_swatter:1,m10_bamboo_staff:7}});
+    expect(loadProfile()).toMatchObject({coins:516,weaponFragments:{m01_swatter:2,m10_bamboo_staff:18}});
   });
 });
 
@@ -158,7 +158,7 @@ describe('P11 dedicated market tabs',()=>{
     h.storage.setItem.mockClear();
     h.meta.action('meta-spin:coins');
     expect(h.storage.setItem).toHaveBeenCalledTimes(1);
-    expect(loadProfile()).toMatchObject({coins:380,freeLotteryTickets:1,ownedProps:{washer:1}});
+    expect(loadProfile()).toMatchObject({coins:300,freeLotteryTickets:1,ownedProps:{washer:1}});
     h.meta.action('meta-tab:backpack');h.meta.action('meta-spin:ticket');
     expect(h.storage.setItem).toHaveBeenCalledTimes(1);
     vi.runAllTimers();
@@ -201,11 +201,11 @@ describe('P11 dedicated market tabs',()=>{
   });
 
   it('purchases and upgrades from the visible shelf while retaining unchanged offers',()=>{
-    const h=host({shop:{day:'2026-11-15',offers:['washer','promo_badge','clay']}});
+    const h=host({coins:1000,shop:{day:'2026-11-15',offers:['washer','promo_badge','clay']}});
     h.meta.action('meta-buy:washer');
-    expect(loadProfile()).toMatchObject({coins:410,ownedProps:{washer:1},shop:{offers:['milk_bottle','promo_badge','clay']}});
+    expect(loadProfile()).toMatchObject({coins:780,ownedProps:{washer:1},shop:{offers:['milk_bottle','promo_badge','clay']}});
     h.meta.action('meta-buy:promo_badge');
-    expect(loadProfile()).toMatchObject({coins:310,ownedProps:{promo_badge:1},shop:{offers:['milk_bottle','promo_badge','clay']}});
+    expect(loadProfile()).toMatchObject({coins:530,ownedProps:{promo_badge:1},shop:{offers:['milk_bottle','promo_badge','clay']}});
     expect(h.meta.markup('market')).toContain(t('p11.meta.upgradeShort'));
   });
 });

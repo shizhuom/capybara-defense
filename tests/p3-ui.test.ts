@@ -81,7 +81,7 @@ describe('P5 safe selection and tutorial integration',()=>{
     const {app,engine}=harness();app.refresh=()=>{};app.profile.tutorialCompleted=true;app.action('tutorial-replay');app.action('skip-transition');
     expect(app.engine).not.toBe(engine);expect(app.engine.options.tutorialGuided).toBe(true);app.engine.tick(30);expect(app.engine.state.spawned).toBe(0);
     app.action('summon');expect(app.selectedId).toBeUndefined();expect(app.engine.state.units.map((u:any)=>u.kind)).toEqual(['hamster','hamster','panda','hat_bamboo','squirrel']);
-    app.compendium=new Compendium();app.tutorialStep=5;const coins=app.profile.coins;app.action('recipes');expect(app.tutorialStep).toBe('done');expect(app.profile.coins).toBe(coins+20);
+    app.compendium=new Compendium();app.tutorialStep=6;const coins=app.profile.coins;app.action('recipes');expect(app.tutorialStep).toBe('done');expect(app.profile.coins).toBe(coins+20);
     app.action('close-recipes');app.engine.tick(19);expect(app.engine.state.spawned).toBeGreaterThan(0);
   });
   it('lets an intentional animal drag take over from a selected prop without consuming it',()=>{
@@ -104,9 +104,9 @@ describe('P5 safe selection and tutorial integration',()=>{
     app.meta.action('meta-weapon:m10_bamboo_staff');app.renderDialog();expect(panes.get('.ledger-body')!.scrollTop).toBe(0);
   });
   it('does not skip the hero lesson on an unrelated basic upgrade; blank stage cancels except while a dialog owns input',()=>{
-    const {app,engine,root}=harness();app.refresh=()=>{};app.tutorialStep=4;const id=engine.grant('hamster').unitId!;
-    app.apply({ok:true,key:'hint.merged',unitId:id});expect(app.tutorialStep).toBe(4);
-    const hero=engine.grant('kungfu_po').unitId!;app.apply({ok:true,key:'hint.merged',unitId:hero});expect(app.tutorialStep).toBe(5);
+    const {app,engine,root}=harness();app.refresh=()=>{};app.tutorialStep=5;const id=engine.grant('hamster').unitId!;
+    app.apply({ok:true,key:'hint.merged',unitId:id});expect(app.tutorialStep).toBe(5);
+    const hero=engine.grant('kungfu_po').unitId!;app.apply({ok:true,key:'hint.merged',unitId:hero});expect(app.tutorialStep).toBe(6);
     app.bindEvents();root.fire('pointerdown',{target:{closest:()=>null}});expect(app.selectedId).toBeUndefined();
     app.selectedId=id;app.dialog.open=true;root.fire('pointerdown',{target:{closest:()=>null}});expect(app.selectedId).toBe(id);
   });
@@ -114,35 +114,36 @@ describe('P5 safe selection and tutorial integration',()=>{
 
 describe('P3 stage integration',()=>{
   it('rejects a tutorial compatibility click created by canvas deployment but accepts a fresh button tap',()=>{
-    const {app,engine,canvas,root}=harness();app.refresh=()=>{};app.tutorialStep=2;app.bindEvents();
+    const {app,engine,canvas,root}=harness();app.refresh=()=>{};app.tutorialStep=3;app.bindEvents();
     app.selectedId=engine.grant('hamster').unitId!;
     app.renderer.hitTest=()=>({kind:'cell',col:2,row:1});
     const canvasTarget={closest:()=>null};
     const touch={pointerId:1,clientX:100,clientY:100,isPrimary:true,button:0,target:canvasTarget,preventDefault:()=>{}};
     canvas.fire('pointerdown',touch);root.fire('pointerdown',touch);canvas.fire('pointerup',touch);
-    expect(app.tutorialStep).toBe(3);
+    expect(app.tutorialStep).toBe(4);
     const button=new Element();button.dataset.action='tutorial-ack';
     const target={closest:(selector:string)=>selector.includes('data-action')?button:null};
     root.fire('click',{target,detail:1,preventDefault:()=>{}});
-    expect(app.tutorialStep).toBe(3);expect(app.profile.tutorialRewardClaimed).toBe(false);
+    expect(app.tutorialStep).toBe(4);expect(app.profile.tutorialRewardClaimed).toBe(false);
     root.fire('pointerdown',{target,isPrimary:true,button:0});
     root.fire('click',{target,detail:1,preventDefault:()=>{}});
-    expect(app.tutorialStep).toBe(4);expect(app.profile.tutorialRewardClaimed).toBe(false);
+    expect(app.tutorialStep).toBe(5);expect(app.profile.tutorialRewardClaimed).toBe(false);
   });
   it('retains keyboard tutorial acknowledgement without a pointer origin',()=>{
-    const {app,root}=harness();app.refresh=()=>{};app.tutorialStep=5;app.bindEvents();
+    const {app,root}=harness();app.refresh=()=>{};app.tutorialStep=6;app.bindEvents();
     const button=new Element();button.dataset.action='tutorial-ack';
     root.fire('click',{target:{closest:()=>button},detail:0,preventDefault:()=>{}});
     expect(app.tutorialStep).toBe('done');expect(app.profile.tutorialRewardClaimed).toBe(true);
   });
   it.each(['zh-CN','en'] as const)('keeps compact menu labels and concise actionable tutorial copy localized in %s',language=>{
-    setLanguage(language);const {app,engine,element}=harness();app.renderMenu();
+    setLanguage(language);const {app,engine,element}=harness();app.profile={...app.profile,stars:5,highestStars:5,matches:5};app.renderMenu();
     for(const key of ['p3.armory','p3.rank']){expect(t(key)).not.toBe(key);expect(element('menu-screen').innerHTML).toContain(t(key));}
-    for(const step of [1,2,3,4,5] as const){
-      const key=step===4?'p6.tutorial4Body':`p5.tutorial${step}.body`,html=tutorialMarkup(step,engine.state);
+    const keys:Record<number,string>={1:'p5.tutorial1.body',2:'p19.tutorialDig.body',3:'p5.tutorial2.body',4:'p5.tutorial3.body',5:'p6.tutorial4Body',6:'p19.tutorial6.body'};
+    for(const step of [1,2,3,4,5,6] as const){
+      const key=keys[step],html=tutorialMarkup(step,engine.state);
       expect(t(key)).not.toBe(key);expect(html).toContain(t(key));
       expect(html).toContain('data-action="tutorial-skip"');
-      if(step===3)expect(html).toContain('data-action="tutorial-ack"');
+      if(step===4)expect(html).toContain('data-action="tutorial-ack"');
     }
   });
   it('exposes the compact boss skill countdown as an accessible progressbar',()=>{
@@ -245,6 +246,7 @@ describe('P3 stage integration',()=>{
   });
   it('offers five persisted map chips and four hub entries in both languages',()=>{
     const {app,element}=harness();
+    app.profile={...app.profile,stars:5,highestStars:5,matches:5};
     for(const language of ['zh-CN','en'] as const){setLanguage(language);app.renderMenu();const html=element('menu-screen').innerHTML;
       expect(html.match(/data-action="select-map:/g)).toHaveLength(5);
       expect(html).toContain('ui_compendium_book');expect(html).toContain('ui_shop_bag');

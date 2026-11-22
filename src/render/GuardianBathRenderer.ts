@@ -174,11 +174,19 @@ function topping(c:C,kind:BrothTopping,index:number,r:number,p:BathPainter):void
       if(index%2){c.beginPath();c.arc(0,0,r*.75,.4,3.6);c.lineWidth=r*.42;c.strokeStyle='#F08A5A';c.stroke();}
       else for(const [x,y] of [[-r*.35,0],[r*.35,0],[0,r*.4]] as const){c.fillStyle='#F6D34A';c.fillRect(x-r*.22,y-r*.22,r*.44,r*.44);}
       break;
+    case 'starlight':
+      if(index%2){if(!sprite('broth_topping_sakura'))dot(c,0,0,r*.75,'#FFE0E6');}
+      else{c.beginPath();for(let k=0;k<10;k++){const a=k*Math.PI/5-Math.PI/2,rad=k%2?r*.46:r*.95;c[k?'lineTo':'moveTo'](Math.cos(a)*rad,Math.sin(a)*rad);}c.closePath();c.fillStyle='#FFE87C';c.fill();c.strokeStyle='#8E621C';c.lineWidth=.9;c.stroke();}
+      dot(c,r*.85,-r*.55,r*.2,'#FFF9D2',false);break;
+    case 'orchard':
+      if(index%2){if(!sprite('broth_topping_yuzu'))dot(c,0,0,r*.85,'#F6C84C');}
+      else{c.beginPath();c.ellipse(0,0,r*.9,r*.52,-.3,0,TAU);c.fillStyle='#FF9F7A';c.fill();c.strokeStyle=INK;c.lineWidth=.9;c.stroke();}
+      dot(c,-r*.75,r*.55,r*.24,'#D1453A');leaf(c,r*.6,-r*.55,r*.5,-.5,'#5E9A43');break;
   }
 }
 function drawToppings(c:C,spot:GuardianBathSpot,pal:SoupPalette,seconds:number,p:BathPainter):void {
   if(!pal.topping)return;
-  const w=spot.water,count=pal.topping==='imperial'?4:3,r=Math.max(5,spot.size*.105);
+  const w=spot.water,count=pal.topping==='imperial'||pal.topping==='starlight'||pal.topping==='orchard'?4:3,r=Math.max(5,spot.size*.105);
   for(let i=0;i<count;i++){
     // Sway back and forth along the front half of the tub, so garnish never floats up beside the face.
     const dir=i%2?1:-1,swing=.5+.5*Math.sin(seconds*(.13+i*.035)+i*2.4),a=-.2+(Math.PI+.4)*((i+swing)/count);

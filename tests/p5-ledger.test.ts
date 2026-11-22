@@ -7,11 +7,11 @@ import {WEAPONS} from '../src/config/weapons';
 import {setLanguage,t} from '../src/i18n/i18n';
 import {p5Zh,p5En} from '../src/i18n/p5';
 afterEach(()=>{vi.unstubAllGlobals();setLanguage('zh-CN');});
-it('charges the P9 120-coin gacha price atomically and retains ticket-first auto payment',()=>{
- const p={...createProfile(),coins:120},prizes=createLotteryPrizes(p,()=>0);
- const paid=spinLottery(p,prizes,()=>0);expect(paid.ok).toBe(true);expect(paid.profile.coins).toBe(0);expect(p.coins).toBe(120);
- expect(spinLottery({...p,coins:119},prizes,()=>0).ok).toBe(false);
- const free=spinLottery({...p,freeLotteryTickets:1},prizes,()=>0);expect(free.profile.coins).toBe(120);expect(free.profile.freeLotteryTickets).toBe(0);
+it('charges the P19 200-coin gacha price atomically and retains ticket-first auto payment',()=>{
+ const p={...createProfile(),coins:200},prizes=createLotteryPrizes(p,()=>0);
+ const paid=spinLottery(p,prizes,()=>0);expect(paid.ok).toBe(true);expect(paid.profile.coins).toBe(0);expect(p.coins).toBe(200);
+ expect(spinLottery({...p,coins:199},prizes,()=>0).ok).toBe(false);
+ const free=spinLottery({...p,freeLotteryTickets:1},prizes,()=>0);expect(free.profile.coins).toBe(200);expect(free.profile.freeLotteryTickets).toBe(0);
 });
 it.each(['zh-CN','en'] as const)('provides a fixed header, tabs and inner body in every ledger page (%s)',lang=>{
  setLanguage(lang);const p=createProfile(),meta=new MetaScreens(()=>p,()=>{},()=>{},()=>{}),profile=new ProfileScreens(()=>p,()=>true,()=>{},()=>{});
@@ -38,7 +38,7 @@ it('separates market tabs and retains all settings semantics and profile links',
  for(const tab of ['shop','lottery'] as const){meta.tab=tab;const html=meta.markup('market');expect(html).not.toContain('market-split');expect(html).not.toContain('class="prop-slot ');expect(html).not.toContain('prop-row');}
  meta.tab='backpack';expect(meta.markup('market').match(/class="prop-slot /g)).toHaveLength(8);
  for(const page of ['profile','leaderboard','settings'] as const){const html=profile.markup(page);for(const action of ['profile','leaderboard','settings'])expect(html).toContain(`data-action="${action}"`);}
- const settings=profile.markup('settings');expect(settings.match(/type="range"/g)).toHaveLength(2);expect(settings.match(/type="checkbox"/g)).toHaveLength(2);expect(settings).toContain('tutorial-replay');
+ const settings=profile.markup('settings');expect(settings.match(/type="range"/g)).toHaveLength(2);expect(settings.match(/type="checkbox"/g)).toHaveLength(1);expect(settings).not.toContain('developerMode');expect(settings).toContain('tutorial-replay');
  const rank=profile.markup('leaderboard');expect(rank).not.toContain('rank-podium');expect(rank).not.toContain('threat-banner');expect(rank).toContain('my-rank-summary-card');expect(rank.match(/data-player=/g)).toHaveLength(16);
 });
 it('has complete P5 bilingual keys and retains all 36 weapons',()=>{
