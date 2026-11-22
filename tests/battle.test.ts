@@ -99,7 +99,7 @@ describe('六首领与镜像AI',()=>{
   });
   it('纸箱封最高级，雨蛙全场淋湿，臭鼬毒雾仍可操作',()=>{
     const e=game();const a=put(e,'hamster'),b=put(e,'squirrel',3,1);b.level=3;
-    e.spawnBoss('box_kraken','player');expect(b.statuses.SEALED).toBe(18);expect(a.statuses.SEALED).toBeUndefined();
+    e.spawnBoss('box_kraken','player');expect(b.statuses.SEALED).toBe(6);expect(a.statuses.SEALED).toBeUndefined();
     e.spawnBoss('sad_rain_frog','player');expect(a.statuses.WET).toBeGreaterThan(0);expect(b.statuses.WET).toBeGreaterThan(0);
     e.spawnBoss('king_skunk','player');expect(e.state.sides.player.fog).toBe(6);expect(e.move(a.id,{zone:'board',col:2,row:3}).ok).toBe(true);
   });

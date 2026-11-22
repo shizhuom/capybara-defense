@@ -202,7 +202,7 @@ html[lang="zh-CN"] .menu-screen h1 { font-size: clamp(43px, 4.5vw, 67px); letter
 .keyboard-shovel { min-height: 31px; font-size: 10px; margin: 10px 0 12px; box-shadow: 0 2px 0 var(--ink); }
 .page-footer { text-align: center; color: #a5947e; font-size: 10px; letter-spacing: .3px; padding: 34px 0 25px; }
 .page-footer > span:first-child { font-size: 17px; vertical-align: middle; margin-right: 5px; }
-.toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%); max-width: min(90vw, 500px); z-index: 50; border: 2px solid var(--ink); border-radius: 12px; box-shadow: 3px 4px 0 #493d3533; background: #e1edcf; padding: 13px 20px; font-size: 13px; font-weight: 700; text-align: center; }
+.toast { position: fixed; top: 16px; bottom: auto; left: 50%; transform: translateX(-50%); max-width: min(90vw, 500px); z-index: 50; border: 2px solid var(--ink); border-radius: 12px; box-shadow: 3px 4px 0 #493d3533; background: #e1edcf; padding: 13px 20px; font-size: 13px; font-weight: 700; text-align: center; pointer-events: none; user-select: none; -webkit-user-select: none; }
 .toast-error { background: #f6d0b9; }
 .game-dialog { padding: 30px; width: min(470px, calc(100vw - 30px)); max-height: calc(100dvh - 48px); color: var(--ink); background: var(--paper); border: 2px solid var(--ink); border-radius: 21px; box-shadow: 7px 8px 0 #2c251b33; overflow-y: auto; }
 .game-dialog::backdrop { background: #564a39a8; backdrop-filter: blur(4px); }
@@ -373,7 +373,7 @@ html[lang="zh-CN"] .menu-screen h1 { font-size: clamp(43px, 4.5vw, 67px); letter
   .recipe-card h4 { font-size: 16px; }
   .recipe-card p { font-size: 11px; }
   .dialog-close { top: 12px; right: 12px; }
-  .toast { font-size: 12px; padding: 11px 15px; bottom: 16px; }
+  .toast { font-size: 12px; padding: 11px 15px; top: 12px; bottom: auto; }
 }
 
 @media (max-width: 370px) {

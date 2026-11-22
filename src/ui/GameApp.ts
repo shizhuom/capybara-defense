@@ -39,7 +39,7 @@ import { liveUnitCardMarkup, momentumText, breakthroughBreakdown } from './LiveU
 import { getBeeProduction } from '../core/UnitStats';
 import { courtyardMarkup } from './CourtyardView';
 import { RANKS, getRank } from '../config/ranks';
-import { recordMergedHeroes, resolveMap, pickBattleMap, selectMap } from '../core/PlayerProgression';
+import { getMapUnlockRequirement, recordMergedHeroes, resolveMap, pickBattleMap, selectMap } from '../core/PlayerProgression';
 import {newlyUnlocked} from '../config/progression';
 import {bindAudioGestures} from './AudioGestures';
 import {transitionMarkup,enemyAlertMarkup} from './BattlePresentation';
@@ -711,8 +711,9 @@ export class GameApp {
     this.renderMenuOnboarding();
     this.renderBattleOnboarding();
     const toast = this.element('toast');
-    toast.hidden = !this.toast || performance.now() > this.toast.until;
-    if (this.toast) {
+    const suppressBattleToast = !!this.engine && !this.dialog.open;
+    toast.hidden = suppressBattleToast || !this.toast || performance.now() > this.toast.until;
+    if (this.toast && !suppressBattleToast) {
       const message = t(this.toast.key, this.toast.vars);
       if (toast.textContent !== message) toast.textContent = message;
       toast.classList.toggle('toast-error', this.toast.error);
@@ -734,7 +735,7 @@ export class GameApp {
     const width = Math.min(320, side === 'right' ? rightSpace : side === 'left' ? leftSpace : viewportWidth - 32);
     Object.assign(style, {
       left: side === 'right' ? `${stage.right + 16}px` : side === 'left' ? '16px' : '50%',
-      right: 'auto', top: 'auto', bottom: '8px', width: `${width}px`, maxWidth: `${width}px`,
+      right: 'auto', top: '14px', bottom: 'auto', width: `${width}px`, maxWidth: `${width}px`,
       transform: side ? 'none' : 'translateX(-50%)',
     });
     // Measure after setting width: translated or long notices may wrap to more lines.
@@ -1707,8 +1708,21 @@ export class GameApp {
       if(!this.persistProfile(replayTutorial(this.profile)))return;
       this.start(true);return;
     }
-    if (this.profileScreens.action(action)) return;
-    if (action === 'profile' || action === 'leaderboard' || action === 'settings' || action === 'brand') { this.endlessHubMode = false; this.openProfileScreen(action === 'brand' ? 'profile' : action); return; }
+    if (action.startsWith('locked-map:')) {
+      const id = action.slice('locked-map:'.length) as MapId;
+      if (!MAP_IDS.includes(id)) return;
+      const req = getMapUnlockRequirement(id);
+      const need = Math.max(1, req.minStars - Math.max(this.profile.stars, this.profile.highestStars));
+      this.notify('p19.mapUnlockToast', false, { map: t(`map.${id}`), stars: req.minStars, rank: t(`rank.${req.rankIndex}`), need });
+      return;
+    }
+    if (this.profileScreens.action(action)) {
+      if (action === 'rank-ladder-toggle' && this.profileScreens.isRankLadderOpen()) {
+        this.dialog.querySelector<HTMLElement>('.rank-ladder-row.is-current-rank')?.scrollIntoView?.({ block: 'center', behavior: 'instant' });
+      }
+      return;
+    }
+    if (action === 'profile' || action === 'leaderboard' || action === 'settings' || action === 'brand') { this.profileScreens.resetView(); this.endlessHubMode = false; this.openProfileScreen(action === 'brand' ? 'profile' : action); return; }
     if (action === 'endless-board') { this.openProfileScreen('endless-board'); return; }
     if (action === 'close-profile') { this.closeProfileScreen(); return; }
     // P17 medallion hall owns a dedicated two-tab Endless window ([ Medallions | Global Board ]).

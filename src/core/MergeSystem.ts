@@ -41,6 +41,7 @@ export class MergeSystem {
     return {
       ok:true,key:feedTarget||feedSource?'hint.fed':'hint.merged',
       unit:{...base,id:target.id,side:target.side,location:{...target.location},kind:recipe?.hero??base.kind,level:recipe?1:base.level+1,statuses:{},cooldown:0,energy:0,production:0,buffTime:0,empowered:0,animation:1,
+        ...(recipe?{clippedByBossId:undefined,clippedLevels:undefined,clippedWave:undefined}:same&&!base.clippedLevels&&source.clippedLevels?{clippedByBossId:source.clippedByBossId,clippedLevels:source.clippedLevels,clippedWave:source.clippedWave}:{}),
         // An awakened hero clipped below Lv.5 keeps its awakening when the same lineage is fed back up.
         ...(!recipe&&same&&(source.awakened||target.awakened)?{awakened:true}:{})},
     };

@@ -22,7 +22,7 @@ describe('P11 rank, profile and settings rows',()=>{
     const html=screens.markup('leaderboard'),summaries=blocks(html,'section','my-rank-summary-card');
     expect(summaries).toHaveLength(1);
     expect(summaries[0]).toContain('aria-valuenow="50"');
-    expect(text(summaries[0])).toContain('1.52');
+    expect(text(summaries[0])).toContain('90');
     expect(text(summaries[0])).toContain(language==='en'?'Next rank in 1★':'再获 1 颗星');
     expect(text(summaries[0])).toContain(language==='en'?'Cat Cafe Boss I':'猫咖店长 I');
     const lists=blocks(html,'ol','storybook-rank-list');
@@ -45,13 +45,13 @@ describe('P11 rank, profile and settings rows',()=>{
     expect(html).not.toMatch(/rank-podium|podium-card|threat-banner|threat-values/);
   });
 
-  it('caps the top rank progress and still explains current enemy health',()=>{
+  it('caps the top rank progress and shows top-rank coin reward',()=>{
     setLanguage('en');
     const {screens}=screen({...createProfile(),stars:200});
     const summary=blocks(screens.markup('leaderboard'),'section','my-rank-summary-card')[0]??'';
     expect(summary).toContain('aria-valuenow="100"');
     expect(text(summary)).toContain('Highest rank');
-    expect(text(summary)).toContain('6.2');
+    expect(text(summary)).toContain('220');
     expect(text(summary)).not.toMatch(/undefined|NaN|next rank/);
   });
 

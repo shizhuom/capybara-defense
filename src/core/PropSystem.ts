@@ -192,7 +192,7 @@ export class PropSystem {
   private randomComponent(exclude:string):string {
     const options=DRAW_POOL.filter(unit=>unit.category==='component'&&unit.id!==exclude&&this.engine.isDrawUnlocked(unit.id));return options[Math.floor(this.random()*options.length)].id;
   }
-  private transform(unit:Unit,kind:string):void {unit.kind=kind;unit.level=1;unit.energy=0;unit.cooldown=0;unit.animation=1;unit.statuses={};}
+  private transform(unit:Unit,kind:string):void {unit.kind=kind;unit.level=1;unit.energy=0;unit.cooldown=0;unit.animation=1;unit.statuses={};delete unit.clippedByBossId;delete unit.clippedLevels;delete unit.clippedWave;}
   private upgrade(unit:Unit,delta:number):void {
     const previous=unit.level,max=HEROES[unit.kind]?5:UNITS[unit.kind]?.maxLevel??1;unit.level=Math.min(max,Math.max(1,unit.level+delta));unit.animation=1;
     if(unit.level>previous){unit.statuses={};unit.energy=0;unit.cooldown=0;this.engine.event({type:'purge',side:unit.side,...this.engine.unitPosition(unit),unitId:unit.id,textKey:'hint.purged',duration:1.1});}

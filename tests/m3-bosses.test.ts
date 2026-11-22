@@ -86,9 +86,9 @@ describe('M3 complete boss roster and real mechanisms',()=>{
       e.skipWave();const spawned=e.state.enemies.filter(enemy=>enemy.boss);expect(spawned.length).toBe([4,6,8,9,10].includes(wave)?1:0);spawned.forEach(enemy=>seen.add(enemy.kind));
     }}expect(seen).toEqual(new Set(BOSS_IDS));
   });
-  it('rank snapshots scale all enemies and victory base coins while preserving food bonus',()=>{
-    const low=game(),high=game(false,53);expect(low.spawnEnemy('rat','player').hp).toBe(28);expect(high.spawnEnemy('rat','player').hp).toBeCloseTo(173.6);
-    expect(high.spawnEnemy('hornet_queen','player').hp).toBeCloseTo(17112);
+  it('rank snapshots keep enemy HP fair while scaling victory base coins and preserving food bonus',()=>{
+    const low=game(),high=game(false,53);expect(low.spawnEnemy('rat','player').hp).toBe(28);expect(high.spawnEnemy('rat','player').hp).toBe(28);
+    expect(high.spawnEnemy('hornet_queen','player').hp).toBe(2760);
     low.state.sides.player.food=17;high.state.sides.player.food=17;low.state.wave=10;high.state.wave=10;low.skipWave();high.skipWave();
     expect(low.state.result?.coins).toBe(68);expect(high.state.result?.coins).toBe(228);expect(high.state.result?.rankIndex).toBe(53);
   });

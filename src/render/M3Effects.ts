@@ -46,13 +46,34 @@ export function drawM3Event(c:C,event:VisualEvent):boolean {
   else if(event.effect==='hornet_queen'){polygon(c,[[-5,-7],[22,-21],[22,4],[-5,-1]],'#e7c162',INK,2);line(c,[[28,-18],[36,-24]],'#e7c162',2);line(c,[[29,-8],[41,-8]],'#e7c162',2);}
   else if(event.effect==='trash_coon'){ellipse(c,0,0,25+p*45,10+p*15,'rgba(0,0,0,0)','#9bb89a',3);for(let i=0;i<3;i++){const x=(i-1)*19;line(c,[[x,3],[x,-12-p*29]],'#adc6a0',4);star(c,x,-14-p*29,5,'#dce2b4',1);}}
   else if(event.effect==='dj_rat_king'){for(let i=0;i<3;i++)ellipse(c,0,0,25+p*(80+i*35),25+p*(80+i*35),'rgba(0,0,0,0)',i%2?'#aad3b8':'#d3a8ce',3);}
+  else if(event.effect==='dr_clippers'){
+    for(let i=0;i<2;i++)ellipse(c,0,0,18+p*(54+i*24),14+p*(40+i*18),'rgba(0,0,0,0)',i?'#e66479':'#b49aba',3-i*.6);
+  }
   else heart(c,0,-30,12+p*4);
   c.restore();
   for(const [index,point] of targets.entries()){
     const target=pixel(point.col,point.row);
     if(event.effect==='diva_kitty'){const travel=Math.min(1,p*1.6);heart(c,source.x+(target.x-source.x)*travel,source.y+(target.y-source.y)*travel-Math.sin(travel*Math.PI)*30,10);}
+    if(event.effect==='dr_clippers'){
+      c.save();c.setLineDash([6,5]);line(c,[[source.x,source.y],[target.x,target.y]],'#e05a6d',3);c.restore();
+    }
     c.save();c.translate(target.x,target.y);
     switch(event.effect){
+      case 'dr_clippers':{
+        const snap=Math.abs(Math.sin(p*Math.PI*3))*.42;
+        ellipse(c,0,0,16+p*36,16+p*36,'rgba(224,79,95,0.12)','#e04f5f',3);
+        for(const dir of [-1,1]){
+          c.save();c.rotate(dir*(.22+snap));
+          line(c,[[-22,0],[24,0]],'#eef3f7',5);line(c,[[-22,0],[24,0]],INK,2);
+          ellipse(c,-26,dir*6,6,6,'#e05a6d',INK,1.8);
+          c.restore();
+        }
+        for(let i=0;i<5;i++){
+          const a=i*Math.PI*2/5+p*2.4,r=12+p*34;
+          ellipse(c,Math.cos(a)*r,Math.sin(a)*r-p*10,4.5*(1-p*.5),3.2*(1-p*.5),'#f6ead4',INK,1);
+        }
+        break;
+      }
       case 'diva_kitty':heart(c,0,-17-Math.sin(p*Math.PI)*13,8+p*4);ellipse(c,0,18,17+p*15,6,'rgba(0,0,0,0)','#e2a1b2',2);break;
       case 'buff_roo':for(let i=0;i<4;i++){const a=i*Math.PI/2+p;star(c,Math.cos(a)*(15+p*30),Math.sin(a)*(10+p*22),6,'#edc277',1);}line(c,[[-24,19],[-9,11],[0,24],[10,13],[26,20]],'#a78867',2);break;
       case 'hornet_queen':line(c,[[-30-p*18,-8],[-6,-8]],'#dbb359',3);line(c,[[-25-p*18,5],[-3,5]],'#dbb359',2);polygon(c,[[6,-4],[17,0],[6,4]],'#f0d379',INK,1);break;

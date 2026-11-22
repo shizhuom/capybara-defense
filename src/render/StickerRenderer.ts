@@ -303,6 +303,7 @@ export class StickerRenderer {
       const badgeColor=hero?'#f1cc7d':'#fff7e3';
       // P17: awakened heroes trade the gold "5" for a caramel-red badge with a warm gold star.
       if(unit.awakened){round(c,14,-31,22,18,6,'#b5462e',INK,1.6);this.label('★',25,-21,14,'#ffd66b','center',900);}
+      else if((unit.clippedLevels??0)>0){round(c,10,-31,28,18,6,'#ffd5dc','#b52b42',1.8);this.label(`${unit.level}↓`,24,-21,13,'#9e182e','center',900);}
       else{round(c,14,-31,22,18,6,badgeColor,INK,1.6);this.label(String(unit.level),25,-21,14,INK,'center',800);}
       if(hero){
         round(c,-24,30,48,6,3,'#ded6c3',INK,1);const fill=clamp(unit.energy/requiredCharge,0,1);
@@ -349,6 +350,13 @@ export class StickerRenderer {
     if(!paused&&pose.footfall){this.dust.push({id:enemy.id,x:p.x-pose.dirX*20,y:p.y+30,dir:pose.dirX,age:0});if(this.dust.length>48)this.dust.shift();}
     c.save();c.translate(p.x+(enemy.hitFlash>0?(enemy.knockX||0)+Math.sin(seconds*95)*1.4:0),p.y+(enemy.hitFlash>0?(enemy.knockY||0):0));
     ellipse(c,0,boss?39:29,(boss?35:26)*pose.shadowScale,6*pose.shadowScale,'rgba(80,70,51,.19)','',0);
+    if(boss&&enemy.knockbackImmune){
+      const pulse=.6+.3*Math.sin(seconds*6);
+      c.save();c.globalAlpha*=pulse;
+      ellipse(c,0,38,44,12,'rgba(235,92,58,.18)','#e8593c',2.6);
+      ellipse(c,0,38,50,15,'rgba(0,0,0,0)','#ffd166',1.6);
+      c.restore();
+    }
     drawLandingRipple(c,pose,base*size);
     c.save();c.translate(0,pose.hopY);c.rotate(pose.tilt+pose.bankTilt);
     c.scale(size*pose.squashX*(1+pose.jello*.19+pose.roar*.10)*pose.visualFlip*pose.spawnScale,size*pose.squashY*(1-pose.jello*.15+pose.roar*.14)*pose.spawnScale);
@@ -363,6 +371,11 @@ export class StickerRenderer {
     const hp=clamp(enemy.hp/enemy.maxHp,0,1);
     if(hp>0)round(c,-width/2+1,y+1,(width-2)*hp,height-2,2,boss?'#d98a77':'#9eae7b','',0);
     if(boss)star(c,-width/2-8,y+height/2,5,'#e2b46e',1.2);
+    if(boss&&enemy.knockbackImmune){
+      const tag=t('p19.unstoppableTag'),tw=Math.max(38,tag.length*11+14);
+      round(c,-tw/2,y-22,tw,18,7,'#c93828','#ffd166',1.6);
+      this.label(tag,0,y-13,11,'#fff7d6','center',900);
+    }
     if(enemy.stun>0){for(let i=0;i<2;i++)star(c,Math.sin(seconds*5+i*3)*17,y-7,3.5,'#f7d37b',1);}
     if(enemy.burn>0){polygon(c,[[-5,20],[-9,12],[-3,14],[0,5],[4,13],[8,10],[6,21]],'#edb15c','#d98964',1.3);}
     if(enemy.poison>0){ellipse(c,19,3,4,4,'#99b483',INK,1);ellipse(c,24,-5,2.4,2.4,'#a5bb8c',INK,1);}
@@ -658,6 +671,20 @@ export class StickerRenderer {
       } else {
         if(event.type==='burst'&&this.drawUltimateBurst(state,event,from,p)){c.restore();continue;}
         if(event.type==='purge'&&event.effect==='awakened'){this.drawAwakenedBurst(event,from);c.restore();continue;}
+        if(event.type==='purge'&&(event.effect==='clipped'||event.effect==='clip_restore')){
+          const clipped=event.effect==='clipped',ring=clamp(event.age/.7,0,1);
+          if(ring<1){
+            const r=16+ring*44;c.globalAlpha=(1-ring)*.88;
+            ellipse(c,from.x,from.y,r,r*.88,'rgba(255,255,255,0)',clipped?'#e04f5f':'#39b56a',3.5);
+          }
+          const text=t(event.textKey||(clipped?'p19.clippedDowngrade':'p19.clipRestored'));
+          c.font=`900 15px ${FONT}`;
+          const pillW=Math.min(196,c.measureText(text).width+22),pillH=28,ty=from.y-54-p*26;
+          c.globalAlpha=Math.min(1,(1-p)*2.8);
+          round(c,from.x-pillW/2,ty-pillH/2,pillW,pillH,11,clipped?'#d63649':'#289658',clipped?'#fff0f2':'#fff9db',2.2);
+          this.label(text,from.x,ty,15,'#fffdf8','center',900,pillW-10);
+          c.restore();continue;
+        }
         const purge=event.type==='purge',radius=(purge?18:10)+p*(purge?43:31);
         c.globalAlpha=(1-p)*.8;ellipse(c,from.x,from.y,radius,radius,'rgba(255,255,255,0)',event.color||(purge?'#e5c05e':'#dab07b'),purge?4:3);
         for(let i=0;i<(purge?8:5);i++){

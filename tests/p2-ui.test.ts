@@ -62,6 +62,7 @@ describe('P2 solo UI',()=>{
     {width:390,left:9,right:381,top:88,bottom:795,height:35},
   ])('keeps measured notices outside the stage actions at viewport width $width',fixture=>{
     const {app,element}=harness();
+    app.dialog.open=true;
     Object.assign(window,{innerWidth:fixture.width,innerHeight:900});
     if(fixture.width===390)window.innerHeight=844;
     for(const method of ['renderMenu','renderBattleHUD','renderTutorial','renderBattleProps','renderInspector','renderKeyboard'])app[method]=()=>{};
@@ -81,6 +82,7 @@ describe('P2 solo UI',()=>{
   });
   it('repositions a visible notice after resizing and keeps a wrapped narrow-screen notice above actions when no gutter fits',()=>{
     const {app,element}=harness();
+    app.dialog.open=true;
     for(const method of ['renderMenu','renderBattleHUD','renderTutorial','renderBattleProps','renderInspector','renderKeyboard'])app[method]=()=>{};
     Object.assign(window,{innerWidth:1024,innerHeight:900});
     let bounds={left:289,right:735,top:48,bottom:892,width:446,height:844};
@@ -94,6 +96,15 @@ describe('P2 solo UI',()=>{
     expect(parseFloat(style.width)).toBeGreaterThanOrEqual(280);
     expect(top).toBeGreaterThanOrEqual(48);expect(top+90).toBeLessThan(48+542*1080/1216);
     expect(style.bottom).toBe('auto');expect(element('toast').textContent).toContain('14');
+  });
+  it('suppresses the toast banner during active battle so routine hints never obstruct dragging',()=>{
+    const {app,element}=harness();
+    for(const method of ['renderMenu','renderBattleHUD','renderTutorial','renderBattleProps','renderInspector','renderKeyboard'])app[method]=()=>{};
+    app.dialog.open=false;
+    app.notify('hint.deployed');
+    expect(element('toast').hidden).toBe(true);
+    app.notify('hint.summoned');
+    expect(element('toast').hidden).toBe(true);
   });
   it('keeps the shovel identity in UI icons when optional sprites are unavailable',()=>{
     expect(unitSticker('shovel')).toContain('data-sticker="shovel"');

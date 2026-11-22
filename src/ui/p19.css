@@ -381,3 +381,258 @@
     animation: none !important;
   }
 }
+
+/* --- Keep battlefield drag area free of selectable text and bottom toast obstruction --- */
+#stage,
+#battle-hud,
+#battle-actions,
+#battle-props,
+#sealed-hint,
+.toast {
+  user-select: none;
+  -webkit-user-select: none;
+}
+.toast,
+.clean-mode .toast {
+  top: 14px;
+  bottom: auto;
+  pointer-events: none !important;
+}
+
+/* --- Locked Map Hover Tooltip --- */
+#menu-screen .map-chips .map-chip-wrap.is-locked {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  cursor: help;
+}
+#menu-screen .map-chips .map-chip-wrap.is-locked > button.locked {
+  pointer-events: none;
+}
+#menu-screen .map-chips .map-lock-tooltip {
+  position: absolute;
+  bottom: calc(100% + 10px);
+  left: 50%;
+  transform: translateX(-50%) translateY(4px);
+  padding: 7px 13px;
+  border-radius: 11px;
+  background: linear-gradient(180deg, #4b3119 0%, #34200e 100%);
+  color: #fff6df;
+  border: 2px solid #e2b866;
+  box-shadow: 0 8px 20px rgba(34, 18, 6, 0.36);
+  font-size: 13.5px;
+  font-weight: 800;
+  line-height: 1.3;
+  white-space: nowrap;
+  opacity: 0;
+  pointer-events: none;
+  z-index: 45;
+  transition: opacity 0.16s ease, transform 0.16s ease;
+}
+#menu-screen .map-chips .map-lock-tooltip::after {
+  content: '';
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  border: 6px solid transparent;
+  border-top-color: #e2b866;
+}
+#menu-screen .map-chips .map-chip-wrap.is-locked:hover .map-lock-tooltip,
+#menu-screen .map-chips .map-chip-wrap.is-locked:focus-within .map-lock-tooltip {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+
+/* --- Clickable My Rank Summary Card & 54-Tier Rank Ladder --- */
+#game-dialog.profile-dialog .my-rank-summary-card.is-clickable {
+  display: block;
+  padding: 0;
+  overflow: hidden;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease, transform 0.15s ease;
+}
+#game-dialog.profile-dialog .my-rank-summary-card.is-clickable:hover {
+  border-color: #c2872a;
+  box-shadow: 0 5px 14px rgba(102, 62, 16, 0.18);
+  transform: translateY(-1px);
+}
+#game-dialog.profile-dialog .my-rank-summary-card.is-ladder-open {
+  border-color: #c2872a;
+  background: #fff4d8;
+}
+#game-dialog.profile-dialog .my-rank-summary-card .rank-summary-trigger {
+  width: 100%;
+  margin: 0;
+  padding: 13px;
+  border: 0;
+  border-radius: inherit;
+  background: transparent;
+  box-shadow: none;
+  text-align: left;
+  cursor: pointer;
+  display: grid;
+  grid-template-columns: 76px minmax(0, 1fr) 82px;
+  align-items: center;
+  gap: 14px;
+  color: inherit;
+  font: inherit;
+}
+#game-dialog.profile-dialog .my-rank-summary-card .rank-summary-trigger > .storybook-frame {
+  width: 76px;
+  height: 76px;
+}
+#game-dialog.profile-dialog .rank-ladder-cue {
+  display: inline-block;
+  margin-left: 8px;
+  padding: 2px 9px;
+  border-radius: 999px;
+  background: rgba(217, 152, 46, 0.2);
+  border: 1px solid rgba(176, 114, 24, 0.45);
+  color: #7c480d;
+  font-size: 13px;
+  font-weight: 800;
+  vertical-align: middle;
+}
+#game-dialog.profile-dialog .rank-ladder-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+#game-dialog.profile-dialog .rank-ladder-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 14px;
+  border-radius: 14px;
+  background: #f6ead4;
+  border: 1.5px solid #d7be92;
+}
+#game-dialog.profile-dialog .rank-ladder-head-copy h3 {
+  margin: 0;
+  font-size: 17px;
+  font-weight: 900;
+  color: #4f2f12;
+}
+#game-dialog.profile-dialog .rank-ladder-head-copy p {
+  margin: 2px 0 0;
+  font-size: 13.5px;
+  color: #755331;
+}
+#game-dialog.profile-dialog .rank-ladder-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+#game-dialog.profile-dialog .rank-ladder-row {
+  display: grid;
+  grid-template-columns: 112px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 14px;
+  border-radius: 14px;
+  background: #fdf7eb;
+  border: 1.5px solid #e0cba6;
+}
+#game-dialog.profile-dialog .rank-ladder-row.is-reached {
+  background: #f7f3e7;
+  border-color: #d6c8a8;
+}
+#game-dialog.profile-dialog .rank-ladder-row.is-upcoming {
+  opacity: 0.88;
+}
+#game-dialog.profile-dialog .rank-ladder-row.is-current-rank {
+  background: linear-gradient(180deg, #fff5cf 0%, #ffe69c 100%);
+  border: 2.5px solid #c97d14;
+  box-shadow: 0 4px 14px rgba(196, 125, 22, 0.25);
+  opacity: 1;
+}
+#game-dialog.profile-dialog .rank-ladder-stars {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 15px;
+  font-weight: 900;
+  color: #784812;
+  white-space: nowrap;
+}
+#game-dialog.profile-dialog .rank-ladder-copy {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+#game-dialog.profile-dialog .rank-ladder-name {
+  font-size: 16.5px;
+  font-weight: 900;
+  color: #44280e;
+}
+#game-dialog.profile-dialog .rank-ladder-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  font-size: 13.5px;
+  font-weight: 700;
+  color: #785636;
+}
+#game-dialog.profile-dialog .rank-ladder-map {
+  display: inline-block;
+  padding: 1px 8px;
+  border-radius: 999px;
+  background: rgba(112, 166, 98, 0.18);
+  border: 1px solid rgba(76, 130, 62, 0.4);
+  color: #2f6626;
+  font-size: 12.5px;
+  font-weight: 800;
+}
+#game-dialog.profile-dialog .rank-ladder-map.is-unlock {
+  background: rgba(235, 162, 45, 0.2);
+  border-color: rgba(181, 114, 16, 0.48);
+  color: #874b08;
+}
+#game-dialog.profile-dialog .rank-ladder-pill {
+  display: inline-block;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 900;
+  white-space: nowrap;
+}
+#game-dialog.profile-dialog .rank-ladder-pill.is-current {
+  background: #c86d10;
+  color: #fffdf5;
+}
+#game-dialog.profile-dialog .rank-ladder-pill.is-reached {
+  background: rgba(84, 158, 76, 0.18);
+  color: #2f7028;
+}
+#game-dialog.profile-dialog .rank-ladder-pill.is-upcoming {
+  background: rgba(128, 98, 68, 0.12);
+  color: #7b5d3f;
+}
+@media (max-width: 760px) {
+  #game-dialog.profile-dialog .my-rank-summary-card .rank-summary-trigger {
+    grid-template-columns: 60px minmax(0, 1fr) 64px;
+    gap: 9px;
+    padding: 11px 9px;
+  }
+  #game-dialog.profile-dialog .my-rank-summary-card .rank-summary-trigger > .storybook-frame {
+    width: 60px;
+    height: 60px;
+  }
+  #game-dialog.profile-dialog .rank-ladder-row {
+    grid-template-columns: 88px minmax(0, 1fr) auto;
+    gap: 8px;
+    padding: 9px 10px;
+  }
+  #game-dialog.profile-dialog .rank-ladder-stars {
+    font-size: 13.5px;
+  }
+  #game-dialog.profile-dialog .rank-ladder-name {
+    font-size: 15px;
+  }
+}

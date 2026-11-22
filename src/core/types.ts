@@ -16,6 +16,10 @@ export interface Unit {
   awakened?: boolean;
   /** Missed breakthrough rolls; each adds +5% to the next one. */
   breakthroughFails?: number;
+  /** Temporary level clip by Dr. Buzzcut (`dr_clippers`): source boss id, levels to restore when it dies, and the wave it happened (max 1/wave). */
+  clippedByBossId?: number;
+  clippedLevels?: number;
+  clippedWave?: number;
 }
 export interface Enemy {
   id: number; kind: string; side: Side; boss: boolean; hp: number; maxHp: number;
@@ -24,6 +28,8 @@ export interface Enemy {
   burn: number; burnDps: number; poison: number; poisonDps: number; stolenBy: number[]; hitFlash: number;
   knockX?:number; knockY?:number;
   bleed?: number; bleedDps?: number; armorBreak?: number; hasteTime?:number; boneShield?:boolean;
+  /** Seconds alive on the lane and overtime anti-stall flag (immune to knockback & stun). */
+  aliveTime?: number; knockbackImmune?: boolean;
 }
 export interface BattleLoadout {
   equippedWeapons: Record<string,string>; ownedProps: Record<string,number>;

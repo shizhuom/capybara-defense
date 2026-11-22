@@ -8,7 +8,7 @@ export const ENEMIES: Record<string, EnemyDefinition> = {
   husky_wrecker: {id:'husky_wrecker',hp:700,speed:.22,armor:.05,boss:true,interval:24,maxBrokenTiles:2,color:'#879eab'},
   mega_roomba: {id:'mega_roomba',hp:1725,speed:.22,armor:.1,boss:true,interval:10,color:'#b4b8bd'},
   dr_clippers: {id:'dr_clippers',hp:2530,speed:.22,armor:.1,boss:true,interval:9,color:'#b49aba'},
-  box_kraken: {id:'box_kraken',hp:3220,speed:.22,armor:.1,boss:true,interval:12,color:'#d6ab79'},
+  box_kraken: {id:'box_kraken',hp:3220,speed:.22,armor:.1,boss:true,interval:14,color:'#d6ab79'},
   sad_rain_frog: {id:'sad_rain_frog',hp:3680,speed:.22,armor:.1,boss:true,interval:12,color:'#8baec6'},
   king_skunk: {id:'king_skunk',hp:4600,speed:.22,armor:.15,boss:true,interval:10,color:'#929b91'},
   diva_kitty: {id:'diva_kitty',hp:2070,speed:.22,armor:.08,boss:true,interval:11,color:'#e8c9d8'},
@@ -19,4 +19,6 @@ export const ENEMIES: Record<string, EnemyDefinition> = {
   dj_rat_king: {id:'dj_rat_king',hp:4140,speed:.22,armor:.15,boss:true,interval:9,color:'#ac88c2'},
 };
 export const BOSS_IDS = Object.values(ENEMIES).filter(e=>e.boss).map(e=>e.id);
+/** Balanced cardboard-box seal duration (strictly shorter than box_kraken's shortest rank-scaled cooldown of 10.5s). */
+export const BOX_SEAL_DURATION = 6;
 export const FRAGMENTS = ['bamboo_blade','sardine_cannon','orange_wand','chill_shield'] as const;

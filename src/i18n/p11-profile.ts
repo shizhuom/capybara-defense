@@ -1,7 +1,7 @@
 const phrases:Record<string,[string,string]>={
   'p11.profile.myRank':['我的当前段位','My current rank'],
-  'p11.profile.rankProgress':['再获 {count} 颗星晋升下一段位 · 怪物生命 ×{hp}','Next rank in {count}★ · Enemy HP ×{hp}'],
-  'p11.profile.topRank':['已达最高段位 · 怪物生命 ×{hp}','Highest rank reached · Enemy HP ×{hp}'],
+  'p11.profile.rankProgress':['再获 {count} 颗星晋升下一段位 · 通关金币 +{coins}','Next rank in {count}★ · Win +{coins} coins'],
+  'p11.profile.topRank':['已达最高段位 · 通关金币 +{coins}','Highest rank reached · Win +{coins} coins'],
   'p11.profile.rankProgressLabel':['下一段位进度','Progress to the next rank'],
   'p11.profile.youHere':['我在这里','You are here'],
   'p11.profile.record':['总场次 {matches} · 胜率 {rate}% · 最高连胜 {best}','{matches} matches · {rate}% wins · Best streak {best}'],

@@ -462,10 +462,10 @@ describe('P17 UI: courtyard pill, medallion hall, hero card, board tab and settl
     expect(meta.markup('market')).toContain(t('p11.meta.merchantMaxed'));
     meta.action('meta-tab:lottery');
     expect(meta.markup('market')).toMatch(/class="lottery-center has-ticket" data-action="meta-spin:ticket"/);
-    // Rank board rounds enemy HP multiplier to 2 decimals & displays player nickname; passport displays nickname + endless best.
+    // Rank board shows rank coin reward & displays player nickname; passport displays nickname + endless best.
     const rankedProfile={...createProfile(),stars:48,nickname:'泡汤大侠',bestEndlessWave:37};
     const ps=new ProfileScreens(()=>rankedProfile,()=>true,()=>{},()=>{});
-    const lb=ps.markup('leaderboard');expect(lb).toContain('×2.66');expect(lb).not.toContain('2.6556');expect(lb).toContain('泡汤大侠');
+    const lb=ps.markup('leaderboard');expect(lb).toContain('+132');expect(lb).not.toContain('怪物生命');expect(lb).toContain('泡汤大侠');
     const pp=ps.markup('profile');expect(pp).toContain('泡汤大侠');expect(pp).toContain('最高 第 37 波');
   });
   it('ships complete, wholesome zh-CN / en P17 copy',()=>{

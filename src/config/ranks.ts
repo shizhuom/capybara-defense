@@ -5,20 +5,24 @@ export interface RankDifficulty {
   intervalScale:number; armorBonus:number; bossCooldownScale:number;
 }
 export const clampRank = (index:number):number => Number.isFinite(index)?Math.max(0,Math.min(53,Math.trunc(index))):0;
-const hpAnchors = [[0,1],[4,1.16],[5,1.22],[9,1.44],[10,1.52],[14,1.78],[15,1.88],[19,2.18],[20,2.30],[29,3.10],[30,3.25],[39,4.20],[40,4.40],[49,5.45],[50,5.65],[53,6.20]];
-const speedAnchors = [[0,1],[4,1.02],[5,1.03],[9,1.05],[10,1.06],[14,1.08],[15,1.09],[19,1.11],[20,1.12],[29,1.16],[30,1.17],[39,1.21],[40,1.22],[49,1.26],[50,1.27],[53,1.28]];
-function interpolate(index:number,anchors:number[][]):number {
-  for(let i=1;i<anchors.length;i++)if(index<=anchors[i][0]){
-    const [x,a]=anchors[i-1],[y,b]=anchors[i];return Number((a+(b-a)*(index-x)/(y-x)).toFixed(4));
-  }
-  return anchors.at(-1)![1];
-}
+/**
+ * Rank progression is strictly rewarding (zero enemy HP/speed/armor/cooldown penalty):
+ * - All enemy HP, speed, armor & boss cooldown multipliers stay at 1.0× across every rank (0.85× HP only for the guided Match 1).
+ * - Waves 1–10 gently spawn +0..+8 extra 1×-HP small minions at higher ranks for livelier wave-clearing, extra fish food & faster momentum.
+ * - Endless Mode (Wave 11+) is 100% identical across all ranks so the Global Endless Board is completely fair.
+ */
 export function getRankDifficulty(rankIndex:number,options:{tutorialGuided?:boolean}={}):RankDifficulty {
   const rank=clampRank(rankIndex);
-  return {hpMultiplier:rank===0&&options.tutorialGuided? .85:interpolate(rank,hpAnchors),
-    speedMultiplier:interpolate(rank,speedAnchors),extraCount:Math.floor(rank/4),intervalScale:Math.max(.62,1-rank*.007),
-    armorBonus:rank<20?0:interpolate(rank,[[20,.04],[53,.10]]),
-    bossCooldownScale:interpolate(rank,[[0,1],[9,1],[10,.94],[20,.90],[30,.84],[39,.80],[53,.75]])};
+  const extraCount=Math.min(8,Math.floor(rank/6));
+  const intervalScale=Number(Math.max(.76,1-extraCount*.03).toFixed(4));
+  return {
+    hpMultiplier:rank===0&&options.tutorialGuided?.85:1,
+    speedMultiplier:1,
+    extraCount,
+    intervalScale,
+    armorBonus:0,
+    bossCooldownScale:1,
+  };
 }
 
 export interface RankDefinition {

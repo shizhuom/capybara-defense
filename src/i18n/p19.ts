@@ -70,6 +70,26 @@ const copy = {
   // Lucky Crit Drop battle callouts
   'p19.luckyLegendary': ['✨ 鸿运暴击！传说碎片 +1', '✨ LUCKY CRIT! Legendary Fragment +1'],
   'p19.luckyTruffle': ['✨ 鸿运暴击！黑松露 +1', '✨ LUCKY CRIT! Forest Truffle +1'],
+  // Combat balance callouts (Dr. Buzzcut temporary clip + Overtime Boss Unstoppable)
+  'p19.clippedDowngrade': ['✂️ 剃毛降级 -1', '✂️ Clipped -1 Lv'],
+  'p19.clipRestored': ['✨ 恢复原级 +1', '✨ Restored +1 Lv'],
+  'p19.awakenedImmuneClip': ['★ 突破免疫降级！', '★ Awakened: Clip Immune!'],
+  'p19.bossUnstoppable': ['🔥 超时霸体 · 免疫击退！', '🔥 Overtime: Unstoppable!'],
+  'p19.unstoppableTag': ['霸体', 'STEADY'],
+  // Locked map hover tooltip & Rank ladder overview
+  'p19.mapUnlockTip': ['达到 {stars}★（{rank}）解锁 · 还差 {need}★', 'Reach {stars}★ ({rank}) to unlock · {need}★ left'],
+  'p19.mapUnlockToast': ['「{map}」需达到 {stars}★（{rank}）解锁，还差 {need}★！', '{map} unlocks at {stars}★ ({rank}) — {need}★ left!'],
+  'p19.rankLadderShow': ['段位总览 ▾', 'All Ranks ▾'],
+  'p19.rankLadderHide': ['收起总览 ▴', 'Hide Ranks ▴'],
+  'p19.rankLadderTitle': ['全部段位与星级对照（共 54 阶）', 'All Ranks & Star Milestones (54 Tiers)'],
+  'p19.rankLadderSub': ['升级零惩罚：怪物血量、移速与技能冷却恒定 1×（无尽模式全段位完全公平）；段位越高通关金币与碎片倍率越丰厚，前 10 波还会多刷少量小怪带来更多鱼粮与战意！', 'Zero rank penalty: enemy HP, speed & boss cooldown stay 1× (100% fair Endless). Higher ranks raise win coins & fragment odds, plus add extra 1×-HP minions in Waves 1–10 for more fish food & momentum!'],
+  'p19.rankLadderBack': ['← 返回排行', '← Back'],
+  'p19.rankCurrent': ['当前段位', 'Current'],
+  'p19.rankWinCoins': ['通关 +{coins} 金币', 'Win +{coins} coins'],
+  'p19.rankExtraMinions': ['前10波小怪 +{count}', 'W1–10 +{count} minions'],
+  'p19.rankFragBoost': ['碎片权重 ×{mult}', 'Drops ×{mult}'],
+  'p19.rankUnlockMap': ['解锁 {map}', 'Unlocks {map}'],
+  'p19.rankInitMap': ['初始地图 · {map}', 'Starter · {map}'],
   // Zeigarnik "Almost There!" Settlement Hooks
   'p19.hook.featureMatch': ['🎯 完成首战即可解锁「{name}」！', '🎯 Finish 1 match to unlock {name}!'],
   'p19.hook.featureStars': ['🎯 还差 {need} ★ 解锁「{name}」（{current}/{target}★）', '🎯 {need}★ away from unlocking {name} ({current}/{target}★)'],

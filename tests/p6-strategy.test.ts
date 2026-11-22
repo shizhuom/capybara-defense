@@ -8,7 +8,7 @@ const roster=(e:BattleEngine)=>e.state.units.filter(u=>u.location.zone==='bench'
 describe('P6 immutable previews and fair early waves',()=>{
  it('previews preparation wave1 without moving the clocks or consuming any main random draws',()=>{
   const a=new BattleEngine({seed:124,rankIndex:53}),b=new BattleEngine({seed:124,rankIndex:53});a.start();b.start();
-  const before=JSON.stringify(a.state);for(let i=0;i<30;i++)expect(a.getUpcomingWavePreview()).toMatchObject({wave:1,count:20,bosses:[],minion:'roach'});
+  const before=JSON.stringify(a.state);for(let i=0;i<30;i++)expect(a.getUpcomingWavePreview()).toMatchObject({wave:1,count:15,bosses:[],minion:'roach'});
   expect(JSON.stringify(a.state)).toBe(before);a.summon();b.summon();expect(roster(a)).toEqual(roster(b));
   for(let i=0;i<8;i++)expect(a.rollWeaponFragment()).toBe(b.rollWeaponFragment());
  });

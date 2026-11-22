@@ -15,6 +15,8 @@ export const WAVES = [
 ] as const;
 export const WAVE_DURATION = 36;
 export const FIRST_WAVE_PREPARATION = 18;
+/** After 60s in a wave (or 60s alive), bosses enter overtime Unstoppable state (immune to knockback & stun) to prevent infinite stall loops. */
+export const BOSS_UNSTOPPABLE_TIME = 60;
 export interface WaveConfig {count:number;interval:number;hpScale:number;speedScale:number;armorBonus:number}
 /** Endless HP grows by this factor per wave after the tenth (P17: a gentle ×1.25 instead of ×2). */
 export const ENDLESS_HP_GROWTH=1.25;

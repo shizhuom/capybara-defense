@@ -33,6 +33,10 @@ export function getUnlockedMaps(profile:Profile):MapId[] {
   const rank=getRank(Math.max(profile.stars,profile.highestStars)).index;
   return maps.slice(0,Math.min(4,Math.floor(rank/10)+1));
 }
+export function getMapUnlockRequirement(id:MapId):{rankIndex:number;minStars:number} {
+  const index=Math.max(0,maps.indexOf(id)),rankIndex=index*10;
+  return{rankIndex,minStars:RANKS[rankIndex]?.minStars??0};
+}
 export function resolveMap(profile:Profile):MapId {
   return profile.selectedMap!=='auto'&&getUnlockedMaps(profile).includes(profile.selectedMap)?profile.selectedMap:getRank(profile.stars).mapId;
 }

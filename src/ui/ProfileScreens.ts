@@ -68,6 +68,7 @@ export function mapOptions(profile: Profile, includeAuto = true): string {
 }
 
 export class ProfileScreens {
+  private showRankLadder = false;
   constructor(
     private profile: () => Profile,
     private persist: (profile: Profile) => boolean,
@@ -77,7 +78,11 @@ export class ProfileScreens {
     private onAvatarChange?: () => void,
     private rankBoard?: () => RankBoardView,
   ) {}
+  resetView(): void { this.showRankLadder = false; }
+  isRankLadderOpen(): boolean { return this.showRankLadder; }
   action(action: string): boolean {
+    if (action === 'rank-ladder-toggle') { this.showRankLadder = !this.showRankLadder; this.render(); return true; }
+    if (action === 'rank-ladder-close') { this.showRankLadder = false; this.render(); return true; }
     if (!action.startsWith('avatar:')) return false;
     const id = action.slice(7), current = this.profile();
     if (current.unlockedAvatars.includes(id) && this.persist(selectAvatar(current, id))) { this.notify('m3.avatarEquipped'); this.onAvatarChange?.(); this.render(); }
@@ -118,9 +123,12 @@ export class ProfileScreens {
   }
   private leaderboard(profile:Profile,rankView?:RankBoardView):string {
     const language=getLanguage();
-    const rank=getRank(profile.stars),next=RANKS[rank.index+1],hp=Number(getRankDifficulty(rank.index).hpMultiplier.toFixed(2));
+    const rank=getRank(profile.stars),next=RANKS[rank.index+1];
     const progress=next?Math.max(0,Math.min(100,(profile.stars-rank.minStars)/(next.minStars-rank.minStars)*100)):100;
-    const summary=`<section class="storybook-row-card my-rank-summary-card" aria-label="${tr('p11.profile.myRank')}"><span class="storybook-frame tone-heroes">${avatarSticker(profile.avatarId,64)}</span><span class="storybook-copy"><strong class="portrait-name">${tr(`rank.${rank.index}`)}</strong><span class="storybook-tagline">${tr(next?'p11.profile.rankProgress':'p11.profile.topRank',{count:next?next.minStars-profile.stars:0,hp})}</span><span class="slim-progress" role="progressbar" aria-label="${tr('p11.profile.rankProgressLabel')}" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${Math.round(progress)}"><i style="width:${progress}%"></i></span></span><span class="storybook-status rank-stars">${sceneSticker('ui_star_rank','',24)}<b>${profile.stars}</b></span></section>`;
+    const ladderCue=`<span class="rank-ladder-cue">${tr(this.showRankLadder?'p19.rankLadderHide':'p19.rankLadderShow')}</span>`;
+    const summary=`<section class="storybook-row-card my-rank-summary-card is-clickable${this.showRankLadder?' is-ladder-open':''}" aria-label="${tr('p11.profile.myRank')}"><button type="button" class="rank-summary-trigger" data-action="rank-ladder-toggle" aria-expanded="${this.showRankLadder}"><span class="storybook-frame tone-heroes">${avatarSticker(profile.avatarId,64)}</span><span class="storybook-copy"><strong class="portrait-name">${tr(`rank.${rank.index}`)} ${ladderCue}</strong><span class="storybook-tagline">${tr(next?'p11.profile.rankProgress':'p11.profile.topRank',{count:next?next.minStars-profile.stars:0,coins:rank.winCoins})}</span><span class="slim-progress" role="progressbar" aria-label="${tr('p11.profile.rankProgressLabel')}" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${Math.round(progress)}"><i style="width:${progress}%"></i></span></span><span class="storybook-status rank-stars">${sceneSticker('ui_star_rank','',24)}<b>${profile.stars}</b></span></button></section>`;
+
+    if(this.showRankLadder) return `${summary}${this.rankLadder(profile,rank.index)}`;
 
     const snap=rankView?.snapshot;
     const connected=!!snap&&snap.mode!=='unconfigured';
@@ -161,6 +169,23 @@ export class ProfileScreens {
     const playerName=displayNickname(profile,language);
     const rows=getLeaderboard(profile).map((entry,index)=>`<li class="storybook-row-card leaderboard-row${entry.isPlayer?' is-player':''}" data-player="${entry.isPlayer}" data-place="${index+1}" aria-label="${tr('m3.place',{place:index+1})}"><span class="rank-portrait"><b class="place-number">${index<3?['🥇','🥈','🥉'][index]:index+1}</b><span class="storybook-frame tone-heroes">${avatarSticker(entry.avatarId,44)}</span></span><span class="storybook-copy"><strong class="portrait-name">${esc(entry.isPlayer?playerName:entry.name[language])}${entry.isPlayer?` <span class="you-here">${tr('p11.profile.youHere')}</span>`:''}</strong><span class="storybook-tagline">${tr(`rank.${getRank(entry.stars).index}`)}</span></span><span class="storybook-status rank-stars">${sceneSticker('ui_star_rank','',20)}<b>${entry.stars}</b></span></li>`).join('');
     return `${summary}<ol class="storybook-rank-list" aria-label="${tr('m3.localBoard')}">${rows}</ol>`;
+  }
+  private rankLadder(profile:Profile,currentIndex:number):string {
+    const rows=RANKS.map(entry=>{
+      const isCurrent=entry.index===currentIndex,isReached=entry.index<currentIndex;
+      const nextEntry=RANKS[entry.index+1];
+      const starRange=nextEntry?`${entry.minStars}–${nextEntry.minStars-1}★`:`${entry.minStars}★+`;
+      const extra=getRankDifficulty(entry.index).extraCount;
+      const extras=extra>0?`<span>${tr('p19.rankExtraMinions',{count:extra})}</span>`:'';
+      const frag=entry.fragmentMultiplier>1?`<span>${tr('p19.rankFragBoost',{mult:entry.fragmentMultiplier})}</span>`:'';
+      const mapTag=entry.index===0?`<span class="rank-ladder-map">${tr('p19.rankInitMap',{map:t(`p3.map.${entry.mapId}`)})}</span>`
+        :(entry.index===10||entry.index===20||entry.index===30)?`<span class="rank-ladder-map is-unlock">🗺 ${tr('p19.rankUnlockMap',{map:t(`p3.map.${entry.mapId}`)})}</span>`:'';
+      const status=isCurrent?`<span class="rank-ladder-pill is-current">${tr('p19.rankCurrent')}</span>`
+        :isReached?`<span class="rank-ladder-pill is-reached">✓</span>`
+        :`<span class="rank-ladder-pill is-upcoming">+${Math.max(1,entry.minStars-profile.stars)}★</span>`;
+      return `<li class="storybook-row-card rank-ladder-row${isCurrent?' is-current-rank':isReached?' is-reached':' is-upcoming'}" data-rank-index="${entry.index}" data-current-rank="${isCurrent}"><span class="rank-ladder-stars">${sceneSticker('ui_star_rank','',18)}<b>${starRange}</b></span><span class="rank-ladder-copy"><strong class="rank-ladder-name">${tr(`rank.${entry.index}`)}</strong><span class="rank-ladder-meta"><span>${tr('p19.rankWinCoins',{coins:entry.winCoins})}</span>${extras}${frag}${mapTag}</span></span><span class="rank-ladder-status">${status}</span></li>`;
+    }).join('');
+    return `<section class="rank-ladder-panel" aria-label="${tr('p19.rankLadderTitle')}"><header class="rank-ladder-head"><div class="rank-ladder-head-copy"><h3>${tr('p19.rankLadderTitle')}</h3><p>${tr('p19.rankLadderSub')}</p></div><button type="button" class="endless-board-refresh rank-ladder-back" data-action="rank-ladder-close">${tr('p19.rankLadderBack')}</button></header><ol class="rank-ladder-list" aria-label="${tr('p19.rankLadderTitle')}">${rows}</ol></section>`;
   }
   private passport(profile:Profile):string {
     const rate=profile.matches?Math.round(profile.wins/profile.matches*100):0,language=getLanguage();

@@ -1,7 +1,7 @@
 import { GridSystem } from './GridSystem';
 import { ECONOMY, getSummonCost, SHOVEL_PRODUCTION, UNITS } from '../config/units';
 import { HEROES } from '../config/heroes';
-import { ENEMIES } from '../config/enemies';
+import { BOX_SEAL_DURATION, ENEMIES } from '../config/enemies';
 import {getMap,GRID_ROWS,GRID_COLS,STAGE} from '../config/maps';
 import {COMBAT_STYLES} from '../config/combat';
 import {progressionFor,getUnlockedBossIds,getUnlockedMinionIds} from '../config/progression';
@@ -11,7 +11,7 @@ import {rollWeapon} from '../config/weapons';
 import {getVillageBuff,type VillageBuffKey,type VillageResourceId} from '../config/village';
 import {AWAKENED_DAMAGE,AWAKENED_RATE,STANDARD_VICTORY_CRESTS,armorPenetration,bossResist,bossSlayerMultiplier,breakthroughAttackMultiplier,capyShieldCooldown,computeBreakthroughChance,endlessCrestsForWave,getMedallionLevel,momentumMultiplier,type BreakthroughChance,type MedallionId} from '../config/medallions';
 import {ELITE_ENEMY_IDS,INGREDIENT_IDS,MAP_SIGNATURE_INGREDIENT,getActiveBroth,getBrothEffect,getKitchenCollectionAura,getUnitCombatFamily,type BrothEffectKey,type IngredientId} from '../config/kitchen';
-import { FIRST_WAVE_PREPARATION, WAVE_DURATION,bossesForWave,waveEnemyCount,minionForWave,getWaveConfig } from '../config/waves';
+import { BOSS_UNSTOPPABLE_TIME, FIRST_WAVE_PREPARATION, WAVE_DURATION,bossesForWave,waveEnemyCount,minionForWave,getWaveConfig } from '../config/waves';
 import { MergeSystem } from './MergeSystem';
 import {CombatRecords} from './CombatRecords';
 import type {OpponentTuning} from '../config/opponents';
@@ -379,7 +379,8 @@ export class BattleEngine {
   addFood(amount:number,side:Side='player'):void { if(side==='player'&&this.actionAllowed()&&Number.isFinite(amount))this.state.sides[side].food=Math.max(0,this.state.sides[side].food+Math.trunc(amount)); }
   skipWave():void {
     if(!this.actionAllowed())return;
-    // Skipping drops pending enemies without kill income or loot.
+    // Skipping drops pending enemies without kill income or loot, and ends any active Dr. Buzzcut temporary clip.
+    this.restoreClippedUnits();
     this.state.enemies=[];
     if(!this.state.endless&&this.state.wave>=10){this.finishByScore();return;}
     this.beginWave(Math.max(1,this.state.wave+1));
@@ -453,15 +454,24 @@ export class BattleEngine {
       }
       enemy.armorBreak=Math.max(0,(enemy.armorBreak??0)-dt);
       if(enemy.hp<=0)continue;
+      enemy.aliveTime=(enemy.aliveTime??0)+dt;
+      if(enemy.boss&&!enemy.knockbackImmune&&(this.state.waveTime+1e-8>=BOSS_UNSTOPPABLE_TIME||enemy.aliveTime+1e-8>=BOSS_UNSTOPPABLE_TIME)){
+        enemy.knockbackImmune=true;enemy.stun=0;
+        this.event({type:'bubble',side:enemy.side,col:enemy.col,row:enemy.row,textKey:'p19.bossUnstoppable',effect:'boss_unstoppable',duration:2.2});
+      }
+      if(enemy.boss&&enemy.knockbackImmune)enemy.stun=0;
       enemy.stun=Math.max(0,enemy.stun-dt);enemy.slow=Math.max(0,enemy.slow-dt);
       if(enemy.boss){enemy.abilityCooldown-=dt;if(enemy.abilityCooldown<=0){this.bossAbility(enemy);enemy.abilityCooldown=ENEMIES[enemy.kind].interval*getRankDifficulty(this.state.rankIndex).bossCooldownScale;}}
       if(enemy.hp<=0)continue;
       const hasteDuration=Math.min(dt,Math.max(0,enemy.hasteTime??0));enemy.hasteTime=Math.max(0,(enemy.hasteTime??0)-dt);
-      if(enemy.stun<=0)enemy.progress+=enemy.speed*(dt+.3*hasteDuration)*(enemy.slow>0?enemy.slowFactor:1)*(this.props.has(enemy.side,'banana_peel')?.88:1)*this.brothEnemySpeed(enemy);
+      const slowMult=(enemy.slow>0?enemy.slowFactor:1)*(this.props.has(enemy.side,'banana_peel')?.88:1)*this.brothEnemySpeed(enemy);
+      const effectiveSlow=enemy.boss&&enemy.knockbackImmune?Math.max(.5,slowMult):slowMult;
+      if(enemy.stun<=0)enemy.progress+=enemy.speed*(dt+.3*hasteDuration)*effectiveSlow;
       Object.assign(enemy,GridSystem.pathPosition(enemy.side,enemy.progress,this.state.mapId));
       this.props.onEnemy(enemy);if(enemy.hp<=0)continue;
       if(enemy.progress>=getMap(this.state.mapId).paths.player.length-1){
         this.state.enemies=this.state.enemies.filter(e=>e.id!==enemy.id);
+        if(enemy.kind==='dr_clippers')this.restoreClippedUnits(enemy.id);
         if(this.blockWithCapyShield(enemy))continue;
         this.adjustOranges(enemy.boss?-2:-1,enemy.side);
         if(this.state.phase==='finished')break;
@@ -507,6 +517,8 @@ export class BattleEngine {
     return true;
   }
   private beginWave(wave:number,grantIncome=true):void {
+    const liveBossIds=new Set(this.state.enemies.filter(e=>e.hp>0).map(e=>e.id));
+    for(const unit of this.state.units)if(unit.clippedLevels&&unit.clippedByBossId!==undefined&&!liveBossIds.has(unit.clippedByBossId))this.restoreClippedUnits(unit.clippedByBossId);
     this.announcedElites.clear();
     this.state.wave=wave;this.state.waveTime=0;this.state.nextSpawn=wave===1?FIRST_WAVE_PREPARATION:1;this.state.spawned=0;
     for(const side of ['player'] as Side[]){
@@ -647,6 +659,7 @@ export class BattleEngine {
       this.event({type:'damage',side:enemy.side,col:enemy.col,row:enemy.row,value:Math.round(damage),hitCue,color:critical?'#f16941':'#fff7da',duration:.65});
     }
     if(enemy.hp<=0){
+      if(enemy.kind==='dr_clippers')this.restoreClippedUnits(enemy.id);
       const owner=this.state.sides[enemy.side];owner.kills++;
       this.dropKillIngredients(enemy);this.dropVillageKill(enemy);
       if(enemy.boss&&this.dropEnabled('armory')){
@@ -750,7 +763,27 @@ export class BattleEngine {
       case 'pepe_king':for(const e of lane){e.slow=awakened?6:4;e.slowFactor=.6;this.applyDot(e,'poison',awakened?6:4,damage*.65,unit);if(awakened)e.armorBreak=6;}break;
     }
   }
-  knockback(enemy:Enemy,amount:number):void { enemy.progress=Math.max(0,enemy.progress-amount);Object.assign(enemy,GridSystem.pathPosition(enemy.side,enemy.progress,this.state.mapId)); }
+  knockback(enemy:Enemy,amount:number):void {
+    if(enemy.boss&&enemy.knockbackImmune)return;
+    enemy.progress=Math.max(0,enemy.progress-amount);Object.assign(enemy,GridSystem.pathPosition(enemy.side,enemy.progress,this.state.mapId));
+  }
+  /** Restores temporary level clips when the Dr. Buzzcut boss that applied them dies or leaves the lane. */
+  private restoreClippedUnits(bossId?:number):void {
+    for(const unit of this.state.units){
+      if(!unit.clippedLevels||unit.clippedLevels<=0)continue;
+      if(bossId!==undefined&&unit.clippedByBossId!==bossId)continue;
+      const max=HEROES[unit.kind]?5:UNITS[unit.kind]?.maxLevel??1;
+      const restored=Math.min(max,unit.level+unit.clippedLevels)-unit.level;
+      unit.level=Math.min(max,unit.level+unit.clippedLevels);
+      delete unit.clippedByBossId;
+      delete unit.clippedLevels;
+      delete unit.statuses.MERGE_LOCK;
+      unit.animation=1;
+      if(restored>0){
+        this.event({type:'purge',side:unit.side,...this.unitPosition(unit),unitId:unit.id,effect:'clip_restore',textKey:'p19.clipRestored',value:restored,color:'#39b56a',duration:1.9});
+      }
+    }
+  }
   private bossAbility(enemy:Enemy):void {
     if(this.props.blockBoss(enemy))return;
     const units=this.state.units.filter(u=>u.side===enemy.side&&u.location.zone==='board');
@@ -770,13 +803,32 @@ export class BattleEngine {
         if(victim){this.state.units=this.state.units.filter(u=>u.id!==victim.id);enemy.hp=Math.min(enemy.maxHp,enemy.hp+enemy.maxHp*.2);enemy.size*=1.15;}break;
       }
       case 'dr_clippers':{
-        const clipped=units.filter(u=>GridSystem.distance(this.unitPosition(u),enemy)<=2).sort((a,b)=>b.level-a.level).slice(0,2);
-        if(clipped.length&&this.resistBossSkill(this.unitPosition(clipped[0])))break;
-        for(const u of clipped){u.level=Math.max(1,u.level-1);u.statuses.MERGE_LOCK=this.resistDuration(5);u.animation=1;}break;
+        const inRange=units.filter(u=>GridSystem.distance(this.unitPosition(u),enemy)<=2).sort((a,b)=>b.level-a.level||a.id-b.id);
+        // Awakened heroes are immune; each non-awakened unit can lose at most 1 temporary level per wave until this boss dies.
+        const clipped=inRange.filter(u=>!u.awakened&&u.level>1&&u.clippedWave!==this.state.wave).slice(0,2);
+        if(clipped.length){
+          if(this.resistBossSkill(this.unitPosition(clipped[0])))break;
+          this.event({type:'boss_skill',side:enemy.side,col:enemy.col,row:enemy.row,effect:'dr_clippers',points:clipped.map(u=>this.unitPosition(u)),duration:1.35});
+          for(const u of clipped){
+            u.level=Math.max(1,u.level-1);
+            u.clippedByBossId=enemy.id;
+            u.clippedLevels=(u.clippedLevels??0)+1;
+            u.clippedWave=this.state.wave;
+            u.statuses.MERGE_LOCK=this.resistDuration(5);
+            u.animation=1;
+            this.event({type:'purge',side:enemy.side,...this.unitPosition(u),unitId:u.id,effect:'clipped',textKey:'p19.clippedDowngrade',color:'#e04f5f',duration:2.1});
+          }
+        }else{
+          const immune=inRange.find(u=>u.awakened);
+          if(immune)this.event({type:'bubble',side:enemy.side,...this.unitPosition(immune),unitId:immune.id,textKey:'p19.awakenedImmuneClip',duration:1.6});
+        }
+        break;
       }
       case 'box_kraken':{
-        const victim=units.sort((a,b)=>b.level-a.level||this.stats(b).damage-this.stats(a).damage)[0];
-        if(victim)victim.statuses.SEALED=this.resistDuration(18);break;
+        const unsealed=units.filter(u=>!(u.statuses.SEALED));
+        const pool=unsealed.length?unsealed:units;
+        const victim=pool.sort((a,b)=>b.level-a.level||this.stats(b).damage-this.stats(a).damage)[0];
+        if(victim)victim.statuses.SEALED=this.resistDuration(BOX_SEAL_DURATION);break;
       }
       case 'sad_rain_frog':{const wet=this.resistDuration(18);for(const u of units)u.statuses.WET=wet;break;}
       case 'king_skunk':this.state.sides[enemy.side].fog=this.resistDuration(6);break;

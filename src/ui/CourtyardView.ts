@@ -1,7 +1,7 @@
 import type { Profile } from '../core/types';
 import { MAP_IDS } from '../config/maps';
 import { getRank } from '../config/ranks';
-import { getUnlockedMaps } from '../core/PlayerProgression';
+import { getMapUnlockRequirement, getUnlockedMaps } from '../core/PlayerProgression';
 import { avatarSticker, weaponSticker } from '../render/M3Art';
 import { getLanguage, t } from '../i18n/i18n';
 import { escapeHtml as esc } from './art';
@@ -69,10 +69,17 @@ export function courtyardMarkup(profile: Profile, now = Date.now()): string {
   const nextDock = nextLockedFeature(profile, true);
   const lockText = nextDock ? (nextDock.requiresMatchOnly ? t('p19.lockMatch') : t('p19.lockStars', { stars: nextDock.targetStars })) : '';
 
+  const highestStars=Math.max(profile.stars,profile.highestStars);
   const maps=['auto',...MAP_IDS].map(id=>{
     const locked=id!=='auto'&&!unlocked.includes(id as typeof MAP_IDS[number]);
     const fullName=tr(id==='auto'?'p3.auto':`map.${id}`);
-    return `<button type="button" data-action="select-map:${id}" aria-label="${fullName}" title="${fullName}" aria-pressed="${profile.selectedMap===id}" class="${locked?'locked':''}" ${locked?'disabled':''}>${tr(id==='auto'?'p3.auto':`p3.map.${id}`)}${locked?' <span class="map-lock" aria-hidden="true">🔒</span>':''}</button>`;
+    if(!locked){
+      return `<button type="button" data-action="select-map:${id}" aria-label="${fullName}" title="${fullName}" aria-pressed="${profile.selectedMap===id}">${tr(id==='auto'?'p3.auto':`p3.map.${id}`)}</button>`;
+    }
+    const req=getMapUnlockRequirement(id as typeof MAP_IDS[number]);
+    const need=Math.max(1,req.minStars-highestStars);
+    const unlockTip=esc(t('p19.mapUnlockTip',{stars:req.minStars,rank:t(`rank.${req.rankIndex}`),need}));
+    return `<div class="map-chip-wrap is-locked" data-action="locked-map:${id}" title="${unlockTip}"><button type="button" data-action="select-map:${id}" aria-label="${fullName} · ${unlockTip}" title="${unlockTip}" aria-pressed="false" class="locked" disabled>${tr(`p3.map.${id}`)} <span class="map-lock" aria-hidden="true">🔒</span></button><span class="map-lock-tooltip" role="tooltip">🔒 ${unlockTip}</span></div>`;
   }).join('');
 
   const profilePill = hasRank

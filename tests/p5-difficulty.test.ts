@@ -25,29 +25,34 @@ describe('P5 guided first pack and preparation hold',()=>{
 });
 
 describe('P5 rank difficulty and complete wave scheduling',()=>{
-  it.each([[0,1],[5,1.22],[10,1.52],[15,1.88],[20,2.3],[30,3.25],[40,4.4],[50,5.65],[53,6.2]])('rank %i matches its HP anchor', (rank,hp)=>{
-    expect(getRankDifficulty(rank).hpMultiplier).toBe(hp);expect(RANKS[rank].hpMultiplier).toBe(hp);
+  it.each([0,5,10,15,20,30,40,50,53])('rank %i keeps enemy HP flat at 1.0× with zero stat penalty', (rank)=>{
+    expect(getRankDifficulty(rank).hpMultiplier).toBe(1);expect(RANKS[rank].hpMultiplier).toBe(1);
+    expect(getRankDifficulty(rank).speedMultiplier).toBe(1);expect(getRankDifficulty(rank).armorBonus).toBe(0);
+    expect(getRankDifficulty(rank).bossCooldownScale).toBe(1);
   });
-  it('increases all pressure dimensions and rewards, preserving exact count/interval formulas',()=>{
+  it('increases rewards and Waves 1-10 minion count without penalizing enemy stats or endless waves',()=>{
     const sample=[0,10,25,45,53];
     for(let i=1;i<sample.length;i++){
-      const a=getRankDifficulty(sample[i-1]),b=getRankDifficulty(sample[i]);
-      expect(b.hpMultiplier).toBeGreaterThan(a.hpMultiplier);expect(b.speedMultiplier).toBeGreaterThan(a.speedMultiplier);
       expect(waveEnemyCount(10,sample[i])).toBeGreaterThan(waveEnemyCount(10,sample[i-1]));
-      expect(b.bossCooldownScale).toBeLessThan(a.bossCooldownScale);expect(RANKS[sample[i]].winCoins).toBeGreaterThan(RANKS[sample[i-1]].winCoins);
+      expect(waveEnemyCount(11,sample[i])).toBe(waveEnemyCount(11,sample[i-1]));
+      expect(RANKS[sample[i]].winCoins).toBeGreaterThan(RANKS[sample[i-1]].winCoins);
     }
-    for(let r=0;r<54;r++){expect(getRankDifficulty(r).extraCount).toBe(Math.floor(r/4));expect(getRankDifficulty(r).intervalScale).toBeCloseTo(Math.max(.62,1-r*.007));}
+    for(let r=0;r<54;r++){
+      const extra=Math.min(8,Math.floor(r/6));
+      expect(getRankDifficulty(r).extraCount).toBe(extra);
+      expect(getRankDifficulty(r).intervalScale).toBeCloseTo(Math.max(.76,1-extra*.03));
+    }
     expect([RANKS[0].winCoins,RANKS[53].winCoins]).toEqual([60,220]);
     expect(getRankDifficulty(NaN)).toEqual(getRankDifficulty(0));expect(getRankDifficulty(99)).toEqual(getRankDifficulty(53));
-    expect(getRankDifficulty(0,{tutorialGuided:true}).hpMultiplier).toBe(.85);expect(getRankDifficulty(10,{tutorialGuided:true}).hpMultiplier).toBe(1.52);
+    expect(getRankDifficulty(0,{tutorialGuided:true}).hpMultiplier).toBe(.85);expect(getRankDifficulty(10,{tutorialGuided:true}).hpMultiplier).toBe(1);
   });
-  it('applies HP, speed, armored reduction and Boss cooldown to spawned enemies and subsequent casts',()=>{
-    const e=new BattleEngine({rankIndex:53,autoWaves:false});e.start();const d=getRankDifficulty(53);
+  it('keeps spawned enemy HP, speed, armor and Boss cooldown fair and penalty-free at max rank',()=>{
+    const e=new BattleEngine({rankIndex:53,autoWaves:false});e.start();
     const crab=e.spawnEnemy('crab','player'),rat=e.spawnEnemy('rat','player'),boss=e.spawnEnemy('buff_roo','player');
-    expect(crab.hp).toBeCloseTo(ENEMIES.crab.hp*d.hpMultiplier);expect(crab.speed).toBeCloseTo(ENEMIES.crab.speed*d.speedMultiplier);
-    expect(crab.armor).toBeCloseTo(ENEMIES.crab.armor+d.armorBonus);expect(rat.armor).toBe(0);
-    expect(boss.abilityCooldown).toBeCloseTo(ENEMIES.buff_roo.interval*d.bossCooldownScale);boss.abilityCooldown=.01;e.tick(.05);
-    expect(boss.abilityCooldown).toBeCloseTo(ENEMIES.buff_roo.interval*d.bossCooldownScale);
+    expect(crab.hp).toBeCloseTo(ENEMIES.crab.hp);expect(crab.speed).toBeCloseTo(ENEMIES.crab.speed);
+    expect(crab.armor).toBeCloseTo(ENEMIES.crab.armor);expect(rat.armor).toBe(0);
+    expect(boss.abilityCooldown).toBeCloseTo(ENEMIES.buff_roo.interval);boss.abilityCooldown=.01;e.tick(.05);
+    expect(boss.abilityCooldown).toBeCloseTo(ENEMIES.buff_roo.interval);
   });
   it('retains rank0 species and mixes early fast / armored / summoned minions at higher ranks',()=>{
     expect(Array.from({length:7},(_,i)=>minionForWave(1,i,0))).toEqual(Array(7).fill('rat'));
@@ -61,7 +66,7 @@ describe('P5 rank difficulty and complete wave scheduling',()=>{
     const e=new BattleEngine({rankIndex:53});e.start();const seen:number[]=[];
     while(e.state.wave===1){e.tick(.05);if(e.state.wave===1)seen.push(e.state.spawned);e.state.enemies=[];}
     expect(Math.max(...seen)).toBe(waveEnemyCount(1,53)-1); // final spawn and next-wave transition are atomic
-    expect(e.state.time).toBeGreaterThan(46);
+    expect(e.state.time).toBeGreaterThan(40);
   });
   it('does not award wave10 before delayed second Boss AND dynamic minion count are exhausted',()=>{
     const e=new BattleEngine({rankIndex:53});e.start();for(let i=1;i<10;i++)e.skipWave();
