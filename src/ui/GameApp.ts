@@ -1504,11 +1504,12 @@ export class GameApp {
       }
       this.action(action);
     });
+    this.canvas.addEventListener('touchmove', event => { if (this.canInteract()) event.preventDefault(); }, { passive: false });
     this.canvas.addEventListener('pointerdown', event => {
       if (!this.canInteract() || !event.isPrimary || event.button !== 0) return;
       event.preventDefault();
       const point = this.point(event);
-      const hit = this.renderer.hitTest(point.x, point.y,{state:this.engine!.state,allowBenchLock:this.tutorialStep==='done'&&!this.selectedProp});
+      const hit = this.renderer.hitTest(point.x, point.y,{state:this.engine!.state,allowBenchLock:this.tutorialStep==='done'&&!this.selectedProp,touch:event.pointerType==='touch'});
       if (!hit) { this.clearSelection(); this.refresh(); return; }
       const unit = this.unitAt(hit);
       this.drag = { pointerId: event.pointerId, start: point, point, id: unit?.id, shovel: hit.kind === 'shovel', moved: false };
@@ -1529,7 +1530,7 @@ export class GameApp {
       const drag = this.drag;
       if (!drag || drag.pointerId !== event.pointerId) return;
       const point = this.point(event);
-      const hit = this.renderer.hitTest(point.x, point.y,{state:this.engine!.state,allowBenchLock:this.tutorialStep==='done'&&!this.selectedProp,dragging:drag.moved});
+      const hit = this.renderer.hitTest(point.x, point.y,{state:this.engine!.state,allowBenchLock:this.tutorialStep==='done'&&!this.selectedProp,dragging:drag.moved,touch:event.pointerType==='touch'});
       this.cancelDrag();
       if (!this.canInteract() || !hit) { if(!drag.moved)this.clearSelection();this.refresh(); return; }
       if (drag.moved) {

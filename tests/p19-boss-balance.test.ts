@@ -3,10 +3,12 @@ import { BattleEngine } from '../src/core/BattleEngine';
 import { BOX_SEAL_DURATION, ENEMIES } from '../src/config/enemies';
 import { getRankDifficulty } from '../src/config/ranks';
 import { BOSS_UNSTOPPABLE_TIME } from '../src/config/waves';
+import { STAGE } from '../src/config/maps';
 import { GridSystem } from '../src/core/GridSystem';
 import { createProfile } from '../src/core/MetaProgression';
 import { getMapUnlockRequirement } from '../src/core/PlayerProgression';
 import { RANKS } from '../src/config/ranks';
+import { StickerRenderer } from '../src/render/StickerRenderer';
 import { courtyardMarkup } from '../src/ui/CourtyardView';
 import { ProfileScreens } from '../src/ui/ProfileScreens';
 import { setLanguage, t } from '../src/i18n/i18n';
@@ -225,5 +227,24 @@ describe('P19.2 Boss balance: Dr. Buzzcut temporary clip, Overtime Boss Unstoppa
     expect(screens.action('rank-ladder-close')).toBe(true);
     expect(screens.isRankLadderOpen()).toBe(false);
     expect(screens.markup('leaderboard')).not.toContain('rank-ladder-panel');
+  });
+
+  it('extends bench hit-testing upward for touch pointers only while keeping desktop mouse hit-testing unchanged', () => {
+    const e = arena();
+    const id = e.grant('hamster').unitId!;
+    const unit = e.state.units.find(u => u.id === id)!;
+    expect(unit.location).toEqual({ zone: 'bench', slot: 0 });
+    const renderer = Object.create(StickerRenderer.prototype) as StickerRenderer;
+    const x = STAGE.benchX + 10; // inside slot 0's left lock-icon column horizontally
+    const gapY = STAGE.benchY - 8; // 602: in the dead gap between board bottom (592) and bench top (610)
+
+    // Desktop mouse (touch omitted/false) stays exact and does not trigger in the gap
+    expect(renderer.hitTest(x, gapY, { state: e.state, allowBenchLock: true, touch: false })).toBeNull();
+    expect(renderer.hitTest(x, gapY, { state: e.state, allowBenchLock: true })).toBeNull();
+
+    // Mobile touch (touch: true) grabs the pet cleanly in the upper buffer without hitting bench-lock
+    expect(renderer.hitTest(x, gapY, { state: e.state, allowBenchLock: true, touch: true })).toEqual({ kind: 'bench', slot: 0 });
+    // Touch directly on the lock icon itself (y >= benchY) still toggles bench-lock
+    expect(renderer.hitTest(x, STAGE.benchY + 10, { state: e.state, allowBenchLock: true, touch: true })).toEqual({ kind: 'bench-lock', slot: 0 });
   });
 });

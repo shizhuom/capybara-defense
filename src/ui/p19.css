@@ -636,3 +636,32 @@
     font-size: 15px;
   }
 }
+
+/* --- Mobile Touch Landscape Bottom Safe-Area Guard (iPhone Home Bar anti-swipe; strictly touch-phone only, never affects desktop) --- */
+@media (pointer: coarse) {
+  .page-shell #battle-canvas,
+  .page-shell #stage {
+    -webkit-touch-callout: none;
+  }
+  .page-shell #battle-canvas {
+    touch-action: none;
+  }
+}
+@media (max-height: 520px) and (orientation: landscape) and (pointer: coarse) {
+  .page-shell,
+  .clean-mode.page-shell {
+    box-sizing: border-box;
+    padding-top: max(2px, env(safe-area-inset-top));
+    padding-bottom: max(30px, calc(env(safe-area-inset-bottom) + 14px));
+    padding-left: env(safe-area-inset-left);
+    padding-right: env(safe-area-inset-right);
+    align-content: start;
+  }
+  .page-shell #stage {
+    width: min(
+      calc(100vw - env(safe-area-inset-left) - env(safe-area-inset-right)),
+      calc((100dvh - max(32px, calc(env(safe-area-inset-bottom) + 16px)) - max(2px, env(safe-area-inset-top))) * 16 / 9)
+    );
+    touch-action: none;
+  }
+}

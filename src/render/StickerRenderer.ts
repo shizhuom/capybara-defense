@@ -64,16 +64,20 @@ export class StickerRenderer {
     this.resize();
   }
 
-  hitTest(x:number,y:number,context?:{state:BattleState;allowBenchLock:boolean;dragging?:boolean}):HitTarget|null {
+  hitTest(x:number,y:number,context?:{state:BattleState;allowBenchLock:boolean;dragging?:boolean;touch?:boolean}):HitTarget|null {
     if (!Number.isFinite(x) || !Number.isFinite(y)) return null;
     const {boardX,boardY,cell,benchX,benchY,benchStep,benchSize,shovelX,shovelY}=STAGE;
-    if (x>=boardX && x<boardX+cell*STAGE.cols && y>=boardY && y<boardY+cell*STAGE.rows)
+    const boardBottom=boardY+cell*STAGE.rows;
+    if (x>=boardX && x<boardX+cell*STAGE.cols && y>=boardY && y<boardBottom)
       return {kind:'cell',col:Math.floor((x-boardX)/cell),row:Math.floor((y-boardY)/cell)};
-    if (y>=benchY && y<benchY+benchSize) {
+    // Touch screens extend the bench grab zone upward into the dead gap below the board (592..610)
+    // so thumbs naturally start higher and stay well clear of the iOS bottom Home Indicator bar.
+    const benchTop=context?.touch?boardBottom:benchY;
+    if (y>=benchTop && y<benchY+benchSize) {
       for(let slot=0;slot<5;slot++) {
         const left=benchX+slot*benchStep;
         if(x>=left && x<left+benchSize){
-          if(context?.allowBenchLock&&!context.dragging&&x<left+26&&y<benchY+26&&context.state.units.some(u=>u.side==='player'&&u.location.zone==='bench'&&u.location.slot===slot))return{kind:'bench-lock',slot};
+          if(context?.allowBenchLock&&!context.dragging&&x<left+26&&y>=benchY&&y<benchY+26&&context.state.units.some(u=>u.side==='player'&&u.location.zone==='bench'&&u.location.slot===slot))return{kind:'bench-lock',slot};
           return {kind:'bench',slot};
         }
       }
