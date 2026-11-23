@@ -52,7 +52,8 @@ export function weaponPose(unit:Unit,seconds:number){
  return {x,y,rotation,extension,recoil,muzzle:style==='ranged_recoil'&&active>1-.12*3.1};
 }
 export function fitSprite(c:CanvasRenderingContext2D,image:HTMLImageElement,width:number,height=width){
- const ratio=Math.min(width/image.naturalWidth,height/image.naturalHeight);c.drawImage(image,-image.naturalWidth*ratio/2,-image.naturalHeight*ratio/2,image.naturalWidth*ratio,image.naturalHeight*ratio);
+ const iw=image.naturalWidth||image.width||1,ih=image.naturalHeight||image.height||1;
+ const ratio=Math.min(width/iw,height/ih);c.drawImage(image,-iw*ratio/2,-ih*ratio/2,iw*ratio,ih*ratio);
 }
 /** Called in pet-local space. Bench, tools and components deliberately have no mounts. */
 export function drawHeldWeapon(c:CanvasRenderingContext2D,unit:Unit,seconds:number,loadout:Partial<BattleLoadout>={}){

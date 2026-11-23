@@ -56,12 +56,20 @@ export class StickerRenderer {
   /** P17: live breakthrough chances supplied by the host for the 「可突破 x%」 labels. */
   private chances:Record<number,number>={};
   private readonly reducedMotion=typeof window!=='undefined'&&typeof window.matchMedia==='function'&&window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  private readonly managedViewport:boolean;
+  private viewportTransform={scale:1,offsetX:0,offsetY:0};
 
-  constructor(private readonly canvas: HTMLCanvasElement) {
+  constructor(private readonly canvas: HTMLCanvasElement, options: { managedViewport?: boolean } = {}) {
     const context = canvas.getContext('2d');
     if (!context) throw new Error('Canvas 2D is required to draw the garden.');
     this.c = context;
+    this.managedViewport = !!options.managedViewport;
     this.resize();
+  }
+
+  /** Used by mini-game hosts that own a full-screen canvas and map the 1280×720 stage into safe areas. */
+  setViewportTransform(scale:number,offsetX:number,offsetY:number):void {
+    this.viewportTransform={scale,offsetX,offsetY};
   }
 
   hitTest(x:number,y:number,context?:{state:BattleState;allowBenchLock:boolean;dragging?:boolean;touch?:boolean}):HitTarget|null {
@@ -101,8 +109,13 @@ export class StickerRenderer {
     this.animationPaused=state.phase==='paused';this.battleMap=state.mapId;
     this.observeOranges(state,dt);
     const c=this.c;
-    c.setTransform(this.pixelRatio,0,0,this.pixelRatio,0,0);
-    c.clearRect(0,0,STAGE.width,STAGE.height);
+    if(this.managedViewport){
+      const {scale,offsetX,offsetY}=this.viewportTransform;
+      c.setTransform(scale,0,0,scale,offsetX,offsetY);
+    }else{
+      c.setTransform(this.pixelRatio,0,0,this.pixelRatio,0,0);
+      c.clearRect(0,0,STAGE.width,STAGE.height);
+    }
     c.lineCap='round';c.lineJoin='round';c.textBaseline='middle';
     this.drawPaper(state.mapId);
     this.drawBoard(state,seconds);
@@ -142,6 +155,7 @@ export class StickerRenderer {
   }
 
   private resize():void {
+    if(this.managedViewport)return;
     const ratio=clamp(typeof window==='undefined'?1:window.devicePixelRatio||1,1,2.5);
     if(this.pixelRatio===ratio && this.canvas.width===Math.round(STAGE.width*ratio) && this.canvas.height===Math.round(STAGE.height*ratio)) return;
     this.pixelRatio=ratio;
@@ -157,7 +171,14 @@ export class StickerRenderer {
   drawPreview(mapId:MapId,seconds:number,oranges=3):void {
     this.resize();this.battleId='';this.lastSeconds=seconds;this.sceneSeconds=seconds;this.unitPositions.clear();
     this.enemyMotion.clear();this.unitMotion.clear();this.dust=[];this.previousOranges=null;this.orangeMotions=[];
-    const c=this.c;c.setTransform(this.pixelRatio,0,0,this.pixelRatio,0,0);c.clearRect(0,0,STAGE.width,STAGE.height);
+    const c=this.c;
+    if(this.managedViewport){
+      const {scale,offsetX,offsetY}=this.viewportTransform;
+      c.setTransform(scale,0,0,scale,offsetX,offsetY);
+    }else{
+      c.setTransform(this.pixelRatio,0,0,this.pixelRatio,0,0);
+      c.clearRect(0,0,STAGE.width,STAGE.height);
+    }
     c.lineCap='round';c.lineJoin='round';c.textBaseline='middle';
     drawSplashScene(c,this.assets,mapId,seconds,oranges);
   }
@@ -847,7 +868,8 @@ export class StickerRenderer {
   }
 
   private drawImage(image:HTMLImageElement,width:number,height:number,x=0,y=0):void {
-    const ratio=Math.min(width/image.naturalWidth,height/image.naturalHeight),w=image.naturalWidth*ratio,h=image.naturalHeight*ratio;
+    const iw=image.naturalWidth||image.width||1,ih=image.naturalHeight||image.height||1;
+    const ratio=Math.min(width/iw,height/ih),w=iw*ratio,h=ih*ratio;
     this.c.drawImage(image,x-w/2,y-h/2,w,h);
   }
 

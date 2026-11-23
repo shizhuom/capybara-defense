@@ -1,5 +1,8 @@
 node_modules/
 dist/
+dist-wx/
+dist-bl/
+.minigame-assets-cache/
 .npm-cache/
 .runtime/
 verification/*.png
