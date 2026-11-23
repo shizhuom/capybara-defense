@@ -123,18 +123,22 @@ describe('Mini-Game Phase 2: Canvas UI Toolkit, Full Menu, Battle Loop, Tutorial
       expect(h.app.getDebugState().tutorialStep).toBe(2);
       expect(h.app.getDebugState().battleState?.units.length).toBe(5);
 
-      // Open Pause modal via top-right pause button (wx reserves capsule margin ~108 -> rightEdge = 1172, pause center ~1145)
+      // Tap a summoned pet on bench slot 0 -> must NOT open any modal or right-side stats card
+      h.stepFrame(130);
+      h.tap(298, 655);
+      expect(h.app.getDebugState().modal).toBe(null);
+
+      // Open Pause modal via top-right pause button (wx reserves capsule margin ~108 -> rightEdge = 1172, pause center ~1143, y=34)
       h.stepFrame(140);
       const vp = h.platform.viewport();
       expect(vp.screenWidth).toBe(1280);
-      // Pause button sits at rightEdge - 54..rightEdge -> x = 1172 - 27 = 1145, y = 32
-      h.tap(1145, 32);
+      h.tap(1143, 34);
       expect(h.app.getDebugState().modal).toBe('pause');
       expect(h.app.getDebugState().battleState?.phase).toBe('paused');
 
-      // Resume via modal resume button (x=470, y=540)
+      // Resume via P18 Pause modal resume button (x=415, y=586)
       h.stepFrame(160);
-      h.tap(470, 540);
+      h.tap(415, 586);
       expect(h.app.getDebugState().modal).toBe(null);
       expect(h.app.getDebugState().battleState?.phase).toBe('playing');
     } finally {
@@ -159,34 +163,35 @@ describe('Mini-Game Phase 2: Canvas UI Toolkit, Full Menu, Battle Loop, Tutorial
     const h = createHarness(veteran);
     try {
       h.stepFrame(100);
-      // Open Recipes from bottom courtyard dock (first dock item)
-      h.tap(195, 650);
+      // Open Recipes from bottom-left circular medallion dock (1st medallion center x=68, y=630)
+      h.tap(68, 630);
       h.stepFrame(120);
-      // Start battle cleanly with equipped props (also test Settings directly on menu!)
-      // Close recipes if opened, or tap Start
-      if (h.app.getDebugState().modal === 'recipes') {
-        h.tap(1050, 102); // close × button on recipes modal
-        h.stepFrame(140);
-      }
+      expect(h.app.getDebugState().modal).toBe('recipes');
+      // Close Recipes via Yuzu Close medallion at top-right (x=1158, y=52)
+      h.tap(1158, 52);
+      h.stepFrame(140);
       expect(h.app.getDebugState().modal).toBe(null);
 
-      // Tap Start button (center x=640, y=484)
-      h.tap(640, 484);
+      // Tap Start button (center x=640, y=548)
+      h.tap(640, 548);
       await vi.waitFor(() => expect(h.app.getDebugState().screen).toBe('battle'));
       h.stepFrame(160);
+      // Tap once to dismiss the opening battle clash curtain immediately
+      h.tap(640, 360);
+      h.stepFrame(180);
 
       // Returning profile skips tutorial and renders active/passive props + sprinkler without throwing
       expect(h.app.getDebugState().tutorialStep).toBe('done');
       const state = h.app.getDebugState().battleState!;
       expect(state.sides.player.loadout.equippedActiveProps).toEqual(['glue_trap', 'catnip']);
 
-      // Tap Sprinkler (x=80, y=268) -> activates free sprinkler
-      h.tap(80, 268);
+      // Tap Sprinkler (x=86, y=274) -> activates free sprinkler
+      h.tap(86, 274);
       expect(state.sides.player.sprinklerUsed).toBe(true);
 
-      // Tap self-cast active prop Catnip (2nd active prop slot at y=388, x=80) -> casts immediately!
-      h.stepFrame(180);
-      h.tap(80, 420);
+      // Tap self-cast active prop Catnip (2nd active prop slot at x=86, y=465) -> casts immediately!
+      h.stepFrame(200);
+      h.tap(86, 465);
       expect(state.sides.player.catnipTime).toBeGreaterThan(0);
 
       // Simulate Wave 10 victory -> banks standard rewards & shows Endless Offer modal!
@@ -194,12 +199,12 @@ describe('Mini-Game Phase 2: Canvas UI Toolkit, Full Menu, Battle Loop, Tutorial
         h.app.getDebugState().battleState!.wave = 10;
       }
       // Surrender triggers defeat result cleanly (test Pause -> Surrender -> Result modal)
-      h.tap(1145, 32); // pause
-      h.stepFrame(200);
+      h.tap(1143, 34); // pause
+      h.stepFrame(220);
       expect(h.app.getDebugState().modal).toBe('pause');
-      h.tap(840, 540); // surrender button
+      h.tap(903, 586); // surrender button
       expect(h.app.getDebugState().modal).toBe('result');
-      h.stepFrame(220); // draw full settlement modal cleanly
+      h.stepFrame(240); // draw full settlement modal cleanly
     } finally {
       h.cleanup();
     }

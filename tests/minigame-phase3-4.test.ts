@@ -124,8 +124,8 @@ describe('Mini-Game Phases 3 & 4: All 7 Meta Hubs, P19 Onboarding, Online Leader
       h.stepFrame(100);
       expect(h.app.getDebugState().modal).toBe('onboard');
 
-      // Tap "Try it now" button (px=350, pw=580, button at x=578..894, y=482..534)
-      h.tap(720, 506);
+      // Tap "Try it now" button (px=296, pw=688, button at x=544..956, y=535..591)
+      h.tap(750, 563);
       expect(h.app.getDebugState().modal).toBe('armory');
       // Starter gift granted 2 Fly Swatter fragments and unlocked m01_swatter!
       expect(h.app.getDebugState().profile.unlockedWeapons).toContain('m01_swatter');
@@ -133,7 +133,7 @@ describe('Mini-Game Phases 3 & 4: All 7 Meta Hubs, P19 Onboarding, Online Leader
 
       // Render Armory and equip m01_swatter on Kung-Fu Po (1st hero card at right panel)
       h.stepFrame(120);
-      h.tap(860, 520);
+      h.tap(820, 524);
       expect(h.app.getDebugState().profile.equippedWeapons.kungfu_po).toBe('m01_swatter');
     } finally {
       h.cleanup();
@@ -169,10 +169,10 @@ describe('Mini-Game Phases 3 & 4: All 7 Meta Hubs, P19 Onboarding, Online Leader
       // 1. Market: switch to Gacha & spin using free ticket
       h.app.openHub('market');
       h.stepFrame(100);
-      h.tap(480, 148); // Gacha tab
+      h.tap(554, 138); // Honey-Oak Gacha tab
       h.stepFrame(120);
       expect(h.app.getDebugState().marketTab).toBe('gacha');
-      h.tap(448, 390); // center Spin button
+      h.tap(416, 424); // center Spin button
       expect(h.app.getDebugState().profile.freeLotteryTickets).toBe(1);
 
       // 2. Village: collect offline harvest + switch to Build tab + upgrade Bamboo Pool
@@ -180,47 +180,47 @@ describe('Mini-Game Phases 3 & 4: All 7 Meta Hubs, P19 Onboarding, Online Leader
       h.app.openHub('village');
       h.stepFrame(140);
       expect(h.subpackages).toContain('maps');
-      h.tap(1020, 616); // Harvest Collect button
+      h.tap(1020, 626); // Harvest Collect button
       expect(h.app.getDebugState().profile.coins).toBeGreaterThan(coinsBeforeHarvest);
-      h.tap(440, 144); // Facilities tab
+      h.tap(549, 138); // Honey-Oak Facilities tab
       h.stepFrame(160);
       expect(h.app.getDebugState().villageTab).toBe('build');
 
       // 3. Kitchen: brew Yuzu Calm Soak Lv.1 & verify auto-equip
       h.app.openHub('kitchen');
       h.stepFrame(180);
-      h.tap(545, 340); // Brew Lv.1 on 1st card (dish_yuzu_bath)
+      h.tap(554, 364); // Brew Lv.1 on 1st card (dish_yuzu_bath)
       expect(h.app.getDebugState().profile.unlockedBroths).toContain('dish_yuzu_bath');
       expect(h.app.getDebugState().profile.activeBrothId).toBe('dish_yuzu_bath');
 
       // 4. Medallions: upgrade Ember Breakthrough to Lv.1
       h.app.openHub('medallions');
       h.stepFrame(200);
-      h.tap(540, 290); // Upgrade button on 1st medallion card
+      h.tap(535, 288); // Upgrade button on 1st medallion card
       expect(h.app.getDebugState().profile.endlessMedallions.med_breakthrough_atk).toBe(1);
 
       // 5. Leaderboard: syncs via wx.request, switches to Endless & 54-Rank Ladder, renames via wx.showKeyboard, and shares
       h.app.openHub('leaderboard');
       h.stepFrame(220);
       await vi.waitFor(() => expect(h.app.getDebugState().modal).toBe('leaderboard'));
-      h.tap(920, 84); // Rename button -> triggers wx.showKeyboard -> sets '温泉水豚王'
+      h.tap(945, 51); // Rename button -> triggers wx.showKeyboard -> sets '温泉水豚王'
       await vi.waitFor(() => expect(h.app.getDebugState().profile.nickname).toBe('温泉水豚王'));
-      h.tap(680, 144); // 54-Rank Ladder tab
+      h.tap(756, 138); // Honey-Oak 54-Rank Ladder tab
       h.stepFrame(240);
       expect(h.app.getDebugState().leaderboardTab).toBe('ladder');
 
       // 6. Keeper Profile: renders 16-avatar wall and shares card via wx.shareAppMessage
       h.app.openHub('profile');
       h.stepFrame(260);
-      h.tap(950, 152); // Share card button
+      h.tap(1042, 242); // Share card button
       expect(h.shared.length).toBeGreaterThanOrEqual(1);
 
       // 7. Full 4-tab Compendium renders Enemies & Rules cleanly without throwing
       h.app.openHub('recipes');
       h.stepFrame(280);
-      h.tap(600, 156); // Enemies tab
+      h.tap(699, 138); // Honey-Oak Enemies tab
       h.stepFrame(300);
-      h.tap(770, 156); // Rules tab
+      h.tap(893, 138); // Honey-Oak Rules tab
       h.stepFrame(320);
 
       // Share payload builder sanity check

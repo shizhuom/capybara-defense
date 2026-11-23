@@ -55,6 +55,7 @@ import {
 import type { BattleState, MapId, Profile, Unit, UnitLocation } from '../core/types';
 import { getLanguage, setLanguage, t } from '../i18n/i18n';
 import { StickerRenderer, type HitTarget } from '../render/StickerRenderer';
+import { getMusicMode } from '../ui/BattleHUD';
 import { EndlessLeaderboardClient } from '../ui/EndlessLeaderboardClient';
 import { nextBattleSpeed } from '../ui/P13HUD';
 import {
@@ -160,6 +161,7 @@ export class MinigameApp {
   private expandedPassiveId?: string;
   private tutorialStep: TutorialStep = 'done';
   private reviveUsedThisBattle = false;
+  private curtainRemaining = 0;
   private drag?: DragState;
   private toast: ToastMessage | null = null;
   private settlement: SettlementMeta = {
@@ -427,6 +429,9 @@ export class MinigameApp {
       this.toast.remaining -= rawDt;
       if (this.toast.remaining <= 0) this.toast = null;
     }
+    if (this.curtainRemaining > 0) {
+      this.curtainRemaining = Math.max(0, this.curtainRemaining - rawDt);
+    }
     this.scroll.tick(rawDt);
 
     if (this.screen === 'battle' && this.engine && this.engine.state.phase === 'playing' && !this.modal) {
@@ -436,6 +441,9 @@ export class MinigameApp {
         this.handleBattleFinished(this.engine.state);
       }
     }
+
+    const browsing = this.screen !== 'battle' || this.modal !== null;
+    this.platform.audio.setMusicMode?.(getMusicMode(this.engine?.state, browsing));
 
     this.drawFrame();
     this.rafId = this.platform.requestFrame(nextTs => this.loop(nextTs));
@@ -542,12 +550,12 @@ export class MinigameApp {
         profile: this.profile,
         elapsed: this.elapsedSec,
         speed: this.speed,
-        selectedId: this.selectedId,
         shovelSelected: this.shovelSelected,
         activePropId: this.activePropId,
         expandedPassiveId: this.expandedPassiveId,
         tutorialStep: this.tutorialStep,
         capsuleRightMargin: this.capsuleRightMargin(),
+        curtainRemaining: this.curtainRemaining,
       });
     }
 
@@ -571,6 +579,7 @@ export class MinigameApp {
         battleLesson: this.battleLesson,
         devUnlocked: this.devUnlocked,
         isTestSave: isTestProfile(this.platform.storage),
+        elapsed: this.elapsedSec,
       });
     } else {
       this.modalLayout = {};
@@ -626,6 +635,7 @@ export class MinigameApp {
     this.modal = null;
     this.modalReturnTo = null;
     this.reviveUsedThisBattle = false;
+    this.curtainRemaining = guided ? 0 : 0.85;
     this.selectedId = undefined;
     this.shovelSelected = false;
     this.activePropId = undefined;
@@ -1347,22 +1357,8 @@ export class MinigameApp {
       }
       return;
     }
+    if (id === 'battle:skip-curtain') { this.curtainRemaining = 0; return; }
     if (id === 'battle:cancel-mode') { this.activePropId = undefined; this.shovelSelected = false; return; }
-    if (id === 'battle:clear-select') { this.selectedId = undefined; return; }
-    if (id === 'battle:lock-selected' && this.engine && this.selectedId !== undefined) {
-      const u = this.engine.state.units.find(x => x.id === this.selectedId);
-      if (u && u.location.zone === 'bench') {
-        const res = this.engine.toggleBenchLock(u.location.slot);
-        if (res.ok) this.showToast(t(res.key), 'info', 1.8);
-      }
-      return;
-    }
-    if (id === 'battle:store-shovel' && this.engine && this.selectedId !== undefined) {
-      const res = this.engine.storeShovel(this.selectedId);
-      if (res.ok) { this.platform.audio.play('shovel'); this.selectedId = undefined; }
-      else this.showToast(t(res.key), 'warn', 1.8);
-      return;
-    }
     if (id.startsWith('battle:passive:')) {
       const pid = id.slice('battle:passive:'.length);
       this.expandedPassiveId = this.expandedPassiveId === pid ? undefined : pid;
@@ -1546,6 +1542,7 @@ export class MinigameApp {
     this.activePropId = undefined;
     this.expandedPassiveId = undefined;
     this.tutorialStep = 'done';
+    this.curtainRemaining = 0;
     this.drag = undefined;
     this.checkMenuOnboarding();
   }

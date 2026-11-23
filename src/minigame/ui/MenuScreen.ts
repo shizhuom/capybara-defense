@@ -1,15 +1,18 @@
+import { BROTHS, BROTH_IDS, isBrothId } from '../../config/kitchen';
 import { MAP_IDS } from '../../config/maps';
 import { getRank } from '../../config/ranks';
+import { VILLAGE_MAX_STARS } from '../../config/village';
 import {
   isFeatureUnlocked,
   isRankHubUnlocked,
   nextLockedFeature,
   type FeatureId,
 } from '../../core/FeatureUnlocks';
-import { canBrewOrUpgradeAnyBroth } from '../../core/KitchenProgression';
+import { canBrewOrUpgradeAnyBroth, getBrothLevel } from '../../core/KitchenProgression';
 import { upgradeableMedallions } from '../../core/MedallionProgression';
 import { getMapUnlockRequirement, getUnlockedMaps } from '../../core/PlayerProgression';
-import { villageBadge } from '../../core/VillageProgression';
+import { villageBadge, villageStars } from '../../core/VillageProgression';
+import { formatCompactNumber } from '../../core/formatNumber';
 import type { MapId, Profile } from '../../core/types';
 import { getLanguage, t } from '../../i18n/i18n';
 import { assets } from '../../render/AssetRegistry';
@@ -17,7 +20,9 @@ import { INK, round } from '../../render/StickerArt';
 import {
   BTN_STYLES,
   PALETTE,
+  UI_FONT,
   drawButton,
+  drawIconLabel,
   drawSpriteContain,
   drawText,
   type UiHitManager,
@@ -27,23 +32,23 @@ export interface MenuRenderContext {
   profile: Profile;
   elapsed: number;
   muted: boolean;
-  /** Top-right safe reserve (in stage px) so buttons never sit underneath WeChat's floating capsule. */
   capsuleRightMargin: number;
 }
 
-interface DockItem {
+interface MedallionDockItem {
   id: string;
   icon: string;
   label: string;
-  feature?: FeatureId;
+  badge?: string;
+  badgeColor?: string;
+  badgeIcon?: string;
   locked?: boolean;
   lockTag?: string;
-  badge?: string;
 }
 
 /**
- * Full Courtyard Menu rendered directly on Canvas over the live animated garden preview.
- * Follows P19 progressive visibility: Fresh Start stays ultra clean; Match 1+ opens map selector & feature dock.
+ * 1:1 Web Storybook Courtyard Start Screen (`CourtyardView.ts` + `p18-garden-wood.css`),
+ * tuned with larger, ultra-legible mobile typography and unobstructed soaking capybara panorama.
  */
 export function drawMenuScreen(
   c: CanvasRenderingContext2D,
@@ -52,248 +57,423 @@ export function drawMenuScreen(
 ): void {
   const { profile, elapsed, muted, capsuleRightMargin } = ctx;
   const lang = getLanguage();
-  const isFreshStart = (profile.matches ?? 0) === 0 && (profile.stars ?? 0) === 0;
+  const zh = lang === 'zh-CN';
+  const hasRank = isRankHubUnlocked(profile);
   const rank = getRank(profile.stars);
 
-  // Subtle warm top vignette so HUD pills stay super legible over bright foliage
-  const topGrad = c.createLinearGradient(0, 0, 0, 110);
-  topGrad.addColorStop(0, 'rgba(38,24,12,0.42)');
-  topGrad.addColorStop(1, 'rgba(38,24,12,0)');
+  // Subtle top vignette for readability over sky & cherry blossoms
+  const topGrad = c.createLinearGradient(0, 0, 0, 108);
+  topGrad.addColorStop(0, 'rgba(36,22,10,0.38)');
+  topGrad.addColorStop(1, 'rgba(36,22,10,0)');
   c.fillStyle = topGrad;
-  c.fillRect(0, 0, 1280, 110);
+  c.fillRect(0, 0, 1280, 108);
 
-  // ── 1. TOP-LEFT KEEPER PASSPORT / RANK & COINS PILL ───────────────────────
-  if (isRankHubUnlocked(profile)) {
-    const pillX = 20, pillY = 16, pillW = 356, pillH = 56;
-    round(c, pillX, pillY + 3, pillW, pillH, 28, 'rgba(54,34,16,0.34)', 'transparent', 0);
-    round(c, pillX, pillY, pillW, pillH, 28, 'rgba(255,246,225,0.94)', PALETTE.woodDark, 2.5);
-    // Avatar circle
-    round(c, pillX + 6, pillY + 6, 44, 44, 22, '#f2d9a2', PALETTE.woodDark, 2);
-    if (!drawSpriteContain(c, `avatar_${profile.avatarId}`, pillX + 8, pillY + 8, 40, 40)) {
-      drawSpriteContain(c, 'avatar_capybara', pillX + 8, pillY + 8, 40, 40);
+  // ── 1. TOP-LEFT KEEPER PASSPORT PILL (matches p19_03 exactly!) ────────────
+  if (hasRank) {
+    const px = 22, py = 14, pw = 320, ph = 70;
+    round(c, px, py + 4, pw, ph, 35, 'rgba(46,26,10,0.34)', 'transparent', 0);
+    round(c, px, py, pw, ph, 35, 'rgba(255,248,232,0.95)', '#5c3b1e', 3);
+
+    // Circular avatar seal
+    round(c, px + 6, py + 6, 58, 58, 29, '#f6e0b3', '#5c3b1e', 2.6);
+    if (!drawSpriteContain(c, `avatar_${profile.avatarId}`, px + 9, py + 9, 52, 52)) {
+      drawSpriteContain(c, 'avatar_capybara', px + 9, py + 9, 52, 52);
     }
-    drawText(c, t(`rank.${rank.index}`), pillX + 62, pillY + 20, 16, PALETTE.ink, 'left', 900);
-    const sub = `★ ${profile.stars}   🪙 ${profile.coins}${profile.winStreak >= 2 ? `   🔥${profile.winStreak}` : ''}`;
-    drawText(c, sub, pillX + 62, pillY + 41, 14, PALETTE.inkSoft, 'left', 800);
-    hits.add({ id: 'menu:profile', x: pillX, y: pillY, w: pillW, h: pillH });
-  } else {
-    // Minimal cozy badge on Match 0
-    round(c, 20, 16, 204, 44, 22, 'rgba(255,246,225,0.9)', PALETTE.woodDark, 2);
-    drawText(c, `🍊 ${t('menu.new')}`, 122, 39, 15, PALETTE.ink, 'center', 800);
+
+    drawText(c, t(`rank.${rank.index}`), px + 76, py + 24, 20, PALETTE.ink, 'left', 900);
+    const coinsW = drawIconLabel(c, 'ui_coin_gold', String(profile.coins), px + 74, py + 50, 22, 18.5, PALETTE.ink);
+    drawIconLabel(c, 'ui_star_rank', String(profile.stars), px + 74 + coinsW + 16, py + 50, 22, 18.5, PALETTE.ink);
+    hits.add({ id: 'menu:profile', x: px, y: py, w: pw, h: ph });
   }
 
-  // ── 2. TOP-RIGHT UTILITY BAR (respects WeChat capsule margin!) ────────────
+  // ── 2. TOP-RIGHT SYSTEM CONTROLS (Web segmented [中|EN] + ⚙ + Mute + Share) ─
   const rightEdge = 1280 - Math.max(20, capsuleRightMargin);
-  const langW = 80;
-  const setW = 48;
-  const muteW = 48;
-  const shareW = 48;
-  const btnH = 44;
   const btnY = 16;
+  const btnH = 48;
+  const sqW = 50;
 
-  drawButton(c, hits, 'menu:lang', rightEdge - langW, btnY, langW, btnH, lang === 'zh-CN' ? 'EN' : '中文', {
+  // Settings gear (rightmost, matching p19_01!)
+  drawButton(c, hits, 'menu:settings', rightEdge - sqW, btnY, sqW, btnH, '⚙', {
     ...BTN_STYLES.cream,
     radius: 14,
-    fontSize: 16,
-  });
-  drawButton(c, hits, 'menu:settings', rightEdge - langW - 8 - setW, btnY, setW, btnH, '⚙', {
-    ...BTN_STYLES.cream,
-    radius: 14,
-    fontSize: 20,
-  });
-  drawButton(c, hits, 'menu:mute', rightEdge - langW - 16 - setW - muteW, btnY, muteW, btnH, muted ? '🔇' : '🔊', {
-    ...BTN_STYLES.cream,
-    radius: 14,
-    fontSize: 19,
-  });
-  drawButton(c, hits, 'menu:share', rightEdge - langW - 24 - setW - muteW - shareW, btnY, shareW, btnH, '📤', {
-    ...BTN_STYLES.cream,
-    radius: 14,
-    fontSize: 18,
+    fontSize: 24,
   });
 
-  // ── 3. TITLE LOGO (CENTER TOP) ────────────────────────────────────────────
-  const logoId = lang === 'zh-CN' ? 'title_logo_zh' : 'title_logo_en';
+  // Segmented Language Switch [中 | EN]
+  const segW = 104;
+  const segX = rightEdge - sqW - 10 - segW;
+  round(c, segX, btnY + 3, segW, btnH, 14, '#b89464', '#5c3b1e', 2);
+  round(c, segX, btnY, segW, btnH, 14, '#fff8e8', '#5c3b1e', 2.6);
+  const activeHalfX = zh ? segX + 4 : segX + segW / 2;
+  round(c, activeHalfX, btnY + 4, segW / 2 - 4, btnH - 8, 10, '#6a4526', 'transparent', 0);
+  drawText(c, '中', segX + segW * 0.25 + 1, btnY + btnH / 2 + 1, 18, zh ? '#fffdf6' : '#5a3a1e', 'center', 900);
+  drawText(c, 'EN', segX + segW * 0.75 - 1, btnY + btnH / 2 + 1, 17, zh ? '#5a3a1e' : '#fffdf6', 'center', 900);
+  hits.add({ id: 'menu:lang', x: segX, y: btnY, w: segW, h: btnH });
+
+  // Mute & Share compact buttons with hand-inked storybook vector icons (zero OS emoji mismatch!)
+  const muteX = segX - 10 - sqW;
+  drawButton(c, hits, 'menu:mute', muteX, btnY, sqW, btnH, '', { ...BTN_STYLES.cream, radius: 14 });
+  drawVectorSpeaker(c, muteX + sqW / 2, btnY + btnH / 2 + (hits.isPressed('menu:mute') ? 3 : 0), muted);
+
+  const shareX = segX - 20 - sqW * 2;
+  drawButton(c, hits, 'menu:share', shareX, btnY, sqW, btnH, '', { ...BTN_STYLES.cream, radius: 14 });
+  drawVectorShare(c, shareX + sqW / 2, btnY + btnH / 2 + (hits.isPressed('menu:share') ? 3 : 0));
+
+  // ── 3. OVERSIZED TITLE LOGO (matches p19_01 / p19_03!) ────────────────────
+  const logoId = zh ? 'title_logo_zh' : 'title_logo_en';
   const logo = assets.get(logoId);
-  const logoY = isFreshStart ? 78 : 24;
   const bob = Math.sin(elapsed * 2.1) * 4;
   if (logo) {
     const iw = logo.naturalWidth || logo.width || 960;
     const ih = logo.naturalHeight || logo.height || 320;
-    const w = isFreshStart ? 590 : 490;
+    const w = 640;
     const h = w * (ih / iw);
-    c.drawImage(logo, (1280 - w) / 2, logoY + bob, w, h);
+    c.drawImage(logo, (1280 - w) / 2, 18 + bob, w, h);
   } else {
-    drawText(c, t('app.title'), 640, logoY + 84 + bob, 56, '#fff7dc', 'center', 900, INK, 8);
+    drawText(c, t('app.title'), 640, 120 + bob, 60, '#fff7dc', 'center', 900, INK, 8);
   }
 
-  // Primary Start Button (sits cleanly below the soaking capybara)
-  const startW = isFreshStart ? 350 : 288;
-  const startH = isFreshStart ? 140 : 108;
+  // ── 4. BIG ILLUSTRATED START BUTTON (centered on pier below capybara!) ────
+  const startW = 336;
+  const startH = 134;
   const startX = (1280 - startW) / 2;
-  const startY = isFreshStart ? 470 : 430;
+  const startY = hasRank ? 482 : 494;
   const pressedStart = hits.isPressed('menu:start');
   const pulse = pressedStart ? 0.96 : 1 + Math.sin(elapsed * 2.6) * 0.02;
 
   hits.add({ id: 'menu:start', x: startX, y: startY, w: startW, h: startH });
-  const startArt = assets.get(lang === 'zh-CN' ? 'ui_btn_start_zh' : 'ui_btn_start_en');
+  const startArt = assets.get(zh ? 'ui_btn_start_zh' : 'ui_btn_start_en');
   c.save();
   c.translate(startX + startW / 2, startY + startH / 2 + (pressedStart ? 3 : 0));
   c.scale(pulse, pulse);
   if (startArt) {
     c.drawImage(startArt, -startW / 2, -startH / 2, startW, startH);
   } else {
-    round(c, -150, -46, 300, 92, 28, '#f4c855', PALETTE.woodDark, 4);
-    drawText(c, t('menu.start'), 0, 2, 30, PALETTE.ink, 'center', 900);
+    round(c, -152, -48, 304, 96, 28, '#f4c855', PALETTE.woodDark, 4);
+    drawText(c, t('menu.start'), 0, 2, 32, PALETTE.ink, 'center', 900);
   }
   c.restore();
 
-  // Map Selector Strip (compact single-row bar below Start, leaving capybara 100% visible)
-  const unlockedMaps = getUnlockedMaps(profile);
-  if (!isFreshStart) {
-    drawMapSelector(c, hits, profile, unlockedMaps, 546);
+  // ── 5. BOTTOM-CENTER COMPACT MAP SIGNPOST BAR (matches p19_03 exactly!) ───
+  if (hasRank) {
+    drawCompactMapBar(c, hits, profile, 640);
   }
 
-  // ── 6. BOTTOM COURTYARD FEATURE DOCK (P19 Progressive Unlocks) ────────────
-  if (!isFreshStart) {
-    drawCourtyardDock(c, hits, profile, 608);
-  } else {
-    // On Fresh Start: subtle cozy tagline pill
-    round(c, (1280 - 410) / 2, 636, 410, 38, 19, 'rgba(56,36,18,0.74)', 'rgba(244,210,136,0.7)', 1.5);
-    drawText(c, t('app.subtitle'), 640, 656, 15, '#fff6df', 'center', 700);
+  // ── 6. BOTTOM-LEFT & BOTTOM-RIGHT CIRCULAR MEDALLION DOCKS (matches Web!) ─
+  const hasArmory = isFeatureUnlocked(profile, 'armory');
+  const hasMarket = isFeatureUnlocked(profile, 'market');
+  const hasVillage = isFeatureUnlocked(profile, 'village');
+  const hasKitchen = isFeatureUnlocked(profile, 'kitchen');
+  const hasMedallions = isFeatureUnlocked(profile, 'medallions');
+  const nextDock = nextLockedFeature(profile, true);
+  const lockText = nextDock
+    ? (nextDock.requiresMatchOnly ? t('p19.lockMatch') : t('p19.lockStars', { stars: nextDock.targetStars }))
+    : '';
+
+  const leftDock: MedallionDockItem[] = [
+    { id: 'menu:recipes', icon: 'ui_compendium_book', label: t('p3.guide') },
+  ];
+  if (hasArmory) {
+    leftDock.push({
+      id: 'menu:hub:armory',
+      icon: 'weapon_m10_bamboo_staff',
+      label: t('p3.armory'),
+      badge: `${profile.unlockedWeapons.length}/36`,
+      badgeColor: '#fff8e8',
+    });
+  } else if (nextDock?.id === 'armory') {
+    leftDock.push({ id: 'menu:locked:armory', icon: 'weapon_m10_bamboo_staff', label: t('p3.armory'), locked: true, lockTag: lockText });
+  }
+  if (hasKitchen) {
+    const brewable = canBrewOrUpgradeAnyBroth(profile).brewable.length > 0;
+    const unlocked = (profile.unlockedBroths ?? []).filter(isBrothId).length;
+    leftDock.push({
+      id: 'menu:hub:kitchen',
+      icon: 'ui_kitchen_pot',
+      label: t('p14.dock'),
+      badge: brewable ? t('p14.brewBadge') : `${unlocked}/${BROTH_IDS.length}`,
+      badgeColor: brewable ? '#79be43' : '#fff8e8',
+    });
+  } else if (nextDock?.id === 'kitchen') {
+    leftDock.push({ id: 'menu:locked:kitchen', icon: 'ui_kitchen_pot', label: t('p14.dock'), locked: true, lockTag: lockText });
+  }
+
+  const rightDock: MedallionDockItem[] = [];
+  if (hasVillage) {
+    const vb = villageBadge(profile, Date.now());
+    rightDock.push({
+      id: 'menu:hub:village',
+      icon: 'ui_village_gate',
+      label: t('p16.dock'),
+      badge: vb === 'harvest' ? t('p16.harvestBadge') : vb === 'build' ? t('p16.buildBadge') : `★${villageStars(profile)}/${VILLAGE_MAX_STARS}`,
+      badgeColor: vb === 'harvest' ? '#e59226' : vb === 'build' ? '#79be43' : '#fff8e8',
+    });
+  } else if (nextDock?.id === 'village') {
+    rightDock.push({ id: 'menu:locked:village', icon: 'ui_village_gate', label: t('p16.dock'), locked: true, lockTag: lockText });
+  }
+  if (hasMarket) {
+    rightDock.push({
+      id: 'menu:hub:market',
+      icon: 'ui_shop_bag',
+      label: t('p3.shop'),
+      badge: profile.freeLotteryTickets > 0 ? String(profile.freeLotteryTickets) : undefined,
+      badgeIcon: profile.freeLotteryTickets > 0 ? 'ui_ticket_gacha' : undefined,
+      badgeColor: '#d95443',
+    });
+  } else if (nextDock?.id === 'market') {
+    rightDock.push({ id: 'menu:locked:market', icon: 'ui_shop_bag', label: t('p3.shop'), locked: true, lockTag: lockText });
+  }
+  if (hasRank) {
+    rightDock.push({ id: 'menu:hub:leaderboard', icon: 'ui_trophy_rank', label: t('p3.rank') });
+  }
+
+  // Draw Left Circular Medallions (bottom-left corner)
+  drawMedallionRow(c, hits, leftDock, 26, 588, false);
+  // Draw Right Circular Medallions (bottom-right corner)
+  if (rightDock.length > 0) {
+    drawMedallionRow(c, hits, rightDock, 1280 - 26, 588, true);
+  }
+
+  // Floating Active Broth Pill (above left dock when Kitchen unlocked & broth active)
+  if (hasKitchen && profile.activeBrothId && isBrothId(profile.activeBrothId)) {
+    const lv = getBrothLevel(profile, profile.activeBrothId);
+    if (lv > 0) {
+      drawFloatingCornerPill(
+        c,
+        hits,
+        'menu:hub:kitchen',
+        26,
+        522,
+        profile.activeBrothId,
+        `${t(`broth.${profile.activeBrothId}`)} Lv.${lv}`,
+        BROTHS[profile.activeBrothId].bathColor,
+      );
+    }
+  }
+
+  // Floating Endless Medallion Hall Pill (above right dock when unlocked or next preview!)
+  if (hasMedallions) {
+    const ready = upgradeableMedallions(profile).length > 0;
+    const crests = formatCompactNumber(profile.endlessCrests ?? 0);
+    const label = `${t('p17.hallPill')} · ${ready ? t('p17.canUpgrade') : `×${crests}`}`;
+    drawFloatingCornerPill(c, hits, 'menu:hub:medallions', 1280 - 26, 522, 'ui_endless_crest', label, ready ? '#f6cf59' : '#efe3fa', true);
+  } else if (nextDock?.id === 'medallions') {
+    drawFloatingCornerPill(c, hits, 'menu:locked:medallions', 1280 - 26, 522, 'ui_endless_crest', `${t('p17.hallPill')} 🔒${lockText}`, '#d8ccb8', true);
   }
 }
 
-function drawMapSelector(
+function drawMedallionRow(
+  c: CanvasRenderingContext2D,
+  hits: UiHitManager,
+  items: readonly MedallionDockItem[],
+  anchorX: number,
+  topY: number,
+  alignRight: boolean,
+): void {
+  const size = 84;
+  const gap = 18;
+  const totalW = items.length * size + (items.length - 1) * gap;
+  const startX = alignRight ? anchorX - totalW : anchorX;
+
+  items.forEach((item, idx) => {
+    const x = startX + idx * (size + gap);
+    const cx = x + size / 2;
+    const cy = topY + size / 2;
+    const pressed = hits.isPressed(item.id);
+    const dy = pressed ? 3 : 0;
+
+    hits.add({ id: item.id, x: x - 4, y: topY - 12, w: size + 8, h: size + 44, data: item });
+
+    // Circle shadow & warm ivory medallion ring (exact Web circular hub dock!)
+    if (!pressed) {
+      c.fillStyle = 'rgba(42,22,8,0.42)';
+      c.beginPath();
+      c.arc(cx, cy + 5, size / 2, 0, Math.PI * 2);
+      c.fill();
+    }
+
+    const grad = c.createLinearGradient(x, topY + dy, x, topY + dy + size);
+    if (item.locked) {
+      grad.addColorStop(0, '#c8c3b8');
+      grad.addColorStop(1, '#9b9588');
+    } else {
+      grad.addColorStop(0, '#fffdf6');
+      grad.addColorStop(1, '#f4e1b8');
+    }
+    c.beginPath();
+    c.arc(cx, cy + dy, size / 2, 0, Math.PI * 2);
+    c.fillStyle = grad;
+    c.fill();
+    c.lineWidth = 3.5;
+    c.strokeStyle = item.locked ? '#6b6254' : '#58371c';
+    c.stroke();
+
+    // Inner bright highlight rim
+    c.beginPath();
+    c.arc(cx, cy + dy, size / 2 - 4, 0, Math.PI * 2);
+    c.lineWidth = 1.6;
+    c.strokeStyle = 'rgba(255,255,255,0.68)';
+    c.stroke();
+
+    drawSpriteContain(c, item.icon, cx - 30, cy + dy - 30, 60, 60, item.locked ? 0.45 : 1);
+
+    // Top badge pill (lock tag or count/action badge)
+    if (item.locked && item.lockTag) {
+      const bw = 92;
+      round(c, cx - bw / 2, topY + dy - 12, bw, 26, 13, '#5c4430', '#ffe7a8', 2);
+      drawText(c, `🔒${item.lockTag}`, cx, topY + dy + 1, 13.5, '#fff4d4', 'center', 900);
+    } else if (item.badge) {
+      const isDark = item.badgeColor && item.badgeColor !== '#fff8e8';
+      c.font = `900 14px ${UI_FONT}`;
+      const bw = Math.max(52, Math.ceil(c.measureText(item.badge).width) + (item.badgeIcon ? 36 : 18));
+      const bx = cx - bw / 2 + 12;
+      const by = topY + dy - 12;
+      round(c, bx, by, bw, 26, 13, item.badgeColor ?? '#fff8e8', '#58371c', 2);
+      if (item.badgeIcon) {
+        drawSpriteContain(c, item.badgeIcon, bx + 5, by + 3, 20, 20);
+        drawText(c, item.badge, bx + 28 + (bw - 32) / 2, by + 14, 14, isDark ? '#fffdf5' : '#4a2b14', 'center', 900);
+      } else {
+        drawText(c, item.badge, bx + bw / 2, by + 14, 14, isDark ? '#fffdf5' : '#4a2b14', 'center', 900);
+      }
+    }
+
+    // Crisp bold white outlined label underneath medallion (super legible on phones!)
+    drawText(c, item.label, cx, topY + size + 19, 20, item.locked ? '#e3d8c4' : '#fffdf4', 'center', 900, '#442610', 5);
+  });
+}
+
+function drawFloatingCornerPill(
+  c: CanvasRenderingContext2D,
+  hits: UiHitManager,
+  id: string,
+  anchorX: number,
+  y: number,
+  icon: string,
+  text: string,
+  fill: string,
+  alignRight = false,
+): void {
+  c.font = `900 16.5px ${UI_FONT}`;
+  const pw = Math.min(268, Math.max(152, Math.ceil(c.measureText(text).width) + 56));
+  const ph = 42;
+  const x = alignRight ? anchorX - pw : anchorX;
+  const pressed = hits.isPressed(id);
+  const dy = pressed ? 2 : 0;
+
+  hits.add({ id, x, y, w: pw, h: ph });
+  if (!pressed) round(c, x, y + 3, pw, ph, 21, 'rgba(46,26,10,0.38)', 'transparent', 0);
+  round(c, x, y + dy, pw, ph, 21, fill, '#5a391e', 2.4);
+  drawSpriteContain(c, icon, x + 8, y + dy + 6, 30, 30);
+  drawText(c, text, x + 44, y + dy + ph / 2 + 1, 16, PALETTE.ink, 'left', 900);
+}
+
+function drawCompactMapBar(
   c: CanvasRenderingContext2D,
   hits: UiHitManager,
   profile: Profile,
-  unlockedMaps: readonly MapId[],
   y: number,
 ): void {
+  const unlockedMaps = getUnlockedMaps(profile);
   const options: Array<{ id: 'auto' | MapId; label: string; locked: boolean; reqStars: number }> = [
-    { id: 'auto', label: getLanguage() === 'zh-CN' ? '🎲 随机地图' : '🎲 Random', locked: false, reqStars: 0 },
-    ...MAP_IDS.map(id => {
-      const unlocked = unlockedMaps.includes(id);
-      const req = getMapUnlockRequirement(id);
-      return { id, label: t(`map.${id}`), locked: !unlocked, reqStars: req.minStars };
-    }),
+    { id: 'auto', label: t('p3.auto'), locked: false, reqStars: 0 },
+    ...MAP_IDS.map(id => ({
+      id,
+      label: t(`p3.map.${id}`),
+      locked: !unlockedMaps.includes(id),
+      reqStars: getMapUnlockRequirement(id).minStars,
+    })),
   ];
 
-  const cardW = 152;
-  const gap = 10;
-  const totalW = options.length * cardW + (options.length - 1) * gap;
-  const startX = (1280 - totalW) / 2;
-  const h = 44;
+  const chipW = 86;
+  const gap = 8;
+  const signW = 34;
+  const barW = signW + 16 + options.length * chipW + (options.length - 1) * gap + 18;
+  const barH = 54;
+  const bx = (1280 - barW) / 2;
 
-  // Backing sleek wooden pill rail
-  round(c, startX - 12, y - 6, totalW + 24, h + 12, 18, 'rgba(66,42,20,0.72)', 'rgba(245,216,154,0.62)', 1.8);
+  round(c, bx, y + 3, barW, barH, 27, 'rgba(42,22,8,0.36)', 'transparent', 0);
+  round(c, bx, y, barW, barH, 27, 'rgba(255,247,230,0.95)', '#6a4626', 2.6);
+  drawSpriteContain(c, 'ui_map_sign', bx + 12, y + 10, 34, 34);
 
-  options.forEach((opt, idx) => {
-    const x = startX + idx * (cardW + gap);
+  let cx = bx + 52;
+  for (const opt of options) {
     const selected = profile.selectedMap === opt.id;
     const pressed = hits.isPressed(`menu:map:${opt.id}`);
     const dy = pressed ? 2 : 0;
+    hits.add({ id: `menu:map:${opt.id}`, x: cx, y: y + 6, w: chipW, h: barH - 12, data: opt });
 
-    hits.add({ id: `menu:map:${opt.id}`, x, y, w: cardW, h, data: opt });
-
-    if (opt.locked) {
-      round(c, x, y + dy, cardW, h, 12, 'rgba(72,58,44,0.88)', 'rgba(182,160,132,0.68)', 1.8);
-      drawText(c, `🔒${opt.reqStars}★ ${opt.label}`, x + cardW / 2, y + dy + h / 2 + 1, 12.5, '#dfd0b8', 'center', 800);
+    if (selected) {
+      round(c, cx, y + 6 + dy, chipW, barH - 12, 18, '#f7d263', '#8c4e12', 2.4);
+      drawText(c, opt.label, cx + chipW / 2, y + barH / 2 + dy + 1, 17.5, PALETTE.ink, 'center', 900);
+    } else if (opt.locked) {
+      round(c, cx, y + 7 + dy, chipW, barH - 14, 17, 'rgba(130,112,92,0.22)', 'rgba(130,112,92,0.45)', 1.5);
+      drawText(c, `${opt.label}🔒`, cx + chipW / 2, y + barH / 2 + dy + 1, 15.5, '#8c745c', 'center', 800);
     } else {
-      const fill = selected ? '#f9d771' : '#fff4dc';
-      const stroke = selected ? '#8f4c12' : '#7b5835';
-      if (!pressed) round(c, x, y + 3, cardW, h, 12, selected ? '#b8781d' : '#b7976c', stroke, 1.5);
-      round(c, x, y + dy, cardW, h, 12, fill, stroke, selected ? 2.6 : 1.8);
-      drawText(c, `${selected ? '✓ ' : ''}${opt.label}`, x + cardW / 2, y + dy + h / 2 + 1, 13.5, PALETTE.ink, 'center', 900);
+      drawText(c, opt.label, cx + chipW / 2, y + barH / 2 + dy + 1, 17.5, '#59391e', 'center', 800);
     }
-  });
+    cx += chipW + gap;
+  }
 }
 
-function drawCourtyardDock(
-  c: CanvasRenderingContext2D,
-  hits: UiHitManager,
-  profile: Profile,
-  y: number,
-): void {
-  const lang = getLanguage();
-  const items: DockItem[] = [
-    { id: 'menu:recipes', icon: 'ui_compendium_book', label: lang === 'zh-CN' ? '图鉴配方' : 'Guide' },
-  ];
+function drawVectorSpeaker(c: CanvasRenderingContext2D, cx: number, cy: number, muted: boolean): void {
+  c.save();
+  c.translate(cx, cy);
+  c.fillStyle = PALETTE.ink;
+  c.strokeStyle = PALETTE.ink;
+  c.lineWidth = 2.4;
+  c.lineCap = 'round';
+  c.lineJoin = 'round';
 
-  const vBadge = villageBadge(profile, Date.now());
-  const kReady = canBrewOrUpgradeAnyBroth(profile);
-  const mReady = upgradeableMedallions(profile).length;
+  c.beginPath();
+  c.moveTo(-10, -4);
+  c.lineTo(-5, -4);
+  c.lineTo(1, -9);
+  c.lineTo(1, 9);
+  c.lineTo(-5, 4);
+  c.lineTo(-10, 4);
+  c.closePath();
+  c.fill();
+  c.stroke();
 
-  const featureDefs: Array<{ id: FeatureId; icon: string; zh: string; en: string; badge?: string }> = [
-    { id: 'armory', icon: 'ui_weapon_fragment', zh: '神兵坊', en: 'Armory', badge: profile.unlockedWeapons.length > 0 && Object.keys(profile.equippedWeapons).length === 0 ? '!' : undefined },
-    { id: 'market', icon: 'ui_shop_bag', zh: '浣熊黑市', en: 'Market', badge: profile.freeLotteryTickets > 0 ? `🎟️${profile.freeLotteryTickets}` : undefined },
-    { id: 'village', icon: 'ui_village_gate', zh: '温泉山庄', en: 'Village', badge: vBadge === 'harvest' ? '🧺' : vBadge === 'build' ? '🔨' : undefined },
-    { id: 'kitchen', icon: 'ui_kitchen_pot', zh: '料理屋', en: 'Kitchen', badge: kReady.brewable.length + kReady.upgradeable.length > 0 ? '🍲' : undefined },
-    { id: 'medallions', icon: 'ui_endless_crest', zh: '无尽勋章', en: 'Medals', badge: mReady > 0 ? `✨${mReady}` : undefined },
-  ];
-
-  for (const def of featureDefs) {
-    if (isFeatureUnlocked(profile, def.id)) {
-      items.push({
-        id: `menu:hub:${def.id}`,
-        icon: def.icon,
-        label: lang === 'zh-CN' ? def.zh : def.en,
-        feature: def.id,
-        badge: def.badge,
-      });
-    }
+  if (muted) {
+    c.strokeStyle = '#c43e2d';
+    c.lineWidth = 2.8;
+    c.beginPath();
+    c.moveTo(5, -5); c.lineTo(12, 5);
+    c.moveTo(12, -5); c.lineTo(5, 5);
+    c.stroke();
+  } else {
+    c.beginPath();
+    c.arc(2, 0, 6.5, -0.75, 0.75);
+    c.stroke();
+    c.beginPath();
+    c.arc(2, 0, 11, -0.75, 0.75);
+    c.stroke();
   }
+  c.restore();
+}
 
-  if (isRankHubUnlocked(profile)) {
-    items.push({ id: 'menu:hub:leaderboard', icon: 'ui_trophy_rank', label: lang === 'zh-CN' ? '风云榜' : 'Ranks' });
-  }
+function drawVectorShare(c: CanvasRenderingContext2D, cx: number, cy: number): void {
+  c.save();
+  c.translate(cx, cy);
+  c.strokeStyle = PALETTE.ink;
+  c.lineWidth = 2.6;
+  c.lineCap = 'round';
+  c.lineJoin = 'round';
 
-  // Option-A single next locked dock preview (P19 design)
-  const nextDock = nextLockedFeature(profile, true);
-  if (nextDock) {
-    const def = featureDefs.find(d => d.id === nextDock.id);
-    if (def) {
-      items.push({
-        id: `menu:locked:${nextDock.id}`,
-        icon: def.icon,
-        label: lang === 'zh-CN' ? def.zh : def.en,
-        feature: nextDock.id,
-        locked: true,
-        lockTag: nextDock.requiresMatchOnly ? t('p19.lockMatch') : t('p19.lockStars', { stars: nextDock.targetStars }),
-      });
-    }
-  }
+  c.beginPath();
+  c.moveTo(-9, 1);
+  c.lineTo(-9, 9);
+  c.lineTo(9, 9);
+  c.lineTo(9, 1);
+  c.stroke();
 
-  const itemW = Math.min(132, Math.floor(1140 / Math.max(items.length, 1)) - 10);
-  const gap = 12;
-  const h = 88;
-  const totalW = items.length * itemW + (items.length - 1) * gap;
-  const startX = (1280 - totalW) / 2;
-
-  // Cozy wooden shelf strip
-  round(c, startX - 18, y - 6, totalW + 36, h + 12, 24, 'rgba(66,42,20,0.72)', 'rgba(244,212,146,0.68)', 2);
-
-  items.forEach((item, i) => {
-    const x = startX + i * (itemW + gap);
-    const pressed = hits.isPressed(item.id);
-    const dy = pressed ? 3 : 0;
-    hits.add({ id: item.id, x, y, w: itemW, h, data: item });
-
-    if (item.locked) {
-      round(c, x, y + dy, itemW, h, 16, 'rgba(84,68,52,0.88)', 'rgba(196,174,142,0.68)', 2);
-      drawSpriteContain(c, item.icon, x + (itemW - 40) / 2, y + dy + 8, 40, 40, 0.45);
-      drawText(c, `🔒 ${item.lockTag ?? ''}`, x + itemW / 2, y + dy + 32, 13, '#fff0cc', 'center', 900, INK, 3);
-      drawText(c, item.label, x + itemW / 2, y + dy + 68, 13, '#d7c6ab', 'center', 800);
-    } else {
-      if (!pressed) round(c, x, y + 3, itemW, h, 16, '#b7976b', PALETTE.woodDark, 1.5);
-      round(c, x, y + dy, itemW, h, 16, '#fff5dd', PALETTE.woodDark, 2.2);
-      drawSpriteContain(c, item.icon, x + (itemW - 44) / 2, y + dy + 8, 44, 44);
-      drawText(c, item.label, x + itemW / 2, y + dy + 68, 14, PALETTE.ink, 'center', 900);
-      if (item.badge) {
-        round(c, x + itemW - 46, y + dy - 6, 50, 22, 11, '#d95342', '#fff7e8', 2);
-        drawText(c, item.badge, x + itemW - 21, y + dy + 6, 12, '#fffdf5', 'center', 900);
-      }
-    }
-  });
+  c.beginPath();
+  c.moveTo(0, 4);
+  c.lineTo(0, -10);
+  c.moveTo(-5, -5);
+  c.lineTo(0, -10);
+  c.lineTo(5, -5);
+  c.stroke();
+  c.restore();
 }

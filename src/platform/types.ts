@@ -84,10 +84,13 @@ export type MinigameCue =
   | 'hero_ult'
   | 'gacha_win';
 
+export type MinigameMusicMode = 'menu' | 'battle' | 'boss';
+
 export interface MinigameAudioController {
   unlock(): void;
   setSettings(settings: { musicVolume?: number; soundVolume?: number }): void;
   play(cue: MinigameCue): void;
+  setMusicMode?(mode: MinigameMusicMode): void;
   setPaused(paused: boolean): void;
 }
 

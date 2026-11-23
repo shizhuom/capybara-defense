@@ -11,17 +11,23 @@ import { getBaseUnitStats } from '../../core/UnitStats';
 import { formatCompactNumber } from '../../core/formatNumber';
 import type { BattleState, Profile } from '../../core/types';
 import { getLanguage, t } from '../../i18n/i18n';
-import { round } from '../../render/StickerArt';
+import { INK, round } from '../../render/StickerArt';
 import {
   BTN_STYLES,
   PALETTE,
   ScrollRegion,
   drawButton,
+  drawHinokiBoard,
+  drawHoneyOakTab,
+  drawIconLabel,
+  drawIvorySlab,
+  drawMatchaSignboard,
   drawProgressBar,
   drawSpriteContain,
+  drawSunburst,
   drawText,
-  drawWoodPanel,
   drawWrappedText,
+  drawYuzuCloseButton,
   formatClock,
   type UiHitManager,
 } from './CanvasUI';
@@ -98,6 +104,7 @@ export interface ModalDrawContext {
   battleLesson: 'prop_battle' | 'endless_battle' | null;
   devUnlocked: boolean;
   isTestSave: boolean;
+  elapsed: number;
 }
 
 export interface ModalLayoutInfo {
@@ -106,13 +113,13 @@ export interface ModalLayoutInfo {
   soundSlider?: { x: number; y: number; w: number; h: number };
 }
 
-/** Draws the active Canvas modal over a dimmed backdrop and registers all hit targets. */
+/** Draws the active P18 Canvas modal over a dimmed backdrop and registers all hit targets. */
 export function drawActiveModal(
   c: CanvasRenderingContext2D,
   hits: UiHitManager,
   ctx: ModalDrawContext,
 ): ModalLayoutInfo {
-  c.fillStyle = 'rgba(26,16,8,0.66)';
+  c.fillStyle = 'rgba(22,12,5,0.68)';
   c.fillRect(0, 0, 1280, 720);
   hits.add({ id: 'modal:backdrop', x: 0, y: 0, w: 1280, h: 720 });
 
@@ -121,10 +128,10 @@ export function drawActiveModal(
       if (ctx.state) drawPauseModal(c, hits, ctx.state);
       return {};
     case 'endless-offer':
-      if (ctx.state) drawEndlessOfferModal(c, hits, ctx.state, ctx.settlement);
+      if (ctx.state) drawEndlessOfferModal(c, hits, ctx.state, ctx.settlement, ctx.elapsed);
       return {};
     case 'result':
-      if (ctx.state) drawResultModal(c, hits, ctx.state, ctx.profile, ctx.settlement);
+      if (ctx.state) drawResultModal(c, hits, ctx.state, ctx.profile, ctx.settlement, ctx.elapsed);
       return {};
     case 'recipes':
       return drawRecipesModal(c, hits, ctx.recipesTab, ctx.scroll);
@@ -158,58 +165,61 @@ export function drawActiveModal(
 }
 
 function drawPauseModal(c: CanvasRenderingContext2D, hits: UiHitManager, state: BattleState): void {
-  const pw = 640, ph = 472;
-  const px = (1280 - pw) / 2, py = (720 - ph) / 2;
-  drawWoodPanel(c, px, py, pw, ph, 24, PALETTE.cream, PALETTE.woodDark);
+  const pw = 748, ph = 524;
+  const px = (1280 - pw) / 2, py = (720 - ph) / 2 + 16;
+
+  // Peeking pause mascot above hinoki board
+  drawSpriteContain(c, 'ui_pause_peek_capy', px + 26, py - 66, 114, 114);
+  drawHinokiBoard(c, px, py, pw, ph, 26);
   hits.add({ id: 'modal:card', x: px, y: py, w: pw, h: ph });
 
-  drawSpriteContain(c, 'ui_pause_peek_capy', px + 26, py - 24, 88, 88);
-  drawText(c, t('p12.pauseTitle'), px + 122, py + 38, 28, PALETTE.ink, 'left', 900);
-  drawButton(c, hits, 'modal:resume', px + pw - 56, py + 18, 38, 38, '×', {
-    ...BTN_STYLES.cream,
-    radius: 12,
-    fontSize: 22,
-  });
+  drawMatchaSignboard(c, 640, py - 32, t('p12.pauseTitle'), undefined, 280);
+  drawYuzuCloseButton(c, hits, 'modal:resume', px + pw - 20, py - 2, 26);
 
-  const sy = py + 76;
-  round(c, px + 26, sy, pw - 52, 78, 16, '#f3e2be', PALETTE.woodLight, 2);
-  drawSpriteContain(c, 'ui_map_sign', px + 38, sy + 12, 54, 54);
-  drawText(c, t(`map.${state.mapId}`), px + 104, sy + 26, 18, PALETTE.ink, 'left', 900);
+  // Map & Battle Status ivory slab
+  const sy = py + 44;
+  drawIvorySlab(c, px + 26, sy, pw - 52, 92, 18);
+  drawSpriteContain(c, 'ui_map_sign', px + 40, sy + 14, 64, 64);
+  drawText(c, t(`map.${state.mapId}`), px + 116, sy + 30, 22, PALETTE.ink, 'left', 900);
   const waveStr = state.endless ? t('p13.endlessWave', { wave: state.wave }) : t('p12.pauseWave', { wave: state.wave });
-  const statLine = `${waveStr}   ·   ${t('p12.pauseTime', { time: formatClock(state.time) })}   ·   🍊 ×${state.sides.player.oranges}`;
-  drawText(c, statLine, px + 104, sy + 54, 14, PALETTE.inkSoft, 'left', 800);
+  let statX = px + 116;
+  statX += drawIconLabel(c, state.endless ? 'ui_endless_emblem' : 'ui_wave_horn', waveStr, statX, sy + 64, 24, 17, PALETTE.inkSoft) + 20;
+  statX += drawIconLabel(c, 'ui_clock_sand', formatClock(state.time), statX, sy + 64, 22, 17, PALETTE.inkSoft) + 20;
+  drawIconLabel(c, 'orange', `×${state.sides.player.oranges}`, statX, sy + 64, 24, 18, '#a64d0c');
 
-  const ly = sy + 94;
-  round(c, px + 26, ly, pw - 52, 184, 16, '#fff7e5', PALETTE.woodLight, 1.8);
-  drawText(c, `🎒 ${t('p12.pauseLoot')}`, px + 42, ly + 24, 15, PALETTE.ink, 'left', 900);
+  // Loot Shelf ivory slab
+  const ly = sy + 106;
+  drawIvorySlab(c, px + 26, ly, pw - 52, 268, 18, '#fffdf7', '#f7e9cb');
+  drawIconLabel(c, 'ui_harvest_basket', t('p12.pauseLoot'), px + 44, ly + 28, 28, 19, PALETTE.ink);
 
   const items = collectShelfChips(state.sides.player.loot, state.sides.player.ingredientLoot, state.sides.player.villageLoot, state.sides.player.endlessCrests);
   if (items.length === 0) {
-    drawText(c, t('p12.pauseEmpty'), px + pw / 2, ly + 102, 15, PALETTE.muted, 'center', 700);
+    drawText(c, t('p12.pauseEmpty'), px + pw / 2, ly + 150, 18, PALETTE.muted, 'center', 700);
   } else {
-    drawChipGrid(c, items.slice(0, 8), px + 40, ly + 46, pw - 80, 4);
+    drawChipGrid(c, items.slice(0, 8), px + 42, ly + 52, pw - 84, 4);
   }
 
+  // Footer action buttons
   const fy = py + ph - 82;
-  drawButton(c, hits, 'modal:resume', px + 26, fy, 214, 56, `▶ ${t('p12.resume')}`, {
+  drawButton(c, hits, 'modal:resume', px + 26, fy, 246, 60, `▶ ${t('p12.resume')}`, {
     ...BTN_STYLES.teal,
     radius: 16,
-    fontSize: 17,
+    fontSize: 20,
   });
-  drawButton(c, hits, 'modal:open-profile', px + 250, fy, 98, 56, t('p12.profile'), {
+  drawButton(c, hits, 'modal:open-profile', px + 284, fy, 122, 60, t('p12.profile'), {
     ...BTN_STYLES.cream,
     radius: 16,
-    fontSize: 15,
+    fontSize: 18,
   });
-  drawButton(c, hits, 'modal:open-settings', px + 358, fy, 98, 56, `⚙ ${t('p12.settings')}`, {
+  drawButton(c, hits, 'modal:open-settings', px + 418, fy, 122, 60, t('p12.settings'), {
     ...BTN_STYLES.cream,
     radius: 16,
-    fontSize: 15,
+    fontSize: 18,
   });
-  drawButton(c, hits, 'modal:surrender', px + 466, fy, 148, 56, t(state.endless ? 'p13.settleEndless' : 'p12.surrender'), {
+  drawButton(c, hits, 'modal:surrender', px + 552, fy, 170, 60, t(state.endless ? 'p13.settleEndless' : 'p12.surrender'), {
     ...BTN_STYLES.coral,
     radius: 16,
-    fontSize: 14.5,
+    fontSize: 18,
   });
 }
 
@@ -218,48 +228,58 @@ function drawEndlessOfferModal(
   hits: UiHitManager,
   state: BattleState,
   settlement: SettlementMeta,
+  elapsed: number,
 ): void {
   const result = state.standardResult ?? state.result;
-  const pw = 640, ph = 474;
-  const px = (1280 - pw) / 2, py = (720 - ph) / 2;
-  drawWoodPanel(c, px, py, pw, ph, 26, '#fff8e8', '#70441e');
+  const pw = 740, ph = 524;
+  const px = (1280 - pw) / 2, py = (720 - ph) / 2 + 18;
+
+  drawSunburst(c, 640, py + 12, 320, elapsed, 'rgba(218,162,255,0.24)');
+  drawHinokiBoard(c, px, py, pw, ph, 26);
   hits.add({ id: 'modal:card', x: px, y: py, w: pw, h: ph });
 
-  drawSpriteContain(c, 'ui_endless_crest', px + pw / 2 - 52, py - 38, 104, 104);
-  drawText(c, t('p13.endlessOfferTitle'), px + pw / 2, py + 88, 25, '#6a2e8c', 'center', 900);
+  if (!drawSpriteContain(c, 'ui_endless_emblem', px + pw / 2 - 64, py - 56, 128, 128)) {
+    drawSpriteContain(c, 'ui_endless_crest', px + pw / 2 - 56, py - 48, 112, 112);
+  }
 
-  round(c, px + 88, py + 114, pw - 176, 32, 16, '#dff5d8', '#3c8532', 1.8);
-  drawText(c, `✓ ${t('p13.endlessBanked')}`, px + pw / 2, py + 131, 13, '#265c1f', 'center', 800);
+  // Inner warm ivory card
+  drawIvorySlab(c, px + 24, py + 58, pw - 48, ph - 152, 20);
+  drawText(c, t('p13.endlessOfferTitle'), px + pw / 2, py + 94, 28, '#5f2685', 'center', 900);
 
-  round(c, px + 36, py + 160, pw - 72, 118, 16, '#f6e7c7', PALETTE.woodLight, 1.8);
-  drawWrappedText(c, t('p13.endlessOfferBody'), px + 54, py + 174, pw - 108, 14, 21, PALETTE.inkSoft, 'left', 700, 3);
-  round(c, px + 140, py + 236, pw - 280, 30, 15, '#593373', 'transparent', 0);
-  drawText(c, '×1.25  →  ×1.56  →  ×1.95  →  …', px + pw / 2, py + 252, 14, '#ffe9a3', 'center', 900);
+  round(c, px + 76, py + 122, pw - 152, 38, 19, '#dff5d8', '#3c8532', 2);
+  drawText(c, `✓ ${t('p13.endlessBanked')}`, px + pw / 2, py + 142, 16, '#23591c', 'center', 900);
+
+  round(c, px + 44, py + 174, pw - 88, 134, 16, '#f6e7c7', PALETTE.woodLight, 2);
+  drawWrappedText(c, t('p13.endlessOfferBody'), px + 62, py + 188, pw - 124, 17, 24, PALETTE.ink, 'left', 700, 3);
+  round(c, px + 148, py + 266, pw - 296, 34, 17, '#593373', '#c89cf0', 2);
+  drawText(c, '×1.25  →  ×1.56  →  ×1.95  →  …', px + pw / 2, py + 284, 16.5, '#ffe9a3', 'center', 900);
 
   const crests = result?.endlessCrests ?? STANDARD_VICTORY_CRESTS;
-  const pills = [
-    `★ ${t('p13.rankBanked')}`,
-    `🪙 +${result?.coins ?? 0}`,
-    ...(settlement.ticketAwarded ? ['🎟️ +1'] : []),
-    ...(crests > 0 ? [`✨ +${crests}`] : []),
+  const pills: Array<{ icon: string; text: string }> = [
+    { icon: 'ui_star_rank', text: t('p13.rankBanked') },
+    { icon: 'ui_coin_gold', text: `+${result?.coins ?? 0}` },
+    ...(settlement.ticketAwarded ? [{ icon: 'ui_ticket_gacha', text: '+1' }] : []),
+    ...(crests > 0 ? [{ icon: 'ui_endless_crest', text: `+${crests}` }] : []),
   ];
-  const rw = Math.floor((pw - 72 - (pills.length - 1) * 10) / pills.length);
-  pills.forEach((label, i) => {
-    const x = px + 36 + i * (rw + 10);
-    round(c, x, py + 296, rw, 48, 14, '#fff2d2', PALETTE.woodMid, 1.8);
-    drawText(c, label, x + rw / 2, py + 321, 14, PALETTE.ink, 'center', 900);
+  const rw = Math.floor((pw - 88 - (pills.length - 1) * 10) / pills.length);
+  pills.forEach((p, i) => {
+    const x = px + 44 + i * (rw + 10);
+    round(c, x, py + 324, rw, 56, 15, '#fff5dc', '#8a5d2e', 2);
+    drawSpriteContain(c, p.icon, x + 10, py + 336, 32, 32);
+    drawText(c, p.text, x + 46 + (rw - 52) / 2, py + 353, 17, PALETTE.ink, 'center', 900);
   });
 
-  const fy = py + ph - 84;
-  drawButton(c, hits, 'modal:decline-endless', px + 40, fy, 266, 58, t('p13.declineEndless'), {
+  const fy = py + ph - 78;
+  drawButton(c, hits, 'modal:decline-endless', px + 30, fy, 320, 60, t('p13.declineEndless'), {
     ...BTN_STYLES.cream,
     radius: 16,
-    fontSize: 17,
+    fontSize: 20,
   });
-  drawButton(c, hits, 'modal:enter-endless', px + pw - 306, fy, 266, 58, `♾️ ${t('p13.enterEndless')}`, {
+  drawButton(c, hits, 'modal:enter-endless', px + pw - 350, fy, 320, 60, t('p13.enterEndless'), {
     ...BTN_STYLES.gold,
     radius: 16,
-    fontSize: 18,
+    fontSize: 21,
+    icon: 'ui_endless_emblem',
   });
 }
 
@@ -269,6 +289,7 @@ function drawResultModal(
   state: BattleState,
   profile: Profile,
   settlement: SettlementMeta,
+  elapsed: number,
 ): void {
   const result = state.result;
   if (!result) return;
@@ -287,77 +308,92 @@ function drawResultModal(
     : 0;
   const guardianStars = endless ? 3 : won ? Math.min(3, Math.max(1, Math.floor(state.sides.player.oranges))) : 0;
 
-  const pw = 790, ph = 596;
-  const px = (1280 - pw) / 2, py = (720 - ph) / 2 + 8;
-  drawWoodPanel(c, px, py, pw, ph, 26, PALETTE.cream, won ? '#66431d' : '#5e352c');
+  const pw = 884, ph = 612;
+  const px = (1280 - pw) / 2, py = 86;
+
+  // Radial victory sunburst rays behind shield & board!
+  if (won) {
+    drawSunburst(c, 640, py + 10, 380, elapsed, 'rgba(255,222,110,0.30)');
+  }
+
+  drawHinokiBoard(c, px, py, pw, ph, 26);
   hits.add({ id: 'modal:card', x: px, y: py, w: pw, h: ph });
 
+  // Winged Victory / Defeat Shield straddling top edge
   const shieldId = won ? 'ui_victory_shield_wings' : 'ui_defeat_shield_wings';
-  drawSpriteContain(c, shieldId, px + pw / 2 - 120, py - 54, 240, 110);
+  drawSpriteContain(c, shieldId, px + pw / 2 - 134, py - 74, 268, 116);
   const headline = endless ? t('p13.endlessVictory') : won ? t('p12.victory') : t('p12.defeat');
-  drawText(c, headline, px + pw / 2, py + 60, 30, won ? '#2e763f' : '#b23e2f', 'center', 900);
+  drawText(c, headline, px + pw / 2, py + 62, 32, won ? '#fff9d6' : '#ffd5cc', 'center', 900, INK, 6);
 
-  // Share Victory button at top-right of modal
+  // Share Victory button at top-right of board
   if (won) {
-    drawButton(c, hits, 'result:share', px + pw - 146, py + 20, 120, 36, zh ? '📤 炫耀战绩' : '📤 Share', {
+    drawButton(c, hits, 'result:share', px + pw - 168, py + 18, 142, 42, zh ? '炫耀战绩' : 'Share', {
       ...BTN_STYLES.gold,
-      radius: 12,
-      fontSize: 13,
+      radius: 14,
+      fontSize: 16.5,
+      icon: 'ui_star_rank',
     });
   }
 
+  // 3 Guardian Stars
   for (let i = 0; i < 3; i++) {
     const lit = i < guardianStars;
-    const sx = px + pw / 2 - 64 + i * 44;
-    if (!drawSpriteContain(c, lit ? 'ui_victory_star_lit' : 'ui_victory_star_dim', sx, py + 80, 40, 40)) {
-      drawText(c, lit ? '★' : '☆', sx + 20, py + 100, 28, lit ? '#f0b429' : '#c9bca5', 'center', 900);
+    const sx = px + pw / 2 - 78 + i * 56;
+    if (!drawSpriteContain(c, lit ? 'ui_victory_star_lit' : 'ui_victory_star_dim', sx, py + 82, 46, 46)) {
+      drawText(c, lit ? '★' : '☆', sx + 23, py + 105, 34, lit ? '#ffd449' : '#b89f82', 'center', 900);
     }
   }
 
-  const ry = py + 130;
-  round(c, px + 32, ry, pw - 64, 58, 16, '#f3e2be', PALETTE.woodLight, 1.8);
-  const deltaStr = settlement.resultStars > 0
-    ? `+${settlement.resultStars}★`
-    : settlement.resultStars < 0
-      ? `${settlement.resultStars}★`
-      : '🛡️ 0★';
-  drawText(c, `${t(`rank.${rank.index}`)}  (${profile.stars}★)`, px + 50, ry + 20, 16, PALETTE.ink, 'left', 900);
-  drawText(c, deltaStr, px + pw - 50, ry + 20, 18, settlement.resultStars > 0 ? '#2f7a42' : PALETTE.inkSoft, 'right', 900);
+  // Rank & Star progress ivory slab
+  const ry = py + 136;
+  drawIvorySlab(c, px + 26, ry, pw - 52, 68, 16);
+  drawIconLabel(c, 'ui_star_rank', `${t(`rank.${rank.index}`)}  (${profile.stars}★)`, px + 42, ry + 24, 26, 20, PALETTE.ink);
+
+  if (settlement.resultStars === 0) {
+    drawSpriteContain(c, 'ui_rank_protect_shield', px + pw - 118, ry + 9, 28, 28);
+    drawText(c, '0★', px + pw - 44, ry + 24, 22, PALETTE.inkSoft, 'right', 900);
+  } else {
+    const deltaStr = settlement.resultStars > 0 ? `+${settlement.resultStars}★` : `${settlement.resultStars}★`;
+    drawText(c, deltaStr, px + pw - 44, ry + 24, 23, settlement.resultStars > 0 ? '#2b7a3d' : '#b43c2e', 'right', 900);
+  }
 
   const nextRank = RANKS[rank.index + 1];
   const progressMax = nextRank ? nextRank.minStars - rank.minStars : 1;
   const progress = nextRank ? Math.min(progressMax, Math.max(0, profile.stars - rank.minStars)) : 1;
-  drawProgressBar(c, px + 50, ry + 36, pw - 220, 12, progress / Math.max(1, progressMax), '#f2b838', 'rgba(72,46,24,0.18)', PALETTE.woodDark);
-  drawText(c, nextRank ? `${progress}/${progressMax}★` : 'MAX', px + pw - 50, ry + 42, 12, PALETTE.inkSoft, 'right', 800);
+  drawProgressBar(c, px + 44, ry + 44, pw - 188, 14, progress / Math.max(1, progressMax), '#f2b838', 'rgba(72,46,24,0.2)', PALETTE.woodDark);
+  drawText(c, nextRank ? `${progress}/${progressMax}★` : 'MAX', px + pw - 44, ry + 51, 15, PALETTE.inkSoft, 'right', 900);
 
-  const bodyY = ry + 70;
-  const bodyH = 224;
+  // Body: Treasure Shelf + MVP OR Detailed Stats Report
+  const bodyY = ry + 80;
+  const bodyH = 238;
   if (settlement.statsOpen) {
-    round(c, px + 32, bodyY, pw - 64, bodyH, 16, '#fff7e5', PALETTE.woodLight, 1.8);
-    drawText(c, `📊 ${t('p12.report')}`, px + 50, bodyY + 24, 17, PALETTE.ink, 'left', 900);
+    drawIvorySlab(c, px + 26, bodyY, pw - 52, bodyH, 18);
+    drawIconLabel(c, 'ui_stat_damage_burst', t('p12.report'), px + 44, bodyY + 28, 26, 20, PALETTE.ink);
     const boardCount = state.units.filter(u => u.side === 'player' && u.location.zone === 'board').length;
-    const rows: Array<[string, string]> = [
-      [t('p6.time'), formatClock(result.elapsed)],
-      [t('p13.damage'), formatCompactNumber(state.sides.player.damage)],
-      [t('p13.kills'), String(state.sides.player.kills)],
-      [t('p6.lineup', { count: boardCount }), `${t(`map.${state.mapId}`)}`],
-      ...(endless ? [[t('p13.endlessWave', { wave: result.endlessWave ?? state.wave }), `${t('p13.endlessRecord', { wave: result.endlessWave ?? state.wave, best: Math.max(result.endlessWave ?? state.wave, profile.bestEndlessWave ?? 0) })}`] as [string, string]] : []),
+    const rows: Array<[string, string, string]> = [
+      ['ui_clock_sand', t('p6.time'), formatClock(result.elapsed)],
+      ['ui_stat_damage_burst', t('p13.damage'), formatCompactNumber(state.sides.player.damage)],
+      ['ui_stat_ko_skull', t('p13.kills'), String(state.sides.player.kills)],
+      ['ui_map_sign', t('p6.lineup', { count: boardCount }), `${t(`map.${state.mapId}`)}`],
+      ...(endless
+        ? [['ui_endless_emblem', t('p13.endlessWave', { wave: result.endlessWave ?? state.wave }), t('p13.endlessRecord', { wave: result.endlessWave ?? state.wave, best: Math.max(result.endlessWave ?? state.wave, profile.bestEndlessWave ?? 0) })] as [string, string, string]]
+        : []),
     ];
-    rows.forEach(([k, v], i) => {
-      const rowY = bodyY + 54 + i * 32;
-      drawText(c, k, px + 56, rowY, 14, PALETTE.inkSoft, 'left', 800);
-      drawText(c, v, px + pw - 56, rowY, 15, PALETTE.ink, 'right', 900);
+    rows.forEach(([icon, k, v], i) => {
+      const rowY = bodyY + 66 + i * 35;
+      drawIconLabel(c, icon, k, px + 50, rowY, 24, 17, PALETTE.inkSoft);
+      drawText(c, v, px + pw - 50, rowY, 18.5, PALETTE.ink, 'right', 900);
     });
   } else {
-    const leftW = 444;
-    round(c, px + 32, bodyY, leftW, bodyH, 16, '#fff7e5', PALETTE.woodLight, 1.8);
-    drawText(c, `🎁 ${t('p13.treasureShelf')}`, px + 48, bodyY + 22, 15, PALETTE.ink, 'left', 900);
+    const leftW = 516;
+    drawIvorySlab(c, px + 26, bodyY, leftW, bodyH, 18);
+    drawIconLabel(c, 'ui_harvest_basket', t('p13.treasureShelf'), px + 42, bodyY + 26, 26, 18.5, PALETTE.ink);
 
     if (won && coins > 0 && settlement.adDoubleCoinsAvailable && !settlement.adDoubleClaimed) {
-      drawButton(c, hits, 'result:ad-double', px + 32 + leftW - 154, bodyY + 8, 142, 30, zh ? `🎬 双倍 (+${coins})` : `🎬 2× (+${coins})`, {
+      drawButton(c, hits, 'result:ad-double', px + 26 + leftW - 186, bodyY + 8, 174, 36, zh ? `🎬 双倍 (+${coins})` : `🎬 2× (+${coins})`, {
         ...BTN_STYLES.gold,
-        radius: 10,
-        fontSize: 12,
+        radius: 12,
+        fontSize: 15,
       });
     }
 
@@ -366,67 +402,72 @@ function drawResultModal(
       ...(settlement.ticketAwarded ? [{ icon: 'ui_ticket_gacha', label: t('p5.tickets'), count: '+1' }] : []),
       ...collectShelfChips(loot, result.ingredientLoot, result.villageLoot, crests),
     ];
-    drawChipGrid(c, chips.slice(0, 6), px + 44, bodyY + 44, leftW - 24, 3);
+    drawChipGrid(c, chips.slice(0, 6), px + 40, bodyY + 50, leftW - 28, 3);
 
-    const mx = px + 32 + leftW + 14;
-    const mw = pw - 64 - leftW - 14;
-    round(c, mx, bodyY, mw, bodyH, 16, '#fff4d6', PALETTE.goldDark, 2);
-    drawSpriteContain(c, 'ui_mvp_crown', mx + mw / 2 - 20, bodyY + 8, 40, 34);
-    drawText(c, t('p6.mvp'), mx + mw / 2, bodyY + 52, 14, '#8a4c10', 'center', 900);
+    // MVP Hero Card
+    const mx = px + 26 + leftW + 14;
+    const mw = pw - 52 - leftW - 14;
+    drawIvorySlab(c, mx, bodyY, mw, bodyH, 18, '#fff7dc', '#f5dca4', PALETTE.goldDark, 2.4);
+    drawSpriteContain(c, 'ui_mvp_crown', mx + mw / 2 - 22, bodyY + 8, 44, 36);
+    drawText(c, t('p6.mvp'), mx + mw / 2, bodyY + 56, 17, '#7c3f08', 'center', 900);
     if (result.mvp) {
       const mvpSprite = result.mvp.awakened ? `${result.mvp.kind}_awakened` : result.mvp.kind;
-      if (!drawSpriteContain(c, mvpSprite, mx + mw / 2 - 38, bodyY + 66, 76, 76)) {
-        drawSpriteContain(c, result.mvp.kind, mx + mw / 2 - 38, bodyY + 66, 76, 76);
+      if (!drawSpriteContain(c, mvpSprite, mx + mw / 2 - 44, bodyY + 68, 88, 88)) {
+        drawSpriteContain(c, result.mvp.kind, mx + mw / 2 - 44, bodyY + 68, 88, 88);
       }
       const mvpName = t(`${HEROES[result.mvp.kind] ? 'hero' : 'unit'}.${result.mvp.kind}`);
-      drawText(c, `${mvpName} Lv.${result.mvp.level}`, mx + mw / 2, bodyY + 158, 15, PALETTE.ink, 'center', 900);
-      drawText(c, `⚔️ ${formatCompactNumber(result.mvp.damage)}   ·   🎯 ${result.mvp.kills}`, mx + mw / 2, bodyY + 184, 13, PALETTE.inkSoft, 'center', 800);
+      drawText(c, `${mvpName} Lv.${result.mvp.level}`, mx + mw / 2, bodyY + 174, 18.5, PALETTE.ink, 'center', 900);
+      drawIconLabel(c, 'ui_stat_damage_burst', formatCompactNumber(result.mvp.damage), mx + 26, bodyY + 208, 22, 16, PALETTE.inkSoft);
+      drawIconLabel(c, 'ui_stat_ko_skull', String(result.mvp.kills), mx + mw / 2 + 26, bodyY + 208, 22, 16, PALETTE.inkSoft);
     } else {
-      drawText(c, t('p6.noMvp'), mx + mw / 2, bodyY + 132, 13, PALETTE.muted, 'center', 700);
+      drawText(c, t('p6.noMvp'), mx + mw / 2, bodyY + 140, 16, PALETTE.muted, 'center', 700);
     }
   }
 
+  // Next Goal Progress Hook
   const hook = computeNextGoalHook(profile);
-  const hy = bodyY + bodyH + 14;
+  const hy = bodyY + bodyH + 12;
   if (hook) {
-    round(c, px + 32, hy, pw - 64, 54, 14, '#f8ebd0', '#c78c36', 2);
-    drawText(c, formatNextGoalText(hook), px + 48, hy + 19, 13.5, '#6b3b0e', 'left', 800);
-    drawProgressBar(c, px + 48, hy + 34, pw - 96, 10, Math.max(0.06, hook.percent / 100), '#f2b838', 'rgba(72,46,24,0.16)', PALETTE.woodDark);
+    drawIvorySlab(c, px + 26, hy, pw - 52, 60, 15, '#fff8e2', '#f3dfb4', '#c1852e', 2);
+    drawText(c, formatNextGoalText(hook), px + 44, hy + 21, 16.5, '#68360b', 'left', 900);
+    drawProgressBar(c, px + 44, hy + 38, pw - 88, 12, Math.max(0.06, hook.percent / 100), '#f2b838', 'rgba(72,46,24,0.18)', PALETTE.woodDark);
   }
 
+  // Footer CTA Row
   const fy = py + ph - 76;
-  drawButton(c, hits, 'modal:toggle-stats', px + 32, fy, 128, 54, settlement.statsOpen ? t('p12.closeStats') : `📊 ${t('p12.stats')}`, {
+  drawButton(c, hits, 'modal:toggle-stats', px + 26, fy, 148, 58, settlement.statsOpen ? t('p12.closeStats') : t('p12.stats'), {
     ...BTN_STYLES.cream,
-    radius: 15,
-    fontSize: 14.5,
+    radius: 16,
+    fontSize: 18,
+    icon: 'ui_stat_damage_burst',
   });
 
   if (!won && result.reason === 'oranges' && settlement.adReviveAvailable) {
-    drawButton(c, hits, 'result:ad-revive', px + 172, fy, 200, 54, zh ? '🎬 看视频复活 (+2🍊)' : '🎬 Ad Revive (+2🍊)', {
+    drawButton(c, hits, 'result:ad-revive', px + 186, fy, 240, 58, zh ? '🎬 看视频复活 (+2)' : '🎬 Ad Revive (+2)', {
       ...BTN_STYLES.gold,
-      radius: 15,
-      fontSize: 15,
+      radius: 16,
+      fontSize: 18,
     });
-    drawButton(c, hits, 'modal:menu', px + 384, fy, 174, 54, t('p12.return'), {
+    drawButton(c, hits, 'modal:menu', px + 438, fy, 198, 58, t('p12.return'), {
       ...BTN_STYLES.cream,
-      radius: 15,
-      fontSize: 16,
+      radius: 16,
+      fontSize: 18.5,
     });
-    drawButton(c, hits, 'modal:again', px + pw - 32 - 188, fy, 188, 54, t('p12.retry'), {
+    drawButton(c, hits, 'modal:again', px + pw - 26 - 210, fy, 210, 58, t('p12.retry'), {
       ...BTN_STYLES.green,
-      radius: 15,
-      fontSize: 17,
+      radius: 16,
+      fontSize: 20,
     });
   } else {
-    drawButton(c, hits, 'modal:menu', px + 176, fy, 250, 54, t('p12.return'), {
+    drawButton(c, hits, 'modal:menu', px + 190, fy, 300, 58, t('p12.return'), {
       ...BTN_STYLES.cream,
-      radius: 15,
-      fontSize: 17,
+      radius: 16,
+      fontSize: 20,
     });
-    drawButton(c, hits, 'modal:again', px + pw - 32 - 300, fy, 300, 54, won ? t('p12.continue') : t('p12.retry'), {
+    drawButton(c, hits, 'modal:again', px + pw - 26 - 348, fy, 348, 58, won ? t('p12.continue') : t('p12.retry'), {
       ...BTN_STYLES.green,
-      radius: 15,
-      fontSize: 19,
+      radius: 16,
+      fontSize: 22,
     });
   }
 }
@@ -438,126 +479,152 @@ function drawRecipesModal(
   scroll: ScrollRegion,
 ): ModalLayoutInfo {
   const zh = getLanguage() === 'zh-CN';
-  const pw = 940, ph = 604;
-  const px = (1280 - pw) / 2, py = (720 - ph) / 2;
-  drawWoodPanel(c, px, py, pw, ph, 24, PALETTE.cream, PALETTE.woodDark);
-  hits.add({ id: 'modal:card', x: px, y: py, w: pw, h: ph });
+  const pw = 1080, ph = 532;
+  const px = (1280 - pw) / 2, py = 158;
 
-  drawSpriteContain(c, 'ui_compendium_book', px + 24, py + 16, 46, 46);
-  drawText(c, t('p5.page.compendium'), px + 80, py + 32, 24, PALETTE.ink, 'left', 900);
-  drawText(c, t('recipe.subtitle'), px + 80, py + 56, 13, PALETTE.inkSoft, 'left', 700);
-  drawButton(c, hits, 'modal:close', px + pw - 56, py + 18, 38, 38, '×', {
-    ...BTN_STYLES.cream,
-    radius: 12,
-    fontSize: 22,
-  });
+  drawMatchaSignboard(c, 640, 18, t('p5.page.compendium'), t('recipe.subtitle'), 310);
+  drawYuzuCloseButton(c, hits, 'modal:close', px + pw - 22, 52);
 
-  // 4 Compendium Tabs
-  const ty = py + 80;
+  // 4 Carved Honey-Oak Bookmark Tabs perched above the hinoki wood rim (unified with Armory/Market/Kitchen!)
+  const tabY = py - 44;
   const tabs: Array<{ id: CompendiumTab; label: string }> = [
-    { id: 'heroes', label: zh ? '🦸 12 位英雄' : '🦸 12 Heroes' },
-    { id: 'basics', label: zh ? '🐾 5 位萌宠' : '🐾 5 Basics' },
-    { id: 'enemies', label: zh ? '👾 害虫与首领' : '👾 Pests & Bosses' },
-    { id: 'rules', label: zh ? '📖 规则速查' : '📖 Rules' },
+    { id: 'heroes', label: zh ? '12 位英雄' : '12 Heroes' },
+    { id: 'basics', label: zh ? '5 位萌宠' : '5 Basics' },
+    { id: 'enemies', label: zh ? '害虫与首领' : 'Pests & Bosses' },
+    { id: 'rules', label: zh ? '规则速查' : 'Rules' },
   ];
   tabs.forEach((tb, i) => {
-    drawButton(c, hits, `modal:recipes-tab:${tb.id}`, px + 26 + i * 170, ty, 160, 40, tb.label, {
-      ...(tab === tb.id ? BTN_STYLES.gold : BTN_STYLES.cream),
-      radius: 12,
-      fontSize: 14,
-    });
+    drawHoneyOakTab(c, hits, `modal:recipes-tab:${tb.id}`, px + 118 + i * 194, tabY, 186, 48, tb.label, tab === tb.id);
   });
   if (tab === 'heroes' || tab === 'enemies') {
-    drawText(c, zh ? '↕ 上下滑动查看更多' : '↕ Scroll for more', px + pw - 28, ty + 20, 12.5, PALETTE.inkSoft, 'right', 700);
+    drawText(c, zh ? '↕ 上下滑动' : '↕ Scroll', px + pw - 20, tabY + 24, 15.5, '#fff5dc', 'right', 900, INK, 3);
   }
 
-  const vx = px + 26, vy = ty + 50, vw = pw - 52, vh = ph - 154;
-  round(c, vx, vy, vw, vh, 16, '#fff8ea', PALETTE.woodLight, 1.8);
+  // Peeking Compendium Capybara perched right beside Tab 1!
+  drawSpriteContain(c, 'ui_compendium_peek_capy', px + 10, tabY - 38, 102, 102);
+
+  drawHinokiBoard(c, px, py, pw, ph, 24);
+  hits.add({ id: 'modal:card', x: px, y: py, w: pw, h: ph });
+
+  const vx = px + 22, vy = py + 16, vw = pw - 44, vh = ph - 32;
+  drawIvorySlab(c, vx, vy, vw, vh, 18, '#fffdf7', '#f5e4c2', '#5b3719', 2.4);
 
   c.save();
   c.beginPath();
-  c.rect(vx + 2, vy + 2, vw - 4, vh - 4);
+  c.rect(vx + 3, vy + 3, vw - 6, vh - 6);
   c.clip();
 
   let contentH = 0;
   if (tab === 'heroes') {
-    const cols = 2, gap = 12, cw = Math.floor((vw - 24 - gap) / cols), ch = 104;
+    const cols = 2, gap = 14, cw = Math.floor((vw - 30 - gap) / cols), ch = 132;
     RECIPES.forEach((r, idx) => {
       const col = idx % cols, row = Math.floor(idx / cols);
-      const rx = vx + 12 + col * (cw + gap);
-      const ry = vy + 12 + row * (ch + gap) - scroll.offset;
+      const rx = vx + 15 + col * (cw + gap);
+      const ry = vy + 14 + row * (ch + gap) - scroll.offset;
       if (ry + ch < vy - 20 || ry > vy + vh + 20) return;
 
-      round(c, rx, ry, cw, ch, 14, '#f7ebd1', PALETTE.woodLight, 1.6);
-      drawSpriteContain(c, r.parts[0], rx + 10, ry + 10, 42, 42);
-      drawText(c, '+', rx + 58, ry + 32, 16, PALETTE.inkSoft, 'center', 900);
-      drawSpriteContain(c, r.parts[1], rx + 66, ry + 10, 42, 42);
-      drawText(c, '→', rx + 116, ry + 32, 16, PALETTE.inkSoft, 'center', 900);
-      drawSpriteContain(c, r.hero, rx + 126, ry + 6, 50, 50);
+      drawIvorySlab(c, rx, ry, cw, ch, 15, '#fffdf8', '#f6e7c7', '#8a5d32', 2);
+      drawSpriteContain(c, r.parts[0], rx + 12, ry + 12, 50, 50);
+      drawText(c, '+', rx + 70, ry + 38, 20, PALETTE.inkSoft, 'center', 900);
+      drawSpriteContain(c, r.parts[1], rx + 80, ry + 12, 50, 50);
+      drawText(c, '→', rx + 140, ry + 38, 20, PALETTE.inkSoft, 'center', 900);
+      drawSpriteContain(c, r.hero, rx + 152, ry + 8, 58, 58);
 
       const st = getBaseUnitStats(r.hero, 1);
-      drawText(c, t(`hero.${r.hero}`), rx + 184, ry + 22, 16, PALETTE.ink, 'left', 900);
-      drawText(c, `⚔️${Math.round(st.damage)}  ⚡${Number(st.rate.toFixed(2))}/s  🎯${st.range}`, rx + 184, ry + 44, 12, PALETTE.inkSoft, 'left', 800);
-      drawWrappedText(c, `★ ${t(`skill.${r.hero}`)}: ${t(`skill.${r.hero}.desc`, { charge: st.charge })}`, rx + 14, ry + 62, cw - 28, 11, 14.5, PALETTE.inkSoft, 'left', 600, 2);
+      drawText(c, t(`hero.${r.hero}`), rx + 220, ry + 26, 19.5, PALETTE.ink, 'left', 900);
+      drawText(c, `⚔️${Math.round(st.damage)}  ⚡${Number(st.rate.toFixed(2))}/s  🎯${st.range}`, rx + 220, ry + 52, 15, PALETTE.inkSoft, 'left', 800);
+      drawWrappedText(c, `★ ${t(`skill.${r.hero}`)}: ${t(`skill.${r.hero}.desc`, { charge: st.charge })}`, rx + 16, ry + 76, cw - 32, 14.5, 20, PALETTE.inkSoft, 'left', 700, 2);
     });
-    contentH = 24 + Math.ceil(RECIPES.length / cols) * (ch + gap);
+    contentH = 28 + Math.ceil(RECIPES.length / cols) * (ch + gap);
   } else if (tab === 'basics') {
     const basicIds = ['hamster', 'squirrel', 'hedgehog', 'corgi', 'bee'];
-    const ch = 82, gap = 10;
+    const ch = 96, gap = 12;
     basicIds.forEach((id, idx) => {
-      const rx = vx + 14, ry = vy + 14 + idx * (ch + gap) - scroll.offset;
-      round(c, rx, ry, vw - 28, ch, 14, '#f7ebd1', PALETTE.woodLight, 1.6);
-      drawSpriteContain(c, id, rx + 14, ry + 11, 60, 60);
-      drawText(c, t(`unit.${id}`), rx + 88, ry + 27, 17, PALETTE.ink, 'left', 900);
+      const rx = vx + 16, ry = vy + 14 + idx * (ch + gap) - scroll.offset;
+      drawIvorySlab(c, rx, ry, vw - 32, ch, 15, '#fffdf8', '#f6e7c7', '#8a5d32', 2);
+      drawSpriteContain(c, id, rx + 16, ry + 12, 72, 72);
+      drawText(c, t(`unit.${id}`), rx + 104, ry + 32, 21, PALETTE.ink, 'left', 900);
       if (id === 'bee') {
-        drawText(c, t('inspect.bee', { time: 7, amount: 5 }), rx + 88, ry + 53, 13, PALETTE.inkSoft, 'left', 700);
+        drawText(c, t('inspect.bee', { time: 7, amount: 5 }), rx + 104, ry + 64, 16.5, PALETTE.inkSoft, 'left', 800);
       } else {
         const lv1 = getBaseUnitStats(id, 1), lv3 = getBaseUnitStats(id, 3);
-        drawText(c, `Lv.1: ⚔️${Math.round(lv1.damage)} ⚡${Number(lv1.rate.toFixed(2))}/s 🎯${lv1.range}    →    Lv.3: ⚔️${Math.round(lv3.damage)} ⚡${Number(lv3.rate.toFixed(2))}/s`, rx + 88, ry + 53, 13, PALETTE.inkSoft, 'left', 700);
+        drawText(
+          c,
+          `Lv.1: ⚔️${Math.round(lv1.damage)}  ⚡${Number(lv1.rate.toFixed(2))}/s  🎯${lv1.range}    →    Lv.3: ⚔️${Math.round(lv3.damage)}  ⚡${Number(lv3.rate.toFixed(2))}/s`,
+          rx + 104,
+          ry + 64,
+          16.5,
+          PALETTE.inkSoft,
+          'left',
+          800,
+        );
       }
     });
     contentH = 28 + basicIds.length * (ch + gap);
   } else if (tab === 'enemies') {
     const enemyList = Object.values(ENEMIES);
-    const cols = 2, gap = 10, cw = Math.floor((vw - 24 - gap) / cols), ch = 92;
+    const cols = 2, gap = 12, cw = Math.floor((vw - 30 - gap) / cols), ch = 120;
     enemyList.forEach((en, idx) => {
       const col = idx % cols, row = Math.floor(idx / cols);
-      const rx = vx + 12 + col * (cw + gap);
-      const ry = vy + 12 + row * (ch + gap) - scroll.offset;
+      const rx = vx + 15 + col * (cw + gap);
+      const ry = vy + 14 + row * (ch + gap) - scroll.offset;
       if (ry + ch < vy - 20 || ry > vy + vh + 20) return;
 
-      round(c, rx, ry, cw, ch, 14, en.boss ? '#fdeee6' : '#f7ebd1', en.boss ? '#c75b45' : PALETTE.woodLight, en.boss ? 2 : 1.4);
-      drawSpriteContain(c, en.id, rx + 10, ry + 14, 58, 58);
+      drawIvorySlab(
+        c,
+        rx,
+        ry,
+        cw,
+        ch,
+        15,
+        en.boss ? '#fff3ec' : '#fffdf8',
+        en.boss ? '#fadad0' : '#f6e7c7',
+        en.boss ? '#bf4f3a' : '#8a5d32',
+        en.boss ? 2.4 : 2,
+      );
+      drawSpriteContain(c, en.id, rx + 12, ry + 20, 74, 74);
       const name = t(`${en.boss ? 'boss' : 'enemy'}.${en.id}`);
-      drawText(c, `${en.boss ? '👑 ' : ''}${name}`, rx + 76, ry + 22, 14.5, en.boss ? '#9e2e1f' : PALETTE.ink, 'left', 900);
-      drawText(c, `HP ${en.hp}  ·  ${zh ? '速' : 'SPD'} ${en.speed}${en.armor ? `  ·  🛡${Math.round(en.armor * 100)}%` : ''}`, rx + 76, ry + 42, 11.5, PALETTE.inkSoft, 'left', 800);
+      drawText(c, `${en.boss ? '👑 ' : ''}${name}`, rx + 96, ry + 26, 18.5, en.boss ? '#9e2e1f' : PALETTE.ink, 'left', 900);
+      drawText(c, `HP ${en.hp}  ·  ${zh ? '速' : 'SPD'} ${en.speed}${en.armor ? `  ·  护甲${Math.round(en.armor * 100)}%` : ''}`, rx + 96, ry + 50, 14.5, PALETTE.inkSoft, 'left', 800);
       const tipKey = en.boss ? `p1.boss.${en.id}.tip` : `p9.alert.${en.id}`;
       const tip = t(tipKey);
-      drawWrappedText(c, tip === tipKey ? (zh ? '普通/精英害虫，注意集火阻截！' : 'Lane pest — focus fire before it reaches the tub!') : tip, rx + 76, ry + 54, cw - 88, 11, 14, PALETTE.inkSoft, 'left', 600, 2);
+      drawWrappedText(
+        c,
+        tip === tipKey ? (zh ? '普通/精英害虫，注意集火阻截！' : 'Lane pest — focus fire before it reaches the tub!') : tip,
+        rx + 96,
+        ry + 68,
+        cw - 110,
+        14.5,
+        20,
+        PALETTE.inkSoft,
+        'left',
+        700,
+        2,
+      );
     });
-    contentH = 24 + Math.ceil(enemyList.length / cols) * (ch + gap);
+    contentH = 28 + Math.ceil(enemyList.length / cols) * (ch + gap);
   } else {
     const sections = zh
       ? [
-          ['🔔 摇铃与合成', '点击底部摇铃消耗小鱼干抽 5 只伙伴（10→12→14… 递增）。同种同星可合并升星；宠物 + 对应头饰合成传奇英雄，英雄可继续喂食散件升至 Lv.5，合成还能立刻解除纸箱封印与淋湿！'],
-          ['⛏️ 铁锹与洒水器', '铁锹可铲开绿草坪增加白色阵位，或 2 步修好烂沙发；每局左侧配有 1 次免费【洒水器】全路冲退减速救急。'],
-          ['♾️ 无尽模式与觉醒突破', '10★ 解锁无尽模式！通关第 10 波先安全入账升星与奖励，可自愿挑战第 11 波+。无尽中将 Lv.5 英雄再喂 1 次散件（或同款 Lv.5）可掷骰【觉醒突破】，前 10 波攒的战意提高成功率，失败零损失且每次保底 +5%！'],
-          ['🛡️ 升段零惩罚', '全 54 阶怪物血量、移速与首领技能冷却恒定 1×，升段只提升通关金币、神兵碎片倍率与新地图解锁！'],
+          ['摇铃与合成', '点击底部摇铃消耗小鱼干抽 5 只伙伴（10→12→14… 递增）。同种同星可合并升星；宠物 + 对应头饰合成传奇英雄，英雄可继续喂食散件升至 Lv.5，合成还能立刻解除纸箱封印与淋湿！'],
+          ['铁锹与洒水器', '铁锹可铲开绿草坪增加白色阵位，或 2 步修好烂沙发；每局左侧配有 1 次免费【洒水器】全路冲退减速救急。'],
+          ['无尽模式与觉醒突破', '10★ 解锁无尽模式！通关第 10 波先安全入账升星与奖励，可自愿挑战第 11 波+。无尽中将 Lv.5 英雄再喂 1 次散件（或同款 Lv.5）可掷骰【觉醒突破】，前 10 波战意提高成功率，失败零损失且每次保底 +5%！'],
+          ['升段零惩罚', '全 54 阶怪物血量、移速与首领技能冷却恒定 1×，升段只提升通关金币、神兵碎片倍率与新地图解锁！'],
         ]
       : [
-          ['🔔 Bell & Merging', 'Ring the bell to draw 5 friends (cost rises 10→12→14…). Merge matching pets to star up; combine Pet + Gear for Legendary Heroes! Heroes feed on their parts up to Lv.5, and merging cleanses seals & wet debuffs.'],
-          ['⛏️ Shovels & Sprinkler', 'Use shovels to clear grass into paw pads or repair craters in 2 steps. Your free Sprinkler on the left pushes back the whole lane once per match!'],
-          ['♾️ Endless & Awakening', 'Unlock Endless at 10★! Wave-10 rewards bank safely first. From Wave 11+, feed a Lv.5 hero one more part (or Lv.5 twin) to roll Awakening Breakthrough — pre-wave-10 Momentum boosts odds, and misses add +5% pity!'],
-          ['🛡️ Zero Rank Penalty', 'Enemy HP, speed & boss cooldowns stay 1× across all 54 ranks — climbing only boosts coins, fragment rates, and new map unlocks!'],
+          ['Bell & Merging', 'Ring the bell to draw 5 friends (cost rises 10→12→14…). Merge matching pets to star up; combine Pet + Gear for Legendary Heroes! Heroes feed on parts up to Lv.5, and merging cleanses seals & wet debuffs.'],
+          ['Shovels & Sprinkler', 'Use shovels to clear grass into paw pads or repair craters in 2 steps. Your free Sprinkler on the left pushes back the whole lane once per match!'],
+          ['Endless & Awakening', 'Unlock Endless at 10★! Wave-10 rewards bank safely first. From Wave 11+, feed a Lv.5 hero one more part (or Lv.5 twin) to roll Awakening Breakthrough — pre-wave-10 Momentum boosts odds, and misses add +5% pity!'],
+          ['Zero Rank Penalty', 'Enemy HP, speed & boss cooldowns stay 1× across all 54 ranks — climbing only boosts coins, fragment rates, and new map unlocks!'],
         ];
-    let ry = vy + 16 - scroll.offset;
+    let ry = vy + 14 - scroll.offset;
     for (const [title, body] of sections) {
-      round(c, vx + 16, ry, vw - 32, 92, 14, '#f7ebd1', PALETTE.woodLight, 1.5);
-      drawText(c, title, vx + 30, ry + 22, 15.5, PALETTE.ink, 'left', 900);
-      drawWrappedText(c, body, vx + 30, ry + 38, vw - 60, 12.5, 17, PALETTE.inkSoft, 'left', 600, 3);
-      ry += 104;
+      drawIvorySlab(c, vx + 16, ry, vw - 32, 112, 15, '#fffdf8', '#f6e7c7', '#8a5d32', 2);
+      drawText(c, title, vx + 34, ry + 26, 19.5, PALETTE.ink, 'left', 900);
+      drawWrappedText(c, body, vx + 34, ry + 46, vw - 68, 16, 22, PALETTE.inkSoft, 'left', 700, 3);
+      ry += 124;
     }
-    contentH = 32 + sections.length * 104;
+    contentH = 28 + sections.length * 124;
   }
 
   c.restore();
@@ -575,69 +642,72 @@ function drawSettingsModal(
   devUnlocked: boolean,
 ): ModalLayoutInfo {
   const lang = getLanguage();
-  const pw = 560, ph = devUnlocked ? 512 : 456;
-  const px = (1280 - pw) / 2, py = (720 - ph) / 2;
-  drawWoodPanel(c, px, py, pw, ph, 24, PALETTE.cream, PALETTE.woodDark);
+  const zh = lang === 'zh-CN';
+  const pw = 668, ph = devUnlocked ? 548 : 488;
+  const px = (1280 - pw) / 2, py = (720 - ph) / 2 + 16;
+
+  drawHinokiBoard(c, px, py, pw, ph, 26);
   hits.add({ id: 'modal:card', x: px, y: py, w: pw, h: ph });
 
-  drawText(c, `⚙ ${t('p5.page.settings')}`, px + 32, py + 38, 25, PALETTE.ink, 'left', 900);
-  // Hidden QA gesture: 5 rapid taps on the Settings title unlocks Developer Debug Tools
-  hits.add({ id: 'settings:title-tap', x: px + 24, y: py + 16, w: 280, h: 44 });
-  drawButton(c, hits, 'modal:close', px + pw - 56, py + 18, 38, 38, '×', {
-    ...BTN_STYLES.cream,
-    radius: 12,
-    fontSize: 22,
-  });
+  drawMatchaSignboard(c, 640, py - 32, t('p5.page.settings'), undefined, 290);
+  // Hidden QA gesture: 5 rapid taps on the Settings signboard unlocks Developer Debug Tools!
+  hits.add({ id: 'settings:title-tap', x: 640 - 165, y: py - 36, w: 330, h: 68 });
+  drawYuzuCloseButton(c, hits, 'modal:close', px + pw - 20, py - 2, 26);
 
-  const sx = px + 180, sw = pw - 236, sh = 26;
-  const my = py + 94;
-  drawText(c, lang === 'zh-CN' ? '🎵 背景音乐' : '🎵 Music', px + 36, my + 13, 16, PALETTE.ink, 'left', 800);
+  // Inner sculpted ivory settings card
+  const ix = px + 26, iy = py + 44, iw = pw - 52, ih = ph - (devUnlocked ? 196 : 138);
+  drawIvorySlab(c, ix, iy, iw, ih, 18);
+
+  const sx = ix + 186, sw = iw - 266, sh = 30;
+  const my = iy + 32;
+  drawText(c, zh ? '背景音乐' : 'Music', ix + 24, my + 15, 20, PALETTE.ink, 'left', 900);
   drawSlider(c, sx, my, sw, sh, profile.settings.musicVolume);
-  drawText(c, `${Math.round(profile.settings.musicVolume * 100)}%`, sx + sw + 34, my + 13, 14, PALETTE.inkSoft, 'center', 800);
-  hits.add({ id: 'settings:music', x: sx - 10, y: my - 10, w: sw + 20, h: sh + 20 });
+  drawText(c, `${Math.round(profile.settings.musicVolume * 100)}%`, sx + sw + 42, my + 15, 17.5, PALETTE.inkSoft, 'center', 900);
+  hits.add({ id: 'settings:music', x: sx - 12, y: my - 12, w: sw + 24, h: sh + 24 });
 
-  const sfxY = py + 152;
-  drawText(c, lang === 'zh-CN' ? '🔊 游戏音效' : '🔊 Sound FX', px + 36, sfxY + 13, 16, PALETTE.ink, 'left', 800);
+  const sfxY = iy + 102;
+  drawText(c, zh ? '游戏音效' : 'Sound FX', ix + 24, sfxY + 15, 20, PALETTE.ink, 'left', 900);
   drawSlider(c, sx, sfxY, sw, sh, profile.settings.soundVolume);
-  drawText(c, `${Math.round(profile.settings.soundVolume * 100)}%`, sx + sw + 34, sfxY + 13, 14, PALETTE.inkSoft, 'center', 800);
-  hits.add({ id: 'settings:sound', x: sx - 10, y: sfxY - 10, w: sw + 20, h: sh + 20 });
+  drawText(c, `${Math.round(profile.settings.soundVolume * 100)}%`, sx + sw + 42, sfxY + 15, 17.5, PALETTE.inkSoft, 'center', 900);
+  hits.add({ id: 'settings:sound', x: sx - 12, y: sfxY - 12, w: sw + 24, h: sh + 24 });
 
-  const dmgY = py + 216;
-  drawText(c, lang === 'zh-CN' ? '💥 伤害浮字' : '💥 Damage Numbers', px + 36, dmgY + 20, 16, PALETTE.ink, 'left', 800);
+  const dmgY = iy + 174;
+  drawText(c, zh ? '伤害浮字' : 'Damage Numbers', ix + 24, dmgY + 24, 20, PALETTE.ink, 'left', 900);
   const dmgOn = profile.settings.showDamageNumbers;
-  drawButton(c, hits, 'settings:damage', px + pw - 148, dmgY, 114, 42, dmgOn ? (lang === 'zh-CN' ? '已开启' : 'ON') : (lang === 'zh-CN' ? '已关闭' : 'OFF'), {
+  drawButton(c, hits, 'settings:damage', ix + iw - 156, dmgY, 134, 48, dmgOn ? (zh ? '已开启' : 'ON') : (zh ? '已关闭' : 'OFF'), {
     ...(dmgOn ? BTN_STYLES.green : BTN_STYLES.muted),
-    radius: 14,
-    fontSize: 15,
+    radius: 15,
+    fontSize: 18,
   });
 
-  const langY = py + 278;
-  drawText(c, lang === 'zh-CN' ? '🌐 显示语言' : '🌐 Language', px + 36, langY + 20, 16, PALETTE.ink, 'left', 800);
-  drawButton(c, hits, 'settings:lang', px + pw - 178, langY, 144, 42, lang === 'zh-CN' ? '简体中文 ⇄ EN' : 'English ⇄ 中文', {
+  const langY = iy + 244;
+  drawText(c, zh ? '显示语言' : 'Language', ix + 24, langY + 24, 20, PALETTE.ink, 'left', 900);
+  drawButton(c, hits, 'settings:lang', ix + iw - 196, langY, 174, 48, zh ? '简体中文 ⇄ EN' : 'English ⇄ 中文', {
     ...BTN_STYLES.cream,
-    radius: 14,
-    fontSize: 14,
+    radius: 15,
+    fontSize: 17,
   });
 
-  const botY = py + ph - 82;
+  const botY = py + ph - 78;
   if (devUnlocked) {
-    drawButton(c, hits, 'settings:open-dev', px + 36, botY - 58, pw - 72, 44, lang === 'zh-CN' ? '🧪 打开开发者调试 & 新手节点预览' : '🧪 Open Developer QA & Stage Preview', {
+    drawButton(c, hits, 'settings:open-dev', px + 26, botY - 62, pw - 52, 50, zh ? '打开开发者调试 & 新手节点预览' : 'Open Developer QA & Stage Preview', {
       ...BTN_STYLES.coral,
-      radius: 14,
-      fontSize: 15,
+      radius: 15,
+      fontSize: 18,
     });
   }
   if (!inBattle) {
-    drawButton(c, hits, 'settings:replay-tutorial', px + 36, botY, 240, 52, lang === 'zh-CN' ? '🎓 重玩新手教学' : '🎓 Replay Tutorial', {
+    drawButton(c, hits, 'settings:replay-tutorial', px + 26, botY, 274, 58, zh ? '重玩新手教学' : 'Replay Tutorial', {
       ...BTN_STYLES.gold,
-      radius: 15,
-      fontSize: 16,
+      radius: 16,
+      fontSize: 19,
+      icon: 'ui_tutorial_capy',
     });
   }
-  drawButton(c, hits, 'modal:close', px + pw - 180, botY, 146, 52, lang === 'zh-CN' ? '完成' : 'Done', {
+  drawButton(c, hits, 'modal:close', px + pw - 216, botY, 190, 58, zh ? '完成' : 'Done', {
     ...BTN_STYLES.teal,
-    radius: 15,
-    fontSize: 17,
+    radius: 16,
+    fontSize: 20,
   });
 
   return {
@@ -648,9 +718,9 @@ function drawSettingsModal(
 
 function drawSlider(c: CanvasRenderingContext2D, x: number, y: number, w: number, h: number, value: number): void {
   const v = Math.max(0, Math.min(1, value));
-  drawProgressBar(c, x, y + h / 2 - 6, w, 12, v, '#5fb098', 'rgba(72,46,24,0.18)', PALETTE.woodDark);
+  drawProgressBar(c, x, y + h / 2 - 7, w, 14, v, '#5fb098', 'rgba(72,46,24,0.2)', PALETTE.woodDark);
   const kx = x + v * w;
-  round(c, kx - 13, y + h / 2 - 13, 26, 26, 13, '#fff6df', PALETTE.woodDark, 2.5);
+  round(c, kx - 15, y + h / 2 - 15, 30, 30, 15, '#fff6df', PALETTE.woodDark, 2.8);
 }
 
 interface ShelfChip {
@@ -688,21 +758,21 @@ function collectShelfChips(
 }
 
 function drawChipGrid(c: CanvasRenderingContext2D, chips: readonly ShelfChip[], x: number, y: number, w: number, cols: number): void {
-  const gap = 8;
+  const gap = 10;
   const cw = Math.floor((w - (cols - 1) * gap) / cols);
-  const ch = 74;
+  const ch = 84;
   chips.forEach((chip, i) => {
     const col = i % cols;
     const row = Math.floor(i / cols);
     const cx = x + col * (cw + gap);
     const cy = y + row * (ch + gap);
-    round(c, cx, cy, cw, ch, 12, '#f6e7c8', PALETTE.woodLight, 1.4);
-    if (!drawSpriteContain(c, chip.icon, cx + (cw - 36) / 2, cy + 6, 36, 36)) {
-      drawSpriteContain(c, 'ui_weapon_fragment', cx + (cw - 36) / 2, cy + 6, 36, 36);
+    round(c, cx, cy, cw, ch, 14, '#f8ebd0', '#8d6235', 1.8);
+    if (!drawSpriteContain(c, chip.icon, cx + (cw - 40) / 2, cy + 5, 40, 40)) {
+      drawSpriteContain(c, 'ui_weapon_fragment', cx + (cw - 40) / 2, cy + 5, 40, 40);
     }
-    drawText(c, chip.count, cx + cw / 2, cy + 52, 13, '#80410e', 'center', 900);
+    drawText(c, chip.count, cx + cw / 2, cy + 56, 16.5, '#7e3d0a', 'center', 900);
     const shortLabel = chip.label.length > 6 ? `${chip.label.slice(0, 6)}…` : chip.label;
-    drawText(c, shortLabel, cx + cw / 2, cy + 66, 10, PALETTE.inkSoft, 'center', 700);
+    drawText(c, shortLabel, cx + cw / 2, cy + 74, 12.5, PALETTE.inkSoft, 'center', 800);
   });
 }
 

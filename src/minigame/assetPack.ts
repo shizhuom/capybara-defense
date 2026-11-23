@@ -39,6 +39,9 @@ const MAIN_CORE_IDS = new Set([
   'ui_victory_star_lit', 'ui_victory_star_dim', 'ui_mvp_crown', 'ui_ticket_gacha',
   'ui_weapon_fragment', 'ui_clock_sand', 'ui_skull_threat', 'ui_btn_return_arrow',
   'ui_horn_continue', 'ui_crossed_blades', 'ui_storybook_check', 'ui_streak_flame',
+  'ui_pause_peek_capy', 'ui_compendium_peek_capy', 'ui_armory_peek_capy', 'ui_alert_siren',
+  'ui_battle_clash_crest', 'ui_harvest_basket', 'ui_rank_protect_shield', 'ui_endless_emblem',
+  'ui_passive_aura_badge', 'ui_stat_damage_burst', 'ui_stat_ko_skull', 'weapon_m10_bamboo_staff',
 ]);
 
 /** Single source of truth for mini-game sprite compression & WeChat/Bilibili subpackage assignment. */
