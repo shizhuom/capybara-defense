@@ -48,6 +48,7 @@ import {
   drawBattleLessonModal,
   drawOnboardingUnlockModal,
 } from './OnboardingModals';
+import { drawDevToolsModal } from './DevToolsModal';
 
 export type MinigameModalKind =
   | null
@@ -64,7 +65,8 @@ export type MinigameModalKind =
   | 'leaderboard'
   | 'profile'
   | 'onboard'
-  | 'battle-lesson';
+  | 'battle-lesson'
+  | 'dev';
 
 export type CompendiumTab = 'heroes' | 'basics' | 'enemies' | 'rules';
 
@@ -94,6 +96,8 @@ export interface ModalDrawContext {
   leaderboard: LeaderboardUiState;
   onboardingFeature: FeatureId | null;
   battleLesson: 'prop_battle' | 'endless_battle' | null;
+  devUnlocked: boolean;
+  isTestSave: boolean;
 }
 
 export interface ModalLayoutInfo {
@@ -125,7 +129,10 @@ export function drawActiveModal(
     case 'recipes':
       return drawRecipesModal(c, hits, ctx.recipesTab, ctx.scroll);
     case 'settings':
-      return drawSettingsModal(c, hits, ctx.profile, !!ctx.state);
+      return drawSettingsModal(c, hits, ctx.profile, !!ctx.state, ctx.devUnlocked);
+    case 'dev':
+      drawDevToolsModal(c, hits, ctx.profile, ctx.state, ctx.isTestSave);
+      return {};
     case 'armory':
       return drawArmoryModal(c, hits, ctx.profile, ctx.armory, ctx.scroll);
     case 'market':
@@ -565,14 +572,17 @@ function drawSettingsModal(
   hits: UiHitManager,
   profile: Profile,
   inBattle: boolean,
+  devUnlocked: boolean,
 ): ModalLayoutInfo {
   const lang = getLanguage();
-  const pw = 560, ph = 456;
+  const pw = 560, ph = devUnlocked ? 512 : 456;
   const px = (1280 - pw) / 2, py = (720 - ph) / 2;
   drawWoodPanel(c, px, py, pw, ph, 24, PALETTE.cream, PALETTE.woodDark);
   hits.add({ id: 'modal:card', x: px, y: py, w: pw, h: ph });
 
   drawText(c, `⚙ ${t('p5.page.settings')}`, px + 32, py + 38, 25, PALETTE.ink, 'left', 900);
+  // Hidden QA gesture: 5 rapid taps on the Settings title unlocks Developer Debug Tools
+  hits.add({ id: 'settings:title-tap', x: px + 24, y: py + 16, w: 280, h: 44 });
   drawButton(c, hits, 'modal:close', px + pw - 56, py + 18, 38, 38, '×', {
     ...BTN_STYLES.cream,
     radius: 12,
@@ -610,6 +620,13 @@ function drawSettingsModal(
   });
 
   const botY = py + ph - 82;
+  if (devUnlocked) {
+    drawButton(c, hits, 'settings:open-dev', px + 36, botY - 58, pw - 72, 44, lang === 'zh-CN' ? '🧪 打开开发者调试 & 新手节点预览' : '🧪 Open Developer QA & Stage Preview', {
+      ...BTN_STYLES.coral,
+      radius: 14,
+      fontSize: 15,
+    });
+  }
   if (!inBattle) {
     drawButton(c, hits, 'settings:replay-tutorial', px + 36, botY, 240, 52, lang === 'zh-CN' ? '🎓 重玩新手教学' : '🎓 Replay Tutorial', {
       ...BTN_STYLES.gold,

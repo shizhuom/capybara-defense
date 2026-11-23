@@ -225,8 +225,31 @@ describe('Mini-Game Phases 3 & 4: All 7 Meta Hubs, P19 Onboarding, Online Leader
 
       // Share payload builder sanity check
       expect(buildSharePayload(h.app.getDebugState().profile, 'endless', 25).title).toContain('25');
+
+      // 8. Developer QA API: jumping to Stage 3 triggers Market onboarding cleanly
+      h.app.getDevApi().stage(3);
+      expect(h.app.getDebugState().profile.stars).toBe(5);
+      expect(h.app.getDebugState().modal).toBe('onboard');
     } finally {
       h.cleanup();
+    }
+  });
+
+  it('installs MiniURLSearchParams polyfill cleanly when global URLSearchParams is absent (WeChat Mini Game runtime)', async () => {
+    const { MiniURLSearchParams, installMiniPolyfills } = await import('../src/platform/polyfills');
+    const g = globalThis as unknown as Record<string, unknown>;
+    const orig = g.URLSearchParams;
+    try {
+      delete g.URLSearchParams;
+      installMiniPolyfills();
+      expect(g.URLSearchParams).toBe(MiniURLSearchParams);
+      const q = new (g.URLSearchParams as typeof MiniURLSearchParams)({ limit: '100', playerId: 'capy_test1234' });
+      q.set('name', '水豚');
+      expect(q.toString()).toContain('limit=100');
+      expect(q.toString()).toContain('playerId=capy_test1234');
+      expect(q.get('name')).toBe('水豚');
+    } finally {
+      g.URLSearchParams = orig;
     }
   });
 });

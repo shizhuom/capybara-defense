@@ -186,10 +186,14 @@ export function createMiniStorage(api: MiniGameGlobalApi): Storage {
 /** Creates a Fetch-compatible wrapper over `wx.request` / `bl.request` for EndlessLeaderboardClient. */
 export function createMiniFetch(api: MiniGameGlobalApi): typeof fetch {
   return ((input: RequestInfo | URL, init?: RequestInit): Promise<Response> => {
-    const url = typeof input === 'string' ? input : input instanceof URL ? input.toString() : input.url;
+    const url = typeof input === 'string'
+      ? input
+      : (typeof URL === 'function' && input instanceof URL)
+        ? input.toString()
+        : (input as { url?: string }).url ?? String(input);
     const headers: Record<string, string> = {};
     if (init?.headers) {
-      if (init.headers instanceof Headers) init.headers.forEach((v, k) => { headers[k] = v; });
+      if (typeof Headers === 'function' && init.headers instanceof Headers) init.headers.forEach((v, k) => { headers[k] = v; });
       else if (Array.isArray(init.headers)) for (const [k, v] of init.headers) headers[k] = v;
       else Object.assign(headers, init.headers);
     }

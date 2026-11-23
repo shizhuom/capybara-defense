@@ -6,6 +6,7 @@ import { STAGE } from '../config/maps';
 import { ECONOMY } from '../config/units';
 import { WEAPONS, type WeaponFamily } from '../config/weapons';
 import {
+  buildDebugStageProfile,
   claimFeatureStarterGift,
   hasOnboarded,
   isFeatureUnlocked,
@@ -56,7 +57,17 @@ import { getLanguage, setLanguage, t } from '../i18n/i18n';
 import { StickerRenderer, type HitTarget } from '../render/StickerRenderer';
 import { EndlessLeaderboardClient } from '../ui/EndlessLeaderboardClient';
 import { nextBattleSpeed } from '../ui/P13HUD';
-import { awardBattle, awardEndless, loadProfile, saveProfile } from '../ui/storage';
+import {
+  awardBattle,
+  awardEndless,
+  emptyProfile,
+  enableTestProfile,
+  isTestProfile,
+  loadProfile,
+  resetOwnStorage,
+  restoreNormalProfile,
+  saveProfile,
+} from '../ui/storage';
 import type { PlatformAdapter, TouchEventData, ViewportMetrics } from '../platform/types';
 import {
   MINIGAME_LEADERBOARD_URL,
@@ -130,6 +141,9 @@ export class MinigameApp {
   private leaderboardUi: LeaderboardUiState;
   private onboardingFeature: FeatureId | null = null;
   private battleLesson: 'prop_battle' | 'endless_battle' | null = null;
+  private devUnlocked = false;
+  private devTapCount = 0;
+  private devTapLastAt = 0;
 
   private draggingSlider: 'music' | 'sound' | null = null;
   private scrollingModal = false;
@@ -238,6 +252,52 @@ export class MinigameApp {
   /** Helper for automated tests / external triggers to open any hub directly. */
   openHub(hub: Exclude<MinigameModalKind, null>): void {
     this.openModal(hub);
+  }
+
+  /** Developer QA API exposed on `globalThis.__capyDev` for WeChat DevTools Console & QA testing. */
+  getDevApi() {
+    return {
+      openDev: () => {
+        this.devUnlocked = true;
+        this.openModal('dev');
+      },
+      stage: (stage: number) => this.jumpToOnboardingStage(stage),
+      unlockAll: () => this.applyDevUnlockAll(),
+      restore: () => this.applyDevRestore(),
+      reset: () => this.applyDevReset(),
+    };
+  }
+
+  private jumpToOnboardingStage(stage: number): void {
+    const s = Math.max(0, Math.min(8, Math.trunc(stage)));
+    this.profile = buildDebugStageProfile(this.profile, s);
+    this.profile = ensureDailyShop(this.profile, localDay(), Math.random);
+    this.save();
+    this.returnToMenu();
+    this.showToast(t('p19.devStageDone', { stage: s }), 'good', 2.6);
+  }
+
+  private applyDevUnlockAll(): void {
+    this.profile = enableTestProfile(this.platform.storage);
+    this.profile = ensureDailyShop(this.profile, localDay(), Math.random);
+    this.save();
+    this.returnToMenu();
+    this.showToast(getLanguage() === 'zh-CN' ? '🌟 已开启全解锁测试档！' : '🌟 Full unlock test save enabled!', 'good', 2.4);
+  }
+
+  private applyDevRestore(): void {
+    this.profile = restoreNormalProfile(this.platform.storage);
+    this.profile = ensureDailyShop(this.profile, localDay(), Math.random);
+    this.returnToMenu();
+    this.showToast(getLanguage() === 'zh-CN' ? '↩ 已恢复正式存档！' : '↩ Restored normal save!', 'good', 2.4);
+  }
+
+  private applyDevReset(): void {
+    resetOwnStorage(this.platform.storage);
+    this.profile = ensureDailyShop(emptyProfile(), localDay(), Math.random);
+    this.save();
+    this.returnToMenu();
+    this.showToast(t('hint.reset'), 'warn', 2.2);
   }
 
   private syncViewport(vp: ViewportMetrics): void {
@@ -509,6 +569,8 @@ export class MinigameApp {
         leaderboard: this.leaderboardUi,
         onboardingFeature: this.onboardingFeature,
         battleLesson: this.battleLesson,
+        devUnlocked: this.devUnlocked,
+        isTestSave: isTestProfile(this.platform.storage),
       });
     } else {
       this.modalLayout = {};
@@ -1387,6 +1449,66 @@ export class MinigameApp {
       this.save();
       this.modal = null;
       void this.startBattle();
+      return;
+    }
+    if (id === 'settings:title-tap') {
+      const now = Date.now();
+      this.devTapCount = now - this.devTapLastAt < 2500 ? this.devTapCount + 1 : 1;
+      this.devTapLastAt = now;
+      if (this.devTapCount >= 5) {
+        this.devUnlocked = true;
+        this.devTapCount = 0;
+        this.showToast(zh ? '🧪 开发者调试模式已开启！' : '🧪 Developer QA mode unlocked!', 'good', 2.2);
+      }
+      return;
+    }
+    if (id === 'settings:open-dev') {
+      this.openModal('dev', this.modalReturnTo);
+      return;
+    }
+
+    // ── Hidden Developer QA Modal Actions ───────────────────────────────────
+    if (id.startsWith('dev:stage:')) {
+      this.jumpToOnboardingStage(Number(id.slice('dev:stage:'.length)));
+      return;
+    }
+    if (id === 'dev:unlock-all') { this.applyDevUnlockAll(); return; }
+    if (id === 'dev:restore') { this.applyDevRestore(); return; }
+    if (id === 'dev:reset') { this.applyDevReset(); return; }
+    if (id === 'dev:add-coins') {
+      this.profile = { ...this.profile, coins: this.profile.coins + 5000 };
+      this.save();
+      this.platform.audio.play('coin');
+      this.showToast('🪙 +5000', 'good', 1.6);
+      return;
+    }
+    if (id === 'dev:battle-food' && this.engine) {
+      this.engine.pause(false);
+      this.engine.addFood(500);
+      this.engine.pause(true);
+      this.showToast(t('hint.foodAdded'), 'good', 1.6);
+      return;
+    }
+    if (id === 'dev:battle-skip' && this.engine) {
+      this.modal = null;
+      this.modalReturnTo = null;
+      this.engine.pause(false);
+      this.engine.skipWave();
+      if (this.engine.state.result) this.handleBattleFinished(this.engine.state);
+      else this.showToast(t('hint.waveSkipped'), 'good', 1.8);
+      return;
+    }
+    if (id === 'dev:battle-orange-up' && this.engine) {
+      this.engine.pause(false);
+      this.engine.adjustOranges(1);
+      this.engine.pause(true);
+      return;
+    }
+    if (id === 'dev:battle-orange-down' && this.engine) {
+      this.engine.pause(false);
+      this.engine.adjustOranges(-1);
+      if (this.engine.state.result) this.handleBattleFinished(this.engine.state);
+      else this.engine.pause(true);
     }
   }
 
