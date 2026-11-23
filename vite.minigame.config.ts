@@ -9,7 +9,7 @@ export default defineConfig({
   build: {
     outDir,
     emptyOutDir: true,
-    target: 'es2020',
+    target: 'es2017',
     minify: true,
     lib: {
       entry: 'src/minigame/entry.ts',

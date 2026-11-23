@@ -52,8 +52,10 @@ const projectConfig = {
     ...(existingProjectConfig?.setting && typeof existingProjectConfig.setting === 'object' ? existingProjectConfig.setting : {}),
     urlCheck: existingProjectConfig?.setting?.urlCheck ?? true,
     es6: false,
+    enhance: false,
     postcss: false,
-    minified: true,
+    // Vite already transpiles (ES2017) & minifies game.js; keep DevTools UglifyJS off so Preview/Upload never re-parses it.
+    minified: false,
     newFeature: true,
   },
   compileType: 'game',
