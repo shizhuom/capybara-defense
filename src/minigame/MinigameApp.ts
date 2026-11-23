@@ -1,28 +1,70 @@
 import { BattleEngine } from '../core/BattleEngine';
 import { HEROES } from '../config/heroes';
+import { PROPS } from '../config/props';
 import { getRank } from '../config/ranks';
 import { STAGE } from '../config/maps';
 import { ECONOMY } from '../config/units';
+import { WEAPONS, type WeaponFamily } from '../config/weapons';
 import {
+  claimFeatureStarterGift,
+  hasOnboarded,
   isFeatureUnlocked,
+  markOnboarded,
   maxBattleSpeed,
+  pendingMenuOnboarding,
   type FeatureId,
 } from '../core/FeatureUnlocks';
+import {
+  brewBroth,
+  buyIngredientBasket,
+  equipBroth,
+  upgradeBroth,
+} from '../core/KitchenProgression';
+import { upgradeMedallion } from '../core/MedallionProgression';
+import {
+  buyProp,
+  createLotteryPrizes,
+  ensureDailyShop,
+  equipProp,
+  equipWeapon,
+  recycleFragments,
+  refreshShop,
+  spinLottery,
+  type LotteryPrize,
+} from '../core/MetaProgression';
+import { validateNickname } from '../core/PlayerIdentity';
 import {
   getMapUnlockRequirement,
   pickBattleMap,
   resolveMap,
+  selectAvatar,
   selectMap,
   updateSettings,
 } from '../core/PlayerProgression';
 import { propTargetKind, resolvePropDrop } from '../core/PropTargets';
 import { advanceTutorial, finishTutorial, replayTutorial, type TutorialStep } from '../core/Tutorial';
+import {
+  buildFacility,
+  claimOfflineHarvest,
+  localDay,
+  petVillageResident,
+  settleVillageClock,
+  villageLoadout,
+} from '../core/VillageProgression';
 import type { BattleState, MapId, Profile, Unit, UnitLocation } from '../core/types';
 import { getLanguage, setLanguage, t } from '../i18n/i18n';
 import { StickerRenderer, type HitTarget } from '../render/StickerRenderer';
+import { EndlessLeaderboardClient } from '../ui/EndlessLeaderboardClient';
 import { nextBattleSpeed } from '../ui/P13HUD';
 import { awardBattle, awardEndless, loadProfile, saveProfile } from '../ui/storage';
 import type { PlatformAdapter, TouchEventData, ViewportMetrics } from '../platform/types';
+import {
+  MINIGAME_LEADERBOARD_URL,
+  buildSharePayload,
+  getAdUnitId,
+  isAdPlacementAvailable,
+  type AdPlacement,
+} from './adConfig';
 import { MinigameAssetManager } from './MinigameAssetManager';
 import { BattleAudioBridge } from './BattleAudioBridge';
 import {
@@ -36,10 +78,14 @@ import { drawMenuScreen } from './ui/MenuScreen';
 import { drawBattleOverlay } from './ui/BattleOverlay';
 import {
   drawActiveModal,
+  type CompendiumTab,
   type MinigameModalKind,
   type ModalLayoutInfo,
   type SettlementMeta,
 } from './ui/BattleModals';
+import type { ArmoryState, MarketState } from './ui/MetaArmoryMarket';
+import type { KitchenUiState, VillageUiState } from './ui/MetaVillageKitchen';
+import type { LeaderboardUiState } from './ui/MetaMedallionsRanks';
 
 interface DragState {
   pointerId: number;
@@ -54,14 +100,17 @@ interface DragState {
 }
 
 /**
- * Phase 2 complete playable mini-game host on `PlatformAdapter` (`wx` / `bl` / `web` preview).
- * Renders Courtyard Menu, Full Battle HUD, Active/Passive Props, Live Unit Card,
- * Match-1 Tutorial, Pause, Endless Offer, Settlement, Quick Recipes & Settings purely on Canvas.
+ * Complete playable mini-game host on `PlatformAdapter` (`wx` / `bl` / `web` preview).
+ * Runs Courtyard Menu, Full Battle Loop, Match-1 Tutorial, Pause/Endless/Settlement,
+ * all 7 Meta Hubs (Armory, Market/Gacha/Backpack, Onsen Village, Kitchen, Medallions,
+ * Global & 54-Rank Leaderboard, Keeper Passport), P19 Progressive Onboarding,
+ * Rewarded Video Ad hooks, and WeChat/Bilibili Share — 100% pure Canvas 2D.
  */
 export class MinigameApp {
   private readonly renderer: StickerRenderer;
   private readonly assetManager: MinigameAssetManager;
   private readonly audioBridge = new BattleAudioBridge();
+  private readonly leaderboardClient: EndlessLeaderboardClient;
   private readonly hits = new UiHitManager();
   private readonly scroll = new ScrollRegion();
 
@@ -69,8 +118,19 @@ export class MinigameApp {
   private engine: BattleEngine | null = null;
   private screen: 'menu' | 'battle' = 'menu';
   private modal: MinigameModalKind = null;
+  private modalReturnTo: MinigameModalKind = null;
   private modalLayout: ModalLayoutInfo = {};
-  private recipesTab: 'heroes' | 'basics' = 'heroes';
+  private recipesTab: CompendiumTab = 'heroes';
+
+  // Phase 3 Meta Hub UI States
+  private armory: ArmoryState = { family: 'all', selectedId: 'm01_swatter' };
+  private market: MarketState;
+  private villageUi: VillageUiState;
+  private kitchenUi: KitchenUiState = { tier: 'all' };
+  private leaderboardUi: LeaderboardUiState;
+  private onboardingFeature: FeatureId | null = null;
+  private battleLesson: 'prop_battle' | 'endless_battle' | null = null;
+
   private draggingSlider: 'music' | 'sound' | null = null;
   private scrollingModal = false;
   private activeTouchId: number | null = null;
@@ -85,6 +145,7 @@ export class MinigameApp {
   private activePropId?: string;
   private expandedPassiveId?: string;
   private tutorialStep: TutorialStep = 'done';
+  private reviveUsedThisBattle = false;
   private drag?: DragState;
   private toast: ToastMessage | null = null;
   private settlement: SettlementMeta = {
@@ -94,13 +155,46 @@ export class MinigameApp {
     newWeapons: [],
     ticketAwarded: false,
     statsOpen: false,
+    adDoubleCoinsAvailable: false,
+    adDoubleClaimed: false,
+    adReviveAvailable: false,
   };
   private disposed = false;
 
   constructor(private readonly platform: PlatformAdapter) {
-    this.profile = loadProfile(platform.storage);
+    this.profile = settleVillageClock(loadProfile(platform.storage), Date.now());
+    this.profile = ensureDailyShop(this.profile, localDay(), Math.random);
     this.platform.audio.setSettings(this.profile.settings);
     this.muted = this.profile.settings.musicVolume <= 0 && this.profile.settings.soundVolume <= 0;
+
+    this.leaderboardClient = new EndlessLeaderboardClient({
+      baseUrl: MINIGAME_LEADERBOARD_URL,
+      fetch: platform.fetch,
+      storage: platform.storage,
+    });
+
+    this.market = {
+      tab: 'shop',
+      prizes: createLotteryPrizes(this.profile, Math.random),
+      lastPrizeIndex: null,
+      lastPrizeLabel: '',
+      adRefreshAvailable: isAdPlacementAvailable(platform.kind, 'free_shop_refresh'),
+      adGachaAvailable: isAdPlacementAvailable(platform.kind, 'free_gacha'),
+    };
+    this.villageUi = {
+      tab: 'courtyard',
+      elapsed: 0,
+      nowMs: Date.now(),
+      lastPetUntil: 0,
+      adDoubleHarvestAvailable: isAdPlacementAvailable(platform.kind, 'double_harvest'),
+    };
+    this.leaderboardUi = {
+      tab: 'rank',
+      endlessSnap: this.leaderboardClient.snapshot(),
+      rankSnap: this.leaderboardClient.rankSnapshot(),
+      loading: false,
+    };
+
     this.renderer = new StickerRenderer(platform.canvas, { managedViewport: true });
     this.syncViewport(platform.viewport());
     this.assetManager = new MinigameAssetManager(platform);
@@ -120,6 +214,7 @@ export class MinigameApp {
       cancel: () => this.resetPointerState(),
     });
 
+    this.checkMenuOnboarding();
     this.lastTs = platform.now();
     this.rafId = platform.requestFrame(ts => this.loop(ts));
   }
@@ -133,14 +228,26 @@ export class MinigameApp {
       speed: this.speed,
       profile: this.profile,
       battleState: this.engine?.state ?? null,
+      armory: this.armory,
+      marketTab: this.market.tab,
+      villageTab: this.villageUi.tab,
+      leaderboardTab: this.leaderboardUi.tab,
     };
+  }
+
+  /** Helper for automated tests / external triggers to open any hub directly. */
+  openHub(hub: Exclude<MinigameModalKind, null>): void {
+    this.openModal(hub);
   }
 
   private syncViewport(vp: ViewportMetrics): void {
     this.renderer.setViewportTransform(vp.stageScale, vp.stageOffsetX, vp.stageOffsetY);
   }
 
-  /** Reserves space on top-right in wx/bl if the right pillarbox doesn't already clear WeChat's floating capsule. */
+  private save(): void {
+    saveProfile(this.profile, this.platform.storage);
+  }
+
   private capsuleRightMargin(): number {
     if (this.platform.kind === 'web') return 18;
     const vp = this.platform.viewport();
@@ -151,6 +258,103 @@ export class MinigameApp {
 
   private showToast(text: string, tone: 'info' | 'good' | 'warn' = 'info', duration = 2.4): void {
     this.toast = { text, tone, remaining: duration, duration };
+  }
+
+  /** Checks for newly unlocked P19 milestones (Armory / 2x Speed / Market / Village / Kitchen / Medallions / 3x Speed). */
+  private checkMenuOnboarding(): void {
+    if (this.screen !== 'menu' || this.modal) return;
+    const pending = pendingMenuOnboarding(this.profile);
+    if (pending) {
+      this.onboardingFeature = pending;
+      this.modal = 'onboard';
+      return;
+    }
+    for (const speedFeat of ['speed2x', 'speed3x'] as const) {
+      if (isFeatureUnlocked(this.profile, speedFeat) && !hasOnboarded(this.profile, speedFeat)) {
+        this.onboardingFeature = speedFeat;
+        this.modal = 'onboard';
+        return;
+      }
+    }
+  }
+
+  private openModal(kind: Exclude<MinigameModalKind, null>, returnTo: MinigameModalKind = null): void {
+    this.modal = kind;
+    this.modalReturnTo = returnTo;
+    this.scroll.reset();
+
+    if (kind === 'village') {
+      this.villageUi.nowMs = Date.now();
+      this.profile = settleVillageClock(this.profile, this.villageUi.nowMs);
+      void this.assetManager.ensureSubpackage('maps');
+    } else if (kind === 'armory' || kind === 'market' || kind === 'kitchen' || kind === 'medallions' || kind === 'profile') {
+      if (kind === 'market') {
+        this.profile = ensureDailyShop(this.profile, localDay(), Math.random);
+      }
+      void this.assetManager.ensureSubpackage('meta');
+    } else if (kind === 'leaderboard') {
+      void this.assetManager.ensureSubpackage('meta');
+      void this.refreshLeaderboards(false);
+    }
+  }
+
+  private async refreshLeaderboards(force: boolean): Promise<void> {
+    this.leaderboardUi.loading = true;
+    try {
+      const lang = getLanguage();
+      void this.leaderboardClient.submitRank(this.profile, lang);
+      if ((this.profile.bestEndlessWave ?? 0) >= 11) {
+        void this.leaderboardClient.submitScore(this.profile, lang);
+      }
+      const [rankSnap, endlessSnap] = await Promise.all([
+        this.leaderboardClient.refreshRank(this.profile.playerId, force),
+        this.leaderboardClient.refresh(this.profile.playerId, force),
+      ]);
+      this.leaderboardUi.rankSnap = rankSnap;
+      this.leaderboardUi.endlessSnap = endlessSnap;
+    } finally {
+      this.leaderboardUi.loading = false;
+    }
+  }
+
+  private async promptNicknameEdit(): Promise<void> {
+    const zh = getLanguage() === 'zh-CN';
+    const raw = await this.platform.showKeyboard({
+      value: this.profile.nickname,
+      maxLength: 14,
+      placeholder: zh ? '输入 2~14 字昵称' : 'Enter 2–14 char nickname',
+      confirmText: zh ? '保存' : 'Save',
+    });
+    if (raw === null) return;
+    const check = validateNickname(raw);
+    if (!check.ok) {
+      this.showToast(t(check.key), 'warn', 2.4);
+      return;
+    }
+    this.profile = { ...this.profile, nickname: check.value };
+    this.save();
+    this.showToast(t('p17.nameSaved'), 'good', 2.0);
+    void this.refreshLeaderboards(true);
+  }
+
+  private async runRewardedAd(placement: AdPlacement, onReward: () => void): Promise<void> {
+    const unitId = getAdUnitId(this.platform.kind, placement);
+    const outcome = await this.platform.showRewardedAd(unitId);
+    if (outcome === 'completed') {
+      onReward();
+    } else if (outcome === 'skipped') {
+      this.showToast(
+        getLanguage() === 'zh-CN' ? '需看完完整视频才能领取奖励哦' : 'Watch the full video to claim the reward!',
+        'warn',
+        2.2,
+      );
+    } else {
+      this.showToast(
+        getLanguage() === 'zh-CN' ? '广告暂时不可用，请稍后再试' : 'Ad unavailable right now — try again later.',
+        'warn',
+        2.2,
+      );
+    }
   }
 
   private loop(ts: number): void {
@@ -189,7 +393,11 @@ export class MinigameApp {
           this.profile = res.profile;
           this.settlement.savedResult = saveProfile(this.profile, this.platform.storage);
           this.settlement.newWeapons = [...this.settlement.newWeapons, ...res.newWeapons];
+          this.settlement.adDoubleCoinsAvailable = isAdPlacementAvailable(this.platform.kind, 'double_settlement');
+          this.settlement.adDoubleClaimed = false;
+          this.settlement.adReviveAvailable = false;
           this.platform.audio.play('victory');
+          void this.leaderboardClient.submitScore(this.profile, getLanguage());
         }
       }
       this.modal = 'result';
@@ -210,12 +418,15 @@ export class MinigameApp {
           newWeapons: res.newWeapons,
           ticketAwarded: Boolean(res.ticketAwarded),
           statsOpen: false,
+          adDoubleCoinsAvailable: result.winner === 'player' && isAdPlacementAvailable(this.platform.kind, 'double_settlement'),
+          adDoubleClaimed: false,
+          adReviveAvailable: result.winner !== 'player' && result.reason === 'oranges' && !this.reviveUsedThisBattle && isAdPlacementAvailable(this.platform.kind, 'revive'),
         };
         this.platform.audio.play(result.winner === 'player' ? 'victory' : 'defeat');
+        void this.leaderboardClient.submitRank(this.profile, getLanguage());
       }
     }
 
-    // Standard Wave-10 win: offer Endless Mode if player has unlocked Endless (10★+)!
     if (
       result.winner === 'player' &&
       result.reason === 'waves' &&
@@ -281,8 +492,9 @@ export class MinigameApp {
     }
 
     if (this.modal) {
-      // Modals sit strictly on top of background UI hits
       this.hits.clear();
+      this.villageUi.elapsed = this.elapsedSec;
+      this.villageUi.nowMs = Date.now();
       this.modalLayout = drawActiveModal(c, this.hits, {
         modal: this.modal,
         profile: this.profile,
@@ -290,6 +502,13 @@ export class MinigameApp {
         settlement: this.settlement,
         recipesTab: this.recipesTab,
         scroll: this.scroll,
+        armory: this.armory,
+        market: this.market,
+        village: this.villageUi,
+        kitchen: this.kitchenUi,
+        leaderboard: this.leaderboardUi,
+        onboardingFeature: this.onboardingFeature,
+        battleLesson: this.battleLesson,
       });
     } else {
       this.modalLayout = {};
@@ -320,7 +539,7 @@ export class MinigameApp {
     this.engine = new BattleEngine({
       mapId: map.id,
       rankIndex: getRank(this.profile.stars).index,
-      loadouts: { player: this.profile },
+      loadouts: { player: villageLoadout(this.profile) },
       unlockedWeapons: this.profile.unlockedWeapons,
       progressionStars: bestStars,
       progressionHeroes: this.profile.mergedHeroes,
@@ -343,12 +562,25 @@ export class MinigameApp {
 
     this.screen = 'battle';
     this.modal = null;
+    this.modalReturnTo = null;
+    this.reviveUsedThisBattle = false;
     this.selectedId = undefined;
     this.shovelSelected = false;
     this.activePropId = undefined;
     this.expandedPassiveId = undefined;
     this.drag = undefined;
     this.platform.audio.play('wave_start');
+
+    // One-time Active Prop battle lesson once player owns & equips an active prop
+    if (
+      !guided &&
+      this.profile.equippedActiveProps.length > 0 &&
+      !hasOnboarded(this.profile, 'prop_battle')
+    ) {
+      this.battleLesson = 'prop_battle';
+      this.engine.pause(true);
+      this.modal = 'battle-lesson';
+    }
   }
 
   private advanceBattleTutorial(action: Parameters<typeof advanceTutorial>[1]): void {
@@ -363,7 +595,7 @@ export class MinigameApp {
     if (next === 'done') {
       const done = finishTutorial(this.profile, action !== 'skip');
       this.profile = done.profile;
-      saveProfile(this.profile, this.platform.storage);
+      this.save();
       if (done.awarded) {
         this.showToast(
           getLanguage() === 'zh-CN' ? '🎉 教学完成！获得 20 金币奖励！' : '🎉 Tutorial complete! +20 coins!',
@@ -386,7 +618,6 @@ export class MinigameApp {
     this.activeTouchId = p.id;
     const hit = this.hits.hit(p.stageX, p.stageY);
 
-    // 1. Active Modal touch handling (scroll, sliders, buttons)
     if (this.modal) {
       if (hit?.id === 'settings:music') {
         this.draggingSlider = 'music';
@@ -407,7 +638,6 @@ export class MinigameApp {
       return;
     }
 
-    // 2. Active Prop button drag-to-cast support (left rail)
     if (hit && hit.id.startsWith('battle:prop:') && this.engine?.state.phase === 'playing') {
       const propId = String(hit.data ?? hit.id.slice('battle:prop:'.length));
       this.hits.activeId = hit.id;
@@ -424,17 +654,14 @@ export class MinigameApp {
       return;
     }
 
-    // 3. Standard UI button hit
     if (hit) {
       this.hits.activeId = hit.id;
       return;
     }
 
-    // 4. Battle Board / Bench / Shovel interaction
     if (this.screen !== 'battle' || !this.engine || this.engine.state.phase !== 'playing') return;
     this.expandedPassiveId = undefined;
 
-    // If an active prop is currently armed by tap, try casting at this tap location
     if (this.activePropId) {
       this.tryCastActivePropAt(this.activePropId, { x: p.stageX, y: p.stageY });
       return;
@@ -499,7 +726,7 @@ export class MinigameApp {
 
     if (this.draggingSlider) {
       this.draggingSlider = null;
-      saveProfile(this.profile, this.platform.storage);
+      this.save();
       return;
     }
 
@@ -509,7 +736,6 @@ export class MinigameApp {
       if (wasScroll) { this.hits.activeId = null; return; }
     }
 
-    // Active Prop drag release
     if (this.drag?.propId) {
       const propId = this.drag.propId;
       const moved = this.drag.moved;
@@ -523,7 +749,6 @@ export class MinigameApp {
       return;
     }
 
-    // UI button tap release
     const pressedId = this.hits.activeId;
     this.hits.activeId = null;
     if (pressedId) {
@@ -534,7 +759,6 @@ export class MinigameApp {
       return;
     }
 
-    // Battle Board / Bench / Shovel release
     const drag = this.drag;
     if (!drag || drag.pointerId !== p.id) return;
     this.drag = undefined;
@@ -576,7 +800,6 @@ export class MinigameApp {
       }
       return;
     }
-    // Toggle target-selection mode for unit/road props
     this.platform.audio.play('click');
     this.activePropId = this.activePropId === propId ? undefined : propId;
     this.selectedId = undefined;
@@ -603,14 +826,28 @@ export class MinigameApp {
     }
   }
 
+  private formatPrizeLabel(prize: LotteryPrize): string {
+    const zh = getLanguage() === 'zh-CN';
+    if (prize.type === 'coins') return `🪙 +${prize.amount}`;
+    if (prize.type === 'prop' && prize.id && PROPS[prize.id]) {
+      return `${PROPS[prize.id].icon} ${zh ? PROPS[prize.id].name['zh-CN'] : PROPS[prize.id].name.en}`;
+    }
+    if (prize.type === 'fragment' && prize.id && WEAPONS[prize.id]) {
+      return `🧩 ${zh ? WEAPONS[prize.id].name['zh-CN'] : WEAPONS[prize.id].name.en}`;
+    }
+    return '🎁';
+  }
+
   private handleUiAction(box: UiHitBox): void {
     const id = box.id;
     const lang = getLanguage();
+    const zh = lang === 'zh-CN';
 
-    // Backdrop dismiss for non-mandatory modals
     if (id === 'modal:backdrop') {
       if (this.modal === 'pause') this.resumeBattle();
-      else if (this.modal === 'recipes' || this.modal === 'settings') this.closeOverlayModal();
+      else if (this.modal && !['endless-offer', 'result', 'onboard', 'battle-lesson'].includes(this.modal)) {
+        this.closeOverlayModal();
+      }
       return;
     }
     if (id === 'modal:card' || id === 'battle:card-bg' || id === 'battle:tutorial-bg') return;
@@ -618,37 +855,28 @@ export class MinigameApp {
     this.platform.audio.play('click');
 
     // ── Menu Actions ────────────────────────────────────────────────────────
-    if (id === 'menu:start') {
-      void this.startBattle();
-      return;
-    }
-    if (id === 'menu:lang' || id === 'settings:lang') {
-      setLanguage(lang === 'zh-CN' ? 'en' : 'zh-CN');
-      return;
-    }
+    if (id === 'menu:start') { void this.startBattle(); return; }
+    if (id === 'menu:lang' || id === 'settings:lang') { setLanguage(zh ? 'en' : 'zh-CN'); return; }
     if (id === 'menu:mute') {
       this.muted = !this.muted;
       this.profile = updateSettings(this.profile, this.muted
         ? { musicVolume: 0, soundVolume: 0 }
         : { musicVolume: 0.5, soundVolume: 0.75 });
       this.platform.audio.setSettings(this.profile.settings);
-      saveProfile(this.profile, this.platform.storage);
+      this.save();
       return;
     }
-    if (id === 'menu:settings' || id === 'modal:open-settings') {
-      this.modal = 'settings';
+    if (id === 'menu:share' || id === 'profile:share' || id === 'lb:share') {
+      this.platform.share(buildSharePayload(this.profile, id === 'menu:share' ? 'menu' : 'profile'));
+      this.showToast(zh ? '📤 已唤起分享卡片！' : '📤 Share card opened!', 'good', 1.8);
       return;
     }
-    if (id === 'menu:recipes') {
-      this.scroll.reset();
-      this.modal = 'recipes';
-      return;
-    }
-    if (id === 'menu:profile') {
-      const rank = getRank(this.profile.stars);
-      this.showToast(`${t(`rank.${rank.index}`)} · ★${this.profile.stars} · ${this.profile.wins}/${this.profile.matches}`, 'info', 2.4);
-      return;
-    }
+    if (id === 'menu:settings') { this.openModal('settings'); return; }
+    if (id === 'modal:open-settings') { this.openModal('settings', 'pause'); return; }
+    if (id === 'modal:open-profile') { this.openModal('profile', 'pause'); return; }
+    if (id === 'menu:recipes') { this.openModal('recipes'); return; }
+    if (id === 'menu:profile') { this.openModal('profile'); return; }
+
     if (id.startsWith('menu:map:')) {
       const data = box.data as { id: 'auto' | MapId; locked: boolean; reqStars: number } | undefined;
       if (!data) return;
@@ -663,11 +891,12 @@ export class MinigameApp {
         }), 'warn', 2.6);
       } else {
         this.profile = selectMap(this.profile, data.id);
-        saveProfile(this.profile, this.platform.storage);
+        this.save();
         if (data.id !== 'auto') void this.assetManager.ensureMap(data.id);
       }
       return;
     }
+
     if (id.startsWith('menu:locked:')) {
       const feat = id.slice('menu:locked:'.length) as FeatureId;
       const best = Math.max(this.profile.stars, this.profile.highestStars);
@@ -680,15 +909,331 @@ export class MinigameApp {
       }
       return;
     }
+
     if (id.startsWith('menu:hub:')) {
-      const hub = id.slice('menu:hub:'.length);
-      this.showToast(
-        lang === 'zh-CN'
-          ? `✨「${hub === 'leaderboard' ? t('p5.page.leaderboard') : t(`p19.feature.${hub}`)}」已解锁！完整养成界面将在阶段 3 上线`
-          : `✨ ${hub === 'leaderboard' ? t('p5.page.leaderboard') : t(`p19.feature.${hub}`)} unlocked! Full Canvas hub arrives in Phase 3.`,
-        'good',
-        2.6,
-      );
+      const hub = id.slice('menu:hub:'.length) as Exclude<MinigameModalKind, null>;
+      this.openModal(hub);
+      return;
+    }
+
+    // ── P19 Onboarding Celebration & Battle Lessons ─────────────────────────
+    if (id.startsWith('onboard:go:')) {
+      const feat = id.slice('onboard:go:'.length) as FeatureId;
+      const gift = claimFeatureStarterGift(this.profile, feat, Date.now());
+      this.profile = markOnboarded(gift.profile, feat);
+      this.save();
+      this.onboardingFeature = null;
+      if (feat === 'armory' || feat === 'market' || feat === 'village' || feat === 'kitchen' || feat === 'medallions') {
+        if (feat === 'village') this.villageUi.tab = 'build';
+        this.openModal(feat);
+      } else {
+        this.modal = null;
+      }
+      return;
+    }
+    if (id.startsWith('onboard:dismiss:')) {
+      const feat = id.slice('onboard:dismiss:'.length) as FeatureId;
+      const gift = claimFeatureStarterGift(this.profile, feat, Date.now());
+      this.profile = markOnboarded(gift.profile, feat);
+      this.save();
+      this.onboardingFeature = null;
+      this.modal = null;
+      this.checkMenuOnboarding();
+      return;
+    }
+    if (id.startsWith('lesson:ok:')) {
+      const lesson = id.slice('lesson:ok:'.length) as 'prop_battle' | 'endless_battle';
+      this.profile = markOnboarded(this.profile, lesson);
+      this.save();
+      this.battleLesson = null;
+      this.resumeBattle();
+      return;
+    }
+
+    // ── Hub #1: Weapon Armory ───────────────────────────────────────────────
+    if (id.startsWith('armory:family:')) {
+      this.armory.family = id.slice('armory:family:'.length) as 'all' | WeaponFamily;
+      const first = Object.values(WEAPONS).find(w => this.armory.family === 'all' || w.family === this.armory.family);
+      if (first) this.armory.selectedId = first.id;
+      this.scroll.reset();
+      return;
+    }
+    if (id.startsWith('armory:select:')) {
+      this.armory.selectedId = id.slice('armory:select:'.length);
+      return;
+    }
+    if (id.startsWith('armory:equip:')) {
+      const data = box.data as { heroId: string; weaponId: string; equippedHere: boolean } | undefined;
+      if (!data) return;
+      const res = equipWeapon(this.profile, data.heroId, data.equippedHere ? null : data.weaponId);
+      if (res.ok) {
+        this.profile = res.profile;
+        this.save();
+        this.platform.audio.play('merge_upgrade');
+        this.showToast(t(res.key), 'good', 1.6);
+      } else {
+        this.showToast(t(res.key), 'warn', 1.8);
+      }
+      return;
+    }
+    if (id === 'armory:recycle') {
+      const res = recycleFragments(this.profile, [0, 1, 2, 3, 4]);
+      if (res.ok) {
+        this.profile = res.profile;
+        this.save();
+        this.platform.audio.play('coin');
+        this.showToast(zh ? `♻ 分解获得 +${res.amount ?? 0} 金币！` : `♻ Recycled for +${res.amount ?? 0} coins!`, 'good', 2.2);
+      }
+      return;
+    }
+
+    // ── Hub #2: Raccoon Market (Shop / Gacha / Backpack) ────────────────────
+    if (id.startsWith('market:tab:')) {
+      this.market.tab = id.slice('market:tab:'.length) as MarketState['tab'];
+      this.scroll.reset();
+      return;
+    }
+    if (id.startsWith('market:buy:')) {
+      const propId = id.slice('market:buy:'.length);
+      const res = buyProp(this.profile, propId);
+      if (res.ok) {
+        this.profile = res.profile;
+        this.save();
+        this.platform.audio.play('coin');
+        this.showToast(zh ? `🛍️ 已购入「${PROPS[propId]?.name['zh-CN']}」！` : `🛍️ Bought ${PROPS[propId]?.name.en}!`, 'good', 2.0);
+      } else {
+        this.showToast(t(res.key), 'warn', 1.8);
+      }
+      return;
+    }
+    if (id === 'market:refresh') {
+      const res = refreshShop(this.profile, localDay(), Math.random);
+      if (res.ok) {
+        this.profile = res.profile;
+        this.save();
+        this.showToast(zh ? '🔄 货摊已刷新！' : '🔄 Shop refreshed!', 'good', 1.6);
+      } else {
+        this.showToast(t(res.key), 'warn', 1.8);
+      }
+      return;
+    }
+    if (id === 'market:ad-refresh') {
+      void this.runRewardedAd('free_shop_refresh', () => {
+        const freeTemp = { ...this.profile, coins: this.profile.coins + 40 };
+        const res = refreshShop(freeTemp, localDay(), Math.random);
+        if (res.ok) {
+          this.profile = res.profile;
+          this.save();
+          this.showToast(zh ? '🎬 免费刷新成功！' : '🎬 Free shop refresh!', 'good', 2.0);
+        }
+      });
+      return;
+    }
+    if (id === 'market:spin') {
+      const res = spinLottery(this.profile, this.market.prizes, Math.random, 'auto');
+      if (res.ok && res.prize) {
+        this.profile = res.profile;
+        this.save();
+        this.market.lastPrizeIndex = res.index ?? null;
+        this.market.lastPrizeLabel = this.formatPrizeLabel(res.prize);
+        this.market.prizes = createLotteryPrizes(this.profile, Math.random);
+        this.platform.audio.play('gacha_win');
+        this.showToast(`🎉 ${this.market.lastPrizeLabel}`, 'good', 2.6);
+      } else {
+        this.showToast(t(res.key), 'warn', 1.8);
+      }
+      return;
+    }
+    if (id === 'market:ad-gacha') {
+      void this.runRewardedAd('free_gacha', () => {
+        const temp = { ...this.profile, freeLotteryTickets: this.profile.freeLotteryTickets + 1 };
+        const res = spinLottery(temp, this.market.prizes, Math.random, 'ticket');
+        if (res.ok && res.prize) {
+          this.profile = res.profile;
+          this.save();
+          this.market.lastPrizeIndex = res.index ?? null;
+          this.market.lastPrizeLabel = this.formatPrizeLabel(res.prize);
+          this.market.prizes = createLotteryPrizes(this.profile, Math.random);
+          this.platform.audio.play('gacha_win');
+          this.showToast(`🎬 🎉 ${this.market.lastPrizeLabel}`, 'good', 2.6);
+        }
+      });
+      return;
+    }
+    if (id.startsWith('market:equip:')) {
+      const propId = id.slice('market:equip:'.length);
+      const res = equipProp(this.profile, propId);
+      if (res.ok) {
+        this.profile = res.profile;
+        this.save();
+        this.showToast(t(res.key), 'good', 1.6);
+      } else {
+        this.showToast(t(res.key), 'warn', 1.8);
+      }
+      return;
+    }
+
+    // ── Hub #3: Capybara Onsen Village ──────────────────────────────────────
+    if (id === 'village:tab:courtyard' || id === 'village:tab:build') {
+      this.villageUi.tab = id === 'village:tab:courtyard' ? 'courtyard' : 'build';
+      this.scroll.reset();
+      return;
+    }
+    if (id.startsWith('village:pet:')) {
+      const petId = id.slice('village:pet:'.length);
+      const res = petVillageResident(this.profile, petId, localDay());
+      if (res.ok) {
+        this.profile = res.profile;
+        this.save();
+        this.villageUi.lastPetId = petId;
+        this.villageUi.lastPetUntil = this.elapsedSec + 0.9;
+        if (res.coins > 0) {
+          this.platform.audio.play('coin');
+          this.showToast(zh ? `🐾 摸宠开心！+${res.coins} 金币` : `🐾 Happy pet! +${res.coins} coins`, 'good', 1.5);
+        } else {
+          this.showToast(zh ? '🐾 萌宠很享受今天的抚摸～' : '🐾 Pet loved the pat!', 'info', 1.5);
+        }
+      }
+      return;
+    }
+    if (id === 'village:harvest') {
+      const res = claimOfflineHarvest(this.profile, Date.now(), Math.random);
+      if (res.ok) {
+        this.profile = res.profile;
+        this.save();
+        this.platform.audio.play('coin');
+        this.showToast(zh ? `🧺 收菜成功！🪙+${res.harvest.coins}` : `🧺 Collected! 🪙+${res.harvest.coins}`, 'good', 2.2);
+      } else {
+        this.showToast(t(res.key), 'warn', 1.8);
+      }
+      return;
+    }
+    if (id === 'village:ad-harvest') {
+      void this.runRewardedAd('double_harvest', () => {
+        const res = claimOfflineHarvest(this.profile, Date.now(), Math.random);
+        if (res.ok) {
+          this.profile = { ...res.profile, coins: res.profile.coins + res.harvest.coins };
+          this.save();
+          this.platform.audio.play('gacha_win');
+          this.showToast(zh ? `🎬 双倍收菜成功！🪙+${res.harvest.coins * 2}` : `🎬 2× Harvest! 🪙+${res.harvest.coins * 2}`, 'good', 2.4);
+        }
+      });
+      return;
+    }
+    if (id.startsWith('village:build:')) {
+      const facId = id.slice('village:build:'.length);
+      const res = buildFacility(this.profile, facId);
+      if (res.ok) {
+        this.profile = res.profile;
+        this.save();
+        this.platform.audio.play('merge_hero');
+        this.showToast(zh ? `🏗️ ${t(`facility.${facId}`)} 升至 Lv.${res.level}！` : `🏗️ ${t(`facility.${facId}`)} Lv.${res.level}!`, 'good', 2.2);
+      } else {
+        this.showToast(t(res.key), 'warn', 1.8);
+      }
+      return;
+    }
+
+    // ── Hub #4: Onsen Kitchen ───────────────────────────────────────────────
+    if (id.startsWith('kitchen:tier:')) {
+      const raw = id.slice('kitchen:tier:'.length);
+      this.kitchenUi.tier = raw === 'all' ? 'all' : (Number(raw) as 1 | 2 | 3 | 4);
+      this.scroll.reset();
+      return;
+    }
+    if (id === 'kitchen:basket') {
+      const res = buyIngredientBasket(this.profile, Math.random);
+      if (res.ok && res.gained) {
+        this.profile = res.profile;
+        this.save();
+        this.platform.audio.play('coin');
+        const names = res.gained.map(g => t(`ingredient.${g}`)).join('、');
+        this.showToast(`🧺 ${names}`, 'good', 2.6);
+      } else {
+        this.showToast(t(res.key), 'warn', 1.8);
+      }
+      return;
+    }
+    if (id.startsWith('kitchen:brew:')) {
+      const bid = id.slice('kitchen:brew:'.length);
+      const res = brewBroth(this.profile, bid);
+      if (res.ok) {
+        this.profile = res.profile;
+        this.save();
+        this.platform.audio.play('merge_hero');
+        this.showToast(zh ? `🍲 成功熬制「${t(`broth.${bid}`)}」！` : `🍲 Brewed ${t(`broth.${bid}`)}!`, 'good', 2.2);
+      } else {
+        this.showToast(t(res.key), 'warn', 1.8);
+      }
+      return;
+    }
+    if (id.startsWith('kitchen:upgrade:')) {
+      const bid = id.slice('kitchen:upgrade:'.length);
+      const res = upgradeBroth(this.profile, bid);
+      if (res.ok) {
+        this.profile = res.profile;
+        this.save();
+        this.platform.audio.play('merge_upgrade');
+        this.showToast(zh ? `✨ ${t(`broth.${bid}`)} 升至 Lv.${res.level}！` : `✨ ${t(`broth.${bid}`)} Lv.${res.level}!`, 'good', 2.0);
+      } else {
+        this.showToast(t(res.key), 'warn', 1.8);
+      }
+      return;
+    }
+    if (id.startsWith('kitchen:equip:')) {
+      const bid = id.slice('kitchen:equip:'.length) as Parameters<typeof equipBroth>[1];
+      const res = equipBroth(this.profile, bid);
+      if (res.ok) {
+        this.profile = res.profile;
+        this.save();
+        this.showToast(
+          this.profile.activeBrothId ? (zh ? `♨️ 今日汤底：${t(`broth.${this.profile.activeBrothId}`)}` : `♨️ Active: ${t(`broth.${this.profile.activeBrothId}`)}`) : (zh ? '已切回清泉水' : 'Back to clear spring'),
+          'good',
+          1.8,
+        );
+      }
+      return;
+    }
+
+    // ── Hub #5: Endless Medallions ──────────────────────────────────────────
+    if (id.startsWith('medallion:up:')) {
+      const mid = id.slice('medallion:up:'.length);
+      const res = upgradeMedallion(this.profile, mid);
+      if (res.ok) {
+        this.profile = res.profile;
+        this.save();
+        this.platform.audio.play('merge_hero');
+        this.showToast(zh ? `✨ 勋章强化至 Lv.${res.level}！` : `✨ Medallion Lv.${res.level}!`, 'good', 1.8);
+      } else {
+        this.showToast(t(res.key), 'warn', 1.8);
+      }
+      return;
+    }
+
+    // ── Hub #6 & #7: Leaderboard & Keeper Profile ───────────────────────────
+    if (id.startsWith('lb:tab:')) {
+      this.leaderboardUi.tab = id.slice('lb:tab:'.length) as LeaderboardUiState['tab'];
+      this.scroll.reset();
+      return;
+    }
+    if (id === 'lb:refresh') {
+      void this.refreshLeaderboards(true);
+      return;
+    }
+    if (id === 'lb:rename' || id === 'profile:rename') {
+      void this.promptNicknameEdit();
+      return;
+    }
+    if (id.startsWith('profile:avatar:')) {
+      const data = box.data as { id: string; unlocked: boolean; desc: string } | undefined;
+      if (!data) return;
+      if (data.unlocked) {
+        this.profile = selectAvatar(this.profile, data.id);
+        this.save();
+        this.showToast(zh ? '💮 头像已更换！' : '💮 Avatar updated!', 'good', 1.6);
+      } else {
+        this.showToast(`🔒 ${data.desc}`, 'warn', 2.4);
+      }
       return;
     }
 
@@ -704,15 +1249,14 @@ export class MinigameApp {
       return;
     }
     if (id === 'battle:guide') {
-      this.scroll.reset();
       if (this.engine?.state.phase === 'playing') this.engine.pause(true);
-      this.modal = 'recipes';
+      this.openModal('recipes');
       this.advanceBattleTutorial('open-compendium');
       return;
     }
     if (id === 'battle:pause') {
       if (this.engine?.state.phase === 'playing') this.engine.pause(true);
-      this.modal = 'pause';
+      this.openModal('pause');
       return;
     }
     if (id === 'battle:early-wave' && this.engine?.state.phase === 'playing') {
@@ -741,15 +1285,8 @@ export class MinigameApp {
       }
       return;
     }
-    if (id === 'battle:cancel-mode') {
-      this.activePropId = undefined;
-      this.shovelSelected = false;
-      return;
-    }
-    if (id === 'battle:clear-select') {
-      this.selectedId = undefined;
-      return;
-    }
+    if (id === 'battle:cancel-mode') { this.activePropId = undefined; this.shovelSelected = false; return; }
+    if (id === 'battle:clear-select') { this.selectedId = undefined; return; }
     if (id === 'battle:lock-selected' && this.engine && this.selectedId !== undefined) {
       const u = this.engine.state.units.find(x => x.id === this.selectedId);
       if (u && u.location.zone === 'bench') {
@@ -760,12 +1297,8 @@ export class MinigameApp {
     }
     if (id === 'battle:store-shovel' && this.engine && this.selectedId !== undefined) {
       const res = this.engine.storeShovel(this.selectedId);
-      if (res.ok) {
-        this.platform.audio.play('shovel');
-        this.selectedId = undefined;
-      } else {
-        this.showToast(t(res.key), 'warn', 1.8);
-      }
+      if (res.ok) { this.platform.audio.play('shovel'); this.selectedId = undefined; }
+      else this.showToast(t(res.key), 'warn', 1.8);
       return;
     }
     if (id.startsWith('battle:passive:')) {
@@ -773,74 +1306,85 @@ export class MinigameApp {
       this.expandedPassiveId = this.expandedPassiveId === pid ? undefined : pid;
       return;
     }
-    if (id === 'battle:tutorial-skip') {
-      this.advanceBattleTutorial('skip');
-      return;
-    }
-    if (id === 'battle:tutorial-ack') {
-      this.advanceBattleTutorial('acknowledge');
-      return;
-    }
+    if (id === 'battle:tutorial-skip') { this.advanceBattleTutorial('skip'); return; }
+    if (id === 'battle:tutorial-ack') { this.advanceBattleTutorial('acknowledge'); return; }
 
-    // ── Modal Actions ───────────────────────────────────────────────────────
-    if (id === 'modal:resume') {
-      this.resumeBattle();
-      return;
-    }
-    if (id === 'modal:close') {
-      this.closeOverlayModal();
-      return;
-    }
+    // ── Battle Modal / Settlement / Ad / Share Actions ──────────────────────
+    if (id === 'modal:resume') { this.resumeBattle(); return; }
+    if (id === 'modal:close') { this.closeOverlayModal(); return; }
     if (id === 'modal:surrender' && this.engine) {
       this.modal = null;
       this.engine.surrender();
       if (this.engine.state.result) this.handleBattleFinished(this.engine.state);
       return;
     }
-    if (id === 'modal:decline-endless') {
-      this.modal = 'result';
-      return;
-    }
+    if (id === 'modal:decline-endless') { this.modal = 'result'; return; }
     if (id === 'modal:enter-endless' && this.engine) {
       const res = this.engine.enterEndless();
       if (res.ok) {
         this.modal = null;
         this.platform.audio.play('wave_start');
-        this.showToast(lang === 'zh-CN' ? '♾️ 无尽模式开启！第 11 波来袭！' : '♾️ Endless Mode started! Wave 11!', 'good', 2.6);
+        if (!hasOnboarded(this.profile, 'endless_battle')) {
+          this.battleLesson = 'endless_battle';
+          this.engine.pause(true);
+          this.modal = 'battle-lesson';
+        } else {
+          this.showToast(zh ? '♾️ 无尽模式开启！第 11 波来袭！' : '♾️ Endless Mode started! Wave 11!', 'good', 2.6);
+        }
       }
       return;
     }
-    if (id === 'modal:toggle-stats') {
-      this.settlement.statsOpen = !this.settlement.statsOpen;
+    if (id === 'modal:toggle-stats') { this.settlement.statsOpen = !this.settlement.statsOpen; return; }
+    if (id === 'result:share' && this.engine?.state.result) {
+      const r = this.engine.state.result;
+      this.platform.share(buildSharePayload(this.profile, r.endless ? 'endless' : 'victory', r.endlessWave));
+      this.showToast(zh ? '📤 已唤起战绩分享卡片！' : '📤 Share card opened!', 'good', 1.8);
       return;
     }
-    if (id === 'modal:again') {
-      this.modal = null;
-      void this.startBattle();
+    if (id === 'result:ad-double' && this.engine?.state.result && !this.settlement.adDoubleClaimed) {
+      const st = this.engine.state;
+      const r = st.result!;
+      const bonus = r.endless && st.standardResult ? st.standardResult.coins + (r.endlessCoins ?? 0) : r.coins;
+      void this.runRewardedAd('double_settlement', () => {
+        if (this.settlement.adDoubleClaimed) return;
+        this.settlement.adDoubleClaimed = true;
+        this.profile = { ...this.profile, coins: this.profile.coins + bonus };
+        this.save();
+        this.platform.audio.play('gacha_win');
+        this.showToast(zh ? `🎬 双倍领奖成功！额外 +${bonus} 金币` : `🎬 2× Bonus! +${bonus} coins`, 'good', 2.4);
+      });
       return;
     }
-    if (id === 'modal:menu') {
-      this.returnToMenu();
+    if (id === 'result:ad-revive' && this.engine && !this.reviveUsedThisBattle) {
+      void this.runRewardedAd('revive', () => {
+        if (!this.engine || this.reviveUsedThisBattle) return;
+        this.reviveUsedThisBattle = true;
+        const st = this.engine.state;
+        st.result = null;
+        st.phase = 'playing';
+        st.sides.player.oranges = 2;
+        for (const en of st.enemies) this.engine.knockback(en, 3.5);
+        this.modal = null;
+        this.platform.audio.play('sprinkler');
+        this.showToast(zh ? '🎬 紧急复活成功！+2 橘子并全路击退！' : '🎬 Revived! +2 Oranges & lane knockback!', 'good', 2.6);
+      });
       return;
     }
-    if (id === 'modal:recipes-tab:heroes') {
-      this.recipesTab = 'heroes';
-      this.scroll.reset();
-      return;
-    }
-    if (id === 'modal:recipes-tab:basics') {
-      this.recipesTab = 'basics';
+    if (id === 'modal:again') { this.modal = null; void this.startBattle(); return; }
+    if (id === 'modal:menu') { this.returnToMenu(); return; }
+    if (id.startsWith('modal:recipes-tab:')) {
+      this.recipesTab = id.slice('modal:recipes-tab:'.length) as CompendiumTab;
       this.scroll.reset();
       return;
     }
     if (id === 'settings:damage') {
       this.profile = updateSettings(this.profile, { showDamageNumbers: !this.profile.settings.showDamageNumbers });
-      saveProfile(this.profile, this.platform.storage);
+      this.save();
       return;
     }
     if (id === 'settings:replay-tutorial') {
       this.profile = replayTutorial(this.profile);
-      saveProfile(this.profile, this.platform.storage);
+      this.save();
       this.modal = null;
       void this.startBattle();
     }
@@ -848,27 +1392,32 @@ export class MinigameApp {
 
   private resumeBattle(): void {
     this.modal = null;
+    this.modalReturnTo = null;
     if (this.engine?.state.phase === 'paused') {
       this.engine.pause(false);
     }
   }
 
   private closeOverlayModal(): void {
+    if (this.modalReturnTo) {
+      const back = this.modalReturnTo;
+      this.modalReturnTo = null;
+      this.modal = back;
+      this.scroll.reset();
+      return;
+    }
     if (this.screen === 'battle' && this.engine?.state.phase === 'paused') {
-      // Closing Settings from Pause goes back to Pause; closing Recipes resumes directly!
-      if (this.modal === 'settings') {
-        this.modal = 'pause';
-      } else {
-        this.resumeBattle();
-      }
+      this.resumeBattle();
       return;
     }
     this.modal = null;
+    this.checkMenuOnboarding();
   }
 
   private returnToMenu(): void {
     this.screen = 'menu';
     this.modal = null;
+    this.modalReturnTo = null;
     this.engine = null;
     this.selectedId = undefined;
     this.shovelSelected = false;
@@ -876,6 +1425,7 @@ export class MinigameApp {
     this.expandedPassiveId = undefined;
     this.tutorialStep = 'done';
     this.drag = undefined;
+    this.checkMenuOnboarding();
   }
 
   private unitAt(hit: HitTarget): Unit | undefined {

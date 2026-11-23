@@ -6,7 +6,10 @@ import {
   nextLockedFeature,
   type FeatureId,
 } from '../../core/FeatureUnlocks';
+import { canBrewOrUpgradeAnyBroth } from '../../core/KitchenProgression';
+import { upgradeableMedallions } from '../../core/MedallionProgression';
 import { getMapUnlockRequirement, getUnlockedMaps } from '../../core/PlayerProgression';
+import { villageBadge } from '../../core/VillageProgression';
 import type { MapId, Profile } from '../../core/types';
 import { getLanguage, t } from '../../i18n/i18n';
 import { assets } from '../../render/AssetRegistry';
@@ -81,9 +84,10 @@ export function drawMenuScreen(
 
   // ── 2. TOP-RIGHT UTILITY BAR (respects WeChat capsule margin!) ────────────
   const rightEdge = 1280 - Math.max(20, capsuleRightMargin);
-  const langW = 86;
-  const setW = 50;
-  const muteW = 50;
+  const langW = 80;
+  const setW = 48;
+  const muteW = 48;
+  const shareW = 48;
   const btnH = 44;
   const btnY = 16;
 
@@ -92,15 +96,20 @@ export function drawMenuScreen(
     radius: 14,
     fontSize: 16,
   });
-  drawButton(c, hits, 'menu:settings', rightEdge - langW - 10 - setW, btnY, setW, btnH, '⚙', {
+  drawButton(c, hits, 'menu:settings', rightEdge - langW - 8 - setW, btnY, setW, btnH, '⚙', {
     ...BTN_STYLES.cream,
     radius: 14,
-    fontSize: 21,
+    fontSize: 20,
   });
-  drawButton(c, hits, 'menu:mute', rightEdge - langW - 20 - setW - muteW, btnY, muteW, btnH, muted ? '🔇' : '🔊', {
+  drawButton(c, hits, 'menu:mute', rightEdge - langW - 16 - setW - muteW, btnY, muteW, btnH, muted ? '🔇' : '🔊', {
     ...BTN_STYLES.cream,
     radius: 14,
     fontSize: 19,
+  });
+  drawButton(c, hits, 'menu:share', rightEdge - langW - 24 - setW - muteW - shareW, btnY, shareW, btnH, '📤', {
+    ...BTN_STYLES.cream,
+    radius: 14,
+    fontSize: 18,
   });
 
   // ── 3. TITLE LOGO (CENTER TOP) ────────────────────────────────────────────
@@ -212,12 +221,16 @@ function drawCourtyardDock(
     { id: 'menu:recipes', icon: 'ui_compendium_book', label: lang === 'zh-CN' ? '图鉴配方' : 'Guide' },
   ];
 
+  const vBadge = villageBadge(profile, Date.now());
+  const kReady = canBrewOrUpgradeAnyBroth(profile);
+  const mReady = upgradeableMedallions(profile).length;
+
   const featureDefs: Array<{ id: FeatureId; icon: string; zh: string; en: string; badge?: string }> = [
-    { id: 'armory', icon: 'ui_weapon_fragment', zh: '神兵坊', en: 'Armory' },
+    { id: 'armory', icon: 'ui_weapon_fragment', zh: '神兵坊', en: 'Armory', badge: profile.unlockedWeapons.length > 0 && Object.keys(profile.equippedWeapons).length === 0 ? '!' : undefined },
     { id: 'market', icon: 'ui_shop_bag', zh: '浣熊黑市', en: 'Market', badge: profile.freeLotteryTickets > 0 ? `🎟️${profile.freeLotteryTickets}` : undefined },
-    { id: 'village', icon: 'ui_village_gate', zh: '温泉山庄', en: 'Village' },
-    { id: 'kitchen', icon: 'ui_kitchen_pot', zh: '料理屋', en: 'Kitchen' },
-    { id: 'medallions', icon: 'ui_endless_crest', zh: '无尽勋章', en: 'Medals' },
+    { id: 'village', icon: 'ui_village_gate', zh: '温泉山庄', en: 'Village', badge: vBadge === 'harvest' ? '🧺' : vBadge === 'build' ? '🔨' : undefined },
+    { id: 'kitchen', icon: 'ui_kitchen_pot', zh: '料理屋', en: 'Kitchen', badge: kReady.brewable.length + kReady.upgradeable.length > 0 ? '🍲' : undefined },
+    { id: 'medallions', icon: 'ui_endless_crest', zh: '无尽勋章', en: 'Medals', badge: mReady > 0 ? `✨${mReady}` : undefined },
   ];
 
   for (const def of featureDefs) {

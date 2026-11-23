@@ -299,6 +299,15 @@ export function drawButton(
       return;
     }
   }
+  const lines = label.split('\n');
+  if (lines.length > 1) {
+    const lineGap = Math.round(fontSize * 1.32);
+    const topY = y + dy + h / 2 - ((lines.length - 1) * lineGap) / 2;
+    lines.forEach((line, idx) => {
+      drawText(c, line, x + w / 2, topY + idx * lineGap, idx === 0 ? fontSize : Math.max(12, fontSize - 2), s.text, 'center', idx === 0 ? 900 : 800);
+    });
+    return;
+  }
   drawText(c, label, x + w / 2, y + dy + h / 2 + 1, fontSize, s.text, 'center', 800);
 }
 

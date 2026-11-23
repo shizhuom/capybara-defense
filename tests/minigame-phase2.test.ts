@@ -3,6 +3,7 @@ import { createMiniGameAdapter, type MiniGameGlobalApi } from '../src/platform/m
 import type { SpriteImage } from '../src/render/AssetRegistry';
 import { MinigameApp } from '../src/minigame/MinigameApp';
 import { createProfile } from '../src/core/MetaProgression';
+import { allOnboardedTokens } from '../src/core/FeatureUnlocks';
 import { saveProfile } from '../src/ui/storage';
 import { STAGE } from '../src/config/maps';
 import { ScrollRegion, wrapText } from '../src/minigame/ui/CanvasUI';
@@ -150,6 +151,7 @@ describe('Mini-Game Phase 2: Canvas UI Toolkit, Full Menu, Battle Loop, Tutorial
       highestStars: 12,
       tutorialCompleted: true,
       tutorialRewardClaimed: true,
+      onboardedFeatures: allOnboardedTokens(),
       ownedProps: { glue_trap: 1, catnip: 1, banana_peel: 1 },
       equippedActiveProps: ['glue_trap', 'catnip'],
       equippedPassiveProps: ['banana_peel'],
