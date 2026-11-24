@@ -1,10 +1,12 @@
 import { BattleEngine } from '../core/BattleEngine';
 import { HEROES } from '../config/heroes';
+import { BROTH_IDS, type BrothId } from '../config/kitchen';
 import { PROPS } from '../config/props';
 import { getRank } from '../config/ranks';
 import { getMap, STAGE } from '../config/maps';
 import { ECONOMY } from '../config/units';
-import { WEAPONS, type WeaponFamily } from '../config/weapons';
+import { isFacilityId } from '../config/village';
+import { WEAPONS } from '../config/weapons';
 import {
   buildDebugStageProfile,
   claimFeatureStarterGift,
@@ -47,6 +49,7 @@ import { advanceTutorial, finishTutorial, replayTutorial, type TutorialStep } fr
 import {
   buildFacility,
   claimOfflineHarvest,
+  getVillageResidents,
   localDay,
   petVillageResident,
   settleVillageClock,
@@ -54,9 +57,16 @@ import {
 } from '../core/VillageProgression';
 import type { BattleState, MapId, Profile, Unit, UnitLocation } from '../core/types';
 import { getLanguage, setLanguage, t } from '../i18n/i18n';
+import { PET_QUOTE_COUNT } from '../i18n/p16';
 import { StickerRenderer, type HitTarget } from '../render/StickerRenderer';
 import { getMusicMode } from '../ui/BattleHUD';
 import { EndlessLeaderboardClient } from '../ui/EndlessLeaderboardClient';
+import {
+  computeDialogGuideStep,
+  nextBattleLesson,
+  type BattleLessonKey,
+  type DialogGuideStep,
+} from '../ui/OnboardingGuide';
 import { nextBattleSpeed } from '../ui/P13HUD';
 import {
   awardBattle,
@@ -96,9 +106,19 @@ import {
   type ModalLayoutInfo,
   type SettlementMeta,
 } from './ui/BattleModals';
-import type { ArmoryState, MarketState } from './ui/MetaArmoryMarket';
+import {
+  compendiumCatalog,
+  compendiumOwnerTab,
+  type CompendiumUiState,
+} from './ui/MetaCompendium';
+import {
+  getSortedArmoryWeapons,
+  type ArmoryState,
+  type ArmoryTab,
+  type MarketState,
+} from './ui/MetaArmoryMarket';
 import type { KitchenUiState, VillageUiState } from './ui/MetaVillageKitchen';
-import type { LeaderboardUiState } from './ui/MetaMedallionsRanks';
+import type { LeaderboardUiState, MedallionHubTab, ProfileHubTab } from './ui/MetaMedallionsRanks';
 
 interface DragState {
   pointerId: number;
@@ -133,16 +153,17 @@ export class MinigameApp {
   private modal: MinigameModalKind = null;
   private modalReturnTo: MinigameModalKind = null;
   private modalLayout: ModalLayoutInfo = {};
-  private recipesTab: CompendiumTab = 'heroes';
+  private compendium: CompendiumUiState = { tab: 'matrix', detailId: null, previewAwakened: false };
 
-  // Phase 3 Meta Hub UI States
-  private armory: ArmoryState = { family: 'all', selectedId: 'm01_swatter' };
+  // Strict 1:1 Web Meta Hub UI States
+  private armory: ArmoryState = { family: 'all', detailWeaponId: null, recycleRarities: [0, 1, 2, 3, 4] };
   private market: MarketState;
   private villageUi: VillageUiState;
-  private kitchenUi: KitchenUiState = { tier: 'all' };
+  private kitchenUi: KitchenUiState = { tab: 'broths', detailBrothId: null, lastBasketGained: [] };
   private leaderboardUi: LeaderboardUiState;
   private onboardingFeature: FeatureId | null = null;
-  private battleLesson: 'prop_battle' | 'endless_battle' | null = null;
+  private activeGuideFeature: FeatureId | null = null;
+  private battleLesson: BattleLessonKey | null = null;
   private devUnlocked = false;
   private devTapCount = 0;
   private devTapLastAt = 0;
@@ -170,6 +191,7 @@ export class MinigameApp {
     resultStars: 0,
     previousRank: 0,
     newWeapons: [],
+    newAvatars: [],
     ticketAwarded: false,
     statsOpen: false,
     adDoubleCoinsAvailable: false,
@@ -192,30 +214,40 @@ export class MinigameApp {
 
     this.market = {
       tab: 'shop',
+      merchantQuip: 0,
       prizes: createLotteryPrizes(this.profile, Math.random),
       lastPrizeIndex: null,
       lastPrizeLabel: '',
+      spunThisVisit: false,
       adRefreshAvailable: isAdPlacementAvailable(platform.kind, 'free_shop_refresh'),
       adGachaAvailable: isAdPlacementAvailable(platform.kind, 'free_gacha'),
     };
     this.villageUi = {
       tab: 'courtyard',
+      focusFacilityId: null,
       elapsed: 0,
       nowMs: Date.now(),
-      lastPetUntil: 0,
+      petFeedback: null,
+      interacted: false,
       adDoubleHarvestAvailable: isAdPlacementAvailable(platform.kind, 'double_harvest'),
     };
     this.leaderboardUi = {
-      tab: 'rank',
       endlessSnap: this.leaderboardClient.snapshot(),
       rankSnap: this.leaderboardClient.rankSnapshot(),
       loading: false,
+      showRankLadder: false,
+      medallionTab: 'medallions',
     };
 
     this.renderer = new StickerRenderer(platform.canvas, { managedViewport: true });
     this.syncViewport(platform.viewport());
     this.assetManager = new MinigameAssetManager(platform);
-    void this.assetManager.bootMainAssets();
+    void this.assetManager.bootMainAssets().then(() => {
+      // Returning players may show meta avatars/broths on courtyard menu; warm meta subpackage silently.
+      if (this.profile.avatarId !== 'capybara' || this.profile.activeBrothId || isFeatureUnlocked(this.profile, 'armory')) {
+        void this.assetManager.ensureSubpackage('meta');
+      }
+    });
 
     platform.onResize(vp => this.syncViewport(vp));
     platform.onHide(() => {
@@ -245,10 +277,15 @@ export class MinigameApp {
       speed: this.speed,
       profile: this.profile,
       battleState: this.engine?.state ?? null,
+      compendium: this.compendium,
       armory: this.armory,
       marketTab: this.market.tab,
       villageTab: this.villageUi.tab,
-      leaderboardTab: this.leaderboardUi.tab,
+      kitchenTab: this.kitchenUi.tab,
+      medallionTab: this.leaderboardUi.medallionTab,
+      leaderboardTab: this.modal === 'endless-board' ? 'endless' : 'rank',
+      activeGuideFeature: this.activeGuideFeature,
+      battleLesson: this.battleLesson,
     };
   }
 
@@ -328,7 +365,7 @@ export class MinigameApp {
     this.toast = { text, tone, remaining: duration, duration };
   }
 
-  /** Checks for newly unlocked P19 milestones (Armory / 2x Speed / Market / Village / Kitchen / Medallions / 3x Speed). */
+  /** Checks for newly unlocked P19 courtyard milestones (Armory / Market / Village / Kitchen / Medallions). */
   private checkMenuOnboarding(): void {
     if (this.screen !== 'menu' || this.modal) return;
     const pending = pendingMenuOnboarding(this.profile);
@@ -337,13 +374,18 @@ export class MinigameApp {
       this.modal = 'onboard';
       return;
     }
-    for (const speedFeat of ['speed2x', 'speed3x'] as const) {
-      if (isFeatureUnlocked(this.profile, speedFeat) && !hasOnboarded(this.profile, speedFeat)) {
-        this.onboardingFeature = speedFeat;
-        this.modal = 'onboard';
-        return;
-      }
-    }
+  }
+
+  private computeCurrentDialogGuideStep(): DialogGuideStep | null {
+    if (!this.activeGuideFeature || !this.modal) return null;
+    return computeDialogGuideStep(this.activeGuideFeature, this.profile, {
+      dialogKind: this.modal,
+      detailWeaponId: this.armory.detailWeaponId,
+      marketTab: this.market.tab,
+      marketSpun: this.market.spunThisVisit,
+      villageTab: this.villageUi.tab,
+      villageInteracted: this.villageUi.interacted,
+    });
   }
 
   private openModal(kind: Exclude<MinigameModalKind, null>, returnTo: MinigameModalKind = null): void {
@@ -351,18 +393,38 @@ export class MinigameApp {
     this.modalReturnTo = returnTo;
     this.scroll.reset();
 
-    if (kind === 'village') {
+    if (kind === 'recipes') {
+      this.compendium.detailId = null;
+      this.compendium.previewAwakened = false;
+      void this.assetManager.ensureSubpackage('meta');
+    } else if (kind === 'armory') {
+      this.armory.detailWeaponId = null;
+      void this.assetManager.ensureSubpackage('meta');
+    } else if (kind === 'market') {
+      this.profile = ensureDailyShop(this.profile, localDay(), Math.random);
+      this.market.spunThisVisit = false;
+      void this.assetManager.ensureSubpackage('meta');
+    } else if (kind === 'village') {
       this.villageUi.nowMs = Date.now();
+      this.villageUi.focusFacilityId = null;
+      this.villageUi.interacted = false;
       this.profile = settleVillageClock(this.profile, this.villageUi.nowMs);
       void this.assetManager.ensureSubpackage('maps');
-    } else if (kind === 'armory' || kind === 'market' || kind === 'kitchen' || kind === 'medallions' || kind === 'profile') {
-      if (kind === 'market') {
-        this.profile = ensureDailyShop(this.profile, localDay(), Math.random);
-      }
+    } else if (kind === 'kitchen') {
+      this.kitchenUi.detailBrothId = null;
       void this.assetManager.ensureSubpackage('meta');
-    } else if (kind === 'leaderboard') {
+    } else if (kind === 'medallions') {
+      void this.assetManager.ensureSubpackage('meta');
+      if (this.leaderboardUi.medallionTab === 'endless-board') {
+        void this.refreshLeaderboards(false);
+      }
+    } else if (kind === 'leaderboard' || kind === 'endless-board') {
+      this.leaderboardUi.showRankLadder = false;
       void this.assetManager.ensureSubpackage('meta');
       void this.refreshLeaderboards(false);
+    } else if (kind === 'profile' || kind === 'settings') {
+      this.leaderboardUi.showRankLadder = false;
+      void this.assetManager.ensureSubpackage('meta');
     }
   }
 
@@ -462,11 +524,14 @@ export class MinigameApp {
     if (result.endless) {
       const receipt = `${state.id}:endless`;
       if (!this.profile.awardedBattles.includes(receipt)) {
+        const prevAvatars = this.profile.unlockedAvatars;
         const res = awardEndless(this.profile, state.id, result);
         if (res.awarded) {
           this.profile = res.profile;
+          const newlyUnlockedAvatars = res.profile.unlockedAvatars.filter(a => !prevAvatars.includes(a));
           this.settlement.savedResult = saveProfile(this.profile, this.platform.storage);
           this.settlement.newWeapons = [...this.settlement.newWeapons, ...res.newWeapons];
+          this.settlement.newAvatars = [...this.settlement.newAvatars, ...newlyUnlockedAvatars];
           this.settlement.adDoubleCoinsAvailable = isAdPlacementAvailable(this.platform.kind, 'double_settlement');
           this.settlement.adDoubleClaimed = false;
           this.settlement.adReviveAvailable = false;
@@ -481,15 +546,18 @@ export class MinigameApp {
     if (!this.profile.awardedBattles.includes(state.id)) {
       const prevStars = this.profile.stars;
       const prevRank = getRank(prevStars).index;
+      const prevAvatars = this.profile.unlockedAvatars;
       const res = awardBattle(this.profile, state.id, result);
       if (res.awarded) {
         this.profile = res.profile;
+        const newlyUnlockedAvatars = res.profile.unlockedAvatars.filter(a => !prevAvatars.includes(a));
         const saved = saveProfile(this.profile, this.platform.storage);
         this.settlement = {
           savedResult: saved,
           resultStars: this.profile.stars - prevStars,
           previousRank: prevRank,
           newWeapons: res.newWeapons,
+          newAvatars: newlyUnlockedAvatars,
           ticketAwarded: Boolean(res.ticketAwarded),
           statsOpen: false,
           adDoubleCoinsAvailable: result.winner === 'player' && isAdPlacementAvailable(this.platform.kind, 'double_settlement'),
@@ -527,13 +595,17 @@ export class MinigameApp {
       const mapId = resolveMap(this.profile);
       drawFullBleedBackdrop(c, 'start_splash_bg', vp, 72, 64, '#d8deb6');
       this.renderer.drawPreview(mapId, this.elapsedSec, 3);
-      drawMenuScreen(c, this.hits, {
-        profile: this.profile,
-        elapsed: this.elapsedSec,
-        muted: this.muted,
-        topRightEdge: topRight,
-        viewport: vp,
-      });
+      // Keep courtyard HUD visible on home & lightweight P19 welcome card; hide behind full modals to avoid × / footer clash!
+      if (!this.modal || this.modal === 'onboard') {
+        drawMenuScreen(c, this.hits, {
+          profile: this.profile,
+          elapsed: this.elapsedSec,
+          muted: this.muted,
+          topRightEdge: topRight,
+          viewport: vp,
+          highlightFeature: this.modal === 'onboard' ? this.onboardingFeature : null,
+        });
+      }
     } else {
       const state = this.engine.state;
       const mapTheme = getMap(state.mapId).theme;
@@ -549,19 +621,22 @@ export class MinigameApp {
         allowBenchLock: true,
         breakthroughChances,
       });
-      drawBattleOverlay(c, this.hits, {
-        engine: this.engine,
-        profile: this.profile,
-        elapsed: this.elapsedSec,
-        speed: this.speed,
-        shovelSelected: this.shovelSelected,
-        activePropId: this.activePropId,
-        expandedPassiveId: this.expandedPassiveId,
-        tutorialStep: this.tutorialStep,
-        topRightEdge: topRight,
-        viewport: vp,
-        curtainRemaining: this.curtainRemaining,
-      });
+      if (this.modal !== 'result') {
+        drawBattleOverlay(c, this.hits, {
+          engine: this.engine,
+          profile: this.profile,
+          elapsed: this.elapsedSec,
+          speed: this.speed,
+          shovelSelected: this.shovelSelected,
+          activePropId: this.activePropId,
+          expandedPassiveId: this.expandedPassiveId,
+          highlightPropId: this.modal === 'battle-lesson' && this.battleLesson === 'prop_battle' ? 'glue_trap' : undefined,
+          tutorialStep: this.tutorialStep,
+          topRightEdge: topRight,
+          viewport: vp,
+          curtainRemaining: this.curtainRemaining,
+        });
+      }
     }
 
     if (this.modal) {
@@ -573,7 +648,7 @@ export class MinigameApp {
         profile: this.profile,
         state: this.engine?.state ?? null,
         settlement: this.settlement,
-        recipesTab: this.recipesTab,
+        compendium: this.compendium,
         scroll: this.scroll,
         armory: this.armory,
         market: this.market,
@@ -582,6 +657,7 @@ export class MinigameApp {
         leaderboard: this.leaderboardUi,
         onboardingFeature: this.onboardingFeature,
         battleLesson: this.battleLesson,
+        dialogGuideStep: this.computeCurrentDialogGuideStep(),
         devUnlocked: this.devUnlocked,
         isTestSave: isTestProfile(this.platform.storage),
         elapsed: this.elapsedSec,
@@ -591,7 +667,7 @@ export class MinigameApp {
       this.modalLayout = {};
     }
 
-    drawToast(c, this.toast, STAGE.width, this.screen === 'battle' ? 68 : 82);
+    drawToast(c, this.toast, STAGE.width, this.modal ? 674 : this.screen === 'battle' ? 68 : 82);
     c.restore();
   }
 
@@ -609,6 +685,15 @@ export class MinigameApp {
   private async startBattle(): Promise<void> {
     const map = pickBattleMap(this.profile);
     await this.assetManager.ensureMap(map.id);
+    if (
+      map.id !== 'sunny_backyard' ||
+      this.profile.equippedActiveProps.length > 0 ||
+      this.profile.equippedPassiveProps.length > 0 ||
+      Boolean(this.profile.activeBrothId) ||
+      isFeatureUnlocked(this.profile, 'endless')
+    ) {
+      void this.assetManager.ensureSubpackage('meta');
+    }
     this.assetManager.releaseHeavyIdleSprites(map.id);
 
     const guided = !this.profile.tutorialCompleted;
@@ -649,15 +734,17 @@ export class MinigameApp {
     this.drag = undefined;
     this.platform.audio.play('wave_start');
 
-    // One-time Active Prop battle lesson once player owns & equips an active prop
-    if (
-      !guided &&
-      this.profile.equippedActiveProps.length > 0 &&
-      !hasOnboarded(this.profile, 'prop_battle')
-    ) {
-      this.battleLesson = 'prop_battle';
-      this.engine.pause(true);
-      this.modal = 'battle-lesson';
+    // One-time in-battle lessons (speed2x, prop_battle, speed3x — exact Web `nextBattleLesson`!)
+    if (!guided) {
+      const lesson = nextBattleLesson(this.profile, {
+        endless: false,
+        hasActiveProp: this.profile.equippedActiveProps.length > 0,
+      });
+      if (lesson) {
+        this.battleLesson = lesson;
+        this.engine.pause(true);
+        this.modal = 'battle-lesson';
+      }
     }
   }
 
@@ -994,33 +1081,43 @@ export class MinigameApp {
       return;
     }
 
-    // ── P19 Onboarding Celebration & Battle Lessons ─────────────────────────
+    // ── P19 Onboarding Celebration, In-Dialog Guide & Battle Lessons ─────────
     if (id.startsWith('onboard:go:')) {
       const feat = id.slice('onboard:go:'.length) as FeatureId;
       const gift = claimFeatureStarterGift(this.profile, feat, Date.now());
-      this.profile = markOnboarded(gift.profile, feat);
+      this.profile = gift.profile;
       this.save();
       this.onboardingFeature = null;
       if (feat === 'armory' || feat === 'market' || feat === 'village' || feat === 'kitchen' || feat === 'medallions') {
-        if (feat === 'village') this.villageUi.tab = 'build';
+        this.activeGuideFeature = feat;
+        if (feat === 'armory') this.armory.family = 'all';
+        if (feat === 'market') this.market.tab = 'shop';
+        if (feat === 'village') this.villageUi.tab = 'courtyard';
+        if (feat === 'kitchen') this.kitchenUi.tab = 'broths';
+        if (feat === 'medallions') this.leaderboardUi.medallionTab = 'medallions';
         this.openModal(feat);
       } else {
+        this.profile = markOnboarded(this.profile, feat);
+        this.save();
         this.modal = null;
       }
       return;
     }
-    if (id.startsWith('onboard:dismiss:')) {
-      const feat = id.slice('onboard:dismiss:'.length) as FeatureId;
+    if (id.startsWith('onboard:dismiss:') || id.startsWith('onboard:done:') || id.startsWith('onboard:skip:')) {
+      const feat = id.slice(id.lastIndexOf(':') + 1) as FeatureId;
       const gift = claimFeatureStarterGift(this.profile, feat, Date.now());
       this.profile = markOnboarded(gift.profile, feat);
       this.save();
       this.onboardingFeature = null;
-      this.modal = null;
-      this.checkMenuOnboarding();
+      if (this.activeGuideFeature === feat) this.activeGuideFeature = null;
+      if (this.modal === 'onboard') {
+        this.modal = null;
+        this.checkMenuOnboarding();
+      }
       return;
     }
     if (id.startsWith('lesson:ok:')) {
-      const lesson = id.slice('lesson:ok:'.length) as 'prop_battle' | 'endless_battle';
+      const lesson = id.slice('lesson:ok:'.length) as BattleLessonKey;
       this.profile = markOnboarded(this.profile, lesson);
       this.save();
       this.battleLesson = null;
@@ -1028,16 +1125,81 @@ export class MinigameApp {
       return;
     }
 
-    // ── Hub #1: Weapon Armory ───────────────────────────────────────────────
-    if (id.startsWith('armory:family:')) {
-      this.armory.family = id.slice('armory:family:'.length) as 'all' | WeaponFamily;
-      const first = Object.values(WEAPONS).find(w => this.armory.family === 'all' || w.family === this.armory.family);
-      if (first) this.armory.selectedId = first.id;
+    // ── Modal Switch Links (In-Battle Armory ⇄ Market, Endless Board → Medallions) ──
+    if (id.startsWith('modal:switch:')) {
+      const target = id.slice('modal:switch:'.length) as Exclude<MinigameModalKind, null>;
+      this.openModal(target, this.modalReturnTo);
+      return;
+    }
+
+    // ── 6-Tab Compendium & Detail Sub-Page ──────────────────────────────────
+    if (id.startsWith('compendium:tab:')) {
+      this.compendium.tab = id.slice('compendium:tab:'.length) as CompendiumTab;
+      this.compendium.detailId = null;
+      this.compendium.previewAwakened = false;
       this.scroll.reset();
       return;
     }
-    if (id.startsWith('armory:select:')) {
-      this.armory.selectedId = id.slice('armory:select:'.length);
+    if (id.startsWith('compendium:entry:')) {
+      const entryId = id.slice('compendium:entry:'.length);
+      const owner = compendiumOwnerTab(entryId);
+      if (this.compendium.tab !== 'matrix' && owner && owner !== this.compendium.tab) {
+        this.compendium.tab = owner;
+      }
+      this.compendium.detailId = entryId;
+      this.compendium.previewAwakened = false;
+      this.scroll.reset();
+      return;
+    }
+    if (id === 'compendium:back') {
+      this.compendium.detailId = null;
+      this.compendium.previewAwakened = false;
+      this.scroll.reset();
+      return;
+    }
+    if (id === 'compendium:prev' || id === 'compendium:next') {
+      const list = compendiumCatalog(this.compendium.tab);
+      if (list.length > 0 && this.compendium.detailId) {
+        const cur = list.indexOf(this.compendium.detailId);
+        const step = id === 'compendium:next' ? 1 : -1;
+        const nextIdx = cur >= 0 ? (cur + step + list.length) % list.length : 0;
+        this.compendium.detailId = list[nextIdx];
+        this.compendium.previewAwakened = false;
+        this.scroll.reset();
+      }
+      return;
+    }
+    if (id === 'compendium:awakened') {
+      this.compendium.previewAwakened = !this.compendium.previewAwakened;
+      return;
+    }
+
+    // ── Hub #1: Weapon Armory (5 Tabs + Detail Sheet + Recycle Workshop) ────
+    if (id.startsWith('armory:family:')) {
+      this.armory.family = id.slice('armory:family:'.length) as ArmoryTab;
+      this.armory.detailWeaponId = null;
+      this.scroll.reset();
+      return;
+    }
+    if (id.startsWith('armory:open:')) {
+      this.armory.detailWeaponId = id.slice('armory:open:'.length);
+      this.scroll.reset();
+      return;
+    }
+    if (id === 'armory:back') {
+      this.armory.detailWeaponId = null;
+      this.scroll.reset();
+      return;
+    }
+    if (id === 'armory:prev' || id === 'armory:next') {
+      const list = getSortedArmoryWeapons(this.profile, this.armory.family);
+      if (list.length > 0 && this.armory.detailWeaponId) {
+        const cur = list.findIndex(w => w.id === this.armory.detailWeaponId);
+        const step = id === 'armory:next' ? 1 : -1;
+        const nextIdx = cur >= 0 ? (cur + step + list.length) % list.length : 0;
+        this.armory.detailWeaponId = list[nextIdx].id;
+        this.scroll.reset();
+      }
       return;
     }
     if (id.startsWith('armory:equip:')) {
@@ -1054,8 +1216,17 @@ export class MinigameApp {
       }
       return;
     }
+    if (id.startsWith('armory:recycle-toggle:')) {
+      const rarity = Number(id.slice('armory:recycle-toggle:'.length));
+      if (this.armory.recycleRarities.includes(rarity)) {
+        this.armory.recycleRarities = this.armory.recycleRarities.filter(r => r !== rarity);
+      } else {
+        this.armory.recycleRarities = [...this.armory.recycleRarities, rarity].sort();
+      }
+      return;
+    }
     if (id === 'armory:recycle') {
-      const res = recycleFragments(this.profile, [0, 1, 2, 3, 4]);
+      const res = recycleFragments(this.profile, this.armory.recycleRarities);
       if (res.ok) {
         this.profile = res.profile;
         this.save();
@@ -1065,10 +1236,14 @@ export class MinigameApp {
       return;
     }
 
-    // ── Hub #2: Raccoon Market (Shop / Gacha / Backpack) ────────────────────
+    // ── Hub #2: Raccoon Market (Shop / Backpack / Lucky Gacha) ──────────────
     if (id.startsWith('market:tab:')) {
       this.market.tab = id.slice('market:tab:'.length) as MarketState['tab'];
       this.scroll.reset();
+      return;
+    }
+    if (id === 'market:merchant') {
+      this.market.merchantQuip = (this.market.merchantQuip + 1) % 3;
       return;
     }
     if (id.startsWith('market:buy:')) {
@@ -1107,13 +1282,16 @@ export class MinigameApp {
       });
       return;
     }
-    if (id === 'market:spin') {
-      const res = spinLottery(this.profile, this.market.prizes, Math.random, 'auto');
+    if (id === 'market:spin' || id.startsWith('market:spin:')) {
+      const rawPay = id.startsWith('market:spin:') ? id.slice('market:spin:'.length) : 'auto';
+      const pay = (rawPay === 'ticket' || rawPay === 'coins' ? rawPay : 'auto') as 'auto' | 'ticket' | 'coins';
+      const res = spinLottery(this.profile, this.market.prizes, Math.random, pay);
       if (res.ok && res.prize) {
         this.profile = res.profile;
         this.save();
         this.market.lastPrizeIndex = res.index ?? null;
         this.market.lastPrizeLabel = this.formatPrizeLabel(res.prize);
+        this.market.spunThisVisit = true;
         this.market.prizes = createLotteryPrizes(this.profile, Math.random);
         this.platform.audio.play('gacha_win');
         this.showToast(`🎉 ${this.market.lastPrizeLabel}`, 'good', 2.6);
@@ -1131,6 +1309,7 @@ export class MinigameApp {
           this.save();
           this.market.lastPrizeIndex = res.index ?? null;
           this.market.lastPrizeLabel = this.formatPrizeLabel(res.prize);
+          this.market.spunThisVisit = true;
           this.market.prizes = createLotteryPrizes(this.profile, Math.random);
           this.platform.audio.play('gacha_win');
           this.showToast(`🎬 🎉 ${this.market.lastPrizeLabel}`, 'good', 2.6);
@@ -1154,22 +1333,37 @@ export class MinigameApp {
     // ── Hub #3: Capybara Onsen Village ──────────────────────────────────────
     if (id === 'village:tab:courtyard' || id === 'village:tab:build') {
       this.villageUi.tab = id === 'village:tab:courtyard' ? 'courtyard' : 'build';
+      if (this.villageUi.tab === 'courtyard') this.villageUi.focusFacilityId = null;
       this.scroll.reset();
       return;
     }
+    if (id.startsWith('village:focus:')) {
+      const facId = id.slice('village:focus:'.length);
+      if (isFacilityId(facId)) {
+        this.villageUi.tab = 'build';
+        this.villageUi.focusFacilityId = facId;
+        this.scroll.reset();
+      }
+      return;
+    }
     if (id.startsWith('village:pet:')) {
-      const petId = id.slice('village:pet:'.length);
+      const raw = id.slice('village:pet:'.length);
+      const residents = getVillageResidents(this.profile);
+      const parsedIdx = Number(raw);
+      const petIdx = Number.isInteger(parsedIdx) && parsedIdx >= 0 && parsedIdx < residents.length ? parsedIdx : 0;
+      const petId = residents[petIdx]?.id ?? raw;
       const res = petVillageResident(this.profile, petId, localDay());
       if (res.ok) {
         this.profile = res.profile;
         this.save();
-        this.villageUi.lastPetId = petId;
-        this.villageUi.lastPetUntil = this.elapsedSec + 0.9;
+        this.villageUi.interacted = true;
+        const quote = t(`p16.quote.${Math.floor(Math.random() * PET_QUOTE_COUNT)}`);
+        this.villageUi.petFeedback = { petIndex: petIdx, quote, coins: res.coins, until: this.elapsedSec + 2.2 };
         if (res.coins > 0) {
           this.platform.audio.play('coin');
-          this.showToast(zh ? `🐾 摸宠开心！+${res.coins} 金币` : `🐾 Happy pet! +${res.coins} coins`, 'good', 1.5);
+          this.showToast(`🐾 ${quote} +${res.coins}`, 'good', 1.8);
         } else {
-          this.showToast(zh ? '🐾 萌宠很享受今天的抚摸～' : '🐾 Pet loved the pat!', 'info', 1.5);
+          this.showToast(`🐾 ${quote}`, 'info', 1.6);
         }
       }
       return;
@@ -1179,6 +1373,7 @@ export class MinigameApp {
       if (res.ok) {
         this.profile = res.profile;
         this.save();
+        this.villageUi.interacted = true;
         this.platform.audio.play('coin');
         this.showToast(zh ? `🧺 收菜成功！🪙+${res.harvest.coins}` : `🧺 Collected! 🪙+${res.harvest.coins}`, 'good', 2.2);
       } else {
@@ -1192,6 +1387,7 @@ export class MinigameApp {
         if (res.ok) {
           this.profile = { ...res.profile, coins: res.profile.coins + res.harvest.coins };
           this.save();
+          this.villageUi.interacted = true;
           this.platform.audio.play('gacha_win');
           this.showToast(zh ? `🎬 双倍收菜成功！🪙+${res.harvest.coins * 2}` : `🎬 2× Harvest! 🪙+${res.harvest.coins * 2}`, 'good', 2.4);
         }
@@ -1204,6 +1400,7 @@ export class MinigameApp {
       if (res.ok) {
         this.profile = res.profile;
         this.save();
+        if (isFacilityId(facId)) this.villageUi.focusFacilityId = facId;
         this.platform.audio.play('merge_hero');
         this.showToast(zh ? `🏗️ ${t(`facility.${facId}`)} 升至 Lv.${res.level}！` : `🏗️ ${t(`facility.${facId}`)} Lv.${res.level}!`, 'good', 2.2);
       } else {
@@ -1212,11 +1409,39 @@ export class MinigameApp {
       return;
     }
 
-    // ── Hub #4: Onsen Kitchen ───────────────────────────────────────────────
-    if (id.startsWith('kitchen:tier:')) {
-      const raw = id.slice('kitchen:tier:'.length);
-      this.kitchenUi.tier = raw === 'all' ? 'all' : (Number(raw) as 1 | 2 | 3 | 4);
+    // ── Hub #4: Onsen Kitchen (Broths + Dish Detail + Ingredient Pantry) ────
+    if (id.startsWith('kitchen:tab:')) {
+      this.kitchenUi.tab = id.slice('kitchen:tab:'.length) as KitchenUiState['tab'];
+      this.kitchenUi.detailBrothId = null;
       this.scroll.reset();
+      return;
+    }
+    if (id.startsWith('kitchen:dish:')) {
+      this.kitchenUi.detailBrothId = id.slice('kitchen:dish:'.length) as BrothId;
+      this.scroll.reset();
+      return;
+    }
+    if (id === 'kitchen:back') {
+      this.kitchenUi.detailBrothId = null;
+      this.scroll.reset();
+      return;
+    }
+    if (id === 'kitchen:prev' || id === 'kitchen:next') {
+      if (this.kitchenUi.detailBrothId) {
+        const cur = BROTH_IDS.indexOf(this.kitchenUi.detailBrothId);
+        const step = id === 'kitchen:next' ? 1 : -1;
+        this.kitchenUi.detailBrothId = BROTH_IDS[(cur + step + BROTH_IDS.length) % BROTH_IDS.length];
+        this.scroll.reset();
+      }
+      return;
+    }
+    if (id === 'kitchen:unequip') {
+      const res = equipBroth(this.profile, null);
+      if (res.ok) {
+        this.profile = res.profile;
+        this.save();
+        this.showToast(zh ? '已切回清泉水' : 'Back to clear spring', 'good', 1.6);
+      }
       return;
     }
     if (id === 'kitchen:basket') {
@@ -1224,6 +1449,7 @@ export class MinigameApp {
       if (res.ok && res.gained) {
         this.profile = res.profile;
         this.save();
+        this.kitchenUi.lastBasketGained = [...res.gained];
         this.platform.audio.play('coin');
         const names = res.gained.map(g => t(`ingredient.${g}`)).join('、');
         this.showToast(`🧺 ${names}`, 'good', 2.6);
@@ -1273,7 +1499,13 @@ export class MinigameApp {
       return;
     }
 
-    // ── Hub #5: Endless Medallions ──────────────────────────────────────────
+    // ── Hub #5: Endless Medallions (2 Tabs: Medallions + Global Endless Board) ──
+    if (id.startsWith('medallion:tab:')) {
+      this.leaderboardUi.medallionTab = id.slice('medallion:tab:'.length) as MedallionHubTab;
+      this.scroll.reset();
+      if (this.leaderboardUi.medallionTab === 'endless-board') void this.refreshLeaderboards(false);
+      return;
+    }
     if (id.startsWith('medallion:up:')) {
       const mid = id.slice('medallion:up:'.length);
       const res = upgradeMedallion(this.profile, mid);
@@ -1288,9 +1520,19 @@ export class MinigameApp {
       return;
     }
 
-    // ── Hub #6 & #7: Leaderboard & Keeper Profile ───────────────────────────
-    if (id.startsWith('lb:tab:')) {
-      this.leaderboardUi.tab = id.slice('lb:tab:'.length) as LeaderboardUiState['tab'];
+    // ── Hub #6 & #7: Unified 4-Tab Profile Wood Book (Rank / Endless / Passport / Settings) ──
+    if (id.startsWith('profilehub:tab:')) {
+      const nextTab = id.slice('profilehub:tab:'.length) as ProfileHubTab;
+      this.modal = nextTab;
+      this.leaderboardUi.showRankLadder = false;
+      this.scroll.reset();
+      if (nextTab === 'leaderboard' || nextTab === 'endless-board') {
+        void this.refreshLeaderboards(false);
+      }
+      return;
+    }
+    if (id === 'lb:toggle-ladder') {
+      this.leaderboardUi.showRankLadder = !this.leaderboardUi.showRankLadder;
       this.scroll.reset();
       return;
     }
@@ -1330,6 +1572,17 @@ export class MinigameApp {
       if (this.engine?.state.phase === 'playing') this.engine.pause(true);
       this.openModal('recipes');
       this.advanceBattleTutorial('open-compendium');
+      return;
+    }
+    if (id === 'battle:shop') {
+      if (this.engine?.state.phase === 'playing') this.engine.pause(true);
+      this.openModal(isFeatureUnlocked(this.profile, 'market') ? 'market' : 'armory');
+      return;
+    }
+    if (id === 'battle:backpack') {
+      if (this.engine?.state.phase === 'playing') this.engine.pause(true);
+      this.market.tab = 'backpack';
+      this.openModal('market');
       return;
     }
     if (id === 'battle:pause') {
@@ -1436,11 +1689,6 @@ export class MinigameApp {
     }
     if (id === 'modal:again') { this.modal = null; void this.startBattle(); return; }
     if (id === 'modal:menu') { this.returnToMenu(); return; }
-    if (id.startsWith('modal:recipes-tab:')) {
-      this.recipesTab = id.slice('modal:recipes-tab:'.length) as CompendiumTab;
-      this.scroll.reset();
-      return;
-    }
     if (id === 'settings:damage') {
       this.profile = updateSettings(this.profile, { showDamageNumbers: !this.profile.settings.showDamageNumbers });
       this.save();
@@ -1523,6 +1771,11 @@ export class MinigameApp {
   }
 
   private closeOverlayModal(): void {
+    if (this.activeGuideFeature) {
+      this.profile = markOnboarded(this.profile, this.activeGuideFeature);
+      this.save();
+      this.activeGuideFeature = null;
+    }
     if (this.modalReturnTo) {
       const back = this.modalReturnTo;
       this.modalReturnTo = null;

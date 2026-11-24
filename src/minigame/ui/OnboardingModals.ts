@@ -1,163 +1,110 @@
 import type { FeatureId } from '../../core/FeatureUnlocks';
-import { getLanguage, t } from '../../i18n/i18n';
+import { t } from '../../i18n/i18n';
 import { round } from '../../render/StickerArt';
+import type { BattleLessonKey } from '../../ui/OnboardingGuide';
 import {
-  BTN_STYLES,
   PALETTE,
-  drawButton,
-  drawHinokiBoard,
   drawIvorySlab,
-  drawMatchaSignboard,
+  drawPillButton,
   drawSpriteContain,
   drawText,
   drawWrappedText,
   type UiHitManager,
 } from './CanvasUI';
 
-const FEATURE_ICON: Record<FeatureId, string> = {
-  armory: 'ui_weapon_fragment',
-  speed2x: 'ui_horn_continue',
-  market: 'ui_shop_bag',
-  endless: 'ui_endless_emblem',
-  village: 'ui_village_gate',
-  kitchen: 'ui_kitchen_pot',
-  medallions: 'ui_endless_crest',
-  speed3x: 'ui_horn_continue',
-};
-
-const FEATURE_PEEK: Record<FeatureId, string> = {
+const FEATURE_MASCOT: Record<FeatureId, string> = {
   armory: 'ui_armory_peek_capy',
   speed2x: 'ui_tutorial_capy',
   market: 'ui_market_peek_raccoon',
-  endless: 'ui_medallion_peek_capy',
+  endless: 'ui_endless_emblem',
   village: 'ui_village_peek_capy',
   kitchen: 'ui_kitchen_peek_capy',
   medallions: 'ui_medallion_peek_capy',
   speed3x: 'ui_tutorial_capy',
 };
 
-const FEATURE_GIFT_SUMMARY: Record<FeatureId, { zh: string; en: string }> = {
-  armory: { zh: '赠礼：塑料苍蝇拍碎片 ×2（可直接佩戴！）', en: 'Starter Gift: Fly Swatter Fragments ×2 (Ready to equip!)' },
-  speed2x: { zh: '战斗右上角可随时切换 1× / 2× 加速！', en: 'Toggle 1× / 2× speed anytime at top-right!' },
-  market: { zh: '赠礼：强力粘鼠板 ×1 + 免费扭蛋券 ×1', en: 'Starter Gift: Super Glue Trap ×1 + Free Gacha Ticket ×1' },
-  endless: { zh: '守住第 10 波后即可开启无尽模式与觉醒突破！', en: 'Clear Wave 10 to unlock Endless Mode & Awakening!' },
-  village: { zh: '赠礼：温泉木料 ×10 + 柚子精粹 ×3（立刻开建！）', en: 'Starter Gift: Onsen Wood ×10 + Yuzu Essence ×3!' },
-  kitchen: { zh: '赠礼：黄金柚子 ×4（立刻熬制第一锅汤底！）', en: 'Starter Gift: Golden Yuzu ×4 (Brew your first broth!)' },
-  medallions: { zh: '赠礼：无尽星徽 ×10 + 金币 ×20（立刻强化！）', en: 'Starter Gift: Endless Crests ×10 + 20 Coins!' },
-  speed3x: { zh: '战斗右上角现支持 1× → 2× → 3× 极速切换！', en: 'Top-right speed now cycles 1× → 2× → 3×!' },
-};
-
-/** 1:1 P18/P19 New-Feature Unlock Celebration & Starter-Gift Modal with crisp mobile-scaled fonts. */
+/**
+ * Strict 1:1 Web Courtyard New-Feature Welcome Card (`OnboardingGuide.ts` + `p19_03_stage1_armory_welcome.png`):
+ * - Lightweight warm-cream rounded card floating gracefully above the wooden dock (so the soaking capybara & pets remain visible!)
+ * - Left peeking feature mascot (`92×92`), bright green pill badge `新功能解锁`, bold title, crisp mobile-readable body,
+ *   and side-by-side rounded pill buttons (`立刻去体验 →` bright green + `跳过指引` cream)!
+ */
 export function drawOnboardingUnlockModal(
   c: CanvasRenderingContext2D,
   hits: UiHitManager,
   feature: FeatureId,
 ): void {
-  const zh = getLanguage() === 'zh-CN';
-  const pw = 688, ph = 466;
-  const px = (1280 - pw) / 2, py = (720 - ph) / 2 + 16;
+  const pw = 620, ph = 224;
+  const px = (1280 - pw) / 2, py = 398;
 
-  // Peeking mascot perched atop carved hinoki board
-  if (!drawSpriteContain(c, FEATURE_PEEK[feature], px + 26, py - 62, 108, 108)) {
-    drawSpriteContain(c, 'ui_tutorial_capy', px + 26, py - 62, 108, 108);
-  }
-  drawHinokiBoard(c, px, py, pw, ph, 26);
+  // Soft outer shadow + warm cream parchment card (NO heavy dark wood frame obscuring the courtyard!)
+  round(c, px, py + 8, pw, ph, 24, 'rgba(30,16,6,0.34)', 'transparent', 0);
+  drawIvorySlab(c, px, py, pw, ph, 24, '#fffdf7', '#f7ead0', '#70461e', 3.4);
   hits.add({ id: 'modal:card', x: px, y: py, w: pw, h: ph });
 
-  // Top Matcha-Bamboo Signboard
-  drawMatchaSignboard(c, 640, py - 32, t('p19.guideTag'), undefined, 250);
-
-  // Inner sculpted warm parchment body
-  const ix = px + 24, iy = py + 44, iw = pw - 48, ih = ph - 134;
-  drawIvorySlab(c, ix, iy, iw, ih, 18, '#fffdf7', '#f5e4c2', '#6f4826', 2.4);
-
-  // Feature icon medallion at top-right of inner slab
-  round(c, ix + iw - 96, iy + 14, 78, 78, 22, '#fff5dc', '#7d5027', 2.4);
-  if (!drawSpriteContain(c, FEATURE_ICON[feature], ix + iw - 88, iy + 22, 62, 62)) {
-    drawSpriteContain(c, 'ui_weapon_fragment', ix + iw - 88, iy + 22, 62, 62);
+  // Left peeking mascot
+  if (!drawSpriteContain(c, FEATURE_MASCOT[feature], px + 22, py + (ph - 104) / 2, 104, 104)) {
+    drawSpriteContain(c, 'ui_tutorial_capy', px + 22, py + (ph - 104) / 2, 104, 104);
   }
 
-  // Big bold title + body
-  drawText(c, t(`p19.onboard.${feature}.title`), ix + 24, iy + 48, 26, '#7a370a', 'left', 900);
-  drawWrappedText(
-    c,
-    t(`p19.onboard.${feature}.body`),
-    ix + 24,
-    iy + 102,
-    iw - 48,
-    18.5,
-    27,
-    PALETTE.ink,
-    'left',
-    700,
-    4,
-  );
+  const cx = px + 142;
+  const cw = pw - 166;
 
-  // Starter gift highlight banner
-  const gift = FEATURE_GIFT_SUMMARY[feature];
-  const gy = iy + ih - 62;
-  round(c, ix + 18, gy, iw - 36, 48, 15, '#dff6d6', '#3d8633', 2.2);
-  drawSpriteContain(c, FEATURE_ICON[feature], ix + 28, gy + 8, 32, 32);
-  drawText(c, zh ? gift.zh : gift.en, ix + 68, gy + 25, 17, '#205519', 'left', 900);
+  // Bright green pill badge `新功能解锁`
+  round(c, cx, py + 18, 108, 28, 14, '#79bd3c', '#3d6e19', 1.8);
+  drawText(c, t('p19.guideTag'), cx + 54, py + 33, 14, '#fffdf5', 'center', 900);
 
-  // Action buttons
-  const fy = py + ph - 74;
+  // Title & readable body
+  drawText(c, t(`p19.onboard.${feature}.title`), cx, py + 66, 23, PALETTE.ink, 'left', 900);
+  drawWrappedText(c, t(`p19.onboard.${feature}.body`), cx, py + 86, cw, 16.5, 23, PALETTE.inkSoft, 'left', 700, 3);
+
+  // Pill CTA Row (exact `p19_03` order: green primary left, cream skip right!)
+  const fy = py + ph - 58;
   const isMenuHub = feature === 'armory' || feature === 'market' || feature === 'village' || feature === 'kitchen' || feature === 'medallions';
   if (isMenuHub) {
-    drawButton(c, hits, `onboard:dismiss:${feature}`, px + 28, fy, 206, 56, t('p19.guideSkip'), {
-      ...BTN_STYLES.cream,
-      radius: 16,
-      fontSize: 18,
-    });
-    drawButton(c, hits, `onboard:go:${feature}`, px + 248, fy, pw - 276, 56, t('p19.guideGo'), {
-      ...BTN_STYLES.green,
-      radius: 16,
-      fontSize: 21,
-    });
+    drawPillButton(c, hits, `onboard:go:${feature}`, cx, fy, 198, 44, t('p19.guideGo'), 'green', { fontSize: 17.5 });
+    drawPillButton(c, hits, `onboard:dismiss:${feature}`, cx + 212, fy, 134, 44, t('p19.guideSkip'), 'cream', { fontSize: 16 });
   } else {
-    drawButton(c, hits, `onboard:dismiss:${feature}`, px + pw / 2 - 156, fy, 312, 56, t('p19.guideGotIt'), {
-      ...BTN_STYLES.gold,
-      radius: 16,
-      fontSize: 21,
-    });
+    drawPillButton(c, hits, `onboard:dismiss:${feature}`, cx, fy, 224, 44, t('p19.guideGotIt'), 'green', { fontSize: 17.5 });
   }
 }
 
-/** One-time compact P18 battle lesson modal for Active Props or Endless Wave 11 Awakening. */
+/**
+ * Strict 1:1 Web In-Battle Coaching Card (`OnboardingGuide.ts` + `p19_06_battle_prop_lesson.png`):
+ * - Anchored right beside the relevant HUD control (left-prop for `prop_battle`, top-right for `speed2x`/`speed3x`, center for `endless_battle`)
+ * - Warm cream storybook card with peeking mascot, green `新功能解锁` tag, crisp body, and green `太棒了，知道了！` pill button!
+ */
 export function drawBattleLessonModal(
   c: CanvasRenderingContext2D,
   hits: UiHitManager,
-  lesson: 'prop_battle' | 'endless_battle',
+  lesson: BattleLessonKey,
 ): void {
-  const pw = 664, ph = 398;
-  const px = (1280 - pw) / 2, py = (720 - ph) / 2 + 12;
+  const pw = 500, ph = 250;
+  let px = (1280 - pw) / 2;
+  let py = (720 - ph) / 2;
+  if (lesson === 'prop_battle') {
+    px = 148;
+    py = 224;
+  } else if (lesson === 'speed2x' || lesson === 'speed3x') {
+    px = 680;
+    py = 76;
+  }
 
-  drawHinokiBoard(c, px, py, pw, ph, 26);
+  round(c, px, py + 8, pw, ph, 22, 'rgba(28,14,4,0.34)', 'transparent', 0);
+  drawIvorySlab(c, px, py, pw, ph, 22, '#fffdf7', '#f7ead0', '#70461e', 3.4);
   hits.add({ id: 'modal:card', x: px, y: py, w: pw, h: ph });
-  drawMatchaSignboard(c, 640, py - 32, t('p19.guideTag'), undefined, 240);
 
-  const ix = px + 24, iy = py + 44, iw = pw - 48, ih = ph - 134;
-  drawIvorySlab(c, ix, iy, iw, ih, 18, '#fffdf7', '#f5e4c2', '#6f4826', 2.4);
+  const mascot = lesson === 'endless_battle' ? 'ui_endless_emblem' : lesson === 'prop_battle' ? 'ui_market_peek_raccoon' : 'ui_tutorial_capy';
+  drawSpriteContain(c, mascot, px + 22, py + 18, 68, 68);
 
-  drawSpriteContain(c, lesson === 'endless_battle' ? 'ui_endless_emblem' : 'ui_tutorial_capy', ix + 20, iy + 18, 76, 76);
-  drawText(c, t(`p19.onboard.${lesson}.title`), ix + 110, iy + 54, 24, '#7a370a', 'left', 900);
-  drawWrappedText(
-    c,
-    t(`p19.onboard.${lesson}.body`),
-    ix + 24,
-    iy + 106,
-    iw - 48,
-    18.5,
-    27,
-    PALETTE.ink,
-    'left',
-    700,
-    5,
-  );
+  // Green tag + Title
+  round(c, px + 102, py + 20, 104, 26, 13, '#79bd3c', '#3d6e19', 1.6);
+  drawText(c, t('p19.guideTag'), px + 154, py + 34, 13.5, '#fffdf5', 'center', 900);
+  drawText(c, t(`p19.onboard.${lesson}.title`), px + 102, py + 66, 22, PALETTE.ink, 'left', 900);
 
-  drawButton(c, hits, `lesson:ok:${lesson}`, px + pw / 2 - 150, py + ph - 74, 300, 56, t('p19.guideGotIt'), {
-    ...BTN_STYLES.teal,
-    radius: 16,
-    fontSize: 20,
-  });
+  // Body
+  drawWrappedText(c, t(`p19.onboard.${lesson}.body`), px + 24, py + 98, pw - 48, 16.5, 23.5, PALETTE.inkSoft, 'left', 700, 4);
+
+  // Bottom green Got-It pill button
+  drawPillButton(c, hits, `lesson:ok:${lesson}`, px + pw / 2 - 110, py + ph - 56, 220, 44, t('p19.guideGotIt'), 'green', { fontSize: 17.5 });
 }

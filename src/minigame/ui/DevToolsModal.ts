@@ -106,7 +106,7 @@ export function drawDevToolsModal(
     ...(disabled ? BTN_STYLES.muted : BTN_STYLES.green),
     radius: 14,
     fontSize: 17,
-    icon: 'ui_fish_icon',
+    icon: 'ui_fish_food',
     disabled,
   });
   drawButton(c, hits, 'dev:battle-skip', px + 280, by2 + 48, 224, 50, zh ? '跳过当前波' : 'Skip Wave', {

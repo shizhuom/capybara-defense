@@ -39,6 +39,9 @@ const MAIN_CORE_IDS = new Set([
   'ui_pause_peek_capy', 'ui_compendium_peek_capy', 'ui_armory_peek_capy', 'ui_alert_siren',
   'ui_battle_clash_crest', 'ui_harvest_basket', 'ui_rank_protect_shield', 'ui_endless_emblem',
   'ui_passive_aura_badge', 'ui_stat_damage_burst', 'ui_stat_ko_skull', 'weapon_m10_bamboo_staff',
+  'ui_stats_scroll', 'ui_unlock_chest', 'ui_profile_peek_capy', 'ui_rank_peek_capy',
+  'ui_market_peek_raccoon', 'ui_village_peek_capy', 'ui_kitchen_peek_capy', 'ui_medallion_peek_capy',
+  'ui_gacha_machine', 'ui_pet_heart', 'ui_sleep_zzz',
 ]);
 
 function classifySprite(id) {
@@ -46,6 +49,7 @@ function classifySprite(id) {
   if (OPAQUE_MAIN_BGS.has(id)) return { pkg: 'main', format: 'jpg', maxDim: 1280, quality: 0.82 };
   if (OPAQUE_MAP_BGS.has(id)) return { pkg: 'maps', format: 'jpg', maxDim: 1280, quality: 0.82 };
   if (id === 'title_logo_zh' || id === 'title_logo_en') return { pkg: 'main', format: 'webp', maxDim: 720, quality: 0.85 };
+  if (id === 'ui_victory_shield_wings' || id === 'ui_defeat_shield_wings') return { pkg: 'main', format: 'webp', maxDim: 512, quality: 0.85 };
   if (id === 'ui_btn_start_zh' || id === 'ui_btn_start_en') return { pkg: 'main', format: 'webp', maxDim: 440, quality: 0.85 };
   if (id.startsWith('tub_rim_')) return { pkg: id === 'tub_rim_sunny_backyard' ? 'main' : 'maps', format: 'webp', maxDim: 420, quality: 0.84 };
   if (id.startsWith('fac_')) return { pkg: 'maps', format: 'webp', maxDim: 280, quality: 0.84 };

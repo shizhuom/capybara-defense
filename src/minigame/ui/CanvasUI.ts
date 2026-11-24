@@ -1,6 +1,8 @@
 import { assets } from '../../render/AssetRegistry';
 import { INK, round } from '../../render/StickerArt';
 import type { ViewportMetrics } from '../../platform/types';
+import { t } from '../../i18n/i18n';
+import type { DialogGuideStep } from '../../ui/OnboardingGuide';
 
 export const UI_FONT = '"Trebuchet MS", "PingFang SC", "Microsoft YaHei", sans-serif';
 
@@ -147,7 +149,7 @@ export function wrapText(c: CanvasRenderingContext2D, text: string, maxWidth: nu
 
   for (const para of paragraphs) {
     if (!para.trim()) { lines.push(''); continue; }
-    const tokens = para.match(/[A-Za-z0-9_+.,:;/%×·'-]+\s*|\s+|./gu) ?? [para];
+    const tokens = para.match(/(?:[A-Za-z0-9_+.,:;/%×·'-]+\s*|\s+|[^\s])[。，、；：！？）》】」]*/gu) ?? [para];
     let current = '';
     for (const token of tokens) {
       const candidate = current + token;
@@ -186,8 +188,9 @@ export function drawWrappedText(
   c.textAlign = align;
   c.textBaseline = 'top';
   c.fillStyle = color;
+  const drawX = align === 'center' ? x + maxWidth / 2 : align === 'right' ? x + maxWidth : x;
   for (let i = 0; i < clipped.length; i++) {
-    c.fillText(clipped[i], x, y + i * lineHeight);
+    c.fillText(clipped[i], drawX, y + i * lineHeight);
   }
   return clipped.length * lineHeight;
 }
@@ -617,10 +620,17 @@ export function drawButton(
 
   const fontSize = style.fontSize ?? Math.min(22, Math.max(15, Math.round(h * 0.44)));
   if (style.icon) {
-    const iconSize = Math.min(h - 10, 32);
-    const hasImg = drawSpriteContain(c, style.icon, x + 10, y + dy + (h - iconSize) / 2, iconSize, iconSize);
+    const iconSize = Math.min(h - 10, 30);
+    c.font = `900 ${fontSize}px ${UI_FONT}`;
+    const textW = label ? Math.ceil(c.measureText(label).width) : 0;
+    const gap = label ? 7 : 0;
+    const totalW = iconSize + gap + textW;
+    const startX = x + Math.max(10, Math.floor((w - totalW) / 2));
+    const hasImg = drawSpriteContain(c, style.icon, startX, y + dy + (h - iconSize) / 2, iconSize, iconSize);
     if (hasImg) {
-      drawText(c, label, x + 10 + iconSize + (w - 14 - iconSize) / 2, y + dy + h / 2 + 1, fontSize, s.text, 'center', 900);
+      if (label) {
+        drawText(c, label, startX + iconSize + gap, y + dy + h / 2 + 1, fontSize, s.text, 'left', 900);
+      }
       return;
     }
   }
@@ -787,4 +797,310 @@ export function drawFullBleedBackdrop(
     c.fillStyle = g;
     c.fillRect(0, 720, 1280, bleedBottom + 2);
   }
+}
+
+// ── 1:1 WEB P18 LEDGER SHELL & CONTROLS (`LedgerView.ts` + `p18_preview_*`) ──
+
+/** Centered storybook hinoki wood board dimensions matching Web `p18_preview_*` silhouette with generous phone readability. */
+export const LEDGER = {
+  x: 224,
+  y: 156,
+  w: 832,
+  h: 492,
+} as const;
+
+export interface LedgerTabItem {
+  id: string;
+  label: string;
+  active: boolean;
+  pulse?: boolean;
+}
+
+export interface BadgeSegment {
+  icon?: string;
+  text: string;
+}
+
+export interface LedgerShellOptions {
+  title: string;
+  mascot: string;
+  badgeSegments?: readonly BadgeSegment[];
+  tabs?: readonly LedgerTabItem[];
+  footer1?: string;
+  footer2?: string;
+  closeId?: string;
+  /** Optional hit target on the Matcha Signboard title (used for hidden 5-tap Dev Mode in Settings). */
+  titleHitId?: string;
+  /** Optional in-battle switch link beside the header badge (`去黑市 ›` / `去神兵 ›`). */
+  switchLink?: { id: string; label: string };
+  /** Optional P19 in-dialog coaching strip rendered right inside the top of the wooden board. */
+  guideStep?: DialogGuideStep | null;
+  /** Optional elapsed seconds for gentle golden guide pulse. */
+  elapsed?: number;
+}
+
+const GUIDE_MASCOT: Record<string, string> = {
+  armory: 'ui_armory_peek_capy',
+  market: 'ui_market_peek_raccoon',
+  village: 'ui_village_peek_capy',
+  kitchen: 'ui_kitchen_peek_capy',
+  medallions: 'ui_medallion_peek_capy',
+};
+
+/**
+ * Renders the EXACT Web P18 Carved Hinoki-Wood Ledger Window (`LedgerView.ts` + `p18_preview_*`):
+ * Matcha-Bamboo Signboard -> Cream Badge Pill -> Yuzu Close Medallion -> Equal-Width Honey-Oak Tabs
+ * -> Peeking Mascot -> Carved Hinoki Board -> Optional P19 Guide Strip -> 2-Line White Outlined Footer Tips!
+ * Returns the inner content viewport rect `{ x, y, w, h }`.
+ */
+export function drawLedgerShell(
+  c: CanvasRenderingContext2D,
+  hits: UiHitManager,
+  opts: LedgerShellOptions,
+): { x: number; y: number; w: number; h: number } {
+  const { x: lx, y: ly, w: lw, h: lh } = LEDGER;
+
+  // 1. Matcha-Bamboo Signboard straddling top center
+  drawMatchaSignboard(c, 640, 12, opts.title, undefined, 290);
+  if (opts.titleHitId) {
+    hits.add({ id: opts.titleHitId, x: 640 - 170, y: 10, w: 340, h: 66 });
+  }
+
+  // 2. Yuzu-Gold Circular Close Button perched neatly to the right of signboard
+  drawYuzuCloseButton(c, hits, opts.closeId ?? 'modal:close', lx + lw - 18, 46, 25);
+
+  // 3. Cream Pill Header Badge directly below signboard (supports sprite icons + text!)
+  if (opts.badgeSegments && opts.badgeSegments.length > 0) {
+    c.font = `900 16px ${UI_FONT}`;
+    let totalW = 28;
+    const widths = opts.badgeSegments.map(seg => {
+      const tw = Math.ceil(c.measureText(seg.text).width);
+      const iw = seg.icon ? 24 : 0;
+      const w = iw + tw;
+      totalW += w + 12;
+      return { tw, iw, w };
+    });
+    totalW = Math.min(620, Math.max(120, totalW - 12));
+    const pillH = 30;
+    const pillY = 77;
+    const switchW = opts.switchLink ? 106 : 0;
+    const groupW = totalW + (switchW ? switchW + 8 : 0);
+    const pillX = 640 - groupW / 2;
+
+    round(c, pillX, pillY + 2, totalW, pillH, 15, 'rgba(56,30,12,0.38)', 'transparent', 0);
+    round(c, pillX, pillY, totalW, pillH, 15, '#fff9eb', '#8a5b32', 2);
+
+    let cx = pillX + 14;
+    opts.badgeSegments.forEach((seg, idx) => {
+      const m = widths[idx];
+      if (seg.icon) {
+        drawSpriteContain(c, seg.icon, cx, pillY + 5, 20, 20);
+        cx += 24;
+      }
+      drawText(c, seg.text, cx, pillY + 16, 15.5, '#4a2a14', 'left', 900);
+      cx += m.tw + 12;
+    });
+
+    if (opts.switchLink) {
+      drawPillButton(c, hits, opts.switchLink.id, pillX + totalW + 8, pillY - 1, switchW, 32, opts.switchLink.label, 'gold', { fontSize: 14 });
+    }
+  }
+
+  // 4. Equal-Width Honey-Oak Bookmark Tabs perched cleanly on top rim of hinoki board
+  const hasTabs = Boolean(opts.tabs && opts.tabs.length > 0);
+  const boardY = hasTabs ? ly : ly - 38;
+  const boardH = hasTabs ? lh : lh + 38;
+
+  if (opts.tabs && opts.tabs.length > 0) {
+    const tabY = boardY - 46;
+    const padX = 12;
+    const gap = 8;
+    const n = opts.tabs.length;
+    const tabW = Math.floor((lw - padX * 2 - gap * (n - 1)) / n);
+    opts.tabs.forEach((tb, i) => {
+      const tx = lx + padX + i * (tabW + gap);
+      drawHoneyOakTab(c, hits, tb.id, tx, tabY, tabW, 48, tb.label, tb.active);
+      if (tb.pulse && !tb.active) {
+        const glow = 0.55 + 0.45 * Math.sin((opts.elapsed ?? 0) * 6);
+        round(c, tx - 2, tabY + 2, tabW + 4, 48, 15, 'transparent', `rgba(255,212,64,${glow.toFixed(2)})`, 3.5);
+      }
+    });
+  }
+
+  // 5. Carved Hinoki Wood Board
+  drawHinokiBoard(c, lx, boardY, lw, boardH, 24);
+  hits.add({ id: 'modal:card', x: lx, y: boardY, w: lw, h: boardH });
+
+  // 6. Peeking Mascot layered ON TOP of Tab 1 shoulder so its paws visibly grip the rim (exact Web `p18_preview_*`!)
+  drawSpriteContain(c, opts.mascot, lx + 4, hasTabs ? boardY - 122 : boardY - 82, 86, 86);
+
+  // 7. 2-Line White Outlined Storybook Footer Tips right below the board (exact Web look!)
+  if (opts.footer1) {
+    drawText(c, opts.footer1, 640, boardY + boardH + 22, 16, '#fffdf5', 'center', 800, INK, 4.5);
+  }
+  if (opts.footer2) {
+    drawText(c, opts.footer2, 640, boardY + boardH + 46, 15.5, '#fff4d6', 'center', 800, INK, 4.5);
+  }
+
+  // 8. Optional P19 In-Dialog Coaching Strip (`p19_04`, `p19_05`, `p19_07`)
+  let bodyY = boardY + 14;
+  let bodyH = boardH - 28;
+  if (opts.guideStep) {
+    const gx = lx + 16, gw = lw - 32, gh = 68;
+    const done = opts.guideStep.done;
+    drawIvorySlab(
+      c,
+      gx,
+      bodyY,
+      gw,
+      gh,
+      16,
+      done ? '#eafbe2' : '#fff8dc',
+      done ? '#d4f2c4' : '#f8e6b4',
+      done ? '#3d8633' : '#d6891e',
+      2.6,
+    );
+    const gm = GUIDE_MASCOT[opts.guideStep.feature] ?? 'ui_tutorial_capy';
+    drawSpriteContain(c, gm, gx + 12, bodyY + 10, 48, 48);
+    const btnW = done ? 168 : 112;
+    const guideText = t(opts.guideStep.textKey);
+    const guideMaxW = gw - 86 - btnW;
+    const lineCount = Math.min(2, Math.max(1, wrapText(c, guideText, guideMaxW, 16.5, 800).length));
+    const textTopY = bodyY + Math.round((gh - lineCount * 22) / 2);
+    drawWrappedText(c, guideText, gx + 70, textTopY, guideMaxW, 16.5, 22, PALETTE.ink, 'left', 800, 2);
+    if (done) {
+      drawPillButton(c, hits, `onboard:done:${opts.guideStep.feature}`, gx + gw - btnW - 12, bodyY + 13, btnW, 42, t('p19.guideGotIt'), 'green', { fontSize: 16 });
+    } else {
+      drawPillButton(c, hits, `onboard:skip:${opts.guideStep.feature}`, gx + gw - btnW - 12, bodyY + 13, btnW, 42, t('p19.guideSkip'), 'cream', { fontSize: 15 });
+    }
+    bodyY += gh + 10;
+    bodyH -= gh + 10;
+  }
+
+  return { x: lx + 16, y: bodyY, w: lw - 32, h: bodyH };
+}
+
+/** Exact Web Detail Navigation Bar: `[← 返回列表]     [◀ 上一个  3 / 12  下一个 ▶]`. */
+export function drawDetailNavBar(
+  c: CanvasRenderingContext2D,
+  hits: UiHitManager,
+  backId: string,
+  prevId: string,
+  nextId: string,
+  indexText: string,
+  x: number,
+  y: number,
+  w: number,
+  backLabel: string = t('p7.back'),
+): number {
+  const h = 42;
+  c.font = `900 15.5px ${UI_FONT}`;
+  const backW = Math.min(240, Math.max(128, Math.ceil(c.measureText(backLabel).width) + 34));
+  drawPillButton(c, hits, backId, x + 2, y, backW, h, backLabel, 'cream', { fontSize: 15.5 });
+  drawPillButton(c, hits, prevId, x + w - 294, y, 102, h, `◀ ${t('p7.prev')}`, 'cream', { fontSize: 15 });
+  drawText(c, indexText, x + w - 146, y + h / 2 + 1, 16.5, '#fffdf5', 'center', 900, INK, 3.5);
+  drawPillButton(c, hits, nextId, x + w - 104, y, 102, h, `${t('p7.next')} ▶`, 'cream', { fontSize: 15 });
+  return h;
+}
+
+/** Exact Web P18 rounded pill button (green, gold, cream, coral, muted). */
+export function drawPillButton(
+  c: CanvasRenderingContext2D,
+  hits: UiHitManager,
+  id: string,
+  x: number,
+  y: number,
+  w: number,
+  h: number,
+  label: string,
+  variant: 'green' | 'gold' | 'cream' | 'coral' | 'muted' | 'teal',
+  opts?: { fontSize?: number; icon?: string; disabled?: boolean; data?: unknown },
+): void {
+  const styleMap = {
+    green: { fill: '#82c943', bottom: '#478020', stroke: '#2f5916', text: '#fffdf7' },
+    gold: { fill: '#f8cd52', bottom: '#b57314', stroke: '#5c3612', text: '#46250b' },
+    cream: { fill: '#fffaf0', bottom: '#bda074', stroke: '#6c4928', text: '#452812' },
+    coral: { fill: '#e06753', bottom: '#963425', stroke: '#662015', text: '#fffdf7' },
+    teal: { fill: '#57ad94', bottom: '#2b6756', stroke: '#224f42', text: '#fffdf7' },
+    muted: { fill: '#e6dcc9', bottom: '#b5a68e', stroke: '#877862', text: '#756652' },
+  } as const;
+  drawButton(c, hits, id, x, y, w, h, label, {
+    ...styleMap[variant],
+    radius: Math.round(h / 2),
+    fontSize: opts?.fontSize ?? Math.min(18, Math.max(14, Math.round(h * 0.43))),
+    icon: opts?.icon,
+    disabled: opts?.disabled,
+  }, opts?.data);
+}
+
+/** Exact Web P18 Golden Wood-Track Volume Slider (`p18_preview_d17_settings.png`). */
+export function drawGoldSlider(
+  c: CanvasRenderingContext2D,
+  x: number,
+  y: number,
+  w: number,
+  h: number,
+  value: number,
+): void {
+  const v = Math.max(0, Math.min(1, value));
+  const trackH = 12;
+  const ty = y + (h - trackH) / 2;
+  round(c, x, ty, w, trackH, 6, '#e9dac0', '#8c6239', 1.8);
+  if (v > 0.01) {
+    round(c, x + 1, ty + 1, Math.max(10, (w - 2) * v), trackH - 2, 5, '#efb93c', 'transparent', 0);
+  }
+  const kx = x + v * w;
+  const ky = y + h / 2;
+  const grad = c.createRadialGradient(kx - 4, ky - 4, 2, kx, ky, 14);
+  grad.addColorStop(0, '#fff5b8');
+  grad.addColorStop(0.55, '#f6c443');
+  grad.addColorStop(1, '#d18414');
+  c.beginPath();
+  c.arc(kx, ky, 14, 0, Math.PI * 2);
+  c.fillStyle = grad;
+  c.fill();
+  c.lineWidth = 2.4;
+  c.strokeStyle = '#5c3612';
+  c.stroke();
+}
+
+/** Exact Web P18 iOS-style Green Pill Toggle Switch (`p18_preview_d17_settings.png`). */
+export function drawToggleSwitch(
+  c: CanvasRenderingContext2D,
+  hits: UiHitManager,
+  id: string,
+  x: number,
+  y: number,
+  checked: boolean,
+): void {
+  const w = 64, h = 34;
+  hits.add({ id, x: x - 6, y: y - 6, w: w + 12, h: h + 12 });
+  round(c, x, y, w, h, h / 2, checked ? '#82c943' : '#d6c6ac', checked ? '#3b6e1c' : '#856d50', 2.2);
+  const kx = checked ? x + w - h / 2 : x + h / 2;
+  const ky = y + h / 2;
+  c.beginPath();
+  c.arc(kx, ky, h / 2 - 4, 0, Math.PI * 2);
+  c.fillStyle = '#fffdf8';
+  c.fill();
+  c.lineWidth = 1.6;
+  c.strokeStyle = 'rgba(74,43,22,0.35)';
+  c.stroke();
+}
+
+/** Crisp scroll indicator thumb drawn along the right edge of scrollable modal viewports. */
+export function drawScrollbar(
+  c: CanvasRenderingContext2D,
+  vx: number,
+  vy: number,
+  vw: number,
+  vh: number,
+  contentH: number,
+  scroll: ScrollRegion,
+): void {
+  if (contentH <= vh + 2) return;
+  const trackH = vh - 16;
+  const thumbH = Math.max(36, (vh / contentH) * trackH);
+  const ratio = scroll.maxOffset > 0 ? scroll.offset / scroll.maxOffset : 0;
+  const ty = vy + 8 + ratio * (trackH - thumbH);
+  round(c, vx + vw - 9, ty, 6, thumbH, 3, 'rgba(255,244,218,0.72)', 'rgba(74,43,22,0.45)', 1);
 }

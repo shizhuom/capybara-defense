@@ -11,6 +11,18 @@ if (typeof Object.hasOwn !== 'function') {
   });
 }
 
+if (typeof Object.fromEntries !== 'function') {
+  Object.defineProperty(Object, 'fromEntries', {
+    value: <T = unknown>(entries: Iterable<readonly [PropertyKey, T]>): Record<string, T> => {
+      const out: Record<string, T> = {};
+      for (const [k, v] of entries) out[String(k)] = v;
+      return out;
+    },
+    configurable: true,
+    writable: true,
+  });
+}
+
 if (typeof Array.prototype.at !== 'function') {
   Object.defineProperty(Array.prototype, 'at', {
     value: function at<T>(this: T[], index: number): T | undefined {

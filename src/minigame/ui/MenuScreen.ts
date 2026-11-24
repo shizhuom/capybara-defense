@@ -35,6 +35,7 @@ export interface MenuRenderContext {
   muted: boolean;
   topRightEdge: number;
   viewport: ViewportMetrics;
+  highlightFeature?: FeatureId | null;
 }
 
 interface MedallionDockItem {
@@ -46,6 +47,7 @@ interface MedallionDockItem {
   badgeIcon?: string;
   locked?: boolean;
   lockTag?: string;
+  highlight?: boolean;
 }
 
 /**
@@ -57,7 +59,7 @@ export function drawMenuScreen(
   hits: UiHitManager,
   ctx: MenuRenderContext,
 ): void {
-  const { profile, elapsed, muted, topRightEdge, viewport: vp } = ctx;
+  const { profile, elapsed, muted, topRightEdge, viewport: vp, highlightFeature } = ctx;
   const lang = getLanguage();
   const zh = lang === 'zh-CN';
   const hasRank = isRankHubUnlocked(profile);
@@ -190,6 +192,7 @@ export function drawMenuScreen(
       label: t('p3.armory'),
       badge: `${profile.unlockedWeapons.length}/36`,
       badgeColor: '#fff8e8',
+      highlight: highlightFeature === 'armory',
     });
   } else if (nextDock?.id === 'armory') {
     leftDock.push({ id: 'menu:locked:armory', icon: 'weapon_m10_bamboo_staff', label: t('p3.armory'), locked: true, lockTag: lockText });
@@ -203,6 +206,7 @@ export function drawMenuScreen(
       label: t('p14.dock'),
       badge: brewable ? t('p14.brewBadge') : `${unlocked}/${BROTH_IDS.length}`,
       badgeColor: brewable ? '#79be43' : '#fff8e8',
+      highlight: highlightFeature === 'kitchen',
     });
   } else if (nextDock?.id === 'kitchen') {
     leftDock.push({ id: 'menu:locked:kitchen', icon: 'ui_kitchen_pot', label: t('p14.dock'), locked: true, lockTag: lockText });
@@ -217,6 +221,7 @@ export function drawMenuScreen(
       label: t('p16.dock'),
       badge: vb === 'harvest' ? t('p16.harvestBadge') : vb === 'build' ? t('p16.buildBadge') : `★${villageStars(profile)}/${VILLAGE_MAX_STARS}`,
       badgeColor: vb === 'harvest' ? '#e59226' : vb === 'build' ? '#79be43' : '#fff8e8',
+      highlight: highlightFeature === 'village',
     });
   } else if (nextDock?.id === 'village') {
     rightDock.push({ id: 'menu:locked:village', icon: 'ui_village_gate', label: t('p16.dock'), locked: true, lockTag: lockText });
@@ -229,6 +234,7 @@ export function drawMenuScreen(
       badge: profile.freeLotteryTickets > 0 ? String(profile.freeLotteryTickets) : undefined,
       badgeIcon: profile.freeLotteryTickets > 0 ? 'ui_ticket_gacha' : undefined,
       badgeColor: '#d95443',
+      highlight: highlightFeature === 'market',
     });
   } else if (nextDock?.id === 'market') {
     rightDock.push({ id: 'menu:locked:market', icon: 'ui_shop_bag', label: t('p3.shop'), locked: true, lockTag: lockText });
@@ -240,10 +246,10 @@ export function drawMenuScreen(
   // Draw Left Circular Medallions (bottom-left corner, lifted cleanly above iOS Home Indicator!)
   const dockY = 580;
   const dockLeftX = leftAnchor + 4;
-  drawMedallionRow(c, hits, leftDock, dockLeftX, dockY, false);
+  drawMedallionRow(c, hits, leftDock, dockLeftX, dockY, false, elapsed);
   // Draw Right Circular Medallions (bottom-right corner)
   if (rightDock.length > 0) {
-    drawMedallionRow(c, hits, rightDock, bottomRightAnchor, dockY, true);
+    drawMedallionRow(c, hits, rightDock, bottomRightAnchor, dockY, true, elapsed);
   }
 
   // Floating Active Broth Pill (above left dock when Kitchen unlocked & broth active)
@@ -267,7 +273,8 @@ export function drawMenuScreen(
   if (hasMedallions) {
     const ready = upgradeableMedallions(profile).length > 0;
     const crests = formatCompactNumber(profile.endlessCrests ?? 0);
-    const label = `${t('p17.hallPill')} · ${ready ? t('p17.canUpgrade') : `×${crests}`}`;
+    const waveTag = (profile.bestEndlessWave ?? 0) >= 11 ? ` · W${profile.bestEndlessWave}` : '';
+    const label = `${t('p17.hallPill')}${waveTag} · ${ready ? t('p17.canUpgrade') : `×${crests}`}`;
     drawFloatingCornerPill(c, hits, 'menu:hub:medallions', bottomRightAnchor, 514, 'ui_endless_crest', label, ready ? '#f6cf59' : '#efe3fa', true);
   } else if (nextDock?.id === 'medallions') {
     drawFloatingCornerPill(c, hits, 'menu:locked:medallions', bottomRightAnchor, 514, 'ui_endless_crest', `${t('p17.hallPill')} 🔒${lockText}`, '#d8ccb8', true);
@@ -281,6 +288,7 @@ function drawMedallionRow(
   anchorX: number,
   topY: number,
   alignRight: boolean,
+  elapsed: number,
 ): void {
   const size = 84;
   const gap = 18;
@@ -295,6 +303,18 @@ function drawMedallionRow(
     const dy = pressed ? 3 : 0;
 
     hits.add({ id: item.id, x: x - 4, y: topY - 12, w: size + 8, h: size + 44, data: item });
+
+    // Golden P19 onboarding spotlight ring (matches `p19_03_stage1_armory_welcome.png`!)
+    if (item.highlight) {
+      const pulse = 0.5 + 0.5 * Math.sin(elapsed * 5.2);
+      c.save();
+      c.beginPath();
+      c.arc(cx, cy + dy, size / 2 + 8 + pulse * 5, 0, Math.PI * 2);
+      c.strokeStyle = `rgba(255,212,68,${(0.65 + pulse * 0.32).toFixed(2)})`;
+      c.lineWidth = 6;
+      c.stroke();
+      c.restore();
+    }
 
     // Circle shadow & warm ivory medallion ring (exact Web circular hub dock!)
     if (!pressed) {

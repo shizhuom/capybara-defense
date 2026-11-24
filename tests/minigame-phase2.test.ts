@@ -136,9 +136,9 @@ describe('Mini-Game Phase 2: Canvas UI Toolkit, Full Menu, Battle Loop, Tutorial
       expect(h.app.getDebugState().modal).toBe('pause');
       expect(h.app.getDebugState().battleState?.phase).toBe('paused');
 
-      // Resume via P18 Pause modal resume button (x=415, y=586)
+      // Resume via 1:1 auto-fit Web Pause modal full-width green Resume button (x=640, y=465)
       h.stepFrame(160);
-      h.tap(415, 586);
+      h.tap(640, 465);
       expect(h.app.getDebugState().modal).toBe(null);
       expect(h.app.getDebugState().battleState?.phase).toBe('playing');
     } finally {
@@ -167,8 +167,8 @@ describe('Mini-Game Phase 2: Canvas UI Toolkit, Full Menu, Battle Loop, Tutorial
       h.tap(68, 630);
       h.stepFrame(120);
       expect(h.app.getDebugState().modal).toBe('recipes');
-      // Close Recipes via Yuzu Close medallion at top-right (x=1158, y=52)
-      h.tap(1158, 52);
+      // Close Recipes via Yuzu Close medallion at top-right of LEDGER (x=1038, y=48)
+      h.tap(1038, 48);
       h.stepFrame(140);
       expect(h.app.getDebugState().modal).toBe(null);
 
@@ -198,13 +198,15 @@ describe('Mini-Game Phase 2: Canvas UI Toolkit, Full Menu, Battle Loop, Tutorial
       for (let i = 0; i < 10; i++) {
         h.app.getDebugState().battleState!.wave = 10;
       }
-      // Surrender triggers defeat result cleanly (test Pause -> Surrender -> Result modal)
+      // Surrender triggers defeat result cleanly (test Pause -> Surrender -> Result modal + Report drawer)
       h.tap(1143, 34); // pause
       h.stepFrame(220);
       expect(h.app.getDebugState().modal).toBe('pause');
-      h.tap(903, 586); // surrender button
+      h.tap(852, 520); // surrender pill button below auto-fit wood board
       expect(h.app.getDebugState().modal).toBe('result');
-      h.stepFrame(240); // draw full settlement modal cleanly
+      h.stepFrame(240); // draw full settlement crest stage cleanly
+      h.tap(140, 640); // open Visual Battle Report Drawer
+      h.stepFrame(260); // draw visual report drawer cleanly
     } finally {
       h.cleanup();
     }

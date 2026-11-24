@@ -1,9 +1,10 @@
 import { getActiveBroth } from '../../config/kitchen';
 import { STAGE } from '../../config/maps';
+import { getUnlockedHeroIds } from '../../config/progression';
 import { PROPS } from '../../config/props';
 import { getSummonCost } from '../../config/units';
 import type { BattleEngine } from '../../core/BattleEngine';
-import { maxBattleSpeed } from '../../core/FeatureUnlocks';
+import { isFeatureUnlocked, maxBattleSpeed } from '../../core/FeatureUnlocks';
 import { getHeroMergeOptions } from '../../core/MergeTargets';
 import type { TutorialStep } from '../../core/Tutorial';
 import { formatCompactNumber } from '../../core/formatNumber';
@@ -35,6 +36,7 @@ export interface BattleOverlayContext {
   shovelSelected: boolean;
   activePropId?: string;
   expandedPassiveId?: string;
+  highlightPropId?: string;
   tutorialStep: TutorialStep;
   topRightEdge: number;
   viewport: ViewportMetrics;
@@ -48,35 +50,38 @@ export interface BattleOverlayResult {
 }
 
 /**
- * 1:1 Web Battle HUD (`p19_02_tutorial_step2_shovel.png` style) tuned for phone readability:
- * - Large bold numbers & labels across top bar, left medallions, bottom summon bell, and tutorial.
- * - ZERO auto-popping right-side unit stats card (keeps the entire garden & right rail unobstructed!).
- * - Includes Boss/Elite siren alert banners and brief battle-start clash curtain.
+ * Strict 1:1 Web Battle HUD (`p19_02_tutorial_step2_shovel.png` & `p19_06_battle_prop_lesson.png`) tuned for phone readability:
+ * - Top bar: Wave + Timer, Early/Upcoming, Fish, Oranges on left; Guide, Shop (when unlocked), Speed, Pause on right.
+ * - Left rail: Square Sprinkler medallion + Active Prop medallions + dashed `+` prep slots.
+ * - Right rail: Active Broth pill + Passive Aura badge + Passive Prop pills + dashed `+` prep slots.
+ * - Bottom: Open clean grass on right (NO clutter box!), big Summon Bell + Golden Merge Callout!
+ * - ZERO auto-popping right-side live unit stats card (per user's explicit preference!).
  */
 export function drawBattleOverlay(
   c: CanvasRenderingContext2D,
   hits: UiHitManager,
   ctx: BattleOverlayContext,
 ): BattleOverlayResult {
-  const { engine, profile, elapsed, speed, shovelSelected, activePropId, expandedPassiveId, tutorialStep, topRightEdge, viewport: vp, curtainRemaining } = ctx;
+  const { engine, profile, elapsed, speed, shovelSelected, activePropId, expandedPassiveId, highlightPropId, tutorialStep, topRightEdge, viewport: vp, curtainRemaining } = ctx;
   const state = engine.state;
   const player = state.sides.player;
   const zh = getLanguage() === 'zh-CN';
   const avoidRects: StageRect[] = [];
+  const preparation = state.wave === 1 && state.spawned === 0;
 
-  // ── 1. TOP HUD BAR (y: 8..60 — matches p19_02 with big readable mobile fonts!) ──
+  // ── 1. TOP HUD BAR (y: 8..60 — matches p19_02 & p19_06 with crisp mobile fonts!) ──
   const waveHud = getWaveHUD(state);
-  const waveX = 16, waveY = 8, waveW = 148, waveH = 52;
+  const waveX = 16, waveY = 8, waveW = 144, waveH = 52;
   drawIvorySlab(c, waveX, waveY, waveW, waveH, 16, '#fffdf7', '#f5e4c2', '#5c3b1e', 2.4);
   if (state.endless) {
     drawSpriteContain(c, 'ui_endless_emblem', waveX + 8, waveY + 9, 34, 34);
-    drawText(c, `W${state.wave}`, waveX + 94, waveY + 27, 23, '#6b2f94', 'center', 900);
+    drawText(c, `W${state.wave}`, waveX + 92, waveY + 27, 23, '#6b2f94', 'center', 900);
   } else {
-    drawSpriteContain(c, 'ui_wave_horn', waveX + 8, waveY + 9, 34, 34);
-    drawText(c, `${state.wave}/10`, waveX + 92, waveY + 27, 23, PALETTE.ink, 'center', 900);
+    drawBlueWaveIcon(c, waveX + 26, waveY + 26);
+    drawText(c, `${state.wave}/10`, waveX + 90, waveY + 27, 23, PALETTE.ink, 'center', 900);
   }
 
-  // Crisp timer pill tucked directly below Wave pill (exact p19_02 position!)
+  // Crisp timer pill tucked directly below Wave pill
   const timerY = waveY + waveH + 4;
   round(c, waveX, timerY, 108, 30, 15, 'rgba(255,247,230,0.95)', '#6e4927', 2);
   drawSpriteContain(c, 'ui_clock_sand', waveX + 8, timerY + 4, 22, 22);
@@ -95,7 +100,7 @@ export function drawBattleOverlay(
   const early = engine.canCallEarlyWave();
   let nextX = waveX + waveW + 8;
   if (early.allowed) {
-    const hornW = 142;
+    const hornW = 136;
     const pulse = 1 + Math.sin(elapsed * 5) * 0.03;
     c.save();
     c.translate(nextX + hornW / 2, waveY + waveH / 2);
@@ -112,30 +117,30 @@ export function drawBattleOverlay(
   } else {
     const preview = engine.getUpcomingWavePreview();
     if (preview) {
-      const pw = 120;
+      const pw = 116;
       drawIvorySlab(c, nextX, waveY, pw, waveH, 16, '#fffdf7', '#f5e4c2', '#5c3b1e', 2.2);
       const previewIcon = preview.bosses[0] ?? preview.minion;
       drawText(c, preview.bosses.length > 0 ? (zh ? '首领' : 'Boss') : (zh ? '来袭' : 'Next'), nextX + 34, waveY + 27, 17, preview.bosses.length > 0 ? '#b6392c' : PALETTE.inkSoft, 'center', 900);
-      drawSpriteContain(c, previewIcon, nextX + pw - 48, waveY + 6, 40, 40);
+      drawSpriteContain(c, previewIcon, nextX + pw - 46, waveY + 6, 40, 40);
       nextX += pw + 8;
     }
   }
 
-  // Fish Food Pill (big bold 25px digits!)
-  const foodW = 114;
+  // Fish Food Pill
+  const foodW = 112;
   drawIvorySlab(c, nextX, waveY, foodW, waveH, 16, '#fffdf7', '#f5e4c2', '#5c3b1e', 2.4);
   if (drawSpriteContain(c, 'ui_fish_food', nextX + 10, waveY + 8, 36, 36)) {
-    drawText(c, String(player.food), nextX + 78, waveY + 27, 25, PALETTE.ink, 'center', 900);
+    drawText(c, String(player.food), nextX + 76, waveY + 27, 25, PALETTE.ink, 'center', 900);
   } else {
     drawText(c, `🐟${player.food}`, nextX + foodW / 2, waveY + 27, 22, PALETTE.ink, 'center', 900);
   }
   nextX += foodW + 8;
 
-  // Oranges Pill (big bold 25px digits!)
-  const orangeW = state.endless && player.capyShieldReady ? 124 : 104;
+  // Oranges Pill
+  const orangeW = state.endless && player.capyShieldReady ? 122 : 102;
   drawIvorySlab(c, nextX, waveY, orangeW, waveH, 16, '#fffdf7', '#f5e4c2', '#5c3b1e', 2.4);
   if (drawSpriteContain(c, 'orange', nextX + 10, waveY + 9, 34, 34)) {
-    drawText(c, `×${player.oranges}`, nextX + 74, waveY + 27, 24, player.oranges <= 1 ? '#c73a2b' : PALETTE.ink, 'center', 900);
+    drawText(c, `×${player.oranges}`, nextX + 72, waveY + 27, 24, player.oranges <= 1 ? '#c73a2b' : PALETTE.ink, 'center', 900);
     if (state.endless && player.capyShieldReady) {
       drawSpriteContain(c, 'ui_rank_protect_shield', nextX + orangeW - 26, waveY + 12, 22, 22);
     }
@@ -144,29 +149,49 @@ export function drawBattleOverlay(
   }
   nextX += orangeW + 10;
 
-  // Top-Right Controls (respects WeChat capsule & wide-phone safe bounds!)
+  // Top-Right Controls (EXACT Web order `p19_06`: [图鉴] [商店] [1×] [⏸] — respecting WeChat capsule!)
   const rightEdge = topRightEdge;
-  const pauseW = 58, guideW = 104, speedW = 72, ctrlH = 52;
-  const pauseX = rightEdge - pauseW;
-  const guideX = pauseX - 8 - guideW;
-  const speedX = guideX - 8 - speedW;
-  const guideRect: TutorialRect = { x: guideX, y: waveY, w: guideW, h: ctrlH };
-
+  const pauseW = 58, speedW = 68, shopW = 102, guideW = 102, ctrlH = 52;
   const maxSpd = maxBattleSpeed(profile);
   const showSpeed = maxSpd > 1 || (profile.matches ?? 0) >= 1;
+  const showShop = isFeatureUnlocked(profile, 'market') || isFeatureUnlocked(profile, 'armory');
+
+  const pauseX = rightEdge - pauseW;
+  let cursorX = pauseX;
+  let speedX = cursorX;
+  if (showSpeed) {
+    speedX = cursorX - 8 - speedW;
+    cursorX = speedX;
+  }
+  let shopX = cursorX;
+  if (showShop) {
+    shopX = cursorX - 8 - shopW;
+    cursorX = shopX;
+  }
+  const guideX = cursorX - 8 - guideW;
+  const guideRect: TutorialRect = { x: guideX, y: waveY, w: guideW, h: ctrlH };
+
+  drawButton(c, hits, 'battle:guide', guideX, waveY, guideW, ctrlH, zh ? '图鉴' : 'Guide', {
+    ...BTN_STYLES.cream,
+    radius: 15,
+    fontSize: 18.5,
+    icon: 'ui_compendium_book',
+  });
+  if (showShop) {
+    drawButton(c, hits, 'battle:shop', shopX, waveY, shopW, ctrlH, zh ? '商店' : 'Shop', {
+      ...BTN_STYLES.cream,
+      radius: 15,
+      fontSize: 18.5,
+      icon: isFeatureUnlocked(profile, 'market') ? 'ui_shop_bag' : 'weapon_m10_bamboo_staff',
+    });
+  }
   if (showSpeed) {
     drawButton(c, hits, 'battle:speed', speedX, waveY, speedW, ctrlH, maxSpd <= 1 ? '1×🔒' : `${speed}×`, {
       ...(speed > 1 ? BTN_STYLES.gold : BTN_STYLES.cream),
       radius: 15,
-      fontSize: maxSpd <= 1 ? 16 : 21,
+      fontSize: maxSpd <= 1 ? 15.5 : 21,
     });
   }
-  drawButton(c, hits, 'battle:guide', guideX, waveY, guideW, ctrlH, zh ? '图鉴' : 'Guide', {
-    ...BTN_STYLES.cream,
-    radius: 15,
-    fontSize: 19,
-    icon: 'ui_compendium_book',
-  });
   drawButton(c, hits, 'battle:pause', pauseX, waveY, pauseW, ctrlH, '⏸', {
     ...BTN_STYLES.cream,
     radius: 15,
@@ -175,19 +200,18 @@ export function drawBattleOverlay(
 
   // Boss Health Bar (sits cleanly between Oranges and Top-Right controls)
   const bossHud = getBossHUD(state);
-  const rightBarEdge = showSpeed ? speedX : guideX;
   if (bossHud) {
-    const availW = rightBarEdge - nextX - 10;
-    if (availW >= 200) {
-      const bw = Math.min(350, availW);
+    const availW = guideX - nextX - 10;
+    if (availW >= 180) {
+      const bw = Math.min(340, availW);
       const bx = nextX + (availW - bw) / 2;
       const by = 8;
       const bh = 52;
       round(c, bx, by, bw, bh, 15, bossHud.warning ? '#6b2019' : '#4d241c', bossHud.warning ? '#ffcf5c' : '#e68c64', 2.6);
       drawSpriteContain(c, bossHud.kind, bx + 6, by + 4, 44, 44);
       const bossName = `${t(`boss.${bossHud.kind}`)}${bossHud.count > 1 ? ` ×${bossHud.count}` : ''}`;
-      drawText(c, bossName, bx + 56, by + 16, 16, '#fff8e4', 'left', 900);
-      drawText(c, `${formatCompactNumber(bossHud.hp)}/${formatCompactNumber(bossHud.maxHp)}`, bx + bw - 10, by + 16, 13.5, '#ffe0b3', 'right', 900);
+      drawText(c, bossName, bx + 54, by + 16, 15.5, '#fff8e4', 'left', 900);
+      drawText(c, `${formatCompactNumber(bossHud.hp)}/${formatCompactNumber(bossHud.maxHp)}`, bx + bw - 10, by + 16, 13, '#ffe0b3', 'right', 900);
       drawProgressBar(c, bx + 54, by + 28, bw - 64, 12, bossHud.fraction, '#eb5442', 'rgba(255,255,255,0.2)', '#2d120c');
       drawProgressBar(c, bx + 54, by + 43, bw - 64, 5, 1 - bossHud.cooldownFraction, bossHud.warning ? '#ffe066' : '#76c5d9', 'rgba(255,255,255,0.14)', 'transparent');
     }
@@ -211,23 +235,23 @@ export function drawBattleOverlay(
     drawText(c, tip.length > 26 ? `${tip.slice(0, 26)}…` : tip, ax + 114, ay + 45, 13.5, '#ffe2b8', 'left', 700);
   }
 
-  // ── 2. LEFT VERTICAL MEDALLION RAIL (matches p19_02 compact squares!) ─────
-  drawLeftToolRail(c, hits, state, activePropId, elapsed);
+  // ── 2. LEFT VERTICAL MEDALLION RAIL (matches p19_02 & p19_06!) ────────────
+  drawLeftToolRail(c, hits, state, profile, preparation, activePropId, highlightPropId, elapsed);
 
-  // ── 3. RIGHT VERTICAL AURA RAIL (Active Broth + Passive Props) ────────────
-  drawRightAuraRail(c, hits, state, expandedPassiveId);
+  // ── 3. RIGHT VERTICAL AURA RAIL (Active Broth + Passive Props + Prep `+`!) ─
+  drawRightAuraRail(c, hits, state, profile, preparation, expandedPassiveId);
 
-  // ── 4. BOTTOM SUMMON BELL, HERO MERGE CALLOUT & STATUS CHIP ───────────────
+  // ── 4. BOTTOM SUMMON BELL & GOLDEN HERO MERGE CALLOUT (clean open right grass!) ─
   drawBottomControls(c, hits, engine, activePropId, shovelSelected, elapsed);
 
-  // ── 5. MATCH-1 6-STEP GUIDED TUTORIAL OVERLAY (larger mobile fonts!) ──────
+  // ── 5. MATCH-1 6-STEP GUIDED TUTORIAL OVERLAY ─────────────────────────────
   if (tutorialStep !== 'done') {
     drawTutorialOverlay(c, hits, tutorialStep, state, guideRect, avoidRects, elapsed);
   }
 
   // ── 6. BRIEF OPENING BATTLE CLASH CURTAIN (tap anywhere to skip!) ─────────
   if (curtainRemaining > 0) {
-    drawBattleCurtain(c, hits, state, curtainRemaining, vp);
+    drawBattleCurtain(c, hits, state, profile, curtainRemaining, vp);
   }
 
   return { guideRect, avoidRects };
@@ -237,7 +261,10 @@ function drawLeftToolRail(
   c: CanvasRenderingContext2D,
   hits: UiHitManager,
   state: BattleState,
+  profile: Profile,
+  preparation: boolean,
   activePropId: string | undefined,
+  highlightPropId: string | undefined,
   elapsed: number,
 ): void {
   const player = state.sides.player;
@@ -245,7 +272,7 @@ function drawLeftToolRail(
   const rx = 42;
   const size = 88;
 
-  // Compact Square Cream Sprinkler Medallion (exact p19_02 look!)
+  // Compact Square Cream Sprinkler Medallion
   const spY = 230;
   const used = player.sprinklerUsed;
   const spPressed = !used && hits.isPressed('battle:sprinkler');
@@ -265,28 +292,47 @@ function drawLeftToolRail(
     3,
   );
   drawSpriteContain(c, 'sprinkler', rx + 12, spY + spDy + 10, 64, 64, used ? 0.38 : 1);
-  // Crisp bottom-right count pill (`1` or `0`)
   round(c, rx + size - 30, spY + spDy + size - 28, 30, 26, 13, used ? '#8c8175' : '#4a997e', '#fffdf5', 2);
   drawText(c, used ? '0' : '1', rx + size - 15, spY + spDy + size - 14, 16, '#fffdf5', 'center', 900);
 
-  // Equipped Active Props (square tactile medallions stacked cleanly below Sprinkler)
-  const equipped = player.loadout.equippedActiveProps.filter(id => PROPS[id]?.type === 'active').slice(0, 3);
-  equipped.forEach((propId, index) => {
-    const def = PROPS[propId];
+  // Equipped Active Props (+ soft dashed `+` prep slot when Market unlocked, matching `p19_06`!)
+  const equipped = player.loadout.equippedActiveProps.filter(id => PROPS[id]?.type === 'active').slice(0, 2);
+  const slotCount = preparation && isFeatureUnlocked(profile, 'market') ? 2 : equipped.length;
+
+  for (let index = 0; index < slotCount; index++) {
+    const propId = equipped[index];
     const py = 332 + index * 92;
     const ph = 82;
+
+    if (!propId) {
+      hits.add({ id: 'battle:backpack', x: rx, y: py, w: size, h: ph });
+      c.save();
+      c.setLineDash([6, 5]);
+      round(c, rx, py, size, ph, 18, 'rgba(235,244,218,0.58)', '#4a6b3e', 2);
+      c.restore();
+      drawText(c, '+', rx + size / 2, py + ph / 2, 30, '#3a5730', 'center', 900);
+      continue;
+    }
+
+    const def = PROPS[propId];
     const cd = Math.max(0, player.propCooldowns[propId] ?? 0);
     const ready = cd <= 0.05;
     const selected = activePropId === propId;
-    const pulse = selected ? 1 + Math.sin(elapsed * 6) * 0.035 : 1;
+    const highlighted = highlightPropId === propId;
+    const pulse = selected || highlighted ? 1 + Math.sin(elapsed * 6) * 0.04 : 1;
+    const lv = player.loadout.ownedProps[propId] ?? 1;
 
     hits.add({ id: `battle:prop:${propId}`, x: rx, y: py, w: size, h: ph, data: propId, disabled: !ready });
 
     c.save();
-    if (selected) {
+    if (selected || highlighted) {
       c.translate(rx + size / 2, py + ph / 2);
       c.scale(pulse, pulse);
       c.translate(-(rx + size / 2), -(py + ph / 2));
+    }
+    if (highlighted) {
+      const glow = 0.55 + 0.45 * Math.sin(elapsed * 6);
+      round(c, rx - 5, py - 5, size + 10, ph + 10, 22, 'rgba(255,220,76,0.28)', `rgba(255,212,56,${glow.toFixed(2)})`, 4.5);
     }
     drawIvorySlab(
       c,
@@ -295,81 +341,116 @@ function drawLeftToolRail(
       size,
       ph,
       18,
-      selected ? '#fff0ad' : ready ? '#fffdf6' : '#c8bfb0',
-      selected ? '#f7ca57' : ready ? '#f4e1ba' : '#ada394',
-      selected ? '#c75a16' : '#5a3a1e',
-      selected ? 3.5 : 2.6,
+      selected || highlighted ? '#fff0ad' : ready ? '#fffdf6' : '#c8bfb0',
+      selected || highlighted ? '#f7ca57' : ready ? '#f4e1ba' : '#ada394',
+      selected || highlighted ? '#c75a16' : '#5a3a1e',
+      selected || highlighted ? 3.5 : 2.6,
     );
-    if (!drawSpriteContain(c, `prop_${propId}`, rx + 14, py + 8, 60, 56, ready ? 1 : 0.4)) {
+    if (!drawSpriteContain(c, `prop_${propId}`, rx + 12, py + 7, 64, 62, ready ? 1 : 0.4)) {
       drawText(c, def.icon, rx + size / 2, py + 38, 36, PALETTE.ink, 'center', 700);
     }
 
     if (ready) {
-      const shortName = (zh ? def.name['zh-CN'] : def.name.en).slice(0, 4);
-      round(c, rx + 4, py + ph - 22, size - 8, 20, 10, selected ? '#c75a16' : 'rgba(74,43,22,0.84)', 'transparent', 0);
-      drawText(c, selected ? (zh ? '点释放' : 'Cast') : shortName, rx + size / 2, py + ph - 11, 12.5, '#fffdf5', 'center', 900);
+      if (selected) {
+        round(c, rx + 4, py + ph - 22, size - 8, 20, 10, '#c75a16', 'transparent', 0);
+        drawText(c, zh ? '点释放' : 'Cast', rx + size / 2, py + ph - 11, 12.5, '#fffdf5', 'center', 900);
+      } else {
+        // Exact Web `p19_06` clean numeric level badge (no mid-word truncated Chinese title!)
+        round(c, rx + size - 30, py + ph - 26, 28, 24, 12, '#6a4626', '#fffdf5', 2);
+        drawText(c, String(lv), rx + size - 16, py + ph - 13, 14, '#fffdf5', 'center', 900);
+      }
     } else {
       round(c, rx + 6, py + 6, size - 12, ph - 12, 14, 'rgba(34,20,10,0.52)', 'transparent', 0);
       drawText(c, `${Math.ceil(cd)}s`, rx + size / 2, py + ph / 2, 22, '#fff6d6', 'center', 900, INK, 4);
     }
     c.restore();
-  });
+  }
 }
 
 function drawRightAuraRail(
   c: CanvasRenderingContext2D,
   hits: UiHitManager,
   state: BattleState,
+  profile: Profile,
+  preparation: boolean,
   expandedPassiveId: string | undefined,
 ): void {
   const loadout = state.sides.player.loadout;
   const activeBroth = getActiveBroth(loadout);
   const passives = loadout.equippedPassiveProps.filter(id => PROPS[id]?.type === 'passive').slice(0, 6);
-  if (!activeBroth && passives.length === 0) return;
+  const showPrepPassives = preparation && isFeatureUnlocked(profile, 'market');
+  if (!activeBroth && passives.length === 0 && !showPrepPassives) return;
 
-  const rx = 1172;
-  const size = 74;
-  let y = 84;
+  const rx = 1166;
+  let y = 78;
+  const tileW = 72;
+  const tileH = 66;
+  const zh = getLanguage() === 'zh-CN';
 
+  // Active Broth Pill
   if (activeBroth) {
-    const { def, level } = activeBroth;
-    const exp = expandedPassiveId === 'broth';
-    hits.add({ id: 'battle:passive:broth', x: rx, y, w: size, h: size });
-    drawIvorySlab(c, rx, y, size, size, 16, '#fffdf7', def.bathColor, exp ? '#c25711' : '#5a3a1e', exp ? 3 : 2.2);
-    if (!drawSpriteContain(c, def.id, rx + 9, y + 6, 56, 52)) {
-      drawSpriteContain(c, 'ui_kitchen_pot', rx + 9, y + 6, 56, 52);
+    const id = 'broth';
+    const expanded = expandedPassiveId === id;
+    hits.add({ id: `battle:passive:${id}`, x: rx, y, w: tileW, h: tileH });
+    drawIvorySlab(c, rx, y, tileW, tileH, 16, expanded ? '#fff2b2' : '#fffdf6', expanded ? '#f7d56a' : '#f5e4c2', '#5c3b1e', 2.4);
+    round(c, rx + 12, y + 4, 48, 42, 11, activeBroth.def.bathColor, '#6e4b2b', 1.5);
+    drawSpriteContain(c, activeBroth.def.id, rx + 16, y + 6, 40, 38);
+    round(c, rx + 6, y + tileH - 20, tileW - 12, 18, 9, '#4a2b16', 'transparent', 0);
+    drawText(c, `Lv.${activeBroth.level}`, rx + tileW / 2, y + tileH - 10, 12.5, '#fffdf5', 'center', 900);
+
+    if (expanded) {
+      drawRightTooltip(c, rx - 310, y, 298, `${t(`broth.${activeBroth.def.id}`)} Lv.${activeBroth.level}`, t('p14.railLive'));
     }
-    round(c, rx + 10, y + size - 22, size - 20, 20, 10, '#4a2b16', 'transparent', 0);
-    drawText(c, `Lv.${level}`, rx + size / 2, y + size - 11, 13.5, '#fff6df', 'center', 900);
-    if (exp) {
-      drawAuraTooltip(c, rx - 310, y, `${t(`broth.${def.id}`)} Lv.${level}`, t('p14.railLive'));
-    }
-    y += size + 10;
+    y += tileH + 8;
   }
 
-  for (const propId of passives) {
+  // Passive Aura Header Badge (`ui_passive_aura_badge` + 被动 — soft cream backing so it pops over map flora!)
+  if (passives.length > 0 || showPrepPassives) {
+    round(c, rx + 14, y - 2, 44, 34, 17, 'rgba(255,248,232,0.86)', '#6e4926', 1.6);
+    drawSpriteContain(c, 'ui_passive_aura_badge', rx + 20, y, 32, 30);
+    round(c, rx + 10, y + 26, tileW - 20, 20, 10, 'rgba(62,38,18,0.9)', 'transparent', 0);
+    drawText(c, t('p13.passives'), rx + tileW / 2, y + 36, 12, '#fffdf5', 'center', 900);
+    y += 52;
+  }
+
+  // Passive Props (+ dashed `+` slots during Wave-1 prep)
+  const slotCount = showPrepPassives ? 6 : passives.length;
+  const pH = slotCount > 4 ? 58 : tileH;
+  for (let i = 0; i < slotCount; i++) {
+    const propId = passives[i];
+    if (!propId) {
+      hits.add({ id: 'battle:backpack', x: rx, y, w: tileW, h: pH });
+      c.save();
+      c.setLineDash([5, 4]);
+      round(c, rx + 6, y, tileW - 12, pH, 14, 'rgba(235,244,218,0.52)', '#4a6b3e', 1.8);
+      c.restore();
+      drawText(c, '+', rx + tileW / 2, y + pH / 2, 24, '#3a5730', 'center', 900);
+      y += pH + 6;
+      continue;
+    }
+
     const def = PROPS[propId];
-    const exp = expandedPassiveId === propId;
-    hits.add({ id: `battle:passive:${propId}`, x: rx, y, w: size, h: 66 });
-    drawIvorySlab(c, rx, y, size, 66, 15, exp ? '#fff0b3' : '#fffdf7', exp ? '#f5d26a' : '#f4e2bc', exp ? '#c25711' : '#5a3a1e', exp ? 3 : 2.2);
-    if (!drawSpriteContain(c, `prop_${propId}`, rx + 13, y + 5, 48, 44)) {
-      drawText(c, def.icon, rx + size / 2, y + 28, 28, PALETTE.ink, 'center', 700);
+    const lv = loadout.ownedProps[propId] ?? 1;
+    const expanded = expandedPassiveId === propId;
+    hits.add({ id: `battle:passive:${propId}`, x: rx, y, w: tileW, h: pH });
+    drawIvorySlab(c, rx, y, tileW, pH, 15, expanded ? '#fff2b2' : '#fffdf6', expanded ? '#f7d56a' : '#f5e4c2', '#5c3b1e', 2.2);
+    if (!drawSpriteContain(c, `prop_${propId}`, rx + 14, y + 4, 44, pH - 22)) {
+      drawText(c, def.icon, rx + tileW / 2, y + pH / 2 - 6, 26, PALETTE.ink, 'center', 700);
     }
-    round(c, rx + 12, y + 46, size - 24, 18, 9, '#4a2b16', 'transparent', 0);
-    drawText(c, `Lv.${loadout.ownedProps[propId] ?? 1}`, rx + size / 2, y + 55, 12.5, '#fff6df', 'center', 900);
-    if (exp) {
-      drawAuraTooltip(c, rx - 310, Math.min(y, 430), t(`prop.${propId}`), t(`prop.${propId}.desc`));
+    round(c, rx + 6, y + pH - 19, tileW - 12, 17, 8, '#4a2b16', 'transparent', 0);
+    drawText(c, `Lv.${lv}`, rx + tileW / 2, y + pH - 10, 12, '#fffdf5', 'center', 900);
+
+    if (expanded) {
+      drawRightTooltip(c, rx - 310, Math.min(540, y), 298, `${zh ? def.name['zh-CN'] : def.name.en} Lv.${lv}`, zh ? def.description['zh-CN'] : def.description.en);
     }
-    y += 74;
+    y += pH + 6;
   }
 }
 
-function drawAuraTooltip(c: CanvasRenderingContext2D, x: number, y: number, title: string, desc: string): void {
-  const w = 298;
-  const h = 116;
-  drawWoodPanel(c, x, y, w, h, 16, PALETTE.creamSoft, PALETTE.woodDark);
+function drawRightTooltip(c: CanvasRenderingContext2D, x: number, y: number, w: number, title: string, body: string): void {
+  drawWoodPanel(c, x, y, w, 108, 16, '#fffaf0', PALETTE.woodDark);
   drawText(c, title, x + 16, y + 26, 18, PALETTE.ink, 'left', 900);
-  drawWrappedText(c, desc, x + 16, y + 44, w - 32, 15.5, 21, PALETTE.inkSoft, 'left', 700, 3);
+  drawWrappedText(c, body, x + 16, y + 44, w - 32, 15, 20, PALETTE.inkSoft, 'left', 700, 3);
 }
 
 function drawBottomControls(
@@ -383,66 +464,52 @@ function drawBottomControls(
   const state = engine.state;
   const player = state.sides.player;
   const zh = getLanguage() === 'zh-CN';
+
+  // Golden Hero-Merge Callout Pill floating directly above Summon Bell (EXACT `p19_02`!)
+  const mergeOpts = getHeroMergeOptions(state);
+  if (mergeOpts.length > 0 && !activePropId && !shovelSelected) {
+    const heroName = t(`hero.${mergeOpts[0].heroId}`);
+    const label = zh ? `✦ 可合成【${heroName}】!` : `✦ Ready: ${heroName}!`;
+    const mw = 260, mh = 34;
+    const mx = STAGE.summonX + (STAGE.summonW - mw) / 2;
+    const my = STAGE.summonY - mh - 4;
+    const bounce = Math.sin(elapsed * 5.2) * 2;
+    round(c, mx, my + bounce + 2, mw, mh, 17, 'rgba(54,28,6,0.36)', 'transparent', 0);
+    round(c, mx, my + bounce, mw, mh, 17, '#f8d254', '#7a450b', 2.4);
+    drawText(c, label, mx + mw / 2, my + bounce + mh / 2 + 1, 16.5, '#472408', 'center', 900);
+  }
+
+  // Big Warm Gold Summon Bell Button (`34px` bold fish cost!)
   const cost = getSummonCost(player.summons);
-  const affordable = player.food >= cost;
-  const benchCount = state.units.filter(u => u.side === 'player' && u.location.zone === 'bench').length;
-  const heroOptions = getHeroMergeOptions(state);
-
-  const sx = STAGE.summonX, sy = STAGE.summonY, sw = STAGE.summonW, sh = STAGE.summonH;
-  const pressed = hits.isPressed('battle:summon');
+  const canAfford = player.food >= cost && state.phase === 'playing';
+  const pressed = canAfford && hits.isPressed('battle:summon');
   const dy = pressed ? 3 : 0;
-  hits.add({ id: 'battle:summon', x: sx, y: sy, w: sw, h: sh });
+  const sx = STAGE.summonX, sy = STAGE.summonY, sw = STAGE.summonW, sh = STAGE.summonH;
 
-  // Hero-Merge Golden Ribbon above Summon Bell (exact p19_02 look!)
-  if (heroOptions.length > 0) {
-    const heroName = t(`hero.${heroOptions[0].heroId}`);
-    const ribbonText = zh ? `✦ 可合成【${heroName}】!` : `✦ Merge ${heroName}!`;
-    const glow = 0.85 + Math.sin(elapsed * 5) * 0.15;
-    c.save();
-    c.globalAlpha = glow;
-    round(c, sx - 6, sy - 32, sw + 12, 30, 15, '#f6cf55', '#5a3414', 2.4);
-    drawText(c, ribbonText, sx + sw / 2, sy - 16, 16.5, '#462208', 'center', 900);
-    c.restore();
+  hits.add({ id: 'battle:summon', x: sx, y: sy, w: sw, h: sh, disabled: !canAfford });
+  if (!pressed) {
+    round(c, sx, sy + 5, sw, sh, 20, canAfford ? '#b57416' : '#8c8070', PALETTE.woodDark, 2.5);
+  }
+  round(c, sx, sy + dy, sw, sh, 20, canAfford ? '#f6d572' : '#d2c9b8', PALETTE.woodDark, 3.2);
+  if (canAfford) {
+    round(c, sx + 6, sy + dy + 4, sw - 12, 16, 10, 'rgba(255,255,255,0.32)', 'transparent', 0);
   }
 
-  // Summon Bell Slab (big readable 32px cost!)
-  if (!pressed) round(c, sx, sy + 5, sw, sh, 20, affordable ? '#8f622a' : '#857866', PALETTE.woodDark, 2.2);
-  round(c, sx, sy + dy, sw, sh, 20, affordable ? '#f5db8c' : '#e6d9c2', PALETTE.woodDark, 3.2);
-  round(c, sx + 6, sy + dy + 4, sw - 12, 16, 8, 'rgba(255,255,255,0.28)', 'transparent', 0);
+  drawSpriteContain(c, 'ui_bell_summon', sx + 22, sy + dy + 17, 58, 58, canAfford ? 1 : 0.45);
+  drawSpriteContain(c, 'ui_fish_food', sx + 96, sy + dy + 28, 36, 36, canAfford ? 1 : 0.45);
+  drawText(c, String(cost), sx + 172, sy + dy + 48, 34, canAfford ? '#3f220d' : '#736757', 'center', 900);
+  drawText(c, '↻5', sx + sw - 26, sy + dy + 20, 15.5, '#6b4722', 'center', 800);
 
-  if (drawSpriteContain(c, 'ui_bell_summon', sx + 22, sy + dy + 16, 60, 60)) {
-    drawSpriteContain(c, 'ui_fish_food', sx + 96, sy + dy + 28, 36, 36);
-    drawText(c, String(cost), sx + 168, sy + dy + sh / 2 + 2, 34, affordable ? '#3e2310' : '#c74232', 'center', 900);
-  } else {
-    drawText(c, `🔔 ${cost}`, sx + sw / 2, sy + dy + sh / 2, 30, affordable ? PALETTE.ink : '#c74232', 'center', 900);
-  }
-  if (benchCount > 0) {
-    drawText(c, `↻${benchCount}`, sx + sw - 18, sy + dy + 20, 16, '#6e4926', 'right', 900);
-  }
-
-  // Bottom-Right Cancel / Shovel Recharge Chip (big mobile font!)
-  const cx = 1044, cy = 614, cw = 218, ch = 84;
-  if (activePropId) {
-    drawButton(c, hits, 'battle:cancel-mode', cx, cy, cw, ch, zh ? '✕ 取消道具' : '✕ Cancel Prop', {
+  // Clean targeting Cancel pill ONLY when player actively selected a Prop or Shovel (otherwise right grass stays 100% open like Web!)
+  if (activePropId || shovelSelected) {
+    const label = activePropId
+      ? (zh ? `释放「${PROPS[activePropId]?.name['zh-CN']}」· 点取消` : `Cast ${PROPS[activePropId]?.name.en} · Cancel`)
+      : (zh ? '点绿草坪开垦 · 点取消' : 'Tap grass to dig · Cancel');
+    drawButton(c, hits, 'battle:cancel-mode', 1044, STAGE.summonY + 14, 218, 60, label, {
       ...BTN_STYLES.coral,
-      radius: 18,
-      fontSize: 20,
+      radius: 16,
+      fontSize: 16,
     });
-  } else if (shovelSelected) {
-    drawButton(c, hits, 'battle:cancel-mode', cx, cy, cw, ch, zh ? '✕ 取消铁锹' : '✕ Cancel Dig', {
-      ...BTN_STYLES.coral,
-      radius: 18,
-      fontSize: 20,
-    });
-  } else {
-    const rules = engine.getShovelRules();
-    const remain = Math.max(0, Math.ceil(rules.interval - player.shovelTimer));
-    drawIvorySlab(c, cx, cy, cw, ch, 18, 'rgba(255,252,242,0.92)', 'rgba(244,226,188,0.92)', '#6a4626', 2.4);
-    drawText(c, t(`map.${state.mapId}`), cx + cw / 2, cy + 28, 19, PALETTE.ink, 'center', 900);
-    const shovelInfo = player.shovels >= rules.maxStored
-      ? (zh ? `铁锹已满 ${player.shovels}/${rules.maxStored}` : `Shovels ${player.shovels}/${rules.maxStored}`)
-      : (zh ? `铁锹 ${player.shovels}/${rules.maxStored} · ${remain}s` : `Shovel ${player.shovels}/${rules.maxStored} · ${remain}s`);
-    drawText(c, shovelInfo, cx + cw / 2, cy + 58, 16, PALETTE.inkSoft, 'center', 800);
   }
 }
 
@@ -455,67 +522,50 @@ function drawTutorialOverlay(
   avoidRects: readonly StageRect[],
   elapsed: number,
 ): void {
-  const { source, target, acknowledge } = tutorialTargets(step, state, guideRect);
-  const rects = [target, source].filter((r): r is TutorialRect => !!r);
-  const pulse = 0.65 + Math.sin(elapsed * 5.2) * 0.35;
+  const targets = tutorialTargets(step, state, guideRect);
+  const pulse = 0.55 + 0.45 * Math.sin(elapsed * 5.2);
 
-  for (const r of rects) {
+  if (targets.source) {
+    const r = targets.source;
+    round(c, r.x - 4, r.y - 4, r.w + 8, r.h + 8, 18, `rgba(255,224,102,${(0.16 * pulse).toFixed(2)})`, `rgba(255,216,74,${(0.75 + 0.25 * pulse).toFixed(2)})`, 4);
+  }
+  if (targets.target) {
+    const r = targets.target;
+    round(c, r.x - 3, r.y - 3, r.w + 6, r.h + 6, 16, `rgba(148,224,112,${(0.2 * pulse).toFixed(2)})`, `rgba(255,228,112,${(0.75 + 0.25 * pulse).toFixed(2)})`, 3.5);
+  }
+  if (targets.source && targets.target) {
+    const ax = targets.source.x + targets.source.w / 2;
+    const ay = targets.source.y + targets.source.h / 2;
+    const bx = targets.target.x + targets.target.w / 2;
+    const by = targets.target.y + targets.target.h / 2;
     c.save();
-    c.strokeStyle = `rgba(255,228,112,${pulse.toFixed(2)})`;
-    c.lineWidth = 5;
+    c.strokeStyle = '#ffdf6b';
+    c.lineWidth = 4.5;
+    c.setLineDash([12, 8]);
+    c.lineDashOffset = -elapsed * 32;
     c.beginPath();
-    c.roundRect(r.x - 4, r.y - 4, r.w + 8, r.h + 8, 16);
+    c.moveTo(ax, ay);
+    c.quadraticCurveTo((ax + bx) / 2, Math.min(ay, by) - 24, bx, by);
     c.stroke();
-    c.fillStyle = `rgba(255,232,128,${(0.16 * pulse).toFixed(2)})`;
-    c.fill();
     c.restore();
   }
 
-  if (source && target) {
-    const sx = source.x + source.w / 2, sy = source.y + source.h / 2;
-    const tx = target.x + target.w / 2, ty = target.y + target.h / 2;
-    const cx = sx, cy = ty;
-    c.save();
-    c.strokeStyle = '#ffe078';
-    c.lineWidth = 6;
-    c.setLineDash([14, 9]);
-    c.lineDashOffset = -elapsed * 42;
-    c.beginPath();
-    c.moveTo(sx, sy);
-    c.quadraticCurveTo(cx, cy, tx, ty);
-    c.stroke();
-    c.setLineDash([]);
-    const angle = Math.atan2(ty - cy, tx - cx);
-    c.fillStyle = '#ffe078';
-    c.beginPath();
-    c.moveTo(tx, ty);
-    c.lineTo(tx - 18 * Math.cos(angle - 0.45), ty - 18 * Math.sin(angle - 0.45));
-    c.lineTo(tx - 18 * Math.cos(angle + 0.45), ty - 18 * Math.sin(angle + 0.45));
-    c.closePath();
-    c.fill();
-    c.restore();
-  }
+  const acknowledge = targets.acknowledge || step === 6;
+  const bubbleW = 486;
+  const bubbleH = step === 5 ? 256 : acknowledge ? 228 : 200;
+  const targetRects = [targets.target, targets.source].filter((r): r is TutorialRect => Boolean(r));
+  const b = placeTutorialBubble([...targetRects, ...avoidRects], { w: bubbleW, h: bubbleH });
 
-  if (target && (step === 1 || step === 6)) {
-    const bob = Math.sin(elapsed * 6) * 6;
-    const px = target.x + target.w * 0.65;
-    const py = step === 1 ? target.y - 58 + bob : target.y + target.h + 4 + bob;
-    drawSpriteContain(c, 'ui_tutorial_pointer', px, py, 60, 60);
-  }
-
-  // Larger mobile-readable tutorial bubble!
-  const bubbleSize = { w: 486, h: step === 5 ? 290 : acknowledge ? 268 : 228 };
-  const b = placeTutorialBubble([...rects, ...avoidRects], bubbleSize);
-  drawWoodPanel(c, b.x, b.y, b.w, b.h, 22, '#fff9eb', '#6a4420');
+  drawWoodPanel(c, b.x, b.y, b.w, b.h, 22, '#fffdf6', '#69411b');
   hits.add({ id: 'battle:tutorial-bg', x: b.x, y: b.y, w: b.w, h: b.h });
 
-  drawSpriteContain(c, 'ui_tutorial_capy', b.x + 14, b.y + 12, 66, 66);
-  round(c, b.x + 88, b.y + 14, 96, 26, 13, '#4e9b86', 'transparent', 0);
-  drawText(c, `STEP ${step}/6`, b.x + 136, b.y + 28, 14, '#fffdf5', 'center', 900);
+  drawSpriteContain(c, 'ui_tutorial_capy', b.x + 16, b.y + 12, 64, 64);
+  round(c, b.x + 88, b.y + 14, 96, 26, 13, '#4c9883', 'transparent', 0);
+  drawText(c, `STEP ${step}/6`, b.x + 136, b.y + 28, 13.5, '#fffdf5', 'center', 900);
 
-  drawButton(c, hits, 'battle:tutorial-skip', b.x + b.w - 94, b.y + 12, 80, 34, t('p1.tutorialSkip'), {
+  drawButton(c, hits, 'battle:tutorial-skip', b.x + b.w - 92, b.y + 12, 78, 34, t('p1.tutorialSkip'), {
     ...BTN_STYLES.cream,
-    radius: 11,
+    radius: 12,
     fontSize: 15,
   });
 
@@ -554,8 +604,14 @@ function drawTutorialOverlay(
   }
 }
 
-function drawBattleCurtain(c: CanvasRenderingContext2D, hits: UiHitManager, state: BattleState, remaining: number, vp: ViewportMetrics): void {
-  // Smooth open: stays closed briefly, then parts left & right across full phone/tablet bleed!
+function drawBattleCurtain(
+  c: CanvasRenderingContext2D,
+  hits: UiHitManager,
+  state: BattleState,
+  profile: Profile,
+  remaining: number,
+  vp: ViewportMetrics,
+): void {
   const tNorm = Math.max(0, Math.min(1, remaining / 0.85));
   const open = tNorm < 0.45 ? 1 - tNorm / 0.45 : 0;
   const halfW = Math.max(650, Math.ceil(vp.visible.width / 2) + 20);
@@ -564,7 +620,6 @@ function drawBattleCurtain(c: CanvasRenderingContext2D, hits: UiHitManager, stat
 
   hits.add({ id: 'battle:skip-curtain', x: vp.visible.left, y: vp.visible.top, w: vp.visible.width, h: vp.visible.height });
   c.save();
-  // Left & Right warm wooden shutters spanning the full edge-to-edge screen
   c.fillStyle = '#5d391f';
   c.fillRect(640 - halfW - slide, vp.visible.top - 2, halfW + 2, vp.visible.height + 4);
   c.fillRect(638 + slide, vp.visible.top - 2, halfW + 2, vp.visible.height + 4);
@@ -576,10 +631,52 @@ function drawBattleCurtain(c: CanvasRenderingContext2D, hits: UiHitManager, stat
   c.stroke();
 
   c.globalAlpha = alpha;
-  drawSpriteContain(c, 'ui_battle_clash_crest', 640 - 90, 150, 180, 180);
-  drawSpriteContain(c, 'ui_crossed_blades', 640 - 68, 190, 136, 136);
-  drawText(c, t(`map.${state.mapId}`), 640, 386, 40, '#fff7dc', 'center', 900, INK, 7);
-  drawText(c, `${t(`rank.${state.rankIndex}`)} · ${t('p9.ready')}`, 640, 444, 22, '#ffe099', 'center', 900, INK, 5);
+  drawSpriteContain(c, 'ui_battle_clash_crest', 640 - 90, 128, 180, 180);
+  drawSpriteContain(c, 'ui_crossed_blades', 640 - 66, 166, 132, 132);
+  drawText(c, t(`map.${state.mapId}`), 640, 356, 40, '#fff7dc', 'center', 900, INK, 7);
+  drawText(c, t('p9.ready'), 640, 406, 23, '#ffe099', 'center', 900, INK, 5);
+
+  // Roster preview strip (EXACT `BattlePresentation.ts`!)
+  const heroes = getUnlockedHeroIds(Math.max(profile.stars, profile.highestStars)).slice(0, 6);
+  const spacing = 54;
+  const startX = 640 - ((heroes.length - 1) * spacing) / 2;
+  heroes.forEach((h, i) => {
+    drawSpriteContain(c, h, startX + i * spacing - 22, 434, 44, 44);
+  });
+
+  drawText(c, `${t(`rank.${state.rankIndex}`)} · ${t('p9.skipCurtain')}`, 640, 506, 17, '#f5d99d', 'center', 800, INK, 4);
+  c.restore();
+}
+
+/** Crisp storybook blue wave crest icon for the top-left Wave `1/10` pill (distinct from the brass early-wave horn!). */
+function drawBlueWaveIcon(c: CanvasRenderingContext2D, cx: number, cy: number): void {
+  c.save();
+  c.translate(cx, cy);
+  c.fillStyle = '#3b9be0';
+  c.strokeStyle = '#1f4e78';
+  c.lineWidth = 2.2;
+  c.lineCap = 'round';
+  c.lineJoin = 'round';
+
+  c.beginPath();
+  c.moveTo(-14, 7);
+  c.bezierCurveTo(-13, -8, -2, -14, 7, -10);
+  c.bezierCurveTo(13, -7, 13, 0, 7, 1);
+  c.bezierCurveTo(4, 1, 2, -2, 4, -4);
+  c.bezierCurveTo(0, -4, -3, 1, 2, 4);
+  c.bezierCurveTo(7, 6, 12, 4, 14, 7);
+  c.lineTo(14, 11);
+  c.lineTo(-14, 11);
+  c.closePath();
+  c.fill();
+  c.stroke();
+
+  c.strokeStyle = '#dff4ff';
+  c.lineWidth = 2;
+  c.beginPath();
+  c.moveTo(-8, 1);
+  c.quadraticCurveTo(-4, -8, 5, -7);
+  c.stroke();
   c.restore();
 }
 

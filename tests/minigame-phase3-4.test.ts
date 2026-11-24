@@ -124,23 +124,28 @@ describe('Mini-Game Phases 3 & 4: All 7 Meta Hubs, P19 Onboarding, Online Leader
       h.stepFrame(100);
       expect(h.app.getDebugState().modal).toBe('onboard');
 
-      // Tap "Try it now" button (px=296, pw=688, button at x=544..956, y=535..591)
-      h.tap(750, 563);
+      // Tap "Try it now" green pill button on lightweight courtyard welcome card (x=571, y=586)
+      h.tap(571, 586);
       expect(h.app.getDebugState().modal).toBe('armory');
       // Starter gift granted 2 Fly Swatter fragments and unlocked m01_swatter!
       expect(h.app.getDebugState().profile.unlockedWeapons).toContain('m01_swatter');
       expect(h.subpackages).toContain('meta');
 
-      // Render Armory and equip m01_swatter on Kung-Fu Po (1st hero card at right panel)
+      // Render Armory with live P19 in-dialog guide strip -> tap 1st weapon row (m01_swatter) to open Weapon Detail Sheet
       h.stepFrame(120);
-      h.tap(820, 524);
+      h.tap(500, 295);
+      expect(h.app.getDebugState().armory.detailWeaponId).toBe('m01_swatter');
+
+      // Render Weapon Detail Sheet -> tap 1st horizontal hero card (kungfu_po at x=355, y=575) to equip!
+      h.stepFrame(140);
+      h.tap(355, 575);
       expect(h.app.getDebugState().profile.equippedWeapons.kungfu_po).toBe('m01_swatter');
     } finally {
       h.cleanup();
     }
   });
 
-  it('renders and operates Market (Shop/Gacha/Backpack), Onsen Village (Build/Pet/Harvest), Kitchen, Medallions, Leaderboard & Profile', async () => {
+  it('renders and operates Market (Shop/Backpack/Gacha), Onsen Village (Build/Pet/Harvest), Kitchen (Broths/Detail/Pantry), Medallions, 4-Tab Profile Hub & 6-Tab Compendium', async () => {
     const rich = {
       ...unlockAllProfile(createProfile()),
       endlessMedallions: {
@@ -166,62 +171,70 @@ describe('Mini-Game Phases 3 & 4: All 7 Meta Hubs, P19 Onboarding, Online Leader
     };
     const h = createFullHarness(rich);
     try {
-      // 1. Market: switch to Gacha & spin using free ticket
+      // 1. Market: switch to Tab 3 (Lucky Gacha) & spin center button using free ticket
       h.app.openHub('market');
       h.stepFrame(100);
-      h.tap(554, 138); // Honey-Oak Gacha tab
+      h.tap(920, 131); // Honey-Oak Tab 3: Lucky Gacha ('lottery')
       h.stepFrame(120);
-      expect(h.app.getDebugState().marketTab).toBe('gacha');
-      h.tap(416, 424); // center Spin button
+      expect(h.app.getDebugState().marketTab).toBe('lottery');
+      h.tap(640, 389); // center Spin button in 3x3 machine
       expect(h.app.getDebugState().profile.freeLotteryTickets).toBe(1);
 
-      // 2. Village: collect offline harvest + switch to Build tab + upgrade Bamboo Pool
+      // 2. Village: collect offline harvest + switch to Build tab
       const coinsBeforeHarvest = h.app.getDebugState().profile.coins;
       h.app.openHub('village');
       h.stepFrame(140);
       expect(h.subpackages).toContain('maps');
-      h.tap(1020, 626); // Harvest Collect button
+      h.tap(956, 566); // Harvest Collect golden pill button
       expect(h.app.getDebugState().profile.coins).toBeGreaterThan(coinsBeforeHarvest);
-      h.tap(549, 138); // Honey-Oak Facilities tab
+      h.tap(848, 131); // Honey-Oak Tab 2: Facilities Build
       h.stepFrame(160);
       expect(h.app.getDebugState().villageTab).toBe('build');
 
-      // 3. Kitchen: brew Yuzu Calm Soak Lv.1 & verify auto-equip
+      // 3. Kitchen: brew Yuzu Calm Soak Lv.1 & verify auto-equip + open Dish Detail & Pantry tab
       h.app.openHub('kitchen');
       h.stepFrame(180);
-      h.tap(554, 364); // Brew Lv.1 on 1st card (dish_yuzu_bath)
+      h.tap(949, 344); // Brew button on 1st broth card (dish_yuzu_bath)
       expect(h.app.getDebugState().profile.unlockedBroths).toContain('dish_yuzu_bath');
       expect(h.app.getDebugState().profile.activeBrothId).toBe('dish_yuzu_bath');
+      h.stepFrame(190);
+      h.tap(848, 131); // Tab 2: Ingredient Pantry
+      h.stepFrame(195);
+      expect(h.app.getDebugState().kitchenTab).toBe('pantry');
 
       // 4. Medallions: upgrade Ember Breakthrough to Lv.1
       h.app.openHub('medallions');
       h.stepFrame(200);
-      h.tap(535, 288); // Upgrade button on 1st medallion card
+      h.tap(960, 302); // Upgrade golden pill button on 1st medallion card
       expect(h.app.getDebugState().profile.endlessMedallions.med_breakthrough_atk).toBe(1);
 
-      // 5. Leaderboard: syncs via wx.request, switches to Endless & 54-Rank Ladder, renames via wx.showKeyboard, and shares
+      // 5. Unified 4-Tab Profile Wood Book: Rank Board -> Rename via wx.showKeyboard -> Endless Board -> Keeper Passport -> Settings
       h.app.openHub('leaderboard');
       h.stepFrame(220);
       await vi.waitFor(() => expect(h.app.getDebugState().modal).toBe('leaderboard'));
-      h.tap(945, 51); // Rename button -> triggers wx.showKeyboard -> sets '温泉水豚王'
+      h.tap(468, 339); // Rename pill button -> triggers wx.showKeyboard -> sets '温泉水豚王'
       await vi.waitFor(() => expect(h.app.getDebugState().profile.nickname).toBe('温泉水豚王'));
-      h.tap(756, 138); // Honey-Oak 54-Rank Ladder tab
+      h.tap(535, 131); // Honey-Oak Tab 2: Global Endless Board
       h.stepFrame(240);
-      expect(h.app.getDebugState().leaderboardTab).toBe('ladder');
+      expect(h.app.getDebugState().modal).toBe('endless-board');
+      expect(h.app.getDebugState().leaderboardTab).toBe('endless');
 
-      // 6. Keeper Profile: renders 16-avatar wall and shares card via wx.shareAppMessage
-      h.app.openHub('profile');
+      // 6. Keeper Passport tab (Tab 3) -> shares card via wx.shareAppMessage
+      h.tap(744, 131);
       h.stepFrame(260);
-      h.tap(1042, 242); // Share card button
+      expect(h.app.getDebugState().modal).toBe('profile');
+      h.tap(958, 249); // Share card pill button
       expect(h.shared.length).toBeGreaterThanOrEqual(1);
 
-      // 7. Full 4-tab Compendium renders Enemies & Rules cleanly without throwing
+      // 7. Strict 1:1 6-Tab Compendium -> open Bosses tab + Hero Detail Sheet cleanly without throwing
       h.app.openHub('recipes');
       h.stepFrame(280);
-      h.tap(699, 138); // Honey-Oak Enemies tab
+      h.tap(709, 131); // Tab 4: Bosses
       h.stepFrame(300);
-      h.tap(893, 138); // Honey-Oak Rules tab
-      h.stepFrame(320);
+      expect(h.app.getDebugState().compendium.tab).toBe('bosses');
+      h.tap(500, 220); // Open 1st boss Detail Sheet
+      h.stepFrame(310);
+      expect(h.app.getDebugState().compendium.detailId).toBeTruthy();
 
       // Share payload builder sanity check
       expect(buildSharePayload(h.app.getDebugState().profile, 'endless', 25).title).toContain('25');
