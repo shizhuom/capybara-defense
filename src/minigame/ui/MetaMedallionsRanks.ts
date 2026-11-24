@@ -369,7 +369,7 @@ function drawRankBoardBody(
     if (y + toolH > vy && y < vy + vh) {
       drawPillButton(c, hits, 'lb:rename', vx + 180, y + 38, 92, 30, zh ? '改昵称' : 'Rename', 'green', { fontSize: 13.5 });
       drawPillButton(c, hits, 'lb:share', vx + 280, y + 38, 86, 30, zh ? '分享' : 'Share', 'gold', { fontSize: 13.5 });
-      drawPillButton(c, hits, 'lb:refresh', vx + 4 + rowW - 108, y + 18, 94, 38, lb.loading ? '…' : `↻ ${zh ? '刷新' : 'Sync'}`, 'cream', { fontSize: 15 });
+      drawPillButton(c, hits, 'lb:refresh', vx + 4 + rowW - 108, y + 18, 94, 38, lb.loading ? '…' : (zh ? '刷新' : 'Sync'), 'cream', { fontSize: 15 });
     }
   }
   y += toolH + 12;
@@ -476,7 +476,7 @@ function drawEndlessBoardBody(
 
     if (y + idH > vy && y < vy + vh) {
       drawPillButton(c, hits, 'lb:rename', vx + 4 + rowW - 216, y + 16, 96, 36, zh ? '改昵称' : 'Rename', 'gold', { fontSize: 14.5 });
-      drawPillButton(c, hits, 'lb:refresh', vx + 4 + rowW - 110, y + 16, 96, 36, lb.loading ? '…' : `↻ ${zh ? '刷新' : 'Sync'}`, 'cream', { fontSize: 14.5 });
+      drawPillButton(c, hits, 'lb:refresh', vx + 4 + rowW - 110, y + 16, 96, 36, lb.loading ? '…' : (zh ? '刷新' : 'Sync'), 'cream', { fontSize: 14.5 });
       if (!fromMedallionHub) {
         drawPillButton(c, hits, 'modal:switch:medallions', vx + 4 + rowW - 216, y + 62, 202, 36, t('p17.board.medallions'), 'cream', { fontSize: 14.5, icon: 'ui_endless_crest' });
       }

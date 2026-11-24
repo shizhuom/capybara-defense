@@ -65,13 +65,14 @@ export function drawMenuScreen(
   const hasRank = isRankHubUnlocked(profile);
   const rank = getRank(profile.stars);
 
-  // Adaptive horizontal anchors: standard 16:9 stays 22..1258; wide phones (19.5:9–22:9) gently expand into safe bleed!
+  // Adaptive horizontal anchors: standard 16:9 stays 22..1254; wide phones (19.5:9–22:9) expand into safe bleed
+  // with hard floor/ceiling guards so right-side docks never collide with the center Map Selector on any device.
   const leftAnchor = vp.visible.left < -10
-    ? Math.round(Math.max(vp.safeStage.left + 14, Math.max(-76, vp.visible.left + 26)))
-    : Math.round(Math.max(22, vp.safeStage.left + 12));
+    ? Math.round(Math.min(22, Math.max(vp.safeStage.left + 14, Math.max(-76, vp.visible.left + 26))))
+    : Math.round(Math.min(80, Math.max(22, vp.safeStage.left + 12)));
   const bottomRightAnchor = vp.visible.right > 1290
-    ? Math.round(Math.min(vp.safeStage.right - 14, Math.min(1356, vp.visible.right - 26)))
-    : Math.round(Math.min(1254, vp.safeStage.right - 14));
+    ? Math.round(Math.max(1254, Math.min(vp.safeStage.right - 14, Math.min(1356, vp.visible.right - 26))))
+    : Math.round(Math.max(1180, Math.min(1254, vp.safeStage.right - 14)));
 
   // Subtle top vignette spans full phone/tablet width (zero edge cutoff!)
   const topGrad = c.createLinearGradient(0, vp.visible.top, 0, 108);

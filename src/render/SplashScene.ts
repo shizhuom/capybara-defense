@@ -31,7 +31,7 @@ export function drawSplashScene(c:CanvasRenderingContext2D,assets:AssetRegistry,
   if(mapId==='sakura_onsen'){
    ellipse(c,0,0,3,6,i%2?'#fff0ec':'#ec9fac','transparent',0);
   }else if(mapId==='midnight_kitchen'){
-   const glow=c.createRadialGradient(0,0,0,0,0,9);glow.addColorStop(0,'#ffcd61');glow.addColorStop(1,'#ffcd6100');
+   const glow=c.createRadialGradient(0,0,0,0,0,9);glow.addColorStop(0,'#ffcd61');glow.addColorStop(1,'rgba(255,205,97,0)');
    c.fillStyle=glow;c.fillRect(-9,-9,18,18);ellipse(c,0,0,1.8,1.8,'#ffdc88','transparent',0);
   }else if(mapId==='cat_tower_maze'){
    if(i%2)star(c,0,0,5,'#fff1c9',0);

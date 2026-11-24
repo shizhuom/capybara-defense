@@ -261,22 +261,58 @@ export function createMiniGameAdapter(api: MiniGameGlobalApi, kind: Exclude<Plat
     api.onShareAppMessage?.(() => ({ title: '卡皮巴拉别慌！一起来泡温泉守卫浴池 🍊' }));
   } catch { /* optional */ }
 
+  function sanitizeSafeArea(
+    w: number,
+    h: number,
+    sa: { top: number; bottom: number; left: number; right: number } | undefined,
+  ): { top: number; bottom: number; left: number; right: number } {
+    const wide = w > h && w / h >= 1.85;
+    const fallback = wide
+      ? { top: 0, bottom: 21, left: Math.round(Math.min(54, w * 0.055)), right: Math.round(Math.min(54, w * 0.055)) }
+      : { top: 0, bottom: 0, left: 0, right: 0 };
+    if (!sa) return { top: 0, bottom: 0, left: 0, right: 0 };
+    const { top, bottom, left, right } = sa;
+    if (![top, bottom, left, right].every(Number.isFinite)) return fallback;
+    // Detect portrait-stale safeArea reported by iOS WeChat on landscape startup (e.g. right=393, bottom=818 on 852×393).
+    if (
+      right > w + 8
+      || bottom > h + 8
+      || right - left < w * 0.65
+      || bottom - top < h * 0.65
+      || left > w * 0.16
+      || w - right > w * 0.16
+      || top > h * 0.16
+      || h - bottom > h * 0.16
+    ) {
+      return fallback;
+    }
+    return {
+      top: Math.max(0, top),
+      bottom: Math.max(0, h - bottom),
+      left: Math.max(0, left),
+      right: Math.max(0, w - right),
+    };
+  }
+
   function measure(): ViewportMetrics {
     const info = api.getWindowInfo?.() ?? api.getSystemInfoSync();
     const w = info.windowWidth || 1280;
     const h = info.windowHeight || 720;
     const dpr = info.pixelRatio || 1;
-    const sa = info.safeArea;
-    const safe = sa ? {
-      top: Math.max(0, sa.top),
-      bottom: Math.max(0, h - sa.bottom),
-      left: Math.max(0, sa.left),
-      right: Math.max(0, w - sa.right),
-    } : { top: 0, bottom: 0, left: 0, right: 0 };
+    const safe = sanitizeSafeArea(w, h, info.safeArea);
     let menuBtn: { left: number; right?: number; top?: number; bottom?: number; width?: number; height?: number } | null = null;
     try {
       const rect = api.getMenuButtonBoundingClientRect?.();
-      if (rect && Number.isFinite(rect.left) && rect.left > 0) menuBtn = rect;
+      if (
+        rect
+        && Number.isFinite(rect.left)
+        && rect.left >= w * 0.72
+        && rect.left < w - 36
+        && (!Number.isFinite(rect.right) || (rect.right >= w * 0.80 && rect.right <= w + 12))
+        && (!Number.isFinite(rect.width) || (rect.width >= 40 && rect.width <= 180))
+      ) {
+        menuBtn = rect;
+      }
     } catch { /* optional on older runtimes */ }
     return computeViewport(w, h, dpr, safe, true, menuBtn);
   }
@@ -322,7 +358,10 @@ export function createMiniGameAdapter(api: MiniGameGlobalApi, kind: Exclude<Plat
       };
       api.onWindowResize?.(handler);
       api.onDeviceOrientationChange?.(handler);
+      // iOS WeChat sometimes finishes rotating window/capsule metrics 150-800ms after landscape startup.
+      const timers = [setTimeout(handler, 250), setTimeout(handler, 900)];
       const off = () => {
+        timers.forEach(clearTimeout);
         api.offWindowResize?.(handler);
         api.offDeviceOrientationChange?.(handler);
       };

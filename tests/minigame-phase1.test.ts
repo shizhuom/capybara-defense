@@ -2,6 +2,7 @@ import { describe, expect, it, vi } from 'vitest';
 import { computeViewport, screenToStage } from '../src/platform/viewport';
 import { createMiniGameAdapter, type MiniGameGlobalApi } from '../src/platform/minigameAdapter';
 import { AssetRegistry, type SpriteImage } from '../src/render/AssetRegistry';
+import { ellipse, polygon, round } from '../src/render/StickerArt';
 import { StickerRenderer } from '../src/render/StickerRenderer';
 import { STAGE } from '../src/config/maps';
 import { classifySprite, spriteRelativePath } from '../src/minigame/assetPack';
@@ -202,5 +203,63 @@ describe('Mini-Game Phase 1: Platform layer, Viewport safe-area, Assets & Subpac
     expect(counts.maps).toBeGreaterThanOrEqual(10);
     expect(counts.meta).toBeGreaterThan(100);
     expect(counts.omitted).toBe(1); // unused legacy menu_banner
+  });
+
+  it('rejects portrait-stale iOS WeChat safeArea & menuButton rects on landscape phones so HUD stays at screen edges', () => {
+    const { api } = mockMiniApi();
+    // Simulate real-iPhone WeChat landscape startup bug where safeArea & capsule report portrait coords (width=393)
+    api.getWindowInfo = () => ({
+      windowWidth: 852,
+      windowHeight: 393,
+      pixelRatio: 3,
+      safeArea: { top: 59, bottom: 818, left: 0, right: 393 },
+    });
+    api.getMenuButtonBoundingClientRect = () => ({
+      left: 299,
+      right: 386,
+      top: 62,
+      bottom: 94,
+      width: 87,
+      height: 32,
+    });
+    const platform = createMiniGameAdapter(api, 'wx');
+    const vp = platform.viewport();
+    expect(vp.safeStage.right).toBeGreaterThan(1250);
+    expect(vp.safeStage.left).toBeLessThan(0);
+    expect(vp.capsuleStageLeft).toBeUndefined();
+
+    // Direct computeViewport guard against bogus insets & portrait capsule
+    const guarded = computeViewport(852, 393, 3, { top: 59, bottom: 0, left: 0, right: 459 }, true, { left: 299, right: 386, width: 87 });
+    expect(guarded.safeStage.right).toBeGreaterThan(1250);
+    expect(guarded.capsuleStageLeft).toBeUndefined();
+  });
+
+  it('skips ctx.fill() on transparent shapes so iOS WeChat shadowBlur never paints solid circles over mergeable units', () => {
+    const fill = vi.fn();
+    const stroke = vi.fn();
+    const ctx = {
+      beginPath: vi.fn(),
+      ellipse: vi.fn(),
+      roundRect: vi.fn(),
+      moveTo: vi.fn(),
+      lineTo: vi.fn(),
+      closePath: vi.fn(),
+      fill,
+      stroke,
+      fillStyle: '',
+      strokeStyle: '',
+      lineWidth: 0,
+      lineJoin: 'round',
+    } as unknown as CanvasRenderingContext2D;
+
+    ellipse(ctx, 100, 100, 48, 44, 'transparent', '#1db964', 3);
+    round(ctx, 10, 10, 80, 80, 14, 'rgba(255,255,255,0)', '#efc45d', 2);
+    polygon(ctx, [[0, 0], [10, 0], [5, 10]], 'none', '#514739', 2);
+    expect(fill).not.toHaveBeenCalled();
+    expect(stroke).toHaveBeenCalledTimes(3);
+
+    ellipse(ctx, 50, 50, 10, 10, '#f4ca69', 'transparent', 2);
+    expect(fill).toHaveBeenCalledTimes(1);
+    expect(stroke).toHaveBeenCalledTimes(3);
   });
 });

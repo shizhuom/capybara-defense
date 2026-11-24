@@ -349,16 +349,17 @@ export class MinigameApp {
   }
 
   private topRightEdge(vp: ViewportMetrics): number {
+    const minRight = Math.round(Math.max(1010, vp.visible.right - 260));
     const baseRight = vp.visible.right > 1290
       ? Math.min(vp.safeStage.right - 14, Math.min(1356, vp.visible.right - 26))
       : Math.min(1262, vp.safeStage.right - 14);
     if (vp.capsuleStageLeft !== undefined) {
-      return Math.round(Math.min(baseRight, vp.capsuleStageLeft - 14));
+      return Math.round(Math.max(minRight, Math.min(baseRight, vp.capsuleStageLeft - 14)));
     }
-    if (this.platform.kind === 'web') return Math.round(baseRight);
+    if (this.platform.kind === 'web') return Math.round(Math.max(minRight, baseRight));
     const scale = Math.max(0.25, vp.stageCssWidth / STAGE.width);
     const fallbackCapsuleLeft = vp.visible.right - 108 / scale;
-    return Math.round(Math.min(baseRight, fallbackCapsuleLeft));
+    return Math.round(Math.max(minRight, Math.min(baseRight, fallbackCapsuleLeft)));
   }
 
   private showToast(text: string, tone: 'info' | 'good' | 'warn' = 'info', duration = 2.4): void {

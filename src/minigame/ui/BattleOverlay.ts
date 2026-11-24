@@ -498,7 +498,7 @@ function drawBottomControls(
   drawSpriteContain(c, 'ui_bell_summon', sx + 22, sy + dy + 17, 58, 58, canAfford ? 1 : 0.45);
   drawSpriteContain(c, 'ui_fish_food', sx + 96, sy + dy + 28, 36, 36, canAfford ? 1 : 0.45);
   drawText(c, String(cost), sx + 172, sy + dy + 48, 34, canAfford ? '#3f220d' : '#736757', 'center', 900);
-  drawText(c, '↻5', sx + sw - 26, sy + dy + 20, 15.5, '#6b4722', 'center', 800);
+  drawText(c, '×5', sx + sw - 26, sy + dy + 20, 15.5, '#6b4722', 'center', 800);
 
   // Clean targeting Cancel pill ONLY when player actively selected a Prop or Shovel (otherwise right grass stays 100% open like Web!)
   if (activePropId || shovelSelected) {

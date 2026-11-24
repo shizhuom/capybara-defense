@@ -8,18 +8,26 @@ export function line(c: C, points: number[][], color = INK, width = 2.8): void {
   points.forEach(([x,y], i) => i ? c.lineTo(x,y) : c.moveTo(x,y));
   c.strokeStyle = color; c.lineWidth = width; c.lineJoin = 'round'; c.lineCap = 'round'; c.stroke();
 }
+const isTransparentColor = (color: string): boolean => {
+  if (!color) return true;
+  const trimmed = color.trim().toLowerCase();
+  return trimmed === 'transparent' || trimmed === 'none' || /^rgba\([^)]*,\s*0(?:\.0+)?\s*\)$/.test(trimmed);
+};
+
 export function ellipse(c: C, x: number, y: number, rx: number, ry: number, fill: string, stroke = INK, width = 2.6): void {
   c.beginPath(); c.ellipse(x,y,rx,ry,0,0,Math.PI*2);
-  c.fillStyle = fill; c.fill();
-  if (width > 0) { c.strokeStyle=stroke; c.lineWidth=width; c.stroke(); }
+  if (!isTransparentColor(fill)) { c.fillStyle = fill; c.fill(); }
+  if (width > 0 && !isTransparentColor(stroke)) { c.strokeStyle=stroke; c.lineWidth=width; c.stroke(); }
 }
 export function round(c: C, x: number, y: number, w: number, h: number, r: number, fill: string, stroke = INK, width = 2.6): void {
-  c.beginPath(); c.roundRect(x,y,w,h,r); c.fillStyle=fill; c.fill();
-  if (width > 0) { c.strokeStyle=stroke; c.lineWidth=width; c.stroke(); }
+  c.beginPath(); c.roundRect(x,y,w,h,r);
+  if (!isTransparentColor(fill)) { c.fillStyle=fill; c.fill(); }
+  if (width > 0 && !isTransparentColor(stroke)) { c.strokeStyle=stroke; c.lineWidth=width; c.stroke(); }
 }
 export function polygon(c: C, points: number[][], fill: string, stroke = INK, width = 2.6): void {
   c.beginPath(); points.forEach(([x,y],i) => i ? c.lineTo(x,y) : c.moveTo(x,y)); c.closePath();
-  c.fillStyle=fill; c.fill(); if (width > 0) { c.strokeStyle=stroke; c.lineWidth=width; c.lineJoin='round'; c.stroke(); }
+  if (!isTransparentColor(fill)) { c.fillStyle=fill; c.fill(); }
+  if (width > 0 && !isTransparentColor(stroke)) { c.strokeStyle=stroke; c.lineWidth=width; c.lineJoin='round'; c.stroke(); }
 }
 export function star(c: C, x: number, y: number, r: number, fill = '#f4ca69', width = 1.7): void {
   const points = Array.from({length:10},(_,i) => {

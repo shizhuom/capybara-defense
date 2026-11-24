@@ -31,11 +31,21 @@ export function computeViewport(
   const screenWidth = Math.max(1, Number.isFinite(rawWidth) ? rawWidth : STAGE.width);
   const screenHeight = Math.max(1, Number.isFinite(rawHeight) ? rawHeight : STAGE.height);
   const dpr = clamp(Number.isFinite(rawDpr) ? rawDpr : 1, 1, 2.5);
+  const rawTop = Math.max(0, Number.isFinite(safeArea?.top) ? safeArea!.top! : 0);
+  const rawBottom = Math.max(0, Number.isFinite(safeArea?.bottom) ? safeArea!.bottom! : 0);
+  const rawLeft = Math.max(0, Number.isFinite(safeArea?.left) ? safeArea!.left! : 0);
+  const rawRight = Math.max(0, Number.isFinite(safeArea?.right) ? safeArea!.right! : 0);
+  // Guard against stale portrait safe-area insets on landscape mobile runtimes (e.g. iOS WeChat returning right=459 on 852px screen).
+  const maxXInset = Math.min(96, screenWidth * 0.16);
+  const maxYInset = Math.min(64, screenHeight * 0.16);
+  const bogusHorizontal = rawLeft > maxXInset || rawRight > maxXInset || rawLeft + rawRight > screenWidth * 0.30;
+  const bogusVertical = rawTop > maxYInset || rawBottom > maxYInset || rawTop + rawBottom > screenHeight * 0.30;
+  const wideNotchFallback = screenWidth / screenHeight >= 1.85 ? Math.round(Math.min(54, screenWidth * 0.055)) : 0;
   const safe: SafeAreaInsets = {
-    top: Math.max(0, safeArea?.top ?? 0),
-    bottom: Math.max(0, safeArea?.bottom ?? 0),
-    left: Math.max(0, safeArea?.left ?? 0),
-    right: Math.max(0, safeArea?.right ?? 0),
+    top: bogusVertical ? 0 : rawTop,
+    bottom: bogusVertical ? (screenWidth / screenHeight >= 1.85 ? 21 : 0) : rawBottom,
+    left: bogusHorizontal ? wideNotchFallback : rawLeft,
+    right: bogusHorizontal ? wideNotchFallback : rawRight,
   };
 
   // Scale against full physical screen so wide phones (19.5:9/20:9/21:9) never get shrunk by black margins.
@@ -71,10 +81,19 @@ export function computeViewport(
     height: safeBottom - safeTop,
   };
 
-  const capsuleStageLeft =
-    menuButton && Number.isFinite(menuButton.left) && menuButton.left > 0
-      ? (menuButton.left - stageCssX) / cssScale
-      : undefined;
+  // Accept floating capsule rect ONLY when it lies genuinely near the top-right corner of the current orientation
+  // (rejects stale portrait coordinates like left=299/right=386 on an 852px landscape iPhone, or wide transient banners).
+  const validMenuButton = Boolean(
+    menuButton
+      && Number.isFinite(menuButton.left)
+      && menuButton.left >= screenWidth * 0.72
+      && menuButton.left < screenWidth - 36
+      && (menuButton.right === undefined || !Number.isFinite(menuButton.right) || (menuButton.right >= screenWidth * 0.80 && menuButton.right <= screenWidth + 12))
+      && (menuButton.width === undefined || !Number.isFinite(menuButton.width) || (menuButton.width >= 40 && menuButton.width <= 180)),
+  );
+  const capsuleStageLeft = validMenuButton
+    ? (menuButton!.left - stageCssX) / cssScale
+    : undefined;
 
   return {
     screenWidth,

@@ -429,7 +429,7 @@ export function drawMarketModal(
     drawText(c, whisper, body.x + 52, hy + 24, 15.5, PALETTE.ink, 'left', 800);
 
     const canRefresh = !allMaxed && profile.coins >= META_PRICES.shopRefresh;
-    drawPillButton(c, hits, 'market:refresh', body.x + whisperW + 10, hy + 2, refreshW, 42, `↻ ${t('p6.refresh')} · ${META_PRICES.shopRefresh}`, canRefresh ? 'gold' : 'muted', {
+    drawPillButton(c, hits, 'market:refresh', body.x + whisperW + 10, hy + 2, refreshW, 42, `${t('p6.refresh')} · ${META_PRICES.shopRefresh}`, canRefresh ? 'gold' : 'muted', {
       fontSize: 15.5,
       icon: 'ui_coin_gold',
       disabled: !canRefresh,
