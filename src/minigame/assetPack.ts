@@ -2,7 +2,8 @@ export type SpritePackage = 'main' | 'maps' | 'meta';
 
 export interface SpritePackRule {
   pkg: SpritePackage;
-  format: 'jpg' | 'webp';
+  /** iOS WeChat Mini Game (`wx.createImage`) natively supports `.jpg` and `.png` (NOT `.webp`). */
+  format: 'jpg' | 'png';
   maxDim: number;
   quality: number;
   omit?: boolean;
@@ -56,32 +57,32 @@ export function classifySprite(id: string): SpritePackRule {
     return { pkg: 'main', format: 'jpg', maxDim: 1280, quality: 0.78 };
   }
   if (OPAQUE_MAP_BGS.has(id)) {
-    return { pkg: 'maps', format: 'jpg', maxDim: 1280, quality: 0.76 };
+    return { pkg: 'maps', format: 'jpg', maxDim: 1280, quality: 0.75 };
   }
   if (id === 'title_logo_zh' || id === 'title_logo_en') {
-    return { pkg: 'main', format: 'webp', maxDim: 720, quality: 0.84 };
+    return { pkg: 'main', format: 'png', maxDim: 720, quality: 1 };
   }
   if (id === 'ui_victory_shield_wings' || id === 'ui_defeat_shield_wings') {
-    return { pkg: 'main', format: 'webp', maxDim: 480, quality: 0.82 };
+    return { pkg: 'main', format: 'png', maxDim: 480, quality: 1 };
   }
   if (id === 'ui_btn_start_zh' || id === 'ui_btn_start_en') {
-    return { pkg: 'main', format: 'webp', maxDim: 440, quality: 0.84 };
+    return { pkg: 'main', format: 'png', maxDim: 440, quality: 1 };
   }
   if (id.startsWith('tub_rim_')) {
-    return { pkg: id === 'tub_rim_sunny_backyard' ? 'main' : 'maps', format: 'webp', maxDim: 400, quality: 0.8 };
+    return { pkg: id === 'tub_rim_sunny_backyard' ? 'main' : 'maps', format: 'png', maxDim: 380, quality: 1 };
   }
   if (id.startsWith('fac_')) {
-    return { pkg: 'maps', format: 'webp', maxDim: 256, quality: 0.8 };
+    return { pkg: 'maps', format: 'png', maxDim: 240, quality: 1 };
   }
   if (id.startsWith('vfx_') || id.startsWith('weapon_basic_')) {
-    return { pkg: 'main', format: 'webp', maxDim: 160, quality: 0.8 };
+    return { pkg: 'main', format: 'png', maxDim: 152, quality: 1 };
   }
   if (MAIN_CORE_IDS.has(id)) {
     const isIcon = id.startsWith('ui_') || id === 'orange' || id === 'logo_capy' || id === 'tile_open' || id === 'tile_broken';
-    return { pkg: 'main', format: 'webp', maxDim: isIcon ? 160 : 216, quality: 0.8 };
+    return { pkg: 'main', format: 'png', maxDim: isIcon ? 156 : 216, quality: 1 };
   }
   const isLargeMeta = id.startsWith('dish_') || id.startsWith('npc_') || id.endsWith('_awakened') || id.endsWith('_walk2') || id.startsWith('box_kraken') || id.startsWith('dr_clippers') || id.startsWith('buff_roo') || id.startsWith('hornet_queen') || id.startsWith('screaming_marmot') || id.startsWith('trash_coon') || id.startsWith('dj_rat_king');
-  return { pkg: 'meta', format: 'webp', maxDim: isLargeMeta ? 208 : 152, quality: 0.78 };
+  return { pkg: 'meta', format: 'png', maxDim: isLargeMeta ? 196 : 144, quality: 1 };
 }
 
 /**
