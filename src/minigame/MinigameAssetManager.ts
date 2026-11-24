@@ -44,27 +44,23 @@ export class MinigameAssetManager {
     return count;
   }
 
-  /** Loads a WeChat/Bilibili subpackage (`maps` or `meta`) and decodes its sprites (or a targeted subset). */
+  /** Lazily decodes a tiered sprite group (`maps` or `meta`) on demand from `assets/sprites/`. */
   async ensureSubpackage(name: SubpackageName, subset?: readonly string[]): Promise<boolean> {
-    let subPromise = this.packagePromises.get(name);
-    if (!subPromise) {
-      subPromise = this.platform.loadSubpackage(name);
-      this.packagePromises.set(name, subPromise);
-    }
-    const ok = await subPromise;
-    if (!ok) {
-      this.packagePromises.delete(name);
-      return false;
-    }
+    if (!subset && this.loadedPackages.has(name)) return true;
     const ids = subset
       ? subset.filter(id => !classifySprite(id).omit)
       : ALL_IDS.filter(id => {
           const rule = classifySprite(id);
           return !rule.omit && rule.pkg === name;
         });
-    await assets.loadBatch(ids);
-    if (!subset) this.loadedPackages.add(name);
-    return true;
+    let work = !subset ? this.packagePromises.get(name) : undefined;
+    if (!work) {
+      work = assets.loadBatch(ids).then(() => true);
+      if (!subset) this.packagePromises.set(name, work);
+    }
+    const ok = await work;
+    if (ok && !subset) this.loadedPackages.add(name);
+    return ok;
   }
 
   /** Ensures a battle map's background and tub rim are loaded before starting combat on that map. */

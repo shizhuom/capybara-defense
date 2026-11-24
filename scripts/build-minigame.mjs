@@ -28,14 +28,12 @@ execSync('npx vite build --config vite.minigame.config.ts', {
 
 const assetsSummary = await buildMinigameAssets(outDir);
 
+// All 289 compressed sprites + game.js fit cleanly under WeChat's 4 MB single-package limit,
+// eliminating subpackages so WeChat DevTools Remote Debugging never trips on `/__debug__/__jscore-debug__/subpackages/...`.
 const gameJson = {
   deviceOrientation: 'landscape',
   showStatusBar: false,
   networkTimeout: { request: 10000, downloadFile: 15000 },
-  subpackages: [
-    { name: 'maps', root: 'subpackages/maps' },
-    { name: 'meta', root: 'subpackages/meta' },
-  ],
 };
 writeFileSync(join(outDir, 'game.json'), `${JSON.stringify(gameJson, null, 2)}\n`);
 
@@ -54,8 +52,9 @@ const projectConfig = {
     es6: false,
     enhance: false,
     postcss: false,
-    // Vite already transpiles (ES2017) & minifies game.js; keep DevTools UglifyJS off so Preview/Upload never re-parses it.
+    // Vite already transpiles (ES2017) & minifies game.js; keep DevTools UglifyJS & SourceMap off for Preview / Remote Debug.
     minified: false,
+    uploadWithSourceMap: false,
     newFeature: true,
   },
   compileType: 'game',
@@ -66,18 +65,18 @@ const projectConfig = {
 writeFileSync(projectConfigPath, `${JSON.stringify(projectConfig, null, 2)}\n`);
 
 const jsBytes = statSync(join(outDir, 'game.js')).size;
-const mainTotalBytes = jsBytes + assetsSummary.sizes.main;
-const totalBytes = mainTotalBytes + assetsSummary.sizes.maps + assetsSummary.sizes.meta;
+const spritesTotalBytes = assetsSummary.sizes.main + assetsSummary.sizes.maps + assetsSummary.sizes.meta;
+const totalBytes = jsBytes + spritesTotalBytes;
 const mb = n => `${(n / (1024 * 1024)).toFixed(2)} MB`;
 
-console.log(`\n[${target.toUpperCase()}] Built ${outDirName}/ successfully:`);
+console.log(`\n[${target.toUpperCase()}] Built ${outDirName}/ successfully (single package, zero subpackages):`);
 console.log(`  game.js       : ${(jsBytes / 1024).toFixed(1)} KB`);
-console.log(`  main package  : ${mb(mainTotalBytes)} (limit: 4.00 MB)`);
-console.log(`  subpkg maps   : ${mb(assetsSummary.sizes.maps)}`);
-console.log(`  subpkg meta   : ${mb(assetsSummary.sizes.meta)}`);
-console.log(`  grand total   : ${mb(totalBytes)} (${assetsSummary.count} sprites)`);
+console.log(`  core sprites  : ${mb(assetsSummary.sizes.main)}`);
+console.log(`  map sprites   : ${mb(assetsSummary.sizes.maps)}`);
+console.log(`  meta sprites  : ${mb(assetsSummary.sizes.meta)}`);
+console.log(`  total package : ${mb(totalBytes)} / 4.00 MB (${assetsSummary.count} sprites)`);
 
-if (mainTotalBytes >= 4 * 1024 * 1024) {
-  console.error(`ERROR: main package (${mb(mainTotalBytes)}) exceeds the 4 MB mini-game limit!`);
+if (totalBytes >= 4 * 1024 * 1024) {
+  console.error(`ERROR: total package (${mb(totalBytes)}) exceeds the 4 MB single-package mini-game limit!`);
   process.exit(1);
 }

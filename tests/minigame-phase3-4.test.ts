@@ -129,7 +129,6 @@ describe('Mini-Game Phases 3 & 4: All 7 Meta Hubs, P19 Onboarding, Online Leader
       expect(h.app.getDebugState().modal).toBe('armory');
       // Starter gift granted 2 Fly Swatter fragments and unlocked m01_swatter!
       expect(h.app.getDebugState().profile.unlockedWeapons).toContain('m01_swatter');
-      expect(h.subpackages).toContain('meta');
 
       // Render Armory with live P19 in-dialog guide strip -> tap 1st weapon row (m01_swatter) to open Weapon Detail Sheet
       h.stepFrame(120);
@@ -184,7 +183,6 @@ describe('Mini-Game Phases 3 & 4: All 7 Meta Hubs, P19 Onboarding, Online Leader
       const coinsBeforeHarvest = h.app.getDebugState().profile.coins;
       h.app.openHub('village');
       h.stepFrame(140);
-      expect(h.subpackages).toContain('maps');
       h.tap(956, 566); // Harvest Collect golden pill button
       expect(h.app.getDebugState().profile.coins).toBeGreaterThan(coinsBeforeHarvest);
       h.tap(848, 131); // Honey-Oak Tab 2: Facilities Build

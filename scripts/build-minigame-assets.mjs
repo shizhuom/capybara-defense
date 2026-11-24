@@ -46,20 +46,20 @@ const MAIN_CORE_IDS = new Set([
 
 function classifySprite(id) {
   if (id === 'menu_banner') return { pkg: 'meta', format: 'jpg', maxDim: 640, quality: 0.78, omit: true };
-  if (OPAQUE_MAIN_BGS.has(id)) return { pkg: 'main', format: 'jpg', maxDim: 1280, quality: 0.82 };
-  if (OPAQUE_MAP_BGS.has(id)) return { pkg: 'maps', format: 'jpg', maxDim: 1280, quality: 0.82 };
-  if (id === 'title_logo_zh' || id === 'title_logo_en') return { pkg: 'main', format: 'webp', maxDim: 720, quality: 0.85 };
-  if (id === 'ui_victory_shield_wings' || id === 'ui_defeat_shield_wings') return { pkg: 'main', format: 'webp', maxDim: 512, quality: 0.85 };
-  if (id === 'ui_btn_start_zh' || id === 'ui_btn_start_en') return { pkg: 'main', format: 'webp', maxDim: 440, quality: 0.85 };
-  if (id.startsWith('tub_rim_')) return { pkg: id === 'tub_rim_sunny_backyard' ? 'main' : 'maps', format: 'webp', maxDim: 420, quality: 0.84 };
-  if (id.startsWith('fac_')) return { pkg: 'maps', format: 'webp', maxDim: 280, quality: 0.84 };
-  if (id.startsWith('vfx_') || id.startsWith('weapon_basic_')) return { pkg: 'main', format: 'webp', maxDim: 160, quality: 0.82 };
+  if (OPAQUE_MAIN_BGS.has(id)) return { pkg: 'main', format: 'jpg', maxDim: 1280, quality: 0.78 };
+  if (OPAQUE_MAP_BGS.has(id)) return { pkg: 'maps', format: 'jpg', maxDim: 1280, quality: 0.76 };
+  if (id === 'title_logo_zh' || id === 'title_logo_en') return { pkg: 'main', format: 'webp', maxDim: 720, quality: 0.84 };
+  if (id === 'ui_victory_shield_wings' || id === 'ui_defeat_shield_wings') return { pkg: 'main', format: 'webp', maxDim: 480, quality: 0.82 };
+  if (id === 'ui_btn_start_zh' || id === 'ui_btn_start_en') return { pkg: 'main', format: 'webp', maxDim: 440, quality: 0.84 };
+  if (id.startsWith('tub_rim_')) return { pkg: id === 'tub_rim_sunny_backyard' ? 'main' : 'maps', format: 'webp', maxDim: 400, quality: 0.8 };
+  if (id.startsWith('fac_')) return { pkg: 'maps', format: 'webp', maxDim: 256, quality: 0.8 };
+  if (id.startsWith('vfx_') || id.startsWith('weapon_basic_')) return { pkg: 'main', format: 'webp', maxDim: 160, quality: 0.8 };
   if (MAIN_CORE_IDS.has(id)) {
     const isIcon = id.startsWith('ui_') || id === 'orange' || id === 'logo_capy' || id === 'tile_open' || id === 'tile_broken';
-    return { pkg: 'main', format: 'webp', maxDim: isIcon ? 160 : 224, quality: 0.82 };
+    return { pkg: 'main', format: 'webp', maxDim: isIcon ? 160 : 216, quality: 0.8 };
   }
   const isLargeMeta = id.startsWith('dish_') || id.startsWith('npc_') || id.endsWith('_awakened') || id.endsWith('_walk2') || id.startsWith('box_kraken') || id.startsWith('dr_clippers') || id.startsWith('buff_roo') || id.startsWith('hornet_queen') || id.startsWith('screaming_marmot') || id.startsWith('trash_coon') || id.startsWith('dj_rat_king');
-  return { pkg: 'meta', format: 'webp', maxDim: isLargeMeta ? 224 : 160, quality: 0.8 };
+  return { pkg: 'meta', format: 'webp', maxDim: isLargeMeta ? 208 : 152, quality: 0.78 };
 }
 
 function findBrowserExecutable() {
@@ -79,8 +79,6 @@ export async function buildMinigameAssets(outDir) {
   const manifest = JSON.parse(readFileSync(join(SPRITES_DIR, 'manifest.json'), 'utf8'));
   mkdirSync(CACHE_DIR, { recursive: true });
   mkdirSync(join(outDir, 'assets', 'sprites'), { recursive: true });
-  mkdirSync(join(outDir, 'subpackages', 'maps', 'assets'), { recursive: true });
-  mkdirSync(join(outDir, 'subpackages', 'meta', 'assets'), { recursive: true });
 
   const work = [];
   const entries = [];
@@ -92,7 +90,7 @@ export async function buildMinigameAssets(outDir) {
     const st = statSync(srcPath);
     const cacheKey = createHash('sha1').update(`${id}:${st.size}:${Math.trunc(st.mtimeMs)}:${rule.format}:${rule.maxDim}:${rule.quality}`).digest('hex').slice(0, 12);
     const cachedFile = join(CACHE_DIR, `${id}.${cacheKey}.${rule.format}`);
-    const destRel = rule.pkg === 'main' ? `assets/sprites/${id}.${rule.format}` : `subpackages/${rule.pkg}/assets/${id}.${rule.format}`;
+    const destRel = `assets/sprites/${id}.${rule.format}`;
     const destPath = join(outDir, destRel);
     entries.push({ id, rule, srcPath, cachedFile, destRel, destPath });
     if (!existsSync(cachedFile)) work.push({ id, rule, srcPath, cachedFile });
@@ -154,10 +152,6 @@ export async function buildMinigameAssets(outDir) {
     copyFileSync(item.cachedFile, item.destPath);
     sizes[item.rule.pkg] += statSync(item.destPath).size;
   }
-
-  // Minimal subpackage entry files required by WeChat/Bilibili subpackage loader.
-  writeFileSync(join(outDir, 'subpackages', 'maps', 'game.js'), 'module.exports = { ready: true };\n');
-  writeFileSync(join(outDir, 'subpackages', 'meta', 'game.js'), 'module.exports = { ready: true };\n');
 
   return { count: entries.length, compressedNow: work.length, sizes };
 }

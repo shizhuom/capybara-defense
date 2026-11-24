@@ -196,8 +196,7 @@ describe('Mini-Game Phase 1: Platform layer, Viewport safe-area, Assets & Subpac
       if (rule.omit) { counts.omitted++; continue; }
       counts[rule.pkg]++;
       const rel = spriteRelativePath(id);
-      if (rule.pkg === 'main') expect(rel).toMatch(/^assets\/sprites\/.+\.(jpg|webp)$/);
-      else expect(rel).toMatch(new RegExp(`^subpackages/${rule.pkg}/assets/.+\\.(jpg|webp)$`));
+      expect(rel).toMatch(/^assets\/sprites\/.+\.(jpg|webp)$/);
     }
     expect(counts.main).toBeGreaterThan(60);
     expect(counts.maps).toBeGreaterThanOrEqual(10);

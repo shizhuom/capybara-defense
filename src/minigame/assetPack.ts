@@ -53,40 +53,43 @@ export function classifySprite(id: string): SpritePackRule {
     return { pkg: 'meta', format: 'jpg', maxDim: 640, quality: 0.78, omit: true };
   }
   if (OPAQUE_MAIN_BGS.has(id)) {
-    return { pkg: 'main', format: 'jpg', maxDim: 1280, quality: 0.82 };
+    return { pkg: 'main', format: 'jpg', maxDim: 1280, quality: 0.78 };
   }
   if (OPAQUE_MAP_BGS.has(id)) {
-    return { pkg: 'maps', format: 'jpg', maxDim: 1280, quality: 0.82 };
+    return { pkg: 'maps', format: 'jpg', maxDim: 1280, quality: 0.76 };
   }
   if (id === 'title_logo_zh' || id === 'title_logo_en') {
-    return { pkg: 'main', format: 'webp', maxDim: 720, quality: 0.85 };
+    return { pkg: 'main', format: 'webp', maxDim: 720, quality: 0.84 };
   }
   if (id === 'ui_victory_shield_wings' || id === 'ui_defeat_shield_wings') {
-    return { pkg: 'main', format: 'webp', maxDim: 512, quality: 0.85 };
+    return { pkg: 'main', format: 'webp', maxDim: 480, quality: 0.82 };
   }
   if (id === 'ui_btn_start_zh' || id === 'ui_btn_start_en') {
-    return { pkg: 'main', format: 'webp', maxDim: 440, quality: 0.85 };
+    return { pkg: 'main', format: 'webp', maxDim: 440, quality: 0.84 };
   }
   if (id.startsWith('tub_rim_')) {
-    return { pkg: id === 'tub_rim_sunny_backyard' ? 'main' : 'maps', format: 'webp', maxDim: 420, quality: 0.84 };
+    return { pkg: id === 'tub_rim_sunny_backyard' ? 'main' : 'maps', format: 'webp', maxDim: 400, quality: 0.8 };
   }
   if (id.startsWith('fac_')) {
-    return { pkg: 'maps', format: 'webp', maxDim: 280, quality: 0.84 };
+    return { pkg: 'maps', format: 'webp', maxDim: 256, quality: 0.8 };
   }
   if (id.startsWith('vfx_') || id.startsWith('weapon_basic_')) {
-    return { pkg: 'main', format: 'webp', maxDim: 160, quality: 0.82 };
+    return { pkg: 'main', format: 'webp', maxDim: 160, quality: 0.8 };
   }
   if (MAIN_CORE_IDS.has(id)) {
     const isIcon = id.startsWith('ui_') || id === 'orange' || id === 'logo_capy' || id === 'tile_open' || id === 'tile_broken';
-    return { pkg: 'main', format: 'webp', maxDim: isIcon ? 160 : 224, quality: 0.82 };
+    return { pkg: 'main', format: 'webp', maxDim: isIcon ? 160 : 216, quality: 0.8 };
   }
   const isLargeMeta = id.startsWith('dish_') || id.startsWith('npc_') || id.endsWith('_awakened') || id.endsWith('_walk2') || id.startsWith('box_kraken') || id.startsWith('dr_clippers') || id.startsWith('buff_roo') || id.startsWith('hornet_queen') || id.startsWith('screaming_marmot') || id.startsWith('trash_coon') || id.startsWith('dj_rat_king');
-  return { pkg: 'meta', format: 'webp', maxDim: isLargeMeta ? 224 : 160, quality: 0.8 };
+  return { pkg: 'meta', format: 'webp', maxDim: isLargeMeta ? 208 : 152, quality: 0.78 };
 }
 
+/**
+ * All 289 compressed sprites fit comfortably inside a single < 4 MB mini-game package (`assets/sprites/`),
+ * avoiding WeChat DevTools Remote Debugging's `/__debug__/__jscore-debug__/subpackages/...` reserved-directory error
+ * while `pkg` tiers still govern lazy RAM decoding on mobile devices.
+ */
 export function spriteRelativePath(id: string): string {
   const rule = classifySprite(id);
-  const ext = rule.format;
-  if (rule.pkg === 'main') return `assets/sprites/${id}.${ext}`;
-  return `subpackages/${rule.pkg}/assets/${id}.${ext}`;
+  return `assets/sprites/${id}.${rule.format}`;
 }
