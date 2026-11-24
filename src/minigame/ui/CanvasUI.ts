@@ -1,5 +1,6 @@
 import { assets } from '../../render/AssetRegistry';
 import { INK, round } from '../../render/StickerArt';
+import type { ViewportMetrics } from '../../platform/types';
 
 export const UI_FONT = '"Trebuchet MS", "PingFang SC", "Microsoft YaHei", sans-serif';
 
@@ -695,4 +696,95 @@ export function formatClock(seconds: number): string {
   const m = Math.floor(s / 60);
   const rem = s % 60;
   return `${m}:${String(rem).padStart(2, '0')}`;
+}
+
+/**
+ * Eliminates all black letterbox/pillarbox bars across every phone & tablet aspect ratio
+ * (19.5:9 iPhones, 20:9–22:9 Androids, 16:9 classics, 4:3 iPads, Foldables) by seamlessly
+ * mirroring pure decorative outer edge strips of the active storybook panorama/map artwork
+ * into the bleed regions outside 0..1280 × 0..720.
+ */
+export function drawFullBleedBackdrop(
+  c: CanvasRenderingContext2D,
+  spriteId: string,
+  vp: ViewportMetrics,
+  edgeStripX = 96,
+  edgeStripY = 66,
+  fallbackFill = '#c9d7a6',
+): void {
+  const { left, right, top, bottom, width, height } = vp.visible;
+  c.fillStyle = fallbackFill;
+  c.fillRect(left - 2, top - 2, width + 4, height + 4);
+
+  const img = assets.get(spriteId);
+  if (!img) return;
+  const iw = img.naturalWidth || img.width;
+  const ih = img.naturalHeight || img.height;
+  if (!iw || !ih) return;
+
+  const bleedLeft = Math.max(0, -left);
+  const bleedRight = Math.max(0, right - 1280);
+  const bleedTop = Math.max(0, -top);
+  const bleedBottom = Math.max(0, bottom - 720);
+
+  const trim = 2;
+  if (bleedLeft > 0.5) {
+    const srcW = Math.max(16, Math.min(Math.floor(iw * 0.2), Math.round((edgeStripX / 1280) * iw)));
+    c.save();
+    c.translate(0, 0);
+    c.scale(-1, 1);
+    c.drawImage(img, trim, 0, srcW, ih, -2, 0, bleedLeft + 5, 720);
+    c.restore();
+
+    const g = c.createLinearGradient(left, 0, 0, 0);
+    g.addColorStop(0, 'rgba(34,20,8,0.18)');
+    g.addColorStop(1, 'rgba(34,20,8,0)');
+    c.fillStyle = g;
+    c.fillRect(left - 1, 0, bleedLeft + 2, 720);
+  }
+
+  if (bleedRight > 0.5) {
+    const srcW = Math.max(16, Math.min(Math.floor(iw * 0.2), Math.round((edgeStripX / 1280) * iw)));
+    c.save();
+    c.translate(1280, 0);
+    c.scale(-1, 1);
+    c.drawImage(img, iw - srcW - trim, 0, srcW, ih, -(bleedRight + 3), 0, bleedRight + 5, 720);
+    c.restore();
+
+    const g = c.createLinearGradient(1280, 0, right, 0);
+    g.addColorStop(0, 'rgba(34,20,8,0)');
+    g.addColorStop(1, 'rgba(34,20,8,0.18)');
+    c.fillStyle = g;
+    c.fillRect(1280, 0, bleedRight + 2, 720);
+  }
+
+  if (bleedTop > 0.5) {
+    const srcH = Math.max(16, Math.min(Math.floor(ih * 0.2), Math.round((edgeStripY / 720) * ih)));
+    c.save();
+    c.translate(0, 0);
+    c.scale(1, -1);
+    c.drawImage(img, 0, trim, iw, srcH, 0, -2, 1280, bleedTop + 5);
+    c.restore();
+
+    const g = c.createLinearGradient(0, top, 0, 0);
+    g.addColorStop(0, 'rgba(34,20,8,0.16)');
+    g.addColorStop(1, 'rgba(34,20,8,0)');
+    c.fillStyle = g;
+    c.fillRect(0, top - 1, 1280, bleedTop + 2);
+  }
+
+  if (bleedBottom > 0.5) {
+    const srcH = Math.max(16, Math.min(Math.floor(ih * 0.2), Math.round((edgeStripY / 720) * ih)));
+    c.save();
+    c.translate(0, 720);
+    c.scale(1, -1);
+    c.drawImage(img, 0, ih - srcH - trim, iw, srcH, 0, -(bleedBottom + 3), 1280, bleedBottom + 5);
+    c.restore();
+
+    const g = c.createLinearGradient(0, 720, 0, bottom);
+    g.addColorStop(0, 'rgba(34,20,8,0)');
+    g.addColorStop(1, 'rgba(34,20,8,0.2)');
+    c.fillStyle = g;
+    c.fillRect(0, 720, 1280, bleedBottom + 2);
+  }
 }

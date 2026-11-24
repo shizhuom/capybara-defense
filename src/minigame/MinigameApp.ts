@@ -2,7 +2,7 @@ import { BattleEngine } from '../core/BattleEngine';
 import { HEROES } from '../config/heroes';
 import { PROPS } from '../config/props';
 import { getRank } from '../config/ranks';
-import { STAGE } from '../config/maps';
+import { getMap, STAGE } from '../config/maps';
 import { ECONOMY } from '../config/units';
 import { WEAPONS, type WeaponFamily } from '../config/weapons';
 import {
@@ -82,6 +82,7 @@ import { BattleAudioBridge } from './BattleAudioBridge';
 import {
   ScrollRegion,
   UiHitManager,
+  drawFullBleedBackdrop,
   drawToast,
   type ToastMessage,
   type UiHitBox,
@@ -310,12 +311,17 @@ export class MinigameApp {
     saveProfile(this.profile, this.platform.storage);
   }
 
-  private capsuleRightMargin(): number {
-    if (this.platform.kind === 'web') return 18;
-    const vp = this.platform.viewport();
-    const rightLetterboxCss = Math.max(0, vp.screenWidth - (vp.stageCssX + vp.stageCssWidth));
-    if (rightLetterboxCss >= 104) return 18;
-    return Math.max(18, Math.round((108 - rightLetterboxCss) / Math.max(0.25, vp.stageCssWidth / STAGE.width)));
+  private topRightEdge(vp: ViewportMetrics): number {
+    const baseRight = vp.visible.right > 1290
+      ? Math.min(vp.safeStage.right - 14, Math.min(1356, vp.visible.right - 26))
+      : Math.min(1262, vp.safeStage.right - 14);
+    if (vp.capsuleStageLeft !== undefined) {
+      return Math.round(Math.min(baseRight, vp.capsuleStageLeft - 14));
+    }
+    if (this.platform.kind === 'web') return Math.round(baseRight);
+    const scale = Math.max(0.25, vp.stageCssWidth / STAGE.width);
+    const fallbackCapsuleLeft = vp.visible.right - 108 / scale;
+    return Math.round(Math.min(baseRight, fallbackCapsuleLeft));
   }
 
   private showToast(text: string, tone: 'info' | 'good' | 'warn' = 'info', duration = 2.4): void {
@@ -509,31 +515,29 @@ export class MinigameApp {
 
   private drawFrame(): void {
     const vp = this.platform.viewport();
+    this.syncViewport(vp);
     const c = this.platform.ctx;
-    c.save();
-    c.setTransform(1, 0, 0, 1, 0, 0);
-    c.fillStyle = '#231d18';
-    c.fillRect(0, 0, this.platform.canvas.width, this.platform.canvas.height);
-    c.restore();
+    const topRight = this.topRightEdge(vp);
 
     this.hits.clear();
     c.save();
     c.setTransform(vp.stageScale, 0, 0, vp.stageScale, vp.stageOffsetX, vp.stageOffsetY);
-    c.beginPath();
-    c.rect(0, 0, STAGE.width, STAGE.height);
-    c.clip();
 
     if (this.screen === 'menu' || !this.engine) {
       const mapId = resolveMap(this.profile);
+      drawFullBleedBackdrop(c, 'start_splash_bg', vp, 72, 64, '#d8deb6');
       this.renderer.drawPreview(mapId, this.elapsedSec, 3);
       drawMenuScreen(c, this.hits, {
         profile: this.profile,
         elapsed: this.elapsedSec,
         muted: this.muted,
-        capsuleRightMargin: this.capsuleRightMargin(),
+        topRightEdge: topRight,
+        viewport: vp,
       });
     } else {
       const state = this.engine.state;
+      const mapTheme = getMap(state.mapId).theme;
+      drawFullBleedBackdrop(c, `map_${state.mapId}`, vp, 124, 62, mapTheme.grass[0]);
       const breakthroughChances = state.endless ? this.computeBreakthroughChances(state) : undefined;
       this.renderer.draw(state, this.elapsedSec, {
         draggingId: this.drag?.moved ? this.drag.unitId : undefined,
@@ -554,7 +558,8 @@ export class MinigameApp {
         activePropId: this.activePropId,
         expandedPassiveId: this.expandedPassiveId,
         tutorialStep: this.tutorialStep,
-        capsuleRightMargin: this.capsuleRightMargin(),
+        topRightEdge: topRight,
+        viewport: vp,
         curtainRemaining: this.curtainRemaining,
       });
     }
@@ -580,6 +585,7 @@ export class MinigameApp {
         devUnlocked: this.devUnlocked,
         isTestSave: isTestProfile(this.platform.storage),
         elapsed: this.elapsedSec,
+        viewport: vp,
       });
     } else {
       this.modalLayout = {};

@@ -15,6 +15,7 @@ import { villageBadge, villageStars } from '../../core/VillageProgression';
 import { formatCompactNumber } from '../../core/formatNumber';
 import type { MapId, Profile } from '../../core/types';
 import { getLanguage, t } from '../../i18n/i18n';
+import type { ViewportMetrics } from '../../platform/types';
 import { assets } from '../../render/AssetRegistry';
 import { INK, round } from '../../render/StickerArt';
 import {
@@ -32,7 +33,8 @@ export interface MenuRenderContext {
   profile: Profile;
   elapsed: number;
   muted: boolean;
-  capsuleRightMargin: number;
+  topRightEdge: number;
+  viewport: ViewportMetrics;
 }
 
 interface MedallionDockItem {
@@ -55,22 +57,30 @@ export function drawMenuScreen(
   hits: UiHitManager,
   ctx: MenuRenderContext,
 ): void {
-  const { profile, elapsed, muted, capsuleRightMargin } = ctx;
+  const { profile, elapsed, muted, topRightEdge, viewport: vp } = ctx;
   const lang = getLanguage();
   const zh = lang === 'zh-CN';
   const hasRank = isRankHubUnlocked(profile);
   const rank = getRank(profile.stars);
 
-  // Subtle top vignette for readability over sky & cherry blossoms
-  const topGrad = c.createLinearGradient(0, 0, 0, 108);
+  // Adaptive horizontal anchors: standard 16:9 stays 22..1258; wide phones (19.5:9–22:9) gently expand into safe bleed!
+  const leftAnchor = vp.visible.left < -10
+    ? Math.round(Math.max(vp.safeStage.left + 14, Math.max(-76, vp.visible.left + 26)))
+    : Math.round(Math.max(22, vp.safeStage.left + 12));
+  const bottomRightAnchor = vp.visible.right > 1290
+    ? Math.round(Math.min(vp.safeStage.right - 14, Math.min(1356, vp.visible.right - 26)))
+    : Math.round(Math.min(1254, vp.safeStage.right - 14));
+
+  // Subtle top vignette spans full phone/tablet width (zero edge cutoff!)
+  const topGrad = c.createLinearGradient(0, vp.visible.top, 0, 108);
   topGrad.addColorStop(0, 'rgba(36,22,10,0.38)');
   topGrad.addColorStop(1, 'rgba(36,22,10,0)');
   c.fillStyle = topGrad;
-  c.fillRect(0, 0, 1280, 108);
+  c.fillRect(vp.visible.left - 2, vp.visible.top - 2, vp.visible.width + 4, 110 - vp.visible.top);
 
   // ── 1. TOP-LEFT KEEPER PASSPORT PILL (matches p19_03 exactly!) ────────────
   if (hasRank) {
-    const px = 22, py = 14, pw = 320, ph = 70;
+    const px = leftAnchor, py = 14, pw = 320, ph = 70;
     round(c, px, py + 4, pw, ph, 35, 'rgba(46,26,10,0.34)', 'transparent', 0);
     round(c, px, py, pw, ph, 35, 'rgba(255,248,232,0.95)', '#5c3b1e', 3);
 
@@ -87,7 +97,7 @@ export function drawMenuScreen(
   }
 
   // ── 2. TOP-RIGHT SYSTEM CONTROLS (Web segmented [中|EN] + ⚙ + Mute + Share) ─
-  const rightEdge = 1280 - Math.max(20, capsuleRightMargin);
+  const rightEdge = topRightEdge;
   const btnY = 16;
   const btnH = 48;
   const sqW = 50;
@@ -154,9 +164,9 @@ export function drawMenuScreen(
   }
   c.restore();
 
-  // ── 5. BOTTOM-CENTER COMPACT MAP SIGNPOST BAR (matches p19_03 exactly!) ───
+  // ── 5. BOTTOM-CENTER COMPACT MAP SIGNPOST BAR (lifted slightly above iOS Home Indicator!) ───
   if (hasRank) {
-    drawCompactMapBar(c, hits, profile, 640);
+    drawCompactMapBar(c, hits, profile, 634);
   }
 
   // ── 6. BOTTOM-LEFT & BOTTOM-RIGHT CIRCULAR MEDALLION DOCKS (matches Web!) ─
@@ -227,11 +237,13 @@ export function drawMenuScreen(
     rightDock.push({ id: 'menu:hub:leaderboard', icon: 'ui_trophy_rank', label: t('p3.rank') });
   }
 
-  // Draw Left Circular Medallions (bottom-left corner)
-  drawMedallionRow(c, hits, leftDock, 26, 588, false);
+  // Draw Left Circular Medallions (bottom-left corner, lifted cleanly above iOS Home Indicator!)
+  const dockY = 580;
+  const dockLeftX = leftAnchor + 4;
+  drawMedallionRow(c, hits, leftDock, dockLeftX, dockY, false);
   // Draw Right Circular Medallions (bottom-right corner)
   if (rightDock.length > 0) {
-    drawMedallionRow(c, hits, rightDock, 1280 - 26, 588, true);
+    drawMedallionRow(c, hits, rightDock, bottomRightAnchor, dockY, true);
   }
 
   // Floating Active Broth Pill (above left dock when Kitchen unlocked & broth active)
@@ -242,8 +254,8 @@ export function drawMenuScreen(
         c,
         hits,
         'menu:hub:kitchen',
-        26,
-        522,
+        dockLeftX,
+        514,
         profile.activeBrothId,
         `${t(`broth.${profile.activeBrothId}`)} Lv.${lv}`,
         BROTHS[profile.activeBrothId].bathColor,
@@ -256,9 +268,9 @@ export function drawMenuScreen(
     const ready = upgradeableMedallions(profile).length > 0;
     const crests = formatCompactNumber(profile.endlessCrests ?? 0);
     const label = `${t('p17.hallPill')} · ${ready ? t('p17.canUpgrade') : `×${crests}`}`;
-    drawFloatingCornerPill(c, hits, 'menu:hub:medallions', 1280 - 26, 522, 'ui_endless_crest', label, ready ? '#f6cf59' : '#efe3fa', true);
+    drawFloatingCornerPill(c, hits, 'menu:hub:medallions', bottomRightAnchor, 514, 'ui_endless_crest', label, ready ? '#f6cf59' : '#efe3fa', true);
   } else if (nextDock?.id === 'medallions') {
-    drawFloatingCornerPill(c, hits, 'menu:locked:medallions', 1280 - 26, 522, 'ui_endless_crest', `${t('p17.hallPill')} 🔒${lockText}`, '#d8ccb8', true);
+    drawFloatingCornerPill(c, hits, 'menu:locked:medallions', bottomRightAnchor, 514, 'ui_endless_crest', `${t('p17.hallPill')} 🔒${lockText}`, '#d8ccb8', true);
   }
 }
 

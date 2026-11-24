@@ -66,20 +66,34 @@ function mockMiniApi() {
 }
 
 describe('Mini-Game Phase 1: Platform layer, Viewport safe-area, Assets & Subpackages', () => {
-  it('lifts the 1280×720 stage above the iOS Home Indicator on touch landscape phones while keeping desktop centered', () => {
-    // iPhone 15 Pro landscape with 21px bottom safe area
-    const phone = computeViewport(852, 393, 3, { top: 0, bottom: 21, left: 59, right: 59 }, true);
+  it('fills full screen without bottom or side black bars across 19.5:9 iPhones, 21:9 Androids, 4:3 iPads & desktops while tracking safe areas and capsule', () => {
+    // iPhone 15 Pro landscape (852×393) with 21px Home Indicator, 59px Dynamic Island & WeChat capsule at left=748
+    const phone = computeViewport(852, 393, 3, { top: 0, bottom: 21, left: 59, right: 59 }, true, { left: 748 });
     expect(phone.dpr).toBe(2.5); // clamped
-    expect(phone.safe.bottom).toBeGreaterThanOrEqual(33);
-    expect(phone.stageCssY).toBe(0); // anchored to top safe edge
-    expect(393 - (phone.stageCssY + phone.stageCssHeight)).toBeGreaterThanOrEqual(33);
+    expect(phone.stageCssHeight).toBeCloseTo(393, 4); // full height — zero bottom black bar!
+    expect(phone.stageCssY).toBeCloseTo(0, 4);
+    expect(phone.visible.left).toBeLessThan(-130); // full-bleed extends seamlessly left
+    expect(phone.visible.right).toBeGreaterThan(1410); // and right
+    expect(phone.safeStage.left).toBeGreaterThan(phone.visible.left); // respects Dynamic Island
+    expect(phone.capsuleStageLeft).toBeGreaterThan(1200); // exact WeChat capsule coordinate
     const center = screenToStage(phone.stageCssX + phone.stageCssWidth / 2, phone.stageCssY + phone.stageCssHeight / 2, phone);
     expect(center.stageX).toBeCloseTo(STAGE.width / 2, 4);
     expect(center.stageY).toBeCloseTo(STAGE.height / 2, 4);
 
-    // Desktop 1440×900: centered cleanly with 0 forced bottom lift
+    // 21:9 Android landscape (926×393): full height + wider horizontal bleed
+    const android21 = computeViewport(926, 393, 2.5, { top: 0, bottom: 0, left: 42, right: 0 }, true);
+    expect(android21.stageCssHeight).toBeCloseTo(393, 4);
+    expect(android21.visible.left).toBeLessThan(-200);
+    expect(android21.visible.right).toBeGreaterThan(1480);
+
+    // iPad 4:3 (1024×768): full width + vertical bleed top & bottom (zero black bars!)
+    const ipad = computeViewport(1024, 768, 2, undefined, true);
+    expect(ipad.stageCssWidth).toBeCloseTo(1024, 4);
+    expect(ipad.visible.top).toBeCloseTo(-120, 4);
+    expect(ipad.visible.bottom).toBeCloseTo(840, 4);
+
+    // Desktop 1440×900 (16:10): full width + subtle vertical bleed
     const desktop = computeViewport(1440, 900, 1, undefined, false);
-    expect(desktop.safe.bottom).toBe(0);
     expect(desktop.stageCssWidth).toBeCloseTo(1440, 4);
     expect(desktop.stageCssY).toBeCloseTo((900 - 810) / 2, 4);
   });

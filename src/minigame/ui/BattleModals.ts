@@ -11,6 +11,7 @@ import { getBaseUnitStats } from '../../core/UnitStats';
 import { formatCompactNumber } from '../../core/formatNumber';
 import type { BattleState, Profile } from '../../core/types';
 import { getLanguage, t } from '../../i18n/i18n';
+import type { ViewportMetrics } from '../../platform/types';
 import { INK, round } from '../../render/StickerArt';
 import {
   BTN_STYLES,
@@ -105,6 +106,7 @@ export interface ModalDrawContext {
   devUnlocked: boolean;
   isTestSave: boolean;
   elapsed: number;
+  viewport: ViewportMetrics;
 }
 
 export interface ModalLayoutInfo {
@@ -119,9 +121,10 @@ export function drawActiveModal(
   hits: UiHitManager,
   ctx: ModalDrawContext,
 ): ModalLayoutInfo {
+  const { left, top, width, height } = ctx.viewport.visible;
   c.fillStyle = 'rgba(22,12,5,0.68)';
-  c.fillRect(0, 0, 1280, 720);
-  hits.add({ id: 'modal:backdrop', x: 0, y: 0, w: 1280, h: 720 });
+  c.fillRect(left - 2, top - 2, width + 4, height + 4);
+  hits.add({ id: 'modal:backdrop', x: left, y: top, w: width, h: height });
 
   switch (ctx.modal) {
     case 'pause':

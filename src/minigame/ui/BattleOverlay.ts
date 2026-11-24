@@ -9,6 +9,7 @@ import type { TutorialStep } from '../../core/Tutorial';
 import { formatCompactNumber } from '../../core/formatNumber';
 import type { BattleState, Profile, StageRect } from '../../core/types';
 import { getLanguage, t } from '../../i18n/i18n';
+import type { ViewportMetrics } from '../../platform/types';
 import { INK, round } from '../../render/StickerArt';
 import { getBossHUD, getWaveHUD } from '../../ui/BattleHUD';
 import { placeTutorialBubble, tutorialTargets, type TutorialRect } from '../../ui/TutorialView';
@@ -35,7 +36,8 @@ export interface BattleOverlayContext {
   activePropId?: string;
   expandedPassiveId?: string;
   tutorialStep: TutorialStep;
-  capsuleRightMargin: number;
+  topRightEdge: number;
+  viewport: ViewportMetrics;
   /** Brief opening battle curtain reveal countdown (0 = hidden). */
   curtainRemaining: number;
 }
@@ -56,7 +58,7 @@ export function drawBattleOverlay(
   hits: UiHitManager,
   ctx: BattleOverlayContext,
 ): BattleOverlayResult {
-  const { engine, profile, elapsed, speed, shovelSelected, activePropId, expandedPassiveId, tutorialStep, capsuleRightMargin, curtainRemaining } = ctx;
+  const { engine, profile, elapsed, speed, shovelSelected, activePropId, expandedPassiveId, tutorialStep, topRightEdge, viewport: vp, curtainRemaining } = ctx;
   const state = engine.state;
   const player = state.sides.player;
   const zh = getLanguage() === 'zh-CN';
@@ -142,8 +144,8 @@ export function drawBattleOverlay(
   }
   nextX += orangeW + 10;
 
-  // Top-Right Controls (respects WeChat capsule safe margin!)
-  const rightEdge = 1280 - Math.max(16, capsuleRightMargin);
+  // Top-Right Controls (respects WeChat capsule & wide-phone safe bounds!)
+  const rightEdge = topRightEdge;
   const pauseW = 58, guideW = 104, speedW = 72, ctrlH = 52;
   const pauseX = rightEdge - pauseW;
   const guideX = pauseX - 8 - guideW;
@@ -225,7 +227,7 @@ export function drawBattleOverlay(
 
   // ── 6. BRIEF OPENING BATTLE CLASH CURTAIN (tap anywhere to skip!) ─────────
   if (curtainRemaining > 0) {
-    drawBattleCurtain(c, hits, state, curtainRemaining);
+    drawBattleCurtain(c, hits, state, curtainRemaining, vp);
   }
 
   return { guideRect, avoidRects };
@@ -552,24 +554,25 @@ function drawTutorialOverlay(
   }
 }
 
-function drawBattleCurtain(c: CanvasRenderingContext2D, hits: UiHitManager, state: BattleState, remaining: number): void {
-  // Smooth open: stays closed briefly, then parts left & right
+function drawBattleCurtain(c: CanvasRenderingContext2D, hits: UiHitManager, state: BattleState, remaining: number, vp: ViewportMetrics): void {
+  // Smooth open: stays closed briefly, then parts left & right across full phone/tablet bleed!
   const tNorm = Math.max(0, Math.min(1, remaining / 0.85));
   const open = tNorm < 0.45 ? 1 - tNorm / 0.45 : 0;
-  const slide = open * 660;
+  const halfW = Math.max(650, Math.ceil(vp.visible.width / 2) + 20);
+  const slide = open * halfW;
   const alpha = tNorm < 0.35 ? tNorm / 0.35 : 1;
 
-  hits.add({ id: 'battle:skip-curtain', x: 0, y: 0, w: 1280, h: 720 });
+  hits.add({ id: 'battle:skip-curtain', x: vp.visible.left, y: vp.visible.top, w: vp.visible.width, h: vp.visible.height });
   c.save();
-  // Left & Right warm wooden shutters
+  // Left & Right warm wooden shutters spanning the full edge-to-edge screen
   c.fillStyle = '#5d391f';
-  c.fillRect(-slide, 0, 642, 720);
-  c.fillRect(638 + slide, 0, 642, 720);
+  c.fillRect(640 - halfW - slide, vp.visible.top - 2, halfW + 2, vp.visible.height + 4);
+  c.fillRect(638 + slide, vp.visible.top - 2, halfW + 2, vp.visible.height + 4);
   c.strokeStyle = '#f2cc7c';
   c.lineWidth = 6;
   c.beginPath();
-  c.moveTo(640 - slide, 0); c.lineTo(640 - slide, 720);
-  c.moveTo(640 + slide, 0); c.lineTo(640 + slide, 720);
+  c.moveTo(640 - slide, vp.visible.top); c.lineTo(640 - slide, vp.visible.bottom);
+  c.moveTo(640 + slide, vp.visible.top); c.lineTo(640 + slide, vp.visible.bottom);
   c.stroke();
 
   c.globalAlpha = alpha;

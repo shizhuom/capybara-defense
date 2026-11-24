@@ -11,6 +11,15 @@ export interface SafeAreaInsets {
   right: number;
 }
 
+export interface StageBounds {
+  left: number;
+  right: number;
+  top: number;
+  bottom: number;
+  width: number;
+  height: number;
+}
+
 export interface ViewportMetrics {
   /** Logical CSS / screen points. */
   screenWidth: number;
@@ -28,6 +37,12 @@ export interface ViewportMetrics {
   stageCssY: number;
   stageCssWidth: number;
   stageCssHeight: number;
+  /** Full visible screen expressed in stage coordinates (extends beyond 0..1280 on wide phones and beyond 0..720 on tablets). */
+  visible: StageBounds;
+  /** Safe interactive screen bounds in stage coordinates (inside hardware notch/Dynamic Island/Home Indicator). */
+  safeStage: StageBounds;
+  /** Left edge of the WeChat/Bilibili top-right floating capsule button in stage coordinates, when known. */
+  capsuleStageLeft?: number;
   isTouch: boolean;
 }
 

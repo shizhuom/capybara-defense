@@ -18,6 +18,7 @@ export interface MiniGameGlobalApi {
   createCanvas(): HTMLCanvasElement;
   createImage(): SpriteImage;
   getWindowInfo?: () => { windowWidth: number; windowHeight: number; pixelRatio: number; safeArea?: { top: number; bottom: number; left: number; right: number } };
+  getMenuButtonBoundingClientRect?: () => { left: number; right: number; top: number; bottom: number; width: number; height: number };
   getSystemInfoSync(): { windowWidth: number; windowHeight: number; pixelRatio: number; safeArea?: { top: number; bottom: number; left: number; right: number } };
   getStorageSync(key: string): unknown;
   setStorageSync(key: string, value: string): void;
@@ -46,6 +47,8 @@ export interface MiniGameGlobalApi {
   offTouchCancel?: (cb: (e: MiniTouchEvent) => void) => void;
   onWindowResize?: (cb: () => void) => void;
   offWindowResize?: (cb: () => void) => void;
+  onDeviceOrientationChange?: (cb: () => void) => void;
+  offDeviceOrientationChange?: (cb: () => void) => void;
   onShow?: (cb: () => void) => void;
   offShow?: (cb: () => void) => void;
   onHide?: (cb: () => void) => void;
@@ -270,7 +273,12 @@ export function createMiniGameAdapter(api: MiniGameGlobalApi, kind: Exclude<Plat
       left: Math.max(0, sa.left),
       right: Math.max(0, w - sa.right),
     } : { top: 0, bottom: 0, left: 0, right: 0 };
-    return computeViewport(w, h, dpr, safe, true);
+    let menuBtn: { left: number; right?: number; top?: number; bottom?: number; width?: number; height?: number } | null = null;
+    try {
+      const rect = api.getMenuButtonBoundingClientRect?.();
+      if (rect && Number.isFinite(rect.left) && rect.left > 0) menuBtn = rect;
+    } catch { /* optional on older runtimes */ }
+    return computeViewport(w, h, dpr, safe, true, menuBtn);
   }
 
   function syncCanvasSize(vp: ViewportMetrics): void {
@@ -313,7 +321,11 @@ export function createMiniGameAdapter(api: MiniGameGlobalApi, kind: Exclude<Plat
         callback(cachedViewport);
       };
       api.onWindowResize?.(handler);
-      const off = () => api.offWindowResize?.(handler);
+      api.onDeviceOrientationChange?.(handler);
+      const off = () => {
+        api.offWindowResize?.(handler);
+        api.offDeviceOrientationChange?.(handler);
+      };
       disposers.push(off);
       return off;
     },
@@ -405,7 +417,12 @@ export function createMiniGameAdapter(api: MiniGameGlobalApi, kind: Exclude<Plat
     requestFrame: (callback) => globalThis.requestAnimationFrame(callback),
     cancelFrame: (id) => globalThis.cancelAnimationFrame?.(id),
     onShow(callback) {
-      const handler = () => { audio.setPaused(false); callback(); };
+      const handler = () => {
+        cachedViewport = measure();
+        syncCanvasSize(cachedViewport);
+        audio.setPaused(false);
+        callback();
+      };
       api.onShow?.(handler);
       const off = () => api.offShow?.(handler);
       disposers.push(off);
