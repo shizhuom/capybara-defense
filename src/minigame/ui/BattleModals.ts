@@ -229,34 +229,34 @@ function drawPauseModal(c: CanvasRenderingContext2D, hits: UiHitManager, state: 
   }
 
   const secCount = 1 + extraSections.length;
-  const secH = secCount === 1 ? 104 : secCount === 2 ? 96 : secCount === 3 ? 86 : 78;
-  const pw = 624;
+  const secH = secCount === 1 ? 112 : secCount === 2 ? 102 : secCount === 3 ? 90 : 82;
+  const pw = 744;
   const px = (1280 - pw) / 2;
-  const ph = Math.min(472, 146 + secCount * secH + (secCount - 1) * 8);
-  const py = Math.max(96, Math.round((566 - ph) / 2) + 20);
+  const ph = Math.min(486, 158 + secCount * secH + (secCount - 1) * 8);
+  const py = Math.max(94, Math.round((566 - ph) / 2) + 18);
 
-  drawHinokiBoard(c, px, py, pw, ph, 24);
+  drawHinokiBoard(c, px, py, pw, ph, 26);
   hits.add({ id: 'modal:card', x: px, y: py, w: pw, h: ph });
 
-  // Peeking towel capybara layered ON TOP of rim so full face & gripping paws stay visible (exact `p18_preview_d20`!)
-  drawSpriteContain(c, 'ui_pause_peek_capy', px + 18, py - 74, 92, 92);
-  drawMatchaSignboard(c, 640, py - 38, t('p12.pauseTitle'), undefined, 260);
-  drawYuzuCloseButton(c, hits, 'modal:resume', px + pw - 16, py - 12, 25);
+  // Peeking towel capybara layered ON TOP of rim
+  drawSpriteContain(c, 'ui_pause_peek_capy', px + 20, py - 82, 100, 100);
+  drawMatchaSignboard(c, 640, py - 42, t('p12.pauseTitle'), undefined, 300);
+  drawYuzuCloseButton(c, hits, 'modal:resume', px + pw - 16, py - 12, 28);
 
-  // Stacked Inner Ivory Sections (exact `p18_preview_d20`!)
-  let cy = py + 34;
-  const cw = pw - 40;
-  const cx = px + 20;
+  // Stacked Inner Ivory Sections
+  let cy = py + 38;
+  const cw = pw - 44;
+  const cx = px + 22;
 
   // 1. Map & Status Card
-  drawIvorySlab(c, cx, cy, cw, 82, 16);
-  round(c, cx + 14, cy + 11, 60, 60, 14, '#fff4dc', '#8a6239', 1.8);
-  drawSpriteContain(c, 'ui_map_sign', cx + 20, cy + 17, 48, 48);
-  drawText(c, t(`map.${state.mapId}`), cx + 88, cy + 28, 21, PALETTE.ink, 'left', 900);
+  drawIvorySlab(c, cx, cy, cw, 90, 18);
+  round(c, cx + 14, cy + 11, 68, 68, 16, '#fff4dc', '#8a6239', 2);
+  drawSpriteContain(c, 'ui_map_sign', cx + 20, cy + 17, 56, 56);
+  drawText(c, t(`map.${state.mapId}`), cx + 96, cy + 31, 26, PALETTE.ink, 'left', 900);
   const waveStr = state.endless ? t('p13.endlessWave', { wave: state.wave }) : t('p12.pauseWave', { wave: state.wave });
   const statLine = `${waveStr}  ·  ${t('p12.pauseTime', { time: formatClock(state.time) })}  ·  ${t('p12.pauseOranges', { count: state.sides.player.oranges })}`;
-  drawText(c, statLine, cx + 88, cy + 56, 15.5, PALETTE.inkSoft, 'left', 800);
-  cy += 92;
+  drawText(c, statLine, cx + 96, cy + 63, 20, PALETTE.inkSoft, 'left', 800);
+  cy += 100;
 
   drawPauseLootSection(c, cx, cy, cw, secH, 'ui_weapon_fragment', t('p12.pauseLoot'), fragChips, t('p12.pauseEmpty'));
   cy += secH + 8;
@@ -508,9 +508,9 @@ function drawResultModal(
     drawText(c, '←', retX + 32, retY + 33, 28, PALETTE.ink, 'center', 900);
   }
 
-  // Top-right Share Victory pill button on Win
+  // Top-right Share Victory pill button on Win (strictly LEFT of WeChat [🎮][···|◉]!)
   if (won) {
-    drawPillButton(c, hits, 'result:share', 1094, 32, 148, 44, zh ? '炫耀战绩' : 'Share', 'gold', { fontSize: 16.5, icon: 'ui_star_rank' });
+    drawPillButton(c, hits, 'result:share', 930, 26, 178, 52, zh ? '炫耀战绩' : 'Share', 'gold', { fontSize: 21, icon: 'ui_star_rank' });
   }
 
   // Huge 512×512 Winged Shield Plaque (EXACT Web `crest-emblem-art`: ribbon + cream interior holds rank & rewards!)
@@ -613,13 +613,13 @@ function drawResultModal(
     drawProgressBar(c, hx + 18, hy + 42, hw - 36, 11, Math.max(0.06, hook.percent / 100), '#f2b838', 'rgba(72,46,24,0.18)', PALETTE.woodDark);
   }
 
-  // Bottom Corner Action Buttons (EXACT `SettlementView.ts`!)
-  const fy = 616;
-  drawPillButton(c, hits, 'modal:toggle-stats', 44, fy, 196, 58, t('p15.report'), 'cream', { fontSize: 19, icon: 'ui_stats_scroll' });
+  // Bottom Corner Action Buttons (ENLARGED for phone readability!)
+  const fy = 610;
+  drawPillButton(c, hits, 'modal:toggle-stats', 44, fy, 224, 64, t('p15.report'), 'cream', { fontSize: 22, icon: 'ui_stats_scroll' });
   if (!won && result.reason === 'oranges' && settlement.adReviveAvailable) {
-    drawPillButton(c, hits, 'result:ad-revive', 640 - 130, fy, 260, 58, zh ? '🎬 看视频复活 (+2)' : '🎬 Ad Revive (+2)', 'gold', { fontSize: 18.5 });
+    drawPillButton(c, hits, 'result:ad-revive', 640 - 148, fy, 296, 64, zh ? '🎬 看视频复活 (+2)' : '🎬 Ad Revive (+2)', 'gold', { fontSize: 21 });
   }
-  drawPillButton(c, hits, 'modal:again', 1280 - 44 - 234, fy, 234, 58, t(won ? 'p15.continue' : 'p15.again'), 'green', { fontSize: 20, icon: 'ui_horn_continue' });
+  drawPillButton(c, hits, 'modal:again', 1280 - 44 - 258, fy, 258, 64, t(won ? 'p15.continue' : 'p15.again'), 'green', { fontSize: 23, icon: 'ui_horn_continue' });
 }
 
 function hookIconSprite(hook: NextGoalHook): string {

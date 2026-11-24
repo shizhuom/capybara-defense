@@ -1,5 +1,6 @@
 import {GUARDIAN_BATH_SPOTS,GUARDIAN_WATERLINE,WATER_CLIP_GROW,type GuardianBathSpot} from '../config/guardianBaths';
 import {BROTHS,CLEAR_SPRING,isBrothId,type BrothTopping} from '../config/kitchen';
+import {getMap,isMobileWideStage,STAGE} from '../config/maps';
 import type {MapId} from '../core/types';
 
 /**
@@ -253,18 +254,62 @@ function drawSteam(c:C,spot:GuardianBathSpot,pal:SoupPalette,seconds:number):voi
   }
 }
 
+function wideBathSpot(mapId:MapId):GuardianBathSpot {
+  const path=getMap(mapId).paths.player;
+  const end=path[path.length-1]??{col:STAGE.cols-1,row:STAGE.rows-1};
+  const x=STAGE.boardX+(end.col+.5)*STAGE.cell;
+  const y=STAGE.boardY+(end.row+.5)*STAGE.cell+2;
+  const size=Math.round(STAGE.cell*.78);
+  const rx=Math.round(STAGE.cell*.43),ry=Math.round(STAGE.cell*.36);
+  return {
+    x,y,size,rippleRx:Math.round(rx*.76),rippleRy:Math.round(ry*.42),orangeBaseY:-Math.round(size*.48),
+    water:{x:0,y:Math.round(STAGE.cell*.07),rx,ry},
+    rim:{dx:x-rx-10,dy:y-ry,dw:(rx+10)*2,dh:ry*2+16},
+  };
+}
+
+function drawWideWoodenTubBack(c:C,spot:GuardianBathSpot):void {
+  const w=spot.water;
+  c.save();
+  // Ground shadow under wooden tub
+  c.fillStyle='rgba(44,28,12,0.28)';
+  c.beginPath();c.ellipse(w.x,w.y+w.ry+5,w.rx+11,w.ry*.55,0,0,TAU);c.fill();
+  // Outer carved hinoki barrel rim
+  c.fillStyle='#9e6b3d';c.strokeStyle=INK;c.lineWidth=3.2;
+  c.beginPath();c.ellipse(w.x,w.y+4,w.rx+9,w.ry+9,0,0,TAU);c.fill();c.stroke();
+  c.fillStyle='#c48d56';c.strokeStyle='#5a361a';c.lineWidth=2.2;
+  c.beginPath();c.ellipse(w.x,w.y,w.rx+7,w.ry+7,0,0,TAU);c.fill();c.stroke();
+  c.restore();
+}
+
+function drawWideWoodenTubFrontLip(c:C,spot:GuardianBathSpot):void {
+  const w=spot.water;
+  c.save();
+  // Subtle lower wooden lip hugging front half of water
+  c.strokeStyle='#b8814a';c.lineWidth=6;
+  c.beginPath();c.ellipse(w.x,w.y+1,w.rx+3,w.ry+3,0,0.14,Math.PI-0.14);c.stroke();
+  c.strokeStyle=INK;c.lineWidth=2.4;
+  c.beginPath();c.ellipse(w.x,w.y+4,w.rx+6,w.ry+6,0,0.12,Math.PI-0.12);c.stroke();
+  c.restore();
+}
+
 /** Draws layers 2-5 for the player's guardian tub; the map (layer 1) must already be on the canvas. */
 export function drawGuardianBath(p:BathPainter,input:GuardianBathInput):void {
-  const c=p.c,spot=GUARDIAN_BATH_SPOTS[input.mapId],dizzy=input.oranges<=0;
+  const wide=isMobileWideStage();
+  const c=p.c,spot=wide?wideBathSpot(input.mapId):GUARDIAN_BATH_SPOTS[input.mapId],dizzy=input.oranges<=0;
   const pal=soupPalette(input.activeBrothId,input.brothLevel),pose=guardianPose(input.seconds,dizzy);
   c.save();c.translate(spot.x,spot.y);
+  if(wide)drawWideWoodenTubBack(c,spot);
   drawSoup(c,spot,pal,input.seconds,pose,p);
   drawCapybara(c,spot,input,pose,p);
   drawFoamCollar(c,spot,pal,input.seconds,pose);
+  if(wide)drawWideWoodenTubFrontLip(c,spot);
   drawOranges(spot,input,p);
   c.restore();
-  const rim=p.image(`tub_rim_${input.mapId}`);
-  if(rim)c.drawImage(rim,spot.rim.dx,spot.rim.dy,spot.rim.dw,spot.rim.dh);
+  if(!wide){
+    const rim=p.image(`tub_rim_${input.mapId}`);
+    if(rim)c.drawImage(rim,spot.rim.dx,spot.rim.dy,spot.rim.dw,spot.rim.dh);
+  }
   c.save();c.translate(spot.x,spot.y);drawSteam(c,spot,pal,input.seconds);c.restore();
   if(input.shield)drawBathShield(c,spot,input,input.shield);
 }

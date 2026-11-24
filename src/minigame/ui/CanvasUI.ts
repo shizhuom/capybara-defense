@@ -45,6 +45,7 @@ export class UiHitManager {
 
   clear(): void { this.boxes = []; }
   add(box: UiHitBox): void { this.boxes.push(box); }
+  findById(id: string): UiHitBox | undefined { return this.boxes.find(b => b.id === id); }
 
   hit(x: number, y: number): UiHitBox | undefined {
     for (let i = this.boxes.length - 1; i >= 0; i--) {
@@ -336,17 +337,17 @@ export function drawMatchaSignboard(
   topY: number,
   title: string,
   subtitle?: string,
-  minWidth = 300,
+  minWidth = 340,
 ): void {
-  c.font = `900 32px ${UI_FONT}`;
-  const tw = Math.max(minWidth, Math.ceil(c.measureText(title).width) + 78);
-  const th = 60;
+  c.font = `900 36px ${UI_FONT}`;
+  const tw = Math.max(minWidth, Math.ceil(c.measureText(title).width) + 92);
+  const th = 66;
   const sx = cx - tw / 2;
   const sy = topY;
 
   // Drop shadow & dark outer outline
-  round(c, sx, sy + 6, tw, th, 22, '#314714', '#314714', 2);
-  round(c, sx - 2, sy - 2, tw + 4, th + 4, 24, '#3e5a1a', 'transparent', 0);
+  round(c, sx, sy + 6, tw, th, 24, '#314714', '#314714', 2);
+  round(c, sx - 2, sy - 2, tw + 4, th + 4, 26, '#3e5a1a', 'transparent', 0);
 
   // Matcha gradient body + bright bamboo border
   const grad = c.createLinearGradient(sx, sy, sx, sy + th);
@@ -355,7 +356,7 @@ export function drawMatchaSignboard(
   grad.addColorStop(1, '#244026');
   c.save();
   c.beginPath();
-  c.roundRect(sx, sy, tw, th, 21);
+  c.roundRect(sx, sy, tw, th, 23);
   c.fillStyle = grad;
   c.fill();
   c.lineWidth = 4.5;
@@ -364,24 +365,24 @@ export function drawMatchaSignboard(
   c.restore();
 
   // Inner top bamboo specular highlight
-  round(c, sx + 7, sy + 5, tw - 14, 10, 5, 'rgba(208,243,132,0.22)', 'transparent', 0);
+  round(c, sx + 8, sy + 6, tw - 16, 11, 5, 'rgba(208,243,132,0.22)', 'transparent', 0);
 
   // Corner yuzu leaf & sakura sprigs flanking the signboard
-  drawCornerSprig(c, sx + 12, sy + th - 6, false);
-  drawCornerSprig(c, sx + tw - 12, sy + th - 6, true);
+  drawCornerSprig(c, sx + 14, sy + th - 6, false);
+  drawCornerSprig(c, sx + tw - 14, sy + th - 6, true);
 
   // Bold white title with deep green drop shadow
-  drawText(c, title, cx, sy + th / 2 + 3, 30, '#182c19', 'center', 900);
-  drawText(c, title, cx, sy + th / 2, 30, '#fffdf5', 'center', 900);
+  drawText(c, title, cx, sy + th / 2 + 3, 35, '#182c19', 'center', 900);
+  drawText(c, title, cx, sy + th / 2, 35, '#fffdf5', 'center', 900);
 
-  // Optional cream pill subtitle nestled right underneath the signboard (just like Web!)
+  // Optional cream pill subtitle nestled right underneath the signboard
   if (subtitle) {
-    c.font = `800 16px ${UI_FONT}`;
-    const sw = Math.min(720, Math.max(180, Math.ceil(c.measureText(subtitle).width) + 34));
+    c.font = `800 20px ${UI_FONT}`;
+    const sw = Math.min(820, Math.max(220, Math.ceil(c.measureText(subtitle).width) + 40));
     const py = sy + th + 6;
-    round(c, cx - sw / 2, py + 2, sw, 30, 15, 'rgba(56,30,12,0.38)', 'transparent', 0);
-    round(c, cx - sw / 2, py, sw, 30, 15, '#fff9eb', '#8a5b32', 2);
-    drawText(c, subtitle, cx, py + 16, 15.5, '#4a2a14', 'center', 900);
+    round(c, cx - sw / 2, py + 2, sw, 36, 18, 'rgba(56,30,12,0.38)', 'transparent', 0);
+    round(c, cx - sw / 2, py, sw, 36, 18, '#fff9eb', '#8a5b32', 2.4);
+    drawText(c, subtitle, cx, py + 19, 19.5, '#4a2a14', 'center', 900);
   }
 }
 
@@ -420,7 +421,7 @@ export function drawYuzuCloseButton(
   c.strokeStyle = '#5b310f';
   c.stroke();
 
-  drawText(c, '×', cx, cy + dy + 1, 30, '#5e2a0b', 'center', 900);
+  drawText(c, '×', cx, cy + dy + 1, Math.round(r * 1.24), '#5e2a0b', 'center', 900);
 }
 
 /**
@@ -477,12 +478,12 @@ export function drawHoneyOakTab(
     label,
     x + w / 2,
     y + dy + (h - dy) / 2 + 1,
-    active ? 18 : 17,
+    active ? 23 : 21.5,
     active ? '#462610' : '#fff8e8',
     'center',
     900,
     active ? undefined : 'rgba(62,33,14,0.65)',
-    2,
+    2.5,
   );
 }
 
@@ -801,12 +802,12 @@ export function drawFullBleedBackdrop(
 
 // ── 1:1 WEB P18 LEDGER SHELL & CONTROLS (`LedgerView.ts` + `p18_preview_*`) ──
 
-/** Centered storybook hinoki wood board dimensions matching Web `p18_preview_*` silhouette with generous phone readability. */
+/** Full-safe-width mobile storybook hinoki wood board (+48% wider than PC narrow sheet so 2-3 giant cards shine on phones!). */
 export const LEDGER = {
-  x: 224,
-  y: 156,
-  w: 832,
-  h: 492,
+  x: 24,
+  y: 162,
+  w: 1232,
+  h: 500,
 } as const;
 
 export interface LedgerTabItem {
@@ -861,68 +862,68 @@ export function drawLedgerShell(
   const { x: lx, y: ly, w: lw, h: lh } = LEDGER;
 
   // 1. Matcha-Bamboo Signboard straddling top center
-  drawMatchaSignboard(c, 640, 12, opts.title, undefined, 290);
+  drawMatchaSignboard(c, 640, 8, opts.title, undefined, 340);
   if (opts.titleHitId) {
-    hits.add({ id: opts.titleHitId, x: 640 - 170, y: 10, w: 340, h: 66 });
+    hits.add({ id: opts.titleHitId, x: 640 - 190, y: 6, w: 380, h: 72 });
   }
 
-  // 2. Yuzu-Gold Circular Close Button perched neatly to the right of signboard
-  drawYuzuCloseButton(c, hits, opts.closeId ?? 'modal:close', lx + lw - 18, 46, 25);
+  // 2. Plump Yuzu-Gold Close Button perched strictly LEFT of WeChat [🎮][···|◉] (x=1084 -> 100% clear on all iPhones!)
+  drawYuzuCloseButton(c, hits, opts.closeId ?? 'modal:close', 1084, 44, 30);
 
-  // 3. Cream Pill Header Badge directly below signboard (supports sprite icons + text!)
+  // 3. Enlarged Cream Pill Header Badge directly below signboard
   if (opts.badgeSegments && opts.badgeSegments.length > 0) {
-    c.font = `900 16px ${UI_FONT}`;
-    let totalW = 28;
+    c.font = `900 20px ${UI_FONT}`;
+    let totalW = 34;
     const widths = opts.badgeSegments.map(seg => {
       const tw = Math.ceil(c.measureText(seg.text).width);
-      const iw = seg.icon ? 24 : 0;
+      const iw = seg.icon ? 28 : 0;
       const w = iw + tw;
-      totalW += w + 12;
+      totalW += w + 14;
       return { tw, iw, w };
     });
-    totalW = Math.min(620, Math.max(120, totalW - 12));
-    const pillH = 30;
-    const pillY = 77;
-    const switchW = opts.switchLink ? 106 : 0;
-    const groupW = totalW + (switchW ? switchW + 8 : 0);
+    totalW = Math.min(760, Math.max(150, totalW - 14));
+    const pillH = 36;
+    const pillY = 78;
+    const switchW = opts.switchLink ? 132 : 0;
+    const groupW = totalW + (switchW ? switchW + 10 : 0);
     const pillX = 640 - groupW / 2;
 
-    round(c, pillX, pillY + 2, totalW, pillH, 15, 'rgba(56,30,12,0.38)', 'transparent', 0);
-    round(c, pillX, pillY, totalW, pillH, 15, '#fff9eb', '#8a5b32', 2);
+    round(c, pillX, pillY + 2, totalW, pillH, 18, 'rgba(56,30,12,0.38)', 'transparent', 0);
+    round(c, pillX, pillY, totalW, pillH, 18, '#fff9eb', '#8a5b32', 2.4);
 
-    let cx = pillX + 14;
+    let cx = pillX + 16;
     opts.badgeSegments.forEach((seg, idx) => {
       const m = widths[idx];
       if (seg.icon) {
-        drawSpriteContain(c, seg.icon, cx, pillY + 5, 20, 20);
-        cx += 24;
+        drawSpriteContain(c, seg.icon, cx, pillY + 6, 24, 24);
+        cx += 28;
       }
-      drawText(c, seg.text, cx, pillY + 16, 15.5, '#4a2a14', 'left', 900);
-      cx += m.tw + 12;
+      drawText(c, seg.text, cx, pillY + 19, 19.5, '#4a2a14', 'left', 900);
+      cx += m.tw + 14;
     });
 
     if (opts.switchLink) {
-      drawPillButton(c, hits, opts.switchLink.id, pillX + totalW + 8, pillY - 1, switchW, 32, opts.switchLink.label, 'gold', { fontSize: 14 });
+      drawPillButton(c, hits, opts.switchLink.id, pillX + totalW + 10, pillY - 1, switchW, 38, opts.switchLink.label, 'gold', { fontSize: 18 });
     }
   }
 
-  // 4. Equal-Width Honey-Oak Bookmark Tabs perched cleanly on top rim of hinoki board
+  // 4. Equal-Width Enlarged Honey-Oak Bookmark Tabs perched cleanly on top rim of hinoki board
   const hasTabs = Boolean(opts.tabs && opts.tabs.length > 0);
-  const boardY = hasTabs ? ly : ly - 38;
-  const boardH = hasTabs ? lh : lh + 38;
+  const boardY = hasTabs ? ly : ly - 42;
+  const boardH = hasTabs ? lh : lh + 42;
 
   if (opts.tabs && opts.tabs.length > 0) {
-    const tabY = boardY - 46;
-    const padX = 12;
-    const gap = 8;
+    const tabY = boardY - 52;
+    const padX = 16;
+    const gap = 10;
     const n = opts.tabs.length;
     const tabW = Math.floor((lw - padX * 2 - gap * (n - 1)) / n);
     opts.tabs.forEach((tb, i) => {
       const tx = lx + padX + i * (tabW + gap);
-      drawHoneyOakTab(c, hits, tb.id, tx, tabY, tabW, 48, tb.label, tb.active);
+      drawHoneyOakTab(c, hits, tb.id, tx, tabY, tabW, 54, tb.label, tb.active);
       if (tb.pulse && !tb.active) {
         const glow = 0.55 + 0.45 * Math.sin((opts.elapsed ?? 0) * 6);
-        round(c, tx - 2, tabY + 2, tabW + 4, 48, 15, 'transparent', `rgba(255,212,64,${glow.toFixed(2)})`, 3.5);
+        round(c, tx - 2, tabY + 2, tabW + 4, 54, 15, 'transparent', `rgba(255,212,64,${glow.toFixed(2)})`, 3.5);
       }
     });
   }
@@ -931,22 +932,22 @@ export function drawLedgerShell(
   drawHinokiBoard(c, lx, boardY, lw, boardH, 24);
   hits.add({ id: 'modal:card', x: lx, y: boardY, w: lw, h: boardH });
 
-  // 6. Peeking Mascot layered ON TOP of Tab 1 shoulder so its paws visibly grip the rim (exact Web `p18_preview_*`!)
-  drawSpriteContain(c, opts.mascot, lx + 4, hasTabs ? boardY - 122 : boardY - 82, 86, 86);
+  // 6. Peeking Mascot layered ON TOP of Tab 1 shoulder
+  drawSpriteContain(c, opts.mascot, lx + 8, hasTabs ? boardY - 132 : boardY - 88, 92, 92);
 
-  // 7. 2-Line White Outlined Storybook Footer Tips right below the board (exact Web look!)
+  // 7. Crisp Outlined Footer Tip right below the board
   if (opts.footer1) {
-    drawText(c, opts.footer1, 640, boardY + boardH + 22, 16, '#fffdf5', 'center', 800, INK, 4.5);
+    drawText(c, opts.footer1, 640, boardY + boardH + 22, 19, '#fffdf5', 'center', 800, INK, 4.8);
   }
   if (opts.footer2) {
-    drawText(c, opts.footer2, 640, boardY + boardH + 46, 15.5, '#fff4d6', 'center', 800, INK, 4.5);
+    drawText(c, opts.footer2, 640, boardY + boardH + 46, 17.5, '#fff4d6', 'center', 800, INK, 4.5);
   }
 
-  // 8. Optional P19 In-Dialog Coaching Strip (`p19_04`, `p19_05`, `p19_07`)
+  // 8. Optional P19 In-Dialog Coaching Strip (enlarged 20px font!)
   let bodyY = boardY + 14;
   let bodyH = boardH - 28;
   if (opts.guideStep) {
-    const gx = lx + 16, gw = lw - 32, gh = 68;
+    const gx = lx + 18, gw = lw - 36, gh = 78;
     const done = opts.guideStep.done;
     drawIvorySlab(
       c,
@@ -954,30 +955,30 @@ export function drawLedgerShell(
       bodyY,
       gw,
       gh,
-      16,
+      18,
       done ? '#eafbe2' : '#fff8dc',
       done ? '#d4f2c4' : '#f8e6b4',
       done ? '#3d8633' : '#d6891e',
-      2.6,
+      3,
     );
     const gm = GUIDE_MASCOT[opts.guideStep.feature] ?? 'ui_tutorial_capy';
-    drawSpriteContain(c, gm, gx + 12, bodyY + 10, 48, 48);
-    const btnW = done ? 168 : 112;
+    drawSpriteContain(c, gm, gx + 14, bodyY + 11, 56, 56);
+    const btnW = done ? 210 : 138;
     const guideText = t(opts.guideStep.textKey);
-    const guideMaxW = gw - 86 - btnW;
-    const lineCount = Math.min(2, Math.max(1, wrapText(c, guideText, guideMaxW, 16.5, 800).length));
-    const textTopY = bodyY + Math.round((gh - lineCount * 22) / 2);
-    drawWrappedText(c, guideText, gx + 70, textTopY, guideMaxW, 16.5, 22, PALETTE.ink, 'left', 800, 2);
+    const guideMaxW = gw - 102 - btnW;
+    const lineCount = Math.min(2, Math.max(1, wrapText(c, guideText, guideMaxW, 20.5, 800).length));
+    const textTopY = bodyY + Math.round((gh - lineCount * 26) / 2);
+    drawWrappedText(c, guideText, gx + 82, textTopY, guideMaxW, 20.5, 26, PALETTE.ink, 'left', 800, 2);
     if (done) {
-      drawPillButton(c, hits, `onboard:done:${opts.guideStep.feature}`, gx + gw - btnW - 12, bodyY + 13, btnW, 42, t('p19.guideGotIt'), 'green', { fontSize: 16 });
+      drawPillButton(c, hits, `onboard:done:${opts.guideStep.feature}`, gx + gw - btnW - 14, bodyY + 14, btnW, 50, t('p19.guideGotIt'), 'green', { fontSize: 20 });
     } else {
-      drawPillButton(c, hits, `onboard:skip:${opts.guideStep.feature}`, gx + gw - btnW - 12, bodyY + 13, btnW, 42, t('p19.guideSkip'), 'cream', { fontSize: 15 });
+      drawPillButton(c, hits, `onboard:skip:${opts.guideStep.feature}`, gx + gw - btnW - 14, bodyY + 14, btnW, 50, t('p19.guideSkip'), 'cream', { fontSize: 19 });
     }
     bodyY += gh + 10;
     bodyH -= gh + 10;
   }
 
-  return { x: lx + 16, y: bodyY, w: lw - 32, h: bodyH };
+  return { x: lx + 18, y: bodyY, w: lw - 36, h: bodyH };
 }
 
 /** Exact Web Detail Navigation Bar: `[← 返回列表]     [◀ 上一个  3 / 12  下一个 ▶]`. */
@@ -993,13 +994,13 @@ export function drawDetailNavBar(
   w: number,
   backLabel: string = t('p7.back'),
 ): number {
-  const h = 42;
-  c.font = `900 15.5px ${UI_FONT}`;
-  const backW = Math.min(240, Math.max(128, Math.ceil(c.measureText(backLabel).width) + 34));
-  drawPillButton(c, hits, backId, x + 2, y, backW, h, backLabel, 'cream', { fontSize: 15.5 });
-  drawPillButton(c, hits, prevId, x + w - 294, y, 102, h, `◀ ${t('p7.prev')}`, 'cream', { fontSize: 15 });
-  drawText(c, indexText, x + w - 146, y + h / 2 + 1, 16.5, '#fffdf5', 'center', 900, INK, 3.5);
-  drawPillButton(c, hits, nextId, x + w - 104, y, 102, h, `${t('p7.next')} ▶`, 'cream', { fontSize: 15 });
+  const h = 48;
+  c.font = `900 20px ${UI_FONT}`;
+  const backW = Math.min(280, Math.max(156, Math.ceil(c.measureText(backLabel).width) + 42));
+  drawPillButton(c, hits, backId, x + 2, y, backW, h, backLabel, 'cream', { fontSize: 20 });
+  drawPillButton(c, hits, prevId, x + w - 364, y, 128, h, `◀ ${t('p7.prev')}`, 'cream', { fontSize: 19 });
+  drawText(c, indexText, x + w - 180, y + h / 2 + 1, 21, '#fffdf5', 'center', 900, INK, 4);
+  drawPillButton(c, hits, nextId, x + w - 130, y, 128, h, `${t('p7.next')} ▶`, 'cream', { fontSize: 19 });
   return h;
 }
 

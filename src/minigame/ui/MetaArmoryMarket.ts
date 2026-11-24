@@ -285,7 +285,7 @@ export function drawArmoryModal(
     return { scrollViewport: { x: vx, y: vy, w: vw, h: vh } };
   }
 
-  // ── SINGLE-COLUMN WEAPON LIST (EXACT `p19_04_armory_step1_guide.png`!) ────
+  // ── 3-COLUMN GIANT MOBILE WEAPON CARDS ───────────────────────────────────
   const vx = body.x, vy = body.y, vw = body.w, vh = body.h;
   c.save();
   c.beginPath();
@@ -297,14 +297,17 @@ export function drawArmoryModal(
     if (weaponId) wornBy.set(weaponId, heroId);
   }
 
-  const rowH = 112;
-  const gap = 12;
-  const rowW = vw - 14;
+  const cols = 3;
+  const gapX = 16, gapY = 14;
+  const cardW = Math.floor((vw - 16 - gapX * (cols - 1)) / cols);
+  const cardH = 228;
   const pulseSwatter = opts?.guideStep?.pulseSelector === '[data-action="meta-weapon:m01_swatter"]';
 
   weapons.forEach((w, idx) => {
-    const ry = vy + 4 + idx * (rowH + gap) - scroll.offset;
-    if (ry + rowH < vy - 20 || ry > vy + vh + 20) return;
+    const col = idx % cols, row = Math.floor(idx / cols);
+    const rx = vx + 4 + col * (cardW + gapX);
+    const ry = vy + 4 + row * (cardH + gapY) - scroll.offset;
+    if (ry + cardH < vy - 20 || ry > vy + vh + 20) return;
 
     const unlocked = profile.unlockedWeapons.includes(w.id);
     const wearer = wornBy.get(w.id);
@@ -313,53 +316,54 @@ export function drawArmoryModal(
     const rColor = RARITY_COLORS[w.rarity];
     const shouldPulse = pulseSwatter && w.id === 'm01_swatter';
 
-    if (ry + rowH > vy && ry < vy + vh) {
-      hits.add({ id: `armory:open:${w.id}`, x: vx + 4, y: Math.max(vy, ry), w: rowW, h: Math.min(ry + rowH, vy + vh) - Math.max(vy, ry), data: w.id });
+    if (ry + cardH > vy && ry < vy + vh) {
+      hits.add({ id: `armory:open:${w.id}`, x: rx, y: Math.max(vy, ry), w: cardW, h: Math.min(ry + cardH, vy + vh) - Math.max(vy, ry), data: w.id });
     }
 
     drawIvorySlab(
       c,
-      vx + 4,
+      rx,
       ry,
-      rowW,
-      rowH,
-      18,
+      cardW,
+      cardH,
+      20,
       shouldPulse ? '#fff9db' : unlocked ? '#fffdf8' : '#f2eadc',
       shouldPulse ? '#fae6a2' : unlocked ? '#f6e8cb' : '#e5dac6',
-      shouldPulse ? '#e08b19' : '#7e5530',
-      shouldPulse ? 3.6 : 2,
+      shouldPulse ? '#e08b19' : rColor,
+      shouldPulse ? 4 : 2.6,
     );
 
-    // Weapon Icon Box
-    round(c, vx + 18, ry + 16, 80, 80, 16, RARITY_BG[w.rarity], rColor, 2.2);
-    if (!drawSpriteContain(c, `weapon_${w.id}`, vx + 23, ry + 21, 70, 70, unlocked ? 1 : 0.46)) {
-      drawSpriteContain(c, 'ui_weapon_fragment', vx + 23, ry + 21, 70, 70, unlocked ? 1 : 0.46);
+    // Big Weapon Icon Box (104×104)
+    round(c, rx + 14, ry + 14, 104, 104, 18, RARITY_BG[w.rarity], rColor, 2.4);
+    if (!drawSpriteContain(c, `weapon_${w.id}`, rx + 20, ry + 20, 92, 92, unlocked ? 1 : 0.46)) {
+      drawSpriteContain(c, 'ui_weapon_fragment', rx + 20, ry + 20, 92, 92, unlocked ? 1 : 0.46);
     }
 
-    // Center Copy
-    drawText(c, t(`weapon.${w.id}`), vx + 114, ry + 30, 21.5, unlocked ? PALETTE.ink : PALETTE.muted, 'left', 900);
-    drawText(c, `${t(`m2.rarity.${w.rarity}`)} · ${t(`p11.meta.family.${w.family}`)}`, vx + 114, ry + 57, 15.5, rColor, 'left', 800);
-    const summary = w.signatureHero ? t('m2.signature', { hero: t(`hero.${w.signatureHero}`) }) : t(`weapon.${w.id}.desc`);
-    const line3 = `⚔ +${Math.round(rule.damageBonus * 100)}% · ${summary}`;
-    drawText(c, line3.length > 26 ? `${line3.slice(0, 26)}…` : line3, vx + 114, ry + 84, 15.5, PALETTE.inkSoft, 'left', 700);
+    // Giant title + rarity + damage bonus
+    drawText(c, t(`weapon.${w.id}`), rx + 132, ry + 36, 26, unlocked ? PALETTE.ink : PALETTE.muted, 'left', 900);
+    drawText(c, `${t(`m2.rarity.${w.rarity}`)} · ${t(`p11.meta.family.${w.family}`)}`, rx + 132, ry + 68, 19.5, rColor, 'left', 800);
+    round(c, rx + 132, ry + 86, cardW - 146, 32, 12, '#efe0be', '#a67f4e', 1.6);
+    drawText(c, `⚔ +${Math.round(rule.damageBonus * 100)}%`, rx + 132 + (cardW - 146) / 2, ry + 103, 19.5, '#4c2c12', 'center', 900);
 
-    // Right Status Column
-    const rightCx = vx + 4 + rowW - 64;
+    // Bottom status / equip / progress footer
+    const footY = ry + 132;
+    const summary = w.signatureHero ? `★ ${t('m2.signature', { hero: t(`hero.${w.signatureHero}`) })}` : t(`weapon.${w.id}.desc`);
+    drawText(c, summary.length > 16 ? `${summary.slice(0, 16)}…` : summary, rx + 16, footY + 14, 19, PALETTE.inkSoft, 'left', 800);
+
     if (wearer) {
-      drawSpriteContain(c, wearer, rightCx - 20, ry + 12, 40, 40);
-      drawText(c, t('p11.meta.worn'), rightCx, ry + 64, 15, '#2c763d', 'center', 900);
-      drawSpriteContain(c, 'ui_storybook_check', rightCx - 12, ry + 76, 24, 24);
+      round(c, rx + 14, ry + cardH - 52, cardW - 28, 38, 19, '#dff5d6', '#3d8633', 2);
+      drawSpriteContain(c, wearer, rx + 24, ry + cardH - 49, 32, 32);
+      drawText(c, `${t(`hero.${wearer}`)} · ${t('p11.meta.worn')}`, rx + cardW / 2 + 12, ry + cardH - 32, 19, '#1f5918', 'center', 900);
     } else if (unlocked) {
-      drawText(c, t('p11.meta.unlocked'), rightCx, ry + 34, 15.5, '#2c763d', 'center', 900);
-      round(c, rightCx - 44, ry + 54, 88, 34, 17, '#f2e0bc', '#855a2e', 1.8);
-      drawText(c, t('p11.meta.equipShort'), rightCx, ry + 72, 16, PALETTE.ink, 'center', 900);
+      round(c, rx + 14, ry + cardH - 52, cardW - 28, 38, 19, '#f7d263', '#8c4e12', 2.2);
+      drawText(c, `${t('p11.meta.unlocked')} · ${t('p11.meta.equipShort')}`, rx + cardW / 2, ry + cardH - 32, 19.5, '#3c1e08', 'center', 900);
     } else {
-      drawText(c, `${have}/${rule.fragments}`, rightCx, ry + 42, 16.5, PALETTE.inkSoft, 'center', 900);
-      drawProgressBar(c, rightCx - 48, ry + 62, 96, 10, have / rule.fragments, rColor, 'rgba(72,46,24,0.18)', '#6b4928');
+      drawProgressBar(c, rx + 16, ry + cardH - 42, cardW - 116, 16, have / rule.fragments, rColor, 'rgba(72,46,24,0.18)', '#6b4928');
+      drawText(c, `${have}/${rule.fragments}`, rx + cardW - 16, ry + cardH - 34, 19.5, PALETTE.inkSoft, 'right', 900);
     }
   });
 
-  const contentH = 8 + weapons.length * (rowH + gap);
+  const contentH = 12 + Math.ceil(weapons.length / cols) * (cardH + gapY);
   c.restore();
   scroll.setContentBounds(contentH, vh);
   drawScrollbar(c, vx, vy, vw, vh, contentH, scroll);
@@ -417,70 +421,77 @@ export function drawMarketModal(
     const allMaxed = !Object.values(PROPS).some(p => (profile.ownedProps[p.id] ?? 0) < p.maxLevel);
     const whisper = allMaxed ? t('p11.meta.merchantMaxed') : t(`p11.meta.merchant${market.merchantQuip % 3}`);
 
-    // Top Raccoon Whisper Bar + Refresh Pill (EXACT Web `storybook-shop-heading`!)
+    // Top Raccoon Whisper Bar + Refresh Pill (ENLARGED!)
     const hy = body.y + 2;
-    const refreshW = market.adRefreshAvailable ? 168 : 184;
-    const adW = market.adRefreshAvailable ? 148 : 0;
-    const whisperW = body.w - refreshW - adW - (adW ? 20 : 12);
+    const refreshW = market.adRefreshAvailable ? 210 : 230;
+    const adW = market.adRefreshAvailable ? 176 : 0;
+    const whisperW = body.w - refreshW - adW - (adW ? 24 : 14);
 
-    hits.add({ id: 'market:merchant', x: body.x + 2, y: hy, w: whisperW, h: 46 });
-    drawIvorySlab(c, body.x + 2, hy, whisperW, 46, 16, '#fffaf0', '#f4e3c0', '#855a2e', 1.8);
-    drawSpriteContain(c, 'ui_market_peek_raccoon', body.x + 12, hy + 7, 32, 32);
-    drawText(c, whisper, body.x + 52, hy + 24, 15.5, PALETTE.ink, 'left', 800);
+    hits.add({ id: 'market:merchant', x: body.x + 2, y: hy, w: whisperW, h: 54 });
+    drawIvorySlab(c, body.x + 2, hy, whisperW, 54, 18, '#fffaf0', '#f4e3c0', '#855a2e', 2.2);
+    drawSpriteContain(c, 'ui_market_peek_raccoon', body.x + 12, hy + 7, 40, 40);
+    drawText(c, whisper, body.x + 60, hy + 28, 20, PALETTE.ink, 'left', 800);
 
     const canRefresh = !allMaxed && profile.coins >= META_PRICES.shopRefresh;
-    drawPillButton(c, hits, 'market:refresh', body.x + whisperW + 10, hy + 2, refreshW, 42, `${t('p6.refresh')} · ${META_PRICES.shopRefresh}`, canRefresh ? 'gold' : 'muted', {
-      fontSize: 15.5,
+    drawPillButton(c, hits, 'market:refresh', body.x + whisperW + 12, hy + 2, refreshW, 50, `${t('p6.refresh')} · ${META_PRICES.shopRefresh}`, canRefresh ? 'gold' : 'muted', {
+      fontSize: 20,
       icon: 'ui_coin_gold',
       disabled: !canRefresh,
     });
     if (market.adRefreshAvailable) {
-      drawPillButton(c, hits, 'market:ad-refresh', body.x + body.w - adW, hy + 2, adW, 42, zh ? '🎬 免费刷新' : '🎬 Ad Free', 'teal', { fontSize: 14.5 });
+      drawPillButton(c, hits, 'market:ad-refresh', body.x + body.w - adW, hy + 2, adW, 50, zh ? '🎬 免费刷新' : '🎬 Ad Free', 'teal', { fontSize: 19 });
     }
 
-    const vx = body.x, vy = hy + 56, vw = body.w, vh = body.h - 58;
+    const vx = body.x, vy = hy + 66, vw = body.w, vh = body.h - 68;
     if (offers.length === 0) {
-      drawIvorySlab(c, vx + 4, vy, vw - 8, vh - 4, 18);
-      drawText(c, t('m2.shopEmpty'), vx + vw / 2, vy + vh / 2, 22, PALETTE.inkSoft, 'center', 900);
+      drawIvorySlab(c, vx + 4, vy, vw - 8, vh - 4, 20);
+      drawText(c, t('m2.shopEmpty'), vx + vw / 2, vy + vh / 2, 28, PALETTE.inkSoft, 'center', 900);
       return {};
     }
 
-    const rowH = Math.min(126, Math.floor((vh - 24) / 3));
-    const gap = 10;
-    offers.forEach((propId, i) => {
+    // 3 GIANT SIDE-BY-SIDE SHOWCASE OFFER CARDS!
+    const gap = 16;
+    const cardW = Math.floor((vw - 8 - gap * 2) / 3);
+    const cardH = Math.min(392, vh - 4);
+    offers.slice(0, 3).forEach((propId, i) => {
       const prop = PROPS[propId];
       if (!prop) return;
-      const ry = vy + i * (rowH + gap);
+      const rx = vx + 4 + i * (cardW + gap);
+      const ry = vy;
       const lv = profile.ownedProps[propId] ?? 0;
       const maxed = lv >= prop.maxLevel;
       const afford = profile.coins >= prop.price;
       const rColor = RARITY_COLORS[prop.rarity];
 
-      drawIvorySlab(c, vx + 4, ry, vw - 8, rowH, 18, '#fffdf8', '#f6e8cb', rColor, 2.2);
-      round(c, vx + 18, ry + (rowH - 78) / 2, 78, 78, 16, RARITY_BG[prop.rarity], rColor, 2);
-      if (!drawSpriteContain(c, `prop_${propId}`, vx + 24, ry + (rowH - 66) / 2, 66, 66)) {
-        drawText(c, prop.icon, vx + 57, ry + rowH / 2, 40, PALETTE.ink, 'center', 700);
+      drawIvorySlab(c, rx, ry, cardW, cardH, 22, '#fffdf8', '#f6e8cb', rColor, 3);
+      const iconS = 114;
+      round(c, rx + (cardW - iconS) / 2, ry + 18, iconS, iconS, 20, RARITY_BG[prop.rarity], rColor, 2.6);
+      if (!drawSpriteContain(c, `prop_${propId}`, rx + (cardW - 96) / 2, ry + 27, 96, 96)) {
+        drawText(c, prop.icon, rx + cardW / 2, ry + 75, 52, PALETTE.ink, 'center', 700);
       }
 
-      drawText(c, t(`prop.${propId}`), vx + 112, ry + 26, 21, PALETTE.ink, 'left', 900);
-      drawText(c, `${t(`m2.${prop.type}`)} · Lv.${lv}/${prop.maxLevel}`, vx + 112, ry + 52, 15, prop.type === 'active' ? '#c2502c' : '#2d7a64', 'left', 800);
-      drawWrappedText(c, t(`prop.${propId}.desc`), vx + 112, ry + 68, vw - 282, 15, 20, PALETTE.inkSoft, 'left', 700, 2);
+      drawText(c, t(`prop.${propId}`), rx + cardW / 2, ry + 156, 28, PALETTE.ink, 'center', 900);
+      drawText(c, `${t(`m2.${prop.type}`)} · Lv.${lv}/${prop.maxLevel}`, rx + cardW / 2, ry + 188, 20, prop.type === 'active' ? '#c2502c' : '#2d7a64', 'center', 800);
 
+      round(c, rx + 16, ry + 208, cardW - 32, Math.max(82, cardH - 294), 14, 'rgba(232,212,172,0.42)', '#cbb082', 1.5);
+      drawWrappedText(c, t(`prop.${propId}.desc`), rx + 26, ry + 218, cardW - 52, 20.5, 27, PALETTE.ink, 'left', 700, 3);
+
+      const btnY = ry + cardH - 68;
       if (maxed) {
-        drawText(c, t('m2.maxed'), vx + vw - 76, ry + rowH / 2 - 14, 16, '#2c763d', 'center', 900);
-        drawSpriteContain(c, 'ui_storybook_check', vx + vw - 89, ry + rowH / 2, 26, 26);
+        round(c, rx + 24, btnY, cardW - 48, 52, 26, '#dff5d6', '#3d8633', 2.2);
+        drawText(c, `✓ ${t('m2.maxed')}`, rx + cardW / 2, btnY + 27, 22, '#22591b', 'center', 900);
       } else {
         drawPillButton(
           c,
           hits,
           `market:buy:${propId}`,
-          vx + vw - 156,
-          ry + (rowH - 48) / 2,
-          138,
-          48,
+          rx + 24,
+          btnY,
+          cardW - 48,
+          54,
           `${prop.price} ${t(lv ? 'p11.meta.upgradeShort' : 'p11.meta.buyShort')}`,
           afford ? 'green' : 'muted',
-          { fontSize: 16.5, icon: 'ui_coin_gold', disabled: !afford },
+          { fontSize: 22, icon: 'ui_coin_gold', disabled: !afford },
         );
       }
     });
@@ -551,10 +562,15 @@ export function drawMarketModal(
     c.rect(vx, vy, vw, vh);
     c.clip();
 
-    const rowH = 104, gap = 10, rowW = vw - 14;
+    // 2-Column GIANT Prop Cards in Backpack
+    const cols = 2, gapX = 16, gapY = 12;
+    const cardW = Math.floor((vw - 16 - gapX) / cols);
+    const cardH = 148;
     props.forEach((prop, idx) => {
-      const ry = vy + 2 + idx * (rowH + gap) - scroll.offset;
-      if (ry + rowH < vy - 20 || ry > vy + vh + 20) return;
+      const col = idx % cols, row = Math.floor(idx / cols);
+      const rx = vx + 4 + col * (cardW + gapX);
+      const ry = vy + 2 + row * (cardH + gapY) - scroll.offset;
+      if (ry + cardH < vy - 20 || ry > vy + vh + 20) return;
 
       const lv = profile.ownedProps[prop.id] ?? 0;
       const worn = eqSet.has(prop.id);
@@ -563,47 +579,47 @@ export function drawMarketModal(
 
       drawIvorySlab(
         c,
-        vx + 4,
+        rx,
         ry,
-        rowW,
-        rowH,
-        16,
+        cardW,
+        cardH,
+        18,
         shouldPulse ? '#fff8d4' : worn ? '#ebf9e4' : lv > 0 ? '#fffdf8' : '#efe7d8',
         shouldPulse ? '#f8df91' : worn ? '#d6f0ca' : lv > 0 ? '#f6e8cb' : '#e3d8c4',
         shouldPulse ? '#e08b19' : worn ? '#3d8633' : rColor,
-        shouldPulse ? 3.5 : worn ? 2.4 : 1.8,
+        shouldPulse ? 3.8 : worn ? 2.8 : 2.2,
       );
-      round(c, vx + 16, ry + 14, 76, 76, 15, RARITY_BG[prop.rarity], rColor, 2);
-      if (!drawSpriteContain(c, `prop_${prop.id}`, vx + 22, ry + 20, 64, 64, lv > 0 ? 1 : 0.36)) {
-        drawText(c, prop.icon, vx + 54, ry + 52, 36, PALETTE.ink, 'center', 700);
+      round(c, rx + 14, ry + 26, 94, 94, 18, RARITY_BG[prop.rarity], rColor, 2.2);
+      if (!drawSpriteContain(c, `prop_${prop.id}`, rx + 21, ry + 33, 80, 80, lv > 0 ? 1 : 0.36)) {
+        drawText(c, prop.icon, rx + 61, ry + 73, 44, PALETTE.ink, 'center', 700);
       }
 
-      drawText(c, t(`prop.${prop.id}`), vx + 106, ry + 26, 20, lv > 0 ? PALETTE.ink : PALETTE.muted, 'left', 900);
-      drawText(c, `${t(`m2.${prop.type}`)}${lv > 0 ? ` · Lv.${lv}/${prop.maxLevel}` : ''}`, vx + 106, ry + 50, 15, prop.type === 'active' ? '#c2502c' : '#2d7a64', 'left', 800);
-      drawWrappedText(c, t(`prop.${prop.id}.desc`), vx + 106, ry + 64, rowW - 252, 14.5, 19, PALETTE.inkSoft, 'left', 700, 2);
+      drawText(c, t(`prop.${prop.id}`), rx + 122, ry + 30, 25, lv > 0 ? PALETTE.ink : PALETTE.muted, 'left', 900);
+      drawText(c, `${t(`m2.${prop.type}`)}${lv > 0 ? ` · Lv.${lv}/${prop.maxLevel}` : ''}`, rx + 122, ry + 60, 19, prop.type === 'active' ? '#c2502c' : '#2d7a64', 'left', 800);
+      drawWrappedText(c, t(`prop.${prop.id}.desc`), rx + 122, ry + 78, cardW - 266, 18.5, 24, PALETTE.inkSoft, 'left', 700, 2);
 
-      if (ry + rowH > vy && ry < vy + vh) {
+      if (ry + cardH > vy && ry < vy + vh) {
         if (lv > 0) {
           drawPillButton(
             c,
             hits,
             `market:equip:${prop.id}`,
-            vx + 4 + rowW - 134,
-            ry + 30,
+            rx + cardW - 134,
+            ry + 48,
             120,
-            44,
+            52,
             t(worn ? 'p11.meta.deployed' : 'p11.meta.deploy'),
             worn ? 'green' : 'gold',
-            { fontSize: 16, icon: worn ? 'ui_storybook_check' : undefined },
+            { fontSize: 19.5, icon: worn ? 'ui_storybook_check' : undefined },
           );
         } else {
-          drawText(c, t('p11.meta.unowned'), vx + 4 + rowW - 68, ry + 36, 15, PALETTE.muted, 'center', 800);
-          drawSpriteContain(c, 'ui_lock_closed', vx + 4 + rowW - 81, ry + 52, 26, 26);
+          drawText(c, t('p11.meta.unowned'), rx + cardW - 72, ry + 54, 18.5, PALETTE.muted, 'center', 800);
+          drawSpriteContain(c, 'ui_lock_closed', rx + cardW - 87, ry + 74, 30, 30);
         }
       }
     });
 
-    const contentH = 8 + props.length * (rowH + gap);
+    const contentH = 12 + Math.ceil(props.length / cols) * (cardH + gapY);
     c.restore();
     scroll.setContentBounds(contentH, vh);
     drawScrollbar(c, vx, vy, vw, vh, contentH, scroll);

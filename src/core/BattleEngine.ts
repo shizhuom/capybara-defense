@@ -792,7 +792,8 @@ export class BattleEngine {
         const broken=this.state.grid.flatMap((tiles,row)=>tiles.map((tile,col)=>({tile,col,row}))).filter(cell=>cell.tile==='B'&&GridSystem.owns(enemy.side,cell.col,cell.row)).length;
         if(broken>=(ENEMIES.husky_wrecker.maxBrokenTiles??2))break;
         const cells:Point[]=[];
-        for(let row=0;row<GRID_ROWS;row++)for(let col=0;col<GRID_COLS;col++)if(GridSystem.owns(enemy.side,col,row)&&this.state.grid[row][col]==='O'&&!units.some(u=>u.location.zone==='board'&&u.location.col===col&&u.location.row===row))cells.push({col,row});
+        const rows=this.state.grid.length,cols=this.state.grid[0]?.length??0;
+        for(let row=0;row<rows;row++)for(let col=0;col<cols;col++)if(GridSystem.owns(enemy.side,col,row)&&this.state.grid[row][col]==='O'&&!units.some(u=>u.location.zone==='board'&&u.location.col===col&&u.location.row===row))cells.push({col,row});
         const cell=cells.sort((a,b)=>GridSystem.distance(enemy,a)-GridSystem.distance(enemy,b))[0];
         if(cell&&this.resistBossSkill(cell))break;
         if(cell){this.state.grid[cell.row][cell.col]='B';delete this.state.craterHits[cell.col+','+cell.row];this.event({type:'burst',side:enemy.side,...cell,color:'#bd9478',duration:1});}break;

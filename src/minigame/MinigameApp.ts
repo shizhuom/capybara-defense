@@ -3,7 +3,7 @@ import { HEROES } from '../config/heroes';
 import { BROTH_IDS, type BrothId } from '../config/kitchen';
 import { PROPS } from '../config/props';
 import { getRank } from '../config/ranks';
-import { getMap, STAGE } from '../config/maps';
+import { getMap, setMobileWideStage, STAGE } from '../config/maps';
 import { ECONOMY } from '../config/units';
 import { isFacilityId } from '../config/village';
 import { WEAPONS } from '../config/weapons';
@@ -201,6 +201,7 @@ export class MinigameApp {
   private disposed = false;
 
   constructor(private readonly platform: PlatformAdapter) {
+    setMobileWideStage(true);
     this.profile = settleVillageClock(loadProfile(platform.storage), Date.now());
     this.profile = ensureDailyShop(this.profile, localDay(), Math.random);
     this.platform.audio.setSettings(this.profile.settings);
@@ -294,6 +295,11 @@ export class MinigameApp {
     this.openModal(hub);
   }
 
+  /** Helper for automated tests to inspect live UI button bounds by hit id. */
+  findHitBox(id: string): UiHitBox | undefined {
+    return this.hits.findById(id);
+  }
+
   /** Developer QA API exposed on `globalThis.__capyDev` for WeChat DevTools Console & QA testing. */
   getDevApi() {
     return {
@@ -349,16 +355,19 @@ export class MinigameApp {
   }
 
   private topRightEdge(vp: ViewportMetrics): number {
-    const minRight = Math.round(Math.max(1010, vp.visible.right - 260));
+    const scale = Math.max(0.25, vp.stageCssWidth / STAGE.width);
     const baseRight = vp.visible.right > 1290
       ? Math.min(vp.safeStage.right - 14, Math.min(1356, vp.visible.right - 26))
       : Math.min(1262, vp.safeStage.right - 14);
+    if (this.platform.kind === 'web') return Math.round(Math.max(1060, baseRight));
+    // WeChat mini-games display BOTH the [···|◉] capsule AND an optional [🎮] game button ~50 CSS px to its left.
+    // Reserve ~54 CSS px left of menuButton (or ~164 CSS px from visible right) so top-right controls NEVER collide!
+    const minRight = Math.round(Math.max(976, vp.visible.right - 310));
     if (vp.capsuleStageLeft !== undefined) {
-      return Math.round(Math.max(minRight, Math.min(baseRight, vp.capsuleStageLeft - 14)));
+      const clearGameBtn = vp.capsuleStageLeft - Math.round(54 / scale);
+      return Math.round(Math.max(minRight, Math.min(baseRight, clearGameBtn)));
     }
-    if (this.platform.kind === 'web') return Math.round(Math.max(minRight, baseRight));
-    const scale = Math.max(0.25, vp.stageCssWidth / STAGE.width);
-    const fallbackCapsuleLeft = vp.visible.right - 108 / scale;
+    const fallbackCapsuleLeft = vp.visible.right - 164 / scale;
     return Math.round(Math.max(minRight, Math.min(baseRight, fallbackCapsuleLeft)));
   }
 
@@ -1877,6 +1886,7 @@ export class MinigameApp {
     this.disposed = true;
     this.platform.cancelFrame(this.rafId);
     this.platform.dispose();
+    setMobileWideStage(false);
   }
 }
 

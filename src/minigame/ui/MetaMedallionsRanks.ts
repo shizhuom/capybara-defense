@@ -113,89 +113,80 @@ export function drawMedallionsModal(
   }
   y += noteH + 12;
 
-  // Single-Column 6 Medallion Cards
-  const rowH = 132, gap = 12;
+  // 2-Column GIANT Medallion Cards (6 Medallions!)
+  const cols = 2, gapX = 16, gapY = 14;
+  const cardW = Math.floor((vw - 16 - gapX) / cols);
+  const cardH = 196;
   const pulseFirst = pulseSel === '[data-action="medallion-up:med_breakthrough_atk"]';
 
-  MEDALLION_IDS.forEach(medId => {
+  MEDALLION_IDS.forEach((medId, idx) => {
+    const col = idx % cols, row = Math.floor(idx / cols);
+    const rx = vx + 4 + col * (cardW + gapX);
+    const ry = y + row * (cardH + gapY);
     const lv = getProfileMedallionLevel(profile, medId);
     const cost = medallionUpgradeCost(lv);
     const max = lv >= MEDALLION_MAX_LEVEL;
     const afford = canAffordMedallion(profile, medId);
     const shouldPulse = pulseFirst && medId === 'med_breakthrough_atk';
 
-    if (y + rowH >= vy - 20 && y <= vy + vh + 20) {
+    if (ry + cardH >= vy - 20 && ry <= vy + vh + 20) {
       drawIvorySlab(
         c,
-        vx + 4,
-        y,
-        rowW,
-        rowH,
-        18,
+        rx,
+        ry,
+        cardW,
+        cardH,
+        20,
         shouldPulse ? '#fff8d4' : '#fffdf8',
         shouldPulse ? '#fae290' : '#f6e8cb',
         shouldPulse ? '#e08b19' : '#7e5530',
-        shouldPulse ? 3.5 : 2,
+        shouldPulse ? 3.8 : 2.4,
       );
 
-      round(c, vx + 18, y + 22, 86, 86, 18, '#fdf5df', '#8a5d32', 2);
-      if (!drawSpriteContain(c, medId, vx + 23, y + 27, 76, 76)) {
-        drawSpriteContain(c, 'ui_endless_crest', vx + 23, y + 27, 76, 76);
+      round(c, rx + 16, ry + 18, 92, 92, 18, '#fdf5df', '#8a5d32', 2.2);
+      if (!drawSpriteContain(c, medId, rx + 22, ry + 24, 80, 80)) {
+        drawSpriteContain(c, 'ui_endless_crest', rx + 22, ry + 24, 80, 80);
       }
 
-      const tx = vx + 118;
+      const tx = rx + 122;
       const name = t(`medallion.${medId}`);
-      drawText(c, name, tx, y + 26, 21, PALETTE.ink, 'left', 900);
-      c.font = '900 21px "Trebuchet MS", "PingFang SC", "Microsoft YaHei", sans-serif';
-      const nw = c.measureText(name).width;
-      round(c, tx + nw + 10, y + 14, 82, 24, 12, '#f5dec0', '#966430', 1.4);
-      drawText(c, `Lv.${lv}/${MEDALLION_MAX_LEVEL}`, tx + nw + 51, y + 27, 13.5, '#7c3f08', 'center', 900);
+      drawText(c, name, tx, ry + 34, 25, PALETTE.ink, 'left', 900);
+      round(c, rx + cardW - 108, ry + 18, 92, 30, 15, '#f5dec0', '#966430', 1.8);
+      drawText(c, `Lv.${lv}/${MEDALLION_MAX_LEVEL}`, rx + cardW - 62, ry + 34, 17, '#7c3f08', 'center', 900);
 
-      // Effect line + `now → next`
       const desc = t(`medallion.${medId}.desc`);
       const nowStr = medallionEffectText(medId, lv);
       const nextStr = max ? '' : medallionEffectText(medId, lv + 1);
-      drawText(c, desc, tx, y + 54, 15.5, PALETTE.inkSoft, 'left', 700);
-      c.font = '700 15.5px "Trebuchet MS", "PingFang SC", "Microsoft YaHei", sans-serif';
-      const dw = c.measureText(desc).width;
-      drawText(c, nowStr, tx + dw + 10, y + 54, 16.5, PALETTE.ink, 'left', 900);
-      if (!max) {
-        c.font = '900 16.5px "Trebuchet MS", "PingFang SC", "Microsoft YaHei", sans-serif';
-        const nowW = c.measureText(nowStr).width;
-        drawText(c, `→ ${nextStr}`, tx + dw + nowW + 18, y + 54, 16.5, '#c45218', 'left', 900);
-      }
+      drawText(c, `${desc} ${nowStr}${max ? '' : ` → ${nextStr}`}`, tx, ry + 70, 19.5, '#6b3610', 'left', 900);
 
-      // Slim Golden Progress Bar
-      drawProgressBar(c, tx, y + 74, rowW - 280, 10, lv / MEDALLION_MAX_LEVEL, '#e8a832', '#e8dcc4', '#8c6239');
+      drawProgressBar(c, tx, ry + 94, cardW - 140, 12, lv / MEDALLION_MAX_LEVEL, '#e8a832', '#e8dcc4', '#8c6239');
 
-      // Cost Chips (`花费 [crest] [coin]`)
+      // Bottom Cost Chips + Giant Upgrade Button
       if (cost) {
-        drawText(c, t('p17.cost'), tx, y + 106, 14.5, PALETTE.inkSoft, 'left', 800);
         const crestOk = profile.endlessCrests >= cost.crests;
         const coinOk = profile.coins >= cost.coins;
-        let cx = tx + 42;
-        round(c, cx, y + 93, 92, 26, 13, crestOk ? '#e4f7dc' : '#f4e6d2', crestOk ? '#49913b' : '#a88c6c', 1.4);
-        drawSpriteContain(c, 'ui_endless_crest', cx + 6, y + 96, 20, 20);
-        drawText(c, formatCompactNumber(cost.crests), cx + 30, y + 107, 14, crestOk ? '#23591b' : '#7a5c3c', 'left', 900);
-        cx += 100;
-        round(c, cx, y + 93, 92, 26, 13, coinOk ? '#e4f7dc' : '#f4e6d2', coinOk ? '#49913b' : '#a88c6c', 1.4);
-        drawSpriteContain(c, 'ui_coin_gold', cx + 6, y + 96, 20, 20);
-        drawText(c, formatCompactNumber(cost.coins), cx + 30, y + 107, 14, coinOk ? '#23591b' : '#7a5c3c', 'left', 900);
+        let cx = rx + 18;
+        round(c, cx, ry + cardH - 54, 108, 34, 17, crestOk ? '#e4f7dc' : '#f4e6d2', crestOk ? '#49913b' : '#a88c6c', 1.6);
+        drawSpriteContain(c, 'ui_endless_crest', cx + 7, ry + cardH - 49, 24, 24);
+        drawText(c, formatCompactNumber(cost.crests), cx + 36, ry + cardH - 36, 18.5, crestOk ? '#23591b' : '#7a5c3c', 'left', 900);
+        cx += 116;
+        round(c, cx, ry + cardH - 54, 108, 34, 17, coinOk ? '#e4f7dc' : '#f4e6d2', coinOk ? '#49913b' : '#a88c6c', 1.6);
+        drawSpriteContain(c, 'ui_coin_gold', cx + 7, ry + cardH - 49, 24, 24);
+        drawText(c, formatCompactNumber(cost.coins), cx + 36, ry + cardH - 36, 18.5, coinOk ? '#23591b' : '#7a5c3c', 'left', 900);
       }
 
-      // Right Action Pill Button (`升级` or `已满级`)
-      if (y + rowH > vy && y < vy + vh) {
+      if (ry + cardH > vy && ry < vy + vh) {
         if (max) {
-          drawText(c, t('p17.maxed'), vx + 4 + rowW - 68, y + 66, 16, '#8c4c10', 'center', 900);
+          drawText(c, t('p17.maxed'), rx + cardW - 76, ry + cardH - 36, 20, '#8c4c10', 'center', 900);
         } else {
-          drawPillButton(c, hits, `medallion:up:${medId}`, vx + 4 + rowW - 122, y + 43, 108, 46, t('p17.upgrade'), afford ? 'gold' : 'muted', {
-            fontSize: 17.5,
+          drawPillButton(c, hits, `medallion:up:${medId}`, rx + cardW - 142, ry + cardH - 60, 126, 48, t('p17.upgrade'), afford ? 'gold' : 'muted', {
+            fontSize: 20.5,
           });
         }
       }
     }
-    y += rowH + gap;
   });
+  y += Math.ceil(MEDALLION_IDS.length / cols) * (cardH + gapY);
 
   const contentH = Math.max(vh, y + scroll.offset - vy + 10);
   c.restore();
@@ -577,57 +568,62 @@ function drawPassportBody(
   }
   y += 32;
 
-  // Single-Column Avatar Rows (EXACT `ProfileScreens.ts` `passport()`!)
+  // 2-Column GIANT Avatar Cards
   const avatars = Object.values(AVATARS);
-  const rh = 86, rg = 10;
-  avatars.forEach(av => {
-    if (y + rh >= vy - 20 && y <= vy + vh + 20) {
+  const cols = 2, gapX = 16, gapY = 12;
+  const cardW = Math.floor((vw - 16 - gapX) / cols);
+  const rh = 114;
+  avatars.forEach((av, idx) => {
+    const col = idx % cols, row = Math.floor(idx / cols);
+    const rx = vx + 4 + col * (cardW + gapX);
+    const ry = y + row * (rh + gapY);
+    if (ry + rh >= vy - 20 && ry <= vy + vh + 20) {
       const unlocked = profile.unlockedAvatars.includes(av.id);
       const selected = profile.avatarId === av.id;
-      if (y + rh > vy && y < vy + vh) {
+      if (ry + rh > vy && ry < vy + vh) {
         hits.add({
           id: `profile:avatar:${av.id}`,
-          x: vx + 4,
-          y: Math.max(vy, y),
-          w: rowW,
-          h: Math.min(y + rh, vy + vh) - Math.max(vy, y),
+          x: rx,
+          y: Math.max(vy, ry),
+          w: cardW,
+          h: Math.min(ry + rh, vy + vh) - Math.max(vy, ry),
           data: { id: av.id, unlocked, desc: t(`avatar.${av.id}.desc`) },
         });
       }
       drawIvorySlab(
         c,
-        vx + 4,
-        y,
-        rowW,
+        rx,
+        ry,
+        cardW,
         rh,
-        16,
+        18,
         selected ? '#fff4c4' : unlocked ? '#fffdf8' : '#efe7d8',
         selected ? '#f7dc84' : unlocked ? '#f6e8cb' : '#e3d8c4',
         selected ? '#c96f14' : '#7e5530',
-        selected ? 2.6 : 1.8,
+        selected ? 3 : 2,
       );
-      round(c, vx + 16, y + 11, 64, 64, 15, '#fff3d6', '#8a5d32', 1.8);
-      if (!drawSpriteContain(c, `avatar_${av.id}`, vx + 20, y + 15, 56, 56, unlocked ? 1 : 0.36)) {
-        drawSpriteContain(c, 'avatar_capybara', vx + 20, y + 15, 56, 56, 0.35);
+      round(c, rx + 14, ry + 15, 84, 84, 18, '#fff3d6', '#8a5d32', 2);
+      if (!drawSpriteContain(c, `avatar_${av.id}`, rx + 20, ry + 21, 72, 72, unlocked ? 1 : 0.36)) {
+        drawSpriteContain(c, 'avatar_capybara', rx + 20, ry + 21, 72, 72, 0.35);
       }
 
-      drawText(c, t(`avatar.${av.id}`), vx + 96, y + 30, 19.5, unlocked ? PALETTE.ink : PALETTE.muted, 'left', 900);
-      drawText(c, t(`avatar.${av.id}.desc`), vx + 96, y + 58, 15, PALETTE.inkSoft, 'left', 700);
+      drawText(c, t(`avatar.${av.id}`), rx + 112, ry + 38, 24, unlocked ? PALETTE.ink : PALETTE.muted, 'left', 900);
+      drawWrappedText(c, t(`avatar.${av.id}.desc`), rx + 112, ry + 58, cardW - 234, 18, 23, PALETTE.inkSoft, 'left', 700, 2);
 
-      const rCx = vx + 4 + rowW - 60;
+      const rCx = rx + cardW - 60;
       if (selected) {
-        drawText(c, t('p11.profile.avatarCurrent'), rCx, y + 28, 15, '#2c763d', 'center', 900);
-        drawSpriteContain(c, 'ui_storybook_check', rCx - 13, y + 44, 26, 26);
+        drawText(c, t('p11.profile.avatarCurrent'), rCx, ry + 36, 18.5, '#2c763d', 'center', 900);
+        drawSpriteContain(c, 'ui_storybook_check', rCx - 15, ry + 56, 30, 30);
       } else if (unlocked) {
-        round(c, rCx - 42, y + 25, 84, 34, 17, '#f2e0bc', '#855a2e', 1.6);
-        drawText(c, t('p11.profile.avatarChange'), rCx, y + 43, 15.5, PALETTE.ink, 'center', 900);
+        round(c, rCx - 48, ry + 36, 96, 42, 21, '#f2e0bc', '#855a2e', 2);
+        drawText(c, t('p11.profile.avatarChange'), rCx, ry + 58, 19, PALETTE.ink, 'center', 900);
       } else {
-        drawText(c, t('m3.avatarLocked'), rCx, y + 28, 14.5, PALETTE.muted, 'center', 800);
-        drawSpriteContain(c, 'ui_lock_closed', rCx - 12, y + 44, 24, 24);
+        drawText(c, t('m3.avatarLocked'), rCx, ry + 36, 18, PALETTE.muted, 'center', 800);
+        drawSpriteContain(c, 'ui_lock_closed', rCx - 14, ry + 56, 28, 28);
       }
     }
-    y += rh + rg;
   });
+  y += Math.ceil(avatars.length / cols) * (rh + gapY);
 
   const contentH = Math.max(vh, y + scroll.offset - vy + 10);
   c.restore();
@@ -660,95 +656,96 @@ function drawSettingsBody(
   let y = vy + 4 - scroll.offset;
 
   // Card 1: Music Volume (`♫` icon box + Golden Slider + %)
-  const volH = 92;
-  const sliderX = vx + 104, sliderW = rowW - 196;
-  const musicSliderRect = { x: sliderX, y: y + 48, w: sliderW, h: 30 };
+  const volH = 104;
+  const sliderX = vx + 114, sliderW = rowW - 226;
+  const musicSliderRect = { x: sliderX, y: y + 56, w: sliderW, h: 34 };
   if (y + volH >= vy - 20 && y <= vy + vh + 20) {
-    drawIvorySlab(c, vx + 4, y, rowW, volH, 18);
-    round(c, vx + 20, y + 16, 60, 60, 14, '#f4efe6', '#8a6239', 1.8);
-    drawText(c, '♫', vx + 50, y + 48, 30, PALETTE.ink, 'center', 900);
-    drawText(c, t('p11.profile.musicVolume'), sliderX, y + 30, 19.5, PALETTE.ink, 'left', 900);
-    drawGoldSlider(c, sliderX, y + 48, sliderW, 30, profile.settings.musicVolume);
-    drawText(c, `${Math.round(profile.settings.musicVolume * 100)}%`, vx + 4 + rowW - 42, y + 48, 18, PALETTE.inkSoft, 'center', 900);
+    drawIvorySlab(c, vx + 4, y, rowW, volH, 20);
+    round(c, vx + 22, y + 18, 68, 68, 16, '#f4efe6', '#8a6239', 2);
+    drawText(c, '♫', vx + 56, y + 54, 36, PALETTE.ink, 'center', 900);
+    drawText(c, t('p11.profile.musicVolume'), sliderX, y + 32, 24, PALETTE.ink, 'left', 900);
+    drawGoldSlider(c, sliderX, y + 56, sliderW, 34, profile.settings.musicVolume);
+    drawText(c, `${Math.round(profile.settings.musicVolume * 100)}%`, vx + 4 + rowW - 50, y + 54, 23, PALETTE.inkSoft, 'center', 900);
     if (y + volH > vy && y < vy + vh) {
-      hits.add({ id: 'settings:music', x: sliderX - 14, y: Math.max(vy, y + 36), w: sliderW + 28, h: 48 });
+      hits.add({ id: 'settings:music', x: sliderX - 14, y: Math.max(vy, y + 40), w: sliderW + 28, h: 56 });
     }
   }
-  y += volH + 12;
+  y += volH + 14;
 
   // Card 2: Sound FX Volume (hand-inked speaker box + Golden Slider + %)
-  const soundSliderRect = { x: sliderX, y: y + 48, w: sliderW, h: 30 };
+  const soundSliderRect = { x: sliderX, y: y + 56, w: sliderW, h: 34 };
   if (y + volH >= vy - 20 && y <= vy + vh + 20) {
-    drawIvorySlab(c, vx + 4, y, rowW, volH, 18);
-    round(c, vx + 20, y + 16, 60, 60, 14, '#f4efe6', '#8a6239', 1.8);
-    drawMiniSpeakerIcon(c, vx + 50, y + 46);
-    drawText(c, t('p11.profile.soundVolume'), sliderX, y + 30, 19.5, PALETTE.ink, 'left', 900);
-    drawGoldSlider(c, sliderX, y + 48, sliderW, 30, profile.settings.soundVolume);
-    drawText(c, `${Math.round(profile.settings.soundVolume * 100)}%`, vx + 4 + rowW - 42, y + 48, 18, PALETTE.inkSoft, 'center', 900);
+    drawIvorySlab(c, vx + 4, y, rowW, volH, 20);
+    round(c, vx + 22, y + 18, 68, 68, 16, '#f4efe6', '#8a6239', 2);
+    drawMiniSpeakerIcon(c, vx + 56, y + 52);
+    drawText(c, t('p11.profile.soundVolume'), sliderX, y + 32, 24, PALETTE.ink, 'left', 900);
+    drawGoldSlider(c, sliderX, y + 56, sliderW, 34, profile.settings.soundVolume);
+    drawText(c, `${Math.round(profile.settings.soundVolume * 100)}%`, vx + 4 + rowW - 50, y + 54, 23, PALETTE.inkSoft, 'center', 900);
     if (y + volH > vy && y < vy + vh) {
-      hits.add({ id: 'settings:sound', x: sliderX - 14, y: Math.max(vy, y + 36), w: sliderW + 28, h: 48 });
+      hits.add({ id: 'settings:sound', x: sliderX - 14, y: Math.max(vy, y + 40), w: sliderW + 28, h: 56 });
     }
   }
-  y += volH + 12;
+  y += volH + 14;
 
   // Card 3: Grouped Toggle Slab (`显示伤害数字` + `语言切换` + optional `开发者调试`)
   const rowsInToggle = opts.devUnlocked ? 3 : 2;
-  const togH = rowsInToggle * 78;
+  const rowStep = 90;
+  const togH = rowsInToggle * rowStep;
   if (y + togH >= vy - 20 && y <= vy + vh + 20) {
-    drawIvorySlab(c, vx + 4, y, rowW, togH, 18);
+    drawIvorySlab(c, vx + 4, y, rowW, togH, 20);
     // Row 1: Show Damage Numbers + iOS green toggle switch
-    drawText(c, t('m3.damage'), vx + 24, y + 28, 19.5, PALETTE.ink, 'left', 900);
-    drawText(c, t('p5.damageHint'), vx + 24, y + 54, 14.5, PALETTE.inkSoft, 'left', 700);
-    if (y + 78 > vy && y < vy + vh) {
-      drawToggleSwitch(c, hits, 'settings:damage', vx + 4 + rowW - 88, y + 22, profile.settings.showDamageNumbers);
+    drawText(c, t('m3.damage'), vx + 26, y + 32, 24, PALETTE.ink, 'left', 900);
+    drawText(c, t('p5.damageHint'), vx + 26, y + 64, 19, PALETTE.inkSoft, 'left', 700);
+    if (y + rowStep > vy && y < vy + vh) {
+      drawToggleSwitch(c, hits, 'settings:damage', vx + 4 + rowW - 94, y + 28, profile.settings.showDamageNumbers);
     }
 
     // Divider 1
     c.strokeStyle = 'rgba(138,98,57,0.22)';
     c.lineWidth = 1.5;
     c.beginPath();
-    c.moveTo(vx + 22, y + 78);
-    c.lineTo(vx + 4 + rowW - 22, y + 78);
+    c.moveTo(vx + 24, y + rowStep);
+    c.lineTo(vx + 4 + rowW - 24, y + rowStep);
     c.stroke();
 
     // Row 2: Language Switch
-    const r2y = y + 78;
-    drawText(c, zh ? '显示语言' : 'Language', vx + 24, r2y + 28, 19.5, PALETTE.ink, 'left', 900);
-    drawText(c, zh ? '切换简体中文 / English 界面' : 'Switch between Chinese & English', vx + 24, r2y + 54, 14.5, PALETTE.inkSoft, 'left', 700);
-    if (r2y + 78 > vy && r2y < vy + vh) {
-      drawPillButton(c, hits, 'settings:lang', vx + 4 + rowW - 154, r2y + 18, 134, 42, zh ? '中文 ⇄ EN' : 'EN ⇄ 中文', 'cream', { fontSize: 15.5 });
+    const r2y = y + rowStep;
+    drawText(c, zh ? '显示语言' : 'Language', vx + 26, r2y + 32, 24, PALETTE.ink, 'left', 900);
+    drawText(c, zh ? '切换简体中文 / English 界面' : 'Switch between Chinese & English', vx + 26, r2y + 64, 19, PALETTE.inkSoft, 'left', 700);
+    if (r2y + rowStep > vy && r2y < vy + vh) {
+      drawPillButton(c, hits, 'settings:lang', vx + 4 + rowW - 184, r2y + 20, 162, 50, zh ? '中文 ⇄ EN' : 'EN ⇄ 中文', 'cream', { fontSize: 20 });
     }
 
-    // Row 3 (when hidden 5-tap Dev Mode unlocked): Open Developer QA Workbench
+    // Row 3 (when hidden 5-tap Dev Mode unlocked)
     if (opts.devUnlocked) {
-      const r3y = y + 156;
+      const r3y = y + rowStep * 2;
       c.beginPath();
-      c.moveTo(vx + 22, r3y);
-      c.lineTo(vx + 4 + rowW - 22, r3y);
+      c.moveTo(vx + 24, r3y);
+      c.lineTo(vx + 4 + rowW - 24, r3y);
       c.stroke();
-      drawText(c, zh ? '开发者调试台' : 'Developer QA Panel', vx + 24, r3y + 28, 19.5, '#a83424', 'left', 900);
-      drawText(c, zh ? '跳转新手节点 0~8、全解锁测试档与战局工具' : 'Jump onboarding stages 0–8 & battle tools', vx + 24, r3y + 54, 14.5, PALETTE.inkSoft, 'left', 700);
-      if (r3y + 78 > vy && r3y < vy + vh) {
-        drawPillButton(c, hits, 'settings:open-dev', vx + 4 + rowW - 122, r3y + 18, 102, 42, zh ? '打开' : 'Open', 'coral', { fontSize: 16 });
+      drawText(c, zh ? '开发者调试台' : 'Developer QA Panel', vx + 26, r3y + 32, 24, '#a83424', 'left', 900);
+      drawText(c, zh ? '跳转新手节点 0~8、全解锁测试档与战局工具' : 'Jump onboarding stages 0–8 & battle tools', vx + 26, r3y + 64, 19, PALETTE.inkSoft, 'left', 700);
+      if (r3y + rowStep > vy && r3y < vy + vh) {
+        drawPillButton(c, hits, 'settings:open-dev', vx + 4 + rowW - 142, r3y + 20, 120, 50, zh ? '打开' : 'Open', 'coral', { fontSize: 20 });
       }
     }
   }
-  y += togH + 12;
+  y += togH + 14;
 
-  // Card 4: Replay Tutorial (`重温新手教程` — EXACT `p18_preview_d17_settings.png`!)
+  // Card 4: Replay Tutorial
   if (!opts.inBattle) {
-    const tutH = 92;
+    const tutH = 104;
     if (y + tutH >= vy - 20 && y <= vy + vh + 20) {
-      drawIvorySlab(c, vx + 4, y, rowW, tutH, 18);
-      round(c, vx + 20, y + 14, 64, 64, 14, '#fff3d6', '#8a6239', 1.8);
-      drawSpriteContain(c, 'ui_tutorial_capy', vx + 24, y + 18, 56, 56);
-      drawText(c, t('p11.profile.tutorialReplay'), vx + 102, y + 32, 19.5, PALETTE.ink, 'left', 900);
-      drawText(c, t('p11.profile.tutorialHint'), vx + 102, y + 60, 14.5, PALETTE.inkSoft, 'left', 700);
+      drawIvorySlab(c, vx + 4, y, rowW, tutH, 20);
+      round(c, vx + 22, y + 16, 72, 72, 16, '#fff3d6', '#8a6239', 2);
+      drawSpriteContain(c, 'ui_tutorial_capy', vx + 26, y + 20, 64, 64);
+      drawText(c, t('p11.profile.tutorialReplay'), vx + 112, y + 36, 24, PALETTE.ink, 'left', 900);
+      drawText(c, t('p11.profile.tutorialHint'), vx + 112, y + 68, 19, PALETTE.inkSoft, 'left', 700);
       if (y + tutH > vy && y < vy + vh) {
-        drawPillButton(c, hits, 'settings:replay-tutorial', vx + 4 + rowW - 116, y + 25, 96, 42, t('p11.profile.start'), 'cream', { fontSize: 16 });
+        drawPillButton(c, hits, 'settings:replay-tutorial', vx + 4 + rowW - 140, y + 27, 118, 50, t('p11.profile.start'), 'cream', { fontSize: 20 });
       }
     }
-    y += tutH + 12;
+    y += tutH + 14;
   }
 
   const contentH = Math.max(vh, y + scroll.offset - vy + 6);

@@ -65,92 +65,96 @@ export function drawMenuScreen(
   const hasRank = isRankHubUnlocked(profile);
   const rank = getRank(profile.stars);
 
-  // Adaptive horizontal anchors: standard 16:9 stays 22..1254; wide phones (19.5:9–22:9) expand into safe bleed
-  // with hard floor/ceiling guards so right-side docks never collide with the center Map Selector on any device.
+  const widePhone = vp.visible.right > 1320;
+  // Adaptive horizontal anchors: wide phones expand cleanly into safe bleed; 16:9 stays strictly inside 0..1280.
   const leftAnchor = vp.visible.left < -10
-    ? Math.round(Math.min(22, Math.max(vp.safeStage.left + 14, Math.max(-76, vp.visible.left + 26))))
-    : Math.round(Math.min(80, Math.max(22, vp.safeStage.left + 12)));
+    ? Math.round(Math.min(14, Math.max(vp.safeStage.left + 12, Math.max(-42, vp.visible.left + 26))))
+    : Math.round(Math.min(60, Math.max(16, vp.safeStage.left + 12)));
   const bottomRightAnchor = vp.visible.right > 1290
-    ? Math.round(Math.max(1254, Math.min(vp.safeStage.right - 14, Math.min(1356, vp.visible.right - 26))))
-    : Math.round(Math.max(1180, Math.min(1254, vp.safeStage.right - 14)));
+    ? Math.round(Math.max(1260, Math.min(vp.safeStage.right - 12, Math.min(1322, vp.visible.right - 26))))
+    : Math.round(Math.max(1196, Math.min(1264, vp.safeStage.right - 12)));
 
   // Subtle top vignette spans full phone/tablet width (zero edge cutoff!)
-  const topGrad = c.createLinearGradient(0, vp.visible.top, 0, 108);
+  const topGrad = c.createLinearGradient(0, vp.visible.top, 0, 120);
   topGrad.addColorStop(0, 'rgba(36,22,10,0.38)');
   topGrad.addColorStop(1, 'rgba(36,22,10,0)');
   c.fillStyle = topGrad;
-  c.fillRect(vp.visible.left - 2, vp.visible.top - 2, vp.visible.width + 4, 110 - vp.visible.top);
+  c.fillRect(vp.visible.left - 2, vp.visible.top - 2, vp.visible.width + 4, 122 - vp.visible.top);
 
-  // ── 1. TOP-LEFT KEEPER PASSPORT PILL (matches p19_03 exactly!) ────────────
+  // ── 1. TOP-LEFT ENLARGED KEEPER PASSPORT PILL ────────────────────────────
   if (hasRank) {
-    const px = leftAnchor, py = 14, pw = 320, ph = 70;
-    round(c, px, py + 4, pw, ph, 35, 'rgba(46,26,10,0.34)', 'transparent', 0);
-    round(c, px, py, pw, ph, 35, 'rgba(255,248,232,0.95)', '#5c3b1e', 3);
+    const px = leftAnchor, py = 12, pw = 344, ph = 92;
+    round(c, px, py + 5, pw, ph, 46, 'rgba(46,26,10,0.36)', 'transparent', 0);
+    round(c, px, py, pw, ph, 46, 'rgba(255,248,232,0.96)', '#5c3b1e', 3.4);
 
     // Circular avatar seal
-    round(c, px + 6, py + 6, 58, 58, 29, '#f6e0b3', '#5c3b1e', 2.6);
-    if (!drawSpriteContain(c, `avatar_${profile.avatarId}`, px + 9, py + 9, 52, 52)) {
-      drawSpriteContain(c, 'avatar_capybara', px + 9, py + 9, 52, 52);
+    round(c, px + 8, py + 8, 76, 76, 38, '#f6e0b3', '#5c3b1e', 3);
+    if (!drawSpriteContain(c, `avatar_${profile.avatarId}`, px + 12, py + 12, 68, 68)) {
+      drawSpriteContain(c, 'avatar_capybara', px + 12, py + 12, 68, 68);
     }
 
-    drawText(c, t(`rank.${rank.index}`), px + 76, py + 24, 20, PALETTE.ink, 'left', 900);
-    const coinsW = drawIconLabel(c, 'ui_coin_gold', String(profile.coins), px + 74, py + 50, 22, 18.5, PALETTE.ink);
-    drawIconLabel(c, 'ui_star_rank', String(profile.stars), px + 74 + coinsW + 16, py + 50, 22, 18.5, PALETTE.ink);
+    drawText(c, t(`rank.${rank.index}`), px + 94, py + 31, 27, PALETTE.ink, 'left', 900);
+    const coinsW = drawIconLabel(c, 'ui_coin_gold', String(profile.coins), px + 92, py + 65, 28, 25, PALETTE.ink);
+    drawIconLabel(c, 'ui_star_rank', String(profile.stars), px + 92 + coinsW + 18, py + 65, 28, 25, PALETTE.ink);
     hits.add({ id: 'menu:profile', x: px, y: py, w: pw, h: ph });
   }
 
-  // ── 2. TOP-RIGHT SYSTEM CONTROLS (Web segmented [中|EN] + ⚙ + Mute + Share) ─
-  const rightEdge = topRightEdge;
-  const btnY = 16;
-  const btnH = 48;
-  const sqW = 50;
+  // ── 2. RIGHT-SIDE SYSTEM CONTROLS (2×2 GIANT BLOCK STRICTLY BELOW WECHAT [🎮][···|◉]!) ─
+  // Placing controls below y=104 clears BOTH WeChat floating buttons (even on Dynamic Island iPhones!) AND the giant Title Logo!
+  void topRightEdge;
+  const ctrlRight = bottomRightAnchor;
+  const ctrlY = 104;
+  const rowGap = 12;
+  const colGap = 12;
+  const sqW = 92;
+  const wideW = 112;
+  const btnH = 66;
+  const rightColX = ctrlRight - sqW;
+  const leftColX = rightColX - colGap - wideW;
 
-  // Settings gear (rightmost, matching p19_01!)
-  drawButton(c, hits, 'menu:settings', rightEdge - sqW, btnY, sqW, btnH, '⚙', {
+  // Row 1: [中 | EN] + [⚙]
+  round(c, leftColX, ctrlY + 4, wideW, btnH, 18, '#b89464', '#5c3b1e', 2.4);
+  round(c, leftColX, ctrlY, wideW, btnH, 18, '#fff8e8', '#5c3b1e', 3.2);
+  const activeHalfX = zh ? leftColX + 5 : leftColX + wideW / 2;
+  round(c, activeHalfX, ctrlY + 5, wideW / 2 - 5, btnH - 10, 13, '#6a4526', 'transparent', 0);
+  drawText(c, '中', leftColX + wideW * 0.25 + 1, ctrlY + btnH / 2 + 1, 25, zh ? '#fffdf6' : '#5a3a1e', 'center', 900);
+  drawText(c, 'EN', leftColX + wideW * 0.75 - 1, ctrlY + btnH / 2 + 1, 23, zh ? '#5a3a1e' : '#fffdf6', 'center', 900);
+  hits.add({ id: 'menu:lang', x: leftColX, y: ctrlY, w: wideW, h: btnH });
+
+  drawButton(c, hits, 'menu:settings', rightColX, ctrlY, sqW, btnH, '⚙', {
     ...BTN_STYLES.cream,
-    radius: 14,
-    fontSize: 24,
+    radius: 18,
+    fontSize: 34,
   });
 
-  // Segmented Language Switch [中 | EN]
-  const segW = 104;
-  const segX = rightEdge - sqW - 10 - segW;
-  round(c, segX, btnY + 3, segW, btnH, 14, '#b89464', '#5c3b1e', 2);
-  round(c, segX, btnY, segW, btnH, 14, '#fff8e8', '#5c3b1e', 2.6);
-  const activeHalfX = zh ? segX + 4 : segX + segW / 2;
-  round(c, activeHalfX, btnY + 4, segW / 2 - 4, btnH - 8, 10, '#6a4526', 'transparent', 0);
-  drawText(c, '中', segX + segW * 0.25 + 1, btnY + btnH / 2 + 1, 18, zh ? '#fffdf6' : '#5a3a1e', 'center', 900);
-  drawText(c, 'EN', segX + segW * 0.75 - 1, btnY + btnH / 2 + 1, 17, zh ? '#5a3a1e' : '#fffdf6', 'center', 900);
-  hits.add({ id: 'menu:lang', x: segX, y: btnY, w: segW, h: btnH });
+  // Row 2: [Mute] + [Share]
+  const row2Y = ctrlY + btnH + rowGap;
+  drawButton(c, hits, 'menu:mute', leftColX, row2Y, wideW, btnH, '', { ...BTN_STYLES.cream, radius: 18 });
+  drawVectorSpeaker(c, leftColX + wideW / 2, row2Y + btnH / 2 + (hits.isPressed('menu:mute') ? 3 : 0), muted);
 
-  // Mute & Share compact buttons with hand-inked storybook vector icons (zero OS emoji mismatch!)
-  const muteX = segX - 10 - sqW;
-  drawButton(c, hits, 'menu:mute', muteX, btnY, sqW, btnH, '', { ...BTN_STYLES.cream, radius: 14 });
-  drawVectorSpeaker(c, muteX + sqW / 2, btnY + btnH / 2 + (hits.isPressed('menu:mute') ? 3 : 0), muted);
+  drawButton(c, hits, 'menu:share', rightColX, row2Y, sqW, btnH, '', { ...BTN_STYLES.cream, radius: 18 });
+  drawVectorShare(c, rightColX + sqW / 2, row2Y + btnH / 2 + (hits.isPressed('menu:share') ? 3 : 0));
 
-  const shareX = segX - 20 - sqW * 2;
-  drawButton(c, hits, 'menu:share', shareX, btnY, sqW, btnH, '', { ...BTN_STYLES.cream, radius: 14 });
-  drawVectorShare(c, shareX + sqW / 2, btnY + btnH / 2 + (hits.isPressed('menu:share') ? 3 : 0));
-
-  // ── 3. OVERSIZED TITLE LOGO (matches p19_01 / p19_03!) ────────────────────
+  // ── 3. GIANT POSTER-SIZED TITLE LOGO (+38% LARGER FOR PHONE CLARITY!) ────
   const logoId = zh ? 'title_logo_zh' : 'title_logo_en';
   const logo = assets.get(logoId);
   const bob = Math.sin(elapsed * 2.1) * 4;
   if (logo) {
     const iw = logo.naturalWidth || logo.width || 960;
     const ih = logo.naturalHeight || logo.height || 320;
-    const w = 640;
+    const w = widePhone ? 860 : 736;
     const h = w * (ih / iw);
-    c.drawImage(logo, (1280 - w) / 2, 18 + bob, w, h);
+    const logoShift = widePhone ? 18 : 6;
+    c.drawImage(logo, (1280 - w) / 2 + logoShift, -12 + bob, w, h);
   } else {
-    drawText(c, t('app.title'), 640, 120 + bob, 60, '#fff7dc', 'center', 900, INK, 8);
+    drawText(c, t('app.title'), 640, 128 + bob, 76, '#fff7dc', 'center', 900, INK, 10);
   }
 
-  // ── 4. BIG ILLUSTRATED START BUTTON (centered on pier below capybara!) ────
-  const startW = 336;
-  const startH = 134;
+  // ── 4. GIANT ILLUSTRATED START BUTTON (+37% LARGER!) ─────────────────────
+  const startW = 456;
+  const startH = 180;
   const startX = (1280 - startW) / 2;
-  const startY = hasRank ? 482 : 494;
+  const startY = hasRank ? 416 : 444;
   const pressedStart = hits.isPressed('menu:start');
   const pulse = pressedStart ? 0.96 : 1 + Math.sin(elapsed * 2.6) * 0.02;
 
@@ -162,14 +166,14 @@ export function drawMenuScreen(
   if (startArt) {
     c.drawImage(startArt, -startW / 2, -startH / 2, startW, startH);
   } else {
-    round(c, -152, -48, 304, 96, 28, '#f4c855', PALETTE.woodDark, 4);
-    drawText(c, t('menu.start'), 0, 2, 32, PALETTE.ink, 'center', 900);
+    round(c, -210, -64, 420, 128, 34, '#f4c855', PALETTE.woodDark, 5);
+    drawText(c, t('menu.start'), 0, 2, 42, PALETTE.ink, 'center', 900);
   }
   c.restore();
 
-  // ── 5. BOTTOM-CENTER COMPACT MAP SIGNPOST BAR (lifted slightly above iOS Home Indicator!) ───
+  // ── 5. ENLARGED BOTTOM-CENTER MAP SIGNPOST BAR ───────────────────────────
   if (hasRank) {
-    drawCompactMapBar(c, hits, profile, 634);
+    drawCompactMapBar(c, hits, profile, 622, widePhone);
   }
 
   // ── 6. BOTTOM-LEFT & BOTTOM-RIGHT CIRCULAR MEDALLION DOCKS (matches Web!) ─
@@ -244,13 +248,13 @@ export function drawMenuScreen(
     rightDock.push({ id: 'menu:hub:leaderboard', icon: 'ui_trophy_rank', label: t('p3.rank') });
   }
 
-  // Draw Left Circular Medallions (bottom-left corner, lifted cleanly above iOS Home Indicator!)
-  const dockY = 580;
-  const dockLeftX = leftAnchor + 4;
-  drawMedallionRow(c, hits, leftDock, dockLeftX, dockY, false, elapsed);
-  // Draw Right Circular Medallions (bottom-right corner)
+  // Draw ENLARGED Left & Right Circular Medallions (106px on wide phones, 94px on 16:9!)
+  const medSize = widePhone ? 106 : 94;
+  const dockY = widePhone ? 554 : 566;
+  const dockLeftX = leftAnchor + 2;
+  drawMedallionRow(c, hits, leftDock, dockLeftX, dockY, false, elapsed, medSize);
   if (rightDock.length > 0) {
-    drawMedallionRow(c, hits, rightDock, bottomRightAnchor, dockY, true, elapsed);
+    drawMedallionRow(c, hits, rightDock, bottomRightAnchor, dockY, true, elapsed, medSize);
   }
 
   // Floating Active Broth Pill (above left dock when Kitchen unlocked & broth active)
@@ -262,7 +266,7 @@ export function drawMenuScreen(
         hits,
         'menu:hub:kitchen',
         dockLeftX,
-        514,
+        476,
         profile.activeBrothId,
         `${t(`broth.${profile.activeBrothId}`)} Lv.${lv}`,
         BROTHS[profile.activeBrothId].bathColor,
@@ -276,9 +280,9 @@ export function drawMenuScreen(
     const crests = formatCompactNumber(profile.endlessCrests ?? 0);
     const waveTag = (profile.bestEndlessWave ?? 0) >= 11 ? ` · W${profile.bestEndlessWave}` : '';
     const label = `${t('p17.hallPill')}${waveTag} · ${ready ? t('p17.canUpgrade') : `×${crests}`}`;
-    drawFloatingCornerPill(c, hits, 'menu:hub:medallions', bottomRightAnchor, 514, 'ui_endless_crest', label, ready ? '#f6cf59' : '#efe3fa', true);
+    drawFloatingCornerPill(c, hits, 'menu:hub:medallions', bottomRightAnchor, 476, 'ui_endless_crest', label, ready ? '#f6cf59' : '#efe3fa', true);
   } else if (nextDock?.id === 'medallions') {
-    drawFloatingCornerPill(c, hits, 'menu:locked:medallions', bottomRightAnchor, 514, 'ui_endless_crest', `${t('p17.hallPill')} 🔒${lockText}`, '#d8ccb8', true);
+    drawFloatingCornerPill(c, hits, 'menu:locked:medallions', bottomRightAnchor, 476, 'ui_endless_crest', `${t('p17.hallPill')} 🔒${lockText}`, '#d8ccb8', true);
   }
 }
 
@@ -290,9 +294,9 @@ function drawMedallionRow(
   topY: number,
   alignRight: boolean,
   elapsed: number,
+  size = 104,
 ): void {
-  const size = 84;
-  const gap = 18;
+  const gap = size >= 100 ? 16 : 12;
   const totalW = items.length * size + (items.length - 1) * gap;
   const startX = alignRight ? anchorX - totalW : anchorX;
 
@@ -303,9 +307,9 @@ function drawMedallionRow(
     const pressed = hits.isPressed(item.id);
     const dy = pressed ? 3 : 0;
 
-    hits.add({ id: item.id, x: x - 4, y: topY - 12, w: size + 8, h: size + 44, data: item });
+    hits.add({ id: item.id, x: x - 4, y: topY - 14, w: size + 8, h: size + 48, data: item });
 
-    // Golden P19 onboarding spotlight ring (matches `p19_03_stage1_armory_welcome.png`!)
+    // Golden P19 onboarding spotlight ring
     if (item.highlight) {
       const pulse = 0.5 + 0.5 * Math.sin(elapsed * 5.2);
       c.save();
@@ -317,11 +321,11 @@ function drawMedallionRow(
       c.restore();
     }
 
-    // Circle shadow & warm ivory medallion ring (exact Web circular hub dock!)
+    // Circle shadow & warm ivory medallion ring
     if (!pressed) {
-      c.fillStyle = 'rgba(42,22,8,0.42)';
+      c.fillStyle = 'rgba(42,22,8,0.44)';
       c.beginPath();
-      c.arc(cx, cy + 5, size / 2, 0, Math.PI * 2);
+      c.arc(cx, cy + 6, size / 2, 0, Math.PI * 2);
       c.fill();
     }
 
@@ -337,41 +341,42 @@ function drawMedallionRow(
     c.arc(cx, cy + dy, size / 2, 0, Math.PI * 2);
     c.fillStyle = grad;
     c.fill();
-    c.lineWidth = 3.5;
+    c.lineWidth = 4;
     c.strokeStyle = item.locked ? '#6b6254' : '#58371c';
     c.stroke();
 
     // Inner bright highlight rim
     c.beginPath();
     c.arc(cx, cy + dy, size / 2 - 4, 0, Math.PI * 2);
-    c.lineWidth = 1.6;
+    c.lineWidth = 1.8;
     c.strokeStyle = 'rgba(255,255,255,0.68)';
     c.stroke();
 
-    drawSpriteContain(c, item.icon, cx - 30, cy + dy - 30, 60, 60, item.locked ? 0.45 : 1);
+    const iconS = Math.round(size * 0.72);
+    drawSpriteContain(c, item.icon, cx - iconS / 2, cy + dy - iconS / 2, iconS, iconS, item.locked ? 0.45 : 1);
 
-    // Top badge pill (lock tag or count/action badge)
+    // Enlarged Top badge pill (lock tag or count/action badge)
     if (item.locked && item.lockTag) {
-      const bw = 92;
-      round(c, cx - bw / 2, topY + dy - 12, bw, 26, 13, '#5c4430', '#ffe7a8', 2);
-      drawText(c, `🔒${item.lockTag}`, cx, topY + dy + 1, 13.5, '#fff4d4', 'center', 900);
+      const bw = 112;
+      round(c, cx - bw / 2, topY + dy - 16, bw, 32, 16, '#5c4430', '#ffe7a8', 2.4);
+      drawText(c, `🔒${item.lockTag}`, cx, topY + dy, 17, '#fff4d4', 'center', 900);
     } else if (item.badge) {
       const isDark = item.badgeColor && item.badgeColor !== '#fff8e8';
-      c.font = `900 14px ${UI_FONT}`;
-      const bw = Math.max(52, Math.ceil(c.measureText(item.badge).width) + (item.badgeIcon ? 36 : 18));
+      c.font = `900 18px ${UI_FONT}`;
+      const bw = Math.max(66, Math.ceil(c.measureText(item.badge).width) + (item.badgeIcon ? 42 : 22));
       const bx = cx - bw / 2 + 12;
-      const by = topY + dy - 12;
-      round(c, bx, by, bw, 26, 13, item.badgeColor ?? '#fff8e8', '#58371c', 2);
+      const by = topY + dy - 16;
+      round(c, bx, by, bw, 32, 16, item.badgeColor ?? '#fff8e8', '#58371c', 2.4);
       if (item.badgeIcon) {
-        drawSpriteContain(c, item.badgeIcon, bx + 5, by + 3, 20, 20);
-        drawText(c, item.badge, bx + 28 + (bw - 32) / 2, by + 14, 14, isDark ? '#fffdf5' : '#4a2b14', 'center', 900);
+        drawSpriteContain(c, item.badgeIcon, bx + 6, by + 4, 24, 24);
+        drawText(c, item.badge, bx + 32 + (bw - 38) / 2, by + 17, 18, isDark ? '#fffdf5' : '#4a2b14', 'center', 900);
       } else {
-        drawText(c, item.badge, bx + bw / 2, by + 14, 14, isDark ? '#fffdf5' : '#4a2b14', 'center', 900);
+        drawText(c, item.badge, bx + bw / 2, by + 17, 18, isDark ? '#fffdf5' : '#4a2b14', 'center', 900);
       }
     }
 
-    // Crisp bold white outlined label underneath medallion (super legible on phones!)
-    drawText(c, item.label, cx, topY + size + 19, 20, item.locked ? '#e3d8c4' : '#fffdf4', 'center', 900, '#442610', 5);
+    // GIANT bold white outlined label underneath medallion (super legible on phones!)
+    drawText(c, item.label, cx, topY + size + 24, 29, item.locked ? '#e3d8c4' : '#fffdf4', 'center', 900, '#442610', 6.5);
   });
 }
 
@@ -386,18 +391,18 @@ function drawFloatingCornerPill(
   fill: string,
   alignRight = false,
 ): void {
-  c.font = `900 16.5px ${UI_FONT}`;
-  const pw = Math.min(268, Math.max(152, Math.ceil(c.measureText(text).width) + 56));
-  const ph = 42;
+  c.font = `900 20px ${UI_FONT}`;
+  const pw = Math.min(316, Math.max(180, Math.ceil(c.measureText(text).width) + 64));
+  const ph = 52;
   const x = alignRight ? anchorX - pw : anchorX;
   const pressed = hits.isPressed(id);
   const dy = pressed ? 2 : 0;
 
   hits.add({ id, x, y, w: pw, h: ph });
-  if (!pressed) round(c, x, y + 3, pw, ph, 21, 'rgba(46,26,10,0.38)', 'transparent', 0);
-  round(c, x, y + dy, pw, ph, 21, fill, '#5a391e', 2.4);
-  drawSpriteContain(c, icon, x + 8, y + dy + 6, 30, 30);
-  drawText(c, text, x + 44, y + dy + ph / 2 + 1, 16, PALETTE.ink, 'left', 900);
+  if (!pressed) round(c, x, y + 4, pw, ph, 26, 'rgba(46,26,10,0.40)', 'transparent', 0);
+  round(c, x, y + dy, pw, ph, 26, fill, '#5a391e', 2.8);
+  drawSpriteContain(c, icon, x + 10, y + dy + 8, 36, 36);
+  drawText(c, text, x + 52, y + dy + ph / 2 + 1, 20, PALETTE.ink, 'left', 900);
 }
 
 function drawCompactMapBar(
@@ -405,6 +410,7 @@ function drawCompactMapBar(
   hits: UiHitManager,
   profile: Profile,
   y: number,
+  widePhone: boolean,
 ): void {
   const unlockedMaps = getUnlockedMaps(profile);
   const options: Array<{ id: 'auto' | MapId; label: string; locked: boolean; reqStars: number }> = [
@@ -417,32 +423,32 @@ function drawCompactMapBar(
     })),
   ];
 
-  const chipW = 86;
+  const chipW = widePhone ? 98 : 88;
   const gap = 8;
-  const signW = 34;
-  const barW = signW + 16 + options.length * chipW + (options.length - 1) * gap + 18;
-  const barH = 54;
+  const signW = 42;
+  const barW = signW + 18 + options.length * chipW + (options.length - 1) * gap + 18;
+  const barH = 70;
   const bx = (1280 - barW) / 2;
 
-  round(c, bx, y + 3, barW, barH, 27, 'rgba(42,22,8,0.36)', 'transparent', 0);
-  round(c, bx, y, barW, barH, 27, 'rgba(255,247,230,0.95)', '#6a4626', 2.6);
-  drawSpriteContain(c, 'ui_map_sign', bx + 12, y + 10, 34, 34);
+  round(c, bx, y + 4, barW, barH, 35, 'rgba(42,22,8,0.38)', 'transparent', 0);
+  round(c, bx, y, barW, barH, 35, 'rgba(255,247,230,0.96)', '#6a4626', 3.2);
+  drawSpriteContain(c, 'ui_map_sign', bx + 14, y + 14, 42, 42);
 
-  let cx = bx + 52;
+  let cx = bx + 62;
   for (const opt of options) {
     const selected = profile.selectedMap === opt.id;
     const pressed = hits.isPressed(`menu:map:${opt.id}`);
     const dy = pressed ? 2 : 0;
-    hits.add({ id: `menu:map:${opt.id}`, x: cx, y: y + 6, w: chipW, h: barH - 12, data: opt });
+    hits.add({ id: `menu:map:${opt.id}`, x: cx, y: y + 7, w: chipW, h: barH - 14, data: opt });
 
     if (selected) {
-      round(c, cx, y + 6 + dy, chipW, barH - 12, 18, '#f7d263', '#8c4e12', 2.4);
-      drawText(c, opt.label, cx + chipW / 2, y + barH / 2 + dy + 1, 17.5, PALETTE.ink, 'center', 900);
+      round(c, cx, y + 7 + dy, chipW, barH - 14, 24, '#f7d263', '#8c4e12', 2.8);
+      drawText(c, opt.label, cx + chipW / 2, y + barH / 2 + dy + 1, 24, PALETTE.ink, 'center', 900);
     } else if (opt.locked) {
-      round(c, cx, y + 7 + dy, chipW, barH - 14, 17, 'rgba(130,112,92,0.22)', 'rgba(130,112,92,0.45)', 1.5);
-      drawText(c, `${opt.label}🔒`, cx + chipW / 2, y + barH / 2 + dy + 1, 15.5, '#8c745c', 'center', 800);
+      round(c, cx, y + 8 + dy, chipW, barH - 16, 22, 'rgba(130,112,92,0.22)', 'rgba(130,112,92,0.45)', 1.8);
+      drawText(c, `${opt.label}🔒`, cx + chipW / 2, y + barH / 2 + dy + 1, 19.5, '#8c745c', 'center', 800);
     } else {
-      drawText(c, opt.label, cx + chipW / 2, y + barH / 2 + dy + 1, 17.5, '#59391e', 'center', 800);
+      drawText(c, opt.label, cx + chipW / 2, y + barH / 2 + dy + 1, 24, '#59391e', 'center', 800);
     }
     cx += chipW + gap;
   }
@@ -451,6 +457,7 @@ function drawCompactMapBar(
 function drawVectorSpeaker(c: CanvasRenderingContext2D, cx: number, cy: number, muted: boolean): void {
   c.save();
   c.translate(cx, cy);
+  c.scale(1.38, 1.38);
   c.fillStyle = PALETTE.ink;
   c.strokeStyle = PALETTE.ink;
   c.lineWidth = 2.4;
@@ -489,6 +496,7 @@ function drawVectorSpeaker(c: CanvasRenderingContext2D, cx: number, cy: number, 
 function drawVectorShare(c: CanvasRenderingContext2D, cx: number, cy: number): void {
   c.save();
   c.translate(cx, cy);
+  c.scale(1.38, 1.38);
   c.strokeStyle = PALETTE.ink;
   c.lineWidth = 2.6;
   c.lineCap = 'round';

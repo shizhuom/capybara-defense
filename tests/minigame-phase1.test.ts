@@ -4,7 +4,7 @@ import { createMiniGameAdapter, type MiniGameGlobalApi } from '../src/platform/m
 import { AssetRegistry, type SpriteImage } from '../src/render/AssetRegistry';
 import { ellipse, polygon, round } from '../src/render/StickerArt';
 import { StickerRenderer } from '../src/render/StickerRenderer';
-import { STAGE } from '../src/config/maps';
+import { STAGE, WIDE_MAPS, WIDE_STAGE, setMobileWideStage } from '../src/config/maps';
 import { classifySprite, spriteRelativePath } from '../src/minigame/assetPack';
 import { loadProfile, saveProfile } from '../src/ui/storage';
 import { createProfile } from '../src/core/MetaProgression';
@@ -261,5 +261,34 @@ describe('Mini-Game Phase 1: Platform layer, Viewport safe-area, Assets & Subpac
     ellipse(ctx, 50, 50, 10, 10, '#f4ca69', 'transparent', 2);
     expect(fill).toHaveBeenCalledTimes(1);
     expect(stroke).toHaveBeenCalledTimes(3);
+  });
+
+  it('defines 4 valid continuous 10x4 mobile wide maps and toggles STAGE cleanly without leaking into classic 9x5 web mode', () => {
+    for (const [id, map] of Object.entries(WIDE_MAPS)) {
+      expect(map.grid.length, `${id} rows`).toBe(4);
+      for (const row of map.grid) expect(row.length, `${id} cols`).toBe(10);
+      const path = map.paths.player;
+      expect(path.length).toBeGreaterThanOrEqual(19);
+      const start = path[0];
+      const end = path[path.length - 1];
+      expect(map.grid[start.row][start.col]).toBe('S');
+      expect(map.grid[end.row][end.col]).toBe('C');
+      for (let i = 1; i < path.length; i++) {
+        const dist = Math.abs(path[i].col - path[i - 1].col) + Math.abs(path[i].row - path[i - 1].row);
+        expect(dist, `${id} step ${i}`).toBe(1);
+        const tile = map.grid[path[i].row][path[i].col];
+        expect(['R', 'C']).toContain(tile);
+      }
+      const openCount = map.grid.flat().filter(t => t === 'O').length;
+      expect(openCount).toBeGreaterThanOrEqual(7);
+    }
+
+    setMobileWideStage(true);
+    expect(STAGE.cols).toBe(10);
+    expect(STAGE.rows).toBe(4);
+    expect(STAGE.cell).toBe(WIDE_STAGE.cell);
+    setMobileWideStage(false);
+    expect(STAGE.cols).toBe(9);
+    expect(STAGE.rows).toBe(5);
   });
 });

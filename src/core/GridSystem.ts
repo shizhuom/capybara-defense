@@ -1,9 +1,9 @@
-import { getMap,GRID_COLS,GRID_ROWS } from '../config/maps';
+import { getMap,STAGE } from '../config/maps';
 import type { BattleState, Point, Side, Tile, UnitLocation,MapId } from './types';
 export class GridSystem {
   static create(mapId?:MapId):Tile[][] { return getMap(mapId).grid.map(row=>[...row]); }
   static owns(side:Side,col:number,row:number):boolean {
-    return side==='player'&&Number.isInteger(col)&&Number.isInteger(row)&&col>=0&&col<GRID_COLS&&row>=0&&row<GRID_ROWS;
+    return side==='player'&&Number.isInteger(col)&&Number.isInteger(row)&&col>=0&&col<STAGE.cols&&row>=0&&row<STAGE.rows;
   }
   static canPlace(state:BattleState,side:Side,location:UnitLocation):boolean {
     if(side!=='player')return false;

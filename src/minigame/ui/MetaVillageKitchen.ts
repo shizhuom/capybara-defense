@@ -277,19 +277,23 @@ export function drawVillageModal(
     return {};
   }
 
-  // ── TAB 2: 5 FACILITIES BUILD & UPGRADE (`设施建造`) ────────────────────────
+  // ── TAB 2: 2-COLUMN GIANT FACILITY CARDS (`设施建造`) ───────────────────────
   const vx = body.x, vy = body.y, vw = body.w, vh = body.h;
   c.save();
   c.beginPath();
   c.rect(vx, vy, vw, vh);
   c.clip();
 
-  const rowH = 148, gap = 12, rowW = vw - 14;
+  const cols = 2, gapX = 16, gapY = 14;
+  const cardW = Math.floor((vw - 16 - gapX) / cols);
+  const cardH = 224;
   const pulsePool = pulseSel === '[data-action="village-build:fac_bamboo_pool"]';
 
   FACILITY_IDS.forEach((facId, idx) => {
-    const ry = vy + 4 + idx * (rowH + gap) - scroll.offset;
-    if (ry + rowH < vy - 20 || ry > vy + vh + 20) return;
+    const col = idx % cols, row = Math.floor(idx / cols);
+    const rx = vx + 4 + col * (cardW + gapX);
+    const ry = vy + 4 + row * (cardH + gapY) - scroll.offset;
+    if (ry + cardH < vy - 20 || ry > vy + vh + 20) return;
 
     const lv = villageLevel(profile, facId);
     const cost = facilityUpgradeCost(facId, lv);
@@ -297,67 +301,55 @@ export function drawVillageModal(
     const focused = villageUi.focusFacilityId === facId;
     const shouldPulse = pulsePool && facId === 'fac_bamboo_pool';
     const curLines = facilityLines(facId, lv || 1);
-    const nextLines = lv > 0 && lv < VILLAGE_MAX_LEVEL ? facilityLines(facId, lv + 1) : null;
 
     drawIvorySlab(
       c,
-      vx + 4,
+      rx,
       ry,
-      rowW,
-      rowH,
-      18,
+      cardW,
+      cardH,
+      20,
       shouldPulse || focused ? '#fff8d4' : lv > 0 ? '#fffdf8' : '#f2eadc',
       shouldPulse || focused ? '#f8e094' : lv > 0 ? '#f6e8cb' : '#e4dac7',
       shouldPulse ? '#e08b19' : focused ? '#4a997e' : '#7e5530',
-      shouldPulse || focused ? 3.2 : 2,
+      shouldPulse || focused ? 3.6 : 2.4,
     );
 
-    round(c, vx + 18, ry + 30, 86, 86, 16, '#eef7e2', '#7a5230', 2);
-    drawSpriteContain(c, facId, vx + 23, ry + 35, 76, 76, lv > 0 ? 1 : 0.55);
+    round(c, rx + 16, ry + 18, 102, 102, 18, '#eef7e2', '#7a5230', 2.4);
+    drawSpriteContain(c, facId, rx + 22, ry + 24, 90, 90, lv > 0 ? 1 : 0.55);
 
-    const tx = vx + 118;
+    const tx = rx + 132;
     const name = t(`facility.${facId}`);
-    drawText(c, name, tx, ry + 24, 20.5, PALETTE.ink, 'left', 900);
-    c.font = '900 20.5px "Trebuchet MS", "PingFang SC", "Microsoft YaHei", sans-serif';
-    const nw = c.measureText(name).width;
-    round(c, tx + nw + 10, ry + 12, lv > 0 ? 58 : 70, 24, 12, lv > 0 ? '#dff5d6' : '#e5dac7', lv > 0 ? '#3d8633' : '#8a7a64', 1.4);
-    drawText(c, lv > 0 ? `Lv.${lv}` : t('p16.notBuilt'), tx + nw + (lv > 0 ? 39 : 45), ry + 25, 13.5, lv > 0 ? '#235c1c' : PALETTE.inkSoft, 'center', 900);
+    drawText(c, name, tx, ry + 34, 26, PALETTE.ink, 'left', 900);
+    round(c, rx + cardW - 102, ry + 18, 86, 32, 16, lv > 0 ? '#dff5d6' : '#e5dac7', lv > 0 ? '#3d8633' : '#8a7a64', 1.8);
+    drawText(c, lv > 0 ? `Lv.${lv}` : t('p16.notBuilt'), rx + cardW - 59, ry + 35, 18, lv > 0 ? '#235c1c' : PALETTE.inkSoft, 'center', 900);
 
-    drawText(c, curLines.output.join(' · '), tx, ry + 50, 14.5, PALETTE.inkSoft, 'left', 800);
-    drawText(c, curLines.buffs.join(' · '), tx, ry + 73, 15, '#2b6b56', 'left', 900);
+    drawText(c, curLines.output.join(' · '), tx, ry + 72, 19, PALETTE.inkSoft, 'left', 800);
+    drawText(c, curLines.buffs.join(' · '), tx, ry + 104, 19.5, '#2b6b56', 'left', 900);
 
-    if (nextLines) {
-      const nextSummary = [...nextLines.output.slice(0, 1), ...nextLines.buffs]
-        .join(' · ')
-        .replace(/🪙\s*/gu, '');
-      const nxtStr = `${t('p16.nextLevel')}: ${nextSummary}`;
-      drawText(c, nxtStr.length > 36 ? `${nxtStr.slice(0, 36)}…` : nxtStr, tx, ry + 96, 13.5, '#8c5a22', 'left', 700);
-    }
-
+    // Bottom Cost Chips + Giant Build/Upgrade Button
+    const footY = ry + cardH - 42;
     if (cost) {
-      const costY = nextLines ? ry + 124 : ry + 108;
-      let cx = tx;
-      if (cost.wood > 0) cx += drawIconLabel(c, 'res_onsen_wood', `${profile.village.wood}/${cost.wood}`, cx, costY, 22, 15, profile.village.wood >= cost.wood ? '#2c763d' : '#b83c2c') + 18;
-      if (cost.essence > 0) cx += drawIconLabel(c, 'res_yuzu_essence', `${profile.village.essence}/${cost.essence}`, cx, costY, 22, 15, profile.village.essence >= cost.essence ? '#2c763d' : '#b83c2c') + 18;
-      if (cost.coins > 0) drawIconLabel(c, 'ui_coin_gold', `${cost.coins}`, cx, costY, 22, 15, profile.coins >= cost.coins ? PALETTE.ink : '#b83c2c');
+      let cx = rx + 18;
+      if (cost.wood > 0) cx += drawIconLabel(c, 'res_onsen_wood', `${profile.village.wood}/${cost.wood}`, cx, footY, 26, 19, profile.village.wood >= cost.wood ? '#2c763d' : '#b83c2c') + 18;
+      if (cost.essence > 0) cx += drawIconLabel(c, 'res_yuzu_essence', `${profile.village.essence}/${cost.essence}`, cx, footY, 26, 19, profile.village.essence >= cost.essence ? '#2c763d' : '#b83c2c') + 18;
+      if (cost.coins > 0) drawIconLabel(c, 'ui_coin_gold', `${cost.coins}`, cx, footY, 26, 19, profile.coins >= cost.coins ? PALETTE.ink : '#b83c2c');
     } else {
-      drawText(c, `★ ${t('p16.maxed')}`, tx, ry + 114, 15.5, '#8a4c10', 'left', 900);
+      drawText(c, `★ ${t('p16.maxed')}`, rx + 20, footY, 21, '#8a4c10', 'left', 900);
     }
 
-    if (ry + rowH > vy && ry < vy + vh) {
+    if (ry + cardH > vy && ry < vy + vh) {
       if (cost) {
         const lbl = lv === 0 ? t('p16.build', { level: 1 }) : t('p16.upgradeTo', { level: lv + 1 });
-        drawPillButton(c, hits, `village:build:${facId}`, vx + 4 + rowW - 144, ry + 51, 130, 46, lbl, afford ? (lv === 0 ? 'green' : 'gold') : 'muted', {
-          fontSize: 16.5,
+        drawPillButton(c, hits, `village:build:${facId}`, rx + cardW - 166, ry + cardH - 68, 150, 52, lbl, afford ? (lv === 0 ? 'green' : 'gold') : 'muted', {
+          fontSize: 20,
           disabled: !afford,
         });
-      } else {
-        drawText(c, t('p16.maxed'), vx + 4 + rowW - 76, ry + 74, 16, '#8a4c10', 'center', 900);
       }
     }
   });
 
-  const contentH = 8 + FACILITY_IDS.length * (rowH + gap);
+  const contentH = 12 + Math.ceil(FACILITY_IDS.length / cols) * (cardH + gapY);
   c.restore();
   scroll.setContentBounds(contentH, vh);
   drawScrollbar(c, vx, vy, vw, vh, contentH, scroll);
@@ -402,25 +394,27 @@ export function drawKitchenModal(
     c.rect(vx, vy, vw, vh);
     c.clip();
 
-    const rowW = vw - 14;
-    const rowH = 92, gap = 10;
+    const cols = 3, gapX = 16, gapY = 14;
+    const cardW = Math.floor((vw - 16 - gapX * (cols - 1)) / cols);
+    const ingCardH = 164;
+    const rowW = vw - 16;
     let y = vy + 4 - scroll.offset;
 
-    INGREDIENT_IDS.forEach(ingId => {
+    INGREDIENT_IDS.forEach((ingId, idx) => {
+      const col = idx % cols, row = Math.floor(idx / cols);
+      const rx = vx + 4 + col * (cardW + gapX);
+      const ry = y + row * (ingCardH + gapY);
       const count = profile.ingredients?.[ingId] ?? 0;
-      if (y + rowH >= vy - 20 && y <= vy + vh + 20) {
-        drawIvorySlab(c, vx + 4, y, rowW, rowH, 16, count > 0 ? '#fffdf8' : '#f2eadc', count > 0 ? '#f6e8cb' : '#e4dac7', '#7e5530', 2);
-        round(c, vx + 18, y + 12, 68, 68, 14, '#fff8e6', '#8a5d32', 1.8);
-        drawSpriteContain(c, ingId, vx + 23, y + 17, 58, 58, count > 0 ? 1 : 0.42);
-        drawText(c, t(`ingredient.${ingId}`), vx + 102, y + 26, 20, PALETTE.ink, 'left', 900);
-        drawText(c, t(`ingredient.${ingId}.flavor`), vx + 102, y + 52, 15, PALETTE.inkSoft, 'left', 700);
-        drawText(c, t(`ingredient.${ingId}.source`), vx + 102, y + 74, 14, '#7d5b32', 'left', 700);
-
-        drawText(c, t('p14.stock'), vx + 4 + rowW - 44, y + 32, 14, PALETTE.inkSoft, 'center', 800);
-        drawText(c, `×${count}`, vx + 4 + rowW - 44, y + 60, 22, count > 0 ? '#7c3f08' : PALETTE.muted, 'center', 900);
+      if (ry + ingCardH >= vy - 20 && ry <= vy + vh + 20) {
+        drawIvorySlab(c, rx, ry, cardW, ingCardH, 18, count > 0 ? '#fffdf8' : '#f2eadc', count > 0 ? '#f6e8cb' : '#e4dac7', '#7e5530', 2.2);
+        round(c, rx + 14, ry + 16, 86, 86, 16, '#fff8e6', '#8a5d32', 2);
+        drawSpriteContain(c, ingId, rx + 20, ry + 22, 74, 74, count > 0 ? 1 : 0.42);
+        drawText(c, t(`ingredient.${ingId}`), rx + 112, ry + 36, 24, PALETTE.ink, 'left', 900);
+        drawText(c, `×${count}`, rx + cardW - 16, ry + 36, 28, count > 0 ? '#7c3f08' : PALETTE.muted, 'right', 900);
+        drawWrappedText(c, t(`ingredient.${ingId}.source`), rx + 112, ry + 64, cardW - 126, 18.5, 24, '#7d5b32', 'left', 700, 3);
       }
-      y += rowH + gap;
     });
+    y += Math.ceil(INGREDIENT_IDS.length / cols) * (ingCardH + gapY) + 6;
 
     // Bottom Ingredient Basket Card
     const hasGained = kitchen.lastBasketGained.length > 0;
@@ -597,11 +591,16 @@ export function drawKitchenModal(
   }
   y += activeH + 12;
 
-  // 2. Single-Column Full-Description Broth Cards (all 14 broths!)
+  // 2. 2-Column GIANT Broth Cards (all 14 broths!)
   const pulseYuzu = pulseSel === '[data-action="kitchen-brew:dish_yuzu_bath"]';
-  const rowH = 136, gap = 12;
+  const cols = 2, gapX = 16, gapY = 14;
+  const cardW = Math.floor((vw - 16 - gapX) / cols);
+  const cardH = 212;
 
-  for (const brothId of BROTH_IDS) {
+  BROTH_IDS.forEach((brothId, idx) => {
+    const col = idx % cols, row = Math.floor(idx / cols);
+    const rx = vx + 4 + col * (cardW + gapX);
+    const ry = y + row * (cardH + gapY);
     const def = BROTHS[brothId];
     const lv = getBrothLevel(profile, brothId);
     const isActive = profile.activeBrothId === brothId;
@@ -609,54 +608,52 @@ export function drawKitchenModal(
     const afford = Boolean(cost && canAffordIngredients(profile, cost));
     const shouldPulse = pulseYuzu && brothId === 'dish_yuzu_bath';
 
-    if (y + rowH >= vy - 20 && y <= vy + vh + 20) {
+    if (ry + cardH >= vy - 20 && ry <= vy + vh + 20) {
       drawIvorySlab(
         c,
-        vx + 4,
-        y,
-        rowW,
-        rowH,
-        18,
+        rx,
+        ry,
+        cardW,
+        cardH,
+        20,
         shouldPulse ? '#fff9d6' : isActive ? '#f3fde9' : lv > 0 ? '#fffdf8' : '#f4ecde',
         shouldPulse ? '#fae292' : isActive ? '#e3f7d0' : lv > 0 ? '#f6e8cb' : '#e7dcc8',
         shouldPulse ? '#e08b19' : isActive ? '#4a9938' : '#7e5530',
-        shouldPulse ? 3.5 : isActive ? 2.6 : 2,
+        shouldPulse ? 3.8 : isActive ? 3 : 2.2,
       );
 
       // Left open-detail tap zone
-      if (y + rowH > vy && y < vy + vh) {
-        hits.add({ id: `kitchen:dish:${brothId}`, x: vx + 4, y: Math.max(vy, y), w: rowW - 156, h: Math.min(y + rowH, vy + vh) - Math.max(vy, y) });
+      if (ry + cardH > vy && ry < vy + vh) {
+        hits.add({ id: `kitchen:dish:${brothId}`, x: rx, y: Math.max(vy, ry), w: cardW - 168, h: Math.min(ry + cardH, vy + vh) - Math.max(vy, ry) });
       }
 
-      round(c, vx + 18, y + 24, 86, 86, 18, def.bathColor, isActive ? '#3d8633' : '#7a5230', isActive ? 2.6 : 2);
-      drawSpriteContain(c, brothId, vx + 24, y + 30, 74, 74, lv > 0 ? 1 : 0.72);
+      round(c, rx + 16, ry + 18, 98, 98, 18, def.bathColor, isActive ? '#3d8633' : '#7a5230', isActive ? 3 : 2.2);
+      drawSpriteContain(c, brothId, rx + 22, ry + 24, 86, 86, lv > 0 ? 1 : 0.72);
 
-      const tx = vx + 118;
+      const tx = rx + 128;
       const nm = t(`broth.${brothId}`);
-      drawText(c, nm, tx, y + 26, 21, PALETTE.ink, 'left', 900);
-      c.font = '900 21px "Trebuchet MS", "PingFang SC", "Microsoft YaHei", sans-serif';
-      const nw = c.measureText(nm).width;
-      round(c, tx + nw + 10, y + 14, lv > 0 ? 54 : 66, 24, 12, lv > 0 ? '#dff5d6' : '#e6dac5', lv > 0 ? '#3d8633' : '#8a7a64', 1.4);
-      drawText(c, lv > 0 ? `Lv.${lv}` : t('p14.locked'), tx + nw + (lv > 0 ? 37 : 43), y + 27, 13.5, lv > 0 ? '#22591b' : PALETTE.inkSoft, 'center', 900);
+      drawText(c, nm, tx, ry + 34, 25, PALETTE.ink, 'left', 900);
+      round(c, rx + cardW - 92, ry + 18, 76, 30, 15, lv > 0 ? '#dff5d6' : '#e6dac5', lv > 0 ? '#3d8633' : '#8a7a64', 1.8);
+      drawText(c, lv > 0 ? `Lv.${lv}` : t('p14.locked'), rx + cardW - 54, ry + 34, 17, lv > 0 ? '#22591b' : PALETTE.inkSoft, 'center', 900);
 
-      drawText(c, `${t('p14.tier', { tier: def.tier })} · ${t(`broth.${brothId}.style`)}`, tx, y + 52, 14.5, '#7a5c3c', 'left', 800);
-      drawWrappedText(c, brothEffectText(brothId, (lv || 1) as BrothLevel), tx, y + 66, rowW - 284, 16, 21, PALETTE.ink, 'left', 800, 2);
+      drawText(c, `${t('p14.tier', { tier: def.tier })} · ${t(`broth.${brothId}.style`)}`, tx, ry + 64, 18, '#7a5c3c', 'left', 800);
+      drawWrappedText(c, brothEffectText(brothId, (lv || 1) as BrothLevel), tx, ry + 82, cardW - 144, 19, 25, PALETTE.ink, 'left', 800, 2);
 
       if (cost) {
-        drawCostChipsInline(c, profile, cost, tx, y + 112, false);
+        drawCostChipsInline(c, profile, cost, rx + 16, ry + cardH - 36, false);
       } else {
-        drawText(c, `★ ${t('p14.mastered')}`, tx, y + 114, 15, '#8c5310', 'left', 900);
+        drawText(c, `★ ${t('p14.mastered')}`, rx + 18, ry + cardH - 36, 19.5, '#8c5310', 'left', 900);
       }
 
-      // Right Action Column (exact `✓ 使用中` / `设为汤底` / `熬制解锁` / `食材不足` + `可升级`!)
-      if (y + rowH > vy && y < vy + vh) {
-        const bx = vx + 4 + rowW - 144;
+      // Bottom-Right Action Pill Button
+      if (ry + cardH > vy && ry < vy + vh) {
+        const bx = rx + cardW - 156;
         if (lv === 0) {
           if (afford) {
-            drawPillButton(c, hits, `kitchen:brew:${brothId}`, bx, y + 45, 130, 46, t('p14.brew'), 'green', { fontSize: 16.5 });
+            drawPillButton(c, hits, `kitchen:brew:${brothId}`, bx, ry + cardH - 60, 142, 48, t('p14.brew'), 'green', { fontSize: 19.5 });
           } else {
-            round(c, bx + 10, y + 48, 112, 40, 20, '#e8dfd0', '#b3a38c', 1.6);
-            drawText(c, t('p14.missing'), bx + 66, y + 69, 15.5, '#7c6e5b', 'center', 800);
+            round(c, bx + 12, ry + cardH - 56, 128, 42, 21, '#e8dfd0', '#b3a38c', 1.8);
+            drawText(c, t('p14.missing'), bx + 76, ry + cardH - 34, 18.5, '#7c6e5b', 'center', 800);
           }
         } else {
           drawPillButton(
@@ -664,21 +661,18 @@ export function drawKitchenModal(
             hits,
             `kitchen:equip:${brothId}`,
             bx,
-            afford ? y + 26 : y + 45,
-            130,
-            44,
+            ry + cardH - 60,
+            142,
+            48,
             t(isActive ? 'p14.active' : 'p14.equip'),
             isActive ? 'green' : 'cream',
-            { fontSize: 16.5 },
+            { fontSize: 19.5 },
           );
-          if (afford) {
-            drawPillButton(c, hits, `kitchen:dish:${brothId}`, bx + 14, y + 80, 102, 32, t('p14.canUpgrade'), 'gold', { fontSize: 14 });
-          }
         }
       }
     }
-    y += rowH + gap;
-  }
+  });
+  y += Math.ceil(BROTH_IDS.length / cols) * (cardH + gapY);
 
   const contentH = Math.max(vh, y + scroll.offset - vy + 10);
   c.restore();

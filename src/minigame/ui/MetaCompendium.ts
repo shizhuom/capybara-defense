@@ -191,41 +191,41 @@ export function drawCompendiumModal(
       drawSpriteContain(c, entrySprite(id, false), frameX + 8, frameY + 8, frameS - 16, frameS - 16, available ? 1 : 0.32);
     }
 
-    const tx = frameX + frameS + 20;
-    drawText(c, entryName(id), tx, y + 40, 26, PALETTE.ink, 'left', 900);
+    const tx = frameX + frameS + 22;
+    drawText(c, entryName(id), tx, y + 40, 31, PALETTE.ink, 'left', 900);
     // Right status badge
     if (!available) {
-      drawText(c, t('p9.starUnlock', { stars: requiredStars(id) }), cardX + cardW - 22, y + 38, 16, '#9c5b1e', 'right', 900);
+      drawText(c, t('p9.starUnlock', { stars: requiredStars(id) }), cardX + cardW - 22, y + 38, 20, '#9c5b1e', 'right', 900);
     } else {
       const stateKey = collected ? (isWeapon || isProp ? 'p10.owned' : 'p10.collected') : isHero ? 'p10.canMerge' : 'p10.uncollected';
-      drawText(c, t(stateKey), cardX + cardW - 22, y + 36, 16, collected ? '#2c763d' : PALETTE.inkSoft, 'right', 900);
-      if (collected) drawSpriteContain(c, 'ui_storybook_check', cardX + cardW - 48, y + 52, 26, 26);
+      drawText(c, t(stateKey), cardX + cardW - 22, y + 36, 20, collected ? '#2c763d' : PALETTE.inkSoft, 'right', 900);
+      if (collected) drawSpriteContain(c, 'ui_storybook_check', cardX + cardW - 52, y + 54, 30, 30);
     }
 
     // Family pill
-    round(c, tx, y + 60, 184, 30, 15, '#f0dec0', '#966b3c', 1.6);
-    drawText(c, entryFamily(id), tx + 92, y + 76, 15, '#59371a', 'center', 900);
+    round(c, tx, y + 62, 230, 34, 17, '#f0dec0', '#966b3c', 1.8);
+    drawText(c, entryFamily(id), tx + 115, y + 80, 19, '#59371a', 'center', 900);
 
-    drawWrappedText(c, entryTagline(id), tx, y + 100, cardW - (tx - cardX) - 24, 16.5, 22, PALETTE.inkSoft, 'left', 700, 2);
+    drawWrappedText(c, entryTagline(id), tx, y + 106, cardW - (tx - cardX) - 24, 21, 27, PALETTE.inkSoft, 'left', 700, 2);
 
     // Awakened Form Toggle Bar (for Heroes!)
     if (isHero && available) {
-      const togY = y + 166;
-      if (togY + 46 > vy && togY < vy + vh) {
+      const togY = y + 168;
+      if (togY + 50 > vy && togY < vy + vh) {
         drawPillButton(
           c,
           hits,
           'compendium:awakened',
           cardX + 22,
           togY,
-          216,
-          44,
+          252,
+          48,
           t(ui.previewAwakened ? 'p17.awakenedToggle.awakened' : 'p17.awakenedToggle.normal'),
           ui.previewAwakened ? 'gold' : 'cream',
-          { fontSize: 16.5 },
+          { fontSize: 20 },
         );
       }
-      drawText(c, t('p17.awakenedHint'), cardX + 252, togY + 23, 14.5, PALETTE.inkSoft, 'left', 700);
+      drawText(c, t('p17.awakenedHint'), cardX + 292, togY + 25, 19, PALETTE.inkSoft, 'left', 700);
     }
     y += showcaseH + 12;
 
@@ -416,110 +416,121 @@ export function drawCompendiumModal(
     return { scrollViewport: { x: vx, y: vy, w: vw, h: vh } };
   }
 
-  // ── SINGLE-COLUMN STORYBOOK ROW LIST (EXACT `p18_preview_d02_compendium_list.png`!) ──
+  // ── MOBILE BIG-CARD GRID (2-column Giant Recipes / 3-column Giant Cards!) ──
   const vx = body.x, vy = body.y, vw = body.w, vh = body.h;
   c.save();
   c.beginPath();
   c.rect(vx, vy, vw, vh);
   c.clip();
 
-  const rowH = 104;
-  const gap = 12;
-  const rowW = vw - 14;
-  let count = 0;
+  const innerW = vw - 16;
+  const gapX = 16, gapY = 14;
+  let totalRows = 0;
+  let cardH = 226;
 
   if (ui.tab === 'matrix') {
-    count = RECIPES.length;
+    const cols = 2;
+    const cardW = Math.floor((innerW - gapX * (cols - 1)) / cols);
+    cardH = 152;
+    totalRows = Math.ceil(RECIPES.length / cols);
     RECIPES.forEach((r, idx) => {
-      const ry = vy + 4 + idx * (rowH + gap) - scroll.offset;
-      if (ry + rowH < vy - 20 || ry > vy + vh + 20) return;
+      const col = idx % cols, row = Math.floor(idx / cols);
+      const rx = vx + 4 + col * (cardW + gapX);
+      const ry = vy + 4 + row * (cardH + gapY) - scroll.offset;
+      if (ry + cardH < vy - 20 || ry > vy + vh + 20) return;
 
       const avail = isAvailable(r.hero);
       const coll = entryCollected(r.hero, profile);
-      if (ry + rowH > vy && ry < vy + vh) {
-        hits.add({ id: `compendium:entry:${r.hero}`, x: vx + 4, y: Math.max(vy, ry), w: rowW, h: Math.min(ry + rowH, vy + vh) - Math.max(vy, ry) });
+      if (ry + cardH > vy && ry < vy + vh) {
+        hits.add({ id: `compendium:entry:${r.hero}`, x: rx, y: Math.max(vy, ry), w: cardW, h: Math.min(ry + cardH, vy + vh) - Math.max(vy, ry) });
       }
 
-      drawIvorySlab(c, vx + 4, ry, rowW, rowH, 18, avail ? '#fffdf8' : '#efe7d8', avail ? '#f6e8cb' : '#e3d8c4', '#7e5530', 2);
-      // Framed Hero Portrait
-      round(c, vx + 18, ry + 14, 76, 76, 16, FRAME_TONE.heroes, '#8a5d32', 2);
-      drawSpriteContain(c, r.hero, vx + 23, ry + 19, 66, 66, avail ? 1 : 0.34);
+      drawIvorySlab(c, rx, ry, cardW, cardH, 20, avail ? '#fffdf8' : '#efe7d8', avail ? '#f6e8cb' : '#e3d8c4', coll ? '#c97b18' : '#7e5530', coll ? 3 : 2.2);
+      round(c, rx + 16, ry + 20, 108, 108, 18, FRAME_TONE.heroes, '#8a5d32', 2.4);
+      drawSpriteContain(c, r.hero, rx + 22, ry + 26, 96, 96, avail ? 1 : 0.34);
 
-      // Hero Name + Equation `[pet] 名称  +  [gear] 名称`
-      drawText(c, entryName(r.hero), vx + 112, ry + 34, 22, avail ? PALETTE.ink : PALETTE.muted, 'left', 900);
-      const eqY = ry + 68;
-      drawSpriteContain(c, r.parts[0], vx + 112, eqY - 16, 32, 32, avail ? 1 : 0.45);
+      drawText(c, entryName(r.hero), rx + 138, ry + 40, 29, avail ? PALETTE.ink : PALETTE.muted, 'left', 900);
+      drawEntryStatusBadge(c, rx + cardW - 14, ry + 20, avail, coll, true, r.hero);
+
+      // Large clear equation `[pet] 名称 + [gear] 名称`
+      const eqY = ry + 102;
+      drawSpriteContain(c, r.parts[0], rx + 138, eqY - 22, 44, 44, avail ? 1 : 0.45);
       const p0Name = entryName(r.parts[0]);
-      drawText(c, p0Name, vx + 150, eqY + 1, 17, PALETTE.inkSoft, 'left', 800);
-      c.font = '800 17px "Trebuchet MS", "PingFang SC", "Microsoft YaHei", sans-serif';
-      const p0W = c.measureText(p0Name).width;
-      const plusX = vx + 150 + p0W + 18;
-      drawText(c, '+', plusX, eqY + 1, 19, PALETTE.inkSoft, 'center', 900);
-      drawSpriteContain(c, r.parts[1], plusX + 14, eqY - 16, 32, 32, avail ? 1 : 0.45);
-      drawText(c, entryName(r.parts[1]), plusX + 52, eqY + 1, 17, PALETTE.inkSoft, 'left', 800);
-
-      // Right Status Column (exact `已收录` + `ui_storybook_check`!)
-      drawEntryStatus(c, vx + 4 + rowW - 22, ry, rowH, avail, coll, true, r.hero);
+      drawText(c, p0Name, rx + 188, eqY + 1, 21, PALETTE.inkSoft, 'left', 800);
+      c.font = '800 21px "Trebuchet MS", "PingFang SC", "Microsoft YaHei", sans-serif';
+      const p0W = Math.min(120, c.measureText(p0Name).width);
+      const plusX = rx + 188 + p0W + 18;
+      drawText(c, '+', plusX, eqY + 1, 24, PALETTE.inkSoft, 'center', 900);
+      drawSpriteContain(c, r.parts[1], plusX + 16, eqY - 22, 44, 44, avail ? 1 : 0.45);
+      drawText(c, entryName(r.parts[1]), plusX + 66, eqY + 1, 21, PALETTE.inkSoft, 'left', 800);
     });
   } else {
     const ids = CATALOGS[ui.tab];
-    count = ids.length;
+    const cols = 3;
+    const cardW = Math.floor((innerW - gapX * (cols - 1)) / cols);
+    cardH = 228;
+    totalRows = Math.ceil(ids.length / cols);
     ids.forEach((id, idx) => {
-      const ry = vy + 4 + idx * (rowH + gap) - scroll.offset;
-      if (ry + rowH < vy - 20 || ry > vy + vh + 20) return;
+      const col = idx % cols, row = Math.floor(idx / cols);
+      const rx = vx + 4 + col * (cardW + gapX);
+      const ry = vy + 4 + row * (cardH + gapY) - scroll.offset;
+      if (ry + cardH < vy - 20 || ry > vy + vh + 20) return;
 
       const avail = isAvailable(id);
       const coll = entryCollected(id, profile);
-      if (ry + rowH > vy && ry < vy + vh) {
-        hits.add({ id: `compendium:entry:${id}`, x: vx + 4, y: Math.max(vy, ry), w: rowW, h: Math.min(ry + rowH, vy + vh) - Math.max(vy, ry) });
+      const isHero = Object.hasOwn(HEROES, id);
+      if (ry + cardH > vy && ry < vy + vh) {
+        hits.add({ id: `compendium:entry:${id}`, x: rx, y: Math.max(vy, ry), w: cardW, h: Math.min(ry + cardH, vy + vh) - Math.max(vy, ry) });
       }
 
-      drawIvorySlab(c, vx + 4, ry, rowW, rowH, 18, avail ? '#fffdf8' : '#efe7d8', avail ? '#f6e8cb' : '#e3d8c4', '#7e5530', 2);
-      round(c, vx + 18, ry + 14, 76, 76, 16, FRAME_TONE[ui.tab], '#8a5d32', 2);
-      if (!drawSpriteContain(c, entrySprite(id), vx + 23, ry + 19, 66, 66, avail ? 1 : 0.34)) {
-        drawSpriteContain(c, 'ui_weapon_fragment', vx + 23, ry + 19, 66, 66, 0.45);
+      drawIvorySlab(c, rx, ry, cardW, cardH, 20, avail ? '#fffdf8' : '#efe7d8', avail ? '#f6e8cb' : '#e3d8c4', isHero && coll ? '#c97b18' : '#7e5530', isHero && coll ? 3 : 2.4);
+      // Giant framed sprite (108×108!)
+      round(c, rx + 14, ry + 14, 108, 108, 18, FRAME_TONE[ui.tab], '#8a5d32', 2.4);
+      if (!drawSpriteContain(c, entrySprite(id), rx + 20, ry + 20, 96, 96, avail ? 1 : 0.34)) {
+        drawSpriteContain(c, 'ui_weapon_fragment', rx + 20, ry + 20, 96, 96, 0.45);
       }
 
-      drawText(c, entryName(id), vx + 112, ry + 34, 21.5, avail ? PALETTE.ink : PALETTE.muted, 'left', 900);
-      drawWrappedText(c, entryTagline(id), vx + 112, ry + 54, rowW - 250, 16, 21, PALETTE.inkSoft, 'left', 700, 2);
+      // Giant title (28px!) + status pill + family chip
+      drawText(c, entryName(id), rx + 134, ry + 36, 27, avail ? PALETTE.ink : PALETTE.muted, 'left', 900);
+      drawEntryStatusBadge(c, rx + cardW - 12, ry + 16, avail, coll, isHero, id);
+      round(c, rx + 134, ry + 64, cardW - 148, 34, 12, '#efe0be', '#a67f4e', 1.6);
+      drawText(c, entryFamily(id), rx + 134 + (cardW - 148) / 2, ry + 82, 19, '#4c2c12', 'center', 900);
 
-      drawEntryStatus(c, vx + 4 + rowW - 22, ry, rowH, avail, coll, Object.hasOwn(HEROES, id), id);
+      // Big readable bottom description box (20px!)
+      round(c, rx + 14, ry + 134, cardW - 28, 80, 14, 'rgba(232,212,172,0.42)', '#cbb082', 1.5);
+      drawWrappedText(c, entryTagline(id), rx + 24, ry + 144, cardW - 48, 20.5, 28, PALETTE.ink, 'left', 800, 2);
     });
   }
 
-  const contentH = 8 + count * (rowH + gap);
+  const contentH = 12 + totalRows * (cardH + gapY);
   c.restore();
   scroll.setContentBounds(contentH, vh);
   drawScrollbar(c, vx, vy, vw, vh, contentH, scroll);
   return { scrollViewport: { x: vx, y: vy, w: vw, h: vh } };
 }
 
-function drawEntryStatus(
+function drawEntryStatusBadge(
   c: CanvasRenderingContext2D,
   rightX: number,
-  rowY: number,
-  rowH: number,
+  topY: number,
   available: boolean,
   collected: boolean,
   isHero: boolean,
   id: string,
 ): void {
-  const cx = rightX - 36;
+  const bw = 92, bh = 32;
+  const bx = rightX - bw;
   if (!available) {
-    drawText(c, t('p9.starUnlock', { stars: requiredStars(id) }), cx, rowY + 34, 15, '#9c5b1e', 'center', 900);
-    drawSpriteContain(c, 'ui_lock_closed', cx - 14, rowY + 52, 28, 28);
+    round(c, bx, topY, bw, bh, 16, '#8f6942', '#4c2d12', 2);
+    drawText(c, t('p9.starUnlock', { stars: requiredStars(id) }), bx + bw / 2, topY + bh / 2 + 1, 16.5, '#fff6df', 'center', 900);
     return;
   }
   const isOwnedType = Object.hasOwn(WEAPONS, id) || Object.hasOwn(PROPS, id);
   const key = collected ? (isOwnedType ? 'p10.owned' : 'p10.collected') : isHero ? 'p10.canMerge' : 'p10.uncollected';
-  drawText(c, t(key), cx, rowY + 34, 15.5, collected ? '#2c763d' : PALETTE.inkSoft, 'center', 900);
-  if (collected) {
-    drawSpriteContain(c, 'ui_storybook_check', cx - 15, rowY + 50, 30, 30);
-  } else if (!isHero) {
-    drawSpriteContain(c, 'ui_lock_closed', cx - 13, rowY + 52, 26, 26);
-  } else {
-    round(c, cx - 12, rowY + 54, 24, 24, 12, '#fff5dc', '#c98e3a', 2);
-  }
+  const fill = collected ? (isHero ? '#f6c542' : '#6db33f') : '#dfd2b8';
+  const color = collected ? (isHero ? '#452208' : '#fffdf5') : '#5d4630';
+  round(c, bx, topY, bw, bh, 16, fill, '#4c2d12', 2);
+  drawText(c, t(key), bx + bw / 2, topY + bh / 2 + 1, 17, color, 'center', 900);
 }
 
 export { LEDGER };

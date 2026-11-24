@@ -1,6 +1,6 @@
 import type { BattleLoadout, BattleState, Enemy, Interaction, MapId, Side, StageRect, Unit, VisualEvent } from '../core/types';
 import {combatRange,combatCharge} from '../core/CombatRules';
-import { getMap, STAGE } from '../config/maps';
+import { getMap, isMobileWideStage, STAGE } from '../config/maps';
 import {GUARDIAN_BATH_SPOTS} from '../config/guardianBaths';
 import {getActiveBroth} from '../config/kitchen';
 import {drawGuardianBath,HAPPY_DURATION,rgba,shieldDome} from './GuardianBathRenderer';
@@ -82,15 +82,16 @@ export class StickerRenderer {
     // so thumbs naturally start higher and stay well clear of the iOS bottom Home Indicator bar.
     const benchTop=context?.touch?boardBottom:benchY;
     if (y>=benchTop && y<benchY+benchSize) {
+      const lockHit = isMobileWideStage() ? 32 : 26;
       for(let slot=0;slot<5;slot++) {
         const left=benchX+slot*benchStep;
         if(x>=left && x<left+benchSize){
-          if(context?.allowBenchLock&&!context.dragging&&x<left+26&&y>=benchY&&y<benchY+26&&context.state.units.some(u=>u.side==='player'&&u.location.zone==='bench'&&u.location.slot===slot))return{kind:'bench-lock',slot};
+          if(context?.allowBenchLock&&!context.dragging&&x<left+lockHit&&y>=benchY&&y<benchY+lockHit&&context.state.units.some(u=>u.side==='player'&&u.location.zone==='bench'&&u.location.slot===slot))return{kind:'bench-lock',slot};
           return {kind:'bench',slot};
         }
       }
     }
-    if(Math.hypot(x-shovelX,y-shovelY)<=41) return {kind:'shovel'};
+    if(Math.hypot(x-shovelX,y-shovelY)<=(isMobileWideStage()?54:41)) return {kind:'shovel'};
     return null;
   }
 
@@ -184,9 +185,25 @@ export class StickerRenderer {
   }
 
   private drawPaper(mapId:MapId):void {
-    const c=this.c,map=this.assets.get(`map_${mapId}`);
+    const c=this.c,map=this.assets.get(`map_${mapId}`),theme=getMap(mapId).theme;
+    if(isMobileWideStage()){
+      const {boardX:bx,boardY:by,cell,cols,rows}=STAGE,bw=cols*cell,bh=rows*cell;
+      c.fillStyle=theme.paper;c.fillRect(0,0,STAGE.width,STAGE.height);
+      if(map){
+        const iw=map.naturalWidth||map.width||1280,ih=map.naturalHeight||map.height||720;
+        // Preserve authentic hand-painted garden margins around our wide 10×4 wooden board
+        c.drawImage(map,0,0,iw*.14,ih,0,0,bx+12,STAGE.height);
+        c.drawImage(map,iw*.86,0,iw*.14,ih,bx+bw-12,0,STAGE.width-(bx+bw)+12,STAGE.height);
+        c.drawImage(map,iw*.14,0,iw*.72,ih*.10,bx-8,0,bw+16,by+8);
+        c.drawImage(map,iw*.14,ih*.86,iw*.72,ih*.14,bx-8,by+bh-6,bw+16,STAGE.height-(by+bh)+8);
+      }
+      // Carved wooden board frame around the 10×4 battlefield
+      round(c,bx-12,by-12,bw+24,bh+24,18,'rgba(30,18,8,0.34)','transparent',0);
+      round(c,bx-10,by-10,bw+20,bh+20,16,'#875732','#3d2210',4.5);
+      round(c,bx-4,by-4,bw+8,bh+8,12,'#a36c3e','#593419',2);
+      return;
+    }
     if(map){c.drawImage(map,0,0,STAGE.width,STAGE.height);return;}
-    const theme=getMap(mapId).theme;
     c.fillStyle=theme.paper;c.fillRect(0,0,STAGE.width,STAGE.height);
     const g=c.createLinearGradient(0,0,0,STAGE.height);g.addColorStop(0,theme.paper);g.addColorStop(1,theme.open);
     c.fillStyle=g;c.fillRect(0,0,STAGE.width,STAGE.height);
@@ -202,19 +219,58 @@ export class StickerRenderer {
 
   private drawBoard(state:Pick<BattleState,'mapId'|'grid'|'craterHits'>,seconds:number):void {
     const c=this.c,{boardX:x,boardY:y,cell}=STAGE,map=getMap(state.mapId),theme=map.theme;
+    const wide=isMobileWideStage();
     c.save();c.beginPath();c.rect(x,y,cell*STAGE.cols,cell*STAGE.rows);c.clip();
-    const mapImage=this.assets.get(`map_${state.mapId}`);
+    const mapImage=wide?undefined:this.assets.get(`map_${state.mapId}`);
+
+    if(wide){
+      // 1. Lush checkerboard grass across the full 10×4 arena
+      for(let row=0;row<STAGE.rows;row++) for(let col=0;col<STAGE.cols;col++){
+        const tile=state.grid[row][col],tx=x+col*cell,ty=y+row*cell;
+        c.fillStyle=theme.grass[(row+col)%2];
+        c.fillRect(tx,ty,cell,cell);
+        if(tile==='G'){
+          const gx=tx+22+((col*31+row*17)%(cell-44)),gy=ty+24+((col*13+row*29)%(cell-44));
+          line(c,[[gx-5,gy+3],[gx-3,gy-5]],'rgba(65,104,35,0.40)',2);
+          line(c,[[gx,gy+4],[gx+1,gy-6]],'rgba(65,104,35,0.40)',2);
+          line(c,[[gx+5,gy+3],[gx+6,gy-4]],'rgba(65,104,35,0.40)',2);
+          if((row*STAGE.cols+col)%7===2) this.flower(tx+cell-22,ty+cell-22,4.5,'#f7efd2');
+        }
+        c.strokeStyle='rgba(54,84,28,0.13)';c.lineWidth=1;c.strokeRect(tx+.5,ty+.5,cell-1,cell-1);
+      }
+      // 2. Smooth hand-inked continuous dirt/stone road + stepping stones
+      const path=map.paths.player;
+      const pts=path.map(pt=>cellCenter(pt.col,pt.row));
+      if(pts.length>1){
+        c.save();c.lineCap='round';c.lineJoin='round';
+        c.beginPath();pts.forEach((p,i)=>i?c.lineTo(p.x,p.y):c.moveTo(p.x,p.y));
+        c.strokeStyle='#624022';c.lineWidth=cell*.72+7;c.stroke();
+        c.strokeStyle=theme.road;c.lineWidth=cell*.72;c.stroke();
+        c.strokeStyle='rgba(255,244,218,0.34)';c.lineWidth=cell*.52;c.stroke();
+        c.restore();
+        for(let i=2;i<pts.length-1;i+=2){
+          const p=pts[i];
+          ellipse(c,p.x+((i%3)-1)*14,p.y+(i%2?12:-12),10,6.5,'rgba(182,148,104,0.75)','#6f4e2d',1.5);
+        }
+        // Burrow stump at route origin (S)
+        const sp=pts[0];
+        c.save();c.translate(sp.x,sp.y);
+        ellipse(c,0,4,cell*.41,cell*.35,'#755032','#3d2410',3.4);
+        ellipse(c,0,4,cell*.28,cell*.23,'#2d1c10','#1d1108',1.6);
+        c.restore();
+      }
+    }
 
     for(let row=0;row<STAGE.rows;row++) for(let col=0;col<STAGE.cols;col++) {
       const tile=state.grid[row][col],tx=x+col*cell,ty=y+row*cell;
       const grass=tile==='G'||tile==='B';
-      if(!mapImage){
+      if(!mapImage&&!wide){
         c.fillStyle=grass?theme.grass[(row+col)%2]:tile==='O'?theme.open:tile==='C'?theme.water:theme.road;
         c.fillRect(tx,ty,cell,cell);
       }
       const tileImage=tile==='O'?(this.assets.get(`tile_open_${state.mapId}`)||this.assets.get('tile_open')):tile==='B'?this.assets.get('tile_broken'):undefined;
       if(tileImage){c.drawImage(tileImage,tx+2,ty+2,cell-4,cell-4);}
-      else if(tile==='G'&&!mapImage) {
+      else if(tile==='G'&&!mapImage&&!wide) {
         // Tiny tufts reveal diggable grass without competing with the pets.
         for(let i=0;i<3;i++) {
           const ox=13+(col*13+row*7+i*23)%49,oy=16+(row*17+col*11+i*19)%41;
@@ -227,7 +283,7 @@ export class StickerRenderer {
         for(let i=9;i<cell;i+=18){c.fillRect(tx+i,ty,5,cell);c.fillRect(tx,ty+i,cell,5);}
         c.save();c.strokeStyle='#d8cbb1';c.lineWidth=1;c.setLineDash([3,4]);c.strokeRect(tx+5,ty+5,cell-10,cell-10);c.restore();
         round(c,tx+2,ty+2,cell-4,cell-4,5,'rgba(255,255,255,0)','#eee1c6',1);
-      } else if(tile==='R'&&!mapImage) {
+      } else if(tile==='R'&&!mapImage&&!wide) {
         ellipse(c,tx+16+(col*7)%30,ty+18+(row*9)%28,2,1.4,'#c5ac87','#c5ac87',0);
         ellipse(c,tx+51,ty+55,2.5,1.2,'#d0b58f','#d0b58f',0);
       } else if(tile==='B') {
@@ -236,15 +292,15 @@ export class StickerRenderer {
         line(c,[[-17,-10],[-6,-2],[-13,9],[3,16]],'#665c48',2.3);line(c,[[11,-11],[6,-3],[16,5]],'#665c48',2.3);
         polygon(c,[[-3,-10],[3,-8],[0,-2],[7,1]],'#e2d2b1',INK,1);c.restore();
         ellipse(c,tx+13,ty+54,3,2,'#e1d4ba',INK,0);ellipse(c,tx+57,ty+18,3,2,'#e1d4ba',INK,0);
-      } else if(tile==='S'&&!mapImage) {
+      } else if(tile==='S'&&!mapImage&&!wide) {
         c.save();c.translate(tx+cell/2,ty+cell/2+1);
         ellipse(c,0,11,30,17,'#bd9d77',INK,1.8);ellipse(c,0,5,25,21,'#6e6955',INK,2.8);ellipse(c,0,11,21,11,'#555443',INK,0);
         line(c,[[-23,9],[-22,-5],[-10,-17],[9,-18],[24,-5],[24,10]],'#9a9271',7);
         ellipse(c,-5,5,2,2,'#f3d495',INK,0);ellipse(c,5,5,2,2,'#f3d495',INK,0);
         c.restore();
       }
-      if(tile==='B'&&state.craterHits[col+','+row]){round(c,tx+28,ty+cell-26,40,21,7,'#fff2c9',INK,1.5);this.label('1/2',tx+48,ty+cell-15,13,INK,'center',800);}
-      {c.strokeStyle='rgba(60,48,34,0.12)';c.lineWidth=1;c.strokeRect(tx+.5,ty+.5,cell-1,cell-1);}
+      if(tile==='B'&&state.craterHits[col+','+row]){round(c,tx+28,ty+cell-28,44,24,8,'#fff2c9',INK,1.7);this.label('1/2',tx+50,ty+cell-16,wide?17:13,INK,'center',900);}
+      if(!wide){c.strokeStyle='rgba(60,48,34,0.12)';c.lineWidth=1;c.strokeRect(tx+.5,ty+.5,cell-1,cell-1);}
     }
     for(const side of ['player'] as const) {
       const path=map.paths[side];
@@ -252,7 +308,7 @@ export class StickerRenderer {
         if(i%2===0) continue;
         const a=cellCenter(path[i].col,path[i].row), b=cellCenter(path[i+1].col,path[i+1].row);
         c.save();c.translate(a.x,a.y);c.rotate(Math.atan2(b.y-a.y,b.x-a.x));
-        c.globalAlpha=.32+.04*Math.sin(seconds*2-i);line(c,[[-4,-5],[2,0],[-4,5]],'#9d825d',2.5);c.restore();
+        c.globalAlpha=.36+.05*Math.sin(seconds*2-i);line(c,[[-5,-6],[3,0],[-5,6]],'#9d825d',wide?3:2.5);c.restore();
       }
     }
     c.restore();
@@ -297,14 +353,23 @@ export class StickerRenderer {
   }
 
   private drawUnit(unit:Unit,position:Position,seconds:number,opacity=1,drag=false,loadout:Partial<BattleLoadout>={},highlightScale=1):void {
-    const c=this.c,hero=HEROES[unit.kind],onBench=unit.location.zone==='bench';
+    const c=this.c,hero=HEROES[unit.kind],onBench=unit.location.zone==='bench',wide=isMobileWideStage();
     const requiredCharge=hero?combatCharge(unit,loadout):1;
-    const scale=(onBench ? .85 : .92)*(1+(unit.level-1)*.06);
+    const baseScale=wide?(onBench?1.08:1.06):(onBench?.85:.92);
+    const scale=baseScale*(1+(unit.level-1)*.06);
     const motion=onBench?undefined:this.unitMotion.sample(unit,seconds,this.animationPaused);
     const pose=motion?.body??{x:0,y:0,scaleX:1,scaleY:1};
     const wave=Math.sin(seconds*2.7+unit.id*1.71);
     c.save();c.globalAlpha=opacity;c.translate(position.x,position.y);c.scale(highlightScale,highlightScale);
-    if(unit.kind==='shovel'){this.drawShovel(false);if(!drag){round(c,16,-37,33,20,6,'#f2d68c',INK,1.4);this.label(t('render.dig'),32,-27,14,INK,'center',800);}c.restore();return;}
+    if(unit.kind==='shovel'){
+      if(wide){c.save();c.scale(1.18,1.18);this.drawShovel(false);c.restore();}
+      else this.drawShovel(false);
+      if(!drag){
+        if(wide){round(c,14,-46,38,26,8,'#f2d68c',INK,1.8);this.label(t('render.dig'),33,-33,18,INK,'center',900);}
+        else{round(c,16,-37,33,20,6,'#f2d68c',INK,1.4);this.label(t('render.dig'),32,-27,14,INK,'center',800);}
+      }
+      c.restore();return;
+    }
     ellipse(c,0,25,(hero?25:22)*scale,6,'rgba(72,79,53,.14)','',0);
     c.save();if(!onBench)c.scale(1.2,1.2);
     if(hero) {
@@ -327,12 +392,24 @@ export class StickerRenderer {
       c.save();if(!onBench)c.scale(1.2,1.2);
       const badgeColor=hero?'#f1cc7d':'#fff7e3';
       // P17: awakened heroes trade the gold "5" for a caramel-red badge with a warm gold star.
-      if(unit.awakened){round(c,14,-31,22,18,6,'#b5462e',INK,1.6);this.label('★',25,-21,14,'#ffd66b','center',900);}
-      else if((unit.clippedLevels??0)>0){round(c,10,-31,28,18,6,'#ffd5dc','#b52b42',1.8);this.label(`${unit.level}↓`,24,-21,13,'#9e182e','center',900);}
-      else{round(c,14,-31,22,18,6,badgeColor,INK,1.6);this.label(String(unit.level),25,-21,14,INK,'center',800);}
+      if(wide){
+        const bx=onBench?18:14,by=onBench?-44:-34,bw=28,bh=24;
+        if(unit.awakened){round(c,bx,by,bw,bh,7,'#b5462e',INK,2);this.label('★',bx+bw/2,by+bh/2+1,18,'#ffd66b','center',900);}
+        else if((unit.clippedLevels??0)>0){round(c,bx-4,by,34,bh,7,'#ffd5dc','#b52b42',2);this.label(`${unit.level}↓`,bx+13,by+bh/2+1,17,'#9e182e','center',900);}
+        else{round(c,bx,by,bw,bh,7,badgeColor,INK,2);this.label(String(unit.level),bx+bw/2,by+bh/2+1,19,INK,'center',900);}
+      }else{
+        if(unit.awakened){round(c,14,-31,22,18,6,'#b5462e',INK,1.6);this.label('★',25,-21,14,'#ffd66b','center',900);}
+        else if((unit.clippedLevels??0)>0){round(c,10,-31,28,18,6,'#ffd5dc','#b52b42',1.8);this.label(`${unit.level}↓`,24,-21,13,'#9e182e','center',900);}
+        else{round(c,14,-31,22,18,6,badgeColor,INK,1.6);this.label(String(unit.level),25,-21,14,INK,'center',800);}
+      }
       if(hero){
-        round(c,-24,30,48,6,3,'#ded6c3',INK,1);const fill=clamp(unit.energy/requiredCharge,0,1);
-        if(fill>0)round(c,-23,31,46*fill,4,2,hero.color,hero.color,0);
+        if(wide){
+          round(c,-26,32,52,8,4,'#ded6c3',INK,1.2);const fill=clamp(unit.energy/requiredCharge,0,1);
+          if(fill>0)round(c,-25,33,50*fill,6,3,hero.color,hero.color,0);
+        }else{
+          round(c,-24,30,48,6,3,'#ded6c3',INK,1);const fill=clamp(unit.energy/requiredCharge,0,1);
+          if(fill>0)round(c,-23,31,46*fill,4,2,hero.color,hero.color,0);
+        }
       }
       this.drawStatus(unit,seconds);c.restore();
     }
@@ -369,8 +446,8 @@ export class StickerRenderer {
   }
 
   private drawEnemy(enemy:Enemy,seconds:number,paused:boolean,path:readonly {col:number;row:number}[]):void {
-    const c=this.c,p=cellCenter(enemy.col,enemy.row),boss=enemy.boss;
-    const size=(boss?1.14:.96)*clamp(enemy.size||1,.75,boss?1.6:1.5),base=boss?126:98;
+    const c=this.c,p=cellCenter(enemy.col,enemy.row),boss=enemy.boss,wide=isMobileWideStage();
+    const size=(boss?1.14:.96)*clamp(enemy.size||1,.75,boss?1.6:1.5),base=wide?(boss?138:108):(boss?126:98);
     const pose=this.enemyMotion.sample(enemy,seconds,paused,path);
     if(!paused&&pose.footfall){this.dust.push({id:enemy.id,x:p.x-pose.dirX*20,y:p.y+30,dir:pose.dirX,age:0});if(this.dust.length>48)this.dust.shift();}
     c.save();c.translate(p.x+(enemy.hitFlash>0?(enemy.knockX||0)+Math.sin(seconds*95)*1.4:0),p.y+(enemy.hitFlash>0?(enemy.knockY||0):0));
@@ -491,21 +568,23 @@ export class StickerRenderer {
   }
   /** Same-phase partner badges stay above sprites and combat effects even with an unrelated selection. */
   private drawPassiveMergeOverlay(state:BattleState,interaction:Interaction,seconds:number):StageRect[] {
-    const used:StageRect[]=[],c=this.c,pulse=(1+Math.sin(seconds*3))/2;
+    const used:StageRect[]=[],c=this.c,pulse=(1+Math.sin(seconds*3))/2,wide=isMobileWideStage();
     for(const hint of this.passiveCallouts(state,interaction)){
       const unit=state.units.find(u=>u.id===hint.unitId)!,p=(unit.location.zone==='board'?this.unitPositions.get(unit.id):undefined)??this.position(unit);
-      const hero=hint.kind==='hero',radius=unit.location.zone==='board'?47+pulse*4:42+pulse*3;
+      const hero=hint.kind==='hero',radius=unit.location.zone==='board'?(wide?53:47)+pulse*4:(wide?52:42)+pulse*3;
       c.save();
       ellipse(c,p.x,p.y,radius,radius*.92,'transparent',hero?`rgba(255,170,0,${(.24+pulse*.14).toFixed(2)})`:`rgba(29,185,100,${(.22+pulse*.14).toFixed(2)})`,9);
       ellipse(c,p.x,p.y,radius,radius*.92,'transparent',hero?'#ffaa00':'#1db964',hero?3.5:3);
       if(hero)ellipse(c,p.x,p.y,radius+4,radius*.92+4,'transparent','#fff5ad',1.8);
-      this.drawBenchBadge('ui_merge_sparkle',p.x+(unit.location.zone==='board'?-38:38),p.y+(unit.location.zone==='board'?-29:0),hero?26:20);
-      const label=hint.breakthroughBaseId!==undefined?t('p17.canBreak',{pct:Math.round((this.chances[hint.breakthroughBaseId]??0)*100)}):t(hero?'p8.merge':'p8.upgrade');c.font=`900 13px ${FONT}`;
-      const width=c.measureText(label).width+(hero?34:18),height=24;
-      const rect=placeMergeCallout(p,width,height,interaction.mergeAvoidRects??[],used,34);used.push(rect);
-      round(c,rect.x,rect.y,width,height,9,hero?'#ffd84d':'#7ef2ad',hero?'#5c3408':'#145c32',2);
-      if(hero&&hint.heroId){const image=this.assets.get(hint.heroId);if(image)c.drawImage(image,rect.x+4,rect.y+2,20,20);else{c.save();c.translate(rect.x+14,rect.y+12);c.scale(.25,.25);drawUnitArt(c,hint.heroId,seconds);c.restore();}}
-      this.label(label,rect.x+(hero?28:9),rect.y+12,13,hero?'#1f1105':'#0a331b','left',900);
+      this.drawBenchBadge('ui_merge_sparkle',p.x+(unit.location.zone==='board'?-(wide?44:38):(wide?46:38)),p.y+(unit.location.zone==='board'?-(wide?32:29):0),hero?(wide?30:26):(wide?24:20));
+      const label=hint.breakthroughBaseId!==undefined?t('p17.canBreak',{pct:Math.round((this.chances[hint.breakthroughBaseId]??0)*100)}):t(hero?'p8.merge':'p8.upgrade');
+      const fs=wide?18:13;
+      c.font=`900 ${fs}px ${FONT}`;
+      const width=c.measureText(label).width+(hero?(wide?42:34):(wide?24:18)),height=wide?30:24;
+      const rect=placeMergeCallout(p,width,height,interaction.mergeAvoidRects??[],used,wide?40:34);used.push(rect);
+      round(c,rect.x,rect.y,width,height,wide?11:9,hero?'#ffd84d':'#7ef2ad',hero?'#5c3408':'#145c32',wide?2.4:2);
+      if(hero&&hint.heroId){const iconS=wide?24:20;const image=this.assets.get(hint.heroId);if(image)c.drawImage(image,rect.x+4,rect.y+(height-iconS)/2,iconS,iconS);else{c.save();c.translate(rect.x+14,rect.y+height/2);c.scale(.25,.25);drawUnitArt(c,hint.heroId,seconds);c.restore();}}
+      this.label(label,rect.x+(hero?(wide?32:28):(wide?12:9)),rect.y+height/2+1,fs,hero?'#1f1105':'#0a331b','left',900);
       c.restore();
     }
     return used;
@@ -520,12 +599,12 @@ export class StickerRenderer {
   /** Foreground layer: never hide the outcome behind the pet or the nest background. */
   private drawActiveMergeHighlights(state:BattleState,interaction:Interaction,seconds:number,used:StageRect[]=[]):void {
     const source=this.mergeSource(state,interaction);if(!source)return;
-    const c=this.c;
+    const c=this.c,wide=isMobileWideStage();
     const obstacles=interaction.mergeAvoidRects??[{x:0,y:0,w:STAGE.width,h:90}];
     for(const target of getMergeTargets(state,source.id)){
       const unit=state.units.find(u=>u.id===target.unitId)!;
       const p=(unit.location.zone==='board'?this.unitPositions.get(unit.id):undefined)??this.position(unit),hero=target.kind==='hero'&&!target.feedHero;
-      const pulse=(1+Math.sin(seconds*4+unit.id))/2,radius=49+pulse*5;
+      const pulse=(1+Math.sin(seconds*4+unit.id))/2,radius=(wide?56:49)+pulse*5;
       const ink=hero?'#78501e':'#235d40',bright=hero?'#f4be37':'#38b86d',light=hero?'#fff3b0':'#c8fbe0';
       c.save();
       ellipse(c,p.x,p.y,radius,radius*.93,'transparent',hero?`rgba(244,190,55,${(.25+pulse*.16).toFixed(2)})`:`rgba(56,184,109,${(.25+pulse*.16).toFixed(2)})`,11);
@@ -533,19 +612,21 @@ export class StickerRenderer {
       ellipse(c,p.x,p.y,radius+4,radius*.93+4,'transparent',light,1.8);
       for(let i=0;i<3;i++){const a=seconds*.9+i*Math.PI*2/3;star(c,p.x+Math.cos(a)*(radius+4),p.y+Math.sin(a)*(radius+1),5.5,light,1);}
       const label=target.breakthrough?t('p17.canBreak',{pct:Math.round((this.chances[target.baseId??-1]??0)*100)}):hero?`→ ${t('hero.'+target.heroId)}`:t(target.feedHero?'p7.feed':'p7.upgrade',{level:target.nextLevel??unit.level+1});
-      c.font=`900 15px ${FONT}`;
-      const width=Math.min(290,c.measureText(label).width+(hero?46:22)),height=32;
+      const fs=wide?19.5:15;
+      c.font=`900 ${fs}px ${FONT}`;
+      const width=Math.min(320,c.measureText(label).width+(hero?(wide?54:46):(wide?28:22))),height=wide?36:32;
       const placed=placeMergeCallout(p,width,height,obstacles,used),{x,y}=placed;used.push(placed);
       // A short tether preserves association when a top-row label moves below or sideways.
       const end={x:clamp(p.x,x,x+width),y:clamp(p.y,y,y+height)},dx=end.x-p.x,dy=end.y-p.y,d=Math.hypot(dx,dy);
       if(d>radius+2)line(c,[[p.x+dx/d*(radius+2),p.y+dy/d*(radius+2)],[end.x,end.y]],ink,2);
-      round(c,x,y,width,height,12,light,ink,2.2);
+      round(c,x,y,width,height,12,light,ink,2.4);
       if(hero&&target.heroId){
+        const iconS=wide?30:26;
         const image=this.assets.get(target.heroId);
-        if(image)c.drawImage(image,x+5,y+3,26,26);
-        else{c.save();c.translate(x+18,y+16);c.scale(.33,.33);drawUnitArt(c,target.heroId,seconds);c.restore();}
+        if(image)c.drawImage(image,x+5,y+(height-iconS)/2,iconS,iconS);
+        else{c.save();c.translate(x+18,y+height/2);c.scale(.33,.33);drawUnitArt(c,target.heroId,seconds);c.restore();}
       }
-      this.label(label,x+(hero?36:11),y+height/2,15,ink,'left',900,width-(hero?43:22));c.restore();
+      this.label(label,x+(hero?(wide?40:36):(wide?14:11)),y+height/2+1,fs,ink,'left',900,width-(hero?(wide?46:43):(wide?26:22)));c.restore();
     }
   }
 
@@ -639,21 +720,27 @@ export class StickerRenderer {
   }
 
   private drawTools(state:BattleState,interaction:Interaction,seconds:number):void {
-    const c=this.c,{shovelX:x,shovelY:y}=STAGE;
+    const c=this.c,{shovelX:x,shovelY:y}=STAGE,wide=isMobileWideStage();
+    const rad=wide?49:39,ringR=wide?52:41;
     const source=state.units.find(unit=>unit.id===(interaction.draggingId??interaction.selectedId));
     const storing=source?.kind==='shovel'&&source.location.zone==='bench';
     const capacity=state.sides.player.loadout.equippedPassiveProps?.includes('auto_shovel')?6:4;
     const rules=state.sides.player.loadout.equippedPassiveProps?.includes('auto_shovel')?{interval:30,maxStored:6}:SHOVEL_PRODUCTION;
     const progress=state.sides.player.shovels>=rules.maxStored?1:clamp(state.sides.player.shovelTimer/rules.interval,0,1);
-    c.save();c.strokeStyle='rgba(119,91,42,.2)';c.lineWidth=5;c.beginPath();c.arc(x,y,41,0,Math.PI*2);c.stroke();
-    if(progress>0){c.strokeStyle='#d9ad48';c.beginPath();c.arc(x,y,41,-Math.PI/2,-Math.PI/2+progress*Math.PI*2);c.stroke();}c.restore();
+    c.save();c.strokeStyle='rgba(119,91,42,.22)';c.lineWidth=wide?6:5;c.beginPath();c.arc(x,y,ringR,0,Math.PI*2);c.stroke();
+    if(progress>0){c.strokeStyle='#d9ad48';c.beginPath();c.arc(x,y,ringR,-Math.PI/2,-Math.PI/2+progress*Math.PI*2);c.stroke();}c.restore();
     c.save();c.shadowColor='rgba(76,70,51,.13)';c.shadowOffsetY=4;
-    ellipse(c,x,y,39,39,interaction.shovel?'#f1d48a':'#e4e7ce',INK,2.2);c.restore();
-    c.save();c.translate(x,y-2);c.scale(.72,.72);this.drawShovel(!!interaction.shovel,state.sides.player.loadout?.equippedPassiveProps.includes('gold_doge'));c.restore();
-    if(interaction.shovel){c.save();c.setLineDash([3,6]);ellipse(c,x,y,44,44,'rgba(255,255,255,0)',TEAL,2);c.restore();}
-    if(storing){c.save();c.setLineDash([4,5]);ellipse(c,x,y,44,44,'rgba(255,246,201,.25)',state.sides.player.shovels<capacity?'#c9a25a':CORAL,3);c.restore();}
-    round(c,x+13,y+19,35,22,9,state.sides.player.shovels?'#fff6da':'#e4d4c2',INK,1.7);
-    this.label(`×${state.sides.player.shovels}`,x+30,y+31,16,INK,'center',800);
+    ellipse(c,x,y,rad,rad,interaction.shovel?'#f1d48a':'#e4e7ce',INK,wide?2.8:2.2);c.restore();
+    c.save();c.translate(x,y-2);const s=wide?.92:.72;c.scale(s,s);this.drawShovel(!!interaction.shovel,state.sides.player.loadout?.equippedPassiveProps.includes('gold_doge'));c.restore();
+    if(interaction.shovel){c.save();c.setLineDash([3,6]);ellipse(c,x,y,ringR+3,ringR+3,'rgba(255,255,255,0)',TEAL,2.4);c.restore();}
+    if(storing){c.save();c.setLineDash([4,5]);ellipse(c,x,y,ringR+3,ringR+3,'rgba(255,246,201,.25)',state.sides.player.shovels<capacity?'#c9a25a':CORAL,3);c.restore();}
+    if(wide){
+      round(c,x+12,y+22,46,30,12,state.sides.player.shovels?'#fff6da':'#e4d4c2',INK,2.2);
+      this.label(`×${state.sides.player.shovels}`,x+35,y+38,21,INK,'center',900);
+    }else{
+      round(c,x+13,y+19,35,22,9,state.sides.player.shovels?'#fff6da':'#e4d4c2',INK,1.7);
+      this.label(`×${state.sides.player.shovels}`,x+30,y+31,16,INK,'center',800);
+    }
     void seconds;
   }
 

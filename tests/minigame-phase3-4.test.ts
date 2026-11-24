@@ -98,13 +98,18 @@ function createFullHarness(initialProfile: Profile) {
     listeners.start.forEach(fn => fn(ev));
     listeners.end.forEach(fn => fn(ev));
   };
+  const tapHit = (id: string) => {
+    const box = app.findHitBox(id);
+    expect(box, `expected hitbox '${id}'`).toBeTruthy();
+    tap(box!.x + box!.w / 2, box!.y + box!.h / 2);
+  };
   const cleanup = () => {
     app.dispose();
     globalThis.requestAnimationFrame = origRaf;
     globalThis.cancelAnimationFrame = origCaf;
   };
 
-  return { app, platform, shared, subpackages, stepFrame, tap, cleanup };
+  return { app, platform, shared, subpackages, stepFrame, tap, tapHit, cleanup };
 }
 
 describe('Mini-Game Phases 3 & 4: All 7 Meta Hubs, P19 Onboarding, Online Leaderboard, Keyboard Rename & Share', () => {
@@ -124,20 +129,20 @@ describe('Mini-Game Phases 3 & 4: All 7 Meta Hubs, P19 Onboarding, Online Leader
       h.stepFrame(100);
       expect(h.app.getDebugState().modal).toBe('onboard');
 
-      // Tap "Try it now" green pill button on lightweight courtyard welcome card (x=571, y=586)
-      h.tap(571, 586);
+      // Tap "Try it now" green pill button on lightweight courtyard welcome card
+      h.tapHit('onboard:go:armory');
       expect(h.app.getDebugState().modal).toBe('armory');
       // Starter gift granted 2 Fly Swatter fragments and unlocked m01_swatter!
       expect(h.app.getDebugState().profile.unlockedWeapons).toContain('m01_swatter');
 
-      // Render Armory with live P19 in-dialog guide strip -> tap 1st weapon row (m01_swatter) to open Weapon Detail Sheet
+      // Render Armory with live P19 in-dialog guide strip -> tap Fly Swatter big card to open Weapon Detail Sheet
       h.stepFrame(120);
-      h.tap(500, 295);
+      h.tapHit('armory:open:m01_swatter');
       expect(h.app.getDebugState().armory.detailWeaponId).toBe('m01_swatter');
 
-      // Render Weapon Detail Sheet -> tap 1st horizontal hero card (kungfu_po at x=355, y=575) to equip!
+      // Render Weapon Detail Sheet -> tap 1st horizontal hero card (kungfu_po) to equip!
       h.stepFrame(140);
-      h.tap(355, 575);
+      h.tapHit('armory:equip:kungfu_po:m01_swatter');
       expect(h.app.getDebugState().profile.equippedWeapons.kungfu_po).toBe('m01_swatter');
     } finally {
       h.cleanup();
@@ -173,64 +178,64 @@ describe('Mini-Game Phases 3 & 4: All 7 Meta Hubs, P19 Onboarding, Online Leader
       // 1. Market: switch to Tab 3 (Lucky Gacha) & spin center button using free ticket
       h.app.openHub('market');
       h.stepFrame(100);
-      h.tap(920, 131); // Honey-Oak Tab 3: Lucky Gacha ('lottery')
+      h.tapHit('market:tab:lottery');
       h.stepFrame(120);
       expect(h.app.getDebugState().marketTab).toBe('lottery');
-      h.tap(640, 389); // center Spin button in 3x3 machine
+      h.tapHit('market:spin:auto');
       expect(h.app.getDebugState().profile.freeLotteryTickets).toBe(1);
 
       // 2. Village: collect offline harvest + switch to Build tab
       const coinsBeforeHarvest = h.app.getDebugState().profile.coins;
       h.app.openHub('village');
       h.stepFrame(140);
-      h.tap(956, 566); // Harvest Collect golden pill button
+      h.tapHit('village:harvest');
       expect(h.app.getDebugState().profile.coins).toBeGreaterThan(coinsBeforeHarvest);
-      h.tap(848, 131); // Honey-Oak Tab 2: Facilities Build
+      h.tapHit('village:tab:build');
       h.stepFrame(160);
       expect(h.app.getDebugState().villageTab).toBe('build');
 
-      // 3. Kitchen: brew Yuzu Calm Soak Lv.1 & verify auto-equip + open Dish Detail & Pantry tab
+      // 3. Kitchen: brew Yuzu Calm Soak Lv.1 & verify auto-equip + open Pantry tab
       h.app.openHub('kitchen');
       h.stepFrame(180);
-      h.tap(949, 344); // Brew button on 1st broth card (dish_yuzu_bath)
+      h.tapHit('kitchen:brew:dish_yuzu_bath');
       expect(h.app.getDebugState().profile.unlockedBroths).toContain('dish_yuzu_bath');
       expect(h.app.getDebugState().profile.activeBrothId).toBe('dish_yuzu_bath');
       h.stepFrame(190);
-      h.tap(848, 131); // Tab 2: Ingredient Pantry
+      h.tapHit('kitchen:tab:pantry');
       h.stepFrame(195);
       expect(h.app.getDebugState().kitchenTab).toBe('pantry');
 
       // 4. Medallions: upgrade Ember Breakthrough to Lv.1
       h.app.openHub('medallions');
       h.stepFrame(200);
-      h.tap(960, 302); // Upgrade golden pill button on 1st medallion card
+      h.tapHit('medallion:up:med_breakthrough_atk');
       expect(h.app.getDebugState().profile.endlessMedallions.med_breakthrough_atk).toBe(1);
 
       // 5. Unified 4-Tab Profile Wood Book: Rank Board -> Rename via wx.showKeyboard -> Endless Board -> Keeper Passport -> Settings
       h.app.openHub('leaderboard');
       h.stepFrame(220);
       await vi.waitFor(() => expect(h.app.getDebugState().modal).toBe('leaderboard'));
-      h.tap(468, 339); // Rename pill button -> triggers wx.showKeyboard -> sets '温泉水豚王'
+      h.tapHit('lb:rename');
       await vi.waitFor(() => expect(h.app.getDebugState().profile.nickname).toBe('温泉水豚王'));
-      h.tap(535, 131); // Honey-Oak Tab 2: Global Endless Board
+      h.tapHit('profilehub:tab:endless-board');
       h.stepFrame(240);
       expect(h.app.getDebugState().modal).toBe('endless-board');
       expect(h.app.getDebugState().leaderboardTab).toBe('endless');
 
       // 6. Keeper Passport tab (Tab 3) -> shares card via wx.shareAppMessage
-      h.tap(744, 131);
+      h.tapHit('profilehub:tab:profile');
       h.stepFrame(260);
       expect(h.app.getDebugState().modal).toBe('profile');
-      h.tap(958, 249); // Share card pill button
+      h.tapHit('profile:share');
       expect(h.shared.length).toBeGreaterThanOrEqual(1);
 
-      // 7. Strict 1:1 6-Tab Compendium -> open Bosses tab + Hero Detail Sheet cleanly without throwing
+      // 7. 6-Tab Compendium -> open Bosses tab + Boss Detail Sheet cleanly
       h.app.openHub('recipes');
       h.stepFrame(280);
-      h.tap(709, 131); // Tab 4: Bosses
+      h.tapHit('compendium:tab:bosses');
       h.stepFrame(300);
       expect(h.app.getDebugState().compendium.tab).toBe('bosses');
-      h.tap(500, 220); // Open 1st boss Detail Sheet
+      h.tapHit('compendium:entry:rat');
       h.stepFrame(310);
       expect(h.app.getDebugState().compendium.detailId).toBeTruthy();
 

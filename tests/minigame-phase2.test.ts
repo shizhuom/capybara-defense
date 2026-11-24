@@ -76,6 +76,11 @@ function createHarness(initialProfile?: ReturnType<typeof createProfile>) {
     listeners.start.forEach(fn => fn(ev));
     listeners.end.forEach(fn => fn(ev));
   };
+  const tapHit = (id: string) => {
+    const box = app.findHitBox(id);
+    expect(box, `expected hitbox '${id}'`).toBeTruthy();
+    tap(box!.x + box!.w / 2, box!.y + box!.h / 2);
+  };
 
   const cleanup = () => {
     app.dispose();
@@ -83,7 +88,7 @@ function createHarness(initialProfile?: ReturnType<typeof createProfile>) {
     globalThis.cancelAnimationFrame = origCaf;
   };
 
-  return { app, platform, mockCtx, stepFrame, tap, cleanup };
+  return { app, platform, mockCtx, stepFrame, tap, tapHit, cleanup };
 }
 
 describe('Mini-Game Phase 2: Canvas UI Toolkit, Full Menu, Battle Loop, Tutorial, Pause & Endless Offer', () => {
@@ -110,35 +115,42 @@ describe('Mini-Game Phase 2: Canvas UI Toolkit, Full Menu, Battle Loop, Tutorial
       h.stepFrame(100);
       expect(h.app.getDebugState().screen).toBe('menu');
 
-      // Tap Start button (center x=640, y=540)
-      h.tap(640, 540);
+      // Tap Start button
+      h.tapHit('menu:start');
       await vi.waitFor(() => expect(h.app.getDebugState().screen).toBe('battle'));
       h.stepFrame(120);
+
+      // Mini-game runs wide 10×4 mobile board!
+      expect(STAGE.cols).toBe(10);
+      expect(STAGE.rows).toBe(4);
+      expect(h.app.getDebugState().battleState?.grid.length).toBe(4);
+      expect(h.app.getDebugState().battleState?.grid[0].length).toBe(10);
 
       // Fresh profile starts at Tutorial Step 1 with Wave 1 held
       expect(h.app.getDebugState().tutorialStep).toBe(1);
 
       // Tap Summon Bell -> summons 5 units and advances Tutorial to Step 2
-      h.tap(STAGE.summonX + 100, STAGE.summonY + 40);
+      h.tapHit('battle:summon');
       expect(h.app.getDebugState().tutorialStep).toBe(2);
       expect(h.app.getDebugState().battleState?.units.length).toBe(5);
 
       // Tap a summoned pet on bench slot 0 -> must NOT open any modal or right-side stats card
       h.stepFrame(130);
-      h.tap(298, 655);
+      h.tap(STAGE.benchX + STAGE.benchSize / 2, STAGE.benchY + STAGE.benchSize / 2);
       expect(h.app.getDebugState().modal).toBe(null);
 
-      // Open Pause modal via top-right pause button (wx reserves capsule margin ~108 -> rightEdge = 1172, pause center ~1143, y=34)
+      // Open Pause modal via top-right pause button (shifted cleanly LEFT of WeChat [🎮][···|◉]!)
       h.stepFrame(140);
-      const vp = h.platform.viewport();
-      expect(vp.screenWidth).toBe(1280);
-      h.tap(1143, 34);
+      const pauseBox = h.app.findHitBox('battle:pause');
+      expect(pauseBox).toBeTruthy();
+      expect(pauseBox!.x + pauseBox!.w).toBeLessThanOrEqual(1126);
+      h.tapHit('battle:pause');
       expect(h.app.getDebugState().modal).toBe('pause');
       expect(h.app.getDebugState().battleState?.phase).toBe('paused');
 
-      // Resume via 1:1 auto-fit Web Pause modal full-width green Resume button (x=640, y=465)
+      // Resume via Pause modal full-width green Resume button
       h.stepFrame(160);
-      h.tap(640, 465);
+      h.tapHit('modal:resume');
       expect(h.app.getDebugState().modal).toBe(null);
       expect(h.app.getDebugState().battleState?.phase).toBe('playing');
     } finally {
@@ -163,17 +175,20 @@ describe('Mini-Game Phase 2: Canvas UI Toolkit, Full Menu, Battle Loop, Tutorial
     const h = createHarness(veteran);
     try {
       h.stepFrame(100);
-      // Open Recipes from bottom-left circular medallion dock (1st medallion center x=68, y=630)
-      h.tap(68, 630);
+      // Open Recipes from bottom-left circular medallion dock
+      h.tapHit('menu:recipes');
       h.stepFrame(120);
       expect(h.app.getDebugState().modal).toBe('recipes');
-      // Close Recipes via Yuzu Close medallion at top-right of LEDGER (x=1038, y=48)
-      h.tap(1038, 48);
+      // Close Recipes via Yuzu Close medallion (positioned cleanly LEFT of WeChat [🎮])
+      const closeBox = h.app.findHitBox('modal:close');
+      expect(closeBox).toBeTruthy();
+      expect(closeBox!.x + closeBox!.w).toBeLessThanOrEqual(1126);
+      h.tapHit('modal:close');
       h.stepFrame(140);
       expect(h.app.getDebugState().modal).toBe(null);
 
-      // Tap Start button (center x=640, y=548)
-      h.tap(640, 548);
+      // Tap Start button
+      h.tapHit('menu:start');
       await vi.waitFor(() => expect(h.app.getDebugState().screen).toBe('battle'));
       h.stepFrame(160);
       // Tap once to dismiss the opening battle clash curtain immediately
@@ -185,13 +200,13 @@ describe('Mini-Game Phase 2: Canvas UI Toolkit, Full Menu, Battle Loop, Tutorial
       const state = h.app.getDebugState().battleState!;
       expect(state.sides.player.loadout.equippedActiveProps).toEqual(['glue_trap', 'catnip']);
 
-      // Tap Sprinkler (x=86, y=274) -> activates free sprinkler
-      h.tap(86, 274);
+      // Tap Sprinkler -> activates free sprinkler
+      h.tapHit('battle:sprinkler');
       expect(state.sides.player.sprinklerUsed).toBe(true);
 
-      // Tap self-cast active prop Catnip (2nd active prop slot at x=86, y=465) -> casts immediately!
+      // Tap self-cast active prop Catnip -> casts immediately!
       h.stepFrame(200);
-      h.tap(86, 465);
+      h.tapHit('battle:prop:catnip');
       expect(state.sides.player.catnipTime).toBeGreaterThan(0);
 
       // Simulate Wave 10 victory -> banks standard rewards & shows Endless Offer modal!
@@ -199,13 +214,13 @@ describe('Mini-Game Phase 2: Canvas UI Toolkit, Full Menu, Battle Loop, Tutorial
         h.app.getDebugState().battleState!.wave = 10;
       }
       // Surrender triggers defeat result cleanly (test Pause -> Surrender -> Result modal + Report drawer)
-      h.tap(1143, 34); // pause
+      h.tapHit('battle:pause');
       h.stepFrame(220);
       expect(h.app.getDebugState().modal).toBe('pause');
-      h.tap(852, 520); // surrender pill button below auto-fit wood board
+      h.tapHit('modal:surrender');
       expect(h.app.getDebugState().modal).toBe('result');
       h.stepFrame(240); // draw full settlement crest stage cleanly
-      h.tap(140, 640); // open Visual Battle Report Drawer
+      h.tapHit('modal:toggle-stats'); // open Visual Battle Report Drawer
       h.stepFrame(260); // draw visual report drawer cleanly
     } finally {
       h.cleanup();
