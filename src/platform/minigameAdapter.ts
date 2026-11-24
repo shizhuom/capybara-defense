@@ -253,6 +253,7 @@ export function createMiniGameAdapter(api: MiniGameGlobalApi, kind: Exclude<Plat
 
   const subpackagePromises = new Map<SubpackageName, Promise<boolean>>();
   const disposers: Array<() => void> = [];
+  let lastLoggedVpSig = '';
   let cachedViewport = measure();
   syncCanvasSize(cachedViewport);
 
@@ -300,9 +301,11 @@ export function createMiniGameAdapter(api: MiniGameGlobalApi, kind: Exclude<Plat
     const h = info.windowHeight || 720;
     const dpr = info.pixelRatio || 1;
     const safe = sanitizeSafeArea(w, h, info.safeArea);
+    let rawMenuBtn: { left: number; right?: number; top?: number; bottom?: number; width?: number; height?: number } | null = null;
     let menuBtn: { left: number; right?: number; top?: number; bottom?: number; width?: number; height?: number } | null = null;
     try {
       const rect = api.getMenuButtonBoundingClientRect?.();
+      if (rect) rawMenuBtn = rect;
       if (
         rect
         && Number.isFinite(rect.left)
@@ -314,7 +317,15 @@ export function createMiniGameAdapter(api: MiniGameGlobalApi, kind: Exclude<Plat
         menuBtn = rect;
       }
     } catch { /* optional on older runtimes */ }
-    return computeViewport(w, h, dpr, safe, true, menuBtn);
+    const vp = computeViewport(w, h, dpr, safe, true, menuBtn);
+    const sig = `${w}x${h}@${dpr}|${Math.round(vp.safeStage.left)}..${Math.round(vp.safeStage.right)}|cap=${vp.capsuleStageLeft !== undefined ? Math.round(vp.capsuleStageLeft) : 'none'}`;
+    if (sig !== lastLoggedVpSig) {
+      lastLoggedVpSig = sig;
+      try {
+        console.log('[CapyVP r3]', sig, 'rawSA=', info.safeArea ?? null, 'rawCap=', rawMenuBtn);
+      } catch { /* ignore */ }
+    }
+    return vp;
   }
 
   function syncCanvasSize(vp: ViewportMetrics): void {

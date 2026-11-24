@@ -425,7 +425,8 @@ export class StickerRenderer {
     if(interaction.propId){this.drawPropTargets(state,interaction,seconds);return;}
     for(const hint of this.passiveCallouts(state,interaction).filter(h=>h.zone==='board')){
       const p=this.position(state.units.find(u=>u.id===hint.unitId)!),hero=hint.kind==='hero',pulse=(1+Math.sin(seconds*3))/2;
-      c.save();c.globalAlpha=.5+pulse*.24;c.shadowBlur=12;c.shadowColor=hero?'#f4be37':'#38b86d';
+      c.save();c.globalAlpha=.5+pulse*.24;
+      ellipse(c,p.x,p.y+6,48+pulse*3,42+pulse*3,'transparent',hero?'rgba(244,190,55,.28)':'rgba(56,184,109,.28)',8);
       ellipse(c,p.x,p.y+6,48+pulse*3,42+pulse*3,'transparent',hero?'#e7b33e':'#4bb780',2.5);c.restore();
     }
     if(selected?.location.zone==='board'&&!drag&&!interaction.shovel) {
@@ -471,8 +472,8 @@ export class StickerRenderer {
       if(!unit||unit.location.zone!==zone||(onlyId!==undefined&&unit.id!==onlyId))continue;
       const c=this.c,p=this.position(unit),pulse=(Math.sin(seconds*4+unit.id)+1)/2,hero=target.kind==='hero'&&!target.feedHero;
       c.save();
-      round(c,p.x-45,p.y-45,90,90,17,hero?'rgba(255,224,102,.44)':'rgba(142,242,178,.38)','',0);
-      c.shadowBlur=14+pulse*8;c.shadowColor=hero?'#f4be37':'#38b86d';
+      round(c,p.x-45,p.y-45,90,90,17,hero?'rgba(255,224,102,.32)':'rgba(142,242,178,.28)','',0);
+      round(c,p.x-45,p.y-45,90,90,17,'transparent',hero?`rgba(244,190,55,${(.22+pulse*.14).toFixed(2)})`:`rgba(56,184,109,${(.22+pulse*.14).toFixed(2)})`,10);
       round(c,p.x-45,p.y-45,90,90,17,'transparent',hero?'#df9118':'#2c9d59',hero?4:3.5);c.restore();
     }
   }
@@ -494,10 +495,10 @@ export class StickerRenderer {
     for(const hint of this.passiveCallouts(state,interaction)){
       const unit=state.units.find(u=>u.id===hint.unitId)!,p=(unit.location.zone==='board'?this.unitPositions.get(unit.id):undefined)??this.position(unit);
       const hero=hint.kind==='hero',radius=unit.location.zone==='board'?47+pulse*4:42+pulse*3;
-      c.save();c.shadowBlur=8+pulse*5;c.shadowColor=hero?'#ffaa00':'#1db964';
+      c.save();
+      ellipse(c,p.x,p.y,radius,radius*.92,'transparent',hero?`rgba(255,170,0,${(.24+pulse*.14).toFixed(2)})`:`rgba(29,185,100,${(.22+pulse*.14).toFixed(2)})`,9);
       ellipse(c,p.x,p.y,radius,radius*.92,'transparent',hero?'#ffaa00':'#1db964',hero?3.5:3);
       if(hero)ellipse(c,p.x,p.y,radius+4,radius*.92+4,'transparent','#fff5ad',1.8);
-      c.shadowBlur=0;
       this.drawBenchBadge('ui_merge_sparkle',p.x+(unit.location.zone==='board'?-38:38),p.y+(unit.location.zone==='board'?-29:0),hero?26:20);
       const label=hint.breakthroughBaseId!==undefined?t('p17.canBreak',{pct:Math.round((this.chances[hint.breakthroughBaseId]??0)*100)}):t(hero?'p8.merge':'p8.upgrade');c.font=`900 13px ${FONT}`;
       const width=c.measureText(label).width+(hero?34:18),height=24;
@@ -526,11 +527,11 @@ export class StickerRenderer {
       const p=(unit.location.zone==='board'?this.unitPositions.get(unit.id):undefined)??this.position(unit),hero=target.kind==='hero'&&!target.feedHero;
       const pulse=(1+Math.sin(seconds*4+unit.id))/2,radius=49+pulse*5;
       const ink=hero?'#78501e':'#235d40',bright=hero?'#f4be37':'#38b86d',light=hero?'#fff3b0':'#c8fbe0';
-      c.save();c.shadowColor=bright;c.shadowBlur=14+pulse*8;
+      c.save();
+      ellipse(c,p.x,p.y,radius,radius*.93,'transparent',hero?`rgba(244,190,55,${(.25+pulse*.16).toFixed(2)})`:`rgba(56,184,109,${(.25+pulse*.16).toFixed(2)})`,11);
       ellipse(c,p.x,p.y,radius,radius*.93,'transparent',bright,3.8);
       ellipse(c,p.x,p.y,radius+4,radius*.93+4,'transparent',light,1.8);
       for(let i=0;i<3;i++){const a=seconds*.9+i*Math.PI*2/3;star(c,p.x+Math.cos(a)*(radius+4),p.y+Math.sin(a)*(radius+1),5.5,light,1);}
-      c.shadowBlur=0;
       const label=target.breakthrough?t('p17.canBreak',{pct:Math.round((this.chances[target.baseId??-1]??0)*100)}):hero?`→ ${t('hero.'+target.heroId)}`:t(target.feedHero?'p7.feed':'p7.upgrade',{level:target.nextLevel??unit.level+1});
       c.font=`900 15px ${FONT}`;
       const width=Math.min(290,c.measureText(label).width+(hero?46:22)),height=32;
@@ -580,7 +581,7 @@ export class StickerRenderer {
       const pulse=(1+Math.sin(seconds*4+unit.id))/2,hot=target?.unitId===unit.id,color=hot?'#edb740':'#43bf86';
       c.save();c.globalAlpha=.7+pulse*.25;
       ellipse(c,p.x,p.y+28,35+pulse*3,11+pulse*2,'rgba(105,225,161,.1)','',0);
-      c.shadowColor=color;c.shadowBlur=12+pulse*6;
+      ellipse(c,p.x,p.y+28,35+pulse*3,11+pulse*2,'transparent',hot?'rgba(237,183,64,.30)':'rgba(67,191,134,.30)',9);
       ellipse(c,p.x,p.y+28,35+pulse*3,11+pulse*2,'transparent',color,hot?3.5:2.5);
       if(hot)ellipse(c,p.x,p.y+28,40+pulse*3,16+pulse*2,'transparent','#fff1ad',1.8);
       c.restore();
