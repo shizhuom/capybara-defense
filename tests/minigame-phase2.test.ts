@@ -6,6 +6,7 @@ import { createProfile } from '../src/core/MetaProgression';
 import { allOnboardedTokens } from '../src/core/FeatureUnlocks';
 import { saveProfile } from '../src/ui/storage';
 import { STAGE } from '../src/config/maps';
+import { STAMINA_COST_PER_BATTLE, STAMINA_MAX, STAMINA_REGEN_SECONDS, getStaminaStatus } from '../src/core/Stamina';
 import { ScrollRegion, wrapText } from '../src/minigame/ui/CanvasUI';
 
 function createHarness(initialProfile?: ReturnType<typeof createProfile>) {
@@ -224,6 +225,87 @@ describe('Mini-Game Phase 2: Canvas UI Toolkit, Full Menu, Battle Loop, Tutorial
       h.stepFrame(260); // draw visual report drawer cleanly
     } finally {
       h.cleanup();
+    }
+  });
+
+  it('enforces 30-max / 5-cost stamina bar with coin refill & time recovery, and never auto-selects upgraded/merged pets', async () => {
+    const startProfile = {
+      ...createProfile(),
+      matches: 2,
+      wins: 2,
+      stars: 2,
+      highestStars: 2,
+      coins: 120,
+      tutorialCompleted: true,
+      tutorialRewardClaimed: true,
+      onboardedFeatures: allOnboardedTokens(),
+    };
+    const h = createHarness(startProfile);
+    try {
+      h.stepFrame(100);
+      // Initial stamina is 30/30
+      expect(getStaminaStatus(h.app.getDebugState().profile).current).toBe(STAMINA_MAX);
+
+      // Starting a battle deducts 5 stamina (30 -> 25)
+      h.tapHit('menu:start');
+      await vi.waitFor(() => expect(h.app.getDebugState().screen).toBe('battle'));
+      expect(h.app.getDebugState().profile.stamina).toBe(STAMINA_MAX - STAMINA_COST_PER_BATTLE);
+
+      // Dismiss opening curtain
+      h.stepFrame(120);
+      h.tap(640, 360);
+      h.stepFrame(140);
+
+      // Tap-to-merge two identical hamsters on bench slots 0 and 1 -> upgrades to Lv.2 AND clears selectedId!
+      const st = h.app.getDebugState().battleState!;
+      st.units = [
+        { id: 101, kind: 'hamster', side: 'player', level: 1, location: { zone: 'bench', slot: 0 }, statuses: {}, energy: 0, cooldown: 0, production: 0, buffTime: 0, empowered: 0, animation: 0 },
+        { id: 102, kind: 'hamster', side: 'player', level: 1, location: { zone: 'bench', slot: 1 }, statuses: {}, energy: 0, cooldown: 0, production: 0, buffTime: 0, empowered: 0, animation: 0 },
+      ];
+      h.stepFrame(160);
+      // Tap slot 0 -> selects hamster 101
+      h.tap(STAGE.benchX + STAGE.benchSize / 2, STAGE.benchY + STAGE.benchSize / 2);
+      expect(h.app.getDebugState().selectedId).toBe(101);
+      // Tap slot 1 -> merges 101 into 102 -> Lv.2 hamster, and selectedId MUST be cleared (undefined)!
+      h.tap(STAGE.benchX + STAGE.benchStep + STAGE.benchSize / 2, STAGE.benchY + STAGE.benchSize / 2);
+      expect(st.units.length).toBe(1);
+      expect(st.units[0].level).toBe(2);
+      expect(h.app.getDebugState().selectedId).toBeUndefined();
+
+      // Natural regen recovers +1 per 300s up to 30
+      const now = Date.now();
+      const recovered = getStaminaStatus({ stamina: 10, staminaUpdatedAt: now - STAMINA_REGEN_SECONDS * 3 * 1000 }, now);
+      expect(recovered.current).toBe(13);
+    } finally {
+      h.cleanup();
+    }
+
+    // Low stamina (< 5) blocks battle start and opens Stamina Refill modal, where buying +15 works cleanly!
+    const tired = {
+      ...createProfile(),
+      matches: 2,
+      wins: 2,
+      stars: 2,
+      highestStars: 2,
+      coins: 120,
+      stamina: 3,
+      staminaUpdatedAt: Date.now(),
+      tutorialCompleted: true,
+      tutorialRewardClaimed: true,
+      onboardedFeatures: allOnboardedTokens(),
+    };
+    const h2 = createHarness(tired);
+    try {
+      h2.stepFrame(100);
+      h2.tapHit('menu:start');
+      await vi.waitFor(() => expect(h2.app.getDebugState().modal).toBe('stamina'));
+      expect(h2.app.getDebugState().screen).toBe('menu');
+      h2.stepFrame(120);
+      h2.tapHit('stamina:buy');
+      expect(h2.app.getDebugState().profile.stamina).toBe(18);
+      expect(h2.app.getDebugState().profile.coins).toBe(60);
+    } finally {
+      h2.cleanup();
     }
   });
 });

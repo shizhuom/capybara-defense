@@ -45,6 +45,15 @@ import {
   updateSettings,
 } from '../core/PlayerProgression';
 import { propTargetKind, resolvePropDrop } from '../core/PropTargets';
+import {
+  STAMINA_COST_PER_BATTLE,
+  STAMINA_MAX,
+  STAMINA_REFILL_AMOUNT,
+  buyStaminaWithCoins,
+  grantStamina,
+  settleStamina,
+  spendStamina,
+} from '../core/Stamina';
 import { advanceTutorial, finishTutorial, replayTutorial, type TutorialStep } from '../core/Tutorial';
 import {
   buildFacility,
@@ -202,7 +211,7 @@ export class MinigameApp {
 
   constructor(private readonly platform: PlatformAdapter) {
     setMobileWideStage(true);
-    this.profile = settleVillageClock(loadProfile(platform.storage), Date.now());
+    this.profile = settleStamina(settleVillageClock(loadProfile(platform.storage), Date.now()), Date.now());
     this.profile = ensureDailyShop(this.profile, localDay(), Math.random);
     this.platform.audio.setSettings(this.profile.settings);
     this.muted = this.profile.settings.musicVolume <= 0 && this.profile.settings.soundVolume <= 0;
@@ -274,6 +283,7 @@ export class MinigameApp {
     return {
       screen: this.screen,
       modal: this.modal,
+      selectedId: this.selectedId,
       tutorialStep: this.tutorialStep,
       speed: this.speed,
       profile: this.profile,
@@ -325,7 +335,7 @@ export class MinigameApp {
 
   private applyDevUnlockAll(): void {
     this.profile = enableTestProfile(this.platform.storage);
-    this.profile = ensureDailyShop(this.profile, localDay(), Math.random);
+    this.profile = ensureDailyShop({ ...this.profile, stamina: STAMINA_MAX, staminaUpdatedAt: Date.now() }, localDay(), Math.random);
     this.save();
     this.returnToMenu();
     this.showToast(getLanguage() === 'zh-CN' ? '🌟 已开启全解锁测试档！' : '🌟 Full unlock test save enabled!', 'good', 2.4);
@@ -523,6 +533,13 @@ export class MinigameApp {
     const browsing = this.screen !== 'battle' || this.modal !== null;
     this.platform.audio.setMusicMode?.(getMusicMode(this.engine?.state, browsing));
 
+    if (this.screen === 'menu' || this.modal === 'stamina') {
+      const settled = settleStamina(this.profile, Date.now());
+      if (settled !== this.profile) {
+        this.profile = settled;
+        this.save();
+      }
+    }
     this.drawFrame();
     this.rafId = this.platform.requestFrame(nextTs => this.loop(nextTs));
   }
@@ -670,6 +687,7 @@ export class MinigameApp {
         dialogGuideStep: this.computeCurrentDialogGuideStep(),
         devUnlocked: this.devUnlocked,
         isTestSave: isTestProfile(this.platform.storage),
+        adStaminaAvailable: isAdPlacementAvailable(this.platform.kind, 'stamina_refill'),
         elapsed: this.elapsedSec,
         viewport: vp,
       });
@@ -692,7 +710,24 @@ export class MinigameApp {
     return out;
   }
 
-  private async startBattle(): Promise<void> {
+  private async startBattle(opts?: { freeStamina?: boolean }): Promise<void> {
+    if (!opts?.freeStamina) {
+      const spent = spendStamina(this.profile, STAMINA_COST_PER_BATTLE, Date.now());
+      if (!spent.ok) {
+        const zh = getLanguage() === 'zh-CN';
+        this.profile = spent.profile;
+        this.save();
+        this.openModal('stamina');
+        this.showToast(
+          zh ? `⚡ 体力不足！每局需要 ${STAMINA_COST_PER_BATTLE} 点体力` : `⚡ Need ${STAMINA_COST_PER_BATTLE} Energy to start!`,
+          'warn',
+          2.2,
+        );
+        return;
+      }
+      this.profile = spent.profile;
+      this.save();
+    }
     const map = pickBattleMap(this.profile);
     await this.assetManager.ensureMap(map.id);
     if (
@@ -1031,6 +1066,28 @@ export class MinigameApp {
 
     // ── Menu Actions ────────────────────────────────────────────────────────
     if (id === 'menu:start') { void this.startBattle(); return; }
+    if (id === 'menu:stamina') { this.openModal('stamina'); return; }
+    if (id === 'stamina:buy') {
+      const res = buyStaminaWithCoins(this.profile, Date.now());
+      if (res.ok) {
+        this.profile = res.profile;
+        this.save();
+        this.platform.audio.play('coin');
+        this.showToast(zh ? `⚡ 体力 +${STAMINA_REFILL_AMOUNT}！精力充沛！` : `⚡ +${STAMINA_REFILL_AMOUNT} Energy!`, 'good', 2.0);
+      } else {
+        this.showToast(zh ? '金币不足，无法购买茶歇体力' : 'Not enough coins for Energy refill', 'warn', 1.8);
+      }
+      return;
+    }
+    if (id === 'stamina:ad') {
+      void this.runRewardedAd('stamina_refill', () => {
+        this.profile = grantStamina(this.profile, STAMINA_REFILL_AMOUNT, Date.now());
+        this.save();
+        this.platform.audio.play('gacha_win');
+        this.showToast(zh ? `🎬 领取成功！体力 +${STAMINA_REFILL_AMOUNT}` : `🎬 +${STAMINA_REFILL_AMOUNT} Energy!`, 'good', 2.2);
+      });
+      return;
+    }
     if (id === 'menu:lang' || id === 'settings:lang') { setLanguage(zh ? 'en' : 'zh-CN'); return; }
     if (id === 'menu:mute') {
       this.muted = !this.muted;
@@ -1708,7 +1765,7 @@ export class MinigameApp {
       this.profile = replayTutorial(this.profile);
       this.save();
       this.modal = null;
-      void this.startBattle();
+      void this.startBattle({ freeStamina: true });
       return;
     }
     if (id === 'settings:title-tap') {
@@ -1869,12 +1926,13 @@ export class MinigameApp {
           this.platform.audio.play('click');
           if (loc.zone === 'board') this.advanceBattleTutorial('deploy');
         }
-        this.selectedId = res.key === 'hint.deployed' ? undefined : res.unitId;
+        // Always clear selection after deploying, moving, upgrading, or merging a pet so the upgraded pet is NEVER auto-selected.
+        this.selectedId = undefined;
       } else {
         this.showToast(t(res.key), 'warn', 1.6);
       }
     } else if (target) {
-      this.selectedId = target.id;
+      this.selectedId = moved ? undefined : (this.selectedId === target.id ? undefined : target.id);
       this.shovelSelected = false;
       this.platform.audio.play('click');
     } else {

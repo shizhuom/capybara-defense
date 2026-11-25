@@ -195,10 +195,10 @@ export function drawCompendiumModal(
     drawText(c, entryName(id), tx, y + 40, 31, PALETTE.ink, 'left', 900);
     // Right status badge
     if (!available) {
-      drawText(c, t('p9.starUnlock', { stars: requiredStars(id) }), cardX + cardW - 22, y + 38, 20, '#9c5b1e', 'right', 900);
+      drawText(c, t('p9.starUnlock', { stars: requiredStars(id) }), cardX + cardW - 22, y + 38, 24, '#9c5b1e', 'right', 900);
     } else {
       const stateKey = collected ? (isWeapon || isProp ? 'p10.owned' : 'p10.collected') : isHero ? 'p10.canMerge' : 'p10.uncollected';
-      drawText(c, t(stateKey), cardX + cardW - 22, y + 36, 20, collected ? '#2c763d' : PALETTE.inkSoft, 'right', 900);
+      drawText(c, t(stateKey), cardX + cardW - 22, y + 36, 22, collected ? '#2c763d' : PALETTE.inkSoft, 'right', 900);
       if (collected) drawSpriteContain(c, 'ui_storybook_check', cardX + cardW - 52, y + 54, 30, 30);
     }
 
@@ -231,11 +231,11 @@ export function drawCompendiumModal(
 
     if (!available) {
       // Locked Chest Notice (1:1 Web `locked-entry-notice` with `ui_unlock_chest`!)
-      const lockH = 128;
-      drawIvorySlab(c, cardX, y, cardW, lockH, 18, '#fff7e6', '#f2dfc0', '#a67642', 2);
-      drawSpriteContain(c, 'ui_unlock_chest', cardX + 28, y + 24, 80, 80);
+      const lockH = 136;
+      drawIvorySlab(c, cardX, y, cardW, lockH, 18, '#fff7e6', '#f2dfc0', '#a67642', 2.4);
+      drawSpriteContain(c, 'ui_unlock_chest', cardX + 26, y + 24, 86, 86);
       const stars = requiredStars(id);
-      drawWrappedText(c, t('p9.lockedDetail', { stars, rank: t(`rank.${getRank(stars).index}`) }), cardX + 126, y + 36, cardW - 152, 18, 26, PALETTE.ink, 'left', 800, 3);
+      drawWrappedText(c, t('p9.lockedDetail', { stars, rank: t(`rank.${getRank(stars).index}`) }), cardX + 128, y + 32, cardW - 154, 22, 30, PALETTE.ink, 'left', 900, 3);
       y += lockH + 14;
     } else {
       // Recipe Equations Card (for Heroes & Component Pets/Hats)
@@ -518,19 +518,26 @@ function drawEntryStatusBadge(
   isHero: boolean,
   id: string,
 ): void {
-  const bw = 92, bh = 32;
-  const bx = rightX - bw;
+  const bh = 38;
   if (!available) {
-    round(c, bx, topY, bw, bh, 16, '#8f6942', '#4c2d12', 2);
-    drawText(c, t('p9.starUnlock', { stars: requiredStars(id) }), bx + bw / 2, topY + bh / 2 + 1, 16.5, '#fff6df', 'center', 900);
+    const label = t('p9.starUnlock', { stars: requiredStars(id) });
+    c.font = '900 21px "Trebuchet MS", "PingFang SC", "Microsoft YaHei", sans-serif';
+    const bw = Math.max(126, Math.ceil(c.measureText(label).width) + 24);
+    const bx = rightX - bw;
+    round(c, bx, topY, bw, bh, 19, '#5e3c1f', '#ffd978', 2.4);
+    drawText(c, label, bx + bw / 2, topY + bh / 2 + 1, 21, '#fff6df', 'center', 900);
     return;
   }
   const isOwnedType = Object.hasOwn(WEAPONS, id) || Object.hasOwn(PROPS, id);
   const key = collected ? (isOwnedType ? 'p10.owned' : 'p10.collected') : isHero ? 'p10.canMerge' : 'p10.uncollected';
+  const label = t(key);
+  c.font = '900 19px "Trebuchet MS", "PingFang SC", "Microsoft YaHei", sans-serif';
+  const bw = Math.max(96, Math.ceil(c.measureText(label).width) + 22);
+  const bx = rightX - bw;
   const fill = collected ? (isHero ? '#f6c542' : '#6db33f') : '#dfd2b8';
   const color = collected ? (isHero ? '#452208' : '#fffdf5') : '#5d4630';
-  round(c, bx, topY, bw, bh, 16, fill, '#4c2d12', 2);
-  drawText(c, t(key), bx + bw / 2, topY + bh / 2 + 1, 17, color, 'center', 900);
+  round(c, bx, topY, bw, 34, 17, fill, '#4c2d12', 2);
+  drawText(c, label, bx + bw / 2, topY + 18, 19, color, 'center', 900);
 }
 
 export { LEDGER };

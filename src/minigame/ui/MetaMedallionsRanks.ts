@@ -271,65 +271,65 @@ function drawRankBoardBody(
   const rowW = vw - 14;
   let y = vy + 4 - scroll.offset;
 
-  // 1. Clickable My-Rank Summary Card (tapping toggles full 54-Rank Ladder!)
-  const sumH = 104;
+  // 1. Clickable GIANT My-Rank Summary Card (tapping toggles full 54-Rank Ladder!)
+  const sumH = 128;
   if (y + sumH >= vy - 20 && y <= vy + vh + 20) {
     if (y + sumH > vy && y < vy + vh) {
       hits.add({ id: 'lb:toggle-ladder', x: vx + 4, y: Math.max(vy, y), w: rowW, h: Math.min(y + sumH, vy + vh) - Math.max(vy, y) });
     }
-    drawIvorySlab(c, vx + 4, y, rowW, sumH, 18, '#fffdf8', '#f6e8cb', lb.showRankLadder ? '#c97416' : '#7e5530', lb.showRankLadder ? 2.6 : 2.2);
-    round(c, vx + 18, y + 14, 76, 76, 16, '#fff3d6', '#7a5230', 2);
-    if (!drawSpriteContain(c, `avatar_${profile.avatarId}`, vx + 23, y + 19, 66, 66)) {
-      drawSpriteContain(c, 'avatar_capybara', vx + 23, y + 19, 66, 66);
+    drawIvorySlab(c, vx + 4, y, rowW, sumH, 20, '#fffdf8', '#f6e8cb', lb.showRankLadder ? '#c97416' : '#7e5530', lb.showRankLadder ? 3.2 : 2.6);
+    round(c, vx + 20, y + 18, 92, 92, 20, '#fff3d6', '#7a5230', 2.4);
+    if (!drawSpriteContain(c, `avatar_${profile.avatarId}`, vx + 26, y + 24, 80, 80)) {
+      drawSpriteContain(c, 'avatar_capybara', vx + 26, y + 24, 80, 80);
     }
 
     const rName = t(`rank.${rank.index}`);
-    drawText(c, rName, vx + 110, y + 30, 21.5, PALETTE.ink, 'left', 900);
-    c.font = '900 21.5px "Trebuchet MS", "PingFang SC", "Microsoft YaHei", sans-serif';
+    drawText(c, rName, vx + 130, y + 36, 29, PALETTE.ink, 'left', 900);
+    c.font = '900 29px "Trebuchet MS", "PingFang SC", "Microsoft YaHei", sans-serif';
     const rw = c.measureText(rName).width;
-    round(c, vx + 120 + rw, y + 18, 108, 24, 12, '#f2e0bc', '#8c5d2c', 1.4);
-    drawText(c, t(lb.showRankLadder ? 'p19.rankLadderHide' : 'p19.rankLadderShow'), vx + 174 + rw, y + 31, 13, '#5c3612', 'center', 900);
+    round(c, vx + 144 + rw, y + 20, 142, 34, 17, '#f2e0bc', '#8c5d2c', 2);
+    drawText(c, t(lb.showRankLadder ? 'p19.rankLadderHide' : 'p19.rankLadderShow'), vx + 215 + rw, y + 38, 19, '#5c3612', 'center', 900);
 
     const progText = t(nextRank ? 'p11.profile.rankProgress' : 'p11.profile.topRank', {
       count: nextRank ? nextRank.minStars - profile.stars : 0,
       coins: rank.winCoins,
     });
-    drawText(c, progText, vx + 110, y + 58, 15, PALETTE.inkSoft, 'left', 800);
-    drawProgressBar(c, vx + 110, y + 76, rowW - 230, 10, progress, '#e8b43c', '#e6dac4', '#8c6239');
+    drawText(c, progText, vx + 130, y + 74, 21, PALETTE.inkSoft, 'left', 800);
+    drawProgressBar(c, vx + 130, y + 96, rowW - 280, 14, progress, '#e8b43c', '#e6dac4', '#8c6239');
 
-    drawIconLabel(c, 'ui_star_rank', String(profile.stars), vx + 4 + rowW - 96, y + 52, 26, 22, '#9e5a0c');
+    drawIconLabel(c, 'ui_star_rank', String(profile.stars), vx + 4 + rowW - 122, y + 64, 34, 29, '#9e5a0c');
   }
-  y += sumH + 10;
+  y += sumH + 12;
 
   // 2A. 54-Rank Ladder Sub-View when toggled open
   if (lb.showRankLadder) {
-    const headH = 96;
+    const headH = 116;
     if (y + headH >= vy - 20 && y <= vy + vh + 20) {
-      drawIvorySlab(c, vx + 4, y, rowW, headH, 16, '#e9fae0', '#d4f2c4', '#3d8633', 2);
-      drawText(c, t('p19.rankLadderTitle'), vx + 20, y + 24, 18.5, '#1f5418', 'left', 900);
-      drawWrappedText(c, t('p19.rankLadderSub'), vx + 20, y + 40, rowW - 148, 13.5, 18, '#2b6123', 'left', 700, 3);
+      drawIvorySlab(c, vx + 4, y, rowW, headH, 18, '#e9fae0', '#d4f2c4', '#3d8633', 2.4);
+      drawText(c, t('p19.rankLadderTitle'), vx + 24, y + 30, 25, '#1f5418', 'left', 900);
+      drawWrappedText(c, t('p19.rankLadderSub'), vx + 24, y + 52, rowW - 180, 19, 25, '#2b6123', 'left', 800, 2);
       if (y + headH > vy && y < vy + vh) {
-        drawPillButton(c, hits, 'lb:toggle-ladder', vx + 4 + rowW - 118, y + 28, 104, 38, t('p19.rankLadderBack'), 'cream', { fontSize: 14.5 });
+        drawPillButton(c, hits, 'lb:toggle-ladder', vx + 4 + rowW - 144, y + 34, 128, 48, t('p19.rankLadderBack'), 'cream', { fontSize: 20 });
       }
     }
-    y += headH + 10;
+    y += headH + 12;
 
-    const rh = 60, rg = 8;
+    const rh = 86, rg = 10;
     RANKS.forEach((rk, i) => {
       if (y + rh >= vy - 20 && y <= vy + vh + 20) {
         const isCur = i === rank.index;
         const reached = i < rank.index;
         const nxt = RANKS[i + 1];
         const range = nxt ? `${rk.minStars}–${nxt.minStars - 1}★` : `${rk.minStars}★+`;
-        drawIvorySlab(c, vx + 4, y, rowW, rh, 14, isCur ? '#fff0a8' : '#fffdf8', isCur ? '#f7d874' : '#f6e8cb', isCur ? '#c96214' : '#8a6239', isCur ? 2.6 : 1.6);
-        drawIconLabel(c, 'ui_star_rank', range, vx + 16, y + rh / 2, 20, 15, '#8c4b10');
-        drawText(c, t(`rank.${i}`), vx + 128, y + 22, 17.5, PALETTE.ink, 'left', 900);
+        drawIvorySlab(c, vx + 4, y, rowW, rh, 18, isCur ? '#fff0a8' : '#fffdf8', isCur ? '#f7d874' : '#f6e8cb', isCur ? '#c96214' : '#8a6239', isCur ? 3 : 2);
+        drawIconLabel(c, 'ui_star_rank', range, vx + 18, y + rh / 2, 26, 21, '#8c4b10');
+        drawText(c, t(`rank.${i}`), vx + 168, y + 30, 25, PALETTE.ink, 'left', 900);
         const extra = getRankDifficulty(i).extraCount;
         const mapTag = i === 0 ? t('map.sunny_backyard') : i === 10 ? t('map.sakura_onsen') : i === 20 ? t('map.midnight_kitchen') : i === 30 ? t('map.cat_tower_maze') : '';
-        drawText(c, `+${rk.winCoins}金币 · 碎片×${rk.fragmentMultiplier.toFixed(1)}${extra ? ` · +${extra}怪` : ''}${mapTag ? ` · ${mapTag}` : ''}`, vx + 128, y + 45, 13.5, PALETTE.inkSoft, 'left', 700);
+        drawText(c, `+${rk.winCoins}金币 · 碎片×${rk.fragmentMultiplier.toFixed(1)}${extra ? ` · +${extra}怪` : ''}${mapTag ? ` · ${mapTag}` : ''}`, vx + 168, y + 62, 19, PALETTE.inkSoft, 'left', 800);
         const pillText = isCur ? t('p19.rankCurrent') : reached ? '✓' : `+${Math.max(1, rk.minStars - profile.stars)}★`;
-        round(c, vx + 4 + rowW - 86, y + 17, 72, 26, 13, isCur ? '#f5c23b' : reached ? '#dff5d6' : '#eee3cf', '#8a5d32', 1.4);
-        drawText(c, pillText, vx + 4 + rowW - 50, y + 31, 13.5, isCur ? '#4a250a' : reached ? '#22591b' : PALETTE.inkSoft, 'center', 900);
+        round(c, vx + 4 + rowW - 114, y + 24, 98, 38, 19, isCur ? '#f5c23b' : reached ? '#dff5d6' : '#eee3cf', '#8a5d32', 1.8);
+        drawText(c, pillText, vx + 4 + rowW - 65, y + 44, 19, isCur ? '#4a250a' : reached ? '#22591b' : PALETTE.inkSoft, 'center', 900);
       }
       y += rh + rg;
     });
@@ -341,31 +341,31 @@ function drawRankBoardBody(
     return { scrollViewport: { x: vx, y: vy, w: vw, h: vh } };
   }
 
-  // 2B. Global Rank Toolbar Card (`p18_preview_d15`!)
+  // 2B. GIANT Global Rank Toolbar Card
   const snap = lb.rankSnap;
   const online = snap.mode === 'online' && snap.entries.length > 0;
-  const toolH = 74;
+  const toolH = 104;
   if (y + toolH >= vy - 20 && y <= vy + vh + 20) {
-    drawIvorySlab(c, vx + 4, y, rowW, toolH, 16, '#fffdf8', '#f6e8cb', '#7e5530', 1.8);
+    drawIvorySlab(c, vx + 4, y, rowW, toolH, 20, '#fffdf8', '#f6e8cb', '#7e5530', 2.4);
     const myRankStr = online && snap.me && snap.me.rank > 0
       ? t('p17.rankBoard.rank', { rank: snap.me.rank, total: Math.max(snap.totalPlayers, snap.me.rank) })
       : (zh ? `本地段位榜 · ${displayNickname(profile, lang)}` : `Local Board · ${displayNickname(profile, lang)}`);
-    drawText(c, myRankStr, vx + 20, y + 24, 16.5, '#8c4912', 'left', 900);
+    drawText(c, myRankStr, vx + 24, y + 30, 24, '#8c4912', 'left', 900);
 
     const loc = formatLocation(profile.locationLabel, lang, profile.playerId);
-    round(c, vx + 18, y + 40, 152, 26, 13, '#f5e8cc', '#9c7344', 1.4);
-    drawSpriteContain(c, 'ui_map_sign', vx + 24, y + 44, 18, 18);
-    drawText(c, loc.slice(0, 8), vx + 46, y + 54, 13.5, PALETTE.inkSoft, 'left', 800);
+    round(c, vx + 22, y + 52, 208, 38, 19, '#f5e8cc', '#9c7344', 1.8);
+    drawSpriteContain(c, 'ui_map_sign', vx + 30, y + 58, 26, 26);
+    drawText(c, loc.slice(0, 8), vx + 62, y + 72, 19, PALETTE.inkSoft, 'left', 900);
 
     if (y + toolH > vy && y < vy + vh) {
-      drawPillButton(c, hits, 'lb:rename', vx + 180, y + 38, 92, 30, zh ? '改昵称' : 'Rename', 'green', { fontSize: 13.5 });
-      drawPillButton(c, hits, 'lb:share', vx + 280, y + 38, 86, 30, zh ? '分享' : 'Share', 'gold', { fontSize: 13.5 });
-      drawPillButton(c, hits, 'lb:refresh', vx + 4 + rowW - 108, y + 18, 94, 38, lb.loading ? '…' : (zh ? '刷新' : 'Sync'), 'cream', { fontSize: 15 });
+      drawPillButton(c, hits, 'lb:rename', vx + 244, y + 48, 122, 44, zh ? '改昵称' : 'Rename', 'green', { fontSize: 20 });
+      drawPillButton(c, hits, 'lb:share', vx + 378, y + 48, 112, 44, zh ? '分享' : 'Share', 'gold', { fontSize: 20 });
+      drawPillButton(c, hits, 'lb:refresh', vx + 4 + rowW - 134, y + 26, 116, 52, lb.loading ? '…' : (zh ? '刷新' : 'Sync'), 'cream', { fontSize: 22 });
     }
   }
-  y += toolH + 12;
+  y += toolH + 14;
 
-  // 3. Heading + Single-Column Player Rows
+  // 3. Heading + GIANT Single-Column Player Rows
   const myNick = displayNickname(profile, lang);
   const rows = online
     ? snap.entries.map((e, i) => ({
@@ -385,36 +385,36 @@ function drawRankBoardBody(
         isMe: e.isPlayer,
       }));
 
-  if (y + 26 >= vy - 20 && y <= vy + vh + 20) {
+  if (y + 32 >= vy - 20 && y <= vy + vh + 20) {
     drawText(
       c,
       online ? `${t('p17.rankBoard.top', { count: Math.min(100, rows.length) })}  ${t('p17.board.players', { total: snap.totalPlayers })}` : t('m3.localBoard'),
       vx + 8,
-      y + 12,
-      17.5,
+      y + 16,
+      23,
       '#fffdf5',
       'left',
       900,
     );
   }
-  y += 32;
+  y += 40;
 
-  const rh = 78, rg = 10;
+  const rh = 104, rg = 12;
   rows.forEach(r => {
     if (y + rh >= vy - 20 && y <= vy + vh + 20) {
-      drawIvorySlab(c, vx + 4, y, rowW, rh, 16, r.isMe ? '#fff4c4' : '#fffdf8', r.isMe ? '#f8da7a' : '#f6e8cb', r.isMe ? '#c26912' : '#7e5530', r.isMe ? 2.6 : 1.8);
+      drawIvorySlab(c, vx + 4, y, rowW, rh, 20, r.isMe ? '#fff4c4' : '#fffdf8', r.isMe ? '#f8da7a' : '#f6e8cb', r.isMe ? '#c26912' : '#7e5530', r.isMe ? 3.2 : 2.4);
       const medal = r.place === 1 ? '🥇' : r.place === 2 ? '🥈' : r.place === 3 ? '🥉' : String(r.place);
-      drawText(c, medal, vx + 36, y + rh / 2, r.place <= 3 ? 26 : 19, PALETTE.ink, 'center', 900);
-      round(c, vx + 64, y + 11, 56, 56, 14, '#fff3d6', '#8a5d32', 1.8);
-      drawSpriteContain(c, `avatar_${r.avatar}`, vx + 68, y + 15, 48, 48);
-      drawText(c, r.name + (r.isMe ? ` ${t('p11.profile.youHere')}` : ''), vx + 134, y + 26, 19.5, PALETTE.ink, 'left', 900);
+      drawText(c, medal, vx + 44, y + rh / 2, r.place <= 3 ? 34 : 25, PALETTE.ink, 'center', 900);
+      round(c, vx + 82, y + 14, 76, 76, 18, '#fff3d6', '#8a5d32', 2.2);
+      drawSpriteContain(c, `avatar_${r.avatar}`, vx + 88, y + 20, 64, 64);
+      drawText(c, r.name + (r.isMe ? ` ${t('p11.profile.youHere')}` : ''), vx + 176, y + 34, 26, PALETTE.ink, 'left', 900);
       const rkStr = t(`rank.${getRank(r.stars).index}`);
-      drawText(c, rkStr, vx + 134, y + 54, 15, PALETTE.inkSoft, 'left', 700);
-      c.font = '700 15px "Trebuchet MS", "PingFang SC", "Microsoft YaHei", sans-serif';
+      drawText(c, rkStr, vx + 176, y + 72, 20.5, PALETTE.inkSoft, 'left', 800);
+      c.font = '800 20.5px "Trebuchet MS", "PingFang SC", "Microsoft YaHei", sans-serif';
       const rkw = c.measureText(rkStr).width;
-      drawSpriteContain(c, 'ui_map_sign', vx + 144 + rkw, y + 45, 16, 16);
-      drawText(c, r.loc, vx + 164 + rkw, y + 54, 14.5, '#7c5d3a', 'left', 700);
-      drawIconLabel(c, 'ui_star_rank', String(r.stars), vx + 4 + rowW - 92, y + rh / 2, 24, 21, '#9e5a0c');
+      drawSpriteContain(c, 'ui_map_sign', vx + 190 + rkw, y + 60, 22, 22);
+      drawText(c, r.loc, vx + 216 + rkw, y + 72, 20, '#7c5d3a', 'left', 800);
+      drawIconLabel(c, 'ui_star_rank', String(r.stars), vx + 4 + rowW - 122, y + rh / 2, 32, 28, '#9e5a0c');
     }
     y += rh + rg;
   });
@@ -452,60 +452,60 @@ function drawEndlessBoardBody(
   const rowW = vw - 14;
   let y = vy + 4 - scroll.offset;
 
-  // Identity Card
-  const idH = 114;
+  // Identity Card (GIANT mobile boxes & fonts!)
+  const idH = 136;
   if (y + idH >= vy - 20 && y <= vy + vh + 20) {
-    drawIvorySlab(c, vx + 4, y, rowW, idH, 18, '#fffdf8', '#f6e8cb', '#7e5530', 2);
-    round(c, vx + 18, y + 18, 76, 76, 16, '#fff3d6', '#7a5230', 2);
-    drawSpriteContain(c, `avatar_${profile.avatarId}`, vx + 23, y + 23, 66, 66);
+    drawIvorySlab(c, vx + 4, y, rowW, idH, 20, '#fffdf8', '#f6e8cb', '#7e5530', 2.4);
+    round(c, vx + 20, y + 22, 92, 92, 20, '#fff3d6', '#7a5230', 2.4);
+    drawSpriteContain(c, `avatar_${profile.avatarId}`, vx + 26, y + 28, 80, 80);
 
-    drawText(c, myNick, vx + 110, y + 28, 21, PALETTE.ink, 'left', 900);
+    drawText(c, myNick, vx + 130, y + 34, 27, PALETTE.ink, 'left', 900);
     const bestLine = best >= 11 ? t('p17.board.best', { wave: best }) : t('p17.board.noBest');
-    drawText(c, bestLine, vx + 110, y + 58, 15.5, best >= 11 ? '#6a2e8c' : PALETTE.inkSoft, 'left', 800);
+    drawText(c, bestLine, vx + 130, y + 72, 21, best >= 11 ? '#6a2e8c' : PALETTE.inkSoft, 'left', 800);
     const loc = formatLocation(profile.locationLabel, lang, profile.playerId);
-    drawIconLabel(c, 'ui_map_sign', loc, vx + 110, y + 88, 18, 14.5, '#7c5d3a');
+    drawIconLabel(c, 'ui_map_sign', loc, vx + 130, y + 106, 22, 19, '#7c5d3a');
 
     if (y + idH > vy && y < vy + vh) {
-      drawPillButton(c, hits, 'lb:rename', vx + 4 + rowW - 216, y + 16, 96, 36, zh ? '改昵称' : 'Rename', 'gold', { fontSize: 14.5 });
-      drawPillButton(c, hits, 'lb:refresh', vx + 4 + rowW - 110, y + 16, 96, 36, lb.loading ? '…' : (zh ? '刷新' : 'Sync'), 'cream', { fontSize: 14.5 });
+      drawPillButton(c, hits, 'lb:rename', vx + 4 + rowW - 264, y + 18, 120, 44, zh ? '改昵称' : 'Rename', 'gold', { fontSize: 19.5 });
+      drawPillButton(c, hits, 'lb:refresh', vx + 4 + rowW - 134, y + 18, 118, 44, lb.loading ? '…' : (zh ? '刷新' : 'Sync'), 'cream', { fontSize: 19.5 });
       if (!fromMedallionHub) {
-        drawPillButton(c, hits, 'modal:switch:medallions', vx + 4 + rowW - 216, y + 62, 202, 36, t('p17.board.medallions'), 'cream', { fontSize: 14.5, icon: 'ui_endless_crest' });
+        drawPillButton(c, hits, 'modal:switch:medallions', vx + 4 + rowW - 264, y + 74, 248, 44, t('p17.board.medallions'), 'cream', { fontSize: 19.5, icon: 'ui_endless_crest' });
       }
     }
   }
-  y += idH + 12;
+  y += idH + 14;
 
   const local = localEntry(profile, lang);
   const entries = snap.entries.length > 0 ? snap.entries : !online && local ? [local] : [];
   if (entries.length === 0) {
-    drawIvorySlab(c, vx + 4, y, rowW, 130, 16);
-    drawText(c, best >= 11 ? t('p17.board.best', { wave: best }) : t('p17.board.noBest'), vx + 4 + rowW / 2, y + 54, 19, PALETTE.ink, 'center', 900);
-    drawText(c, zh ? '通关第 10 波并开启无尽模式即可冲击全球前 100 名！' : 'Clear Wave 10 and enter Endless to join the Global Top 100!', vx + 4 + rowW / 2, y + 88, 15, PALETTE.inkSoft, 'center', 700);
-    y += 140;
+    drawIvorySlab(c, vx + 4, y, rowW, 148, 20);
+    drawText(c, best >= 11 ? t('p17.board.best', { wave: best }) : t('p17.board.noBest'), vx + 4 + rowW / 2, y + 58, 25, PALETTE.ink, 'center', 900);
+    drawText(c, zh ? '通关第 10 波并开启无尽模式即可冲击全球前 100 名！' : 'Clear Wave 10 and enter Endless to join the Global Top 100!', vx + 4 + rowW / 2, y + 102, 20, PALETTE.inkSoft, 'center', 800);
+    y += 158;
   } else {
-    if (y + 26 >= vy - 20 && y <= vy + vh + 20) {
-      drawText(c, `${t(online ? 'p17.board.top' : 'p17.board.local', { count: Math.min(100, entries.length) })}`, vx + 8, y + 12, 17, '#fffdf5', 'left', 900);
+    if (y + 32 >= vy - 20 && y <= vy + vh + 20) {
+      drawText(c, `${t(online ? 'p17.board.top' : 'p17.board.local', { count: Math.min(100, entries.length) })}`, vx + 8, y + 16, 23, '#fffdf5', 'left', 900);
     }
-    y += 32;
-    const rh = 80, rg = 10;
+    y += 40;
+    const rh = 104, rg = 12;
     entries.forEach((e, idx) => {
       if (y + rh >= vy - 20 && y <= vy + vh + 20) {
         const place = e.rank || idx + 1;
-        drawIvorySlab(c, vx + 4, y, rowW, rh, 16, e.isMe ? '#f5e8ff' : '#fffdf8', e.isMe ? '#e6cfff' : '#f6e8cb', e.isMe ? '#7b3fa0' : '#7e5530', e.isMe ? 2.6 : 1.8);
+        drawIvorySlab(c, vx + 4, y, rowW, rh, 20, e.isMe ? '#f5e8ff' : '#fffdf8', e.isMe ? '#e6cfff' : '#f6e8cb', e.isMe ? '#7b3fa0' : '#7e5530', e.isMe ? 3.2 : 2.4);
         const medal = place <= 3 ? ['🥇', '🥈', '🥉'][place - 1] : `#${place}`;
-        drawText(c, medal, vx + 36, y + rh / 2, place <= 3 ? 26 : 19, PALETTE.ink, 'center', 900);
-        round(c, vx + 64, y + 12, 56, 56, 14, '#fff3d6', '#8a5d32', 1.8);
-        drawSpriteContain(c, `avatar_${e.avatarId}`, vx + 68, y + 16, 48, 48);
-        drawText(c, e.nickname + (e.isMe ? ` ${t('p17.board.me')}` : ''), vx + 134, y + 26, 19, PALETTE.ink, 'left', 900);
+        drawText(c, medal, vx + 44, y + rh / 2, place <= 3 ? 34 : 25, PALETTE.ink, 'center', 900);
+        round(c, vx + 82, y + 14, 76, 76, 18, '#fff3d6', '#8a5d32', 2.2);
+        drawSpriteContain(c, `avatar_${e.avatarId}`, vx + 88, y + 20, 64, 64);
+        drawText(c, e.nickname + (e.isMe ? ` ${t('p17.board.me')}` : ''), vx + 176, y + 34, 25, PALETTE.ink, 'left', 900);
 
         const mvpSprite = e.mvpAwakened ? `${e.mvpKind}_awakened` : e.mvpKind;
-        if (!drawSpriteContain(c, mvpSprite, vx + 134, y + 40, 30, 30)) {
-          drawSpriteContain(c, e.mvpKind, vx + 134, y + 40, 30, 30);
+        if (!drawSpriteContain(c, mvpSprite, vx + 176, y + 54, 36, 36)) {
+          drawSpriteContain(c, e.mvpKind, vx + 176, y + 54, 36, 36);
         }
         const mm = Math.floor(e.elapsedSeconds / 60);
         const ss = String(Math.floor(e.elapsedSeconds % 60)).padStart(2, '0');
-        drawText(c, `${e.awakenedCount ? `✦${e.awakenedCount} · ` : ''}${mm}:${ss} · ${formatLocation(e.location, lang, e.nickname)}`, vx + 170, y + 56, 14.5, PALETTE.inkSoft, 'left', 700);
-        drawText(c, t('p17.board.wave', { wave: e.bestWave }), vx + 4 + rowW - 22, y + rh / 2, 20, '#6a2e8c', 'right', 900);
+        drawText(c, `${e.awakenedCount ? `✦${e.awakenedCount} · ` : ''}${mm}:${ss} · ${formatLocation(e.location, lang, e.nickname)}`, vx + 220, y + 73, 19.5, PALETTE.inkSoft, 'left', 800);
+        drawText(c, t('p17.board.wave', { wave: e.bestWave }), vx + 4 + rowW - 24, y + rh / 2, 26, '#6a2e8c', 'right', 900);
       }
       y += rh + rg;
     });
@@ -542,31 +542,31 @@ function drawPassportBody(
   const rowW = vw - 14;
   let y = vy + 4 - scroll.offset;
 
-  // Top Passport Summary Card
-  const sumH = 114;
+  // Top Passport Summary Card (GIANT readable!)
+  const sumH = 136;
   if (y + sumH >= vy - 20 && y <= vy + vh + 20) {
-    drawIvorySlab(c, vx + 4, y, rowW, sumH, 18, '#fffdf8', '#f6e8cb', '#7e5530', 2.2);
-    round(c, vx + 18, y + 18, 78, 78, 18, '#fff3d6', '#7a5230', 2.2);
-    if (!drawSpriteContain(c, `avatar_${profile.avatarId}`, vx + 23, y + 23, 68, 68)) {
-      drawSpriteContain(c, 'avatar_capybara', vx + 23, y + 23, 68, 68);
+    drawIvorySlab(c, vx + 4, y, rowW, sumH, 20, '#fffdf8', '#f6e8cb', '#7e5530', 2.4);
+    round(c, vx + 20, y + 22, 92, 92, 20, '#fff3d6', '#7a5230', 2.4);
+    if (!drawSpriteContain(c, `avatar_${profile.avatarId}`, vx + 26, y + 28, 80, 80)) {
+      drawSpriteContain(c, 'avatar_capybara', vx + 26, y + 28, 80, 80);
     }
 
-    drawText(c, nick, vx + 112, y + 28, 22, PALETTE.ink, 'left', 900);
-    drawText(c, `${t(`rank.${rank.index}`)} · ${loc}`, vx + 112, y + 58, 15.5, PALETTE.inkSoft, 'left', 800);
-    drawText(c, t('p11.profile.record', { matches: profile.matches, rate, best: profile.bestWinStreak }), vx + 112, y + 86, 15, '#2b6b56', 'left', 800);
+    drawText(c, nick, vx + 130, y + 34, 28, PALETTE.ink, 'left', 900);
+    drawText(c, `${t(`rank.${rank.index}`)} · ${loc}`, vx + 130, y + 72, 21, PALETTE.inkSoft, 'left', 800);
+    drawText(c, t('p11.profile.record', { matches: profile.matches, rate, best: profile.bestWinStreak }), vx + 130, y + 106, 20, '#2b6b56', 'left', 900);
 
     if (y + sumH > vy && y < vy + vh) {
-      drawPillButton(c, hits, 'profile:rename', vx + 4 + rowW - 126, y + 14, 112, 38, zh ? '✎ 改昵称' : '✎ Rename', 'gold', { fontSize: 14.5 });
-      drawPillButton(c, hits, 'profile:share', vx + 4 + rowW - 126, y + 60, 112, 38, zh ? '分享名片' : 'Share', 'green', { fontSize: 14.5 });
+      drawPillButton(c, hits, 'profile:rename', vx + 4 + rowW - 156, y + 18, 140, 46, zh ? '✎ 改昵称' : '✎ Rename', 'gold', { fontSize: 20 });
+      drawPillButton(c, hits, 'profile:share', vx + 4 + rowW - 156, y + 72, 140, 46, zh ? '分享名片' : 'Share', 'green', { fontSize: 20 });
     }
   }
   y += sumH + 14;
 
   // Heading: Avatar Collection
-  if (y + 26 >= vy - 20 && y <= vy + vh + 20) {
-    drawText(c, `${t('p11.profile.avatarCollection')} (${profile.unlockedAvatars.length}/${Object.keys(AVATARS).length})`, vx + 8, y + 12, 17.5, '#fffdf5', 'left', 900);
+  if (y + 32 >= vy - 20 && y <= vy + vh + 20) {
+    drawText(c, `${t('p11.profile.avatarCollection')} (${profile.unlockedAvatars.length}/${Object.keys(AVATARS).length})`, vx + 8, y + 16, 23, '#fffdf5', 'left', 900);
   }
-  y += 32;
+  y += 40;
 
   // 2-Column GIANT Avatar Cards
   const avatars = Object.values(AVATARS);

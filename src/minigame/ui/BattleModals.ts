@@ -5,6 +5,13 @@ import { RANKS, getRank } from '../../config/ranks';
 import { VILLAGE_RESOURCE_IDS, type VillageResourceId } from '../../config/village';
 import { WEAPONS } from '../../config/weapons';
 import { computeNextGoalHook, isFeatureUnlocked, type FeatureId, type NextGoalHook } from '../../core/FeatureUnlocks';
+import {
+  STAMINA_COST_PER_BATTLE,
+  STAMINA_REFILL_AMOUNT,
+  STAMINA_REFILL_COIN_COST,
+  formatStaminaCountdown,
+  getStaminaStatus,
+} from '../../core/Stamina';
 import { formatCompactNumber } from '../../core/formatNumber';
 import type { BattleState, Profile } from '../../core/types';
 import { getLanguage, t } from '../../i18n/i18n';
@@ -52,6 +59,7 @@ export type MinigameModalKind =
   | 'profile'
   | 'onboard'
   | 'battle-lesson'
+  | 'stamina'
   | 'dev';
 
 export type { CompendiumTab };
@@ -86,6 +94,7 @@ export interface ModalDrawContext {
   dialogGuideStep: DialogGuideStep | null;
   devUnlocked: boolean;
   isTestSave: boolean;
+  adStaminaAvailable?: boolean;
   elapsed: number;
   viewport: ViewportMetrics;
 }
@@ -171,6 +180,9 @@ export function drawActiveModal(
     case 'dev':
       drawDevToolsModal(c, hits, ctx.profile, ctx.state, ctx.isTestSave);
       return {};
+    case 'stamina':
+      drawStaminaModal(c, hits, ctx.profile, Boolean(ctx.adStaminaAvailable));
+      return {};
     case 'onboard':
       if (ctx.onboardingFeature) drawOnboardingUnlockModal(c, hits, ctx.onboardingFeature);
       return {};
@@ -229,52 +241,52 @@ function drawPauseModal(c: CanvasRenderingContext2D, hits: UiHitManager, state: 
   }
 
   const secCount = 1 + extraSections.length;
-  const secH = secCount === 1 ? 112 : secCount === 2 ? 102 : secCount === 3 ? 90 : 82;
-  const pw = 744;
+  const secH = secCount === 1 ? 132 : secCount === 2 ? 116 : secCount === 3 ? 100 : 88;
+  const pw = 840;
   const px = (1280 - pw) / 2;
-  const ph = Math.min(486, 158 + secCount * secH + (secCount - 1) * 8);
-  const py = Math.max(94, Math.round((566 - ph) / 2) + 18);
+  const ph = Math.min(454, 178 + secCount * secH + (secCount - 1) * 10);
+  const py = Math.max(76, Math.round((528 - ph) / 2) + 22);
 
-  drawHinokiBoard(c, px, py, pw, ph, 26);
+  drawHinokiBoard(c, px, py, pw, ph, 28);
   hits.add({ id: 'modal:card', x: px, y: py, w: pw, h: ph });
 
   // Peeking towel capybara layered ON TOP of rim
-  drawSpriteContain(c, 'ui_pause_peek_capy', px + 20, py - 82, 100, 100);
-  drawMatchaSignboard(c, 640, py - 42, t('p12.pauseTitle'), undefined, 300);
-  drawYuzuCloseButton(c, hits, 'modal:resume', px + pw - 16, py - 12, 28);
+  drawSpriteContain(c, 'ui_pause_peek_capy', px + 22, py - 86, 106, 106);
+  drawMatchaSignboard(c, 640, py - 44, t('p12.pauseTitle'), undefined, 320);
+  drawYuzuCloseButton(c, hits, 'modal:resume', Math.min(1084, px + pw - 16), py - 12, 30);
 
-  // Stacked Inner Ivory Sections
-  let cy = py + 38;
-  const cw = pw - 44;
-  const cx = px + 22;
+  // Stacked Inner Ivory Sections (GIANT readable phone fonts!)
+  let cy = py + 42;
+  const cw = pw - 48;
+  const cx = px + 24;
 
   // 1. Map & Status Card
-  drawIvorySlab(c, cx, cy, cw, 90, 18);
-  round(c, cx + 14, cy + 11, 68, 68, 16, '#fff4dc', '#8a6239', 2);
-  drawSpriteContain(c, 'ui_map_sign', cx + 20, cy + 17, 56, 56);
-  drawText(c, t(`map.${state.mapId}`), cx + 96, cy + 31, 26, PALETTE.ink, 'left', 900);
+  drawIvorySlab(c, cx, cy, cw, 112, 20);
+  round(c, cx + 16, cy + 14, 84, 84, 18, '#fff4dc', '#8a6239', 2.4);
+  drawSpriteContain(c, 'ui_map_sign', cx + 24, cy + 22, 68, 68);
+  drawText(c, t(`map.${state.mapId}`), cx + 116, cy + 36, 32, PALETTE.ink, 'left', 900);
   const waveStr = state.endless ? t('p13.endlessWave', { wave: state.wave }) : t('p12.pauseWave', { wave: state.wave });
   const statLine = `${waveStr}  ·  ${t('p12.pauseTime', { time: formatClock(state.time) })}  ·  ${t('p12.pauseOranges', { count: state.sides.player.oranges })}`;
-  drawText(c, statLine, cx + 96, cy + 63, 20, PALETTE.inkSoft, 'left', 800);
-  cy += 100;
+  drawText(c, statLine, cx + 116, cy + 78, 24, PALETTE.inkSoft, 'left', 900);
+  cy += 122;
 
   drawPauseLootSection(c, cx, cy, cw, secH, 'ui_weapon_fragment', t('p12.pauseLoot'), fragChips, t('p12.pauseEmpty'));
-  cy += secH + 8;
+  cy += secH + 10;
 
   for (const sec of extraSections) {
     drawPauseLootSection(c, cx, cy, cw, secH, sec.icon, sec.title, sec.chips, '');
-    cy += secH + 8;
+    cy += secH + 10;
   }
 
-  // Footer BELOW the wooden board (EXACT `p18_preview_d20_battle_pause.png`!)
-  const f1y = py + ph + 12;
-  drawPillButton(c, hits, 'modal:resume', px, f1y, pw, 50, `▶ ${t('p12.resume')}`, 'green', { fontSize: 20 });
+  // GIANT Footer BELOW the wooden board (HUGE 28px/25px bold buttons!)
+  const f1y = py + ph + 14;
+  drawPillButton(c, hits, 'modal:resume', px, f1y, pw, 64, `▶ ${t('p12.resume')}`, 'green', { fontSize: 28 });
 
-  const f2y = f1y + 58;
-  const subGap = 12;
+  const f2y = f1y + 74;
+  const subGap = 14;
   const subW = Math.floor((pw - subGap * 2) / 3);
-  drawPillButton(c, hits, 'modal:open-profile', px, f2y, subW, 44, t('p12.profile'), 'cream', { fontSize: 17 });
-  drawPillButton(c, hits, 'modal:open-settings', px + subW + subGap, f2y, subW, 44, t('p12.settings'), 'cream', { fontSize: 17 });
+  drawPillButton(c, hits, 'modal:open-profile', px, f2y, subW, 58, t('p12.profile'), 'cream', { fontSize: 25 });
+  drawPillButton(c, hits, 'modal:open-settings', px + subW + subGap, f2y, subW, 58, t('p12.settings'), 'cream', { fontSize: 25 });
   drawPillButton(
     c,
     hits,
@@ -282,10 +294,10 @@ function drawPauseModal(c: CanvasRenderingContext2D, hits: UiHitManager, state: 
     px + (subW + subGap) * 2,
     f2y,
     subW,
-    44,
+    58,
     t(state.endless ? 'p13.settleEndless' : 'p12.surrender'),
     'coral',
-    { fontSize: 16.5, icon: state.endless ? 'ui_endless_emblem' : undefined },
+    { fontSize: 24, icon: state.endless ? 'ui_endless_emblem' : undefined },
   );
 }
 
@@ -300,24 +312,107 @@ function drawPauseLootSection(
   chips: readonly { icon: string; label: string; count: string }[],
   emptyText: string,
 ): void {
-  drawIvorySlab(c, x, y, w, h, 16, '#fffdf8', '#f6e8cb', '#7e5530', 1.8);
-  drawIconLabel(c, icon, title, x + 16, y + 22, 24, 16.5, PALETTE.ink);
+  drawIvorySlab(c, x, y, w, h, 18, '#fffdf8', '#f6e8cb', '#7e5530', 2.2);
+  drawIconLabel(c, icon, title, x + 20, y + 28, 30, 23, PALETTE.ink);
   if (chips.length === 0) {
-    drawText(c, emptyText, x + w / 2, y + h / 2 + 10, 15.5, PALETTE.muted, 'center', 700);
+    drawText(c, emptyText, x + w / 2, y + h / 2 + 16, 22, PALETTE.inkSoft, 'center', 800);
     return;
   }
-  let cx = x + 16;
-  const pillY = y + 40;
+  let cx = x + 20;
+  const pillY = y + 52;
   for (const ch of chips.slice(0, 3)) {
     const labelStr = `${ch.label.slice(0, 7)} ${ch.count}`;
-    c.font = '800 14.5px "Trebuchet MS", "PingFang SC", "Microsoft YaHei", sans-serif';
-    const pw = Math.min(184, Math.max(108, Math.ceil(c.measureText(labelStr).width) + 46));
-    if (cx + pw > x + w - 12) break;
-    round(c, cx, pillY, pw, 36, 18, '#fff7e6', '#a87f4e', 1.6);
-    drawSpriteContain(c, ch.icon, cx + 8, pillY + 4, 28, 28);
-    drawText(c, labelStr, cx + 40, pillY + 19, 14.5, PALETTE.ink, 'left', 800);
-    cx += pw + 8;
+    c.font = '900 20px "Trebuchet MS", "PingFang SC", "Microsoft YaHei", sans-serif';
+    const pw = Math.min(248, Math.max(140, Math.ceil(c.measureText(labelStr).width) + 56));
+    if (cx + pw > x + w - 16) break;
+    round(c, cx, pillY, pw, 48, 24, '#fff7e6', '#a87f4e', 2);
+    drawSpriteContain(c, ch.icon, cx + 10, pillY + 6, 36, 36);
+    drawText(c, labelStr, cx + 52, pillY + 25, 20, PALETTE.ink, 'left', 900);
+    cx += pw + 10;
   }
+}
+
+/** Cozy Hinoki-Wood Stamina Refill Modal (`温泉茶歇 · 体力补充`). */
+function drawStaminaModal(
+  c: CanvasRenderingContext2D,
+  hits: UiHitManager,
+  profile: Profile,
+  adAvailable: boolean,
+): void {
+  const zh = getLanguage() === 'zh-CN';
+  const st = getStaminaStatus(profile, Date.now());
+  const pw = 760, ph = adAvailable ? 464 : 400;
+  const px = (1280 - pw) / 2;
+  const py = Math.round((720 - ph) / 2) + 14;
+
+  drawHinokiBoard(c, px, py, pw, ph, 28);
+  hits.add({ id: 'modal:card', x: px, y: py, w: pw, h: ph });
+  drawSpriteContain(c, 'ui_pause_peek_capy', px + 22, py - 84, 102, 102);
+  drawMatchaSignboard(c, 640, py - 44, zh ? '温泉茶歇 · 体力' : 'Onsen Tea · Energy', undefined, 340);
+  drawYuzuCloseButton(c, hits, 'modal:close', Math.min(1084, px + pw - 18), py - 12, 30);
+
+  const cx = px + 28, cw = pw - 56;
+  let cy = py + 44;
+
+  // Stamina status slab
+  drawIvorySlab(c, cx, cy, cw, 152, 20);
+  const low = st.current < STAMINA_COST_PER_BATTLE;
+  drawText(
+    c,
+    zh ? `当前体力：${st.current} / ${st.max}` : `Energy: ${st.current} / ${st.max}`,
+    cx + cw / 2,
+    cy + 34,
+    31,
+    low ? '#b83224' : PALETTE.ink,
+    'center',
+    900,
+  );
+  drawProgressBar(c, cx + 36, cy + 62, cw - 72, 22, Math.min(1, st.current / st.max), low ? '#e25c48' : '#f4b52c', '#e6d6b5', '#785028');
+  const ruleLine = zh
+    ? `每局守护消耗 ${STAMINA_COST_PER_BATTLE} 点体力 · 每 5 分钟自动恢复 1 点`
+    : `Each battle costs ${STAMINA_COST_PER_BATTLE} Energy · Recovers +1 every 5 min`;
+  drawText(c, ruleLine, cx + cw / 2, cy + 104, 21, PALETTE.inkSoft, 'center', 800);
+  const timerLine = st.nextRegenSeconds > 0
+    ? (zh ? `距离下次恢复 +1 体力：${formatStaminaCountdown(st.nextRegenSeconds)}` : `Next +1 Energy in ${formatStaminaCountdown(st.nextRegenSeconds)}`)
+    : (zh ? '✦ 体力已满，随时可以出发守护澡盆！' : '✦ Full Energy! Ready to defend the tub!');
+  drawText(c, timerLine, cx + cw / 2, cy + 134, 21, st.nextRegenSeconds > 0 ? '#9c5612' : '#2c763d', 'center', 900);
+  cy += 168;
+
+  // Refill with Coins (+15 Energy for 60 Coins)
+  const canBuy = profile.coins >= STAMINA_REFILL_COIN_COST;
+  drawPillButton(
+    c,
+    hits,
+    'stamina:buy',
+    cx,
+    cy,
+    cw,
+    64,
+    zh
+      ? `喝橘子茶补充 +${STAMINA_REFILL_AMOUNT} 体力（${STAMINA_REFILL_COIN_COST} 金币）`
+      : `Yuzu Tea +${STAMINA_REFILL_AMOUNT} Energy (${STAMINA_REFILL_COIN_COST} Coins)`,
+    canBuy ? 'gold' : 'muted',
+    { fontSize: 24, icon: 'ui_coin_gold', disabled: !canBuy },
+  );
+  cy += 76;
+
+  if (adAvailable) {
+    drawPillButton(
+      c,
+      hits,
+      'stamina:ad',
+      cx,
+      cy,
+      cw,
+      62,
+      zh ? `🎬 看视频免费补充 +${STAMINA_REFILL_AMOUNT} 体力` : `🎬 Watch Ad for +${STAMINA_REFILL_AMOUNT} Energy`,
+      'green',
+      { fontSize: 24 },
+    );
+    cy += 74;
+  }
+
+  drawPillButton(c, hits, 'modal:close', cx + (cw - 260) / 2, cy + 4, 260, 56, zh ? '返回庭院' : 'Back', 'cream', { fontSize: 24 });
 }
 
 function drawEndlessOfferModal(

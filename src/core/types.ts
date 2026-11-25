@@ -108,6 +108,8 @@ export interface Profile extends BattleLoadout {
   bestEndlessTime?:number; bestEndlessMvp?:string; bestEndlessMvpAwakened?:boolean; bestEndlessAwakened?:number;
   /** P19 progressive feature onboarding tokens (`gift:<id>` / `done:<id>`) and 3-win free gacha meter (0..2). */
   onboardedFeatures?:string[]; gachaWinCounter?:number;
+  /** Mini-game stamina energy (starts at 30, costs 5 per battle, regens +1 every 5 min up to 30). */
+  stamina?:number; staminaUpdatedAt?:number;
 }
 export interface VillageState {
   wood:number; essence:number;

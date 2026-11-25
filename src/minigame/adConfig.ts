@@ -8,7 +8,8 @@ export type AdPlacement =
   | 'double_settlement'
   | 'free_gacha'
   | 'free_shop_refresh'
-  | 'double_harvest';
+  | 'double_harvest'
+  | 'stamina_refill';
 
 /**
  * Rewarded Video Ad Unit IDs per platform (`wx` / `bl`).
@@ -24,6 +25,7 @@ const AD_UNITS: Record<Exclude<PlatformKind, 'web'>, Record<AdPlacement, string>
     free_gacha: env.VITE_WX_AD_FREE_GACHA ?? '',
     free_shop_refresh: env.VITE_WX_AD_SHOP_REFRESH ?? '',
     double_harvest: env.VITE_WX_AD_DOUBLE_HARVEST ?? '',
+    stamina_refill: env.VITE_WX_AD_STAMINA_REFILL ?? '',
   },
   bl: {
     revive: env.VITE_BL_AD_REVIVE ?? '',
@@ -31,6 +33,7 @@ const AD_UNITS: Record<Exclude<PlatformKind, 'web'>, Record<AdPlacement, string>
     free_gacha: env.VITE_BL_AD_FREE_GACHA ?? '',
     free_shop_refresh: env.VITE_BL_AD_SHOP_REFRESH ?? '',
     double_harvest: env.VITE_BL_AD_DOUBLE_HARVEST ?? '',
+    stamina_refill: env.VITE_BL_AD_STAMINA_REFILL ?? '',
   },
 };
 

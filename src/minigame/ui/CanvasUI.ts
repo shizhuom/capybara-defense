@@ -884,40 +884,40 @@ export function drawLedgerShell(
   // 2. Plump Yuzu-Gold Close Button perched strictly LEFT of WeChat [🎮][···|◉] (x=1084 -> 100% clear on all iPhones!)
   drawYuzuCloseButton(c, hits, opts.closeId ?? 'modal:close', 1084, 44, 30);
 
-  // 3. Enlarged Cream Pill Header Badge directly below signboard
+  // 3. Enlarged Cream Pill Header Badge directly below signboard (crisp 23px bold for `已解锁 36/36`, `★ 180`, etc.!)
   if (opts.badgeSegments && opts.badgeSegments.length > 0) {
-    c.font = `900 20px ${UI_FONT}`;
-    let totalW = 34;
+    c.font = `900 23px ${UI_FONT}`;
+    let totalW = 38;
     const widths = opts.badgeSegments.map(seg => {
       const tw = Math.ceil(c.measureText(seg.text).width);
-      const iw = seg.icon ? 28 : 0;
+      const iw = seg.icon ? 30 : 0;
       const w = iw + tw;
-      totalW += w + 14;
+      totalW += w + 16;
       return { tw, iw, w };
     });
-    totalW = Math.min(760, Math.max(150, totalW - 14));
-    const pillH = 36;
-    const pillY = 78;
-    const switchW = opts.switchLink ? 132 : 0;
+    totalW = Math.min(820, Math.max(176, totalW - 16));
+    const pillH = 42;
+    const pillY = 76;
+    const switchW = opts.switchLink ? 142 : 0;
     const groupW = totalW + (switchW ? switchW + 10 : 0);
     const pillX = 640 - groupW / 2;
 
-    round(c, pillX, pillY + 2, totalW, pillH, 18, 'rgba(56,30,12,0.38)', 'transparent', 0);
-    round(c, pillX, pillY, totalW, pillH, 18, '#fff9eb', '#8a5b32', 2.4);
+    round(c, pillX, pillY + 2, totalW, pillH, 21, 'rgba(56,30,12,0.38)', 'transparent', 0);
+    round(c, pillX, pillY, totalW, pillH, 21, '#fff9eb', '#8a5b32', 2.6);
 
-    let cx = pillX + 16;
+    let cx = pillX + 18;
     opts.badgeSegments.forEach((seg, idx) => {
       const m = widths[idx];
       if (seg.icon) {
-        drawSpriteContain(c, seg.icon, cx, pillY + 6, 24, 24);
-        cx += 28;
+        drawSpriteContain(c, seg.icon, cx, pillY + 7, 28, 28);
+        cx += 32;
       }
-      drawText(c, seg.text, cx, pillY + 19, 19.5, '#4a2a14', 'left', 900);
-      cx += m.tw + 14;
+      drawText(c, seg.text, cx, pillY + 22, 23, '#4a2a14', 'left', 900);
+      cx += m.tw + 16;
     });
 
     if (opts.switchLink) {
-      drawPillButton(c, hits, opts.switchLink.id, pillX + totalW + 10, pillY - 1, switchW, 38, opts.switchLink.label, 'gold', { fontSize: 18 });
+      drawPillButton(c, hits, opts.switchLink.id, pillX + totalW + 10, pillY + 1, switchW, 40, opts.switchLink.label, 'gold', { fontSize: 19 });
     }
   }
 

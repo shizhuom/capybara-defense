@@ -12,6 +12,11 @@ import { canBrewOrUpgradeAnyBroth, getBrothLevel } from '../../core/KitchenProgr
 import { upgradeableMedallions } from '../../core/MedallionProgression';
 import { getMapUnlockRequirement, getUnlockedMaps } from '../../core/PlayerProgression';
 import { villageBadge, villageStars } from '../../core/VillageProgression';
+import {
+  STAMINA_COST_PER_BATTLE,
+  formatStaminaCountdown,
+  getStaminaStatus,
+} from '../../core/Stamina';
 import { formatCompactNumber } from '../../core/formatNumber';
 import type { MapId, Profile } from '../../core/types';
 import { getLanguage, t } from '../../i18n/i18n';
@@ -142,13 +147,18 @@ export function drawMenuScreen(
   if (logo) {
     const iw = logo.naturalWidth || logo.width || 960;
     const ih = logo.naturalHeight || logo.height || 320;
-    const w = widePhone ? 860 : 736;
+    const w = widePhone ? 840 : 728;
     const h = w * (ih / iw);
-    const logoShift = widePhone ? 18 : 6;
+    const logoShift = widePhone ? 30 : 12;
     c.drawImage(logo, (1280 - w) / 2 + logoShift, -12 + bob, w, h);
   } else {
     drawText(c, t('app.title'), 640, 128 + bob, 76, '#fff7dc', 'center', 900, INK, 10);
   }
+
+  // ── 3B. GIANT STAMINA BAR (体力栏: 初始 30，每局消耗 5，每 5 分钟自然恢复 1) ─
+  // Drawn cleanly on top & sized to stay strictly LEFT of the giant title logo!
+  const stamina = getStaminaStatus(profile, Date.now());
+  drawStaminaBar(c, hits, leftAnchor, hasRank ? 112 : 16, stamina, zh, widePhone);
 
   // ── 4. GIANT ILLUSTRATED START BUTTON (+37% LARGER!) ─────────────────────
   const startW = 456;
@@ -170,6 +180,16 @@ export function drawMenuScreen(
     drawText(c, t('menu.start'), 0, 2, 42, PALETTE.ink, 'center', 900);
   }
   c.restore();
+
+  // Crisp Stamina Cost Badge (`⚡ -5`) snugly hugging bottom-right corner of Start Button
+  const enoughStamina = stamina.current >= STAMINA_COST_PER_BATTLE;
+  const costW = 90, costH = 38;
+  const costX = startX + startW - costW - 22;
+  const costY = startY + startH - costH - 12 + (pressedStart ? 3 : 0);
+  round(c, costX, costY + 3, costW, costH, 19, 'rgba(46,24,8,0.42)', 'transparent', 0);
+  round(c, costX, costY, costW, costH, 19, enoughStamina ? '#fff5cf' : '#f4cbc4', enoughStamina ? '#7a4510' : '#8f2c1f', 2.8);
+  drawVectorLightning(c, costX + 22, costY + costH / 2, 1.0, enoughStamina ? '#f2a318' : '#c74332');
+  drawText(c, `-${STAMINA_COST_PER_BATTLE}`, costX + 58, costY + costH / 2 + 1, 23, enoughStamina ? '#5a2d0a' : '#8f2418', 'center', 900);
 
   // ── 5. ENLARGED BOTTOM-CENTER MAP SIGNPOST BAR ───────────────────────────
   if (hasRank) {
@@ -355,23 +375,27 @@ function drawMedallionRow(
     const iconS = Math.round(size * 0.72);
     drawSpriteContain(c, item.icon, cx - iconS / 2, cy + dy - iconS / 2, iconS, iconS, item.locked ? 0.45 : 1);
 
-    // Enlarged Top badge pill (lock tag or count/action badge)
+    // Enlarged Top badge pill (BIG `🔒xx星解锁` & BIG `36/36` / `14/14`!)
     if (item.locked && item.lockTag) {
-      const bw = 112;
-      round(c, cx - bw / 2, topY + dy - 16, bw, 32, 16, '#5c4430', '#ffe7a8', 2.4);
-      drawText(c, `🔒${item.lockTag}`, cx, topY + dy, 17, '#fff4d4', 'center', 900);
+      const lockStr = `🔒${item.lockTag}`;
+      c.font = `900 22px ${UI_FONT}`;
+      const bw = Math.max(136, Math.ceil(c.measureText(lockStr).width) + 26);
+      const bh = 40;
+      round(c, cx - bw / 2, topY + dy - 22, bw, bh, 20, '#4f341f', '#ffd978', 2.8);
+      drawText(c, lockStr, cx, topY + dy - 1, 22, '#fff6d6', 'center', 900);
     } else if (item.badge) {
       const isDark = item.badgeColor && item.badgeColor !== '#fff8e8';
-      c.font = `900 18px ${UI_FONT}`;
-      const bw = Math.max(66, Math.ceil(c.measureText(item.badge).width) + (item.badgeIcon ? 42 : 22));
-      const bx = cx - bw / 2 + 12;
-      const by = topY + dy - 16;
-      round(c, bx, by, bw, 32, 16, item.badgeColor ?? '#fff8e8', '#58371c', 2.4);
+      c.font = `900 22px ${UI_FONT}`;
+      const bw = Math.max(82, Math.ceil(c.measureText(item.badge).width) + (item.badgeIcon ? 46 : 26));
+      const bh = 38;
+      const bx = cx - bw / 2 + 10;
+      const by = topY + dy - 20;
+      round(c, bx, by, bw, bh, 19, item.badgeColor ?? '#fff8e8', '#58371c', 2.8);
       if (item.badgeIcon) {
-        drawSpriteContain(c, item.badgeIcon, bx + 6, by + 4, 24, 24);
-        drawText(c, item.badge, bx + 32 + (bw - 38) / 2, by + 17, 18, isDark ? '#fffdf5' : '#4a2b14', 'center', 900);
+        drawSpriteContain(c, item.badgeIcon, bx + 7, by + 6, 26, 26);
+        drawText(c, item.badge, bx + 36 + (bw - 42) / 2, by + 20, 22, isDark ? '#fffdf5' : '#4a2b14', 'center', 900);
       } else {
-        drawText(c, item.badge, bx + bw / 2, by + 17, 18, isDark ? '#fffdf5' : '#4a2b14', 'center', 900);
+        drawText(c, item.badge, bx + bw / 2, by + 20, 22, isDark ? '#fffdf5' : '#4a2b14', 'center', 900);
       }
     }
 
@@ -391,18 +415,18 @@ function drawFloatingCornerPill(
   fill: string,
   alignRight = false,
 ): void {
-  c.font = `900 20px ${UI_FONT}`;
-  const pw = Math.min(316, Math.max(180, Math.ceil(c.measureText(text).width) + 64));
-  const ph = 52;
+  c.font = `900 22px ${UI_FONT}`;
+  const pw = Math.min(344, Math.max(194, Math.ceil(c.measureText(text).width) + 68));
+  const ph = 56;
   const x = alignRight ? anchorX - pw : anchorX;
   const pressed = hits.isPressed(id);
   const dy = pressed ? 2 : 0;
 
   hits.add({ id, x, y, w: pw, h: ph });
-  if (!pressed) round(c, x, y + 4, pw, ph, 26, 'rgba(46,26,10,0.40)', 'transparent', 0);
-  round(c, x, y + dy, pw, ph, 26, fill, '#5a391e', 2.8);
-  drawSpriteContain(c, icon, x + 10, y + dy + 8, 36, 36);
-  drawText(c, text, x + 52, y + dy + ph / 2 + 1, 20, PALETTE.ink, 'left', 900);
+  if (!pressed) round(c, x, y + 4, pw, ph, 28, 'rgba(46,26,10,0.40)', 'transparent', 0);
+  round(c, x, y + dy, pw, ph, 28, fill, '#5a391e', 2.8);
+  drawSpriteContain(c, icon, x + 10, y + dy + 9, 38, 38);
+  drawText(c, text, x + 54, y + dy + ph / 2 + 1, 22, PALETTE.ink, 'left', 900);
 }
 
 function drawCompactMapBar(
@@ -445,8 +469,8 @@ function drawCompactMapBar(
       round(c, cx, y + 7 + dy, chipW, barH - 14, 24, '#f7d263', '#8c4e12', 2.8);
       drawText(c, opt.label, cx + chipW / 2, y + barH / 2 + dy + 1, 24, PALETTE.ink, 'center', 900);
     } else if (opt.locked) {
-      round(c, cx, y + 8 + dy, chipW, barH - 16, 22, 'rgba(130,112,92,0.22)', 'rgba(130,112,92,0.45)', 1.8);
-      drawText(c, `${opt.label}🔒`, cx + chipW / 2, y + barH / 2 + dy + 1, 19.5, '#8c745c', 'center', 800);
+      round(c, cx, y + 7 + dy, chipW, barH - 14, 22, 'rgba(116,96,76,0.28)', '#8a6f52', 2.2);
+      drawText(c, `${opt.label}🔒`, cx + chipW / 2, y + barH / 2 + dy + 1, 22, '#694e34', 'center', 900);
     } else {
       drawText(c, opt.label, cx + chipW / 2, y + barH / 2 + dy + 1, 24, '#59391e', 'center', 800);
     }
@@ -515,6 +539,92 @@ function drawVectorShare(c: CanvasRenderingContext2D, cx: number, cy: number): v
   c.moveTo(-5, -5);
   c.lineTo(0, -10);
   c.lineTo(5, -5);
+  c.stroke();
+  c.restore();
+}
+
+function drawStaminaBar(
+  c: CanvasRenderingContext2D,
+  hits: UiHitManager,
+  x: number,
+  y: number,
+  stamina: ReturnType<typeof getStaminaStatus>,
+  zh: boolean,
+  widePhone: boolean,
+): void {
+  const w = widePhone ? 280 : 254;
+  const h = 66;
+  const pressed = hits.isPressed('menu:stamina');
+  const dy = pressed ? 2 : 0;
+  hits.add({ id: 'menu:stamina', x, y, w, h });
+
+  if (!pressed) {
+    round(c, x, y + 4, w, h, 33, 'rgba(46,26,10,0.36)', 'transparent', 0);
+  }
+  round(c, x, y + dy, w, h, 33, 'rgba(255,248,232,0.96)', '#5c3b1e', 3.2);
+
+  // Warm golden lightning seal on the left
+  round(c, x + 7, y + dy + 7, 52, 52, 26, '#ffe594', '#5c3b1e', 2.6);
+  drawVectorLightning(c, x + 33, y + dy + 33, 1.28, '#eb8a12');
+
+  // Center text + progress gauge
+  const barX = x + 66;
+  const barW = w - 122;
+  const frac = Math.max(0, Math.min(1, stamina.current / stamina.max));
+  const low = stamina.current < STAMINA_COST_PER_BATTLE;
+  const mainLabel = `${stamina.current}/${stamina.max}`;
+  drawText(c, mainLabel, barX, y + dy + 22, 25, low ? '#b83224' : PALETTE.ink, 'left', 900);
+  if (stamina.nextRegenSeconds > 0) {
+    drawText(c, formatStaminaCountdown(stamina.nextRegenSeconds), barX + barW, y + dy + 23, 17, '#8a5928', 'right', 900);
+  } else {
+    drawText(c, zh ? '体力满' : 'FULL', barX + barW, y + dy + 23, 17, '#2c763d', 'right', 900);
+  }
+
+  // Crisp golden stamina gauge
+  const gy = y + dy + 40;
+  const gh = 16;
+  round(c, barX, gy, barW, gh, 8, '#e6d6b5', '#785028', 2);
+  if (frac > 0.01) {
+    round(c, barX + 2, gy + 2, Math.max(12, (barW - 4) * frac), gh - 4, 6, low ? '#e25c48' : '#f4b52c', 'transparent', 0);
+    round(c, barX + 4, gy + 3, Math.max(8, (barW - 8) * frac), 4, 2, 'rgba(255,255,255,0.42)', 'transparent', 0);
+  }
+
+  // Plump green `+` button on the right to open Stamina Refill modal
+  const plusCx = x + w - 29;
+  const plusCy = y + dy + h / 2;
+  c.beginPath();
+  c.arc(plusCx, plusCy, 20, 0, Math.PI * 2);
+  c.fillStyle = '#7ac443';
+  c.fill();
+  c.lineWidth = 2.6;
+  c.strokeStyle = '#335c18';
+  c.stroke();
+  drawText(c, '+', plusCx, plusCy + 1, 28, '#fffdf5', 'center', 900);
+}
+
+function drawVectorLightning(
+  c: CanvasRenderingContext2D,
+  cx: number,
+  cy: number,
+  scale = 1,
+  fill = '#f2a318',
+): void {
+  c.save();
+  c.translate(cx, cy);
+  c.scale(scale, scale);
+  c.beginPath();
+  c.moveTo(2, -13);
+  c.lineTo(-9, 1);
+  c.lineTo(-1, 1);
+  c.lineTo(-3, 13);
+  c.lineTo(9, -2);
+  c.lineTo(1, -2);
+  c.closePath();
+  c.fillStyle = fill;
+  c.fill();
+  c.lineWidth = 2;
+  c.strokeStyle = '#5c320d';
+  c.lineJoin = 'round';
   c.stroke();
   c.restore();
 }

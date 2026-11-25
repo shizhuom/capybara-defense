@@ -32,7 +32,9 @@ const copy = (profile:Profile):Profile => ({...profile,fragments:[...profile.fra
   ingredients:{...(profile.ingredients??{})},unlockedBroths:[...(profile.unlockedBroths??[])],brothLevels:{...(profile.brothLevels??{})},activeBrothId:profile.activeBrothId??null,
   village:profile.village?copyVillage(profile.village):createVillage(),
   endlessMedallions:normalizeMedallions(profile.endlessMedallions),
-  onboardedFeatures:[...(profile.onboardedFeatures??[])],gachaWinCounter:profile.gachaWinCounter??0});
+  onboardedFeatures:[...(profile.onboardedFeatures??[])],gachaWinCounter:profile.gachaWinCounter??0,
+  ...(profile.stamina!==undefined?{stamina:profile.stamina}:{}),
+  ...(profile.staminaUpdatedAt!==undefined?{staminaUpdatedAt:profile.staminaUpdatedAt}:{})});
 const fail = (profile:Profile,key:string):MetaResult => ({profile:copy(profile),ok:false,key});
 const success = (profile:Profile,key:string,amount?:number):MetaResult => ({profile:unlockAchievements(profile),ok:true,key,...(amount===undefined?{}:{amount})});
 
@@ -124,6 +126,12 @@ export function normalizeProfile(raw:unknown):Profile {
   normalizeEndless(p,data);
   p.onboardedFeatures=sanitizeOnboardedFeatures(data.onboardedFeatures);
   p.gachaWinCounter=Math.min(2,count(data.gachaWinCounter));
+  if(has(data,'stamina')&&typeof data.stamina==='number'&&Number.isFinite(data.stamina)&&data.stamina>=0){
+    p.stamina=Math.min(99,Math.trunc(data.stamina));
+  }
+  if(has(data,'staminaUpdatedAt')&&typeof data.staminaUpdatedAt==='number'&&Number.isFinite(data.staminaUpdatedAt)&&data.staminaUpdatedAt>0){
+    p.staminaUpdatedAt=Math.trunc(data.staminaUpdatedAt);
+  }
   return unlockAchievements(p);
 }
 export function grantWeaponFragments(profile:Profile,ids:string[]):{profile:Profile;newWeapons:string[]} {
