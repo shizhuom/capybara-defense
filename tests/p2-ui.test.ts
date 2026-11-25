@@ -202,12 +202,12 @@ describe('P2 solo UI',()=>{
     const first=tutorialMarkup(1,engine.state);expect(first).toContain('top:84.72222222222221%');
   });
   it('keeps tutorial pending after failed saving and awards once after save, replay and reload',()=>{
-    const {app}=harness();app.refresh=()=>{};app.renderMenu=()=>{};app.tutorialStep=6;
+    const {app}=harness();app.refresh=()=>{};app.renderMenu=()=>{};app.tutorialStep=7;
     const storage=memoryStorage();window.localStorage={...storage,setItem:()=>{throw new Error('quota');}};
-    app.progressTutorial('acknowledge');expect(app.tutorialStep).toBe(6);expect(app.profile.coins).toBe(0);
+    app.progressTutorial('acknowledge');expect(app.tutorialStep).toBe(7);expect(app.profile.coins).toBe(0);
     window.localStorage=storage;app.progressTutorial('acknowledge');
     expect(app.tutorialStep).toBe('done');expect(loadProfile(storage).coins).toBe(20);
-    app.profile=replayTutorial(loadProfile(storage));app.tutorialStep=6;app.progressTutorial('acknowledge');
+    app.profile=replayTutorial(loadProfile(storage));app.tutorialStep=7;app.progressTutorial('acknowledge');
     expect(loadProfile(storage).coins).toBe(20);
   });
   it('persists tutorial skipping without paying a completion reward',()=>{

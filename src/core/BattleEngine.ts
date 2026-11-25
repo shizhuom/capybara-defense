@@ -246,7 +246,7 @@ export class BattleEngine {
     const cost=getSummonCost(this.state.sides[side].summons);
     if(this.state.sides[side].food<cost)return{ok:false,key:'hint.noFood'};
     const discarded=this.state.units.some(u=>u.side===side&&u.location.zone==='bench');
-    const teachingPack=this.options.tutorialGuided&&this.state.sides[side].summons===0?['hamster','hamster','panda','hat_bamboo','squirrel']:undefined;
+    const teachingPack=this.options.tutorialGuided&&this.state.sides[side].summons===0?['hamster','hamster','panda','hat_bamboo','bee']:undefined;
     // Validate the price before discarding. A pack replaces this bench atomically.
     this.validateBenchLock();const kept=this.lockedBenchUnit;
     this.state.units=this.state.units.filter(u=>u.side!==side||u.location.zone!=='bench'||u===kept);

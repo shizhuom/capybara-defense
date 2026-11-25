@@ -702,6 +702,55 @@ export function drawToast(c: CanvasRenderingContext2D, toast: ToastMessage | nul
   c.restore();
 }
 
+/**
+ * Concentric expanding ripple beacon (`0` shadowBlur, 100% iOS Canvas 2D safe) used across
+ * all onboarding & tutorial guide targets so players immediately see where to tap.
+ */
+export function drawGuideRipple(
+  c: CanvasRenderingContext2D,
+  x: number,
+  y: number,
+  w: number,
+  h: number,
+  radius: number,
+  elapsed: number,
+  opts?: { maxExpand?: number; waves?: number; showBullseye?: boolean },
+): void {
+  const waves = opts?.waves ?? 3;
+  const maxExpand = opts?.maxExpand ?? 24;
+  for (let i = 0; i < waves; i++) {
+    const phase = (elapsed * 0.95 + i / waves) % 1;
+    const exp = 2 + phase * maxExpand;
+    const alpha = Math.pow(1 - phase, 1.35) * 0.95;
+    if (alpha <= 0.03) continue;
+    const rr = radius + exp * 0.45;
+    round(c, x - exp, y - exp, w + exp * 2, h + exp * 2, rr, 'transparent', `rgba(120,48,0,${(alpha * 0.62).toFixed(2)})`, 6.2);
+    round(c, x - exp, y - exp, w + exp * 2, h + exp * 2, rr, 'transparent', `rgba(255,224,64,${alpha.toFixed(2)})`, 3.6);
+  }
+  round(c, x - 3, y - 3, w + 6, h + 6, radius + 2, 'transparent', 'rgba(116,48,0,0.68)', 6);
+  round(c, x - 3, y - 3, w + 6, h + 6, radius + 2, 'transparent', '#ffe047', 3.4);
+
+  if (opts?.showBullseye) {
+    const cx = x + w / 2;
+    const cy = y + h / 2;
+    c.save();
+    for (let i = 0; i < 2; i++) {
+      const p = (elapsed * 1.15 + i * 0.5) % 1;
+      const rad = 6 + p * 20;
+      const a = Math.pow(1 - p, 1.3) * 0.9;
+      c.beginPath();
+      c.arc(cx, cy, rad, 0, Math.PI * 2);
+      c.strokeStyle = `rgba(120,48,0,${(a * 0.58).toFixed(2)})`;
+      c.lineWidth = 4.6;
+      c.stroke();
+      c.strokeStyle = `rgba(255,244,160,${a.toFixed(2)})`;
+      c.lineWidth = 2.6;
+      c.stroke();
+    }
+    c.restore();
+  }
+}
+
 export function formatClock(seconds: number): string {
   const s = Math.max(0, Math.floor(seconds));
   const m = Math.floor(s / 60);
@@ -972,8 +1021,7 @@ export function drawLedgerShell(
       const tx = lx + padX + i * (tabW + gap);
       drawHoneyOakTab(c, hits, tb.id, tx, tabY, tabW, 54, tb.label, tb.active);
       if (tb.pulse && !tb.active) {
-        const glow = 0.55 + 0.45 * Math.sin((opts.elapsed ?? 0) * 6);
-        round(c, tx - 2, tabY + 2, tabW + 4, 54, 15, 'transparent', `rgba(255,212,64,${glow.toFixed(2)})`, 3.5);
+        drawGuideRipple(c, tx, tabY + 4, tabW, 50, 14, opts.elapsed ?? 0, { maxExpand: 18, waves: 3, showBullseye: true });
       }
     });
   }

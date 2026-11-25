@@ -12,6 +12,7 @@ import {
   ScrollRegion,
   drawButton,
   drawDetailNavBar,
+  drawGuideRipple,
   drawIconLabel,
   drawIvorySlab,
   drawLedgerShell,
@@ -302,8 +303,7 @@ export function drawArmoryModal(
         shouldPulse ? 3.8 : equippedHere || isSig ? 2.6 : 1.8,
       );
       if (shouldPulse) {
-        const glow = 0.45 + 0.55 * Math.sin(elapsed * 6);
-        round(c, hx - 3, nextY - 3, hw + 6, hh + 6, 17, 'transparent', `rgba(255,204,48,${glow.toFixed(2)})`, 3.5);
+        drawGuideRipple(c, hx, nextY, hw, hh, 15, elapsed, { maxExpand: 16, waves: 3, showBullseye: true });
       }
       drawSpriteContain(c, heroId, hx + hw / 2 - 22, nextY + 4, 44, 44, unlocked ? 1 : 0.4);
       drawText(c, t(`hero.${heroId}`), hx + hw / 2, nextY + 58, 14.5, unlocked ? PALETTE.ink : PALETTE.muted, 'center', 900);
@@ -368,6 +368,9 @@ export function drawArmoryModal(
       shouldPulse ? '#e08b19' : rColor,
       shouldPulse ? 4 : 2.6,
     );
+    if (shouldPulse) {
+      drawGuideRipple(c, rx, ry, cardW, cardH, 20, elapsed, { maxExpand: 14, waves: 3, showBullseye: true });
+    }
 
     // Big Weapon Icon Box (104×104)
     round(c, rx + 14, ry + 14, 104, 104, 18, RARITY_BG[w.rarity], rColor, 2.4);
@@ -655,6 +658,9 @@ export function drawMarketModal(
             worn ? 'green' : 'gold',
             { fontSize: 19.5, icon: worn ? 'ui_storybook_check' : undefined },
           );
+          if (shouldPulse && !worn) {
+            drawGuideRipple(c, rx + cardW - 134, ry + 48, 120, 52, 26, elapsed, { maxExpand: 16, waves: 3, showBullseye: true });
+          }
         } else {
           drawText(c, t('p11.meta.unowned'), rx + cardW - 72, ry + 54, 18.5, PALETTE.muted, 'center', 800);
           drawSpriteContain(c, 'ui_lock_closed', rx + cardW - 87, ry + 74, 30, 30);
@@ -827,8 +833,7 @@ export function drawMarketModal(
         disabled: !canSpin,
       });
       if (pulseSpin && !spinning) {
-        const glow = 0.5 + 0.5 * Math.sin(elapsed * 6);
-        round(c, tx - 3, ty - 3, cw + 6, ch + 6, 22, 'transparent', `rgba(255,212,56,${glow.toFixed(2)})`, 4.5);
+        drawGuideRipple(c, tx, ty, cw, ch, 20, elapsed, { maxExpand: 20, waves: 3, showBullseye: true });
       }
       const dy = hits.isPressed('market:spin:auto') ? 3 : 0;
       const centerLabel = spinning ? t('m2.spinning') : t('m2.spin');

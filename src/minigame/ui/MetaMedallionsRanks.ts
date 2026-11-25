@@ -26,6 +26,7 @@ import {
   PALETTE,
   ScrollRegion,
   drawGoldSlider,
+  drawGuideRipple,
   drawIconLabel,
   drawIvorySlab,
   drawLedgerShell,
@@ -193,6 +194,9 @@ export function drawMedallionsModal(
           drawPillButton(c, hits, `medallion:up:${medId}`, rx + cardW - 152, ry + cardH - 64, 136, 50, t('p17.upgrade'), afford ? 'gold' : 'muted', {
             fontSize: 22,
           });
+          if (shouldPulse) {
+            drawGuideRipple(c, rx + cardW - 152, ry + cardH - 64, 136, 50, 25, opts?.elapsed ?? 0, { maxExpand: 16, waves: 3, showBullseye: true });
+          }
         }
       }
     }

@@ -50,6 +50,7 @@ import {
   ScrollRegion,
   UI_FONT,
   drawDetailNavBar,
+  drawGuideRipple,
   drawIconLabel,
   drawIvorySlab,
   drawLedgerShell,
@@ -418,6 +419,9 @@ export function drawVillageModal(
           fontSize: 21.5,
           disabled: !afford,
         });
+        if (shouldPulse) {
+          drawGuideRipple(c, rx + cardW - 174, ry + cardH - 68, 158, 54, 27, villageUi.elapsed, { maxExpand: 16, waves: 3, showBullseye: true });
+        }
       }
     }
   });
@@ -769,6 +773,9 @@ export function drawKitchenModal(
         if (lv === 0) {
           if (afford) {
             drawPillButton(c, hits, `kitchen:brew:${brothId}`, bx, btnY, 142, 48, t('p14.brew'), 'green', { fontSize: 19.5 });
+            if (shouldPulse) {
+              drawGuideRipple(c, bx, btnY, 142, 48, 24, opts?.elapsed ?? 0, { maxExpand: 16, waves: 3, showBullseye: true });
+            }
           } else {
             round(c, bx + 10, btnY + 2, 130, 44, 22, '#e8dfd0', '#b3a38c', 1.8);
             drawText(c, t('p14.missing'), bx + 75, btnY + 25, 19, '#7c6e5b', 'center', 800);

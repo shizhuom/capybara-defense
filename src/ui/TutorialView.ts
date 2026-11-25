@@ -62,7 +62,12 @@ export function tutorialTargets(step:TutorialStep,state:BattleState,guide?:Tutor
     if(pairs.length)return{source:unitRect(pairs[0].a),target:unitRect(pairs[0].b),acknowledge:false};
     return{target:dock,acknowledge:true};
   }
-  if(step===6)return{target:guide??{x:910,y:8,w:112,h:52},acknowledge:true};
+  if(step===6){
+    const bee=own.find(u=>u.location.zone==='bench'&&u.kind==='bee');
+    const target=openPad(state);
+    return bee&&target?{source:unitRect(bee),target,acknowledge:false}:{target:target??dock,acknowledge:true};
+  }
+  if(step===7)return{target:guide??{x:910,y:8,w:112,h:52},acknowledge:true};
   return{acknowledge:false};
 }
 /** Stage coordinates, including actual measured card/banner bounds. Prefer free space,
@@ -82,8 +87,13 @@ export function tutorialMarkup(step:TutorialStep,state:BattleState,_selectedId?:
   const spotlights=rects.map((r,i)=>`<div class="tutorial-spotlight ${i?'tutorial-source':''}" data-tutorial-target="${i?'source':'target'}" style="left:${r.x/STAGE.width*100}%;top:${r.y/STAGE.height*100}%;width:${r.w/STAGE.width*100}%;height:${r.h/STAGE.height*100}%"></div>`).join('');
   const arrow=source&&target?`<svg class="tutorial-arrow" viewBox="0 0 1280 720" aria-hidden="true"><defs><marker id="tutorial-arrowhead" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="5" markerHeight="5" orient="auto"><path d="M0 0 L10 5 L0 10Z" fill="#ffe080"/></marker></defs><path d="M${source.x+source.w/2} ${source.y+source.h/2} Q${source.x+source.w/2} ${target.y+target.h/2} ${target.x+target.w/2} ${target.y+target.h/2}" marker-end="url(#tutorial-arrowhead)"/></svg>`:'';
   const bubble=placeTutorialBubble([...rects,...avoidRects]);
-  const pointer=target&&(step===1||step===6)?`<div class="tutorial-pointer" style="left:${(target.x+target.w*.75)/1280*100}%;top:${(target.y+(step===1?-52:target.h-2))/720*100}%">${sceneSticker('ui_tutorial_pointer','',60)}</div>`:'';
-  const titleKey=step===2?'p19.tutorialDig.title':step===1?'p5.tutorial1.title':`p5.tutorial${step-1}.title`;
-  const bodyKey=step===2?'p19.tutorialDig.body':step===5?'p6.tutorial4Body':step===6?'p19.tutorial6.body':step===1?'p5.tutorial1.body':`p5.tutorial${step-1}.body`;
-  return `${spotlights}${arrow}${pointer}<section class="tutorial-bubble" data-tutorial-step="${step}" style="--bubble-left:${bubble.x/1280*100}%;--bubble-width:${bubble.w/1280*100}%;top:${bubble.y/720*100}%;--tutorial-top:${bubble.y/720*100}%" role="status" aria-live="polite"><div class="tutorial-heading">${sceneSticker('ui_tutorial_capy','',60)}<strong><span class="tutorial-step-pill">STEP ${step}/6</span>${esc(t(titleKey))}</strong><button type="button" data-action="tutorial-skip">${esc(t('p1.tutorialSkip'))}</button></div><p>${esc(t(bodyKey))}</p>${step===5?`<div class="tutorial-equation">${unitSticker('panda',38)} + ${unitSticker('hat_bamboo',38)} = ${unitSticker('kungfu_po',44)} <b>${esc(t('hero.kungfu_po'))}</b></div>`:''}<div class="tutorial-dots" aria-label="${step}/6">${[1,2,3,4,5,6].map(n=>`<i class="${n===step?'current':n<step?'completed':''}">${n}</i>`).join('')}</div>${acknowledge?`<button type="button" class="button button-teal" data-action="tutorial-ack">${esc(t('p1.tutorialAck'))}</button>`:''}</section>`;
+  const pointer=target&&(step===1||step===7)?`<div class="tutorial-pointer" style="left:${(target.x+target.w*.75)/1280*100}%;top:${(target.y+(step===1?-52:target.h-2))/720*100}%">${sceneSticker('ui_tutorial_pointer','',60)}</div>`:'';
+  const titleKey=step===2?'p19.tutorialDig.title':step===6?'p19.tutorialBee.title':step===7?'p5.tutorial5.title':step===1?'p5.tutorial1.title':`p5.tutorial${step-1}.title`;
+  const bodyKey=step===2?'p19.tutorialDig.body':step===5?'p6.tutorial4Body':step===6?'p19.tutorialBee.body':step===7?'p19.tutorial6.body':step===1?'p5.tutorial1.body':`p5.tutorial${step-1}.body`;
+  const extra=step===5
+    ? `<div class="tutorial-equation">${unitSticker('panda',38)} + ${unitSticker('hat_bamboo',38)} = ${unitSticker('kungfu_po',44)} <b>${esc(t('hero.kungfu_po'))}</b></div>`
+    : step===6
+      ? `<div class="tutorial-equation">${unitSticker('bee',38)} → ${sceneSticker('ui_fish_food','',34)} <b>${esc(t('p19.tutorialBee.badge'))}</b></div>`
+      : '';
+  return `${spotlights}${arrow}${pointer}<section class="tutorial-bubble" data-tutorial-step="${step}" style="--bubble-left:${bubble.x/1280*100}%;--bubble-width:${bubble.w/1280*100}%;top:${bubble.y/720*100}%;--tutorial-top:${bubble.y/720*100}%" role="status" aria-live="polite"><div class="tutorial-heading">${sceneSticker('ui_tutorial_capy','',60)}<strong><span class="tutorial-step-pill">STEP ${step}/7</span>${esc(t(titleKey))}</strong><button type="button" data-action="tutorial-skip">${esc(t('p1.tutorialSkip'))}</button></div><p>${esc(t(bodyKey))}</p>${extra}<div class="tutorial-dots" aria-label="${step}/7">${[1,2,3,4,5,6,7].map(n=>`<i class="${n===step?'current':n<step?'completed':''}">${n}</i>`).join('')}</div>${acknowledge?`<button type="button" class="button button-teal" data-action="tutorial-ack">${esc(t('p1.tutorialAck'))}</button>`:''}</section>`;
 }

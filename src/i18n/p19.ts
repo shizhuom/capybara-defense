@@ -1,9 +1,12 @@
 /** P19 Progressive feature unlocking, interactive per-system onboarding, 2x/3x speed & Zeigarnik hooks. */
 const copy = {
-  // Match 1 upgraded 6-step basic tutorial
+  // Match 1 upgraded 7-step basic tutorial
   'p19.tutorialDig.title': ['2 · 用铁锹开垦草坪', '2 · Dig Grass with the Shovel'],
   'p19.tutorialDig.body': ['点左侧闪亮的铁锹，再点一片绿草坪，就能开出新的白色肉垫（更多阵位）！铁锹会随时间自动补充。', 'Tap the glowing shovel on the left, then tap a green grass tile to clear a fresh paw pad! Shovels recharge over time.'],
-  'p19.tutorial6.body': ['点右上角【图鉴】查配方与属性；左侧【洒水器】免费救场一次；小蜜蜂只产小鱼干、不打怪，抽到记得上场攒口粮！完成教学送 20 金币。', 'Tap Guide at top-right for recipes and stats, and the left Sprinkler saves you once! Tip: Bees only make fish food and do not attack — deploy them to earn food! Finish for 20 coins.'],
+  'p19.tutorialBee.title': ['6 · 放上小蜜蜂，产小鱼干', '6 · Place the Bee for Fish Food'],
+  'p19.tutorialBee.body': ['小蜜蜂不会打怪，但会定时自动生产小鱼干！把它放上白色空垫，帮你攒口粮继续摇铃。', 'Bees do not attack pests — they produce fish food over time! Place the bee on an empty pad to fund more summons.'],
+  'p19.tutorialBee.badge': ['产小鱼干 · 不打怪', 'Makes fish food · No attack'],
+  'p19.tutorial6.body': ['点右上角【图鉴】可随时查配方与属性；危急时左侧还有免费的【洒水器】可以全路冲退害虫！完成教学送 20 金币。', 'Tap Guide at top-right anytime for recipes and stats, and use the free Sprinkler on the left to push pests back! Finish for 20 coins.'],
   // Feature display names
   'p19.feature.armory': ['神兵锻造坊', 'Weapon Armory'],
   'p19.feature.speed2x': ['2× 战斗加速', '2× Battle Speed'],

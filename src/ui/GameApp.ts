@@ -1313,8 +1313,12 @@ export class GameApp {
     this.notify(result.key, !result.ok, result.key === 'hint.noFood' ? { cost, count: Math.max(0, Math.ceil(cost - (this.engine?.state.sides.player.food ?? 0))) } : result.value !== undefined ? { value: result.value } : {});
     if(result.ok){
       if(dug)this.progressTutorial('dig');
-      if(result.key==='hint.deployed'&&this.engine?.state.units.some(unit=>unit.id===result.unitId&&unit.side==='player'&&unit.location.zone==='board')){
-        this.progressTutorial('deploy');
+      if(result.key==='hint.deployed'){
+        const deployed=this.engine?.state.units.find(unit=>unit.id===result.unitId&&unit.side==='player'&&unit.location.zone==='board');
+        if(deployed){
+          if(this.tutorialStep===6){if(deployed.kind==='bee')this.progressTutorial('deploy-bee');}
+          else this.progressTutorial('deploy');
+        }
       }
       if((result.key==='hint.merged'||result.key==='hint.fed')&&(this.tutorialStep!==5||this.engine?.state.units.some(unit=>unit.id===result.unitId&&!!HEROES[unit.kind])))this.progressTutorial('merge');
     }
@@ -1820,7 +1824,7 @@ export class GameApp {
     if (action === 'clear') { this.clearSelection(); this.refresh(); return; }
     if (action === 'pause') { this.pause(); return; }
     if (action === 'resume') { this.closeDialog(true); this.refresh(); this.canvas.focus({ preventScroll: true }); return; }
-    if (action === 'recipes') { if(this.tutorialStep===6)this.progressTutorial('open-compendium');this.openModal('recipes'); return; }
+    if (action === 'recipes') { if(this.tutorialStep===7)this.progressTutorial('open-compendium');this.openModal('recipes'); return; }
     if (action === 'close-recipes') { this.closeModal(); return; }
     if (action === 'surrender') {
       if (this.engine?.state.phase === 'paused') { this.closeDialog(false); this.engine.surrender(); if (this.engine.state.result) this.finish(this.engine.state); }

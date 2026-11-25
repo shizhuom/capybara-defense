@@ -20,6 +20,7 @@ import {
   PALETTE,
   UI_FONT,
   drawButton,
+  drawGuideRipple,
   drawIvorySlab,
   drawSpriteContain,
   drawText,
@@ -33,6 +34,7 @@ export interface BattleOverlayContext {
   profile: Profile;
   elapsed: number;
   speed: 1 | 2 | 3;
+  selectedId?: number;
   shovelSelected: boolean;
   activePropId?: string;
   expandedPassiveId?: string;
@@ -232,9 +234,9 @@ export function drawBattleOverlay(
   // ── 4. BOTTOM SUMMON BELL & GOLDEN HERO MERGE CALLOUT (clean open right grass!) ─
   drawBottomControls(c, hits, engine, activePropId, shovelSelected, elapsed);
 
-  // ── 5. MATCH-1 6-STEP GUIDED TUTORIAL OVERLAY ─────────────────────────────
+  // ── 5. MATCH-1 7-STEP GUIDED TUTORIAL OVERLAY (Expanding Ripple Beacons!) ─
   if (tutorialStep !== 'done') {
-    drawTutorialOverlay(c, hits, tutorialStep, state, guideRect, avoidRects, elapsed);
+    drawTutorialOverlay(c, hits, tutorialStep, state, guideRect, avoidRects, elapsed, ctx.selectedId, shovelSelected);
   }
 
   // ── 6. BRIEF OPENING BATTLE CLASH CURTAIN (tap anywhere to skip!) ─────────
@@ -319,8 +321,7 @@ function drawLeftToolRail(
       c.translate(-(rx + size / 2), -(py + ph / 2));
     }
     if (highlighted) {
-      const glow = 0.55 + 0.45 * Math.sin(elapsed * 6);
-      round(c, rx - 5, py - 5, size + 10, ph + 10, 24, 'rgba(255,220,76,0.28)', `rgba(255,212,56,${glow.toFixed(2)})`, 4.5);
+      drawGuideRipple(c, rx, py, size, ph, 20, elapsed, { maxExpand: 26, waves: 3, showBullseye: true });
     }
     drawIvorySlab(
       c,
@@ -501,6 +502,98 @@ function drawBottomControls(
   }
 }
 
+/**
+ * High-contrast concentric expanding ripple beacon (`0` shadowBlur for 100% iOS Canvas 2D safety)
+ * so players immediately spot which button/pet/tile to tap or drag to on any bright or dark background.
+ */
+function drawTutorialRipple(
+  c: CanvasRenderingContext2D,
+  r: TutorialRect,
+  elapsed: number,
+  primary: boolean,
+  isTarget: boolean,
+): void {
+  const pulse = 0.5 + 0.5 * Math.sin(elapsed * 5.6);
+  const cx = r.x + r.w / 2;
+  const cy = r.y + r.h / 2;
+  const radius = Math.min(24, Math.max(14, Math.min(r.w, r.h) * 0.24));
+
+  // 1. Expanding concentric rectangular ripple waves radiating outward (3 staggered waves on primary, 2 on secondary)
+  const waveCount = primary ? 3 : 2;
+  const maxExpand = primary ? 34 : 20;
+  for (let i = 0; i < waveCount; i++) {
+    const phase = (elapsed * 0.92 + i / waveCount) % 1;
+    const exp = 3 + phase * maxExpand;
+    const alpha = Math.pow(1 - phase, 1.35) * (primary ? 0.96 : 0.62);
+    if (alpha <= 0.03) continue;
+    const rr = radius + exp * 0.45;
+    // Outer dark-amber contrast halo so the bright gold ripple pops on sunlit grass AND cream buttons
+    round(
+      c,
+      r.x - exp,
+      r.y - exp,
+      r.w + exp * 2,
+      r.h + exp * 2,
+      rr,
+      'transparent',
+      `rgba(122,48,0,${(alpha * 0.65).toFixed(2)})`,
+      primary ? 7 : 5,
+    );
+    round(
+      c,
+      r.x - exp,
+      r.y - exp,
+      r.w + exp * 2,
+      r.h + exp * 2,
+      rr,
+      'transparent',
+      isTarget ? `rgba(142,240,104,${alpha.toFixed(2)})` : `rgba(255,226,64,${alpha.toFixed(2)})`,
+      primary ? 4.2 : 3,
+    );
+  }
+
+  // 2. Crisp breathing focus frame tightly hugging the hitbox
+  const fillCol = isTarget
+    ? `rgba(130,224,96,${((primary ? 0.24 : 0.14) * (0.65 + 0.35 * pulse)).toFixed(2)})`
+    : `rgba(255,222,74,${((primary ? 0.24 : 0.14) * (0.65 + 0.35 * pulse)).toFixed(2)})`;
+  const strokeCol = isTarget ? '#8ef068' : '#ffe248';
+  round(c, r.x - 4, r.y - 4, r.w + 8, r.h + 8, radius + 3, 'transparent', 'rgba(110,44,0,0.72)', primary ? 7.5 : 5.5);
+  round(c, r.x - 4, r.y - 4, r.w + 8, r.h + 8, radius + 3, fillCol, strokeCol, primary ? 4.2 : 3);
+
+  // 3. Primary tap bullseye water-ripple + gently tapping paw pointer
+  if (primary) {
+    c.save();
+    for (let i = 0; i < 2; i++) {
+      const p = (elapsed * 1.15 + i * 0.5) % 1;
+      const rad = 8 + p * 24;
+      const a = Math.pow(1 - p, 1.3) * 0.92;
+      c.beginPath();
+      c.arc(cx, cy, rad, 0, Math.PI * 2);
+      c.strokeStyle = `rgba(120,48,0,${(a * 0.6).toFixed(2)})`;
+      c.lineWidth = 5;
+      c.stroke();
+      c.strokeStyle = `rgba(255,244,158,${a.toFixed(2)})`;
+      c.lineWidth = 2.8;
+      c.stroke();
+    }
+    c.restore();
+
+    const bob = Math.sin(elapsed * 6.2) * 6;
+    const pawSz = 56;
+    const aboveTop = r.y > 96;
+    const px = Math.min(STAGE.width - pawSz - 6, Math.max(6, r.x + r.w * 0.62));
+    const py = aboveTop ? r.y - pawSz * 0.56 + bob : r.y + r.h - 10 - bob;
+    drawSpriteContain(c, 'ui_tutorial_pointer', px, py, pawSz, pawSz);
+  }
+}
+
+function rectContainsUnit(r: TutorialRect | undefined, u: BattleState['units'][number] | undefined): boolean {
+  if (!r || !u) return false;
+  const ux = u.location.zone === 'bench' ? STAGE.benchX + u.location.slot * STAGE.benchStep : STAGE.boardX + u.location.col * STAGE.cell;
+  const uy = u.location.zone === 'bench' ? STAGE.benchY : STAGE.boardY + u.location.row * STAGE.cell;
+  return Math.abs(r.x - ux) < 8 && Math.abs(r.y - uy) < 8;
+}
+
 function drawTutorialOverlay(
   c: CanvasRenderingContext2D,
   hits: UiHitManager,
@@ -509,38 +602,67 @@ function drawTutorialOverlay(
   guideRect: TutorialRect,
   avoidRects: readonly StageRect[],
   elapsed: number,
+  selectedId?: number,
+  shovelSelected = false,
 ): void {
   const targets = tutorialTargets(step, state, guideRect);
-  const pulse = 0.55 + 0.45 * Math.sin(elapsed * 5.2);
+  const selectedUnit = selectedId !== undefined ? state.units.find(u => u.id === selectedId) : undefined;
+  const sourceActive = step === 2
+    ? shovelSelected
+    : rectContainsUnit(targets.source, selectedUnit);
 
+  // Expanding ripple beacons: on 2-step tap guides, spotlight Source first, then shift primary ripple to Target once picked!
   if (targets.source) {
-    const r = targets.source;
-    round(c, r.x - 4, r.y - 4, r.w + 8, r.h + 8, 18, `rgba(255,224,102,${(0.16 * pulse).toFixed(2)})`, `rgba(255,216,74,${(0.75 + 0.25 * pulse).toFixed(2)})`, 4);
+    drawTutorialRipple(c, targets.source, elapsed, step === 4 ? true : !sourceActive, false);
   }
   if (targets.target) {
-    const r = targets.target;
-    round(c, r.x - 3, r.y - 3, r.w + 6, r.h + 6, 16, `rgba(148,224,112,${(0.2 * pulse).toFixed(2)})`, `rgba(255,228,112,${(0.75 + 0.25 * pulse).toFixed(2)})`, 3.5);
+    const targetPrimary = !targets.source || sourceActive;
+    drawTutorialRipple(c, targets.target, elapsed, targetPrimary, Boolean(targets.source));
   }
+
+  // Animated trajectory curve between source and target (+ gliding golden drag orb on Step 4 Drag!)
   if (targets.source && targets.target) {
     const ax = targets.source.x + targets.source.w / 2;
     const ay = targets.source.y + targets.source.h / 2;
     const bx = targets.target.x + targets.target.w / 2;
     const by = targets.target.y + targets.target.h / 2;
+    const ctrlX = (ax + bx) / 2;
+    const ctrlY = Math.min(ay, by) - 28;
     c.save();
-    c.strokeStyle = '#ffdf6b';
-    c.lineWidth = 4.5;
+    c.strokeStyle = 'rgba(104,44,0,0.65)';
+    c.lineWidth = 7.5;
     c.setLineDash([12, 8]);
-    c.lineDashOffset = -elapsed * 32;
+    c.lineDashOffset = -elapsed * 36;
     c.beginPath();
     c.moveTo(ax, ay);
-    c.quadraticCurveTo((ax + bx) / 2, Math.min(ay, by) - 24, bx, by);
+    c.quadraticCurveTo(ctrlX, ctrlY, bx, by);
     c.stroke();
+    c.strokeStyle = '#ffe252';
+    c.lineWidth = 4.2;
+    c.stroke();
+    c.setLineDash([]);
+
+    // On Step 4 (Drag Merge), animate a glowing orb gliding continuously along the arc from Source -> Target!
+    if (step === 4) {
+      const tPos = (elapsed * 0.78) % 1;
+      const inv = 1 - tPos;
+      const gx = inv * inv * ax + 2 * inv * tPos * ctrlX + tPos * tPos * bx;
+      const gy = inv * inv * ay + 2 * inv * tPos * ctrlY + tPos * tPos * by;
+      c.beginPath();
+      c.arc(gx, gy, 13, 0, Math.PI * 2);
+      c.fillStyle = '#ffe458';
+      c.strokeStyle = '#6e3004';
+      c.lineWidth = 3.2;
+      c.fill();
+      c.stroke();
+    }
     c.restore();
   }
 
-  const acknowledge = targets.acknowledge || step === 6;
+  const acknowledge = targets.acknowledge || step === 7;
+  const hasEquationStrip = step === 5 || step === 6;
   const bubbleW = 556;
-  const bubbleH = step === 5 || acknowledge ? 292 : 238;
+  const bubbleH = hasEquationStrip ? (acknowledge ? 344 : 300) : acknowledge ? 286 : 244;
   const targetRects = [targets.target, targets.source].filter((r): r is TutorialRect => Boolean(r));
   const b = placeTutorialBubble([...targetRects, ...avoidRects], { w: bubbleW, h: bubbleH });
 
@@ -549,7 +671,7 @@ function drawTutorialOverlay(
 
   drawSpriteContain(c, 'ui_tutorial_capy', b.x + 16, b.y + 12, 74, 74);
   round(c, b.x + 98, b.y + 14, 118, 32, 16, '#4c9883', 'transparent', 0);
-  drawText(c, `STEP ${step}/6`, b.x + 157, b.y + 31, 18, '#fffdf5', 'center', 900);
+  drawText(c, `STEP ${step}/7`, b.x + 157, b.y + 31, 18, '#fffdf5', 'center', 900);
 
   drawButton(c, hits, 'battle:tutorial-skip', b.x + b.w - 110, b.y + 12, 94, 42, t('p1.tutorialSkip'), {
     ...BTN_STYLES.cream,
@@ -557,12 +679,30 @@ function drawTutorialOverlay(
     fontSize: 19,
   });
 
-  const titleKey = step === 2 ? 'p19.tutorialDig.title' : step === 1 ? 'p5.tutorial1.title' : `p5.tutorial${step - 1}.title`;
-  const bodyKey = step === 2 ? 'p19.tutorialDig.body' : step === 5 ? 'p6.tutorial4Body' : step === 6 ? 'p19.tutorial6.body' : step === 1 ? 'p5.tutorial1.body' : `p5.tutorial${step - 1}.body`;
+  const titleKey = step === 2
+    ? 'p19.tutorialDig.title'
+    : step === 6
+      ? 'p19.tutorialBee.title'
+      : step === 7
+        ? 'p5.tutorial5.title'
+        : step === 1
+          ? 'p5.tutorial1.title'
+          : `p5.tutorial${step - 1}.title`;
+  const bodyKey = step === 2
+    ? 'p19.tutorialDig.body'
+    : step === 5
+      ? 'p6.tutorial4Body'
+      : step === 6
+        ? 'p19.tutorialBee.body'
+        : step === 7
+          ? 'p19.tutorial6.body'
+          : step === 1
+            ? 'p5.tutorial1.body'
+            : `p5.tutorial${step - 1}.body`;
 
-  drawText(c, t(titleKey), b.x + 98, b.y + 68, 26, PALETTE.ink, 'left', 900);
+  drawText(c, t(titleKey), b.x + 98, b.y + 68, 25, PALETTE.ink, 'left', 900);
   let cy = b.y + 96;
-  cy += drawWrappedText(c, t(bodyKey), b.x + 22, cy, b.w - 44, 21, 29, PALETTE.inkSoft, 'left', 700, 4);
+  cy += drawWrappedText(c, t(bodyKey), b.x + 22, cy, b.w - 44, 21, 28, PALETTE.inkSoft, 'left', 700, 4);
 
   if (step === 5) {
     const eqY = cy + 6;
@@ -573,14 +713,21 @@ function drawTutorialOverlay(
     drawText(c, '=', b.x + 174, eqY + 30, 26, PALETTE.ink, 'center', 900);
     drawSpriteContain(c, 'kungfu_po', b.x + 192, eqY + 4, 50, 50);
     drawText(c, t('hero.kungfu_po'), b.x + 252, eqY + 30, 24, '#7e3c0e', 'left', 900);
+  } else if (step === 6) {
+    const eqY = cy + 6;
+    round(c, b.x + 22, eqY, b.w - 44, 58, 16, '#fff3c9', '#d49a2a', 2);
+    drawSpriteContain(c, 'bee', b.x + 38, eqY + 6, 46, 46);
+    drawText(c, '→', b.x + 102, eqY + 30, 26, '#8a4c08', 'center', 900);
+    drawSpriteContain(c, 'ui_fish_food', b.x + 122, eqY + 8, 42, 42);
+    drawText(c, t('p19.tutorialBee.badge'), b.x + 178, eqY + 30, 22, '#6e3706', 'left', 900);
   }
 
   const dotY = b.y + b.h - (acknowledge ? 82 : 30);
-  for (let n = 1; n <= 6; n++) {
-    const dx = b.x + b.w / 2 + (n - 3.5) * 40;
+  for (let n = 1; n <= 7; n++) {
+    const dx = b.x + b.w / 2 + (n - 4) * 38;
     const fill = n === step ? '#f4c855' : n < step ? '#6db85a' : '#dfd2b8';
-    round(c, dx - 14, dotY - 14, 28, 28, 14, fill, PALETTE.woodDark, 2);
-    drawText(c, String(n), dx, dotY + 1, 17, n === step ? PALETTE.ink : n < step ? '#fffdf5' : PALETTE.muted, 'center', 900);
+    round(c, dx - 13.5, dotY - 13.5, 27, 27, 13.5, fill, PALETTE.woodDark, 2);
+    drawText(c, String(n), dx, dotY + 1, 16.5, n === step ? PALETTE.ink : n < step ? '#fffdf5' : PALETTE.muted, 'center', 900);
   }
 
   if (acknowledge) {

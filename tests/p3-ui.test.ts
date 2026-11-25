@@ -80,8 +80,8 @@ describe('P5 safe selection and tutorial integration',()=>{
   it('replays into a new guaranteed-pack battle, and opening Guide at step5 awards exactly once and releases hold',()=>{
     const {app,engine}=harness();app.refresh=()=>{};app.profile.tutorialCompleted=true;app.action('tutorial-replay');app.action('skip-transition');
     expect(app.engine).not.toBe(engine);expect(app.engine.options.tutorialGuided).toBe(true);app.engine.tick(30);expect(app.engine.state.spawned).toBe(0);
-    app.action('summon');expect(app.selectedId).toBeUndefined();expect(app.engine.state.units.map((u:any)=>u.kind)).toEqual(['hamster','hamster','panda','hat_bamboo','squirrel']);
-    app.compendium=new Compendium();app.tutorialStep=6;const coins=app.profile.coins;app.action('recipes');expect(app.tutorialStep).toBe('done');expect(app.profile.coins).toBe(coins+20);
+    app.action('summon');expect(app.selectedId).toBeUndefined();expect(app.engine.state.units.map((u:any)=>u.kind)).toEqual(['hamster','hamster','panda','hat_bamboo','bee']);
+    app.compendium=new Compendium();app.tutorialStep=7;const coins=app.profile.coins;app.action('recipes');expect(app.tutorialStep).toBe('done');expect(app.profile.coins).toBe(coins+20);
     app.action('close-recipes');app.engine.tick(19);expect(app.engine.state.spawned).toBeGreaterThan(0);
   });
   it('lets an intentional animal drag take over from a selected prop without consuming it',()=>{
@@ -130,7 +130,7 @@ describe('P3 stage integration',()=>{
     expect(app.tutorialStep).toBe(5);expect(app.profile.tutorialRewardClaimed).toBe(false);
   });
   it('retains keyboard tutorial acknowledgement without a pointer origin',()=>{
-    const {app,root}=harness();app.refresh=()=>{};app.tutorialStep=6;app.bindEvents();
+    const {app,root}=harness();app.refresh=()=>{};app.tutorialStep=7;app.bindEvents();
     const button=new Element();button.dataset.action='tutorial-ack';
     root.fire('click',{target:{closest:()=>button},detail:0,preventDefault:()=>{}});
     expect(app.tutorialStep).toBe('done');expect(app.profile.tutorialRewardClaimed).toBe(true);
@@ -138,8 +138,8 @@ describe('P3 stage integration',()=>{
   it.each(['zh-CN','en'] as const)('keeps compact menu labels and concise actionable tutorial copy localized in %s',language=>{
     setLanguage(language);const {app,engine,element}=harness();app.profile={...app.profile,stars:5,highestStars:5,matches:5};app.renderMenu();
     for(const key of ['p3.armory','p3.rank']){expect(t(key)).not.toBe(key);expect(element('menu-screen').innerHTML).toContain(t(key));}
-    const keys:Record<number,string>={1:'p5.tutorial1.body',2:'p19.tutorialDig.body',3:'p5.tutorial2.body',4:'p5.tutorial3.body',5:'p6.tutorial4Body',6:'p19.tutorial6.body'};
-    for(const step of [1,2,3,4,5,6] as const){
+    const keys:Record<number,string>={1:'p5.tutorial1.body',2:'p19.tutorialDig.body',3:'p5.tutorial2.body',4:'p5.tutorial3.body',5:'p6.tutorial4Body',6:'p19.tutorialBee.body',7:'p19.tutorial6.body'};
+    for(const step of [1,2,3,4,5,6,7] as const){
       const key=keys[step],html=tutorialMarkup(step,engine.state);
       expect(t(key)).not.toBe(key);expect(html).toContain(t(key));
       expect(html).toContain('data-action="tutorial-skip"');

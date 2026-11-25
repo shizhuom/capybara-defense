@@ -10,7 +10,11 @@
 .tutorial-dots i { width:20px;height:20px;font-size:12px;font-style:normal;text-align:center;line-height:20px;background:#e6d9bd;color:#6a4b35; }
 .tutorial-dots .current { width:26px;border-radius:10px;background:#eab459;color:#493021; }
 .tutorial-dots .completed { background:#bfd1a1; }
-.tutorial-spotlight.tutorial-source { box-shadow:0 0 14px 4px #ffe8a5; }
+.tutorial-spotlight { overflow:visible;border:3px solid #ffe248;box-shadow:0 0 0 2px rgba(110,44,0,.65),0 0 16px 4px rgba(255,226,72,.65); }
+.tutorial-spotlight::before,.tutorial-spotlight::after { content:'';position:absolute;inset:-4px;border-radius:inherit;border:4px solid #ffe248;box-shadow:0 0 0 2px rgba(120,48,0,.55);pointer-events:none;animation:tutorial-ripple 1.6s cubic-bezier(.2,.7,.3,1) infinite; }
+.tutorial-spotlight::after { animation-delay:.8s; }
+.tutorial-spotlight.tutorial-source { box-shadow:0 0 0 2px rgba(110,44,0,.65),0 0 18px 5px #ffe8a5; }
+@keyframes tutorial-ripple { 0% { transform:scale(1);opacity:.95; } 100% { transform:scale(1.42);opacity:0; } }
 .tutorial-arrow { position:absolute;inset:0;width:100%;height:100%;overflow:visible; }
 .tutorial-arrow>path { fill:none;stroke:#ffe080;stroke-width:5;stroke-dasharray:10 8;filter:drop-shadow(0 2px 1px #6a492f);animation:guide-flow 1s linear infinite; }
 .tutorial-pointer { position:absolute;width:4.7%;filter:drop-shadow(1px 3px 2px #69442688);animation:guide-paw 1.6s ease-in-out infinite; }

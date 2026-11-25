@@ -319,15 +319,23 @@ function drawMedallionRow(
 
     hits.add({ id: item.id, x: x - 4, y: topY - 14, w: size + 8, h: size + 48, data: item });
 
-    // Golden P19 onboarding spotlight ring
+    // Expanding concentric golden ripple rings for P19 onboarding dock targets
     if (item.highlight) {
-      const pulse = 0.5 + 0.5 * Math.sin(elapsed * 5.2);
       c.save();
-      c.beginPath();
-      c.arc(cx, cy + dy, size / 2 + 8 + pulse * 5, 0, Math.PI * 2);
-      c.strokeStyle = `rgba(255,212,68,${(0.65 + pulse * 0.32).toFixed(2)})`;
-      c.lineWidth = 6;
-      c.stroke();
+      for (let wi = 0; wi < 3; wi++) {
+        const phase = (elapsed * 0.92 + wi / 3) % 1;
+        const rad = size / 2 + 4 + phase * 32;
+        const alpha = Math.pow(1 - phase, 1.35) * 0.95;
+        if (alpha <= 0.03) continue;
+        c.beginPath();
+        c.arc(cx, cy + dy, rad, 0, Math.PI * 2);
+        c.strokeStyle = `rgba(120,48,0,${(alpha * 0.62).toFixed(2)})`;
+        c.lineWidth = 7;
+        c.stroke();
+        c.strokeStyle = `rgba(255,226,64,${alpha.toFixed(2)})`;
+        c.lineWidth = 4;
+        c.stroke();
+      }
       c.restore();
     }
 

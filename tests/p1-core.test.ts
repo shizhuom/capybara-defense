@@ -95,8 +95,9 @@ describe('P1 tutorial and migrations',()=>{
     expect(m.advanceTutorial(3,'deploy')).toBe(4);
     for(const a of ['merge','acknowledge'] as const)expect(m.advanceTutorial(4,a)).toBe(5);
     for(const a of ['merge','acknowledge'] as const)expect(m.advanceTutorial(5,a)).toBe(6);
-    for(const a of ['open-compendium','acknowledge'] as const)expect(m.advanceTutorial(6,a)).toBe('done');
-    for(const step of [1,2,3,4,5,6,'done'] as const){expect(m.advanceTutorial(step,'skip')).toBe('done');expect(m.advanceTutorial('done','summon')).toBe('done');}
+    for(const a of ['deploy-bee','deploy','acknowledge'] as const)expect(m.advanceTutorial(6,a)).toBe(7);
+    for(const a of ['open-compendium','acknowledge'] as const)expect(m.advanceTutorial(7,a)).toBe('done');
+    for(const step of [1,2,3,4,5,6,7,'done'] as const){expect(m.advanceTutorial(step,'skip')).toBe('done');expect(m.advanceTutorial('done','summon')).toBe('done');}
   });
   it('awards twenty once on completion including replay after skip, without mutating input',async()=>{
     const m=await import('../src/core/Tutorial'),p=createProfile(),before=JSON.stringify(p),done=m.finishTutorial(p,true);

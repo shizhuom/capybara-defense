@@ -8,9 +8,9 @@ describe('P5 guided first pack and preparation hold',()=>{
   it('gives five fixed Lv.1 teaching pieces, even with promotion props, only on the first draw',()=>{
     const e=new BattleEngine({seed:51,tutorialGuided:true,loadouts:{player:{equippedPassiveProps:['promo_badge'],ownedProps:{promo_badge:3}}}});e.start();
     expect(e.summon().ok).toBe(true);
-    expect(e.state.units.map(u=>[u.kind,u.level])).toEqual(['hamster','hamster','panda','hat_bamboo','squirrel'].map(k=>[k,1]));
+    expect(e.state.units.map(u=>[u.kind,u.level])).toEqual(['hamster','hamster','panda','hat_bamboo','bee'].map(k=>[k,1]));
     expect(e.state.sides.player.food).toBe(12);e.summon();
-    expect(e.state.units.map(u=>u.kind)).not.toEqual(['hamster','hamster','panda','hat_bamboo','squirrel']);
+    expect(e.state.units.map(u=>u.kind)).not.toEqual(['hamster','hamster','panda','hat_bamboo','bee']);
   });
   it('keeps ordinary seeded draws unchanged when tutorialGuided is omitted or false',()=>{
     const a=new BattleEngine({seed:812}),b=new BattleEngine({seed:812,tutorialGuided:false});a.start();b.start();

@@ -3,11 +3,11 @@ export const p5Zh:Record<string,string>={
   'p5.tutorial1.body':'点下方铃铛，用 10 小鱼干抽 5 个伙伴！再抽需 12、14…；旧窝会换新。教学时怪物会耐心等你。',
   'p5.tutorial2.title':'3 · 把伙伴放上白色肉垫',
   'p5.tutorial2.body':'点亮的小仓鼠，再点箭头指向的空肉垫，就能上场防守。也可拖过去；草坪要先用铲子开垦。',
-  'p5.tutorial3.title':'4 · 同种同星，叠出更强伙伴',
-  'p5.tutorial3.body':'把另一只 1 星仓鼠叠到仓鼠身上，合成 2 星！点击一只再点另一只，或直接拖拽。',
-  'p5.tutorial4.title':'5 · 动物 + 穿搭 = 传说英雄',
-  'p5.tutorial4.body':'把熊猫与大侠斗笠叠在一起，功夫阿宝登场！英雄还能吃对应配方散件升级。若已合出或换过窝，可点下方继续。',
-  'p5.tutorial5.title':'6 · 图鉴与洒水救场',
+  'p5.tutorial3.title':'4 · 拖拽叠合，升星变强',
+  'p5.tutorial3.body':'按住另一只 1 星仓鼠拖拽到场上仓鼠身上，合成 2 星！同种同星都能拖在一起升级。',
+  'p5.tutorial4.title':'5 · 点按操作，合成传说英雄',
+  'p5.tutorial4.body':'游戏也支持点按操作！先点一下熊猫再点空肉垫上场，再点斗笠点熊猫合出功夫阿宝。',
+  'p5.tutorial5.title':'7 · 图鉴与洒水救场',
   'p5.tutorial5.body':'点右上角【图鉴】，查看完整配方与各星级攻击、攻速！动物属性卡的小书也能直达。完成教学送 20 金币。',
 };
 export const p5En:Record<string,string>={
@@ -15,11 +15,11 @@ export const p5En:Record<string,string>={
   'p5.tutorial1.body':'Tap the bell: 10 food brings 5 friends! Later packs cost 12, 14… and replace the nest. Enemies wait during this lesson.',
   'p5.tutorial2.title':'3 · Place a friend on a paw pad',
   'p5.tutorial2.body':'Tap the glowing hamster, then the empty pad at the arrow. Dragging works too. Grass needs a shovel first.',
-  'p5.tutorial3.title':'4 · Matching pets gain a star',
-  'p5.tutorial3.body':'Stack two level 1 hamsters to make level 2! Tap one then the other, or drag them together.',
-  'p5.tutorial4.title':'5 · A pet + gear makes a hero',
-  'p5.tutorial4.body':'Stack Panda and Bamboo Hat to summon Kungfu Po! Feed recipe parts to upgrade heroes. Already merged or redrawn? Continue below.',
-  'p5.tutorial5.title':'6 · Field Guide & Sprinkler',
+  'p5.tutorial3.title':'4 · Drag to stack and star up',
+  'p5.tutorial3.body':'Drag the other level 1 hamster onto the board hamster to make level 2! Matching pets stack to level up.',
+  'p5.tutorial4.title':'5 · Tap to merge a hero',
+  'p5.tutorial4.body':'Tap controls work too! Tap Panda then an empty pad, then tap Bamboo Hat and tap Panda to summon Kungfu Po.',
+  'p5.tutorial5.title':'7 · Field Guide & Sprinkler',
   'p5.tutorial5.body':'Tap Guide at the top right for recipes, damage and attack speed by level. A pet card’s book opens it too. Finish for 20 coins!',
 };
 Object.assign(p5Zh,{

@@ -780,6 +780,7 @@ export class MinigameApp {
           profile: this.profile,
           elapsed: this.elapsedSec,
           speed: this.speed,
+          selectedId: this.selectedId,
           shovelSelected: this.shovelSelected,
           activePropId: this.activePropId,
           expandedPassiveId: this.expandedPassiveId,
@@ -933,7 +934,7 @@ export class MinigameApp {
     const next = advanceTutorial(prev, action);
     if (next === prev) return;
     this.tutorialStep = next;
-    if (next === 6 || next === 'done') {
+    if (next === 7 || next === 'done') {
       this.engine?.setTutorialHold(false);
     }
     if (next === 'done') {
@@ -2273,10 +2274,19 @@ export class MinigameApp {
           this.advanceBattleTutorial('dig');
         } else if (res.key === 'hint.merged' || res.key === 'hint.fed' || res.key === 'p17.breakthroughSuccess') {
           this.platform.audio.play('merge_hero');
-          this.advanceBattleTutorial('merge');
+          if (this.tutorialStep !== 5 || this.engine.state.units.some(u => u.id === res.unitId && Boolean(HEROES[u.kind]))) {
+            this.advanceBattleTutorial('merge');
+          }
         } else {
           this.platform.audio.play('click');
-          if (loc.zone === 'board') this.advanceBattleTutorial('deploy');
+          if (loc.zone === 'board') {
+            const movedUnit = this.engine.state.units.find(u => u.id === res.unitId);
+            if (this.tutorialStep === 6) {
+              if (movedUnit?.kind === 'bee') this.advanceBattleTutorial('deploy-bee');
+            } else {
+              this.advanceBattleTutorial('deploy');
+            }
+          }
         }
         // Always clear selection after deploying, moving, upgrading, or merging a pet so the upgraded pet is NEVER auto-selected.
         this.selectedId = undefined;
