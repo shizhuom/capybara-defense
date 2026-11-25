@@ -62,6 +62,9 @@ export interface MarketState {
 const RARITY_COLORS = ['#7a6d62', '#3d8f4e', '#3276b8', '#8345b0', '#cf6e12'] as const;
 const RARITY_BG = ['#f4f0e8', '#e5f5e8', '#e4effa', '#f2e8fa', '#fdf0dc'] as const;
 
+const GACHA_GRADE_ZH = ['普通', '稀有', '卓越', '史诗', '传说'] as const;
+const GACHA_GRADE_EN = ['Common', 'Rare', 'Superior', 'Epic', 'Legendary'] as const;
+
 const GACHA_RARITY_PALETTE = [
   { top: '#fbf7ef', bot: '#eee3ce', border: '#9c8b72', iconBg: '#f3ead8', pill: '#857560', pillStroke: '#5c4f3e', text: '#fffdf7' },
   { top: '#ecfae8', bot: '#cdeec3', border: '#388a48', iconBg: '#dbf5d3', pill: '#3f9648', pillStroke: '#245e29', text: '#fffdf7' },
@@ -123,19 +126,27 @@ export function drawArmoryModal(
     elapsed,
   });
 
-  // ── TAB 5: FRAGMENT RECYCLE SUB-PAGE (`碎片工坊`) ─────────────────────────
+  // ── TAB 5: FRAGMENT RECYCLE SUB-PAGE (`碎片工坊` — Enlarged Mobile Typography!) ─
   if (armory.family === 'recycle') {
     const cx = body.x + 6, cy = body.y + 4, cw = body.w - 12, ch = body.h - 8;
+    const compact = ch < 395;
     drawIvorySlab(c, cx, cy, cw, ch, 18);
-    drawText(c, t('p11.meta.family.recycle'), cx + cw / 2, cy + 32, 23, PALETTE.ink, 'center', 900);
-    drawWrappedText(c, t('m2.recycleRule'), cx + 28, cy + 54, cw - 56, 16, 22, PALETTE.inkSoft, 'center', 700, 2);
+    drawText(c, t('p11.meta.family.recycle'), cx + cw / 2, cy + (compact ? 26 : 30), compact ? 25 : 28, PALETTE.ink, 'center', 900);
+    drawWrappedText(c, t('m2.recycleRule'), cx + 28, cy + (compact ? 44 : 50), cw - 56, compact ? 18 : 20, compact ? 22 : 25, PALETTE.inkSoft, 'center', 800, 1);
 
-    // 5 Rarity Checkbox Rows + recyclable preview counts (fits cleanly even with P19 coaching strip!)
+    // 5 Rarity Checkbox Rows + recyclable preview counts (enlarged readable font!)
     let totalCoins = 0;
-    const rowStartY = cy + 92;
-    const availRowsH = ch - 160;
-    const rowGap = 7;
-    const rowH = Math.min(48, Math.max(38, Math.floor((availRowsH - rowGap * 4) / 5)));
+    const rowStartY = cy + (compact ? 76 : 84);
+    const btnH = compact ? 46 : 54;
+    const btnBottomPad = compact ? 10 : 12;
+    const availRowsH = ch - (rowStartY - cy) - btnH - btnBottomPad - (compact ? 10 : 14);
+    const rowGap = compact ? 6 : 8;
+    const rowH = Math.min(58, Math.max(42, Math.floor((availRowsH - rowGap * 4) / 5)));
+    const cbSz = compact ? 26 : 30;
+    const rarityFont = compact ? 20.5 : 23.5;
+    const rateFont = compact ? 19 : 21.5;
+    const statusFont = compact ? 19 : 21.5;
+
     RARITY_RULES.forEach((rule, rarity) => {
       const ry = rowStartY + rarity * (rowH + rowGap);
       const checked = armory.recycleRarities.includes(rarity);
@@ -147,12 +158,12 @@ export function drawArmoryModal(
       }
       if (checked) totalCoins += extraFrags * rule.recycle;
 
-      hits.add({ id: `armory:recycle-toggle:${rarity}`, x: cx + 28, y: ry, w: cw - 56, h: rowH });
+      hits.add({ id: `armory:recycle-toggle:${rarity}`, x: cx + 24, y: ry, w: cw - 48, h: rowH });
       drawIvorySlab(
         c,
-        cx + 28,
+        cx + 24,
         ry,
-        cw - 56,
+        cw - 48,
         rowH,
         14,
         checked ? '#fffdf8' : '#efe7d8',
@@ -161,29 +172,30 @@ export function drawArmoryModal(
         checked ? 2.4 : 1.6,
       );
       // Checkbox
-      const cbY = ry + Math.round((rowH - 26) / 2);
-      round(c, cx + 46, cbY, 26, 26, 7, checked ? '#82c943' : '#fffdf7', checked ? '#376b18' : '#7a5230', 2);
-      if (checked) drawText(c, '✓', cx + 59, ry + rowH / 2 + 1, 19, '#fffdf7', 'center', 900);
+      const cbY = ry + Math.round((rowH - cbSz) / 2);
+      round(c, cx + 44, cbY, cbSz, cbSz, 8, checked ? '#82c943' : '#fffdf7', checked ? '#376b18' : '#7a5230', 2.2);
+      if (checked) drawText(c, '✓', cx + 44 + cbSz / 2, ry + rowH / 2 + 1, compact ? 19 : 22, '#fffdf7', 'center', 900);
 
-      drawText(c, t(`m2.rarity.${rarity}`), cx + 88, ry + rowH / 2 + 1, 18.5, RARITY_COLORS[rarity], 'left', 900);
-      drawText(c, t('m2.recycleRate', { value: rule.recycle }), cx + 258, ry + rowH / 2 + 1, 16, PALETTE.inkSoft, 'left', 800);
+      drawText(c, t(`m2.rarity.${rarity}`), cx + 44 + cbSz + 18, ry + rowH / 2 + 1, rarityFont, RARITY_COLORS[rarity], 'left', 900);
+      drawText(c, t('m2.recycleRate', { value: rule.recycle }), cx + 312, ry + rowH / 2 + 1, rateFont, PALETTE.ink, 'left', 800);
       drawText(
         c,
         extraFrags > 0 ? (zh ? `可分解 ${extraFrags} 枚 (+${extraFrags * rule.recycle})` : `${extraFrags} extra (+${extraFrags * rule.recycle})`) : (zh ? '无多余碎片' : 'No extras'),
-        cx + cw - 46,
+        cx + cw - 44,
         ry + rowH / 2 + 1,
-        15.5,
-        extraFrags > 0 ? '#2c763d' : PALETTE.muted,
+        statusFont,
+        extraFrags > 0 ? '#246b34' : PALETTE.inkSoft,
         'right',
-        800,
+        900,
       );
     });
 
     const btnLabel = totalCoins > 0
       ? `${t('p11.meta.recycleAction')} (+${totalCoins})`
       : t('p11.meta.recycleAction');
-    drawPillButton(c, hits, 'armory:recycle', cx + cw / 2 - 170, cy + ch - 56, 340, 46, btnLabel, totalCoins > 0 ? 'gold' : 'muted', {
-      fontSize: 17.5,
+    const btnW = compact ? 380 : 440;
+    drawPillButton(c, hits, 'armory:recycle', cx + (cw - btnW) / 2, cy + ch - btnH - btnBottomPad, btnW, btnH, btnLabel, totalCoins > 0 ? 'gold' : 'muted', {
+      fontSize: compact ? 20 : 22.5,
       icon: 'ui_coin_gold',
       disabled: totalCoins <= 0,
     });
@@ -889,7 +901,8 @@ export function drawMarketModal(
       return;
     }
 
-    // Horizontal cell interior: Rarity-framed icon on left + Big name & Rarity-Colored Tier/Count button on right!
+    // Horizontal cell interior: Rarity-framed icon on left + 3-row stack on right:
+    //   1) Item name   2) Count / `碎片 ×N`   3) Grade-only colored pill (`普通`/`稀有`/`卓越`/`史诗`/`传说`)
     const iconBox = compact ? 70 : 82;
     const ix = tx + 10;
     const iy = ty + Math.round((ch - iconBox) / 2);
@@ -897,34 +910,57 @@ export function drawMarketModal(
 
     const sprSz = iconBox - 12;
     let label = '';
+    let subLabel = `×${prize.amount}`;
+    let isFragment = false;
     if (prize.type === 'coins') {
       drawSpriteContain(c, 'ui_coin_gold', ix + 6, iy + 6, sprSz, sprSz);
       label = t('profile.coins');
+      subLabel = `×${prize.amount}`;
     } else if (prize.type === 'prop' && prize.id) {
       drawSpriteContain(c, `prop_${prize.id}`, ix + 6, iy + 6, sprSz, sprSz);
       label = t(`prop.${prize.id}`);
+      subLabel = `×${prize.amount}`;
     } else if (prize.type === 'fragment' && prize.id) {
       if (!drawSpriteContain(c, `weapon_${prize.id}`, ix + 6, iy + 6, sprSz, sprSz)) {
         drawSpriteContain(c, 'ui_weapon_fragment', ix + 6, iy + 6, sprSz, sprSz);
       }
-      label = t(`fragment.${prize.id}`);
+      label = t(`weapon.${prize.id}`);
+      subLabel = zh ? `碎片 ×${prize.amount}` : `Frag ×${prize.amount}`;
+      isFragment = true;
     }
 
     const textX = ix + iconBox + 10;
     const textW = tx + cw - textX - 10;
-    const nameSize = compact ? 19 : 21;
-    const nameLH = compact ? 22 : 25;
-    drawWrappedText(c, label, textX, ty + (compact ? 12 : 16), textW, nameSize, nameLH, PALETTE.ink, 'left', 900, 2);
+    // Auto-fit single-line item name so long weapon/prop titles stay crisp without colliding with the count row below
+    let nameSize = compact ? 19 : 21;
+    c.font = `900 ${nameSize}px "Trebuchet MS", "PingFang SC", "Microsoft YaHei", sans-serif`;
+    while (nameSize > 14.5 && c.measureText(label).width > textW) {
+      nameSize -= 1;
+      c.font = `900 ${nameSize}px "Trebuchet MS", "PingFang SC", "Microsoft YaHei", sans-serif`;
+    }
+    drawText(c, label, textX + textW / 2, ty + (compact ? 21 : 25), nameSize, PALETTE.ink, 'center', 900);
 
-    // Rarity-Colored Grade + Count Pill/Button (Green for 优良, Blue for 精良, Purple for 史诗, Gold-Orange for 传说!)
-    const pillH = compact ? 32 : 36;
-    const pillY = ty + ch - pillH - (compact ? 10 : 14);
+    // Middle Count / Fragment line strictly between item name & grade pill
+    const subY = ty + (compact ? 45 : 54);
+    drawText(
+      c,
+      subLabel,
+      textX + textW / 2,
+      subY,
+      compact ? 17.5 : 19.5,
+      isFragment ? '#9e470b' : '#5b3a1d',
+      'center',
+      900,
+    );
+
+    // Bottom Grade-Only Colored Pill Button (no color prefix, no ×N inside!)
+    const pillH = compact ? 30 : 34;
+    const pillY = ty + ch - pillH - (compact ? 8 : 11);
     const pillW = textW;
-    const rarityLabel = t(`m2.rarity.${rarity}`);
-    const badgeStr = `${rarityLabel} ×${prize.amount}`;
+    const gradeLabel = (zh ? GACHA_GRADE_ZH : GACHA_GRADE_EN)[rarity] ?? (zh ? '普通' : 'Common');
     round(c, textX, pillY + 2, pillW, pillH, pillH / 2, pal.pillStroke, 'transparent', 0);
     round(c, textX, pillY, pillW, pillH, pillH / 2, pal.pill, pal.pillStroke, 2);
-    drawText(c, badgeStr, textX + pillW / 2, pillY + pillH / 2 + 1, compact ? 17.5 : 19, pal.text, 'center', 900);
+    drawText(c, gradeLabel, textX + pillW / 2, pillY + pillH / 2 + 1, compact ? 18 : 20, pal.text, 'center', 900);
 
     // Celebratory winner badge perched on top-right corner once landed
     if (isWonLit) {

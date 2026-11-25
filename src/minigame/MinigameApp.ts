@@ -1201,7 +1201,8 @@ export class MinigameApp {
       return `${PROPS[prize.id].icon} ${zh ? PROPS[prize.id].name['zh-CN'] : PROPS[prize.id].name.en}`;
     }
     if (prize.type === 'fragment' && prize.id && WEAPONS[prize.id]) {
-      return `🧩 ${zh ? WEAPONS[prize.id].name['zh-CN'] : WEAPONS[prize.id].name.en}`;
+      const wName = zh ? WEAPONS[prize.id].name['zh-CN'] : WEAPONS[prize.id].name.en;
+      return zh ? `🧩 ${wName} 碎片 ×${prize.amount}` : `🧩 ${wName} Frag ×${prize.amount}`;
     }
     return '🎁';
   }

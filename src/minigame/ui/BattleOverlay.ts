@@ -540,7 +540,7 @@ function drawTutorialOverlay(
 
   const acknowledge = targets.acknowledge || step === 6;
   const bubbleW = 556;
-  const bubbleH = step === 5 ? 292 : acknowledge ? 268 : 238;
+  const bubbleH = step === 5 || acknowledge ? 292 : 238;
   const targetRects = [targets.target, targets.source].filter((r): r is TutorialRect => Boolean(r));
   const b = placeTutorialBubble([...targetRects, ...avoidRects], { w: bubbleW, h: bubbleH });
 

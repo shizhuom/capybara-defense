@@ -600,18 +600,19 @@ export function drawKitchenModal(
     y += 136;
 
     // Compact 3-Tier Growth Ladder (Lv.1 / Lv.2 / Lv.3)
-    const ladderH = 34 + 3 * 54;
+    const ladderRowH = 62;
+    const ladderH = 38 + 3 * ladderRowH;
     drawIvorySlab(c, cx, y, cw, ladderH, 16);
-    drawText(c, t('p14.ladder'), cx + 18, y + 19, 15.5, PALETTE.inkSoft, 'left', 900);
+    drawText(c, t('p14.ladder'), cx + 18, y + 21, 18, PALETTE.inkSoft, 'left', 900);
     ([1, 2, 3] as const).forEach((step, si) => {
-      const ly = y + 32 + si * 53;
+      const ly = y + 34 + si * ladderRowH;
       const reached = lv >= step;
-      round(c, cx + 14, ly, cw - 28, 47, 12, reached ? '#eef9e6' : '#f8efdc', reached ? '#4b923c' : '#c7ad82', 1.6);
-      drawText(c, `Lv.${step} ${t(`p14.level.${step}`)}`, cx + 26, ly + 15, 14.5, reached ? '#235c1c' : PALETTE.ink, 'left', 900);
-      if (reached) drawSpriteContain(c, 'ui_storybook_check', cx + 162, ly + 5, 20, 20);
-      drawText(c, brothEffectText(id, step), cx + 26, ly + 35, 14, PALETTE.inkSoft, 'left', 800);
+      round(c, cx + 14, ly, cw - 28, 56, 12, reached ? '#eef9e6' : '#f8efdc', reached ? '#4b923c' : '#c7ad82', 1.6);
+      drawText(c, `Lv.${step} ${t(`p14.level.${step}`)}`, cx + 26, ly + 18, 17, reached ? '#235c1c' : PALETTE.ink, 'left', 900);
+      if (reached) drawSpriteContain(c, 'ui_storybook_check', cx + 188, ly + 6, 22, 22);
+      drawText(c, brothEffectText(id, step), cx + 26, ly + 41, 16.5, PALETTE.inkSoft, 'left', 800);
       if (!reached) {
-        drawCostChipsInline(c, profile, def.costs[step - 1], cx + cw - 22, ly + 23, true);
+        drawCostChipsInline(c, profile, def.costs[step - 1], cx + cw - 22, ly + 28, true);
       }
     });
     y += ladderH + 10;
@@ -703,11 +704,11 @@ export function drawKitchenModal(
   }
   y += activeH + 12;
 
-  // 2. 2-Column GIANT Broth Cards (all 14 broths!)
+  // 2. 2-Column GIANT Broth Cards (all 14 broths, multi-row large ingredient cost chips!)
   const pulseYuzu = pulseSel === '[data-action="kitchen-brew:dish_yuzu_bath"]';
   const cols = 2, gapX = 16, gapY = 14;
   const cardW = Math.floor((vw - 16 - gapX) / cols);
-  const cardH = 212;
+  const cardH = 244;
 
   BROTH_IDS.forEach((brothId, idx) => {
     const col = idx % cols, row = Math.floor(idx / cols);
@@ -748,24 +749,29 @@ export function drawKitchenModal(
       round(c, rx + cardW - 92, ry + 18, 76, 30, 15, lv > 0 ? '#dff5d6' : '#e6dac5', lv > 0 ? '#3d8633' : '#8a7a64', 1.8);
       drawText(c, lv > 0 ? `Lv.${lv}` : t('p14.locked'), rx + cardW - 54, ry + 34, 17, lv > 0 ? '#22591b' : PALETTE.inkSoft, 'center', 900);
 
-      drawText(c, `${t('p14.tier', { tier: def.tier })} · ${t(`broth.${brothId}.style`)}`, tx, ry + 64, 18, '#7a5c3c', 'left', 800);
+      drawText(c, `${t('p14.tier', { tier: def.tier })} · ${t(`broth.${brothId}.style`)}`, tx, ry + 64, 18.5, '#7a5c3c', 'left', 800);
       drawWrappedText(c, brothEffectText(brothId, (lv || 1) as BrothLevel), tx, ry + 82, cardW - 144, 19, 25, PALETTE.ink, 'left', 800, 2);
 
+      // Bottom-left multi-row large ingredient cost chips (strictly clear of right action button!)
+      const bx = rx + cardW - 156;
+      const costMaxW = bx - (rx + 16) - 12;
+      const costBandTop = ry + 138;
+      const costBandH = cardH - 150;
       if (cost) {
-        drawCostChipsInline(c, profile, cost, rx + 16, ry + cardH - 36, false);
+        drawCostChipsWrapped(c, profile, cost, rx + 16, costBandTop, costMaxW, costBandH);
       } else {
-        drawText(c, `★ ${t('p14.mastered')}`, rx + 18, ry + cardH - 36, 19.5, '#8c5310', 'left', 900);
+        drawText(c, `★ ${t('p14.mastered')}`, rx + 18, costBandTop + costBandH / 2, 20, '#8c5310', 'left', 900);
       }
 
-      // Bottom-Right Action Pill Button
+      // Bottom-Right Action Pill Button (vertically centered in the bottom band)
       if (ry + cardH > vy && ry < vy + vh) {
-        const bx = rx + cardW - 156;
+        const btnY = costBandTop + Math.round((costBandH - 48) / 2);
         if (lv === 0) {
           if (afford) {
-            drawPillButton(c, hits, `kitchen:brew:${brothId}`, bx, ry + cardH - 60, 142, 48, t('p14.brew'), 'green', { fontSize: 19.5 });
+            drawPillButton(c, hits, `kitchen:brew:${brothId}`, bx, btnY, 142, 48, t('p14.brew'), 'green', { fontSize: 19.5 });
           } else {
-            round(c, bx + 12, ry + cardH - 56, 128, 42, 21, '#e8dfd0', '#b3a38c', 1.8);
-            drawText(c, t('p14.missing'), bx + 76, ry + cardH - 34, 18.5, '#7c6e5b', 'center', 800);
+            round(c, bx + 10, btnY + 2, 130, 44, 22, '#e8dfd0', '#b3a38c', 1.8);
+            drawText(c, t('p14.missing'), bx + 75, btnY + 25, 19, '#7c6e5b', 'center', 800);
           }
         } else {
           drawPillButton(
@@ -773,7 +779,7 @@ export function drawKitchenModal(
             hits,
             `kitchen:equip:${brothId}`,
             bx,
-            ry + cardH - 60,
+            btnY,
             142,
             48,
             t(isActive ? 'p14.active' : 'p14.equip'),
@@ -793,6 +799,76 @@ export function drawKitchenModal(
   return { scrollViewport: { x: vx, y: vy, w: vw, h: vh } };
 }
 
+/**
+ * Multi-row wrapped large ingredient cost chips (`18–18.5px` bold, matching the card tier/style subtitle)
+ * so costs never look tiny and NEVER collide with the right-hand brew/missing/equip button.
+ */
+function drawCostChipsWrapped(
+  c: CanvasRenderingContext2D,
+  profile: Profile,
+  cost: Partial<Record<IngredientId, number>>,
+  startX: number,
+  bandTop: number,
+  maxW: number,
+  bandH: number,
+): void {
+  const entries = Object.entries(cost) as [IngredientId, number][];
+  if (!entries.length) return;
+  const dense = entries.length > 4;
+  const fontSize = dense ? 17.5 : 18.5;
+  const iconSz = dense ? 22 : 24;
+  const chipH = dense ? 34 : 36;
+  const gapX = dense ? 6 : 8;
+  const gapY = dense ? 7 : 8;
+  const padL = dense ? 7 : 8;
+  const padR = dense ? 9 : 11;
+  const iconGap = dense ? 4 : 5;
+  c.font = `900 ${fontSize}px ${UI_FONT}`;
+
+  const measured = entries.map(([ingId, need]) => {
+    const have = profile.ingredients?.[ingId] ?? 0;
+    const text = `${have}/${need}`;
+    const tw = Math.ceil(c.measureText(text).width);
+    const w = Math.min(maxW, Math.max(dense ? 92 : 104, padL + iconSz + iconGap + tw + padR));
+    return { ingId, have, need, text, w };
+  });
+
+  const rows: Array<typeof measured> = [];
+  let current: typeof measured = [];
+  let rowW = 0;
+  for (const item of measured) {
+    const nextW = current.length > 0 ? rowW + gapX + item.w : item.w;
+    if (current.length > 0 && nextW > maxW) {
+      rows.push(current);
+      current = [item];
+      rowW = item.w;
+    } else {
+      current.push(item);
+      rowW = nextW;
+    }
+  }
+  if (current.length > 0) rows.push(current);
+
+  // If extreme 3-digit counts wrap to 3 rows, compress row pitch gently so all rows stay inside bandH
+  const effectiveGapY = rows.length >= 3 ? 4 : gapY;
+  const effectiveChipH = rows.length >= 3 ? Math.min(chipH, Math.floor((bandH - effectiveGapY * (rows.length - 1)) / rows.length)) : chipH;
+  const totalH = rows.length * effectiveChipH + Math.max(0, rows.length - 1) * effectiveGapY;
+  let ry = bandTop + Math.max(0, Math.round((bandH - totalH) / 2));
+
+  for (const row of rows) {
+    let cx = startX;
+    for (const item of row) {
+      const ok = item.have >= item.need;
+      const cy = ry + effectiveChipH / 2;
+      round(c, cx, ry, item.w, effectiveChipH, effectiveChipH / 2, ok ? '#e4f7dc' : '#fceae6', ok ? '#49913b' : '#c96c5a', 1.6);
+      drawSpriteContain(c, item.ingId, cx + padL, Math.round(cy - iconSz / 2), iconSz, iconSz);
+      drawText(c, item.text, cx + padL + iconSz + iconGap, cy + 1, fontSize, ok ? '#23591b' : '#9c3222', 'left', 900);
+      cx += item.w + gapX;
+    }
+    ry += effectiveChipH + effectiveGapY;
+  }
+}
+
 function drawCostChipsInline(
   c: CanvasRenderingContext2D,
   profile: Profile,
@@ -803,17 +879,29 @@ function drawCostChipsInline(
 ): void {
   const entries = Object.entries(cost) as [IngredientId, number][];
   const compact = entries.length > 4;
-  const chipW = compact ? 68 : 78;
+  const fontSize = compact ? 14.5 : 17;
+  const iconSz = compact ? 18 : 22;
+  const chipH = compact ? 28 : 32;
   const gap = compact ? 4 : 6;
-  const totalW = entries.length * chipW + Math.max(0, entries.length - 1) * gap;
-  let cx = alignRight ? anchorX - totalW : anchorX;
-  for (const [ingId, need] of entries) {
+  const padL = compact ? 5 : 7;
+  const padR = compact ? 7 : 9;
+  const iconGap = compact ? 3 : 4;
+  c.font = `900 ${fontSize}px ${UI_FONT}`;
+
+  const measured = entries.map(([ingId, need]) => {
     const have = profile.ingredients?.[ingId] ?? 0;
-    const ok = have >= need;
-    round(c, cx, centerY - 13, chipW, 26, 13, ok ? '#e4f7dc' : '#fceae6', ok ? '#49913b' : '#c96c5a', 1.4);
-    drawSpriteContain(c, ingId, cx + (compact ? 4 : 5), centerY - 9, 18, 18);
-    drawText(c, `${have}/${need}`, cx + (compact ? 24 : 27), centerY + 1, compact ? 12 : 13.5, ok ? '#23591b' : '#9c3222', 'left', 900);
-    cx += chipW + gap;
+    const text = `${have}/${need}`;
+    const w = Math.max(compact ? 72 : 88, padL + iconSz + iconGap + Math.ceil(c.measureText(text).width) + padR);
+    return { ingId, have, need, text, w };
+  });
+  const totalW = measured.reduce((s, m) => s + m.w, 0) + Math.max(0, measured.length - 1) * gap;
+  let cx = alignRight ? anchorX - totalW : anchorX;
+  for (const item of measured) {
+    const ok = item.have >= item.need;
+    round(c, cx, centerY - chipH / 2, item.w, chipH, chipH / 2, ok ? '#e4f7dc' : '#fceae6', ok ? '#49913b' : '#c96c5a', 1.5);
+    drawSpriteContain(c, item.ingId, cx + padL, Math.round(centerY - iconSz / 2), iconSz, iconSz);
+    drawText(c, item.text, cx + padL + iconSz + iconGap, centerY + 1, fontSize, ok ? '#23591b' : '#9c3222', 'left', 900);
+    cx += item.w + gap;
   }
 }
 
