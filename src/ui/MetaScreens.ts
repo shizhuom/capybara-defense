@@ -33,6 +33,7 @@ export class MetaScreens {
   private detailWeaponId: string | null = null;
   private merchantQuip = 0;
   private prizes: LotteryPrize[] = [];
+  private needsFreshBoard = false;
   private spinning = false;
   private highlight = -1;
   private prize?: LotteryPrize;
@@ -103,11 +104,16 @@ export class MetaScreens {
   }
   private spin(payment: LotteryPayment = 'auto'): void {
     if (this.spinning) return;
+    if (this.needsFreshBoard || this.prizes.length !== 8) {
+      this.prizes = createLotteryPrizes(this.profile(), Math.random);
+      this.needsFreshBoard = false;
+    }
     const before = this.profile();
     const result = spinLottery(this.profile(), this.prizes, Math.random, payment);
     if (!result.ok) { this.notify(result.key, true); return; }
     // The complete transaction is persisted once, before any animation begins.
     if (!this.persist(result.profile)) return;
+    this.needsFreshBoard = true;
     if (result.profile.unlockedAvatars.some(id => !before.unlockedAvatars.includes(id))) this.notify('m3.newAvatars');
     this.spinning = true; this.prize = undefined;
     this.newWeapons = result.newWeapons ?? [];

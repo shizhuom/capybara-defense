@@ -191,11 +191,34 @@ describe('M2 pure progression', () => {
     const storage=memoryStorage();const s=await storageModule();s.saveProfile(today,storage);
     expect(m.ensureDailyShop(s.loadProfile(storage),'2026-11-12',()=>.2).shop).toEqual(today.shop);
   });
-  it('generates 8 prizes and locks a single ticket-first draw, handles capped prop compensation and fragments', async () => {
+  it('generates exact 3-tier rarity 8-slot wheels (6.5/5/1 over 12.5) with uniform 1/8 slot odds, capped prop compensation and fragments', async () => {
     const m=await progression();const p={...m.createProfile(),coins:300,freeLotteryTickets:1};
-    const prizes=m.createLotteryPrizes(p,()=>0);
-    expect(prizes).toHaveLength(8);expect(prizes.filter(p=>p.type==='prop')).toHaveLength(3);
-    expect(prizes.filter(p=>p.type==='coins').map(p=>p.amount)).toEqual([40,80,160]);
+    const countRarities=(list:ReturnType<typeof m.createLotteryPrizes>)=>list.map(pr=>m.getLotteryPrizeRarity(pr)).sort((a,b)=>a-b);
+    const seq=(first:number)=>{let used=false;return()=>{if(!used){used=true;return first;}return .25;};};
+
+    // Exact 3 rarity patterns at exact weight boundaries (6.5 / 12.5, 5 / 12.5, 1 / 12.5)
+    expect(countRarities(m.createLotteryPrizes(p,seq(0)))).toEqual([0,0,0,1,1,1,2,2]);
+    expect(countRarities(m.createLotteryPrizes(p,seq(6.49/12.5)))).toEqual([0,0,0,1,1,1,2,2]);
+    expect(countRarities(m.createLotteryPrizes(p,seq(6.5/12.5)))).toEqual([0,0,0,1,1,2,2,3]);
+    expect(countRarities(m.createLotteryPrizes(p,seq(11.49/12.5)))).toEqual([0,0,0,1,1,2,2,3]);
+    expect(countRarities(m.createLotteryPrizes(p,seq(11.5/12.5)))).toEqual([0,0,1,1,2,2,3,4]);
+    expect(countRarities(m.createLotteryPrizes(p,seq(.999)))).toEqual([0,0,1,1,2,2,3,4]);
+
+    // Deterministic empirical distribution check across 12,500 evenly spaced wheel rolls + exact 1/8 slot pick
+    const tierCounts={common:0,epic:0,legendary:0};
+    for(let i=0;i<12500;i++) tierCounts[m.rollLotteryPattern(()=>(i+.5)/12500).id]++;
+    expect(tierCounts).toEqual({common:6500,epic:5000,legendary:1000});
+
+    const prizes=m.createLotteryPrizes(p,seq(6.5/12.5));
+    expect(prizes).toHaveLength(8);
+    // Exact uniform 1/8 chance for each of the 8 slots
+    const hitSlots=new Set<number>();
+    for(let s=0;s<8;s++) hitSlots.add(m.spinLottery(p,prizes,()=>(s+.5)/8).index!);
+    expect([...hitSlots].sort((a,b)=>a-b)).toEqual([0,1,2,3,4,5,6,7]);
+
+    // Capped prop refund, fragment unlock, atomic ticket/coin payment & invalid prize rejection
+    prizes[0]={type:'prop',id:'washer',amount:1};
+    prizes[6]={type:'fragment',id:'m07_rolling_pin',amount:1};
     const first=m.spinLottery(p,prizes,()=>0);expect(first).toMatchObject({ok:true,index:0,profile:{coins:300,freeLotteryTickets:0,ownedProps:{washer:1}}});
     expect(p.freeLotteryTickets).toBe(1);expect(p.ownedProps).toEqual({});
     const paid=m.spinLottery(first.profile,prizes,()=>0);expect(paid.profile.coins).toBe(320); // P19: 300 - 200 + capped washer's 220
@@ -230,7 +253,7 @@ describe('M2 pure progression', () => {
     expect(second.profile.ownedProps.promo_badge).toBe(2);
     const nearlyFull=m.unlockAllProfile(m.createProfile());delete nearlyFull.ownedProps.washer;delete nearlyFull.ownedProps.clay;
     nearlyFull.freeLotteryTickets=1;nearlyFull.shop={day:'2026-11-13',offers:['washer','clay']};
-    const lastPrizes=m.createLotteryPrizes(nearlyFull,()=>0);
+    const lastPrizes=m.createLotteryPrizes(nearlyFull,()=>0);lastPrizes[0]={type:'prop',id:'washer',amount:1};
     expect(m.spinLottery(nearlyFull,lastPrizes,()=>0).profile.shop).toEqual({day:'2026-11-13',offers:['clay']});
   });
 });

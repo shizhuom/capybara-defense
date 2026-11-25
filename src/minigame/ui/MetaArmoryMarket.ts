@@ -21,7 +21,7 @@ import {
   drawWrappedText,
   type UiHitManager,
 } from './CanvasUI';
-import type { LotteryPrize } from '../../core/MetaProgression';
+import { getLotteryPrizeRarity, type LotteryPrize } from '../../core/MetaProgression';
 
 export type ArmoryTab = 'all' | WeaponFamily | 'recycle';
 export type MarketTab = 'shop' | 'backpack' | 'lottery';
@@ -51,6 +51,7 @@ export interface MarketState {
   lastPrizeLabel: string;
   spinAnim: GachaSpinAnim | null;
   celebrateUntil: number;
+  pendingRefreshAt: number | null;
   spunThisVisit: boolean;
   adRefreshAvailable: boolean;
   adGachaAvailable: boolean;
@@ -66,19 +67,6 @@ const GACHA_RARITY_PALETTE = [
   { top: '#f6ebff', bot: '#e2c9fa', border: '#803eb3', iconBg: '#ebd9fc', pill: '#8542ba', pillStroke: '#52227a', text: '#fffdf7' },
   { top: '#fff4d6', bot: '#fcdd94', border: '#cf6e12', iconBg: '#ffecb8', pill: '#d97312', pillStroke: '#874105', text: '#fffdf7' },
 ] as const;
-
-function getLotteryPrizeRarity(prize: LotteryPrize): 0 | 1 | 2 | 3 | 4 {
-  if (prize.type === 'prop' && prize.id && PROPS[prize.id]) {
-    return Math.max(0, Math.min(4, PROPS[prize.id].rarity)) as 0 | 1 | 2 | 3 | 4;
-  }
-  if (prize.type === 'fragment' && prize.id && WEAPONS[prize.id]) {
-    return Math.max(0, Math.min(4, WEAPONS[prize.id].rarity)) as 0 | 1 | 2 | 3 | 4;
-  }
-  if (prize.type === 'coins') {
-    return prize.amount >= 160 ? 2 : prize.amount >= 80 ? 1 : 0;
-  }
-  return 0;
-}
 
 export function getSortedArmoryWeapons(profile: Profile, family: ArmoryTab): WeaponDefinition[] {
   return Object.values(WEAPONS)

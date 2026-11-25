@@ -230,6 +230,7 @@ export class MinigameApp {
       lastPrizeLabel: '',
       spinAnim: null,
       celebrateUntil: 0,
+      pendingRefreshAt: null,
       spunThisVisit: false,
       adRefreshAvailable: isAdPlacementAvailable(platform.kind, 'free_shop_refresh'),
       adGachaAvailable: isAdPlacementAvailable(platform.kind, 'free_gacha'),
@@ -426,10 +427,12 @@ export class MinigameApp {
       this.profile = ensureDailyShop(this.profile, localDay(), Math.random);
       this.market.spunThisVisit = false;
       this.market.spinAnim = null;
+      if (this.market.pendingRefreshAt !== null || this.market.prizes.length !== 8) {
+        this.market.prizes = createLotteryPrizes(this.profile, Math.random);
+        this.market.pendingRefreshAt = null;
+      }
       this.market.highlightIndex = null;
       this.market.lastPrizeIndex = null;
-      this.market.lastPrizeLabel = '';
-      this.market.prizes = createLotteryPrizes(this.profile, Math.random);
       void this.assetManager.ensureSubpackage('meta');
     } else if (kind === 'village') {
       this.villageUi.nowMs = Date.now();
@@ -1347,6 +1350,10 @@ export class MinigameApp {
     }
     if (id === 'market:spin' || id.startsWith('market:spin:')) {
       if (this.market.spinAnim) return;
+      if (this.market.pendingRefreshAt !== null) {
+        this.market.prizes = createLotteryPrizes(this.profile, Math.random);
+        this.market.pendingRefreshAt = null;
+      }
       const rawPay = id.startsWith('market:spin:') ? id.slice('market:spin:'.length) : 'auto';
       const pay = (rawPay === 'ticket' || rawPay === 'coins' ? rawPay : 'auto') as 'auto' | 'ticket' | 'coins';
       const res = spinLottery(this.profile, this.market.prizes, Math.random, pay);
@@ -1363,6 +1370,10 @@ export class MinigameApp {
     if (id === 'market:ad-gacha') {
       if (this.market.spinAnim) return;
       void this.runRewardedAd('free_gacha', () => {
+        if (this.market.pendingRefreshAt !== null) {
+          this.market.prizes = createLotteryPrizes(this.profile, Math.random);
+          this.market.pendingRefreshAt = null;
+        }
         const temp = { ...this.profile, freeLotteryTickets: this.profile.freeLotteryTickets + 1 };
         const res = spinLottery(temp, this.market.prizes, Math.random, 'ticket');
         if (res.ok && res.prize) {
@@ -1856,7 +1867,15 @@ export class MinigameApp {
 
   private tickGachaSpin(dt: number): void {
     const anim = this.market.spinAnim;
-    if (!anim) return;
+    if (!anim) {
+      if (this.market.pendingRefreshAt !== null && this.elapsedSec >= this.market.pendingRefreshAt) {
+        this.market.prizes = createLotteryPrizes(this.profile, Math.random);
+        this.market.pendingRefreshAt = null;
+        this.market.highlightIndex = null;
+        this.market.lastPrizeIndex = null;
+      }
+      return;
+    }
     if (this.modal !== 'market' || this.market.tab !== 'lottery') {
       this.finishGachaSpin(true);
       return;
@@ -1885,18 +1904,30 @@ export class MinigameApp {
     const anim = this.market.spinAnim;
     if (!anim) return;
     this.market.spinAnim = null;
+    this.market.lastPrizeLabel = anim.pendingLabel;
+    if (silent) {
+      this.market.prizes = createLotteryPrizes(this.profile, Math.random);
+      this.market.pendingRefreshAt = null;
+      this.market.highlightIndex = null;
+      this.market.lastPrizeIndex = null;
+      return;
+    }
     this.market.highlightIndex = anim.winnerIndex;
     this.market.lastPrizeIndex = anim.winnerIndex;
-    this.market.lastPrizeLabel = anim.pendingLabel;
-    this.market.celebrateUntil = this.elapsedSec + 2.6;
-    if (!silent) {
-      this.platform.audio.play('gacha_win');
-      this.showToast(anim.pendingToast, 'good', 2.6);
-    }
+    this.market.celebrateUntil = this.elapsedSec + 1.8;
+    this.market.pendingRefreshAt = this.elapsedSec + 1.8;
+    this.platform.audio.play('gacha_win');
+    this.showToast(anim.pendingToast, 'good', 2.6);
   }
 
   private closeOverlayModal(): void {
     if (this.market.spinAnim) this.finishGachaSpin(true);
+    else if (this.market.pendingRefreshAt !== null) {
+      this.market.prizes = createLotteryPrizes(this.profile, Math.random);
+      this.market.pendingRefreshAt = null;
+      this.market.highlightIndex = null;
+      this.market.lastPrizeIndex = null;
+    }
     if (this.activeGuideFeature) {
       this.profile = markOnboarded(this.profile, this.activeGuideFeature);
       this.save();

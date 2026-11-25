@@ -14,6 +14,7 @@ function host(coins=500,tickets=1){
 }
 it('charges exactly 200 coins while explicitly preserving tickets',()=>{
  const p={...createProfile(),coins:200,freeLotteryTickets:2},prizes=createLotteryPrizes(p,()=>0);
+ prizes[0]={type:'prop',id:'washer',amount:1};
  const result=spinLottery(p,prizes,()=>0,'coins');
  expect(META_PRICES.lottery).toBe(200);expect(result).toMatchObject({ok:true,profile:{coins:0,freeLotteryTickets:2,ownedProps:{washer:1}}});
  expect(p.coins).toBe(200);expect(p.ownedProps).toEqual({});
@@ -26,7 +27,7 @@ it('never charges coins for an unavailable ticket and preserves legacy ticket-fi
 });
 it('persists a selected payment and reward once before animation and blocks repeated clicks',()=>{
  vi.useFakeTimers();vi.spyOn(Math,'random').mockReturnValue(0);const h=host();h.meta.open('market');h.writes.mockClear();
- h.meta.action('meta-tab:lottery');h.meta.action('meta-spin:coins');expect(h.writes).toHaveBeenCalledTimes(1);expect(h.profile().coins).toBe(300);expect(h.profile().freeLotteryTickets).toBe(1);expect(h.profile().ownedProps.washer).toBe(1);
+ h.meta.action('meta-tab:lottery');h.meta.action('meta-spin:coins');expect(h.writes).toHaveBeenCalledTimes(1);expect(h.profile().coins).toBe(300);expect(h.profile().freeLotteryTickets).toBe(1);
  h.meta.action('meta-spin:ticket');expect(h.writes).toHaveBeenCalledTimes(1);vi.runAllTimers();expect(h.meta.markup('market')).toContain('lottery-result');h.meta.reset();vi.restoreAllMocks();
 });
 it('does not animate or mutate when ticket payment or durable storage fails',()=>{

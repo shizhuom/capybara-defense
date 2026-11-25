@@ -158,7 +158,9 @@ describe('P11 dedicated market tabs',()=>{
     h.storage.setItem.mockClear();
     h.meta.action('meta-spin:coins');
     expect(h.storage.setItem).toHaveBeenCalledTimes(1);
-    expect(loadProfile()).toMatchObject({coins:300,freeLotteryTickets:1,ownedProps:{washer:1}});
+    const saved1 = loadProfile();
+    expect(saved1).toMatchObject({coins:300,freeLotteryTickets:1});
+    expect(Object.keys(saved1.weaponFragments).length + Object.keys(saved1.ownedProps).length).toBeGreaterThan(0);
     h.meta.action('meta-tab:backpack');h.meta.action('meta-spin:ticket');
     expect(h.storage.setItem).toHaveBeenCalledTimes(1);
     vi.runAllTimers();
@@ -173,7 +175,9 @@ describe('P11 dedicated market tabs',()=>{
     vi.useFakeTimers();vi.spyOn(Math,'random').mockReturnValue(0);
     const h=host();h.meta.open('market');h.meta.action('meta-tab:lottery');h.meta.action('meta-spin:ticket');h.meta.reset();
     expect(vi.getTimerCount()).toBe(0);
-    expect(loadProfile()).toMatchObject({coins:500,freeLotteryTickets:0,ownedProps:{washer:1}});
+    const saved2 = loadProfile();
+    expect(saved2).toMatchObject({coins:500,freeLotteryTickets:0});
+    expect(Object.keys(saved2.weaponFragments).length + Object.keys(saved2.ownedProps).length).toBeGreaterThan(0);
   });
 
   it('leaves purchases, equipment, recycling and spins unchanged when storage refuses a write',()=>{

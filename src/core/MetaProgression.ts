@@ -16,7 +16,48 @@ import { allOnboardedTokens, sanitizeOnboardedFeatures } from './FeatureUnlocks'
 import type { Profile } from './types';
 
 export interface MetaResult { profile:Profile; ok:boolean; key:string; amount?:number; newWeapons?:string[] }
+export type LotteryRarity = 0 | 1 | 2 | 3 | 4;
 export interface LotteryPrize { type:'prop'|'coins'|'fragment'; id?:string; amount:number }
+
+/**
+ * 8-slot gacha wheel rarity patterns (total weight = 12.5):
+ *  - Pattern 1 (6.5 / 12.5 = 52%): 3 White, 3 Green, 2 Blue
+ *  - Pattern 2 (5.0 / 12.5 = 40%): 3 White, 2 Green, 2 Blue, 1 Purple
+ *  - Pattern 3 (1.0 / 12.5 =  8%): 2 White, 2 Green, 2 Blue, 1 Purple, 1 Orange
+ * Each of the 8 slots wins with uniform 1/8 probability on spin.
+ */
+export const LOTTERY_PATTERNS: readonly {
+  readonly id: 'common' | 'epic' | 'legendary';
+  readonly weight: number;
+  readonly rarities: readonly LotteryRarity[];
+}[] = [
+  { id: 'common', weight: 6.5, rarities: [0, 0, 0, 1, 1, 1, 2, 2] },
+  { id: 'epic', weight: 5, rarities: [0, 0, 0, 1, 1, 2, 2, 3] },
+  { id: 'legendary', weight: 1, rarities: [0, 0, 1, 1, 2, 2, 3, 4] },
+];
+export const LOTTERY_TOTAL_WEIGHT = 12.5;
+
+export function getLotteryPrizeRarity(prize: LotteryPrize): LotteryRarity {
+  if (prize.type === 'prop' && prize.id && has(PROPS, prize.id)) {
+    return Math.max(0, Math.min(4, PROPS[prize.id].rarity)) as LotteryRarity;
+  }
+  if (prize.type === 'fragment' && prize.id && has(WEAPONS, prize.id)) {
+    return Math.max(0, Math.min(4, WEAPONS[prize.id].rarity)) as LotteryRarity;
+  }
+  if (prize.type === 'coins') {
+    return prize.amount >= 160 ? 2 : prize.amount >= 80 ? 1 : 0;
+  }
+  return 0;
+}
+
+export function rollLotteryPattern(random: () => number) {
+  let roll = sample(random) * LOTTERY_TOTAL_WEIGHT;
+  for (const pat of LOTTERY_PATTERNS) {
+    roll -= pat.weight;
+    if (roll < 0) return pat;
+  }
+  return LOTTERY_PATTERNS[LOTTERY_PATTERNS.length - 1];
+}
 const has = (object:object,key:string) => Object.hasOwn(object,key);
 const object = (value:unknown):Record<string,unknown> => value && typeof value==='object' && !Array.isArray(value) ? value as Record<string,unknown> : {};
 const count = (value:unknown):number => typeof value==='number' && Number.isSafeInteger(value) && value>=0 ? value : 0;
@@ -210,17 +251,58 @@ export function buyProp(profile:Profile,id:string):MetaResult {
   return success(p,'meta.purchased',-definition.price);
 }
 export function createLotteryPrizes(profile:Profile,random:()=>number):LotteryPrize[] {
-  const pool=Object.keys(PROPS);const prizes:LotteryPrize[]=[];
-  for(let i=0;i<3;i++) {const id=choose(pool,random);pool.splice(pool.indexOf(id),1);prizes.push({type:'prop',id,amount:1});}
-  prizes.push(...[40,80,160].map(amount=>({type:'coins' as const,amount})),
-    {type:'fragment',id:rollWeapon(random,[3],1,profile.unlockedWeapons),amount:1},{type:'fragment',id:rollWeapon(random,[4],1,profile.unlockedWeapons),amount:1});
+  const pattern=rollLotteryPattern(random);
+  const usedProps=new Set<string>(),usedWeapons=new Set<string>(),usedCoins=new Set<number>();
+  const seen=[0,0,0,0,0];
+  const pickProp=(rarity:number):string|undefined=>{
+    const pool=Object.values(PROPS).filter(p=>p.rarity===rarity&&!usedProps.has(p.id)).map(p=>p.id);
+    if(!pool.length) return undefined;
+    const id=choose(pool,random);usedProps.add(id);return id;
+  };
+  const pickWeapon=(rarity:number):string=>{
+    const rolled=rollWeapon(random,[rarity],1,profile.unlockedWeapons);
+    if(!usedWeapons.has(rolled)){usedWeapons.add(rolled);return rolled;}
+    const pool=Object.values(WEAPONS).filter(w=>w.rarity===rarity&&!usedWeapons.has(w.id)).map(w=>w.id);
+    const id=pool.length?choose(pool,random):rolled;
+    usedWeapons.add(id);return id;
+  };
+  const prizes:LotteryPrize[]=pattern.rarities.map(rarity=>{
+    const nth=seen[rarity]++;
+    if(rarity===0){
+      if(nth>=2&&!usedCoins.has(40)){usedCoins.add(40);return{type:'coins',amount:40};}
+      if(nth===1&&!usedCoins.has(40)&&pattern.id==='legendary'&&sample(random)<.6){usedCoins.add(40);return{type:'coins',amount:40};}
+      return{type:'fragment',id:pickWeapon(0),amount:1};
+    }
+    if(rarity===1){
+      if(nth===0){const pid=pickProp(1);if(pid)return{type:'prop',id:pid,amount:1};}
+      if(!usedCoins.has(80)&&(nth===1?sample(random)<.55:sample(random)<.45)){usedCoins.add(80);return{type:'coins',amount:80};}
+      if(sample(random)<.5){const pid=pickProp(1);if(pid)return{type:'prop',id:pid,amount:1};}
+      return{type:'fragment',id:pickWeapon(1),amount:1};
+    }
+    if(rarity===2){
+      if(nth===0){const pid=pickProp(2);if(pid)return{type:'prop',id:pid,amount:1};}
+      if(!usedCoins.has(160)&&sample(random)<.5){usedCoins.add(160);return{type:'coins',amount:160};}
+      return{type:'fragment',id:pickWeapon(2),amount:1};
+    }
+    if(rarity===3){
+      if(sample(random)<.5){const pid=pickProp(3);if(pid)return{type:'prop',id:pid,amount:1};}
+      return{type:'fragment',id:pickWeapon(3),amount:1};
+    }
+    // rarity === 4 (Orange Legendary)
+    if(sample(random)<.35){const pid=pickProp(4);if(pid)return{type:'prop',id:pid,amount:1};}
+    return{type:'fragment',id:pickWeapon(4),amount:1};
+  });
+  for(let i=prizes.length-1;i>0;i--){
+    const j=Math.floor(sample(random)*(i+1));
+    const tmp=prizes[i];prizes[i]=prizes[j];prizes[j]=tmp;
+  }
   return prizes;
 }
 export type LotteryPayment = 'auto' | 'ticket' | 'coins';
 export function spinLottery(profile:Profile,prizes:LotteryPrize[],random:()=>number,payment:LotteryPayment='auto'):MetaResult&{prize?:LotteryPrize;index?:number} {
   const valid=(prize:LotteryPrize)=>prize&&Number.isSafeInteger(prize.amount)&&prize.amount>0&&
     (prize.type==='coins'?[40,80,160].includes(prize.amount):prize.type==='prop'?typeof prize.id==='string'&&has(PROPS,prize.id)&&prize.amount===1:
-      prize.type==='fragment'&&typeof prize.id==='string'&&has(WEAPONS,prize.id)&&WEAPONS[prize.id].rarity>=3&&prize.amount===1);
+      prize.type==='fragment'&&typeof prize.id==='string'&&has(WEAPONS,prize.id)&&prize.amount===1);
   if(prizes.length!==8||!prizes.every(valid)) return fail(profile,'meta.invalidPrizes');
   const useTicket=payment==='ticket'||(payment==='auto'&&profile.freeLotteryTickets>0);
   if(useTicket&&profile.freeLotteryTickets<=0) return fail(profile,'p9.noTickets');
