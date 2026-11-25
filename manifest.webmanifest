@@ -1,0 +1,9 @@
+{
+  "name": "Capybara: Chill Defense",
+  "short_name": "Capybara",
+  "start_url": "./",
+  "display": "fullscreen",
+  "orientation": "landscape",
+  "background_color": "#231d18",
+  "theme_color": "#231d18"
+}
