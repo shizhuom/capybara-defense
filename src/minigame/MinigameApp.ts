@@ -38,7 +38,7 @@ import {
   spinLottery,
   type LotteryPrize,
 } from '../core/MetaProgression';
-import { validateNickname } from '../core/PlayerIdentity';
+import { displayNickname, validateNickname } from '../core/PlayerIdentity';
 import {
   getMapUnlockRequirement,
   pickBattleMap,
@@ -103,6 +103,7 @@ import {
   recordAdUse,
   type AdPlacement,
 } from './adConfig';
+import { buildFriendCloudPayload } from './friendCloud';
 import { MinigameAssetManager } from './MinigameAssetManager';
 import { BattleAudioBridge } from './BattleAudioBridge';
 import {
@@ -186,6 +187,9 @@ export class MinigameApp {
 
   private draggingSlider: 'music' | 'sound' | null = null;
   private scrollingModal = false;
+  private scrollingWxFriend = false;
+  private wxFriendLastY = 0;
+  private wxFriendMoved = false;
   private activeTouchId: number | null = null;
 
   private rafId = 0;
@@ -237,6 +241,7 @@ export class MinigameApp {
       fetch: platform.fetch,
       storage: platform.storage,
     });
+    this.syncWxFriendCloud();
 
     this.market = {
       tab: 'shop',
@@ -498,10 +503,49 @@ export class MinigameApp {
     }
   }
 
+  private syncWxFriendCloud(): void {
+    const entries = buildFriendCloudPayload(this.profile, getLanguage());
+    if (entries.length > 0) {
+      this.platform.setFriendCloudStorage?.(entries);
+    }
+  }
+
+  private renderWxFriendBoard(board: 'rank' | 'endless', force = false): void {
+    const canvas = this.platform.getFriendLeaderboardCanvas?.();
+    if (!canvas) return;
+    // Main domain sizes sharedCanvas once at 1.5× Retina sharpness for our 1140×360 viewport box.
+    if (canvas.width !== 1710) canvas.width = 1710;
+    if (canvas.height !== 540) canvas.height = 540;
+    const lang = getLanguage();
+    const rank = getRank(this.profile.stars);
+    this.platform.postFriendLeaderboardMessage?.({
+      type: 'render',
+      board,
+      lang,
+      force,
+      selfFallback: {
+        nickname: displayNickname(this.profile, lang),
+        stars: this.profile.stars,
+        rankName: t(`rank.${rank.index}`),
+        wins: this.profile.wins,
+        bestWave: this.profile.bestEndlessWave ?? 0,
+      },
+    });
+  }
+
+  private clearWxFriendBoard(): void {
+    this.platform.postFriendLeaderboardMessage?.({ type: 'clear' });
+  }
+
   private async refreshLeaderboards(force: boolean): Promise<void> {
     this.leaderboardUi.loading = true;
     try {
       const lang = getLanguage();
+      this.syncWxFriendCloud();
+      const activeBoard: 'rank' | 'endless' = (
+        this.modal === 'endless-board' || (this.modal === 'medallions' && this.leaderboardUi.medallionTab === 'endless-board')
+      ) ? 'endless' : 'rank';
+      this.renderWxFriendBoard(activeBoard, force);
       void this.leaderboardClient.submitRank(this.profile, lang);
       if ((this.profile.bestEndlessWave ?? 0) >= 11) {
         void this.leaderboardClient.submitScore(this.profile, lang);
@@ -638,6 +682,7 @@ export class MinigameApp {
           this.settlement.adDoubleClaimed = false;
           this.settlement.adReviveAvailable = false;
           this.platform.audio.play('victory');
+          this.syncWxFriendCloud();
           void this.leaderboardClient.submitScore(this.profile, getLanguage());
         }
       }
@@ -672,6 +717,7 @@ export class MinigameApp {
           adReviveAvailable: canReviveDefeat,
         };
         this.platform.audio.play(result.winner === 'player' ? 'victory' : 'defeat');
+        this.syncWxFriendCloud();
         void this.leaderboardClient.submitRank(this.profile, getLanguage());
       }
     }
@@ -772,6 +818,8 @@ export class MinigameApp {
         adStaminaAvailable: isAdPlacementAvailable(this.platform.kind, 'stamina_refill'),
         adSpeed3xAvailable: isAdPlacementAvailable(this.platform.kind, 'speed3x_trial'),
         speed3xTrialActive: this.speed3xTrialThisBattle,
+        wxFriendCanvas: this.platform.getFriendLeaderboardCanvas?.() ?? null,
+        wxFriendMode: this.platform.kind === 'wx' && Boolean(this.platform.getFriendLeaderboardCanvas?.()),
         elapsed: this.elapsedSec,
         viewport: vp,
       });
@@ -908,6 +956,8 @@ export class MinigameApp {
     this.drag = undefined;
     this.draggingSlider = null;
     this.scrollingModal = false;
+    this.scrollingWxFriend = false;
+    this.wxFriendMoved = false;
   }
 
   private onTouchStart(p: TouchEventData): void {
@@ -924,6 +974,12 @@ export class MinigameApp {
         this.draggingSlider = 'sound';
         this.updateVolumeSlider('sound', p.stageX);
         return;
+      }
+      const wfv = this.modalLayout.wxFriendViewport;
+      if (wfv && p.stageX >= wfv.x && p.stageX <= wfv.x + wfv.w && p.stageY >= wfv.y && p.stageY <= wfv.y + wfv.h) {
+        this.scrollingWxFriend = true;
+        this.wxFriendLastY = p.stageY;
+        this.wxFriendMoved = false;
       }
       const sv = this.modalLayout.scrollViewport;
       if (sv && p.stageX >= sv.x && p.stageX <= sv.x + sv.w && p.stageY >= sv.y && p.stageY <= sv.y + sv.h) {
@@ -993,6 +1049,16 @@ export class MinigameApp {
       this.updateVolumeSlider(this.draggingSlider, p.stageX);
       return;
     }
+    if (this.scrollingWxFriend) {
+      const dy = this.wxFriendLastY - p.stageY;
+      this.wxFriendLastY = p.stageY;
+      if (Math.abs(dy) > 1) {
+        this.wxFriendMoved = true;
+        this.hits.activeId = null;
+        this.platform.postFriendLeaderboardMessage?.({ type: 'scrollDelta', dy });
+      }
+      return;
+    }
     if (this.scrollingModal) {
       this.scroll.onMove(p.stageY);
       if (this.scroll.movedDistance > 10) this.hits.activeId = null;
@@ -1026,6 +1092,12 @@ export class MinigameApp {
       return;
     }
 
+    if (this.scrollingWxFriend) {
+      const wasScroll = this.wxFriendMoved;
+      this.scrollingWxFriend = false;
+      this.wxFriendMoved = false;
+      if (wasScroll) { this.hits.activeId = null; return; }
+    }
     if (this.scrollingModal) {
       const wasScroll = this.scroll.onEnd();
       this.scrollingModal = false;
@@ -1719,6 +1791,9 @@ export class MinigameApp {
     if (id === 'lb:toggle-ladder') {
       this.leaderboardUi.showRankLadder = !this.leaderboardUi.showRankLadder;
       this.scroll.reset();
+      if (!this.leaderboardUi.showRankLadder) {
+        this.renderWxFriendBoard('rank', false);
+      }
       return;
     }
     if (id === 'lb:refresh') {
@@ -2124,11 +2199,13 @@ export class MinigameApp {
       this.resumeBattle();
       return;
     }
+    this.clearWxFriendBoard();
     this.modal = null;
     this.checkMenuOnboarding();
   }
 
   private returnToMenu(): void {
+    this.clearWxFriendBoard();
     this.screen = 'menu';
     this.modal = null;
     this.modalReturnTo = null;

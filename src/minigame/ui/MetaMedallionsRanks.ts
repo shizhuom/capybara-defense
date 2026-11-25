@@ -64,10 +64,21 @@ export function drawMedallionsModal(
   profile: Profile,
   lb: LeaderboardUiState,
   scroll: ScrollRegion,
-  opts?: { inBattle?: boolean; preparation?: boolean; guideStep?: DialogGuideStep | null; elapsed?: number },
-): { scrollViewport?: { x: number; y: number; w: number; h: number } } {
+  opts?: {
+    inBattle?: boolean;
+    preparation?: boolean;
+    guideStep?: DialogGuideStep | null;
+    elapsed?: number;
+    wxFriendCanvas?: HTMLCanvasElement | null;
+    wxFriendMode?: boolean;
+  },
+): { scrollViewport?: { x: number; y: number; w: number; h: number }; wxFriendViewport?: { x: number; y: number; w: number; h: number } } {
   const totalLv = profileMedallionTotal(profile);
   const pulseSel = opts?.guideStep?.pulseSelector;
+  const zh = getLanguage() === 'zh-CN';
+  const endlessTabLabel = opts?.wxFriendMode
+    ? (zh ? '无尽好友榜' : 'Friend Endless')
+    : t('p11.tab.endless-board');
 
   const body = drawLedgerShell(c, hits, {
     title: t('p17.title'),
@@ -79,7 +90,7 @@ export function drawMedallionsModal(
     ],
     tabs: [
       { id: 'medallion:tab:medallions', label: t('p17.title'), active: lb.medallionTab === 'medallions' },
-      { id: 'medallion:tab:endless-board', label: t('p11.tab.endless-board'), active: lb.medallionTab === 'endless-board' },
+      { id: 'medallion:tab:endless-board', label: endlessTabLabel, active: lb.medallionTab === 'endless-board' },
     ],
     footer1: t('p17.footer1'),
     footer2: opts?.inBattle ? t(opts.preparation ? 'p17.footerPreparation' : 'p17.footerNextBattle') : t('p17.footer2'),
@@ -88,7 +99,7 @@ export function drawMedallionsModal(
   });
 
   if (lb.medallionTab === 'endless-board') {
-    return drawEndlessBoardBody(c, hits, profile, lb, scroll, body, true);
+    return drawEndlessBoardBody(c, hits, profile, lb, scroll, body, true, opts?.wxFriendCanvas ?? null, Boolean(opts?.wxFriendMode));
   }
 
   const vx = body.x, vy = body.y, vw = body.w, vh = body.h;
@@ -207,37 +218,58 @@ export function drawProfileHubModal(
   profile: Profile,
   lb: LeaderboardUiState,
   scroll: ScrollRegion,
-  opts: { inBattle: boolean; devUnlocked: boolean },
+  opts: {
+    inBattle: boolean;
+    devUnlocked: boolean;
+    wxFriendCanvas?: HTMLCanvasElement | null;
+    wxFriendMode?: boolean;
+  },
 ): {
   scrollViewport?: { x: number; y: number; w: number; h: number };
+  wxFriendViewport?: { x: number; y: number; w: number; h: number };
   musicSlider?: { x: number; y: number; w: number; h: number };
   soundSlider?: { x: number; y: number; w: number; h: number };
 } {
+  const zh = getLanguage() === 'zh-CN';
   const showEndless = isFeatureUnlocked(profile, 'endless');
   const tabIds: ProfileHubTab[] = showEndless
     ? ['leaderboard', 'endless-board', 'profile', 'settings']
     : ['leaderboard', 'profile', 'settings'];
 
   const mascot = activeTab === 'leaderboard' || activeTab === 'endless-board' ? 'ui_rank_peek_capy' : 'ui_profile_peek_capy';
+  const tabLabel = (tab: ProfileHubTab): string => {
+    if (opts.wxFriendMode && tab === 'endless-board') return zh ? '无尽好友榜' : 'Friend Endless';
+    if (opts.wxFriendMode && tab === 'leaderboard') return zh ? '好友段位榜' : 'Friend Rank';
+    return t(`p11.tab.${tab}`);
+  };
+  const headerTitle = opts.wxFriendMode && activeTab === 'endless-board'
+    ? (zh ? '无尽好友榜' : 'WeChat Friend Endless')
+    : opts.wxFriendMode && activeTab === 'leaderboard'
+      ? (zh ? '微信好友段位榜' : 'WeChat Friend Rank')
+      : t(`p11.title.${activeTab}`);
 
   const body = drawLedgerShell(c, hits, {
-    title: t(`p11.title.${activeTab}`),
+    title: headerTitle,
     mascot,
     titleHitId: activeTab === 'settings' ? 'settings:title-tap' : undefined,
     tabs: tabIds.map(tab => ({
       id: `profilehub:tab:${tab}`,
-      label: t(`p11.tab.${tab}`),
+      label: tabLabel(tab),
       active: activeTab === tab,
     })),
-    footer1: t(`p11.tip.${activeTab}.1`),
-    footer2: t(`p11.tip.${activeTab}.2`),
+    footer1: opts.wxFriendMode && (activeTab === 'leaderboard' || activeTab === 'endless-board')
+      ? (zh ? '微信好友排行榜仅展示同玩本游戏的微信好友，由微信官方免费安全托管' : 'Powered by WeChat Open Data Context — shows WeChat friends playing this game')
+      : t(`p11.tip.${activeTab}.1`),
+    footer2: opts.wxFriendMode && (activeTab === 'leaderboard' || activeTab === 'endless-board')
+      ? (zh ? '每局对战结束自动同步最新段位与无尽波次，点击分享可邀请好友上榜' : 'Scores sync automatically after each match — tap Share to invite friends')
+      : t(`p11.tip.${activeTab}.2`),
   });
 
   if (activeTab === 'leaderboard') {
-    return drawRankBoardBody(c, hits, profile, lb, scroll, body);
+    return drawRankBoardBody(c, hits, profile, lb, scroll, body, opts.wxFriendCanvas ?? null, Boolean(opts.wxFriendMode));
   }
   if (activeTab === 'endless-board') {
-    return drawEndlessBoardBody(c, hits, profile, lb, scroll, body, false);
+    return drawEndlessBoardBody(c, hits, profile, lb, scroll, body, false, opts.wxFriendCanvas ?? null, Boolean(opts.wxFriendMode));
   }
   if (activeTab === 'profile') {
     return drawPassportBody(c, hits, profile, scroll, body);
@@ -253,12 +285,49 @@ function drawRankBoardBody(
   lb: LeaderboardUiState,
   scroll: ScrollRegion,
   body: { x: number; y: number; w: number; h: number },
-): { scrollViewport?: { x: number; y: number; w: number; h: number } } {
+  wxFriendCanvas: HTMLCanvasElement | null,
+  wxFriendMode: boolean,
+): { scrollViewport?: { x: number; y: number; w: number; h: number }; wxFriendViewport?: { x: number; y: number; w: number; h: number } } {
   const lang = getLanguage();
   const zh = lang === 'zh-CN';
   const rank = getRank(profile.stars);
   const nextRank = RANKS[rank.index + 1];
   const progress = nextRank ? Math.max(0, Math.min(1, (profile.stars - rank.minStars) / (nextRank.minStars - rank.minStars))) : 1;
+
+  // ── WECHAT OFFICIAL FREE FRIEND RANK LEADERBOARD (Open Data Context sharedCanvas) ──
+  if (wxFriendMode && wxFriendCanvas && !lb.showRankLadder) {
+    const vx = body.x, vy = body.y, vw = body.w, vh = body.h;
+    const rowW = vw - 8;
+    const sumH = 104;
+    const sumY = vy + 2;
+
+    drawIvorySlab(c, vx + 4, sumY, rowW, sumH, 18, '#fffdf8', '#f6e8cb', '#7e5530', 2.4);
+    hits.add({ id: 'lb:toggle-ladder', x: vx + 4, y: sumY, w: rowW - 360, h: sumH });
+    round(c, vx + 18, sumY + 14, 76, 76, 18, '#fff3d6', '#7a5230', 2.2);
+    if (!drawSpriteContain(c, `avatar_${profile.avatarId}`, vx + 24, sumY + 20, 64, 64)) {
+      drawSpriteContain(c, 'avatar_capybara', vx + 24, sumY + 20, 64, 64);
+    }
+    const rName = t(`rank.${rank.index}`);
+    drawText(c, rName, vx + 110, sumY + 32, 26, PALETTE.ink, 'left', 900);
+    c.font = '900 26px "Trebuchet MS", "PingFang SC", "Microsoft YaHei", sans-serif';
+    const rw = c.measureText(rName).width;
+    round(c, vx + 122 + rw, sumY + 17, 136, 32, 16, '#f2e0bc', '#8c5d2c', 1.8);
+    drawText(c, t('p19.rankLadderShow'), vx + 190 + rw, sumY + 34, 18, '#5c3612', 'center', 900);
+    drawIconLabel(c, 'ui_star_rank', String(profile.stars), vx + 110, sumY + 72, 26, 23, '#9e5a0c');
+    drawProgressBar(c, vx + 196, sumY + 65, Math.max(140, rowW - 580), 14, progress, '#e8b43c', '#e6dac4', '#8c6239');
+
+    drawPillButton(c, hits, 'lb:share', vx + 4 + rowW - 284, sumY + 26, 140, 52, zh ? '邀请好友' : 'Invite', 'gold', { fontSize: 21 });
+    drawPillButton(c, hits, 'lb:refresh', vx + 4 + rowW - 132, sumY + 26, 116, 52, lb.loading ? '…' : (zh ? '刷新' : 'Sync'), 'cream', { fontSize: 21 });
+
+    const listX = vx + 4;
+    const listY = sumY + sumH + 10;
+    const listW = rowW;
+    const listH = Math.max(180, vy + vh - listY - 2);
+    try {
+      c.drawImage(wxFriendCanvas, listX, listY, listW, listH);
+    } catch { /* sharedCanvas may still be initializing on first frame */ }
+    return { wxFriendViewport: { x: listX, y: listY, w: listW, h: listH } };
+  }
 
   const vx = body.x, vy = body.y, vw = body.w, vh = body.h;
   c.save();
@@ -424,7 +493,7 @@ function drawRankBoardBody(
   return { scrollViewport: { x: vx, y: vy, w: vw, h: vh } };
 }
 
-// ── SHARED GLOBAL ENDLESS BOARD BODY (used in BOTH Medallions Tab 2 & Profile Hub Tab 2!) ──
+// ── SHARED ENDLESS BOARD BODY (WeChat Free Friend Board on wx; Local Board on Web/BL) ──
 function drawEndlessBoardBody(
   c: CanvasRenderingContext2D,
   hits: UiHitManager,
@@ -433,11 +502,48 @@ function drawEndlessBoardBody(
   scroll: ScrollRegion,
   body: { x: number; y: number; w: number; h: number },
   fromMedallionHub: boolean,
-): { scrollViewport?: { x: number; y: number; w: number; h: number } } {
+  wxFriendCanvas: HTMLCanvasElement | null = null,
+  wxFriendMode = false,
+): { scrollViewport?: { x: number; y: number; w: number; h: number }; wxFriendViewport?: { x: number; y: number; w: number; h: number } } {
   const lang = getLanguage();
   const zh = lang === 'zh-CN';
   const myNick = displayNickname(profile, lang);
   const best = profile.bestEndlessWave ?? 0;
+
+  // ── WECHAT OFFICIAL FREE FRIEND ENDLESS LEADERBOARD (Open Data Context sharedCanvas) ──
+  if (wxFriendMode && wxFriendCanvas) {
+    const vx = body.x, vy = body.y, vw = body.w, vh = body.h;
+    const rowW = vw - 8;
+    const idH = 104;
+    const idY = vy + 2;
+
+    drawIvorySlab(c, vx + 4, idY, rowW, idH, 18, '#fffdf8', '#f6e8cb', '#7e5530', 2.4);
+    round(c, vx + 18, idY + 14, 76, 76, 18, '#fff3d6', '#7a5230', 2.2);
+    drawSpriteContain(c, `avatar_${profile.avatarId}`, vx + 24, idY + 20, 64, 64);
+
+    drawText(c, zh ? '微信好友无尽榜' : 'WeChat Friend Endless', vx + 110, idY + 32, 26, PALETTE.ink, 'left', 900);
+    const bestLine = best >= 11 ? t('p17.board.best', { wave: best }) : t('p17.board.noBest');
+    drawText(c, bestLine, vx + 110, idY + 70, 21, best >= 11 ? '#6a2e8c' : PALETTE.inkSoft, 'left', 800);
+
+    let rightCursor = vx + 4 + rowW - 16;
+    drawPillButton(c, hits, 'lb:refresh', rightCursor - 116, idY + 26, 116, 52, lb.loading ? '…' : (zh ? '刷新' : 'Sync'), 'cream', { fontSize: 21 });
+    rightCursor -= 128;
+    drawPillButton(c, hits, 'lb:share', rightCursor - 136, idY + 26, 136, 52, zh ? '邀请好友' : 'Invite', 'gold', { fontSize: 21 });
+    rightCursor -= 148;
+    if (!fromMedallionHub) {
+      drawPillButton(c, hits, 'modal:switch:medallions', rightCursor - 188, idY + 26, 188, 52, t('p17.board.medallions'), 'cream', { fontSize: 19.5, icon: 'ui_endless_crest' });
+    }
+
+    const listX = vx + 4;
+    const listY = idY + idH + 10;
+    const listW = rowW;
+    const listH = Math.max(180, vy + vh - listY - 2);
+    try {
+      c.drawImage(wxFriendCanvas, listX, listY, listW, listH);
+    } catch { /* sharedCanvas may still be initializing on first frame */ }
+    return { wxFriendViewport: { x: listX, y: listY, w: listW, h: listH } };
+  }
+
   const snap = lb.endlessSnap;
   const online = snap.mode === 'online' && snap.entries.length > 0;
 

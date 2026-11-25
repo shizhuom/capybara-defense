@@ -69,6 +69,8 @@ export interface MiniGameGlobalApi {
   shareAppMessage?: (opts: { title: string; imageUrl?: string; query?: string }) => void;
   showShareMenu?: (opts: { withShareTicket?: boolean; menus?: string[] }) => void;
   onShareAppMessage?: (cb: () => { title: string; imageUrl?: string; query?: string }) => void;
+  setUserCloudStorage?: (opts: { KVDataList: Array<{ key: string; value: string }>; success?: () => void; fail?: (err: unknown) => void }) => void;
+  getOpenDataContext?: () => { canvas: HTMLCanvasElement; postMessage: (msg: Record<string, unknown>) => void };
 }
 
 interface MiniTouchEvent {
@@ -322,7 +324,7 @@ export function createMiniGameAdapter(api: MiniGameGlobalApi, kind: Exclude<Plat
     if (sig !== lastLoggedVpSig) {
       lastLoggedVpSig = sig;
       try {
-        console.log('[CapyVP r14-ads-v1]', sig, 'rawSA=', info.safeArea ?? null, 'rawCap=', rawMenuBtn);
+        console.log('[CapyVP r15-wx-friend-lb]', sig, 'rawSA=', info.safeArea ?? null, 'rawCap=', rawMenuBtn);
       } catch { /* ignore */ }
     }
     return vp;
@@ -464,6 +466,29 @@ export function createMiniGameAdapter(api: MiniGameGlobalApi, kind: Exclude<Plat
     },
     share(options: ShareOptions): void {
       try { api.shareAppMessage?.({ title: options.title, imageUrl: options.imageUrl, query: options.query }); } catch { /* ignore */ }
+    },
+    setFriendCloudStorage(entries: ReadonlyArray<{ key: string; value: string }>): void {
+      if (kind !== 'wx' || !entries.length || typeof api.setUserCloudStorage !== 'function') return;
+      try {
+        api.setUserCloudStorage({
+          KVDataList: entries.map(e => ({ key: e.key, value: e.value })),
+        });
+      } catch { /* ignore in unsupported simulator states */ }
+    },
+    getFriendLeaderboardCanvas(): HTMLCanvasElement | null {
+      if (kind !== 'wx' || typeof api.getOpenDataContext !== 'function') return null;
+      try {
+        const odc = api.getOpenDataContext();
+        return odc && odc.canvas ? odc.canvas : null;
+      } catch {
+        return null;
+      }
+    },
+    postFriendLeaderboardMessage(message: Record<string, unknown>): void {
+      if (kind !== 'wx' || typeof api.getOpenDataContext !== 'function') return;
+      try {
+        api.getOpenDataContext().postMessage(message);
+      } catch { /* ignore */ }
     },
     now: () => (typeof performance !== 'undefined' && typeof performance.now === 'function' ? performance.now() : Date.now()),
     requestFrame: (callback) => globalThis.requestAnimationFrame(callback),

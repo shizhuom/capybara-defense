@@ -125,6 +125,10 @@ export interface PlatformAdapter {
   showKeyboard(options: KeyboardPromptOptions): Promise<string | null>;
   showRewardedAd(adUnitId?: string): Promise<RewardedAdOutcome>;
   share(options: ShareOptions): void;
+  /** Official free WeChat Friend Leaderboard (`wx.setUserCloudStorage` + Open Data Context). */
+  setFriendCloudStorage?(entries: ReadonlyArray<{ key: string; value: string }>): void;
+  getFriendLeaderboardCanvas?(): HTMLCanvasElement | null;
+  postFriendLeaderboardMessage?(message: Record<string, unknown>): void;
   now(): number;
   requestFrame(callback: (timestampMs: number) => void): number;
   cancelFrame(id: number): void;

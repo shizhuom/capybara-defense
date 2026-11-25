@@ -99,12 +99,15 @@ export interface ModalDrawContext {
   adStaminaAvailable?: boolean;
   adSpeed3xAvailable?: boolean;
   speed3xTrialActive?: boolean;
+  wxFriendCanvas?: HTMLCanvasElement | null;
+  wxFriendMode?: boolean;
   elapsed: number;
   viewport: ViewportMetrics;
 }
 
 export interface ModalLayoutInfo {
   scrollViewport?: { x: number; y: number; w: number; h: number };
+  wxFriendViewport?: { x: number; y: number; w: number; h: number };
   musicSlider?: { x: number; y: number; w: number; h: number };
   soundSlider?: { x: number; y: number; w: number; h: number };
 }
@@ -177,6 +180,8 @@ export function drawActiveModal(
         preparation,
         guideStep: ctx.dialogGuideStep,
         elapsed: ctx.elapsed,
+        wxFriendCanvas: ctx.wxFriendCanvas,
+        wxFriendMode: ctx.wxFriendMode,
       });
     case 'leaderboard':
     case 'endless-board':
@@ -185,6 +190,8 @@ export function drawActiveModal(
       return drawProfileHubModal(c, hits, ctx.modal as ProfileHubTab, ctx.profile, ctx.leaderboard, ctx.scroll, {
         inBattle,
         devUnlocked: ctx.devUnlocked,
+        wxFriendCanvas: ctx.wxFriendCanvas,
+        wxFriendMode: ctx.wxFriendMode,
       });
     case 'dev':
       drawDevToolsModal(c, hits, ctx.profile, ctx.state, ctx.isTestSave);

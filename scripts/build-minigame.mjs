@@ -1,5 +1,5 @@
 import { execSync } from 'node:child_process';
-import { existsSync, readFileSync, statSync, writeFileSync } from 'node:fs';
+import { copyFileSync, existsSync, mkdirSync, readFileSync, statSync, writeFileSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { buildMinigameAssets } from './build-minigame-assets.mjs';
@@ -28,11 +28,22 @@ execSync('npx vite build --config vite.minigame.config.ts', {
 
 const assetsSummary = await buildMinigameAssets(outDir);
 
-// All 289 compressed sprites + game.js fit cleanly under WeChat's 4 MB single-package limit,
+// Copy official free WeChat Open Data Context (好友排行榜开放数据域) for `wx` builds.
+let openDataBytes = 0;
+if (target === 'wx') {
+  const odcSrc = join(ROOT, 'src', 'minigame', 'openDataContext', 'index.js');
+  const odcDir = join(outDir, 'openDataContext');
+  mkdirSync(odcDir, { recursive: true });
+  copyFileSync(odcSrc, join(odcDir, 'index.js'));
+  openDataBytes = statSync(join(odcDir, 'index.js')).size;
+}
+
+// All 289 compressed sprites + game.js (+ openDataContext on wx) fit cleanly under WeChat's 4 MB single-package limit,
 // eliminating subpackages so WeChat DevTools Remote Debugging never trips on `/__debug__/__jscore-debug__/subpackages/...`.
 const gameJson = {
   deviceOrientation: 'landscape',
   showStatusBar: false,
+  ...(target === 'wx' ? { openDataContext: 'openDataContext' } : {}),
   networkTimeout: { request: 10000, downloadFile: 15000 },
 };
 writeFileSync(join(outDir, 'game.json'), `${JSON.stringify(gameJson, null, 2)}\n`);
@@ -66,11 +77,12 @@ writeFileSync(projectConfigPath, `${JSON.stringify(projectConfig, null, 2)}\n`);
 
 const jsBytes = statSync(join(outDir, 'game.js')).size;
 const spritesTotalBytes = assetsSummary.sizes.main + assetsSummary.sizes.maps + assetsSummary.sizes.meta;
-const totalBytes = jsBytes + spritesTotalBytes;
+const totalBytes = jsBytes + openDataBytes + spritesTotalBytes;
 const mb = n => `${(n / (1024 * 1024)).toFixed(2)} MB`;
 
 console.log(`\n[${target.toUpperCase()}] Built ${outDirName}/ successfully (single package, zero subpackages):`);
 console.log(`  game.js       : ${(jsBytes / 1024).toFixed(1)} KB`);
+if (openDataBytes > 0) console.log(`  openDataCtx   : ${(openDataBytes / 1024).toFixed(1)} KB`);
 console.log(`  core sprites  : ${mb(assetsSummary.sizes.main)}`);
 console.log(`  map sprites   : ${mb(assetsSummary.sizes.maps)}`);
 console.log(`  meta sprites  : ${mb(assetsSummary.sizes.meta)}`);
