@@ -100,23 +100,23 @@ export function drawMedallionsModal(
   const rowW = vw - 14;
   let y = vy + 4 - scroll.offset;
 
-  // Top Dashed-Border Endless-Only Notice (`medallion-endless-note` in `p18_preview_d13`!)
-  const noteH = 52;
+  // Top Dashed-Border Endless-Only Notice (ENLARGED 25px bold mobile typography!)
+  const noteH = 68;
   if (y + noteH >= vy - 20 && y <= vy + vh + 20) {
-    round(c, vx + 4, y, rowW, noteH, 16, '#fffdf6', 'transparent', 0);
+    round(c, vx + 4, y, rowW, noteH, 18, '#fffdf6', 'transparent', 0);
     c.save();
-    c.setLineDash([6, 4]);
-    round(c, vx + 4, y, rowW, noteH, 16, 'transparent', '#9c6e3b', 2);
+    c.setLineDash([7, 5]);
+    round(c, vx + 4, y, rowW, noteH, 18, 'transparent', '#9c6e3b', 2.4);
     c.restore();
-    drawSpriteContain(c, 'ui_endless_emblem', vx + 18, y + 12, 28, 28);
-    drawText(c, t('p17.endlessOnly'), vx + 54, y + 27, 16.5, PALETTE.ink, 'left', 800);
+    drawSpriteContain(c, 'ui_endless_emblem', vx + 22, y + 14, 40, 40);
+    drawText(c, t('p17.endlessOnly'), vx + 74, y + 35, 25, '#592878', 'left', 900);
   }
-  y += noteH + 12;
+  y += noteH + 14;
 
   // 2-Column GIANT Medallion Cards (6 Medallions!)
   const cols = 2, gapX = 16, gapY = 14;
   const cardW = Math.floor((vw - 16 - gapX) / cols);
-  const cardH = 196;
+  const cardH = 218;
   const pulseFirst = pulseSel === '[data-action="medallion-up:med_breakthrough_atk"]';
 
   MEDALLION_IDS.forEach((medId, idx) => {
@@ -143,44 +143,44 @@ export function drawMedallionsModal(
         shouldPulse ? 3.8 : 2.4,
       );
 
-      round(c, rx + 16, ry + 18, 92, 92, 18, '#fdf5df', '#8a5d32', 2.2);
-      if (!drawSpriteContain(c, medId, rx + 22, ry + 24, 80, 80)) {
-        drawSpriteContain(c, 'ui_endless_crest', rx + 22, ry + 24, 80, 80);
+      round(c, rx + 16, ry + 18, 96, 96, 18, '#fdf5df', '#8a5d32', 2.2);
+      if (!drawSpriteContain(c, medId, rx + 22, ry + 24, 84, 84)) {
+        drawSpriteContain(c, 'ui_endless_crest', rx + 22, ry + 24, 84, 84);
       }
 
-      const tx = rx + 122;
+      const tx = rx + 126;
       const name = t(`medallion.${medId}`);
-      drawText(c, name, tx, ry + 34, 25, PALETTE.ink, 'left', 900);
-      round(c, rx + cardW - 108, ry + 18, 92, 30, 15, '#f5dec0', '#966430', 1.8);
-      drawText(c, `Lv.${lv}/${MEDALLION_MAX_LEVEL}`, rx + cardW - 62, ry + 34, 17, '#7c3f08', 'center', 900);
+      drawText(c, name, tx, ry + 34, 26, PALETTE.ink, 'left', 900);
+      round(c, rx + cardW - 122, ry + 16, 106, 34, 17, '#f5dec0', '#966430', 2);
+      drawText(c, `Lv.${lv}/${MEDALLION_MAX_LEVEL}`, rx + cardW - 69, ry + 34, 19.5, '#7c3f08', 'center', 900);
 
       const desc = t(`medallion.${medId}.desc`);
       const nowStr = medallionEffectText(medId, lv);
       const nextStr = max ? '' : medallionEffectText(medId, lv + 1);
-      drawText(c, `${desc} ${nowStr}${max ? '' : ` → ${nextStr}`}`, tx, ry + 70, 19.5, '#6b3610', 'left', 900);
+      drawWrappedText(c, `${desc} ${nowStr}${max ? '' : ` → ${nextStr}`}`, tx, ry + 58, cardW - 144, 20.5, 25, '#6b3610', 'left', 900, 2);
 
-      drawProgressBar(c, tx, ry + 94, cardW - 140, 12, lv / MEDALLION_MAX_LEVEL, '#e8a832', '#e8dcc4', '#8c6239');
+      drawProgressBar(c, tx, ry + 114, cardW - 144, 13, lv / MEDALLION_MAX_LEVEL, '#e8a832', '#e8dcc4', '#8c6239');
 
       // Bottom Cost Chips + Giant Upgrade Button
       if (cost) {
         const crestOk = profile.endlessCrests >= cost.crests;
         const coinOk = profile.coins >= cost.coins;
         let cx = rx + 18;
-        round(c, cx, ry + cardH - 54, 108, 34, 17, crestOk ? '#e4f7dc' : '#f4e6d2', crestOk ? '#49913b' : '#a88c6c', 1.6);
-        drawSpriteContain(c, 'ui_endless_crest', cx + 7, ry + cardH - 49, 24, 24);
-        drawText(c, formatCompactNumber(cost.crests), cx + 36, ry + cardH - 36, 18.5, crestOk ? '#23591b' : '#7a5c3c', 'left', 900);
-        cx += 116;
-        round(c, cx, ry + cardH - 54, 108, 34, 17, coinOk ? '#e4f7dc' : '#f4e6d2', coinOk ? '#49913b' : '#a88c6c', 1.6);
-        drawSpriteContain(c, 'ui_coin_gold', cx + 7, ry + cardH - 49, 24, 24);
-        drawText(c, formatCompactNumber(cost.coins), cx + 36, ry + cardH - 36, 18.5, coinOk ? '#23591b' : '#7a5c3c', 'left', 900);
+        round(c, cx, ry + cardH - 58, 122, 38, 19, crestOk ? '#e4f7dc' : '#f4e6d2', crestOk ? '#49913b' : '#a88c6c', 1.8);
+        drawSpriteContain(c, 'ui_endless_crest', cx + 8, ry + cardH - 52, 26, 26);
+        drawText(c, formatCompactNumber(cost.crests), cx + 40, ry + cardH - 38, 20.5, crestOk ? '#23591b' : '#7a5c3c', 'left', 900);
+        cx += 132;
+        round(c, cx, ry + cardH - 58, 122, 38, 19, coinOk ? '#e4f7dc' : '#f4e6d2', coinOk ? '#49913b' : '#a88c6c', 1.8);
+        drawSpriteContain(c, 'ui_coin_gold', cx + 8, ry + cardH - 52, 26, 26);
+        drawText(c, formatCompactNumber(cost.coins), cx + 40, ry + cardH - 38, 20.5, coinOk ? '#23591b' : '#7a5c3c', 'left', 900);
       }
 
       if (ry + cardH > vy && ry < vy + vh) {
         if (max) {
-          drawText(c, t('p17.maxed'), rx + cardW - 76, ry + cardH - 36, 20, '#8c4c10', 'center', 900);
+          drawText(c, t('p17.maxed'), rx + cardW - 82, ry + cardH - 38, 22, '#8c4c10', 'center', 900);
         } else {
-          drawPillButton(c, hits, `medallion:up:${medId}`, rx + cardW - 142, ry + cardH - 60, 126, 48, t('p17.upgrade'), afford ? 'gold' : 'muted', {
-            fontSize: 20.5,
+          drawPillButton(c, hits, `medallion:up:${medId}`, rx + cardW - 152, ry + cardH - 64, 136, 50, t('p17.upgrade'), afford ? 'gold' : 'muted', {
+            fontSize: 22,
           });
         }
       }

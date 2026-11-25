@@ -128,16 +128,23 @@ export function drawVillageModal(
     elapsed: villageUi.elapsed,
   });
 
-  // ── TAB 1: COURTYARD DIORAMA (`温泉庭院` — EXACT `p18_preview_d08_village_courtyard.png`!) ──
+  // ── TAB 1: COURTYARD DIORAMA (`温泉庭院` — Widescreen 2-Column Balanced Layout with BIG Mobile Fonts!) ──
   if (villageUi.tab === 'courtyard') {
-    const harvestH = 92;
-    const sx = body.x + 2, sy = body.y + 2, sw = body.w - 4, sh = body.h - harvestH - 12;
-    round(c, sx, sy, sw, sh, 16, '#d4e2bd', '#5a361a', 2.8);
+    const compact = body.h < 410;
+    const gap = 14;
+    const panelW = 398;
+    const sx = body.x + 2;
+    const sy = body.y + 2;
+    const sw = body.w - panelW - gap - 4;
+    const sh = body.h - 4;
+
+    // LEFT COLUMN: Full-Height Natural-Aspect Courtyard Diorama (~780 × 468 = ~1.67:1, zero vertical squishing!)
+    round(c, sx, sy, sw, sh, 18, '#d4e2bd', '#5a361a', 2.8);
 
     const bg = assets.get('bg_onsen_village');
     c.save();
     c.beginPath();
-    c.roundRect(sx + 2, sy + 2, sw - 4, sh - 4, 14);
+    c.roundRect(sx + 2, sy + 2, sw - 4, sh - 4, 16);
     c.clip();
     if (bg) {
       c.drawImage(bg, sx + 2, sy + 2, sw - 4, sh - 4);
@@ -149,39 +156,43 @@ export function drawVillageModal(
       c.fillRect(sx, sy, sw, sh);
     }
 
-    // 1. Facilities (or dashed empty build spots)
+    // 1. Facilities (or BIG readable dashed empty build spots!)
     for (const facId of FACILITY_IDS) {
       const def = FACILITIES[facId];
       const lv = villageLevel(profile, facId);
       const fx = sx + (def.spot.left / 100) * sw;
       const fy = sy + (def.spot.top / 100) * sh;
       if (lv > 0) {
-        const size = facId === 'fac_bamboo_pool' ? 128 : 114;
+        const size = facId === 'fac_bamboo_pool' ? (compact ? 118 : 138) : (compact ? 106 : 124);
         drawSpriteContain(c, facId, fx - size / 2, fy - size / 2, size, size);
-        hits.add({ id: `village:focus:${facId}`, x: fx - size * 0.42, y: fy - size * 0.42, w: size * 0.84, h: size * 0.84 });
+        hits.add({ id: `village:focus:${facId}`, x: fx - size * 0.44, y: fy - size * 0.44, w: size * 0.88, h: size * 0.88 });
       } else {
-        const bw = 132, bh = 36;
-        hits.add({ id: `village:focus:${facId}`, x: fx - bw / 2, y: fy - bh / 2, w: bw, h: bh });
+        const label = `+ ${t(`facility.${facId}`)}`;
+        c.font = '900 19.5px "Trebuchet MS", "PingFang SC", "Microsoft YaHei", sans-serif';
+        const bw = Math.min(208, Math.max(156, Math.ceil(c.measureText(label).width) + 28));
+        const bh = 44;
+        const clampedX = Math.max(sx + bw / 2 + 8, Math.min(sx + sw - bw / 2 - 8, fx));
+        hits.add({ id: `village:focus:${facId}`, x: clampedX - bw / 2, y: fy - bh / 2, w: bw, h: bh });
         c.save();
         c.setLineDash([6, 4]);
-        round(c, fx - bw / 2, fy - bh / 2, bw, bh, 18, 'rgba(255,248,232,0.92)', '#5d8a4b', 2);
+        round(c, clampedX - bw / 2, fy - bh / 2, bw, bh, 22, 'rgba(255,250,236,0.94)', '#4c803b', 2.4);
         c.restore();
-        drawText(c, `+ ${t(`facility.${facId}`)}`, fx, fy + 1, 14.5, '#3b612c', 'center', 900);
+        drawText(c, label, clampedX, fy + 1, 19.5, '#2d5720', 'center', 900);
       }
     }
 
-    // 2. Floating Lv.x white pill tags on their own layer (exact Web `village-level-tag`!)
+    // 2. Floating ENLARGED Lv.x pill tags
     for (const facId of FACILITY_IDS) {
       const def = FACILITIES[facId];
       const lv = villageLevel(profile, facId);
       if (lv <= 0) continue;
       const fx = sx + (def.spot.left / 100) * sw;
-      const fy = sy + ((def.spot.top + 8) / 100) * sh;
-      round(c, fx - 26, fy - 12, 52, 24, 12, 'rgba(255,250,238,0.95)', '#6e4926', 1.8);
-      drawText(c, `Lv.${lv}`, fx, fy + 1, 13.5, PALETTE.ink, 'center', 900);
+      const fy = sy + ((def.spot.top + 9) / 100) * sh;
+      round(c, fx - 34, fy - 16, 68, 32, 16, 'rgba(255,250,238,0.96)', '#6e4926', 2.2);
+      drawText(c, `Lv.${lv}`, fx, fy + 1, 19, PALETTE.ink, 'center', 900);
     }
 
-    // 3. Interactive Residents (with `ui_sleep_zzz` when napping & `ui_pet_heart` + quote bubble when patted!)
+    // 3. Interactive Residents (enlarged sprites & BIG quote bubbles!)
     const residents = getVillageResidents(profile);
     const activeFb = villageUi.petFeedback && villageUi.elapsed < villageUi.petFeedback.until ? villageUi.petFeedback : null;
     const pulseStep3 = pulseSel === '.village-pet, .village-harvest-btn:not(:disabled)';
@@ -193,86 +204,131 @@ export function drawVillageModal(
       const py = sy + ((spot.top + oy) / 100) * sh;
       const happy = activeFb?.petIndex === idx;
       const bob = happy ? -Math.abs(Math.sin(villageUi.elapsed * 16)) * 10 : Math.sin(villageUi.elapsed * 2.4 + idx * 1.1) * 3;
+      const petSz = compact ? 58 : 66;
 
       if (pulseStep3) {
         const gPulse = 0.5 + 0.5 * Math.sin(villageUi.elapsed * 6 + idx);
         c.save();
         c.beginPath();
-        c.arc(px, py + bob, 31 + gPulse * 4, 0, Math.PI * 2);
+        c.arc(px, py + bob, petSz / 2 + 5 + gPulse * 4, 0, Math.PI * 2);
         c.strokeStyle = `rgba(255,212,56,${(0.65 + gPulse * 0.35).toFixed(2)})`;
-        c.lineWidth = 4;
+        c.lineWidth = 4.5;
         c.stroke();
         c.restore();
       }
-      drawSpriteContain(c, res.id, px - 28, py - 28 + bob, 56, 56);
-      hits.add({ id: `village:pet:${idx}`, x: px - 30, y: py - 30, w: 60, h: 60 });
+      drawSpriteContain(c, res.id, px - petSz / 2, py - petSz / 2 + bob, petSz, petSz);
+      hits.add({ id: `village:pet:${idx}`, x: px - petSz / 2 - 4, y: py - petSz / 2 - 4, w: petSz + 8, h: petSz + 8 });
 
       if (res.pose === 'nap') {
         const zBob = Math.sin(villageUi.elapsed * 2.2 + idx) * 4;
-        drawSpriteContain(c, 'ui_sleep_zzz', px + 14, py - 38 + zBob, 28, 28);
+        drawSpriteContain(c, 'ui_sleep_zzz', px + 16, py - petSz / 2 - 12 + zBob, 32, 32);
       }
       if (happy && activeFb) {
-        const bw = 176, bh = 44;
-        const bx = Math.max(sx + 8, Math.min(sx + sw - bw - 8, px - bw / 2));
-        const by = Math.max(sy + 8, py - 74);
-        round(c, bx, by, bw, bh, 16, 'rgba(255,252,242,0.96)', '#c96240', 2);
-        drawSpriteContain(c, 'ui_pet_heart', bx + 8, by + 8, 28, 28);
+        const bw = 248, bh = 54;
+        const bx = Math.max(sx + 10, Math.min(sx + sw - bw - 10, px - bw / 2));
+        const by = Math.max(sy + 10, py - 84);
+        round(c, bx, by, bw, bh, 18, 'rgba(255,252,242,0.97)', '#c96240', 2.4);
+        drawSpriteContain(c, 'ui_pet_heart', bx + 10, by + 11, 32, 32);
         const q = activeFb.quote.length > 7 ? `${activeFb.quote.slice(0, 7)}…` : activeFb.quote;
-        drawText(c, activeFb.coins > 0 ? `${q} +${activeFb.coins}` : q, bx + 40, by + 23, 14, '#7d3015', 'left', 900);
+        drawText(c, activeFb.coins > 0 ? `${q} +${activeFb.coins}` : q, bx + 48, by + 28, 19.5, '#7d3015', 'left', 900);
       }
     });
 
-    // 4. Bottom-Left & Bottom-Right Status Pills right inside Diorama corners (EXACT `p18_preview_d08`!)
-    const dayStr = localDay(new Date(villageUi.nowMs));
-    const tapsUsed = PET_TAP_DAILY_LIMIT - petTapsLeft(profile, dayStr);
-    const leftPillText = t('p16.residents', { count: residents.length, max: residentCapacity(profile) });
-    const rightPillText = t('p16.petAllowance', { count: tapsUsed });
-
-    round(c, sx + 10, sy + sh - 34, 128, 26, 13, 'rgba(255,250,238,0.94)', '#7c5330', 1.6);
-    drawText(c, leftPillText, sx + 74, sy + sh - 20, 13.5, PALETTE.ink, 'center', 900);
-
-    round(c, sx + sw - 150, sy + sh - 34, 140, 26, 13, 'rgba(255,250,238,0.94)', '#7c5330', 1.6);
-    drawText(c, rightPillText, sx + sw - 80, sy + sh - 20, 13.5, PALETTE.ink, 'center', 900);
-
     c.restore();
 
-    // 5. Bottom Offline Harvest Basket Strip with Golden Progress Bar (EXACT `p18_preview_d08`!)
-    const hy = sy + sh + 10;
+    // RIGHT COLUMN: Big-Font Village Overview & Offline Harvest Control Panel!
+    const rx = sx + sw + gap;
+    const rw = panelW;
+    const dayStr = localDay(new Date(villageUi.nowMs));
+    const tapsUsed = PET_TAP_DAILY_LIMIT - petTapsLeft(profile, dayStr);
+    const cap = residentCapacity(profile);
+
+    // Card 1: Residents & Daily Pocket Money Status (replaces tiny 13.5px diorama corner pills!)
+    const statH = compact ? 112 : 146;
+    drawIvorySlab(c, rx, sy, rw, statH, 18, '#fffdf8', '#f6e8cb', '#7a5230', 2.4);
+
+    // Row 1: Residents
+    const r1y = sy + (compact ? 14 : 18);
+    round(c, rx + 14, r1y, rw - 28, compact ? 38 : 44, 14, '#eef7e2', '#6a9452', 1.8);
+    drawSpriteContain(c, 'ui_village_peek_capy', rx + 22, r1y + (compact ? 4 : 6), compact ? 30 : 32, compact ? 30 : 32);
+    drawText(c, zh ? '入驻萌宠' : 'Residents', rx + 62, r1y + (compact ? 20 : 23), compact ? 20 : 21.5, PALETTE.ink, 'left', 900);
+    drawText(c, `${residents.length} / ${cap}`, rx + rw - 26, r1y + (compact ? 20 : 23), compact ? 21 : 23, '#2b6b28', 'right', 900);
+
+    // Row 2: Daily Pet Pocket Money
+    const r2y = r1y + (compact ? 46 : 52);
+    round(c, rx + 14, r2y, rw - 28, compact ? 38 : 44, 14, '#fff4d8', '#b88234', 1.8);
+    drawSpriteContain(c, 'ui_pet_heart', rx + 22, r2y + (compact ? 4 : 6), compact ? 30 : 32, compact ? 30 : 32);
+    drawText(c, zh ? '今日零花钱' : 'Pocket Money', rx + 62, r2y + (compact ? 20 : 23), compact ? 20 : 21.5, PALETTE.ink, 'left', 900);
+    drawText(c, `${tapsUsed} / ${PET_TAP_DAILY_LIMIT}`, rx + rw - 26, r2y + (compact ? 20 : 23), compact ? 21 : 23, '#8c4408', 'right', 900);
+
+    if (!compact) {
+      drawText(c, zh ? '点点左侧院子里的萌宠可领零花钱' : 'Tap pets in the courtyard for coins!', rx + rw / 2, sy + statH - 15, 17.5, PALETTE.inkSoft, 'center', 800);
+    }
+
+    // Card 2: Offline Harvest Basket (fills remaining height cleanly with GIANT fonts!)
+    const hy = sy + statH + 12;
+    const hh = sy + sh - hy;
     const harvest = computeOfflineHarvest(profile, villageUi.nowMs);
     const ripe = hasHarvest(harvest);
     const frac = Math.min(1, harvest.elapsedMs / VILLAGE_OFFLINE_CAP_MS);
 
-    drawIvorySlab(c, sx, hy, sw, harvestH, 16, '#fffdf8', '#f6e8cb', '#7a5230', 2.2);
-    drawSpriteContain(c, 'ui_harvest_basket', sx + 14, hy + 16, 60, 60);
+    drawIvorySlab(c, rx, hy, rw, hh, 18, '#fffdf8', '#f6e8cb', '#7a5230', 2.4);
 
-    const tx = sx + 86;
-    drawText(c, t('p16.harvestTitle'), tx, hy + 24, 19, PALETTE.ink, 'left', 900);
+    // Header: Basket icon + Title + Elapsed Time
+    const iconS = compact ? 52 : 62;
+    round(c, rx + 14, hy + 14, iconS, iconS, 14, '#fff3d4', '#8a5d32', 2);
+    drawSpriteContain(c, 'ui_harvest_basket', rx + 18, hy + 18, iconS - 8, iconS - 8);
+    drawText(c, t('p16.harvestTitle'), rx + 26 + iconS, hy + (compact ? 28 : 32), compact ? 22.5 : 25, PALETTE.ink, 'left', 900);
     const timeLabel = harvest.full ? t('p16.harvestFull') : t('p16.harvestElapsed', { time: formatOfflineClock(harvest.elapsedMs) });
-    drawText(c, timeLabel, tx + 114, hy + 25, 15, PALETTE.inkSoft, 'left', 800);
+    drawText(c, timeLabel, rx + 26 + iconS, hy + (compact ? 54 : 62), compact ? 18.5 : 20, harvest.full ? '#2d7a26' : PALETTE.inkSoft, 'left', 800);
 
-    const btnAreaW = villageUi.adDoubleHarvestAvailable && ripe ? 302 : 168;
-    drawProgressBar(c, tx, hy + 42, sw - (tx - sx) - btnAreaW - 20, 10, frac, '#e8b43c', '#e8dcc4', '#8c6239');
+    // Thick Golden Progress Bar
+    const barY = hy + iconS + (compact ? 22 : 26);
+    drawProgressBar(c, rx + 16, barY, rw - 32, 14, frac, '#e8b43c', '#e8dcc4', '#8c6239');
 
-    // Preview Loot Chips
-    let cx = tx;
-    cx += drawIconLabel(c, 'ui_coin_gold', `+${harvest.coins}`, cx, hy + 72, 22, 16.5, '#7c3f08') + 16;
-    if (harvest.fragments > 0) cx += drawIconLabel(c, 'ui_weapon_fragment', `×${harvest.fragments}`, cx, hy + 72, 22, 16.5, '#7c3f08') + 16;
-    if (harvest.yuzu > 0) cx += drawIconLabel(c, 'ing_yuzu', `×${harvest.yuzu}`, cx, hy + 72, 22, 16.5, '#7c3f08') + 16;
-    if (harvest.tickets > 0) drawIconLabel(c, 'ui_ticket_gacha', `×${harvest.tickets}`, cx, hy + 72, 22, 16.5, '#c23a2b');
+    // Big 2×2 Preview Loot Chips
+    const previewChips: Array<{ icon: string; val: string; color: string }> = [
+      { icon: 'ui_coin_gold', val: `+${harvest.coins}`, color: '#7c3f08' },
+      ...(harvest.fragments > 0 ? [{ icon: 'ui_weapon_fragment', val: `×${harvest.fragments}`, color: '#7c3f08' }] : []),
+      ...(harvest.yuzu > 0 ? [{ icon: 'ing_yuzu', val: `×${harvest.yuzu}`, color: '#7c3f08' }] : []),
+      ...(harvest.tickets > 0 ? [{ icon: 'ui_ticket_gacha', val: `×${harvest.tickets}`, color: '#c23a2b' }] : []),
+    ];
+    const chipStartY = barY + (compact ? 24 : 28);
+    const chipCols = Math.min(2, Math.max(1, previewChips.length));
+    const chipGap = 10;
+    const chipW = Math.floor((rw - 32 - chipGap * (chipCols - 1)) / chipCols);
+    const chipH = compact ? 42 : 48;
+    previewChips.forEach((pc, i) => {
+      const col = i % chipCols;
+      const row = Math.floor(i / chipCols);
+      const px = rx + 16 + col * (chipW + chipGap);
+      const py = chipStartY + row * (chipH + 8);
+      round(c, px, py, chipW, chipH, 14, '#fff5dc', '#b88c52', 1.8);
+      drawSpriteContain(c, pc.icon, px + 10, py + Math.round((chipH - 30) / 2), 30, 30);
+      drawText(c, pc.val, px + 48, py + chipH / 2 + 1, compact ? 20.5 : 22.5, pc.color, 'left', 900);
+    });
 
-    const claimW = 152;
+    // Bottom Giant Harvest Claim Button(s)
+    const btnH = compact ? 52 : 58;
+    const btnY = hy + hh - btnH - 14;
     const claimLabel = t(ripe ? 'p16.harvestClaim' : 'p16.harvestWaiting').replace(/^🧺\s*/u, '');
+    const showAdDouble = villageUi.adDoubleHarvestAvailable && ripe;
+    const claimW = showAdDouble ? Math.floor((rw - 42) * 0.58) : rw - 32;
+    const claimX = rx + 16;
+
     if (pulseStep3 && ripe) {
       const gPulse = 0.5 + 0.5 * Math.sin(villageUi.elapsed * 6);
-      round(c, sx + sw - claimW - 18, hy + 17, claimW + 8, 58, 29, 'transparent', `rgba(255,212,56,${(0.65 + gPulse * 0.35).toFixed(2)})`, 4);
+      round(c, claimX - 4, btnY - 4, claimW + 8, btnH + 8, (btnH + 8) / 2, 'transparent', `rgba(255,212,56,${(0.65 + gPulse * 0.35).toFixed(2)})`, 4.5);
     }
-    drawPillButton(c, hits, 'village:harvest', sx + sw - claimW - 14, hy + 21, claimW, 50, claimLabel, ripe ? 'gold' : 'muted', {
-      fontSize: 17.5,
+    drawPillButton(c, hits, 'village:harvest', claimX, btnY, claimW, btnH, claimLabel, ripe ? 'gold' : 'muted', {
+      fontSize: compact ? 21 : 23,
       icon: 'ui_harvest_basket',
       disabled: !ripe,
     });
-    if (villageUi.adDoubleHarvestAvailable && ripe) {
-      drawPillButton(c, hits, 'village:ad-harvest', sx + sw - claimW - 148, hy + 21, 126, 50, zh ? '🎬 双倍' : '🎬 2×', 'green', { fontSize: 16 });
+    if (showAdDouble) {
+      const adX = claimX + claimW + 10;
+      const adW = rx + rw - 16 - adX;
+      drawPillButton(c, hits, 'village:ad-harvest', adX, btnY, adW, btnH, zh ? '🎬 双倍' : '🎬 2×', 'green', { fontSize: compact ? 20 : 21.5 });
     }
     return {};
   }
@@ -286,7 +342,7 @@ export function drawVillageModal(
 
   const cols = 2, gapX = 16, gapY = 14;
   const cardW = Math.floor((vw - 16 - gapX) / cols);
-  const cardH = 224;
+  const cardH = 232;
   const pulsePool = pulseSel === '[data-action="village-build:fac_bamboo_pool"]';
 
   FACILITY_IDS.forEach((facId, idx) => {
@@ -321,28 +377,28 @@ export function drawVillageModal(
     const tx = rx + 132;
     const name = t(`facility.${facId}`);
     drawText(c, name, tx, ry + 34, 26, PALETTE.ink, 'left', 900);
-    round(c, rx + cardW - 102, ry + 18, 86, 32, 16, lv > 0 ? '#dff5d6' : '#e5dac7', lv > 0 ? '#3d8633' : '#8a7a64', 1.8);
-    drawText(c, lv > 0 ? `Lv.${lv}` : t('p16.notBuilt'), rx + cardW - 59, ry + 35, 18, lv > 0 ? '#235c1c' : PALETTE.inkSoft, 'center', 900);
+    round(c, rx + cardW - 108, ry + 16, 92, 34, 17, lv > 0 ? '#dff5d6' : '#e5dac7', lv > 0 ? '#3d8633' : '#8a7a64', 2);
+    drawText(c, lv > 0 ? `Lv.${lv}` : t('p16.notBuilt'), rx + cardW - 62, ry + 34, 19.5, lv > 0 ? '#235c1c' : PALETTE.inkSoft, 'center', 900);
 
-    drawText(c, curLines.output.join(' · '), tx, ry + 72, 19, PALETTE.inkSoft, 'left', 800);
-    drawText(c, curLines.buffs.join(' · '), tx, ry + 104, 19.5, '#2b6b56', 'left', 900);
+    drawWrappedText(c, curLines.output.join(' · '), tx, ry + 60, cardW - 148, 20, 24, PALETTE.inkSoft, 'left', 800, 2);
+    drawWrappedText(c, curLines.buffs.join(' · '), tx, ry + 110, cardW - 148, 20.5, 25, '#2b6b56', 'left', 900, 2);
 
     // Bottom Cost Chips + Giant Build/Upgrade Button
-    const footY = ry + cardH - 42;
+    const footY = ry + cardH - 40;
     if (cost) {
       let cx = rx + 18;
-      if (cost.wood > 0) cx += drawIconLabel(c, 'res_onsen_wood', `${profile.village.wood}/${cost.wood}`, cx, footY, 26, 19, profile.village.wood >= cost.wood ? '#2c763d' : '#b83c2c') + 18;
-      if (cost.essence > 0) cx += drawIconLabel(c, 'res_yuzu_essence', `${profile.village.essence}/${cost.essence}`, cx, footY, 26, 19, profile.village.essence >= cost.essence ? '#2c763d' : '#b83c2c') + 18;
-      if (cost.coins > 0) drawIconLabel(c, 'ui_coin_gold', `${cost.coins}`, cx, footY, 26, 19, profile.coins >= cost.coins ? PALETTE.ink : '#b83c2c');
+      if (cost.wood > 0) cx += drawIconLabel(c, 'res_onsen_wood', `${profile.village.wood}/${cost.wood}`, cx, footY, 28, 20.5, profile.village.wood >= cost.wood ? '#2c763d' : '#b83c2c') + 18;
+      if (cost.essence > 0) cx += drawIconLabel(c, 'res_yuzu_essence', `${profile.village.essence}/${cost.essence}`, cx, footY, 28, 20.5, profile.village.essence >= cost.essence ? '#2c763d' : '#b83c2c') + 18;
+      if (cost.coins > 0) drawIconLabel(c, 'ui_coin_gold', `${cost.coins}`, cx, footY, 28, 20.5, profile.coins >= cost.coins ? PALETTE.ink : '#b83c2c');
     } else {
-      drawText(c, `★ ${t('p16.maxed')}`, rx + 20, footY, 21, '#8a4c10', 'left', 900);
+      drawText(c, `★ ${t('p16.maxed')}`, rx + 20, footY, 22, '#8a4c10', 'left', 900);
     }
 
     if (ry + cardH > vy && ry < vy + vh) {
       if (cost) {
         const lbl = lv === 0 ? t('p16.build', { level: 1 }) : t('p16.upgradeTo', { level: lv + 1 });
-        drawPillButton(c, hits, `village:build:${facId}`, rx + cardW - 166, ry + cardH - 68, 150, 52, lbl, afford ? (lv === 0 ? 'green' : 'gold') : 'muted', {
-          fontSize: 20,
+        drawPillButton(c, hits, `village:build:${facId}`, rx + cardW - 174, ry + cardH - 68, 158, 54, lbl, afford ? (lv === 0 ? 'green' : 'gold') : 'muted', {
+          fontSize: 21.5,
           disabled: !afford,
         });
       }

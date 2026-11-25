@@ -225,8 +225,11 @@ export class MinigameApp {
       tab: 'shop',
       merchantQuip: 0,
       prizes: createLotteryPrizes(this.profile, Math.random),
+      highlightIndex: null,
       lastPrizeIndex: null,
       lastPrizeLabel: '',
+      spinAnim: null,
+      celebrateUntil: 0,
       spunThisVisit: false,
       adRefreshAvailable: isAdPlacementAvailable(platform.kind, 'free_shop_refresh'),
       adGachaAvailable: isAdPlacementAvailable(platform.kind, 'free_gacha'),
@@ -422,6 +425,11 @@ export class MinigameApp {
     } else if (kind === 'market') {
       this.profile = ensureDailyShop(this.profile, localDay(), Math.random);
       this.market.spunThisVisit = false;
+      this.market.spinAnim = null;
+      this.market.highlightIndex = null;
+      this.market.lastPrizeIndex = null;
+      this.market.lastPrizeLabel = '';
+      this.market.prizes = createLotteryPrizes(this.profile, Math.random);
       void this.assetManager.ensureSubpackage('meta');
     } else if (kind === 'village') {
       this.villageUi.nowMs = Date.now();
@@ -519,6 +527,7 @@ export class MinigameApp {
     if (this.curtainRemaining > 0) {
       this.curtainRemaining = Math.max(0, this.curtainRemaining - rawDt);
     }
+    this.tickGachaSpin(rawDt);
     this.scroll.tick(rawDt);
 
     if (this.screen === 'battle' && this.engine && this.engine.state.phase === 'playing' && !this.modal) {
@@ -1337,36 +1346,30 @@ export class MinigameApp {
       return;
     }
     if (id === 'market:spin' || id.startsWith('market:spin:')) {
+      if (this.market.spinAnim) return;
       const rawPay = id.startsWith('market:spin:') ? id.slice('market:spin:'.length) : 'auto';
       const pay = (rawPay === 'ticket' || rawPay === 'coins' ? rawPay : 'auto') as 'auto' | 'ticket' | 'coins';
       const res = spinLottery(this.profile, this.market.prizes, Math.random, pay);
       if (res.ok && res.prize) {
         this.profile = res.profile;
         this.save();
-        this.market.lastPrizeIndex = res.index ?? null;
-        this.market.lastPrizeLabel = this.formatPrizeLabel(res.prize);
-        this.market.spunThisVisit = true;
-        this.market.prizes = createLotteryPrizes(this.profile, Math.random);
-        this.platform.audio.play('gacha_win');
-        this.showToast(`🎉 ${this.market.lastPrizeLabel}`, 'good', 2.6);
+        const label = this.formatPrizeLabel(res.prize);
+        this.startGachaSpin(res.index ?? 0, label, `🎉 ${label}`);
       } else {
         this.showToast(t(res.key), 'warn', 1.8);
       }
       return;
     }
     if (id === 'market:ad-gacha') {
+      if (this.market.spinAnim) return;
       void this.runRewardedAd('free_gacha', () => {
         const temp = { ...this.profile, freeLotteryTickets: this.profile.freeLotteryTickets + 1 };
         const res = spinLottery(temp, this.market.prizes, Math.random, 'ticket');
         if (res.ok && res.prize) {
           this.profile = res.profile;
           this.save();
-          this.market.lastPrizeIndex = res.index ?? null;
-          this.market.lastPrizeLabel = this.formatPrizeLabel(res.prize);
-          this.market.spunThisVisit = true;
-          this.market.prizes = createLotteryPrizes(this.profile, Math.random);
-          this.platform.audio.play('gacha_win');
-          this.showToast(`🎬 🎉 ${this.market.lastPrizeLabel}`, 'good', 2.6);
+          const label = this.formatPrizeLabel(res.prize);
+          this.startGachaSpin(res.index ?? 0, label, `🎬 🎉 ${label}`);
         }
       });
       return;
@@ -1832,7 +1835,68 @@ export class MinigameApp {
     }
   }
 
+  private startGachaSpin(winnerIndex: number, label: string, toastText: string): void {
+    const winner = ((winnerIndex % 8) + 8) % 8;
+    const totalSteps = 24 + winner;
+    this.market.spunThisVisit = true;
+    this.market.lastPrizeIndex = null;
+    this.market.lastPrizeLabel = '';
+    this.market.highlightIndex = 0;
+    this.market.spinAnim = {
+      step: 0,
+      totalSteps,
+      winnerIndex: winner,
+      timer: 0,
+      stepDuration: 0.055,
+      pendingLabel: label,
+      pendingToast: toastText,
+    };
+    this.platform.audio.play('click');
+  }
+
+  private tickGachaSpin(dt: number): void {
+    const anim = this.market.spinAnim;
+    if (!anim) return;
+    if (this.modal !== 'market' || this.market.tab !== 'lottery') {
+      this.finishGachaSpin(true);
+      return;
+    }
+    anim.timer += dt;
+    while (anim.timer >= anim.stepDuration && this.market.spinAnim) {
+      anim.timer -= anim.stepDuration;
+      anim.step += 1;
+      this.market.highlightIndex = anim.step % 8;
+      if (anim.step >= anim.totalSteps) {
+        this.finishGachaSpin(false);
+        return;
+      }
+      this.platform.audio.play('click');
+      const slowStart = 16;
+      if (anim.step <= slowStart) {
+        anim.stepDuration = 0.055;
+      } else {
+        const frac = (anim.step - slowStart) / Math.max(1, anim.totalSteps - slowStart);
+        anim.stepDuration = 0.072 + Math.pow(frac, 1.85) * 0.24;
+      }
+    }
+  }
+
+  private finishGachaSpin(silent: boolean): void {
+    const anim = this.market.spinAnim;
+    if (!anim) return;
+    this.market.spinAnim = null;
+    this.market.highlightIndex = anim.winnerIndex;
+    this.market.lastPrizeIndex = anim.winnerIndex;
+    this.market.lastPrizeLabel = anim.pendingLabel;
+    this.market.celebrateUntil = this.elapsedSec + 2.6;
+    if (!silent) {
+      this.platform.audio.play('gacha_win');
+      this.showToast(anim.pendingToast, 'good', 2.6);
+    }
+  }
+
   private closeOverlayModal(): void {
+    if (this.market.spinAnim) this.finishGachaSpin(true);
     if (this.activeGuideFeature) {
       this.profile = markOnboarded(this.profile, this.activeGuideFeature);
       this.save();

@@ -32,12 +32,25 @@ export interface ArmoryState {
   recycleRarities: number[];
 }
 
+export interface GachaSpinAnim {
+  step: number;
+  totalSteps: number;
+  winnerIndex: number;
+  timer: number;
+  stepDuration: number;
+  pendingLabel: string;
+  pendingToast: string;
+}
+
 export interface MarketState {
   tab: MarketTab;
   merchantQuip: number;
   prizes: LotteryPrize[];
+  highlightIndex: number | null;
   lastPrizeIndex: number | null;
   lastPrizeLabel: string;
+  spinAnim: GachaSpinAnim | null;
+  celebrateUntil: number;
   spunThisVisit: boolean;
   adRefreshAvailable: boolean;
   adGachaAvailable: boolean;
@@ -45,6 +58,27 @@ export interface MarketState {
 
 const RARITY_COLORS = ['#7a6d62', '#3d8f4e', '#3276b8', '#8345b0', '#cf6e12'] as const;
 const RARITY_BG = ['#f4f0e8', '#e5f5e8', '#e4effa', '#f2e8fa', '#fdf0dc'] as const;
+
+const GACHA_RARITY_PALETTE = [
+  { top: '#fbf7ef', bot: '#eee3ce', border: '#9c8b72', iconBg: '#f3ead8', pill: '#857560', pillStroke: '#5c4f3e', text: '#fffdf7' },
+  { top: '#ecfae8', bot: '#cdeec3', border: '#388a48', iconBg: '#dbf5d3', pill: '#3f9648', pillStroke: '#245e29', text: '#fffdf7' },
+  { top: '#eaf4fe', bot: '#cae2fc', border: '#2c72ba', iconBg: '#d9ecfd', pill: '#3078c4', pillStroke: '#1c4d82', text: '#fffdf7' },
+  { top: '#f6ebff', bot: '#e2c9fa', border: '#803eb3', iconBg: '#ebd9fc', pill: '#8542ba', pillStroke: '#52227a', text: '#fffdf7' },
+  { top: '#fff4d6', bot: '#fcdd94', border: '#cf6e12', iconBg: '#ffecb8', pill: '#d97312', pillStroke: '#874105', text: '#fffdf7' },
+] as const;
+
+function getLotteryPrizeRarity(prize: LotteryPrize): 0 | 1 | 2 | 3 | 4 {
+  if (prize.type === 'prop' && prize.id && PROPS[prize.id]) {
+    return Math.max(0, Math.min(4, PROPS[prize.id].rarity)) as 0 | 1 | 2 | 3 | 4;
+  }
+  if (prize.type === 'fragment' && prize.id && WEAPONS[prize.id]) {
+    return Math.max(0, Math.min(4, WEAPONS[prize.id].rarity)) as 0 | 1 | 2 | 3 | 4;
+  }
+  if (prize.type === 'coins') {
+    return prize.amount >= 160 ? 2 : prize.amount >= 80 ? 1 : 0;
+  }
+  return 0;
+}
 
 export function getSortedArmoryWeapons(profile: Profile, family: ArmoryTab): WeaponDefinition[] {
   return Object.values(WEAPONS)
@@ -633,33 +667,45 @@ export function drawMarketModal(
     return { scrollViewport: { x: vx, y: vy, w: vw, h: vh } };
   }
 
-  // ── TAB 3: LUCKY GACHA (`幸运扭蛋` — Widescreen 2-Column Big-Font Mobile Layout!) ──
+  // ── TAB 3: LUCKY GACHA (`幸运扭蛋` — Widescreen 2-Column Big-Font + Rarity Colors + Chase Animation!) ──
   const gx = body.x + 4, gy = body.y + 4, gw = body.w - 8, gh = body.h - 8;
   drawIvorySlab(c, gx, gy, gw, gh, 20, '#fffdf8', '#f8ebd0', '#855a2e', 2.4);
 
   const compact = gh < 410;
   const pad = 16;
+  const spinning = Boolean(market.spinAnim);
+  const celebrating = !spinning && market.lastPrizeIndex !== null && elapsed < market.celebrateUntil;
 
   // LEFT COLUMN: Gacha Machine Showcase + Big Rule/Win Banner + Chunky Spin Buttons
   const lx = gx + pad;
   const ly = gy + pad;
-  const lw = 408;
+  const lw = 398;
   const lh = gh - pad * 2;
 
   const machSz = compact ? 74 : 86;
   round(c, lx, ly, machSz, machSz, 18, '#f5e8ff', '#8a5d32', 2.4);
-  drawSpriteContain(c, 'ui_gacha_machine', lx + 6, ly + 6, machSz - 12, machSz - 12);
+  if (spinning) {
+    c.save();
+    c.translate(lx + machSz / 2, ly + machSz / 2);
+    c.rotate(Math.sin(elapsed * 28) * 0.09);
+    const bounce = 1 + Math.abs(Math.sin(elapsed * 18)) * 0.06;
+    c.scale(bounce, bounce);
+    drawSpriteContain(c, 'ui_gacha_machine', -(machSz - 12) / 2, -(machSz - 12) / 2, machSz - 12, machSz - 12);
+    c.restore();
+  } else {
+    drawSpriteContain(c, 'ui_gacha_machine', lx + 6, ly + 6, machSz - 12, machSz - 12);
+  }
 
   const headTextX = lx + machSz + 14;
   const headTextW = lw - machSz - 14;
-  drawText(c, t('p11.meta.lotteryTitle'), headTextX, ly + (compact ? 20 : 24), compact ? 27 : 31, PALETTE.ink, 'left', 900);
+  drawText(c, t('p11.meta.lotteryTitle'), headTextX, ly + (compact ? 20 : 24), compact ? 27 : 30, PALETTE.ink, 'left', 900);
   drawWrappedText(
     c,
     t('p11.meta.lotteryRule'),
     headTextX,
     ly + (compact ? 40 : 48),
     headTextW,
-    compact ? 19 : 20.5,
+    compact ? 19 : 20,
     compact ? 23 : 25,
     PALETTE.inkSoft,
     'left',
@@ -668,8 +714,8 @@ export function drawMarketModal(
   );
 
   // Bottom Spin Buttons Stack (sized first so middle rule/result slab fills exact remaining height!)
-  const hasTicket = profile.freeLotteryTickets > 0;
-  const hasCoins = profile.coins >= META_PRICES.lottery;
+  const hasTicket = !spinning && profile.freeLotteryTickets > 0;
+  const hasCoins = !spinning && profile.coins >= META_PRICES.lottery;
   const hasAd = market.adGachaAvailable;
   const btnH = hasAd ? (compact ? 44 : 52) : (compact ? 52 : 60);
   const btnGap = compact ? 8 : 12;
@@ -677,11 +723,16 @@ export function drawMarketModal(
   const btnStackH = btnCount * btnH + (btnCount - 1) * btnGap;
   const btnStartY = ly + lh - btnStackH;
 
-  // Middle Status / Last Prize / Rule Card (BIG 20–23px bold text, zero tiny footnotes!)
+  // Middle Status / Spinning / Last Prize / Rule Card (BIG 20–25px bold text, zero tiny footnotes!)
   const midY = ly + machSz + (compact ? 10 : 14);
   const midH = Math.max(78, btnStartY - midY - (compact ? 10 : 14));
-  if (market.lastPrizeLabel) {
-    drawIvorySlab(c, lx, midY, lw, midH, 18, '#e8fae0', '#d1f2c2', '#3d8633', 2.6);
+  if (spinning) {
+    const dots = '.'.repeat(1 + (Math.floor(elapsed * 6) % 3));
+    drawIvorySlab(c, lx, midY, lw, midH, 18, '#fff8d4', '#f8df88', '#d48216', 2.8);
+    drawText(c, zh ? `✨ 幸运转盘旋转中${dots}` : `✨ Spinning${dots}`, lx + lw / 2, midY + midH * 0.42, compact ? 22 : 25, '#8c4408', 'center', 900);
+    drawText(c, zh ? '好运即将揭晓！' : 'Good luck!', lx + lw / 2, midY + midH * 0.74, compact ? 19 : 21, '#7c5018', 'center', 800);
+  } else if (market.lastPrizeLabel) {
+    drawIvorySlab(c, lx, midY, lw, midH, 18, '#e8fae0', '#d1f2c2', '#3d8633', 2.8);
     drawText(c, zh ? '🎉 恭喜抽中' : '🎉 You Won!', lx + lw / 2, midY + (compact ? 24 : 34), compact ? 20 : 22, '#2d6e24', 'center', 900);
     drawWrappedText(
       c,
@@ -727,12 +778,13 @@ export function drawMarketModal(
   });
   if (hasAd) {
     by += btnH + btnGap;
-    drawPillButton(c, hits, 'market:ad-gacha', lx, by, lw, btnH, zh ? '🎬 看视频免费抽' : '🎬 Free Ad Spin', 'teal', {
+    drawPillButton(c, hits, 'market:ad-gacha', lx, by, lw, btnH, zh ? '🎬 看视频免费抽' : '🎬 Free Ad Spin', spinning ? 'muted' : 'teal', {
       fontSize: compact ? 19.5 : 21.5,
+      disabled: spinning,
     });
   }
 
-  // RIGHT COLUMN: GIANT 3×3 Horizontal-Card Prize Ring exploiting full widescreen width!
+  // RIGHT COLUMN: GIANT 3×3 Rarity-Colored Prize Ring with Chase Spotlight Animation!
   const ringOrder = [0, 1, 2, 7, -1, 3, 6, 5, 4];
   const gridX = lx + lw + 18;
   const gridY = ly;
@@ -750,18 +802,30 @@ export function drawMarketModal(
 
     if (prizeIdx === -1) {
       const useTicket = profile.freeLotteryTickets > 0;
-      const canSpin = useTicket || profile.coins >= META_PRICES.lottery;
+      const canSpin = !spinning && (useTicket || profile.coins >= META_PRICES.lottery);
       drawButton(c, hits, 'market:spin:auto', tx, ty, cw, ch, '', {
-        ...(canSpin ? BTN_STYLES.green : BTN_STYLES.muted),
+        ...(spinning ? BTN_STYLES.gold : canSpin ? BTN_STYLES.green : BTN_STYLES.muted),
         radius: 20,
         disabled: !canSpin,
       });
-      if (pulseSpin) {
+      if (pulseSpin && !spinning) {
         const glow = 0.5 + 0.5 * Math.sin(elapsed * 6);
         round(c, tx - 3, ty - 3, cw + 6, ch + 6, 22, 'transparent', `rgba(255,212,56,${glow.toFixed(2)})`, 4.5);
       }
       const dy = hits.isPressed('market:spin:auto') ? 3 : 0;
-      drawText(c, t('m2.spin'), tx + cw / 2, ty + ch * 0.34 + dy, compact ? 25 : 29, canSpin ? '#fffdf7' : PALETTE.muted, 'center', 900, canSpin ? '#294d12' : undefined, 4);
+      const centerLabel = spinning ? t('m2.spinning') : t('m2.spin');
+      drawText(
+        c,
+        centerLabel,
+        tx + cw / 2,
+        ty + ch * 0.35 + dy,
+        compact ? 24 : 28,
+        spinning ? '#4a2406' : canSpin ? '#fffdf7' : PALETTE.muted,
+        'center',
+        900,
+        !spinning && canSpin ? '#294d12' : undefined,
+        4,
+      );
       const costStr = useTicket ? `×${profile.freeLotteryTickets}` : String(META_PRICES.lottery);
       const costFont = compact ? 21 : 24;
       const costIcon = compact ? 26 : 30;
@@ -775,13 +839,27 @@ export function drawMarketModal(
         ty + ch * 0.72 + dy,
         costIcon,
         costFont,
-        canSpin ? '#fff9d6' : PALETTE.muted,
+        spinning ? '#5e3208' : canSpin ? '#fff9d6' : PALETTE.muted,
       );
       return;
     }
 
     const prize = market.prizes[prizeIdx];
-    const wonHere = market.lastPrizeIndex === prizeIdx;
+    const rarity = prize ? getLotteryPrizeRarity(prize) : 0;
+    const pal = GACHA_RARITY_PALETTE[rarity];
+    const isChaseLit = spinning && market.highlightIndex === prizeIdx;
+    const isWonLit = !spinning && market.lastPrizeIndex === prizeIdx;
+    const isActive = isChaseLit || isWonLit;
+
+    c.save();
+    if (isActive) {
+      const pop = isChaseLit ? 1.04 : celebrating ? 1.03 + 0.02 * Math.sin(elapsed * 12) : 1.02;
+      c.translate(tx + cw / 2, ty + ch / 2);
+      c.scale(pop, pop);
+      c.translate(-(tx + cw / 2), -(ty + ch / 2));
+    }
+
+    // Rarity-tinted card background + thick golden spotlight ring when chased/won!
     drawIvorySlab(
       c,
       tx,
@@ -789,18 +867,27 @@ export function drawMarketModal(
       cw,
       ch,
       18,
-      wonHere ? '#fff2aa' : '#fffdf8',
-      wonHere ? '#f9d866' : '#f4e3c0',
-      wonHere ? '#c96214' : '#b88f5a',
-      wonHere ? 3.6 : 2.2,
+      isChaseLit ? '#fff9cc' : pal.top,
+      isChaseLit ? '#ffe578' : pal.bot,
+      isActive ? '#e68a00' : pal.border,
+      isActive ? 4.4 : 2.6,
     );
-    if (!prize) return;
 
-    // Horizontal cell interior: Giant left icon + Big readable name & amber ×count pill on right!
-    const iconBox = compact ? 74 : 86;
+    if (isActive) {
+      const glowAlpha = isChaseLit ? 0.95 : 0.65 + 0.35 * Math.sin(elapsed * 8);
+      round(c, tx - 4, ty - 4, cw + 8, ch + 8, 21, 'transparent', `rgba(255,214,48,${glowAlpha.toFixed(2)})`, 5);
+    }
+
+    if (!prize) {
+      c.restore();
+      return;
+    }
+
+    // Horizontal cell interior: Rarity-framed icon on left + Big name & Rarity-Colored Tier/Count button on right!
+    const iconBox = compact ? 70 : 82;
     const ix = tx + 10;
     const iy = ty + Math.round((ch - iconBox) / 2);
-    round(c, ix, iy, iconBox, iconBox, 16, wonHere ? '#fff9d6' : '#f7ebd2', wonHere ? '#c96214' : '#c9a672', 2);
+    round(c, ix, iy, iconBox, iconBox, 16, isChaseLit ? '#fffdf0' : pal.iconBg, isActive ? '#d47c08' : pal.border, 2.2);
 
     const sprSz = iconBox - 12;
     let label = '';
@@ -817,16 +904,35 @@ export function drawMarketModal(
       label = t(`fragment.${prize.id}`);
     }
 
-    const textX = ix + iconBox + 12;
+    const textX = ix + iconBox + 10;
     const textW = tx + cw - textX - 10;
-    const nameSize = compact ? 19.5 : 21.5;
-    const nameLH = compact ? 23 : 26;
-    drawWrappedText(c, label, textX, ty + (compact ? 14 : 20), textW, nameSize, nameLH, PALETTE.ink, 'left', 900, 2);
+    const nameSize = compact ? 19 : 21;
+    const nameLH = compact ? 22 : 25;
+    drawWrappedText(c, label, textX, ty + (compact ? 12 : 16), textW, nameSize, nameLH, PALETTE.ink, 'left', 900, 2);
 
-    const pillH = compact ? 30 : 34;
-    const pillY = ty + ch - pillH - (compact ? 12 : 16);
-    round(c, textX, pillY, Math.min(textW, 108), pillH, pillH / 2, wonHere ? '#f5b832' : '#f3dfae', '#9c6216', 1.8);
-    drawText(c, `×${prize.amount}`, textX + Math.min(textW, 108) / 2, pillY + pillH / 2 + 1, compact ? 20 : 22, '#4a2106', 'center', 900);
+    // Rarity-Colored Grade + Count Pill/Button (Green for 优良, Blue for 精良, Purple for 史诗, Gold-Orange for 传说!)
+    const pillH = compact ? 32 : 36;
+    const pillY = ty + ch - pillH - (compact ? 10 : 14);
+    const pillW = textW;
+    const rarityLabel = t(`m2.rarity.${rarity}`);
+    const badgeStr = `${rarityLabel} ×${prize.amount}`;
+    round(c, textX, pillY + 2, pillW, pillH, pillH / 2, pal.pillStroke, 'transparent', 0);
+    round(c, textX, pillY, pillW, pillH, pillH / 2, pal.pill, pal.pillStroke, 2);
+    drawText(c, badgeStr, textX + pillW / 2, pillY + pillH / 2 + 1, compact ? 17.5 : 19, pal.text, 'center', 900);
+
+    // Celebratory winner badge perched on top-right corner once landed
+    if (isWonLit) {
+      const winW = 76, winH = 26;
+      round(c, tx + cw - winW - 6, ty - 10, winW, winH, 13, '#ffd238', '#8a4306', 2.2);
+      drawText(c, zh ? '★ 中奖!' : '★ WIN!', tx + cw - winW / 2 - 6, ty + 3, 15.5, '#592304', 'center', 900);
+    }
+
+    // Subtle dim on non-lit cells during spin chase so the moving spotlight pops vividly!
+    if (spinning && !isChaseLit) {
+      round(c, tx, ty, cw, ch, 18, 'rgba(38,20,6,0.12)', 'transparent', 0);
+    }
+
+    c.restore();
   });
 
   return {};

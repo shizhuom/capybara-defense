@@ -175,7 +175,7 @@ describe('Mini-Game Phases 3 & 4: All 7 Meta Hubs, P19 Onboarding, Online Leader
     };
     const h = createFullHarness(rich);
     try {
-      // 1. Market: switch to Tab 3 (Lucky Gacha) & spin center button using free ticket
+      // 1. Market: switch to Tab 3 (Lucky Gacha) & spin center button using free ticket (verifying chase animation!)
       h.app.openHub('market');
       h.stepFrame(100);
       h.tapHit('market:tab:lottery');
@@ -183,6 +183,8 @@ describe('Mini-Game Phases 3 & 4: All 7 Meta Hubs, P19 Onboarding, Online Leader
       expect(h.app.getDebugState().marketTab).toBe('lottery');
       h.tapHit('market:spin:auto');
       expect(h.app.getDebugState().profile.freeLotteryTickets).toBe(1);
+      // Advance frames so the clockwise chase animation completes cleanly
+      for (let t = 180; t <= 4000; t += 60) h.stepFrame(t);
 
       // 2. Village: collect offline harvest + switch to Build tab
       const coinsBeforeHarvest = h.app.getDebugState().profile.coins;
