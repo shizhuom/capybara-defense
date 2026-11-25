@@ -93,6 +93,7 @@ export interface Profile extends BattleLoadout {
   coins:number; wins:number; matches:number; fragments:string[]; awardedBattles:string[];
   schemaVersion:2; weaponFragments:Record<string,number>; unlockedWeapons:string[]; freeLotteryTickets:number;
   shop:{day:string;offers:string[]}|null;
+  lottery?:{day:string;prizes:{type:'prop'|'coins'|'fragment';id?:string;amount:number}[]}|null;
   stars:number; highestStars:number; winStreak:number; bestWinStreak:number;
   selectedMap:'auto'|MapId; avatarId:string; unlockedAvatars:string[]; mergedHeroes:string[]; settings:GameSettings;
   ingredients:Record<string,number>; unlockedBroths:string[]; brothLevels:Record<string,number>; activeBrothId:string|null;

@@ -2,7 +2,7 @@ import {ledger} from './LedgerView';
 import type { Profile } from '../core/types';
 import { WEAPONS, HERO_FAMILIES, RARITY_RULES, type WeaponFamily, type WeaponDefinition } from '../config/weapons';
 import { PROPS,META_PRICES } from '../config/props';
-import { buyProp, createLotteryPrizes, ensureDailyShop, equipProp, equipWeapon, recycleFragments, refreshShop, spinLottery, type LotteryPayment, type LotteryPrize, type MetaResult } from '../core/MetaProgression';
+import { buyProp, createLotteryPrizes, ensureDailyLottery, ensureDailyShop, equipProp, equipWeapon, recycleFragments, refreshShop, spinLottery, type LotteryPayment, type LotteryPrize, type MetaResult } from '../core/MetaProgression';
 import { t } from '../i18n/i18n';
 import { escapeHtml as esc } from './art';
 import { saveProfile } from './storage';
@@ -55,9 +55,11 @@ export class MetaScreens {
 
   open(screen: MetaScreen): void {
     if (screen === 'market') {
-      const profile = ensureDailyShop(this.profile(), day(), Math.random);
+      const today = day();
+      const profile = ensureDailyLottery(ensureDailyShop(this.profile(), today, Math.random), today, Math.random);
       this.persist(profile);
-      if (!this.prizes.length) this.prizes = createLotteryPrizes(this.profile(), Math.random);
+      this.prizes = [...(this.profile().lottery?.prizes ?? createLotteryPrizes(this.profile(), Math.random))];
+      this.needsFreshBoard = false;
     }
   }
   private persist(profile: Profile): boolean {
@@ -104,12 +106,14 @@ export class MetaScreens {
   }
   private spin(payment: LotteryPayment = 'auto'): void {
     if (this.spinning) return;
+    const today = day();
     if (this.needsFreshBoard || this.prizes.length !== 8) {
-      this.prizes = createLotteryPrizes(this.profile(), Math.random);
+      const synced = ensureDailyLottery(this.profile(), today, Math.random);
+      this.prizes = [...(synced.lottery?.prizes ?? createLotteryPrizes(synced, Math.random))];
       this.needsFreshBoard = false;
     }
     const before = this.profile();
-    const result = spinLottery(this.profile(), this.prizes, Math.random, payment);
+    const result = spinLottery(this.profile(), this.prizes, Math.random, payment, today);
     if (!result.ok) { this.notify(result.key, true); return; }
     // The complete transaction is persisted once, before any animation begins.
     if (!this.persist(result.profile)) return;

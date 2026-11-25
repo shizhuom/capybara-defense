@@ -21,8 +21,8 @@ export interface LotteryPrize { type:'prop'|'coins'|'fragment'; id?:string; amou
 
 /**
  * 8-slot gacha wheel rarity patterns (total weight = 12.5):
- *  - Pattern 1 (6.5 / 12.5 = 52%): 3 White, 3 Green, 2 Blue
- *  - Pattern 2 (5.0 / 12.5 = 40%): 3 White, 2 Green, 2 Blue, 1 Purple
+ *  - Pattern 1 (2.5 / 12.5 = 20%): 3 White, 3 Green, 2 Blue
+ *  - Pattern 2 (9.0 / 12.5 = 72%): 3 White, 2 Green, 2 Blue, 1 Purple
  *  - Pattern 3 (1.0 / 12.5 =  8%): 2 White, 2 Green, 2 Blue, 1 Purple, 1 Orange
  * Each of the 8 slots wins with uniform 1/8 probability on spin.
  */
@@ -31,8 +31,8 @@ export const LOTTERY_PATTERNS: readonly {
   readonly weight: number;
   readonly rarities: readonly LotteryRarity[];
 }[] = [
-  { id: 'common', weight: 6.5, rarities: [0, 0, 0, 1, 1, 1, 2, 2] },
-  { id: 'epic', weight: 5, rarities: [0, 0, 0, 1, 1, 2, 2, 3] },
+  { id: 'common', weight: 2.5, rarities: [0, 0, 0, 1, 1, 1, 2, 2] },
+  { id: 'epic', weight: 9, rarities: [0, 0, 0, 1, 1, 2, 2, 3] },
   { id: 'legendary', weight: 1, rarities: [0, 0, 1, 1, 2, 2, 3, 4] },
 ];
 export const LOTTERY_TOTAL_WEIGHT = 12.5;
@@ -70,6 +70,7 @@ const copy = (profile:Profile):Profile => ({...profile,fragments:[...profile.fra
   ownedProps:{...profile.ownedProps},equippedActiveProps:[...profile.equippedActiveProps],equippedPassiveProps:[...profile.equippedPassiveProps],
   unlockedAvatars:[...profile.unlockedAvatars],mergedHeroes:[...profile.mergedHeroes],settings:{...profile.settings},
   shop:profile.shop ? {...profile.shop,offers:[...profile.shop.offers]} : null,
+  lottery:profile.lottery ? {day:profile.lottery.day,prizes:profile.lottery.prizes.map(pr=>({...pr}))} : null,
   ingredients:{...(profile.ingredients??{})},unlockedBroths:[...(profile.unlockedBroths??[])],brothLevels:{...(profile.brothLevels??{})},activeBrothId:profile.activeBrothId??null,
   village:profile.village?copyVillage(profile.village):createVillage(),
   endlessMedallions:normalizeMedallions(profile.endlessMedallions),
@@ -81,7 +82,7 @@ const success = (profile:Profile,key:string,amount?:number):MetaResult => ({prof
 
 export function createProfile():Profile {
   return {coins:0,wins:0,matches:0,fragments:[],awardedBattles:[],schemaVersion:2,tutorialCompleted:false,tutorialRewardClaimed:false,earlyWaveTipSeen:false,bestEndlessWave:0,
-    weaponFragments:{},unlockedWeapons:[],equippedWeapons:{},ownedProps:{},equippedActiveProps:[],equippedPassiveProps:[],freeLotteryTickets:0,shop:null,
+    weaponFragments:{},unlockedWeapons:[],equippedWeapons:{},ownedProps:{},equippedActiveProps:[],equippedPassiveProps:[],freeLotteryTickets:0,shop:null,lottery:null,
     stars:0,highestStars:0,winStreak:0,bestWinStreak:0,selectedMap:'auto',avatarId:'capybara',unlockedAvatars:[...DEFAULT_AVATARS],mergedHeroes:[],settings:{...DEFAULT_SETTINGS},
     // P19: ingredients, village materials & crests are gifted on each system's unlock milestone.
     ingredients:{...STARTER_INGREDIENTS},unlockedBroths:[],brothLevels:{},activeBrothId:null,
@@ -161,6 +162,19 @@ export function normalizeProfile(raw:unknown):Profile {
   p.freeLotteryTickets=count(data.freeLotteryTickets);
   const shop=object(data.shop);
   if(typeof shop.day==='string'&&/^\d{4}-\d{2}-\d{2}$/.test(shop.day)) p.shop={day:shop.day,offers:unique(strings(shop.offers).filter(id=>has(PROPS,id))).slice(0,3)};
+  const lot=object(data.lottery);
+  if(typeof lot.day==='string'&&/^\d{4}-\d{2}-\d{2}$/.test(lot.day)&&Array.isArray(lot.prizes)&&lot.prizes.length===8){
+    const parsed=lot.prizes.map(item=>{
+      const o=object(item);
+      const type=o.type==='prop'||o.type==='coins'||o.type==='fragment'?o.type:null;
+      const amount=count(o.amount);
+      const id=typeof o.id==='string'?o.id:undefined;
+      return type?({type,...(id!==undefined?{id}:{}),amount} as LotteryPrize):null;
+    });
+    if(parsed.every((pr):pr is LotteryPrize=>Boolean(pr&&isValidLotteryPrize(pr)))){
+      p.lottery={day:lot.day,prizes:parsed};
+    }
+  }
   normalizeKitchen(p,data);
   // An absent village (new or pre-P16 save) receives the welcome gift; an existing one is never re-gifted.
   p.village=normalizeVillage(data.village);
@@ -298,12 +312,23 @@ export function createLotteryPrizes(profile:Profile,random:()=>number):LotteryPr
   }
   return prizes;
 }
-export type LotteryPayment = 'auto' | 'ticket' | 'coins';
-export function spinLottery(profile:Profile,prizes:LotteryPrize[],random:()=>number,payment:LotteryPayment='auto'):MetaResult&{prize?:LotteryPrize;index?:number} {
-  const valid=(prize:LotteryPrize)=>prize&&Number.isSafeInteger(prize.amount)&&prize.amount>0&&
+export function isValidLotteryPrize(prize:LotteryPrize):boolean {
+  return Boolean(prize)&&Number.isSafeInteger(prize.amount)&&prize.amount>0&&
     (prize.type==='coins'?[40,80,160].includes(prize.amount):prize.type==='prop'?typeof prize.id==='string'&&has(PROPS,prize.id)&&prize.amount===1:
       prize.type==='fragment'&&typeof prize.id==='string'&&has(WEAPONS,prize.id)&&prize.amount===1);
-  if(prizes.length!==8||!prizes.every(valid)) return fail(profile,'meta.invalidPrizes');
+}
+/** Persists the current 8-slot wheel across restarts/actions; resets automatically once per new calendar day. */
+export function ensureDailyLottery(profile:Profile,day:string,random:()=>number):Profile {
+  if(profile.lottery&&profile.lottery.day===day&&profile.lottery.prizes.length===8&&profile.lottery.prizes.every(isValidLotteryPrize)){
+    return unlockAchievements(copy(profile));
+  }
+  const p=copy(profile);
+  p.lottery={day,prizes:createLotteryPrizes(p,random)};
+  return unlockAchievements(p);
+}
+export type LotteryPayment = 'auto' | 'ticket' | 'coins';
+export function spinLottery(profile:Profile,prizes:LotteryPrize[],random:()=>number,payment:LotteryPayment='auto',day?:string):MetaResult&{prize?:LotteryPrize;index?:number} {
+  if(prizes.length!==8||!prizes.every(isValidLotteryPrize)) return fail(profile,'meta.invalidPrizes');
   const useTicket=payment==='ticket'||(payment==='auto'&&profile.freeLotteryTickets>0);
   if(useTicket&&profile.freeLotteryTickets<=0) return fail(profile,'p9.noTickets');
   if(!useTicket&&profile.coins<META_PRICES.lottery) return fail(profile,'meta.insufficientCoins');
@@ -314,6 +339,8 @@ export function spinLottery(profile:Profile,prizes:LotteryPrize[],random:()=>num
     const id=prize.id!;if((p.ownedProps[id]??0)>=PROPS[id].maxLevel) p.coins+=PROPS[id].price;
     else {p.ownedProps[id]=(p.ownedProps[id]??0)+1;replaceCappedShopOffer(p,id);}
   } else {const granted=grantWeaponFragments(p,[prize.id!]);p=granted.profile;newWeapons=granted.newWeapons;}
+  const nextDay=day??p.lottery?.day;
+  if(nextDay) p.lottery={day:nextDay,prizes:createLotteryPrizes(p,random)};
   return {...success(p,'meta.lotteryWon'),prize,index,newWeapons};
 }
 export function unlockAllProfile(profile:Profile):Profile {

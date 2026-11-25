@@ -27,6 +27,7 @@ import { upgradeMedallion } from '../core/MedallionProgression';
 import {
   buyProp,
   createLotteryPrizes,
+  ensureDailyLottery,
   ensureDailyShop,
   equipProp,
   equipWeapon,
@@ -211,7 +212,13 @@ export class MinigameApp {
   constructor(private readonly platform: PlatformAdapter) {
     setMobileWideStage(true);
     this.profile = settleStamina(settleVillageClock(loadProfile(platform.storage), Date.now()), Date.now());
-    this.profile = ensureDailyShop(this.profile, localDay(), Math.random);
+    const bootDay = localDay();
+    const prevLotteryDay = this.profile.lottery?.day;
+    const prevShopDay = this.profile.shop?.day;
+    this.profile = ensureDailyLottery(ensureDailyShop(this.profile, bootDay, Math.random), bootDay, Math.random);
+    if (prevLotteryDay !== this.profile.lottery?.day || prevShopDay !== this.profile.shop?.day) {
+      this.save();
+    }
     this.platform.audio.setSettings(this.profile.settings);
     this.muted = this.profile.settings.musicVolume <= 0 && this.profile.settings.soundVolume <= 0;
 
@@ -224,7 +231,7 @@ export class MinigameApp {
     this.market = {
       tab: 'shop',
       merchantQuip: 0,
-      prizes: createLotteryPrizes(this.profile, Math.random),
+      prizes: [...(this.profile.lottery?.prizes ?? createLotteryPrizes(this.profile, Math.random))],
       highlightIndex: null,
       lastPrizeIndex: null,
       lastPrizeLabel: '',
@@ -327,33 +334,51 @@ export class MinigameApp {
     };
   }
 
+  private syncDailyLottery(persistIfChanged = true): void {
+    const today = localDay();
+    const prevDay = this.profile.lottery?.day;
+    this.profile = ensureDailyLottery(this.profile, today, Math.random);
+    if (persistIfChanged && prevDay !== this.profile.lottery?.day) {
+      this.save();
+    }
+  }
+
   private jumpToOnboardingStage(stage: number): void {
     const s = Math.max(0, Math.min(8, Math.trunc(stage)));
+    const today = localDay();
     this.profile = buildDebugStageProfile(this.profile, s);
-    this.profile = ensureDailyShop({ ...this.profile, stamina: STAMINA_MAX, staminaUpdatedAt: Date.now() }, localDay(), Math.random);
+    this.profile = ensureDailyLottery(ensureDailyShop({ ...this.profile, stamina: STAMINA_MAX, staminaUpdatedAt: Date.now() }, today, Math.random), today, Math.random);
+    this.market.prizes = [...this.profile.lottery!.prizes];
     this.save();
     this.returnToMenu();
     this.showToast(t('p19.devStageDone', { stage: s }), 'good', 2.6);
   }
 
   private applyDevUnlockAll(): void {
+    const today = localDay();
     this.profile = enableTestProfile(this.platform.storage);
-    this.profile = ensureDailyShop({ ...this.profile, stamina: STAMINA_MAX, staminaUpdatedAt: Date.now() }, localDay(), Math.random);
+    this.profile = ensureDailyLottery(ensureDailyShop({ ...this.profile, stamina: STAMINA_MAX, staminaUpdatedAt: Date.now() }, today, Math.random), today, Math.random);
+    this.market.prizes = [...this.profile.lottery!.prizes];
     this.save();
     this.returnToMenu();
     this.showToast(getLanguage() === 'zh-CN' ? '🌟 已开启全解锁测试档！' : '🌟 Full unlock test save enabled!', 'good', 2.4);
   }
 
   private applyDevRestore(): void {
+    const today = localDay();
     this.profile = restoreNormalProfile(this.platform.storage);
-    this.profile = ensureDailyShop(this.profile, localDay(), Math.random);
+    this.profile = ensureDailyLottery(ensureDailyShop(this.profile, today, Math.random), today, Math.random);
+    this.market.prizes = [...this.profile.lottery!.prizes];
+    this.save();
     this.returnToMenu();
     this.showToast(getLanguage() === 'zh-CN' ? '↩ 已恢复正式存档！' : '↩ Restored normal save!', 'good', 2.4);
   }
 
   private applyDevReset(): void {
+    const today = localDay();
     resetOwnStorage(this.platform.storage);
-    this.profile = ensureDailyShop(emptyProfile(), localDay(), Math.random);
+    this.profile = ensureDailyLottery(ensureDailyShop(emptyProfile(), today, Math.random), today, Math.random);
+    this.market.prizes = [...this.profile.lottery!.prizes];
     this.save();
     this.returnToMenu();
     this.showToast(t('hint.reset'), 'warn', 2.2);
@@ -424,13 +449,17 @@ export class MinigameApp {
       this.armory.detailWeaponId = null;
       void this.assetManager.ensureSubpackage('meta');
     } else if (kind === 'market') {
-      this.profile = ensureDailyShop(this.profile, localDay(), Math.random);
+      const today = localDay();
+      const prevShopDay = this.profile.shop?.day;
+      const prevLotDay = this.profile.lottery?.day;
+      this.profile = ensureDailyLottery(ensureDailyShop(this.profile, today, Math.random), today, Math.random);
+      if (prevShopDay !== this.profile.shop?.day || prevLotDay !== this.profile.lottery?.day) {
+        this.save();
+      }
       this.market.spunThisVisit = false;
       this.market.spinAnim = null;
-      if (this.market.pendingRefreshAt !== null || this.market.prizes.length !== 8) {
-        this.market.prizes = createLotteryPrizes(this.profile, Math.random);
-        this.market.pendingRefreshAt = null;
-      }
+      this.market.pendingRefreshAt = null;
+      this.market.prizes = [...this.profile.lottery!.prizes];
       this.market.highlightIndex = null;
       this.market.lastPrizeIndex = null;
       void this.assetManager.ensureSubpackage('meta');
@@ -1350,13 +1379,14 @@ export class MinigameApp {
     }
     if (id === 'market:spin' || id.startsWith('market:spin:')) {
       if (this.market.spinAnim) return;
+      this.syncDailyLottery();
       if (this.market.pendingRefreshAt !== null) {
-        this.market.prizes = createLotteryPrizes(this.profile, Math.random);
+        this.market.prizes = [...this.profile.lottery!.prizes];
         this.market.pendingRefreshAt = null;
       }
       const rawPay = id.startsWith('market:spin:') ? id.slice('market:spin:'.length) : 'auto';
       const pay = (rawPay === 'ticket' || rawPay === 'coins' ? rawPay : 'auto') as 'auto' | 'ticket' | 'coins';
-      const res = spinLottery(this.profile, this.market.prizes, Math.random, pay);
+      const res = spinLottery(this.profile, this.market.prizes, Math.random, pay, localDay());
       if (res.ok && res.prize) {
         this.profile = res.profile;
         this.save();
@@ -1370,12 +1400,13 @@ export class MinigameApp {
     if (id === 'market:ad-gacha') {
       if (this.market.spinAnim) return;
       void this.runRewardedAd('free_gacha', () => {
+        this.syncDailyLottery();
         if (this.market.pendingRefreshAt !== null) {
-          this.market.prizes = createLotteryPrizes(this.profile, Math.random);
+          this.market.prizes = [...this.profile.lottery!.prizes];
           this.market.pendingRefreshAt = null;
         }
         const temp = { ...this.profile, freeLotteryTickets: this.profile.freeLotteryTickets + 1 };
-        const res = spinLottery(temp, this.market.prizes, Math.random, 'ticket');
+        const res = spinLottery(temp, this.market.prizes, Math.random, 'ticket', localDay());
         if (res.ok && res.prize) {
           this.profile = res.profile;
           this.save();
@@ -1869,7 +1900,8 @@ export class MinigameApp {
     const anim = this.market.spinAnim;
     if (!anim) {
       if (this.market.pendingRefreshAt !== null && this.elapsedSec >= this.market.pendingRefreshAt) {
-        this.market.prizes = createLotteryPrizes(this.profile, Math.random);
+        this.syncDailyLottery();
+        this.market.prizes = [...this.profile.lottery!.prizes];
         this.market.pendingRefreshAt = null;
         this.market.highlightIndex = null;
         this.market.lastPrizeIndex = null;
@@ -1906,7 +1938,8 @@ export class MinigameApp {
     this.market.spinAnim = null;
     this.market.lastPrizeLabel = anim.pendingLabel;
     if (silent) {
-      this.market.prizes = createLotteryPrizes(this.profile, Math.random);
+      this.syncDailyLottery();
+      this.market.prizes = [...this.profile.lottery!.prizes];
       this.market.pendingRefreshAt = null;
       this.market.highlightIndex = null;
       this.market.lastPrizeIndex = null;
@@ -1923,7 +1956,8 @@ export class MinigameApp {
   private closeOverlayModal(): void {
     if (this.market.spinAnim) this.finishGachaSpin(true);
     else if (this.market.pendingRefreshAt !== null) {
-      this.market.prizes = createLotteryPrizes(this.profile, Math.random);
+      this.syncDailyLottery();
+      this.market.prizes = [...this.profile.lottery!.prizes];
       this.market.pendingRefreshAt = null;
       this.market.highlightIndex = null;
       this.market.lastPrizeIndex = null;

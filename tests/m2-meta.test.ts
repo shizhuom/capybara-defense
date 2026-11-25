@@ -191,29 +191,49 @@ describe('M2 pure progression', () => {
     const storage=memoryStorage();const s=await storageModule();s.saveProfile(today,storage);
     expect(m.ensureDailyShop(s.loadProfile(storage),'2026-11-12',()=>.2).shop).toEqual(today.shop);
   });
-  it('generates exact 3-tier rarity 8-slot wheels (6.5/5/1 over 12.5) with uniform 1/8 slot odds, capped prop compensation and fragments', async () => {
-    const m=await progression();const p={...m.createProfile(),coins:300,freeLotteryTickets:1};
+  it('generates exact 3-tier rarity 8-slot wheels (2.5/9/1 over 12.5) with uniform 1/8 odds, persists across restarts until spun or next day, and settles rewards', async () => {
+    const m=await progression();const s=await storageModule();const p={...m.createProfile(),coins:300,freeLotteryTickets:1};
     const countRarities=(list:ReturnType<typeof m.createLotteryPrizes>)=>list.map(pr=>m.getLotteryPrizeRarity(pr)).sort((a,b)=>a-b);
     const seq=(first:number)=>{let used=false;return()=>{if(!used){used=true;return first;}return .25;};};
 
-    // Exact 3 rarity patterns at exact weight boundaries (6.5 / 12.5, 5 / 12.5, 1 / 12.5)
+    // Exact 3 rarity patterns at exact weight boundaries (2.5 / 12.5, 9 / 12.5, 1 / 12.5)
     expect(countRarities(m.createLotteryPrizes(p,seq(0)))).toEqual([0,0,0,1,1,1,2,2]);
-    expect(countRarities(m.createLotteryPrizes(p,seq(6.49/12.5)))).toEqual([0,0,0,1,1,1,2,2]);
-    expect(countRarities(m.createLotteryPrizes(p,seq(6.5/12.5)))).toEqual([0,0,0,1,1,2,2,3]);
+    expect(countRarities(m.createLotteryPrizes(p,seq(2.49/12.5)))).toEqual([0,0,0,1,1,1,2,2]);
+    expect(countRarities(m.createLotteryPrizes(p,seq(2.5/12.5)))).toEqual([0,0,0,1,1,2,2,3]);
     expect(countRarities(m.createLotteryPrizes(p,seq(11.49/12.5)))).toEqual([0,0,0,1,1,2,2,3]);
     expect(countRarities(m.createLotteryPrizes(p,seq(11.5/12.5)))).toEqual([0,0,1,1,2,2,3,4]);
     expect(countRarities(m.createLotteryPrizes(p,seq(.999)))).toEqual([0,0,1,1,2,2,3,4]);
 
-    // Deterministic empirical distribution check across 12,500 evenly spaced wheel rolls + exact 1/8 slot pick
+    // Deterministic empirical distribution check across 12,500 evenly spaced wheel rolls
     const tierCounts={common:0,epic:0,legendary:0};
     for(let i=0;i<12500;i++) tierCounts[m.rollLotteryPattern(()=>(i+.5)/12500).id]++;
-    expect(tierCounts).toEqual({common:6500,epic:5000,legendary:1000});
+    expect(tierCounts).toEqual({common:2500,epic:9000,legendary:1000});
 
-    const prizes=m.createLotteryPrizes(p,seq(6.5/12.5));
+    // Persistence across restarts (never rerolls on same day until spun; resets once on a new calendar day!)
+    const storage=memoryStorage();
+    const day1=m.ensureDailyLottery(p,'2026-11-24',seq(0));
+    expect(day1.lottery?.day).toBe('2026-11-24');
+    expect(day1.lottery?.prizes).toHaveLength(8);
+    s.saveProfile(day1,storage);
+    const reloaded=s.loadProfile(storage);
+    expect(m.ensureDailyLottery(reloaded,'2026-11-24',()=>{throw Error('must not reroll on restart');}).lottery).toEqual(day1.lottery);
+    // New calendar day resets once
+    const day2=m.ensureDailyLottery(reloaded,'2026-11-25',seq(11.5/12.5));
+    expect(day2.lottery?.day).toBe('2026-11-25');
+    expect(countRarities(day2.lottery!.prizes)).toEqual([0,0,1,1,2,2,3,4]);
+    // Spinning atomically replaces the persisted board with a new next-round wheel!
+    const spun=m.spinLottery(day1,day1.lottery!.prizes,()=>.95,'auto','2026-11-24');
+    expect(spun.ok).toBe(true);
+    expect(spun.profile.lottery?.day).toBe('2026-11-24');
+    expect(countRarities(spun.profile.lottery!.prizes)).toEqual([0,0,1,1,2,2,3,4]);
+    s.saveProfile(spun.profile,storage);
+    expect(m.ensureDailyLottery(s.loadProfile(storage),'2026-11-24',()=>{throw Error('next-round wheel must persist');}).lottery).toEqual(spun.profile.lottery);
+
+    const prizes=m.createLotteryPrizes(p,seq(2.5/12.5));
     expect(prizes).toHaveLength(8);
     // Exact uniform 1/8 chance for each of the 8 slots
     const hitSlots=new Set<number>();
-    for(let s=0;s<8;s++) hitSlots.add(m.spinLottery(p,prizes,()=>(s+.5)/8).index!);
+    for(let slot=0;slot<8;slot++) hitSlots.add(m.spinLottery(p,prizes,()=>(slot+.5)/8).index!);
     expect([...hitSlots].sort((a,b)=>a-b)).toEqual([0,1,2,3,4,5,6,7]);
 
     // Capped prop refund, fragment unlock, atomic ticket/coin payment & invalid prize rejection
