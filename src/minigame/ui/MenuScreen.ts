@@ -266,6 +266,8 @@ export function drawMenuScreen(
   }
 
   // Floating Active Broth Pill (above left dock when Kitchen unlocked & broth active)
+  // Raised well clear of dock top badges (`3/36`, `领收成!`, `🔒xx星解锁` at dockY - 22)
+  const floatingPillY = dockY - 124;
   if (hasKitchen && profile.activeBrothId && isBrothId(profile.activeBrothId)) {
     const lv = getBrothLevel(profile, profile.activeBrothId);
     if (lv > 0) {
@@ -274,7 +276,7 @@ export function drawMenuScreen(
         hits,
         'menu:hub:kitchen',
         dockLeftX,
-        476,
+        floatingPillY,
         profile.activeBrothId,
         `${t(`broth.${profile.activeBrothId}`)} Lv.${lv}`,
         BROTHS[profile.activeBrothId].bathColor,
@@ -288,9 +290,9 @@ export function drawMenuScreen(
     const crests = formatCompactNumber(profile.endlessCrests ?? 0);
     const waveTag = (profile.bestEndlessWave ?? 0) >= 11 ? ` · W${profile.bestEndlessWave}` : '';
     const label = `${t('p17.hallPill')}${waveTag} · ${ready ? t('p17.canUpgrade') : `×${crests}`}`;
-    drawFloatingCornerPill(c, hits, 'menu:hub:medallions', bottomRightAnchor, 476, 'ui_endless_crest', label, ready ? '#f6cf59' : '#efe3fa', true);
+    drawFloatingCornerPill(c, hits, 'menu:hub:medallions', bottomRightAnchor, floatingPillY, 'ui_endless_crest', label, ready ? '#f6cf59' : '#efe3fa', true);
   } else if (nextDock?.id === 'medallions') {
-    drawFloatingCornerPill(c, hits, 'menu:locked:medallions', bottomRightAnchor, 476, 'ui_endless_crest', `${t('p17.hallPill')} 🔒${lockText}`, '#d8ccb8', true);
+    drawFloatingCornerPill(c, hits, 'menu:locked:medallions', bottomRightAnchor, floatingPillY, 'ui_endless_crest', `${t('p17.hallPill')} 🔒${lockText}`, '#d8ccb8', true);
   }
 }
 

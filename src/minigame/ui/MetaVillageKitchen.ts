@@ -47,6 +47,7 @@ import type { DialogGuideStep } from '../../ui/OnboardingGuide';
 import {
   PALETTE,
   ScrollRegion,
+  UI_FONT,
   drawDetailNavBar,
   drawIconLabel,
   drawIvorySlab,
@@ -472,43 +473,48 @@ export function drawKitchenModal(
     });
     y += Math.ceil(INGREDIENT_IDS.length / cols) * (ingCardH + gapY) + 6;
 
-    // Bottom Ingredient Basket Card
+    // Bottom Ingredient Basket Card (matched typography & scale to ingredient cards above!)
     const hasGained = kitchen.lastBasketGained.length > 0;
-    const cardH = hasGained ? 228 : 160;
+    const cardH = hasGained ? 280 : 196;
     if (y + cardH >= vy - 20 && y <= vy + vh + 20) {
       drawIvorySlab(c, vx + 4, y, rowW, cardH, 18, '#fffaf0', '#f5e2ba', '#b37a32', 2.4);
-      round(c, vx + 18, y + 16, 68, 68, 16, '#fff3d4', '#8a5d32', 2);
-      drawSpriteContain(c, 'ui_kitchen_pot', vx + 24, y + 22, 56, 56);
-      drawText(c, t('p14.basketTitle'), vx + 102, y + 34, 21, PALETTE.ink, 'left', 900);
-      drawWrappedText(c, t('p14.basketBody'), vx + 102, y + 54, rowW - 126, 15, 20, PALETTE.inkSoft, 'left', 700, 2);
+      round(c, vx + 18, y + 16, 86, 86, 16, '#fff3d4', '#8a5d32', 2.2);
+      drawSpriteContain(c, 'ui_kitchen_pot', vx + 24, y + 22, 74, 74);
+      drawText(c, t('p14.basketTitle'), vx + 118, y + 36, 25, PALETTE.ink, 'left', 900);
+      drawWrappedText(c, t('p14.basketBody'), vx + 118, y + 60, rowW - 138, 20, 26, PALETTE.inkSoft, 'left', 700, 2);
 
       if (hasGained) {
-        round(c, vx + 18, y + 96, rowW - 36, 56, 14, '#e6f8de', '#3d8633', 1.8);
-        drawText(c, t('p14.basketGot'), vx + 32, y + 124, 15, '#22591b', 'left', 900);
+        round(c, vx + 18, y + 118, rowW - 36, 68, 16, '#e6f8de', '#3d8633', 2);
+        const gotLabel = t('p14.basketGot');
+        drawText(c, gotLabel, vx + 36, y + 152, 20, '#22591b', 'left', 900);
+        c.font = `900 20px ${UI_FONT}`;
+        const itemsStartX = vx + 50 + Math.ceil(c.measureText(gotLabel).width);
+        const availW = Math.max(420, vx + 4 + rowW - 24 - itemsStartX);
+        const slotW = Math.floor(availW / 3);
         kitchen.lastBasketGained.slice(0, 3).forEach((gid, gi) => {
-          const gx = vx + 166 + gi * 176;
-          drawSpriteContain(c, gid, gx, y + 106, 36, 36);
-          drawText(c, t(`ingredient.${gid}`), gx + 42, y + 124, 15, PALETTE.ink, 'left', 800);
+          const gx = itemsStartX + gi * slotW;
+          drawSpriteContain(c, gid, gx, y + 130, 44, 44);
+          drawText(c, t(`ingredient.${gid}`), gx + 52, y + 152, 20, PALETTE.ink, 'left', 800);
         });
       }
 
-      const buyY = y + cardH - 58;
+      const buyY = y + cardH - 68;
       const afford = profile.coins >= INGREDIENT_BASKET_PRICE;
-      if (buyY + 46 > vy && buyY < vy + vh) {
+      if (buyY + 56 > vy && buyY < vy + vh) {
         drawPillButton(
           c,
           hits,
           'kitchen:basket',
-          vx + 22,
+          vx + 18,
           buyY,
-          310,
-          46,
-          t('p14.basketBuy', { price: INGREDIENT_BASKET_PRICE, count: INGREDIENT_BASKET_SIZE }),
+          436,
+          56,
+          t('p14.basketBuy', { price: INGREDIENT_BASKET_PRICE, count: INGREDIENT_BASKET_SIZE }).replace(/^🪙\s*/, ''),
           afford ? 'gold' : 'muted',
-          { fontSize: 16.5, icon: 'ui_coin_gold', disabled: !afford },
+          { fontSize: 21, icon: 'ui_coin_gold', disabled: !afford },
         );
       }
-      drawIconLabel(c, 'ui_coin_gold', t('p14.coins', { coins: profile.coins }), vx + 350, buyY + 23, 22, 16, PALETTE.inkSoft);
+      drawIconLabel(c, 'ui_coin_gold', t('p14.coins', { coins: profile.coins }), vx + 474, buyY + 28, 28, 22, PALETTE.inkSoft);
     }
     y += cardH + 10;
 
@@ -620,29 +626,32 @@ export function drawKitchenModal(
   const rowW = vw - 14;
   let y = vy + 4 - scroll.offset;
 
-  // 1. Top "Today's Active Broth" Strip Card (`kitchen-active-strip`)
+  // 1. Top "Today's Active Broth" Strip Card (`kitchen-active-strip`, matched font scale to broth cards below!)
   const activeId = profile.activeBrothId && isBrothId(profile.activeBrothId) ? profile.activeBrothId : null;
   const activeLv = activeId ? getBrothLevel(profile, activeId) : 0;
-  const activeH = 96;
+  const activeH = 136;
   if (y + activeH >= vy - 20 && y <= vy + vh + 20) {
-    drawIvorySlab(c, vx + 4, y, rowW, activeH, 18, '#fffef8', '#f6e9cc', '#7a5230', 2.2);
+    drawIvorySlab(c, vx + 4, y, rowW, activeH, 20, '#fffef8', '#f6e9cc', '#7a5230', 2.2);
     if (activeId && activeLv > 0) {
-      drawSpriteContain(c, activeId, vx + 20, y + 18, 60, 60);
-      drawText(c, t('p14.activeTitle'), vx + 94, y + 22, 14, PALETTE.inkSoft, 'left', 800);
+      round(c, vx + 20, y + 19, 98, 98, 18, BROTHS[activeId].bathColor, '#3d8633', 3);
+      drawSpriteContain(c, activeId, vx + 26, y + 25, 86, 86);
+      const tx = vx + 134;
+      drawText(c, t('p14.activeTitle'), tx, y + 30, 19, '#7a5c3c', 'left', 900);
       const nm = t(`broth.${activeId}`);
-      drawText(c, nm, vx + 94, y + 48, 21.5, PALETTE.ink, 'left', 900);
-      c.font = '900 21.5px "Trebuchet MS", "PingFang SC", "Microsoft YaHei", sans-serif';
+      drawText(c, nm, tx, y + 63, 25, PALETTE.ink, 'left', 900);
+      c.font = `900 25px ${UI_FONT}`;
       const nw = c.measureText(nm).width;
-      round(c, vx + 104 + nw, y + 36, 54, 24, 12, '#dff5d6', '#3d8633', 1.4);
-      drawText(c, `Lv.${activeLv}`, vx + 131 + nw, y + 49, 13.5, '#22591b', 'center', 900);
-      drawText(c, brothEffectText(activeId, activeLv as BrothLevel), vx + 94, y + 76, 15.5, PALETTE.inkSoft, 'left', 800);
+      round(c, tx + nw + 14, y + 47, 78, 32, 16, '#dff5d6', '#3d8633', 1.8);
+      drawText(c, `Lv.${activeLv}`, tx + nw + 53, y + 64, 18, '#22591b', 'center', 900);
+      drawWrappedText(c, brothEffectText(activeId, activeLv as BrothLevel), tx, y + 86, rowW - 304, 19.5, 25, PALETTE.ink, 'left', 800, 2);
       if (y + activeH > vy && y < vy + vh) {
-        drawPillButton(c, hits, 'kitchen:unequip', vx + 4 + rowW - 108, y + 26, 92, 42, t('p14.unequip'), 'cream', { fontSize: 16 });
+        drawPillButton(c, hits, 'kitchen:unequip', vx + 4 + rowW - 146, y + 43, 130, 50, t('p14.unequip'), 'cream', { fontSize: 20 });
       }
     } else {
-      drawSpriteContain(c, 'ui_kitchen_pot', vx + 20, y + 18, 60, 60);
-      drawText(c, t('p14.activeTitle'), vx + 94, y + 30, 15, PALETTE.inkSoft, 'left', 800);
-      drawText(c, t('p14.activeEmpty'), vx + 94, y + 60, 17, PALETTE.muted, 'left', 700);
+      round(c, vx + 20, y + 19, 98, 98, 18, '#fff3d4', '#8a5d32', 2.2);
+      drawSpriteContain(c, 'ui_kitchen_pot', vx + 29, y + 28, 80, 80);
+      drawText(c, t('p14.activeTitle'), vx + 134, y + 44, 25, PALETTE.ink, 'left', 900);
+      drawWrappedText(c, t('p14.activeEmpty'), vx + 134, y + 70, rowW - 160, 20, 26, PALETTE.inkSoft, 'left', 800, 2);
     }
   }
   y += activeH + 12;
