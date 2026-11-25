@@ -619,7 +619,7 @@ export class MinigameApp {
     } else {
       const state = this.engine.state;
       const mapTheme = getMap(state.mapId).theme;
-      drawFullBleedBackdrop(c, `map_${state.mapId}`, vp, 124, 62, mapTheme.grass[0]);
+      drawFullBleedBackdrop(c, `map_${state.mapId}`, vp, 102, 62, mapTheme.grass[0], 24);
       const breakthroughChances = state.endless ? this.computeBreakthroughChances(state) : undefined;
       this.renderer.draw(state, this.elapsedSec, {
         draggingId: this.drag?.moved ? this.drag.unitId : undefined,

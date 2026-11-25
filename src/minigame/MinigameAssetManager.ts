@@ -4,6 +4,7 @@ import { classifySprite, spriteRelativePath } from './assetPack';
 import spriteIds from '../../public/assets/sprites/manifest.json';
 
 const ALL_IDS = spriteIds as readonly string[];
+const WIDE_MAP_OVERRIDE_RE = /^(map|tub_rim)_(sunny_backyard|sakura_onsen|midnight_kitchen|cat_tower_maze)$/;
 
 /**
  * Manages tiered sprite loading for WeChat / Bilibili mini-games and Web preview.
@@ -23,10 +24,24 @@ export class MinigameAssetManager {
       if (rule.omit) continue;
       assets.registerUrl(id, this.resolveSpriteUrl(id));
     }
+    if (this.platform.kind === 'web') {
+      // Clear any 9×5 map/rim sprites eagerly fetched by Web AssetRegistry.loadManifest() before minigame boot.
+      assets.unloadSprites(id => WIDE_MAP_OVERRIDE_RE.test(id));
+      void assets.ready.then(() => {
+        const stale = ALL_IDS.filter(id => WIDE_MAP_OVERRIDE_RE.test(id) && !(assets.get(id)?.src ?? '').includes('minigame-maps'));
+        if (stale.length > 0) {
+          assets.unloadSprites(id => stale.includes(id));
+          void assets.loadBatch(stale.map(id => [id, this.resolveSpriteUrl(id)] as const));
+        }
+      });
+    }
   }
 
   private resolveSpriteUrl(id: string): string {
     if (this.platform.kind === 'web') {
+      if (WIDE_MAP_OVERRIDE_RE.test(id)) {
+        return this.platform.resolveAssetPath(`assets/minigame-maps/${id}.png`);
+      }
       return this.platform.resolveAssetPath(`assets/sprites/${id}.png`);
     }
     return this.platform.resolveAssetPath(spriteRelativePath(id));
@@ -67,6 +82,13 @@ export class MinigameAssetManager {
   async ensureMap(mapId: string): Promise<void> {
     const mapSprite = `map_${mapId}`;
     const rimSprite = `tub_rim_${mapId}`;
+    if (this.platform.kind === 'web') {
+      for (const id of [mapSprite, rimSprite]) {
+        if (WIDE_MAP_OVERRIDE_RE.test(id) && !(assets.get(id)?.src ?? '').includes('minigame-maps')) {
+          assets.unloadSprites(k => k === id);
+        }
+      }
+    }
     const loadWork = classifySprite(mapSprite).pkg === 'maps'
       ? this.ensureSubpackage('maps', [mapSprite, rimSprite]).then(() => undefined)
       : assets.loadBatch([mapSprite, rimSprite]).then(() => undefined);

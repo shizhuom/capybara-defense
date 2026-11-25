@@ -32,8 +32,8 @@ export const WIDE_MAPS:Record<MapId,MapDefinition>={
     [[0,0],[1,0],[1,1],[1,2],[1,3],[2,3],[3,3],[4,3],[4,2],[4,1],[4,0],[5,0],[6,0],[7,0],[7,1],[7,2],[7,3],[8,3],[9,3]],
     {grass:['#91c25a','#85b850'],open:'#fff8e8',road:'#e7c68c',water:'#a8c8b1',accent:'#9d825d',paper:'#79a853'}),
   sakura_onsen:arena('sakura_onsen','樱花温泉馆','Sakura Onsen',
-    ["GGRRRRGGRS","GOROOROORG","GGROORGORG","CRRGGRRRRG"],
-    [[9,0],[8,0],[8,1],[8,2],[8,3],[7,3],[6,3],[5,3],[5,2],[5,1],[5,0],[4,0],[3,0],[2,0],[2,1],[2,2],[2,3],[1,3],[0,3]],
+    ["GGRRRRGGSG","GOROOROORG","GGROORGORG","CRRGGRRRRG"],
+    [[8,0],[8,1],[8,2],[8,3],[7,3],[6,3],[5,3],[5,2],[5,1],[5,0],[4,0],[3,0],[2,0],[2,1],[2,2],[2,3],[1,3],[0,3]],
     {grass:['#f0ced8','#e7c1cc'],open:'#f6ecd6',road:'#d4a590',water:'#a7d0ce',accent:'#a45f7a',paper:'#dfb8c4'}),
   midnight_kitchen:arena('midnight_kitchen','深夜厨房','Midnight Kitchen',
     ["RRRRGGRRRR","ROOROOROOR","ROGROORGOC","SGGRRRRGGG"],
@@ -60,8 +60,8 @@ export const GRID_COLS=9;
 export const GRID_ROWS=5;
 
 export const CLASSIC_STAGE = { width:1280, height:720, cols:9, rows:5, cell:104, boardX:172, boardY:72, shovelX:86, shovelY:162, benchX:252, benchY:610, benchStep:104, benchSize:92, summonX:780, summonY:610, summonW:248, summonH:92 };
-/** Mobile 10×4 wide-screen stage: bigger tiles (114px), taller top HUD (0..78), giant 116px bench & summon bell, 100% inside 1280×720 safe zone. */
-export const WIDE_STAGE = { width:1280, height:720, cols:10, rows:4, cell:114, boardX:124, boardY:88, shovelX:60, shovelY:186, benchX:124, benchY:564, benchStep:128, benchSize:116, summonX:772, summonY:564, summonW:356, summonH:116 };
+/** Mobile 10×4 wide-screen stage: bigger tiles (112px), taller top HUD (0..78), giant 114px bench & summon bell, 100% aligned to hand-illustrated 10×4 maps. */
+export const WIDE_STAGE = { width:1280, height:720, cols:10, rows:4, cell:112, boardX:120, boardY:88, shovelX:58, shovelY:186, benchX:120, benchY:562, benchStep:126, benchSize:114, summonX:762, summonY:562, summonW:356, summonH:116 };
 export const STAGE = { ...CLASSIC_STAGE };
 
 export function setMobileWideStage(enabled: boolean): void {

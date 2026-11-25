@@ -10,6 +10,7 @@ const { chromium } = require('playwright-core');
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const SPRITES_DIR = join(ROOT, 'public', 'assets', 'sprites');
+const MINIGAME_MAPS_DIR = join(ROOT, 'public', 'assets', 'minigame-maps');
 const CACHE_DIR = join(ROOT, '.minigame-assets-cache');
 
 const OPAQUE_MAIN_BGS = new Set(['start_splash_bg', 'map_sunny_backyard']);
@@ -266,10 +267,11 @@ export async function buildMinigameAssets(outDir) {
   for (const id of manifest) {
     const rule = classifySprite(id);
     if (rule.omit) continue;
-    const srcPath = join(SPRITES_DIR, `${id}.png`);
+    const wideOverride = join(MINIGAME_MAPS_DIR, `${id}.png`);
+    const srcPath = existsSync(wideOverride) ? wideOverride : join(SPRITES_DIR, `${id}.png`);
     if (!existsSync(srcPath)) continue;
     const st = statSync(srcPath);
-    const cacheKey = createHash('sha1').update(`v3png8:${id}:${st.size}:${Math.trunc(st.mtimeMs)}:${rule.format}:${rule.maxDim}:${rule.quality}`).digest('hex').slice(0, 12);
+    const cacheKey = createHash('sha1').update(`v4wide10x4:${id}:${srcPath}:${st.size}:${Math.trunc(st.mtimeMs)}:${rule.format}:${rule.maxDim}:${rule.quality}`).digest('hex').slice(0, 12);
     const cachedFile = join(CACHE_DIR, `${id}.${cacheKey}.${rule.format}`);
     const destRel = `assets/sprites/${id}.${rule.format}`;
     const destPath = join(outDir, destRel);

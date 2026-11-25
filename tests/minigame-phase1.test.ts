@@ -268,7 +268,7 @@ describe('Mini-Game Phase 1: Platform layer, Viewport safe-area, Assets & Subpac
       expect(map.grid.length, `${id} rows`).toBe(4);
       for (const row of map.grid) expect(row.length, `${id} cols`).toBe(10);
       const path = map.paths.player;
-      expect(path.length).toBeGreaterThanOrEqual(19);
+      expect(path.length).toBeGreaterThanOrEqual(18);
       const start = path[0];
       const end = path[path.length - 1];
       expect(map.grid[start.row][start.col]).toBe('S');

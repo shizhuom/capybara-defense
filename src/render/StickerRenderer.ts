@@ -186,23 +186,6 @@ export class StickerRenderer {
 
   private drawPaper(mapId:MapId):void {
     const c=this.c,map=this.assets.get(`map_${mapId}`),theme=getMap(mapId).theme;
-    if(isMobileWideStage()){
-      const {boardX:bx,boardY:by,cell,cols,rows}=STAGE,bw=cols*cell,bh=rows*cell;
-      c.fillStyle=theme.paper;c.fillRect(0,0,STAGE.width,STAGE.height);
-      if(map){
-        const iw=map.naturalWidth||map.width||1280,ih=map.naturalHeight||map.height||720;
-        // Preserve authentic hand-painted garden margins around our wide 10×4 wooden board
-        c.drawImage(map,0,0,iw*.14,ih,0,0,bx+12,STAGE.height);
-        c.drawImage(map,iw*.86,0,iw*.14,ih,bx+bw-12,0,STAGE.width-(bx+bw)+12,STAGE.height);
-        c.drawImage(map,iw*.14,0,iw*.72,ih*.10,bx-8,0,bw+16,by+8);
-        c.drawImage(map,iw*.14,ih*.86,iw*.72,ih*.14,bx-8,by+bh-6,bw+16,STAGE.height-(by+bh)+8);
-      }
-      // Carved wooden board frame around the 10×4 battlefield
-      round(c,bx-12,by-12,bw+24,bh+24,18,'rgba(30,18,8,0.34)','transparent',0);
-      round(c,bx-10,by-10,bw+20,bh+20,16,'#875732','#3d2210',4.5);
-      round(c,bx-4,by-4,bw+8,bh+8,12,'#a36c3e','#593419',2);
-      return;
-    }
     if(map){c.drawImage(map,0,0,STAGE.width,STAGE.height);return;}
     c.fillStyle=theme.paper;c.fillRect(0,0,STAGE.width,STAGE.height);
     const g=c.createLinearGradient(0,0,0,STAGE.height);g.addColorStop(0,theme.paper);g.addColorStop(1,theme.open);
@@ -221,56 +204,18 @@ export class StickerRenderer {
     const c=this.c,{boardX:x,boardY:y,cell}=STAGE,map=getMap(state.mapId),theme=map.theme;
     const wide=isMobileWideStage();
     c.save();c.beginPath();c.rect(x,y,cell*STAGE.cols,cell*STAGE.rows);c.clip();
-    const mapImage=wide?undefined:this.assets.get(`map_${state.mapId}`);
-
-    if(wide){
-      // 1. Lush checkerboard grass across the full 10×4 arena
-      for(let row=0;row<STAGE.rows;row++) for(let col=0;col<STAGE.cols;col++){
-        const tile=state.grid[row][col],tx=x+col*cell,ty=y+row*cell;
-        c.fillStyle=theme.grass[(row+col)%2];
-        c.fillRect(tx,ty,cell,cell);
-        if(tile==='G'){
-          const gx=tx+22+((col*31+row*17)%(cell-44)),gy=ty+24+((col*13+row*29)%(cell-44));
-          line(c,[[gx-5,gy+3],[gx-3,gy-5]],'rgba(65,104,35,0.40)',2);
-          line(c,[[gx,gy+4],[gx+1,gy-6]],'rgba(65,104,35,0.40)',2);
-          line(c,[[gx+5,gy+3],[gx+6,gy-4]],'rgba(65,104,35,0.40)',2);
-          if((row*STAGE.cols+col)%7===2) this.flower(tx+cell-22,ty+cell-22,4.5,'#f7efd2');
-        }
-        c.strokeStyle='rgba(54,84,28,0.13)';c.lineWidth=1;c.strokeRect(tx+.5,ty+.5,cell-1,cell-1);
-      }
-      // 2. Smooth hand-inked continuous dirt/stone road + stepping stones
-      const path=map.paths.player;
-      const pts=path.map(pt=>cellCenter(pt.col,pt.row));
-      if(pts.length>1){
-        c.save();c.lineCap='round';c.lineJoin='round';
-        c.beginPath();pts.forEach((p,i)=>i?c.lineTo(p.x,p.y):c.moveTo(p.x,p.y));
-        c.strokeStyle='#624022';c.lineWidth=cell*.72+7;c.stroke();
-        c.strokeStyle=theme.road;c.lineWidth=cell*.72;c.stroke();
-        c.strokeStyle='rgba(255,244,218,0.34)';c.lineWidth=cell*.52;c.stroke();
-        c.restore();
-        for(let i=2;i<pts.length-1;i+=2){
-          const p=pts[i];
-          ellipse(c,p.x+((i%3)-1)*14,p.y+(i%2?12:-12),10,6.5,'rgba(182,148,104,0.75)','#6f4e2d',1.5);
-        }
-        // Burrow stump at route origin (S)
-        const sp=pts[0];
-        c.save();c.translate(sp.x,sp.y);
-        ellipse(c,0,4,cell*.41,cell*.35,'#755032','#3d2410',3.4);
-        ellipse(c,0,4,cell*.28,cell*.23,'#2d1c10','#1d1108',1.6);
-        c.restore();
-      }
-    }
+    const mapImage=this.assets.get(`map_${state.mapId}`);
 
     for(let row=0;row<STAGE.rows;row++) for(let col=0;col<STAGE.cols;col++) {
       const tile=state.grid[row][col],tx=x+col*cell,ty=y+row*cell;
       const grass=tile==='G'||tile==='B';
-      if(!mapImage&&!wide){
+      if(!mapImage){
         c.fillStyle=grass?theme.grass[(row+col)%2]:tile==='O'?theme.open:tile==='C'?theme.water:theme.road;
         c.fillRect(tx,ty,cell,cell);
       }
       const tileImage=tile==='O'?(this.assets.get(`tile_open_${state.mapId}`)||this.assets.get('tile_open')):tile==='B'?this.assets.get('tile_broken'):undefined;
       if(tileImage){c.drawImage(tileImage,tx+2,ty+2,cell-4,cell-4);}
-      else if(tile==='G'&&!mapImage&&!wide) {
+      else if(tile==='G'&&!mapImage) {
         // Tiny tufts reveal diggable grass without competing with the pets.
         for(let i=0;i<3;i++) {
           const ox=13+(col*13+row*7+i*23)%49,oy=16+(row*17+col*11+i*19)%41;
@@ -283,7 +228,7 @@ export class StickerRenderer {
         for(let i=9;i<cell;i+=18){c.fillRect(tx+i,ty,5,cell);c.fillRect(tx,ty+i,cell,5);}
         c.save();c.strokeStyle='#d8cbb1';c.lineWidth=1;c.setLineDash([3,4]);c.strokeRect(tx+5,ty+5,cell-10,cell-10);c.restore();
         round(c,tx+2,ty+2,cell-4,cell-4,5,'rgba(255,255,255,0)','#eee1c6',1);
-      } else if(tile==='R'&&!mapImage&&!wide) {
+      } else if(tile==='R'&&!mapImage) {
         ellipse(c,tx+16+(col*7)%30,ty+18+(row*9)%28,2,1.4,'#c5ac87','#c5ac87',0);
         ellipse(c,tx+51,ty+55,2.5,1.2,'#d0b58f','#d0b58f',0);
       } else if(tile==='B') {
@@ -292,7 +237,7 @@ export class StickerRenderer {
         line(c,[[-17,-10],[-6,-2],[-13,9],[3,16]],'#665c48',2.3);line(c,[[11,-11],[6,-3],[16,5]],'#665c48',2.3);
         polygon(c,[[-3,-10],[3,-8],[0,-2],[7,1]],'#e2d2b1',INK,1);c.restore();
         ellipse(c,tx+13,ty+54,3,2,'#e1d4ba',INK,0);ellipse(c,tx+57,ty+18,3,2,'#e1d4ba',INK,0);
-      } else if(tile==='S'&&!mapImage&&!wide) {
+      } else if(tile==='S'&&!mapImage) {
         c.save();c.translate(tx+cell/2,ty+cell/2+1);
         ellipse(c,0,11,30,17,'#bd9d77',INK,1.8);ellipse(c,0,5,25,21,'#6e6955',INK,2.8);ellipse(c,0,11,21,11,'#555443',INK,0);
         line(c,[[-23,9],[-22,-5],[-10,-17],[9,-18],[24,-5],[24,10]],'#9a9271',7);
@@ -300,7 +245,7 @@ export class StickerRenderer {
         c.restore();
       }
       if(tile==='B'&&state.craterHits[col+','+row]){round(c,tx+28,ty+cell-28,44,24,8,'#fff2c9',INK,1.7);this.label('1/2',tx+50,ty+cell-16,wide?17:13,INK,'center',900);}
-      if(!wide){c.strokeStyle='rgba(60,48,34,0.12)';c.lineWidth=1;c.strokeRect(tx+.5,ty+.5,cell-1,cell-1);}
+      c.strokeStyle='rgba(60,48,34,0.12)';c.lineWidth=1;c.strokeRect(tx+.5,ty+.5,cell-1,cell-1);
     }
     for(const side of ['player'] as const) {
       const path=map.paths[side];

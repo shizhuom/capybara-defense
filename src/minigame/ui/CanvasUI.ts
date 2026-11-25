@@ -722,6 +722,7 @@ export function drawFullBleedBackdrop(
   edgeStripX = 96,
   edgeStripY = 66,
   fallbackFill = '#c9d7a6',
+  edgeStripRightX = edgeStripX,
 ): void {
   const { left, right, top, bottom, width, height } = vp.visible;
   c.fillStyle = fallbackFill;
@@ -755,12 +756,25 @@ export function drawFullBleedBackdrop(
   }
 
   if (bleedRight > 0.5) {
-    const srcW = Math.max(16, Math.min(Math.floor(iw * 0.2), Math.round((edgeStripX / 1280) * iw)));
-    c.save();
-    c.translate(1280, 0);
-    c.scale(-1, 1);
-    c.drawImage(img, iw - srcW - trim, 0, srcW, ih, -(bleedRight + 3), 0, bleedRight + 5, 720);
-    c.restore();
+    const srcW = Math.max(16, Math.min(Math.floor(iw * 0.2), Math.round((edgeStripRightX / 1280) * iw)));
+    const tileW = Math.max(edgeStripRightX * 1.4, Math.min(bleedRight + 5, Math.max(edgeStripRightX * 2.2, 48)));
+    let drawn = 0;
+    let flip = true;
+    while (drawn < bleedRight + 4) {
+      const segW = Math.min(tileW, bleedRight + 5 - drawn);
+      const sx = iw - srcW - trim;
+      c.save();
+      if (flip) {
+        c.translate(1280 + drawn + segW, 0);
+        c.scale(-1, 1);
+        c.drawImage(img, sx, 0, srcW, ih, 0, 0, segW + 1, 720);
+      } else {
+        c.drawImage(img, sx, 0, srcW, ih, 1280 + drawn - 1, 0, segW + 1, 720);
+      }
+      c.restore();
+      drawn += segW;
+      flip = !flip;
+    }
 
     const g = c.createLinearGradient(1280, 0, right, 0);
     g.addColorStop(0, 'rgba(34,20,8,0)');

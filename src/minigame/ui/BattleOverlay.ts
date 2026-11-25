@@ -386,7 +386,7 @@ function drawRightAuraRail(
   // Sit cleanly in the right garden bleed on wide phones (zero board overlap!), or compact right edge on 16:9
   const tileW = 76;
   const tileH = 70;
-  const rx = vp.visible.right > 1350 ? 1278 : Math.min(1200, STAGE.boardX + STAGE.cols * STAGE.cell - tileW - 4);
+  const rx = vp.visible.right > 1350 ? 1268 : Math.min(1200, STAGE.boardX + STAGE.cols * STAGE.cell - tileW - 4);
   let y = 92;
   const zh = getLanguage() === 'zh-CN';
 
