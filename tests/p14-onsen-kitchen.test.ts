@@ -110,11 +110,11 @@ describe('P14 brew, upgrade, equip, aura and mystery basket',()=>{
     expect(brewed.profile).toMatchObject({ingredients:{},unlockedBroths:['dish_yuzu_bath'],brothLevels:{dish_yuzu_bath:1},activeBrothId:'dish_yuzu_bath'});
     expect(fresh.ingredients).toEqual({ing_yuzu:4});
     expect(brewBroth(brewed.profile,'dish_yuzu_bath')).toMatchObject({ok:false,key:'p14.alreadyBrewed'});
-    const stocked=grantIngredients(brewed.profile,[...Array(5).fill('ing_bamboo'),...Array(42).fill('ing_yuzu'),...Array(22).fill('ing_honey'),'ing_fake']);
+    const stocked=grantIngredients(brewed.profile,[...Array(5).fill('ing_bamboo'),...Array(60).fill('ing_yuzu'),...Array(32).fill('ing_honey'),'ing_fake']);
     const second=brewBroth(stocked,'dish_bamboo_broth');expect(second.profile.activeBrothId).toBe('dish_yuzu_bath');
-    expect(getBrothUpgradeCost('dish_yuzu_bath',1)).toEqual({ing_yuzu:14,ing_honey:6});
+    expect(getBrothUpgradeCost('dish_yuzu_bath',1)).toEqual({ing_yuzu:18,ing_honey:8});
     const lv2=upgradeBroth(second.profile,'dish_yuzu_bath');expect(lv2).toMatchObject({ok:true,key:'p14.upgraded',level:2});
-    expect(lv2.profile.ingredients).toEqual({ing_yuzu:28,ing_honey:16});
+    expect(lv2.profile.ingredients).toEqual({ing_yuzu:42,ing_honey:24});
     const lv3=upgradeBroth(lv2.profile,'dish_yuzu_bath');expect(getBrothLevel(lv3.profile,'dish_yuzu_bath')).toBe(3);
     expect(lv3.profile.ingredients).toEqual({});expect(getBrothUpgradeCost('dish_yuzu_bath',3)).toBeNull();
     expect(upgradeBroth(lv3.profile,'dish_yuzu_bath')).toMatchObject({ok:false,key:'p14.maxLevel'});
@@ -138,17 +138,17 @@ describe('P14 brew, upgrade, equip, aura and mystery basket',()=>{
     const max=getKitchenCollectionAura(unlockAllProfile(createProfile()));
     expect(max.damageBonus).toBeCloseTo(.42,10);expect(max.rateBonus).toBeCloseTo(.14,10);
   });
-  it('sells a 180-coin basket of three valid ingredients weighted toward the cheapest missing recipe',()=>{
-    const p={...createProfile(),coins:220,ingredients:{}};
+  it('sells a 360-coin basket of three valid ingredients weighted toward the cheapest missing recipe',()=>{
+    const p={...createProfile(),coins:400,ingredients:{}};
     expect(basketFocusIngredients(p)).toEqual(['ing_yuzu']);
     const values=[0,.374,.376];let i=0;
     const bought=buyIngredientBasket(p,()=>values[i++]);
     expect(bought).toMatchObject({ok:true,key:'p14.basketBought',gained:['ing_yuzu','ing_yuzu','ing_bamboo']});
     expect(bought.profile.coins).toBe(40);expect(bought.profile.ingredients).toEqual({ing_yuzu:2,ing_bamboo:1});
-    const random=buyIngredientBasket({...p,coins:180});expect(random.gained).toHaveLength(3);
+    const random=buyIngredientBasket({...p,coins:360});expect(random.gained).toHaveLength(3);
     expect(random.gained!.every(id=>(INGREDIENT_IDS as readonly string[]).includes(id))).toBe(true);
     expect(Object.values(random.profile.ingredients).reduce((a,b)=>a+b,0)).toBe(3);
-    expect(buyIngredientBasket({...p,coins:179})).toMatchObject({ok:false,key:'meta.insufficientCoins'});
+    expect(buyIngredientBasket({...p,coins:359})).toMatchObject({ok:false,key:'meta.insufficientCoins'});
     expect(canAffordIngredients(bought.profile,{ing_yuzu:2})).toBe(true);
   });
 });
@@ -182,9 +182,9 @@ describe('P14 battle drops and isolated ingredient RNG',()=>{
     for(const mapId of ['sunny_backyard','midnight_kitchen'] as const){
       const e=engine(empty,{mapId}),signature=MAP_SIGNATURE_INGREDIENT[mapId],loot=e.state.sides.player.ingredientLoot;
       scripted(e,[.01]);e.hurt(e.spawnEnemy('rat','player'),1e9);expect(loot).toEqual([]);
-      scripted(e,[.03,.5]);e.hurt(e.spawnEnemy('crab','player'),1e9);expect(loot.at(-1)).toBe('ing_honey');
-      scripted(e,[.03,.1]);e.hurt(e.spawnEnemy('killer_bee','player'),1e9);expect(loot.at(-1)).toBe('ing_bamboo');
-      scripted(e,[.05]);e.hurt(e.spawnEnemy('charmed_rat','player'),1e9);expect(loot).toHaveLength(2);
+      scripted(e,[.02,.5]);e.hurt(e.spawnEnemy('crab','player'),1e9);expect(loot.at(-1)).toBe('ing_honey');
+      scripted(e,[.02,.1]);e.hurt(e.spawnEnemy('killer_bee','player'),1e9);expect(loot.at(-1)).toBe('ing_bamboo');
+      scripted(e,[.03]);e.hurt(e.spawnEnemy('charmed_rat','player'),1e9);expect(loot).toHaveLength(2);
       scripted(e,[.99]);e.state.wave=3;e.hurt(e.spawnEnemy('husky_wrecker','player'),1e9);expect(loot).toHaveLength(2);
       scripted(e,[.99]);e.state.wave=6;e.hurt(e.spawnEnemy('husky_wrecker','player'),1e9);expect(loot.at(-1)).toBe(signature);
       scripted(e,[0]);e.state.wave=8;e.hurt(e.spawnEnemy('husky_wrecker','player'),1e9);expect(loot.at(-1)).toBe('ing_mushroom');
@@ -201,16 +201,16 @@ describe('P14 battle drops and isolated ingredient RNG',()=>{
       e.pause();e.surrender();expect(e.state.result!.ingredientLoot).toEqual(e.state.sides.player.ingredientLoot.slice(0,kept));
     }
   });
-  it('drops rare ingredients every 2 endless waves (and truffle every 5) and reports only the new share',()=>{
+  it('drops rare ingredients every 3 endless waves (incl. yuzu, truffle every 6) and reports only the new share',()=>{
     const e=standardWinner();const standard=[...e.state.result!.ingredientLoot!];expect(e.enterEndless().ok).toBe(true);
     expect(e.state.standardResult!.ingredientLoot).toEqual(standard);
-    scripted(e,[.5]);e.skipWave();// Wave 12 (k=2) drops 1 rare ingredient
+    scripted(e,[.65]);e.skipWave();e.skipWave();// Wave 13 (k=3) drops 1 ingredient from 5-pool
     e.state.enemies=[];e.state.spawned=e.currentWaveTargetCount();(e as unknown as {pendingBosses:unknown[]}).pendingBosses=[];
     e.pause();e.surrender();
     const result=e.state.result!;expect(result.endless).toBe(true);
     expect(result.endlessIngredientLoot).toEqual(['ing_bamboo']);
     expect(result.ingredientLoot).toEqual([...standard,'ing_bamboo']);
-    expect(result.endlessCoins).toBe(30);
+    expect(result.endlessCoins).toBe(21);
   });
   it('banks ingredients idempotently through both receipts, including defeat salvage',()=>{
     const p={...createProfile(),ingredients:{ing_yuzu:1}};
@@ -220,7 +220,7 @@ describe('P14 battle drops and isolated ingredient RNG',()=>{
     expect(awardBattle(first.profile,'p14-loss',loss)).toMatchObject({awarded:false,profile:first.profile});
     const e=standardWinner();const standardProfile=awardBattle(p,e.state.id,e.state.result!);
     expect(standardProfile.profile.ingredients).toEqual({ing_yuzu:2});
-    e.enterEndless();e.skipWave();scripted(e,[.1]);e.state.enemies=[];e.state.spawned=e.currentWaveTargetCount();(e as unknown as {pendingBosses:unknown[]}).pendingBosses=[];e.pause();e.surrender();
+    e.enterEndless();e.skipWave();e.skipWave();scripted(e,[.25]);e.state.enemies=[];e.state.spawned=e.currentWaveTargetCount();(e as unknown as {pendingBosses:unknown[]}).pendingBosses=[];e.pause();e.surrender();
     const bonus=awardEndless(standardProfile.profile,e.state.id,e.state.result!);
     expect(bonus.awarded).toBe(true);expect(bonus.profile.ingredients).toEqual({ing_yuzu:2,ing_sakura:1});
     expect(awardEndless(bonus.profile,e.state.id,e.state.result!).awarded).toBe(false);
@@ -372,7 +372,7 @@ describe('P14 renderer and UI markup',()=>{
     expect(after).toContain('class="active-broth-pill" data-action="kitchen"');expect(after).toContain('dish_yuzu_bath');expect(after).toContain(t('broth.dish_yuzu_bath'));expect(after).toContain('Lv.1');
   });
   it('renders the broths tab, dish detail sheet, pantry and basket and persists each action',()=>{
-    const saved=memory();let profile:Profile={...createProfile(),coins:240,ingredients:{ing_yuzu:4}};
+    const saved=memory();let profile:Profile={...createProfile(),coins:420,ingredients:{ing_yuzu:4}};
     const notify=vi.fn(),render=vi.fn(),sound=vi.fn();
     const kitchen=new KitchenScreen(()=>profile,next=>{profile=next;},render,notify,sound);
     let html=kitchen.markup();

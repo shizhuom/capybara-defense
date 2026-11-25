@@ -20,5 +20,8 @@ export default defineConfig({
   },
   define: {
     'import.meta.env.BASE_URL': JSON.stringify('./'),
+    // Prevent Web `.env.production` Cloudflare workers.dev URL from leaking into WeChat/Bilibili bundles.
+    'import.meta.env.VITE_LEADERBOARD_API_URL': JSON.stringify(process.env.VITE_MINIGAME_LEADERBOARD_URL ?? ''),
+    'import.meta.env.VITE_MINIGAME_LEADERBOARD_URL': JSON.stringify(process.env.VITE_MINIGAME_LEADERBOARD_URL ?? ''),
   },
 });

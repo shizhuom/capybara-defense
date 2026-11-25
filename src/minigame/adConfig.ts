@@ -48,13 +48,13 @@ export function isAdPlacementAvailable(kind: PlatformKind, placement: AdPlacemen
 }
 
 /**
- * Default Cloudflare Worker leaderboard endpoint (also overrideable via VITE_LEADERBOARD_API_URL).
- * In WeChat/Bilibili production, whitelist this HTTPS domain in the Mini Game console's request合法域名,
- * or requests will gracefully fall back to offline NPC + local device cache with zero errors.
+ * Optional mini-game leaderboard HTTPS endpoint (configured via build-time `VITE_MINIGAME_LEADERBOARD_URL`).
+ * Intentionally separate from Web `.env.production`'s Cloudflare `workers.dev` URL so WeChat / Bilibili builds
+ * run cleanly in local mode without triggering `request:fail url not in domain list` errors until a real
+ * ICP-filed domain or Tencent CloudBase backend is configured.
  */
 export const MINIGAME_LEADERBOARD_URL = (
-  env.VITE_LEADERBOARD_API_URL
-  ?? 'https://capybara-endless-leaderboard.capybara-defense.workers.dev'
+  env.VITE_MINIGAME_LEADERBOARD_URL ?? ''
 ).trim().replace(/\/+$/, '');
 
 export function buildSharePayload(

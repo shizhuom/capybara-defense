@@ -151,10 +151,10 @@ describe('P13 complete clears and honorable endings',()=>{
     e.state.enemies=[];const last=e.spawnEnemy('rat','player');last.speed=0;
     e.tick(.05);expect(e.state.endlessCoins).toBe(0);expect(e.canCallEarlyWave().allowed).toBe(false);
     e.hurt(last,1e9,undefined,false,false,true);e.tick(.05);
-    expect(e.state.endlessCoins).toBe(90);expect(e.state.endlessClearedWave).toBe(16);
-    e.tick(.5);expect(e.state.endlessCoins).toBe(90);
+    expect(e.state.endlessCoins).toBe(30);expect(e.state.endlessClearedWave).toBe(16);
+    e.tick(.5);expect(e.state.endlessCoins).toBe(30);
     expect(e.canCallEarlyWave().allowed).toBe(true);expect(e.callEarlyWave().ok).toBe(true);
-    expect(e.state.wave).toBe(17);expect(e.state.endlessCoins).toBe(90);expect(e.callEarlyWave().ok).toBe(false);
+    expect(e.state.wave).toBe(17);expect(e.state.endlessCoins).toBe(30);expect(e.callEarlyWave().ok).toBe(false);
   });
   it('does not advance after 36 seconds while the final live monster remains',()=>{
     const e=endless({progressionStars:0});e.state.spawned=29;e.state.waveTime=35.9;

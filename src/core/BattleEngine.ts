@@ -496,16 +496,16 @@ export class BattleEngine {
     const s=this.state;
     if(!s.endless||s.wave<11||s.sides.player.oranges<=0||s.spawned<this.currentWaveTargetCount()||this.pendingBosses.length||s.enemies.some(enemy=>enemy.hp>0))return false;
     if(s.wave>(s.endlessClearedWave??10)){
-      const coins=15*(s.wave-10),multiplier=this.coinMultiplier();
+      const k=s.wave-10;
+      const coins=Math.min(120,12+3*k),multiplier=this.coinMultiplier();
       s.endlessCoins=(s.endlessCoins??0)+(multiplier!==1?Math.round(coins*multiplier):coins);s.endlessClearedWave=s.wave;
       if(this.dropEnabled('medallions'))s.sides.player.endlessCrests+=endlessCrestsForWave(s.wave);
-      const k=s.wave-10;
-      // P19 rebalanced endless drops: 1 fragment every 3 waves; 1 ingredient every 2 waves (+ truffle every 5 waves); 1 wood / 3 waves & 1 essence / 5 waves.
+      // Balanced endless drops (20-30h Kitchen Lv.3 target @ 2x): 1 fragment / 3 waves; 1 ingredient / 3 waves (incl. yuzu) + truffle / 6 waves + feast roll / 2 waves; 1 wood / 3 waves & 1 essence / 5 waves.
       if(this.dropEnabled('armory')&&k%3===0)s.sides.player.loot.push(this.rollWeaponFragment());
       if(this.dropEnabled('kitchen')){
-        if(k%2===0)this.harvest(this.pickIngredient(['ing_sakura','ing_chili','ing_bamboo','ing_honey']));
-        if(k%5===0)this.harvest('ing_mushroom');
-        this.goldenFeastRoll();
+        if(k%3===0)this.harvest(this.pickIngredient(['ing_yuzu','ing_sakura','ing_chili','ing_bamboo','ing_honey']));
+        if(k%6===0)this.harvest('ing_mushroom');
+        if(k%2===0)this.goldenFeastRoll();
       }
       if(this.dropEnabled('village')){
         if(k%3===0)this.gather('res_onsen_wood');
@@ -625,7 +625,7 @@ export class BattleEngine {
       return;
     }
     const elite=ELITE_ENEMY_IDS.includes(enemy.kind);
-    if(!elite||this.ingredientRandom.next()>=.04)return;
+    if(!elite||this.ingredientRandom.next()>=.025)return;
     const roll=this.ingredientRandom.next();
     this.harvest(roll<.45?'ing_bamboo':roll<.8?'ing_honey':signature);
   }
