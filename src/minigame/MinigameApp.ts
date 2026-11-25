@@ -326,7 +326,7 @@ export class MinigameApp {
   private jumpToOnboardingStage(stage: number): void {
     const s = Math.max(0, Math.min(8, Math.trunc(stage)));
     this.profile = buildDebugStageProfile(this.profile, s);
-    this.profile = ensureDailyShop(this.profile, localDay(), Math.random);
+    this.profile = ensureDailyShop({ ...this.profile, stamina: STAMINA_MAX, staminaUpdatedAt: Date.now() }, localDay(), Math.random);
     this.save();
     this.returnToMenu();
     this.showToast(t('p19.devStageDone', { stage: s }), 'good', 2.6);
@@ -1762,6 +1762,7 @@ export class MinigameApp {
       if (this.devTapCount >= 5) {
         this.devUnlocked = true;
         this.devTapCount = 0;
+        this.openModal('dev', this.modalReturnTo);
         this.showToast(zh ? '🧪 开发者调试模式已开启！' : '🧪 Developer QA mode unlocked!', 'good', 2.2);
       }
       return;
@@ -1784,6 +1785,13 @@ export class MinigameApp {
       this.save();
       this.platform.audio.play('coin');
       this.showToast('🪙 +5000', 'good', 1.6);
+      return;
+    }
+    if (id === 'dev:refill-stamina') {
+      this.profile = { ...this.profile, stamina: STAMINA_MAX, staminaUpdatedAt: Date.now() };
+      this.save();
+      this.platform.audio.play('coin');
+      this.showToast(zh ? `⚡ 体力已补满（${STAMINA_MAX}/${STAMINA_MAX}）` : `⚡ Energy full (${STAMINA_MAX}/${STAMINA_MAX})`, 'good', 1.8);
       return;
     }
     if (id === 'dev:battle-food' && this.engine) {

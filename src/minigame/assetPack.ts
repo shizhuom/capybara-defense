@@ -54,10 +54,10 @@ export function classifySprite(id: string): SpritePackRule {
     return { pkg: 'meta', format: 'jpg', maxDim: 640, quality: 0.78, omit: true };
   }
   if (OPAQUE_MAIN_BGS.has(id)) {
-    return { pkg: 'main', format: 'jpg', maxDim: 1280, quality: 0.78 };
+    return { pkg: 'main', format: 'jpg', maxDim: 1512, quality: 0.72 };
   }
   if (OPAQUE_MAP_BGS.has(id)) {
-    return { pkg: 'maps', format: 'jpg', maxDim: 1280, quality: 0.75 };
+    return { pkg: 'maps', format: 'jpg', maxDim: id === 'bg_onsen_village' ? 1280 : 1512, quality: id === 'bg_onsen_village' ? 0.74 : 0.70 };
   }
   if (id === 'title_logo_zh' || id === 'title_logo_en') {
     return { pkg: 'main', format: 'png', maxDim: 720, quality: 1 };

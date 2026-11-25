@@ -242,9 +242,18 @@ describe('Mini-Game Phases 3 & 4: All 7 Meta Hubs, P19 Onboarding, Online Leader
       // Share payload builder sanity check
       expect(buildSharePayload(h.app.getDebugState().profile, 'endless', 25).title).toContain('25');
 
-      // 8. Developer QA API: jumping to Stage 3 triggers Market onboarding cleanly
+      // 8. Developer QA API & 5-tap Settings signboard unlock
+      h.app.openHub('settings');
+      h.stepFrame(320);
+      for (let i = 0; i < 5; i++) h.tapHit('settings:title-tap');
+      expect(h.app.getDebugState().modal).toBe('dev');
+      h.stepFrame(330);
+      expect(h.app.findHitBox('dev:refill-stamina')).toBeTruthy();
+
+      // Jumping to Stage 3 triggers Market onboarding cleanly & restores full stamina
       h.app.getDevApi().stage(3);
       expect(h.app.getDebugState().profile.stars).toBe(5);
+      expect(h.app.getDebugState().profile.stamina).toBe(30);
       expect(h.app.getDebugState().modal).toBe('onboard');
     } finally {
       h.cleanup();

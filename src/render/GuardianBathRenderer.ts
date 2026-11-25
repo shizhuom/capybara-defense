@@ -232,10 +232,11 @@ function headAnchor(spot:GuardianBathSpot,pose:GuardianPose):{x:number;y:number}
   return{x:pose.swayX-dy*Math.sin(pose.tilt),y:pose.bobY+wl+dy*Math.cos(pose.tilt)};
 }
 function drawOranges(spot:GuardianBathSpot,input:GuardianBathInput,p:BathPainter):void {
-  const dizzy=input.oranges<=0,t=input.seconds;
+  const dizzy=input.oranges<=0,t=input.seconds,wide=isMobileWideStage();
+  const step=wide?18:15,orangeSize=wide?12.5:10;
   for(let i=0;i<Math.max(0,Math.floor(input.oranges));i++){
     const lagged=guardianPose(t-.12*(i+1),dizzy),anchor=headAnchor(spot,lagged);
-    p.orange(anchor.x+Math.sin(t*1.5-i*.38)*(1.5+i*.8),anchor.y-i*15,10,Math.sin(t*1.2-i*.4)*.07*(i+1)+lagged.tilt*(1+i*.4));
+    p.orange(anchor.x+Math.sin(t*1.5-i*.38)*(1.5+i*.8),anchor.y-i*step,orangeSize,Math.sin(t*1.2-i*.4)*.07*(i+1)+lagged.tilt*(1+i*.4));
   }
 }
 

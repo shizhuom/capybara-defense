@@ -4,7 +4,7 @@ import { classifySprite, spriteRelativePath } from './assetPack';
 import spriteIds from '../../public/assets/sprites/manifest.json';
 
 const ALL_IDS = spriteIds as readonly string[];
-const WIDE_MAP_OVERRIDE_RE = /^(map|tub_rim)_(sunny_backyard|sakura_onsen|midnight_kitchen|cat_tower_maze)$/;
+const WIDE_MAP_OVERRIDE_RE = /^(?:start_splash_bg|(?:map|tub_rim)_(?:sunny_backyard|sakura_onsen|midnight_kitchen|cat_tower_maze))$/;
 
 /**
  * Manages tiered sprite loading for WeChat / Bilibili mini-games and Web preview.

@@ -186,7 +186,16 @@ export class StickerRenderer {
 
   private drawPaper(mapId:MapId):void {
     const c=this.c,map=this.assets.get(`map_${mapId}`),theme=getMap(mapId).theme;
-    if(map){c.drawImage(map,0,0,STAGE.width,STAGE.height);return;}
+    if(map){
+      const iw=map.naturalWidth||map.width||0,ih=map.naturalHeight||map.height||0;
+      if(iw>0&&ih>0&&iw/ih>1.85){
+        const sw=Math.round(STAGE.height*(iw/ih));
+        c.drawImage(map,(STAGE.width-sw)/2,0,sw,STAGE.height);
+        return;
+      }
+      c.drawImage(map,0,0,STAGE.width,STAGE.height);
+      return;
+    }
     c.fillStyle=theme.paper;c.fillRect(0,0,STAGE.width,STAGE.height);
     const g=c.createLinearGradient(0,0,0,STAGE.height);g.addColorStop(0,theme.paper);g.addColorStop(1,theme.open);
     c.fillStyle=g;c.fillRect(0,0,STAGE.width,STAGE.height);

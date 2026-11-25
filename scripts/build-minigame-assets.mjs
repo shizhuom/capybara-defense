@@ -49,8 +49,8 @@ const MAIN_CORE_IDS = new Set([
 /** Keep in exact sync with `src/minigame/assetPack.ts` (iOS WeChat supports `.jpg` + `.png`, NOT `.webp`). */
 function classifySprite(id) {
   if (id === 'menu_banner') return { pkg: 'meta', format: 'jpg', maxDim: 640, quality: 0.78, omit: true };
-  if (OPAQUE_MAIN_BGS.has(id)) return { pkg: 'main', format: 'jpg', maxDim: 1280, quality: 0.78 };
-  if (OPAQUE_MAP_BGS.has(id)) return { pkg: 'maps', format: 'jpg', maxDim: 1280, quality: 0.75 };
+  if (OPAQUE_MAIN_BGS.has(id)) return { pkg: 'main', format: 'jpg', maxDim: 1512, quality: 0.72 };
+  if (OPAQUE_MAP_BGS.has(id)) return { pkg: 'maps', format: 'jpg', maxDim: id === 'bg_onsen_village' ? 1280 : 1512, quality: id === 'bg_onsen_village' ? 0.74 : 0.70 };
   if (id === 'title_logo_zh' || id === 'title_logo_en') return { pkg: 'main', format: 'png', maxDim: 720, quality: 1 };
   if (id === 'ui_victory_shield_wings' || id === 'ui_defeat_shield_wings') return { pkg: 'main', format: 'png', maxDim: 480, quality: 1 };
   if (id === 'ui_btn_start_zh' || id === 'ui_btn_start_en') return { pkg: 'main', format: 'png', maxDim: 440, quality: 1 };
@@ -271,7 +271,7 @@ export async function buildMinigameAssets(outDir) {
     const srcPath = existsSync(wideOverride) ? wideOverride : join(SPRITES_DIR, `${id}.png`);
     if (!existsSync(srcPath)) continue;
     const st = statSync(srcPath);
-    const cacheKey = createHash('sha1').update(`v4wide10x4:${id}:${srcPath}:${st.size}:${Math.trunc(st.mtimeMs)}:${rule.format}:${rule.maxDim}:${rule.quality}`).digest('hex').slice(0, 12);
+    const cacheKey = createHash('sha1').update(`v5pan21x9:${id}:${srcPath}:${st.size}:${Math.trunc(st.mtimeMs)}:${rule.format}:${rule.maxDim}:${rule.quality}`).digest('hex').slice(0, 12);
     const cachedFile = join(CACHE_DIR, `${id}.${cacheKey}.${rule.format}`);
     const destRel = `assets/sprites/${id}.${rule.format}`;
     const destPath = join(outDir, destRel);

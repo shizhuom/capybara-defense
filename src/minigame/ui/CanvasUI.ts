@@ -734,6 +734,42 @@ export function drawFullBleedBackdrop(
   const ih = img.naturalHeight || img.height;
   if (!iw || !ih) return;
 
+  // Seamless ultrawide panoramic artwork (e.g. 21:9 1680×720): draw the unified painting directly with ZERO mirroring!
+  if (iw / ih > 1.85) {
+    const panW = Math.round(720 * (iw / ih));
+    const panLeft = (1280 - panW) / 2;
+    const panRight = panLeft + panW;
+    c.drawImage(img, panLeft, 0, panW, 720);
+
+    const bleedTop = Math.max(0, -top);
+    const bleedBottom = Math.max(0, bottom - 720);
+    const trim = 2;
+    if (bleedTop > 0.5) {
+      const srcH = Math.max(16, Math.min(Math.floor(ih * 0.2), Math.round((edgeStripY / 720) * ih)));
+      c.save();
+      c.translate(0, 0);
+      c.scale(1, -1);
+      c.drawImage(img, 0, trim, iw, srcH, panLeft, -2, panW, bleedTop + 5);
+      c.restore();
+    }
+    if (bleedBottom > 0.5) {
+      const srcH = Math.max(16, Math.min(Math.floor(ih * 0.2), Math.round((edgeStripY / 720) * ih)));
+      c.save();
+      c.translate(0, 720);
+      c.scale(1, -1);
+      c.drawImage(img, 0, ih - srcH - trim, iw, srcH, panLeft, -(bleedBottom + 3), panW, bleedBottom + 5);
+      c.restore();
+    }
+    // Extreme ultrawide fallback beyond 21:9 (>1680px wide)
+    if (left < panLeft - 0.5) {
+      c.drawImage(img, trim, 0, 24, ih, left - 2, 0, panLeft - left + 4, 720);
+    }
+    if (right > panRight + 0.5) {
+      c.drawImage(img, iw - 24 - trim, 0, 24, ih, panRight - 2, 0, right - panRight + 4, 720);
+    }
+    return;
+  }
+
   const bleedLeft = Math.max(0, -left);
   const bleedRight = Math.max(0, right - 1280);
   const bleedTop = Math.max(0, -top);

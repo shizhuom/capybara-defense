@@ -13,7 +13,13 @@ const guests=[
 /** Menu-only illustration and atmosphere. No board geometry or battle state is read. */
 export function drawSplashScene(c:CanvasRenderingContext2D,assets:AssetRegistry,mapId:MapId,seconds:number,oranges:number):void {
  const splash=assets.get('start_splash_bg');
- if(splash)c.drawImage(splash,0,0,STAGE.width,STAGE.height);
+ if(splash){
+  const iw=splash.naturalWidth||splash.width||0,ih=splash.naturalHeight||splash.height||0;
+  if(iw>0&&ih>0&&iw/ih>1.85){
+   const sw=Math.round(STAGE.height*(iw/ih));
+   c.drawImage(splash,(STAGE.width-sw)/2,0,sw,STAGE.height);
+  }else c.drawImage(splash,0,0,STAGE.width,STAGE.height);
+ }
  else drawFallback(c,seconds,oranges);
  c.save();
  // Five translucent curls, bounded to the spring above the capybara's shoulders.

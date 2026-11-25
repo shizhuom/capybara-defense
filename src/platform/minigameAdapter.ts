@@ -322,7 +322,7 @@ export function createMiniGameAdapter(api: MiniGameGlobalApi, kind: Exclude<Plat
     if (sig !== lastLoggedVpSig) {
       lastLoggedVpSig = sig;
       try {
-        console.log('[CapyVP r7-polish]', sig, 'rawSA=', info.safeArea ?? null, 'rawCap=', rawMenuBtn);
+        console.log('[CapyVP r8-panorama]', sig, 'rawSA=', info.safeArea ?? null, 'rawCap=', rawMenuBtn);
       } catch { /* ignore */ }
     }
     return vp;

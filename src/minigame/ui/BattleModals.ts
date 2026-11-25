@@ -477,87 +477,103 @@ function drawResultModal(
   const crests = won
     ? (endless && state.standardResult ? (state.standardResult.endlessCrests ?? 0) + (result.endlessCrests ?? 0) : (result.endlessCrests ?? 0))
     : 0;
+  const villageLoot = won
+    ? (endless && state.standardResult ? [...(state.standardResult.villageLoot ?? []), ...(result.villageLoot ?? [])] : (result.villageLoot ?? []))
+    : [];
+  const ingredientLoot = won
+    ? (endless && state.standardResult ? [...(state.standardResult.ingredientLoot ?? []), ...(result.ingredientLoot ?? [])] : (result.ingredientLoot ?? []))
+    : [];
   const guardianStars = endless ? 3 : won ? Math.min(3, Math.max(1, Math.floor(state.sides.player.oranges))) : 0;
+
+  const allShelfChips: ShelfChip[] = [
+    { icon: 'ui_coin_gold', label: t('profile.coins'), count: `+${coins * (settlement.adDoubleClaimed ? 2 : 1)}` },
+    ...(won && settlement.ticketAwarded ? [{ icon: 'ui_ticket_gacha', label: t('p5.tickets'), count: '+1' }] : []),
+    ...collectShelfChips(loot, ingredientLoot, villageLoot, crests),
+  ];
 
   // ── VISUAL BATTLE REPORT DRAWER (`statsOpen === true`) ────────────────────
   if (settlement.statsOpen) {
-    const pw = 920, ph = 584;
-    const px = (1280 - pw) / 2, py = 88;
+    const pw = 960, ph = 606;
+    const px = (1280 - pw) / 2, py = 74;
     drawHinokiBoard(c, px, py, pw, ph, 26);
     hits.add({ id: 'modal:card', x: px, y: py, w: pw, h: ph });
     drawMatchaSignboard(c, 640, py - 42, t('p12.report'), undefined, 310);
     drawYuzuCloseButton(c, hits, 'modal:toggle-stats', Math.min(1084, px + pw - 16), py - 12, 30);
 
     const cx = px + 26, cw = pw - 52;
-    let cy = py + 38;
+    let cy = py + 34;
 
     // 1. MVP Stage Card (MVP Crown + Big Portrait + Visual Damage/KO Medals!)
-    const mvpH = 172;
+    const mvpH = 148;
     drawIvorySlab(c, cx, cy, cw, mvpH, 20, '#fff7dc', '#f6e0aa', PALETTE.goldDark, 2.4);
     if (result.mvp) {
-      drawSpriteContain(c, 'ui_mvp_crown', cx + 56, cy + 8, 48, 36);
+      drawSpriteContain(c, 'ui_mvp_crown', cx + 52, cy + 6, 44, 32);
       const spr = result.mvp.awakened ? `${result.mvp.kind}_awakened` : result.mvp.kind;
-      if (!drawSpriteContain(c, spr, cx + 28, cy + 36, 104, 104)) {
-        drawSpriteContain(c, result.mvp.kind, cx + 28, cy + 36, 104, 104);
+      if (!drawSpriteContain(c, spr, cx + 26, cy + 32, 96, 96)) {
+        drawSpriteContain(c, result.mvp.kind, cx + 26, cy + 32, 96, 96);
       }
       const mvpName = t(`${HEROES[result.mvp.kind] ? 'hero' : 'unit'}.${result.mvp.kind}`);
-      drawText(c, `MVP · ${mvpName}`, cx + 148, cy + 52, 29, '#7c3c08', 'left', 900);
-      round(c, cx + 148, cy + 80, 118, 34, 17, '#f3d47c', '#9c6216', 2);
-      drawText(c, `Lv.${result.mvp.level}${result.mvp.awakened ? ' ★' : ''}`, cx + 207, cy + 98, 20, '#592c08', 'center', 900);
+      drawText(c, `MVP · ${mvpName}`, cx + 140, cy + 48, 29, '#7c3c08', 'left', 900);
+      round(c, cx + 140, cy + 74, 118, 34, 17, '#f3d47c', '#9c6216', 2);
+      drawText(c, `Lv.${result.mvp.level}${result.mvp.awakened ? ' ★' : ''}`, cx + 199, cy + 92, 20, '#592c08', 'center', 900);
 
       // Two Big Visual Stat Medals (`ui_stat_damage_burst` & `ui_stat_ko_skull`)
       const m1x = cx + cw - 372;
-      drawIvorySlab(c, m1x, cy + 16, 172, 140, 18, '#fffdf8', '#f6e8cb', '#8a5d32', 2);
-      drawSpriteContain(c, 'ui_stat_damage_burst', m1x + 58, cy + 24, 56, 56);
-      drawText(c, formatCompactNumber(result.mvp.damage), m1x + 86, cy + 104, 26, PALETTE.ink, 'center', 900);
-      drawText(c, t('p13.damage'), m1x + 86, cy + 136, 19, PALETTE.inkSoft, 'center', 900);
+      drawIvorySlab(c, m1x, cy + 12, 172, 124, 18, '#fffdf8', '#f6e8cb', '#8a5d32', 2);
+      drawSpriteContain(c, 'ui_stat_damage_burst', m1x + 62, cy + 18, 48, 48);
+      drawText(c, formatCompactNumber(result.mvp.damage), m1x + 86, cy + 88, 25, PALETTE.ink, 'center', 900);
+      drawText(c, t('p13.damage'), m1x + 86, cy + 116, 18, PALETTE.inkSoft, 'center', 900);
 
       const m2x = m1x + 186;
-      drawIvorySlab(c, m2x, cy + 16, 172, 140, 18, '#fffdf8', '#f6e8cb', '#8a5d32', 2);
-      drawSpriteContain(c, 'ui_stat_ko_skull', m2x + 58, cy + 24, 56, 56);
-      drawText(c, `×${result.mvp.kills}`, m2x + 86, cy + 104, 26, PALETTE.ink, 'center', 900);
-      drawText(c, t('p13.kills'), m2x + 86, cy + 136, 19, PALETTE.inkSoft, 'center', 900);
+      drawIvorySlab(c, m2x, cy + 12, 172, 124, 18, '#fffdf8', '#f6e8cb', '#8a5d32', 2);
+      drawSpriteContain(c, 'ui_stat_ko_skull', m2x + 62, cy + 18, 48, 48);
+      drawText(c, `×${result.mvp.kills}`, m2x + 86, cy + 88, 25, PALETTE.ink, 'center', 900);
+      drawText(c, t('p13.kills'), m2x + 86, cy + 116, 18, PALETTE.inkSoft, 'center', 900);
     } else {
-      drawSpriteContain(c, 'ui_tutorial_capy', cx + 32, cy + 36, 100, 100);
-      drawText(c, t('p6.noMvp'), cx + 150, cy + 68, 26, PALETTE.ink, 'left', 900);
+      drawSpriteContain(c, 'ui_tutorial_capy', cx + 32, cy + 24, 96, 96);
+      drawText(c, t('p6.noMvp'), cx + 146, cy + 56, 26, PALETTE.ink, 'left', 900);
       const boardCount = state.units.filter(u => u.side === 'player' && u.location.zone === 'board').length;
-      drawText(c, t('p6.lineup', { count: boardCount }), cx + 150, cy + 108, 21, PALETTE.inkSoft, 'left', 800);
+      drawText(c, t('p6.lineup', { count: boardCount }), cx + 146, cy + 96, 21, PALETTE.inkSoft, 'left', 800);
     }
-    cy += mvpH + 14;
+    cy += mvpH + 12;
 
-    // 2. Visual Treasure Shelf
+    // 2. Visual Treasure Shelf (up to 2 full rows × 6 columns = 12 distinct items — zero silent 6-item cutoff!)
     const hasUnlocks = settlement.newWeapons.length + settlement.newAvatars.length > 0;
-    const shelfH = hasUnlocks ? 164 : 232;
+    const multiRowShelf = allShelfChips.length > 6;
+    const shelfH = hasUnlocks ? (multiRowShelf ? 248 : 196) : (multiRowShelf ? 286 : 254);
     drawIvorySlab(c, cx, cy, cw, shelfH, 20);
-    drawIconLabel(c, 'ui_harvest_basket', t('p13.treasureShelf'), cx + 20, cy + 28, 30, 23, PALETTE.ink);
-    const chips: ShelfChip[] = [
-      { icon: 'ui_coin_gold', label: t('profile.coins'), count: `+${coins * (settlement.adDoubleClaimed ? 2 : 1)}` },
-      ...(settlement.ticketAwarded ? [{ icon: 'ui_ticket_gacha', label: t('p5.tickets'), count: '+1' }] : []),
-      ...collectShelfChips(loot, result.ingredientLoot, result.villageLoot, crests),
-    ];
-    drawChipRow(c, chips.slice(0, 6), cx + 20, cy + 52, cw - 40);
-    cy += shelfH + 12;
+    drawIconLabel(
+      c,
+      'ui_harvest_basket',
+      `${t('p13.treasureShelf')} (${allShelfChips.length})`,
+      cx + 20,
+      cy + 26,
+      28,
+      23,
+      PALETTE.ink,
+    );
+    drawChipGrid(c, allShelfChips, cx + 18, cy + 48, cw - 36, shelfH - 58);
+    cy += shelfH + 10;
 
     // 3. New Unlocks Chest Ribbon (`ui_unlock_chest` + NEW!)
     if (hasUnlocks) {
-      drawIvorySlab(c, cx, cy, cw, 92, 18, '#eefbe6', '#d6f2c4', '#3d8633', 2.2);
-      drawSpriteContain(c, 'ui_unlock_chest', cx + 18, cy + 12, 68, 68);
-      drawText(c, t('p6.unlock'), cx + 98, cy + 26, 21, '#22591b', 'left', 900);
+      drawIvorySlab(c, cx, cy, cw, 82, 18, '#eefbe6', '#d6f2c4', '#3d8633', 2.2);
+      drawSpriteContain(c, 'ui_unlock_chest', cx + 16, cy + 9, 64, 64);
+      drawText(c, t('p6.unlock'), cx + 92, cy + 23, 20, '#22591b', 'left', 900);
       const unlockSprites = [
         ...settlement.newWeapons.map(id => `weapon_${id}`),
         ...settlement.newAvatars.map(id => `avatar_${id}`),
       ];
-      unlockSprites.slice(0, 6).forEach((sp, i) => {
-        const ux = cx + 98 + i * 76;
-        round(c, ux, cy + 40, 44, 44, 12, '#fffdf7', '#49913b', 1.8);
-        drawSpriteContain(c, sp, ux + 4, cy + 44, 36, 36);
+      unlockSprites.slice(0, 8).forEach((sp, i) => {
+        const ux = cx + 92 + i * 62;
+        round(c, ux, cy + 36, 40, 40, 10, '#fffdf7', '#49913b', 1.8);
+        drawSpriteContain(c, sp, ux + 4, cy + 40, 32, 32);
       });
-      cy += 102;
     }
 
     // 4. Bottom Footprint Strip (`ui_map_sign` · `ui_wave_horn` · `ui_clock_sand` · `orange`)
-    const footY = py + ph - 72;
-    drawIvorySlab(c, cx, footY, cw, 56, 16, '#fffdf8', '#f5e4c2', '#8a5d32', 2);
+    const footY = py + ph - 68;
+    drawIvorySlab(c, cx, footY, cw, 54, 16, '#fffdf8', '#f5e4c2', '#8a5d32', 2);
     const fItems: Array<[string, string]> = [
       ['ui_map_sign', t(`map.${state.mapId}`)],
       [endless ? 'ui_endless_emblem' : 'ui_wave_horn', endless ? `W${result.endlessWave ?? state.wave}` : `${state.wave}/10`],
@@ -566,7 +582,7 @@ function drawResultModal(
     ];
     const fw = cw / fItems.length;
     fItems.forEach(([ic, val], i) => {
-      drawIconLabel(c, ic, val, cx + i * fw + 22, footY + 28, 30, 22, PALETTE.ink);
+      drawIconLabel(c, ic, val, cx + i * fw + 22, footY + 27, 28, 22, PALETTE.ink);
     });
     return;
   }
@@ -576,7 +592,7 @@ function drawResultModal(
     drawSunburst(c, 640, 260, 440, elapsed, 'rgba(255,222,110,0.28)');
   }
 
-  // Winged Shield Plaque centered prominently (`y: 12..492`)
+  // Winged Shield Plaque centered prominently (`y: 10..496`)
   const sSize = 486;
   const sx = 640 - sSize / 2;
   const sy = 10;
@@ -610,24 +626,35 @@ function drawResultModal(
     7,
   );
 
-  // Inside the Shield Plaque (shifted cleanly into the wide cream center so numbers NEVER touch the curved lower border!)
+  // Build ALL core reward categories (Coins, Ticket, Endless Crests, Weapon Frags, Village Wood/Essence, Kitchen Ingredients)
+  const coreChips: Array<{ icon: string; val: string }> = [
+    { icon: 'ui_coin_gold', val: `+${coins * (settlement.adDoubleClaimed ? 2 : 1)}` },
+    ...(won && settlement.ticketAwarded ? [{ icon: 'ui_ticket_gacha', val: '+1' }] : []),
+    ...(crests > 0 ? [{ icon: 'ui_endless_crest', val: `+${crests}` }] : []),
+    ...(loot.length > 0 ? [{ icon: 'ui_weapon_fragment', val: `+${loot.length}` }] : []),
+    ...(villageLoot.length > 0 ? [{ icon: 'ui_village_gate', val: `+${villageLoot.length}` }] : []),
+    ...(ingredientLoot.length > 0 ? [{ icon: 'ui_kitchen_pot', val: `+${ingredientLoot.length}` }] : []),
+  ];
+  const twoRows = coreChips.length >= 5;
+
+  // Inside the Shield Plaque (auto-switches cleanly between 1-row (<=4) and 2×3 grid (5–6) inside the cream belly!)
   const pW = 248;
   const pLeft = 640 - pW / 2;
 
   // 1. Rank Name + Star Delta
-  const rankY = sy + 236;
+  const rankY = twoRows ? sy + 218 : sy + 236;
   const dStr = settlement.resultStars === 0 && !won
     ? '0★'
     : settlement.resultStars > 0
       ? `+${settlement.resultStars}★`
       : `${settlement.resultStars}★`;
-  drawText(c, t(`rank.${rank.index}`), 640 - 30, rankY, 26, '#fff4b8', 'center', 900, '#2b1b14', 5.5);
+  drawText(c, t(`rank.${rank.index}`), 640 - 30, rankY, twoRows ? 24 : 26, '#fff4b8', 'center', 900, '#2b1b14', 5.5);
   drawText(
     c,
     dStr,
     640 + 94,
     rankY,
-    24,
+    twoRows ? 22 : 24,
     settlement.resultStars > 0 ? '#9ff584' : settlement.resultStars < 0 ? '#ff9d8f' : '#efe3cc',
     'center',
     900,
@@ -639,27 +666,37 @@ function drawResultModal(
   const nextRank = RANKS[rank.index + 1];
   const progressMax = nextRank ? nextRank.minStars - rank.minStars : 1;
   const progress = nextRank ? Math.min(progressMax, Math.max(0, profile.stars - rank.minStars)) : 1;
-  drawProgressBar(c, pLeft + 12, rankY + 24, pW - 24, 15, progress / Math.max(1, progressMax), '#ffd242', '#e6dac4', '#4a2912');
-  drawText(c, nextRank ? `${progress} / ${progressMax}` : 'MAX', 640, rankY + 54, 21, '#4a2912', 'center', 900);
+  drawProgressBar(c, pLeft + 12, rankY + (twoRows ? 20 : 24), pW - 24, twoRows ? 13 : 15, progress / Math.max(1, progressMax), '#ffd242', '#e6dac4', '#4a2912');
+  drawText(c, nextRank ? `${progress} / ${progressMax}` : 'MAX', 640, rankY + (twoRows ? 46 : 54), twoRows ? 19 : 21, '#4a2912', 'center', 900);
 
-  // 3. Core Visual Rewards Strip right inside the wide middle belly of the shield plaque
-  const coreChips: Array<{ icon: string; val: string }> = [
-    { icon: 'ui_coin_gold', val: `+${coins * (settlement.adDoubleClaimed ? 2 : 1)}` },
-    ...(won && settlement.ticketAwarded ? [{ icon: 'ui_ticket_gacha', val: '+1' }] : []),
-    ...(crests > 0 ? [{ icon: 'ui_endless_crest', val: `+${crests}` }] : []),
-    ...(loot.length > 0 ? [{ icon: 'ui_weapon_fragment', val: `+${loot.length}` }] : []),
-    ...((result.ingredientLoot?.length ?? 0) > 0 ? [{ icon: 'ui_kitchen_pot', val: `+${result.ingredientLoot!.length}` }] : []),
-  ];
-  const rw = Math.min(72, Math.floor((pW - 14) / Math.max(1, coreChips.length)));
-  const rStartX = 640 - (rw * coreChips.length) / 2;
-  const rewY = rankY + 72;
-  coreChips.forEach((rc, i) => {
-    const rcx = rStartX + i * rw;
-    const isCoin = i === 0;
-    const sz = isCoin ? 48 : 40;
-    drawSpriteContain(c, rc.icon, rcx + (rw - sz) / 2, rewY + (48 - sz) / 2, sz, sz);
-    drawText(c, rc.val, rcx + rw / 2, rewY + 62, isCoin ? 24 : 21, '#4f2406', 'center', 900);
-  });
+  // 3. Core Visual Rewards Strip (1 row for 1..4 categories, neat 2×3 mini-grid for 5..6 categories!)
+  const rewY = twoRows ? rankY + 60 : rankY + 72;
+  if (twoRows) {
+    const cols = 3;
+    const rw = 74;
+    const rowStep = 62;
+    coreChips.slice(0, 6).forEach((rc, i) => {
+      const row = Math.floor(i / cols);
+      const col = i % cols;
+      const itemsInRow = row === 0 ? Math.min(cols, coreChips.length) : Math.min(cols, coreChips.length - cols);
+      const rowStartX = 640 - (itemsInRow * rw) / 2;
+      const rcx = rowStartX + col * rw;
+      const rcy = rewY + row * rowStep;
+      const sz = i === 0 ? 40 : 36;
+      drawSpriteContain(c, rc.icon, rcx + (rw - sz) / 2, rcy + (40 - sz) / 2, sz, sz);
+      drawText(c, rc.val, rcx + rw / 2, rcy + 49, i === 0 ? 21 : 19.5, '#4f2406', 'center', 900);
+    });
+  } else {
+    const rw = Math.min(72, Math.floor((pW - 14) / Math.max(1, coreChips.length)));
+    const rStartX = 640 - (rw * coreChips.length) / 2;
+    coreChips.forEach((rc, i) => {
+      const rcx = rStartX + i * rw;
+      const isCoin = i === 0;
+      const sz = isCoin ? 48 : 40;
+      drawSpriteContain(c, rc.icon, rcx + (rw - sz) / 2, rewY + (48 - sz) / 2, sz, sz);
+      drawText(c, rc.val, rcx + rw / 2, rewY + 62, isCoin ? 24 : 21, '#4f2406', 'center', 900);
+    });
+  }
 
   if (won && coins > 0 && settlement.adDoubleCoinsAvailable && !settlement.adDoubleClaimed) {
     drawPillButton(c, hits, 'result:ad-double', 908, rewY + 8, 210, 56, zh ? `🎬 双倍 (+${coins})` : `🎬 2× (+${coins})`, 'gold', { fontSize: 21 });
@@ -680,9 +717,12 @@ function drawResultModal(
   const fy = hook ? 590 : 530;
   const bh = 68;
   const gap = 14;
+  const reportLabel = allShelfChips.length > 4
+    ? `${t('p15.report')} (${allShelfChips.length})`
+    : t('p15.report');
   const actions: Array<{ id: string; w: number; label: string; variant: 'cream' | 'gold' | 'green'; icon?: string; fontSize: number }> = [
     { id: 'modal:menu', w: 196, label: zh ? '返回庭院' : 'Home', variant: 'cream', icon: 'ui_btn_return_arrow', fontSize: 24 },
-    { id: 'modal:toggle-stats', w: 168, label: t('p15.report'), variant: 'cream', icon: 'ui_stats_scroll', fontSize: 24 },
+    { id: 'modal:toggle-stats', w: allShelfChips.length > 4 ? 204 : 168, label: reportLabel, variant: 'cream', icon: 'ui_stats_scroll', fontSize: 23 },
   ];
   if (won) {
     actions.push({ id: 'result:share', w: 176, label: zh ? '炫耀战绩' : 'Share', variant: 'gold', icon: 'ui_star_rank', fontSize: 24 });
@@ -741,20 +781,50 @@ function collectShelfChips(
   return chips;
 }
 
-function drawChipRow(c: CanvasRenderingContext2D, chips: readonly ShelfChip[], x: number, y: number, w: number): void {
-  const gap = 12;
-  const cols = Math.min(6, Math.max(3, chips.length));
-  const cw = Math.min(136, Math.floor((w - (cols - 1) * gap) / cols));
-  const ch = 104;
-  chips.forEach((chip, i) => {
-    const cx = x + i * (cw + gap);
-    round(c, cx, y, cw, ch, 16, '#f8ebd0', '#8d6235', 2);
-    if (!drawSpriteContain(c, chip.icon, cx + (cw - 48) / 2, y + 6, 48, 48)) {
-      drawSpriteContain(c, 'ui_weapon_fragment', cx + (cw - 48) / 2, y + 6, 48, 48);
+function drawChipGrid(
+  c: CanvasRenderingContext2D,
+  chips: readonly ShelfChip[],
+  x: number,
+  y: number,
+  w: number,
+  maxH: number,
+): void {
+  if (chips.length === 0) return;
+  const zh = getLanguage() === 'zh-CN';
+  const maxVisible = 12;
+  const list: ShelfChip[] = chips.length > maxVisible
+    ? [
+        ...chips.slice(0, maxVisible - 1),
+        { icon: 'ui_harvest_basket', label: zh ? '更多收获' : 'More', count: `+${chips.length - (maxVisible - 1)}` },
+      ]
+    : [...chips];
+
+  const multiRow = list.length > 6;
+  const cols = multiRow ? 6 : Math.min(6, Math.max(3, list.length));
+  const gapX = 10;
+  const gapY = 8;
+  const cw = Math.min(142, Math.floor((w - (cols - 1) * gapX) / cols));
+  const rows = Math.ceil(list.length / cols);
+  const ch = multiRow
+    ? Math.min(96, Math.max(82, Math.floor((maxH - gapY) / 2)))
+    : Math.min(118, maxH);
+  const sprSz = multiRow ? 40 : 52;
+  const countSz = multiRow ? 19.5 : 23;
+  const labelSz = multiRow ? 16 : 18;
+  const gridStartX = rows === 1 ? x + Math.max(0, Math.floor((w - (list.length * cw + (list.length - 1) * gapX)) / 2)) : x;
+
+  list.forEach((chip, i) => {
+    const col = i % cols;
+    const row = Math.floor(i / cols);
+    const cx = gridStartX + col * (cw + gapX);
+    const cy = y + row * (ch + gapY);
+    round(c, cx, cy, cw, ch, 15, '#f8ebd0', '#8d6235', 2);
+    if (!drawSpriteContain(c, chip.icon, cx + (cw - sprSz) / 2, cy + 6, sprSz, sprSz)) {
+      drawSpriteContain(c, 'ui_weapon_fragment', cx + (cw - sprSz) / 2, cy + 6, sprSz, sprSz);
     }
-    drawText(c, chip.count, cx + cw / 2, y + 68, 22, '#7e3d0a', 'center', 900);
+    drawText(c, chip.count, cx + cw / 2, cy + sprSz + (multiRow ? 17 : 22), countSz, '#7e3d0a', 'center', 900);
     const shortLabel = chip.label.length > 5 ? `${chip.label.slice(0, 5)}…` : chip.label;
-    drawText(c, shortLabel, cx + cw / 2, y + 90, 17, PALETTE.inkSoft, 'center', 800);
+    drawText(c, shortLabel, cx + cw / 2, cy + ch - (multiRow ? 12 : 16), labelSz, PALETTE.inkSoft, 'center', 800);
   });
 }
 

@@ -500,53 +500,60 @@ export function drawMarketModal(
 
   // ── TAB 2: BACKPACK (`道具背包`) ───────────────────────────────────────────
   if (market.tab === 'backpack') {
-    // Top Loadout Strip: 2 Active Slots + 6 Passive Slots (EXACT Web `propSlots`!)
+    // Top Loadout Strip: 2 Active Slots + 6 Passive Slots — GIANT icons (>= candidate items below!)
     const stripY = body.y + 2;
-    const stripH = 104;
-    drawIvorySlab(c, body.x + 2, stripY, body.w - 4, stripH, 16, '#fffdf7', '#f3e1bc', '#855a2e', 2);
+    const stripH = 148;
+    drawIvorySlab(c, body.x + 2, stripY, body.w - 4, stripH, 18, '#fffdf7', '#f3e1bc', '#855a2e', 2.4);
+
+    const slotY = stripY + 38;
+    const slotH = 100;
+    const slotIconSz = 86; // Strictly larger than 80×80 candidate prop icons below!
 
     // Left: Active · 2
-    drawText(c, `${t('m2.active')} · 2`, body.x + 18, stripY + 20, 15, '#c2502c', 'left', 900);
+    const activeX0 = body.x + 20;
+    const activeW = 122;
+    const activeGap = 14;
+    drawText(c, `${t('m2.active')} · 2`, activeX0, stripY + 21, 22, '#c2502c', 'left', 900);
     for (let i = 0; i < 2; i++) {
       const pid = profile.equippedActiveProps[i];
-      const sx = body.x + 18 + i * 74;
-      const sy = stripY + 34;
-      if (pid) hits.add({ id: `market:equip:${pid}`, x: sx, y: sy, w: 64, h: 60 });
-      round(c, sx, sy, 64, 60, 14, pid ? '#fff5dc' : '#eadbc0', pid ? '#c2502c' : '#a88e6c', pid ? 2.2 : 1.6);
+      const sx = activeX0 + i * (activeW + activeGap);
+      if (pid) hits.add({ id: `market:equip:${pid}`, x: sx, y: slotY, w: activeW, h: slotH });
+      round(c, sx, slotY, activeW, slotH, 18, pid ? '#fff5dc' : '#eadbc0', pid ? '#c2502c' : '#a88e6c', pid ? 2.6 : 1.8);
       if (pid) {
-        drawSpriteContain(c, `prop_${pid}`, sx + 10, sy + 6, 44, 44);
-        round(c, sx + 44, sy - 4, 22, 22, 11, '#d95843', '#fffdf5', 1.6);
-        drawText(c, '×', sx + 55, sy + 7, 15, '#fffdf5', 'center', 900);
+        drawSpriteContain(c, `prop_${pid}`, sx + (activeW - slotIconSz) / 2, slotY + (slotH - slotIconSz) / 2, slotIconSz, slotIconSz);
+        round(c, sx + activeW - 22, slotY - 6, 28, 28, 14, '#d95843', '#fffdf5', 2);
+        drawText(c, '×', sx + activeW - 8, slotY + 8, 19, '#fffdf5', 'center', 900);
       } else {
-        drawText(c, '+', sx + 32, sy + 30, 24, '#9a8062', 'center', 900);
+        drawText(c, '+', sx + activeW / 2, slotY + slotH / 2, 36, '#9a8062', 'center', 900);
       }
     }
 
     // Divider
+    const divX = activeX0 + 2 * activeW + activeGap + 20;
     c.strokeStyle = 'rgba(122,82,48,0.35)';
-    c.lineWidth = 1.6;
+    c.lineWidth = 2;
     c.beginPath();
-    c.moveTo(body.x + 178, stripY + 14);
-    c.lineTo(body.x + 178, stripY + stripH - 14);
+    c.moveTo(divX, stripY + 14);
+    c.lineTo(divX, stripY + stripH - 14);
     c.stroke();
 
     // Right: Passive · 6
-    const px0 = body.x + 194;
-    drawText(c, `${t('m2.passive')} · 6`, px0, stripY + 20, 15, '#2d7a64', 'left', 900);
-    const slotStep = Math.floor((body.w - 208) / 6);
+    const px0 = divX + 20;
+    const passiveAvailW = body.x + body.w - 20 - px0;
+    const pGap = 14;
+    const pSlotW = Math.floor((passiveAvailW - pGap * 5) / 6);
+    drawText(c, `${t('m2.passive')} · 6`, px0, stripY + 21, 22, '#2d7a64', 'left', 900);
     for (let i = 0; i < 6; i++) {
       const pid = profile.equippedPassiveProps[i];
-      const sx = px0 + i * slotStep;
-      const sy = stripY + 34;
-      const sw = Math.min(82, slotStep - 8);
-      if (pid) hits.add({ id: `market:equip:${pid}`, x: sx, y: sy, w: sw, h: 60 });
-      round(c, sx, sy, sw, 60, 14, pid ? '#edf9f2' : '#eadbc0', pid ? '#3a876f' : '#a88e6c', pid ? 2.2 : 1.6);
+      const sx = px0 + i * (pSlotW + pGap);
+      if (pid) hits.add({ id: `market:equip:${pid}`, x: sx, y: slotY, w: pSlotW, h: slotH });
+      round(c, sx, slotY, pSlotW, slotH, 18, pid ? '#edf9f2' : '#eadbc0', pid ? '#3a876f' : '#a88e6c', pid ? 2.6 : 1.8);
       if (pid) {
-        drawSpriteContain(c, `prop_${pid}`, sx + (sw - 44) / 2, sy + 6, 44, 44);
-        round(c, sx + sw - 18, sy - 4, 22, 22, 11, '#d95843', '#fffdf5', 1.6);
-        drawText(c, '×', sx + sw - 7, sy + 7, 15, '#fffdf5', 'center', 900);
+        drawSpriteContain(c, `prop_${pid}`, sx + (pSlotW - slotIconSz) / 2, slotY + (slotH - slotIconSz) / 2, slotIconSz, slotIconSz);
+        round(c, sx + pSlotW - 22, slotY - 6, 28, 28, 14, '#d95843', '#fffdf5', 2);
+        drawText(c, '×', sx + pSlotW - 8, slotY + 8, 19, '#fffdf5', 'center', 900);
       } else {
-        drawText(c, '+', sx + sw / 2, sy + 30, 24, '#9a8062', 'center', 900);
+        drawText(c, '+', sx + pSlotW / 2, slotY + slotH / 2, 36, '#9a8062', 'center', 900);
       }
     }
 
@@ -626,28 +633,112 @@ export function drawMarketModal(
     return { scrollViewport: { x: vx, y: vy, w: vw, h: vh } };
   }
 
-  // ── TAB 3: LUCKY GACHA (`幸运扭蛋` — EXACT `p18_preview_d12_market_lottery.png`!) ──
-  const gx = body.x + 6, gy = body.y + 4, gw = body.w - 12, gh = body.h - 8;
-  drawIvorySlab(c, gx, gy, gw, gh, 20, '#fffdf8', '#f8ebd0', '#855a2e', 2.2);
+  // ── TAB 3: LUCKY GACHA (`幸运扭蛋` — Widescreen 2-Column Big-Font Mobile Layout!) ──
+  const gx = body.x + 4, gy = body.y + 4, gw = body.w - 8, gh = body.h - 8;
+  drawIvorySlab(c, gx, gy, gw, gh, 20, '#fffdf8', '#f8ebd0', '#855a2e', 2.4);
 
-  // Heading row with framed `ui_gacha_machine`!
-  round(c, gx + 18, gy + 12, 64, 64, 14, '#f5e8ff', '#8a5d32', 2);
-  drawSpriteContain(c, 'ui_gacha_machine', gx + 23, gy + 17, 54, 54);
-  drawText(c, t('p11.meta.lotteryTitle'), gx + 96, gy + 32, 23, PALETTE.ink, 'left', 900);
-  drawText(c, t('p11.meta.lotteryRule'), gx + 96, gy + 60, 16, PALETTE.inkSoft, 'left', 700);
+  const compact = gh < 410;
+  const pad = 16;
 
+  // LEFT COLUMN: Gacha Machine Showcase + Big Rule/Win Banner + Chunky Spin Buttons
+  const lx = gx + pad;
+  const ly = gy + pad;
+  const lw = 408;
+  const lh = gh - pad * 2;
+
+  const machSz = compact ? 74 : 86;
+  round(c, lx, ly, machSz, machSz, 18, '#f5e8ff', '#8a5d32', 2.4);
+  drawSpriteContain(c, 'ui_gacha_machine', lx + 6, ly + 6, machSz - 12, machSz - 12);
+
+  const headTextX = lx + machSz + 14;
+  const headTextW = lw - machSz - 14;
+  drawText(c, t('p11.meta.lotteryTitle'), headTextX, ly + (compact ? 20 : 24), compact ? 27 : 31, PALETTE.ink, 'left', 900);
+  drawWrappedText(
+    c,
+    t('p11.meta.lotteryRule'),
+    headTextX,
+    ly + (compact ? 40 : 48),
+    headTextW,
+    compact ? 19 : 20.5,
+    compact ? 23 : 25,
+    PALETTE.inkSoft,
+    'left',
+    800,
+    2,
+  );
+
+  // Bottom Spin Buttons Stack (sized first so middle rule/result slab fills exact remaining height!)
+  const hasTicket = profile.freeLotteryTickets > 0;
+  const hasCoins = profile.coins >= META_PRICES.lottery;
+  const hasAd = market.adGachaAvailable;
+  const btnH = hasAd ? (compact ? 44 : 52) : (compact ? 52 : 60);
+  const btnGap = compact ? 8 : 12;
+  const btnCount = hasAd ? 3 : 2;
+  const btnStackH = btnCount * btnH + (btnCount - 1) * btnGap;
+  const btnStartY = ly + lh - btnStackH;
+
+  // Middle Status / Last Prize / Rule Card (BIG 20–23px bold text, zero tiny footnotes!)
+  const midY = ly + machSz + (compact ? 10 : 14);
+  const midH = Math.max(78, btnStartY - midY - (compact ? 10 : 14));
   if (market.lastPrizeLabel) {
-    round(c, gx + gw - 256, gy + 16, 238, 52, 14, '#e4f8da', '#3d8633', 2);
-    drawText(c, `🎉 ${market.lastPrizeLabel}`, gx + gw - 137, gy + 43, 15.5, '#1f5918', 'center', 900);
+    drawIvorySlab(c, lx, midY, lw, midH, 18, '#e8fae0', '#d1f2c2', '#3d8633', 2.6);
+    drawText(c, zh ? '🎉 恭喜抽中' : '🎉 You Won!', lx + lw / 2, midY + (compact ? 24 : 34), compact ? 20 : 22, '#2d6e24', 'center', 900);
+    drawWrappedText(
+      c,
+      market.lastPrizeLabel,
+      lx + 16,
+      midY + (compact ? 44 : 58),
+      lw - 32,
+      compact ? 22 : 25,
+      compact ? 26 : 30,
+      '#1a4d14',
+      'center',
+      900,
+      2,
+    );
+  } else {
+    drawIvorySlab(c, lx, midY, lw, midH, 18, '#fff7e4', '#f2dfba', '#b38449', 2.2);
+    drawWrappedText(
+      c,
+      t('m2.lotteryRule'),
+      lx + 18,
+      midY + (compact ? 14 : 22),
+      lw - 36,
+      compact ? 19.5 : 21.5,
+      compact ? 25 : 29,
+      PALETTE.ink,
+      'left',
+      800,
+      compact ? 3 : 4,
+    );
   }
 
-  // Centered 3×3 Ring Grid (exact Web `storybook-lottery-ring`, adapts cleanly when P19 coaching banner is active!)
+  let by = btnStartY;
+  drawPillButton(c, hits, 'market:spin:ticket', lx, by, lw, btnH, t('p11.meta.ticketSpin', { count: profile.freeLotteryTickets }), hasTicket ? 'gold' : 'muted', {
+    fontSize: compact ? 20.5 : 23,
+    icon: 'ui_ticket_gacha',
+    disabled: !hasTicket,
+  });
+  by += btnH + btnGap;
+  drawPillButton(c, hits, 'market:spin:coins', lx, by, lw, btnH, t('p11.meta.coinSpin', { price: META_PRICES.lottery }), hasCoins ? 'cream' : 'muted', {
+    fontSize: compact ? 20.5 : 23,
+    icon: 'ui_coin_gold',
+    disabled: !hasCoins,
+  });
+  if (hasAd) {
+    by += btnH + btnGap;
+    drawPillButton(c, hits, 'market:ad-gacha', lx, by, lw, btnH, zh ? '🎬 看视频免费抽' : '🎬 Free Ad Spin', 'teal', {
+      fontSize: compact ? 19.5 : 21.5,
+    });
+  }
+
+  // RIGHT COLUMN: GIANT 3×3 Horizontal-Card Prize Ring exploiting full widescreen width!
   const ringOrder = [0, 1, 2, 7, -1, 3, 6, 5, 4];
-  const compact = gh < 420;
-  const headH = compact ? 70 : 84;
-  const gridX = gx + 36, gridY = gy + headH, gridW = gw - 72;
-  const gridH = Math.max(198, Math.min(266, gh - headH - 96));
-  const cellGap = compact ? 8 : 10;
+  const gridX = lx + lw + 18;
+  const gridY = ly;
+  const gridW = gx + gw - pad - gridX;
+  const gridH = lh;
+  const cellGap = compact ? 10 : 12;
   const cw = Math.floor((gridW - cellGap * 2) / 3);
   const ch = Math.floor((gridH - cellGap * 2) / 3);
   const pulseSpin = pulseSel === '.lottery-center';
@@ -662,73 +753,82 @@ export function drawMarketModal(
       const canSpin = useTicket || profile.coins >= META_PRICES.lottery;
       drawButton(c, hits, 'market:spin:auto', tx, ty, cw, ch, '', {
         ...(canSpin ? BTN_STYLES.green : BTN_STYLES.muted),
-        radius: 16,
+        radius: 20,
         disabled: !canSpin,
       });
       if (pulseSpin) {
         const glow = 0.5 + 0.5 * Math.sin(elapsed * 6);
-        round(c, tx - 3, ty - 3, cw + 6, ch + 6, 18, 'transparent', `rgba(255,212,56,${glow.toFixed(2)})`, 4);
+        round(c, tx - 3, ty - 3, cw + 6, ch + 6, 22, 'transparent', `rgba(255,212,56,${glow.toFixed(2)})`, 4.5);
       }
       const dy = hits.isPressed('market:spin:auto') ? 3 : 0;
-      drawText(c, t('m2.spin'), tx + cw / 2, ty + ch * 0.34 + dy, compact ? 19 : 22, canSpin ? '#293e10' : PALETTE.muted, 'center', 900);
+      drawText(c, t('m2.spin'), tx + cw / 2, ty + ch * 0.34 + dy, compact ? 25 : 29, canSpin ? '#fffdf7' : PALETTE.muted, 'center', 900, canSpin ? '#294d12' : undefined, 4);
+      const costStr = useTicket ? `×${profile.freeLotteryTickets}` : String(META_PRICES.lottery);
+      const costFont = compact ? 21 : 24;
+      const costIcon = compact ? 26 : 30;
+      c.font = `900 ${costFont}px "Trebuchet MS", "PingFang SC", "Microsoft YaHei", sans-serif`;
+      const totalCostW = costIcon + 8 + c.measureText(costStr).width;
       drawIconLabel(
         c,
         useTicket ? 'ui_ticket_gacha' : 'ui_coin_gold',
-        useTicket ? `×${profile.freeLotteryTickets}` : String(META_PRICES.lottery),
-        tx + cw / 2 - 32,
+        costStr,
+        tx + (cw - totalCostW) / 2,
         ty + ch * 0.72 + dy,
-        22,
-        compact ? 17 : 19,
-        canSpin ? '#3c250e' : PALETTE.muted,
+        costIcon,
+        costFont,
+        canSpin ? '#fff9d6' : PALETTE.muted,
       );
       return;
     }
 
     const prize = market.prizes[prizeIdx];
     const wonHere = market.lastPrizeIndex === prizeIdx;
-    round(c, tx, ty, cw, ch, 14, wonHere ? '#fff0a8' : '#f8efdc', wonHere ? '#c96214' : '#e0c796', wonHere ? 3 : 1.8);
+    drawIvorySlab(
+      c,
+      tx,
+      ty,
+      cw,
+      ch,
+      18,
+      wonHere ? '#fff2aa' : '#fffdf8',
+      wonHere ? '#f9d866' : '#f4e3c0',
+      wonHere ? '#c96214' : '#b88f5a',
+      wonHere ? 3.6 : 2.2,
+    );
     if (!prize) return;
 
-    const sprSz = compact ? 34 : 44;
+    // Horizontal cell interior: Giant left icon + Big readable name & amber ×count pill on right!
+    const iconBox = compact ? 74 : 86;
+    const ix = tx + 10;
+    const iy = ty + Math.round((ch - iconBox) / 2);
+    round(c, ix, iy, iconBox, iconBox, 16, wonHere ? '#fff9d6' : '#f7ebd2', wonHere ? '#c96214' : '#c9a672', 2);
+
+    const sprSz = iconBox - 12;
+    let label = '';
     if (prize.type === 'coins') {
-      drawSpriteContain(c, 'ui_coin_gold', tx + cw / 2 - sprSz / 2, ty + 6, sprSz, sprSz);
-      drawText(c, `${t('profile.coins')} ×${prize.amount}`, tx + cw / 2, ty + ch - 14, compact ? 14 : 15.5, PALETTE.ink, 'center', 800);
+      drawSpriteContain(c, 'ui_coin_gold', ix + 6, iy + 6, sprSz, sprSz);
+      label = t('profile.coins');
     } else if (prize.type === 'prop' && prize.id) {
-      drawSpriteContain(c, `prop_${prize.id}`, tx + cw / 2 - sprSz / 2, ty + 6, sprSz, sprSz);
-      const lbl = `${t(`prop.${prize.id}`)} ×${prize.amount}`;
-      drawText(c, lbl.length > 10 ? `${lbl.slice(0, 10)}…` : lbl, tx + cw / 2, ty + ch - 14, compact ? 13.5 : 15, PALETTE.ink, 'center', 800);
+      drawSpriteContain(c, `prop_${prize.id}`, ix + 6, iy + 6, sprSz, sprSz);
+      label = t(`prop.${prize.id}`);
     } else if (prize.type === 'fragment' && prize.id) {
-      if (!drawSpriteContain(c, `weapon_${prize.id}`, tx + cw / 2 - sprSz / 2, ty + 6, sprSz, sprSz)) {
-        drawSpriteContain(c, 'ui_weapon_fragment', tx + cw / 2 - sprSz / 2, ty + 6, sprSz, sprSz);
+      if (!drawSpriteContain(c, `weapon_${prize.id}`, ix + 6, iy + 6, sprSz, sprSz)) {
+        drawSpriteContain(c, 'ui_weapon_fragment', ix + 6, iy + 6, sprSz, sprSz);
       }
-      const lbl = `${t(`fragment.${prize.id}`)} ×${prize.amount}`;
-      drawText(c, lbl.length > 11 ? `${lbl.slice(0, 11)}…` : lbl, tx + cw / 2, ty + ch - 14, compact ? 13.5 : 14.5, PALETTE.ink, 'center', 800);
+      label = t(`fragment.${prize.id}`);
     }
+
+    const textX = ix + iconBox + 12;
+    const textW = tx + cw - textX - 10;
+    const nameSize = compact ? 19.5 : 21.5;
+    const nameLH = compact ? 23 : 26;
+    drawWrappedText(c, label, textX, ty + (compact ? 14 : 20), textW, nameSize, nameLH, PALETTE.ink, 'left', 900, 2);
+
+    const pillH = compact ? 30 : 34;
+    const pillY = ty + ch - pillH - (compact ? 12 : 16);
+    round(c, textX, pillY, Math.min(textW, 108), pillH, pillH / 2, wonHere ? '#f5b832' : '#f3dfae', '#9c6216', 1.8);
+    drawText(c, `×${prize.amount}`, textX + Math.min(textW, 108) / 2, pillY + pillH / 2 + 1, compact ? 20 : 22, '#4a2106', 'center', 900);
   });
 
-  // Dual Pill Payment Buttons directly underneath 3×3 grid (EXACT `p18_preview_d12`!)
-  const payY = gridY + gridH + (compact ? 10 : 14);
-  const hasTicket = profile.freeLotteryTickets > 0;
-  const hasCoins = profile.coins >= META_PRICES.lottery;
-  const btnGap = 14;
-  const btnW = market.adGachaAvailable ? Math.floor((gridW - btnGap * 2) / 3) : Math.floor((gridW - btnGap) / 2);
-
-  drawPillButton(c, hits, 'market:spin:ticket', gridX, payY, btnW, 42, t('p11.meta.ticketSpin', { count: profile.freeLotteryTickets }), hasTicket ? 'cream' : 'muted', {
-    fontSize: 16,
-    icon: 'ui_ticket_gacha',
-    disabled: !hasTicket,
-  });
-  drawPillButton(c, hits, 'market:spin:coins', gridX + btnW + btnGap, payY, btnW, 42, t('p11.meta.coinSpin', { price: META_PRICES.lottery }), hasCoins ? 'cream' : 'muted', {
-    fontSize: 16,
-    icon: 'ui_coin_gold',
-    disabled: !hasCoins,
-  });
-  if (market.adGachaAvailable) {
-    drawPillButton(c, hits, 'market:ad-gacha', gridX + (btnW + btnGap) * 2, payY, btnW, 42, zh ? '🎬 看视频抽' : '🎬 Ad Spin', 'teal', { fontSize: 15 });
-  }
-
-  // Rule Footnote at bottom of gacha card
-  drawText(c, t('m2.lotteryRule'), gx + gw / 2, payY + 60, 14, PALETTE.inkSoft, 'center', 700);
   return {};
 }
 

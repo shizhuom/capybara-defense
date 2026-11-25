@@ -27,14 +27,14 @@ export const GUARDIAN_BATH_SPOTS:Record<MapId,GuardianBathSpot>={
     water:{x:.4,y:7.5,rx:39.35,ry:39.84},rim:{dx:1001,dy:313,dw:107,dh:86}},
 };
 
-/** Pixel-fitted guardian tub spots for the 10×4 hand-illustrated mobile wide-screen maps. */
+/** Pixel-fitted guardian tub spots for the 10×4 hand-illustrated mobile wide-screen maps (enlarged capybara!). */
 export const WIDE_GUARDIAN_BATH_SPOTS:Record<MapId,GuardianBathSpot>={
-  sunny_backyard:{x:1184.6,y:467.4,size:82,rippleRx:34,rippleRy:13,orangeBaseY:-40,
-    water:{x:.03,y:8,rx:43.09,ry:34.83},rim:{dx:1127,dy:457,dw:115,dh:80}},
-  sakura_onsen:{x:176.8,y:470.5,size:94,rippleRx:38,rippleRy:15,orangeBaseY:-46,
-    water:{x:0,y:8.01,rx:49.28,ry:40.96},rim:{dx:113,dy:459,dw:128,dh:87}},
-  midnight_kitchen:{x:1177.1,y:362.4,size:83,rippleRx:34,rippleRy:15,orangeBaseY:-41,
-    water:{x:-.01,y:8.02,rx:43.45,ry:42.45},rim:{dx:1119,dy:350,dw:116,dh:89}},
-  cat_tower_maze:{x:1184.8,y:363,size:80,rippleRx:33,rippleRy:15,orangeBaseY:-39,
-    water:{x:.02,y:8.02,rx:42.01,ry:41.3},rim:{dx:1128,dy:351,dw:113,dh:88}},
+  sunny_backyard:{x:1184.6,y:455.4,size:118,rippleRx:36,rippleRy:14,orangeBaseY:-51,
+    water:{x:.03,y:20,rx:43.09,ry:34.83},rim:{dx:1127,dy:457,dw:115,dh:80}},
+  sakura_onsen:{x:176.8,y:458.5,size:130,rippleRx:40,rippleRy:16,orangeBaseY:-56,
+    water:{x:0,y:20.01,rx:49.28,ry:40.96},rim:{dx:113,dy:459,dw:128,dh:87}},
+  midnight_kitchen:{x:1177.1,y:350.4,size:118,rippleRx:36,rippleRy:16,orangeBaseY:-51,
+    water:{x:-.01,y:20.02,rx:43.45,ry:42.45},rim:{dx:1119,dy:350,dw:116,dh:89}},
+  cat_tower_maze:{x:1184.8,y:351,size:114,rippleRx:35,rippleRy:16,orangeBaseY:-49,
+    water:{x:.02,y:20.02,rx:42.01,ry:41.3},rim:{dx:1128,dy:351,dw:113,dh:88}},
 };
