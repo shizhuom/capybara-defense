@@ -2,6 +2,8 @@ import { META_PRICES, PROPS } from '../../config/props';
 import { HERO_FAMILIES, RARITY_RULES, WEAPONS, type WeaponDefinition, type WeaponFamily } from '../../config/weapons';
 import type { Profile } from '../../core/types';
 import { getLanguage, t } from '../../i18n/i18n';
+import { localDay } from '../../core/VillageProgression';
+import { AD_DAILY_LIMITS, getAdRemainingToday } from '../adConfig';
 import { round } from '../../render/StickerArt';
 import type { DialogGuideStep } from '../../ui/OnboardingGuide';
 import {
@@ -766,10 +768,26 @@ export function drawMarketModal(
   });
   if (hasAd) {
     by += btnH + btnGap;
-    drawPillButton(c, hits, 'market:ad-gacha', lx, by, lw, btnH, zh ? '🎬 看视频免费抽' : '🎬 Free Ad Spin', spinning ? 'muted' : 'teal', {
-      fontSize: compact ? 19.5 : 21.5,
-      disabled: spinning,
-    });
+    const adRem = getAdRemainingToday(profile, 'free_gacha', localDay());
+    const adMax = AD_DAILY_LIMITS.free_gacha ?? 3;
+    const canAdSpin = !spinning && adRem > 0;
+    drawPillButton(
+      c,
+      hits,
+      'market:ad-gacha',
+      lx,
+      by,
+      lw,
+      btnH,
+      adRem > 0
+        ? (zh ? `🎬 免费转1次 (${adRem}/${adMax})` : `🎬 Free Spin (${adRem}/${adMax})`)
+        : (zh ? `🎬 今日已用完 (0/${adMax})` : `🎬 Daily Limit (0/${adMax})`),
+      canAdSpin ? 'teal' : 'muted',
+      {
+        fontSize: compact ? 19 : 21,
+        disabled: !canAdSpin,
+      },
+    );
   }
 
   // RIGHT COLUMN: GIANT 3×3 Rarity-Colored Prize Ring with Chase Spotlight Animation!

@@ -76,7 +76,8 @@ const copy = (profile:Profile):Profile => ({...profile,fragments:[...profile.fra
   endlessMedallions:normalizeMedallions(profile.endlessMedallions),
   onboardedFeatures:[...(profile.onboardedFeatures??[])],gachaWinCounter:profile.gachaWinCounter??0,
   ...(profile.stamina!==undefined?{stamina:profile.stamina}:{}),
-  ...(profile.staminaUpdatedAt!==undefined?{staminaUpdatedAt:profile.staminaUpdatedAt}:{})});
+  ...(profile.staminaUpdatedAt!==undefined?{staminaUpdatedAt:profile.staminaUpdatedAt}:{}),
+  ...(profile.adDaily?{adDaily:{day:profile.adDaily.day,counts:{...profile.adDaily.counts}}}:{})});
 const fail = (profile:Profile,key:string):MetaResult => ({profile:copy(profile),ok:false,key});
 const success = (profile:Profile,key:string,amount?:number):MetaResult => ({profile:unlockAchievements(profile),ok:true,key,...(amount===undefined?{}:{amount})});
 
@@ -186,6 +187,15 @@ export function normalizeProfile(raw:unknown):Profile {
   }
   if(has(data,'staminaUpdatedAt')&&typeof data.staminaUpdatedAt==='number'&&Number.isFinite(data.staminaUpdatedAt)&&data.staminaUpdatedAt>0){
     p.staminaUpdatedAt=Math.trunc(data.staminaUpdatedAt);
+  }
+  const adDaily=object(data.adDaily);
+  if(typeof adDaily.day==='string'&&/^\d{4}-\d{2}-\d{2}$/.test(adDaily.day)){
+    const rawCounts=object(adDaily.counts);
+    const counts:Record<string,number>={};
+    for(const [k,v] of Object.entries(rawCounts)){
+      if(/^[a-z0-9_]{1,32}$/.test(k)&&count(v)>0) counts[k]=Math.min(99,count(v));
+    }
+    p.adDaily={day:adDaily.day,counts};
   }
   return unlockAchievements(p);
 }

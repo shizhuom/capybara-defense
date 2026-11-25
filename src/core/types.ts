@@ -111,6 +111,8 @@ export interface Profile extends BattleLoadout {
   onboardedFeatures?:string[]; gachaWinCounter?:number;
   /** Mini-game stamina energy (starts at 30, costs 5 per battle, regens +1 every 5 min up to 30). */
   stamina?:number; staminaUpdatedAt?:number;
+  /** Daily rewarded-video ad usage counts (`YYYY-MM-DD` -> placement -> count used today). */
+  adDaily?:{day:string;counts:Record<string,number>};
 }
 export interface VillageState {
   wood:number; essence:number;

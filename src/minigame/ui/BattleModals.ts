@@ -4,7 +4,9 @@ import { STANDARD_VICTORY_CRESTS } from '../../config/medallions';
 import { RANKS, getRank } from '../../config/ranks';
 import { VILLAGE_RESOURCE_IDS, type VillageResourceId } from '../../config/village';
 import { WEAPONS } from '../../config/weapons';
-import { computeNextGoalHook, isFeatureUnlocked, type FeatureId, type NextGoalHook } from '../../core/FeatureUnlocks';
+import { computeNextGoalHook, isFeatureUnlocked, maxBattleSpeed, type FeatureId, type NextGoalHook } from '../../core/FeatureUnlocks';
+import { localDay } from '../../core/VillageProgression';
+import { AD_DAILY_LIMITS, getAdRemainingToday } from '../adConfig';
 import {
   STAMINA_COST_PER_BATTLE,
   STAMINA_REFILL_AMOUNT,
@@ -59,6 +61,7 @@ export type MinigameModalKind =
   | 'onboard'
   | 'battle-lesson'
   | 'stamina'
+  | 'speed3x-trial'
   | 'dev';
 
 export type { CompendiumTab };
@@ -94,6 +97,8 @@ export interface ModalDrawContext {
   devUnlocked: boolean;
   isTestSave: boolean;
   adStaminaAvailable?: boolean;
+  adSpeed3xAvailable?: boolean;
+  speed3xTrialActive?: boolean;
   elapsed: number;
   viewport: ViewportMetrics;
 }
@@ -122,7 +127,12 @@ export function drawActiveModal(
 
   switch (ctx.modal) {
     case 'pause':
-      if (ctx.state) drawPauseModal(c, hits, ctx.state);
+      if (ctx.state) {
+        drawPauseModal(c, hits, ctx.state, ctx.profile, {
+          adSpeed3xAvailable: Boolean(ctx.adSpeed3xAvailable),
+          speed3xTrialActive: Boolean(ctx.speed3xTrialActive),
+        });
+      }
       return {};
     case 'endless-offer':
       if (ctx.state) drawEndlessOfferModal(c, hits, ctx.state, ctx.settlement, ctx.elapsed);
@@ -182,6 +192,9 @@ export function drawActiveModal(
     case 'stamina':
       drawStaminaModal(c, hits, ctx.profile, Boolean(ctx.adStaminaAvailable));
       return {};
+    case 'speed3x-trial':
+      drawSpeed3xTrialModal(c, hits, ctx.profile);
+      return {};
     case 'onboard':
       if (ctx.onboardingFeature) drawOnboardingUnlockModal(c, hits, ctx.onboardingFeature);
       return {};
@@ -197,7 +210,13 @@ export function drawActiveModal(
  * - Stacked ivory cards: Map/Wave status strip + separate Fragments / Crests / Village Materials / Ingredients sections!
  * - Below the wood board: Full-width bright green pill `▶ 继续保卫澡盆`, followed by 3 equal pill buttons `[名片] [设置] [放弃本局]`!
  */
-function drawPauseModal(c: CanvasRenderingContext2D, hits: UiHitManager, state: BattleState): void {
+function drawPauseModal(
+  c: CanvasRenderingContext2D,
+  hits: UiHitManager,
+  state: BattleState,
+  profile: Profile,
+  opts?: { adSpeed3xAvailable?: boolean; speed3xTrialActive?: boolean },
+): void {
   const fragments = state.sides.player.loot;
   const crestsSoFar = (state.endless ? (state.standardResult?.endlessCrests ?? 0) : 0) + (state.sides.player.endlessCrests ?? 0);
   const villageLoot = state.sides.player.villageLoot ?? [];
@@ -279,7 +298,30 @@ function drawPauseModal(c: CanvasRenderingContext2D, hits: UiHitManager, state: 
 
   // GIANT Footer BELOW the wooden board (HUGE 28px/25px bold buttons!)
   const f1y = py + ph + 14;
-  drawPillButton(c, hits, 'modal:resume', px, f1y, pw, 64, `▶ ${t('p12.resume')}`, 'green', { fontSize: 28 });
+  const zh = getLanguage() === 'zh-CN';
+  const speed3xRem = getAdRemainingToday(profile, 'speed3x_trial', localDay());
+  const speed3xMax = AD_DAILY_LIMITS.speed3x_trial ?? 3;
+  const showSpeed3xBtn = maxBattleSpeed(profile) < 3 && !opts?.speed3xTrialActive && Boolean(opts?.adSpeed3xAvailable);
+  if (showSpeed3xBtn) {
+    const resumeW = Math.floor((pw - 14) * 0.54);
+    const adW = pw - 14 - resumeW;
+    drawPillButton(c, hits, 'modal:resume', px, f1y, resumeW, 64, `▶ ${t('p12.resume')}`, 'green', { fontSize: 26 });
+    const canAd = speed3xRem > 0;
+    drawPillButton(
+      c,
+      hits,
+      'battle:ad-speed3x',
+      px + resumeW + 14,
+      f1y,
+      adW,
+      64,
+      canAd ? (zh ? `🎬 本局3× (${speed3xRem}/${speed3xMax})` : `🎬 3× (${speed3xRem}/${speed3xMax})`) : (zh ? `🎬 3×已用完 (0/${speed3xMax})` : `🎬 3× (0/${speed3xMax})`),
+      canAd ? 'gold' : 'muted',
+      { fontSize: 22, disabled: !canAd },
+    );
+  } else {
+    drawPillButton(c, hits, 'modal:resume', px, f1y, pw, 64, `▶ ${t('p12.resume')}`, 'green', { fontSize: 28 });
+  }
 
   const f2y = f1y + 74;
   const subGap = 14;
@@ -398,6 +440,85 @@ function drawStaminaModal(
   drawPillButton(c, hits, 'modal:close', cx + (cw - 280) / 2, cy + 4, 280, 60, zh ? '返回庭院' : 'Back', 'cream', { fontSize: 26 });
 }
 
+/** Clean opt-in confirmation modal for watching a rewarded ad to unlock 3× speed for the current battle. */
+function drawSpeed3xTrialModal(
+  c: CanvasRenderingContext2D,
+  hits: UiHitManager,
+  profile: Profile,
+): void {
+  const zh = getLanguage() === 'zh-CN';
+  const rem = getAdRemainingToday(profile, 'speed3x_trial', localDay());
+  const max = AD_DAILY_LIMITS.speed3x_trial ?? 3;
+  const canAd = rem > 0;
+  const pw = 740, ph = 396;
+  const px = (1280 - pw) / 2;
+  const py = Math.round((720 - ph) / 2) + 14;
+
+  drawHinokiBoard(c, px, py, pw, ph, 28);
+  hits.add({ id: 'modal:card', x: px, y: py, w: pw, h: ph });
+  drawSpriteContain(c, 'ui_pause_peek_capy', px + 22, py - 84, 102, 102);
+  drawMatchaSignboard(c, 640, py - 44, zh ? '3× 极速试用' : '3× Speed Trial', undefined, 320);
+  drawYuzuCloseButton(c, hits, 'modal:resume', Math.min(1084, px + pw - 18), py - 12, 30);
+
+  const cx = px + 30, cw = pw - 60;
+  let cy = py + 44;
+  drawIvorySlab(c, cx, cy, cw, 186, 20);
+  drawText(
+    c,
+    zh ? '⚡ 本局免费开启 3× 极速战斗' : '⚡ Unlock 3× Speed For This Battle',
+    cx + cw / 2,
+    cy + 46,
+    30,
+    PALETTE.ink,
+    'center',
+    900,
+  );
+  drawWrappedText(
+    c,
+    zh
+      ? '观看完整激励视频后立即生效，本局可自由切换 1× / 2× / 3× 倍速。'
+      : 'Watch a full rewarded video to unlock 3× battle speed for this entire run.',
+    cx + 28,
+    cy + 78,
+    cw - 56,
+    21,
+    27,
+    PALETTE.inkSoft,
+    'center',
+    800,
+    2,
+  );
+  round(c, cx + 110, cy + 132, cw - 220, 42, 21, canAd ? '#e4f7dc' : '#eee3d0', canAd ? '#3d8633' : '#9c8a72', 2);
+  drawText(
+    c,
+    zh ? `今日剩余试用次数：${rem} / ${max}` : `Daily trials left: ${rem} / ${max}`,
+    cx + cw / 2,
+    cy + 154,
+    21,
+    canAd ? '#22591b' : PALETTE.inkSoft,
+    'center',
+    900,
+  );
+
+  cy += 206;
+  const gap = 16;
+  const cancelW = 210;
+  const adW = cw - cancelW - gap;
+  drawPillButton(c, hits, 'modal:resume', cx, cy, cancelW, 64, zh ? '暂不需要' : 'Later', 'cream', { fontSize: 24 });
+  drawPillButton(
+    c,
+    hits,
+    'battle:ad-speed3x',
+    cx + cancelW + gap,
+    cy,
+    adW,
+    64,
+    canAd ? (zh ? '🎬 看完整视频开启 3×' : '🎬 Watch Ad for 3×') : (zh ? '今日次数已用完' : 'Daily Limit Reached'),
+    canAd ? 'green' : 'muted',
+    { fontSize: 24, disabled: !canAd },
+  );
+}
+
 function drawEndlessOfferModal(
   c: CanvasRenderingContext2D,
   hits: UiHitManager,
@@ -478,17 +599,21 @@ function drawResultModal(
     ? (endless && state.standardResult ? (state.standardResult.endlessCrests ?? 0) + (result.endlessCrests ?? 0) : (result.endlessCrests ?? 0))
     : 0;
   const villageLoot = won
-    ? (endless && state.standardResult ? [...(state.standardResult.villageLoot ?? []), ...(result.villageLoot ?? [])] : (result.villageLoot ?? []))
+    ? (endless && state.standardResult ? [...(state.standardResult.villageLoot ?? []), ...(result.endlessVillageLoot ?? [])] : (result.villageLoot ?? []))
     : [];
   const ingredientLoot = won
-    ? (endless && state.standardResult ? [...(state.standardResult.ingredientLoot ?? []), ...(result.ingredientLoot ?? [])] : (result.ingredientLoot ?? []))
+    ? (endless && state.standardResult ? [...(state.standardResult.ingredientLoot ?? []), ...(result.endlessIngredientLoot ?? [])] : (result.ingredientLoot ?? []))
     : [];
   const guardianStars = endless ? 3 : won ? Math.min(3, Math.max(1, Math.floor(state.sides.player.oranges))) : 0;
 
+  const dbl = settlement.adDoubleClaimed ? 2 : 1;
+  const displayLoot = settlement.adDoubleClaimed ? [...loot, ...loot] : loot;
+  const displayIngredients = settlement.adDoubleClaimed ? [...ingredientLoot, ...ingredientLoot] : ingredientLoot;
+  const displayVillage = settlement.adDoubleClaimed ? [...villageLoot, ...villageLoot] : villageLoot;
   const allShelfChips: ShelfChip[] = [
-    { icon: 'ui_coin_gold', label: t('profile.coins'), count: `+${coins * (settlement.adDoubleClaimed ? 2 : 1)}` },
+    { icon: 'ui_coin_gold', label: t('profile.coins'), count: `+${coins * dbl}` },
     ...(won && settlement.ticketAwarded ? [{ icon: 'ui_ticket_gacha', label: t('p5.tickets'), count: '+1' }] : []),
-    ...collectShelfChips(loot, ingredientLoot, villageLoot, crests),
+    ...collectShelfChips(displayLoot, displayIngredients, displayVillage, crests * dbl),
   ];
 
   // ── VISUAL BATTLE REPORT DRAWER (`statsOpen === true`) ────────────────────
@@ -628,12 +753,12 @@ function drawResultModal(
 
   // Build ALL core reward categories (Coins, Ticket, Endless Crests, Weapon Frags, Village Wood/Essence, Kitchen Ingredients)
   const coreChips: Array<{ icon: string; val: string }> = [
-    { icon: 'ui_coin_gold', val: `+${coins * (settlement.adDoubleClaimed ? 2 : 1)}` },
+    { icon: 'ui_coin_gold', val: `+${coins * dbl}` },
     ...(won && settlement.ticketAwarded ? [{ icon: 'ui_ticket_gacha', val: '+1' }] : []),
-    ...(crests > 0 ? [{ icon: 'ui_endless_crest', val: `+${crests}` }] : []),
-    ...(loot.length > 0 ? [{ icon: 'ui_weapon_fragment', val: `+${loot.length}` }] : []),
-    ...(villageLoot.length > 0 ? [{ icon: 'ui_village_gate', val: `+${villageLoot.length}` }] : []),
-    ...(ingredientLoot.length > 0 ? [{ icon: 'ui_kitchen_pot', val: `+${ingredientLoot.length}` }] : []),
+    ...(crests > 0 ? [{ icon: 'ui_endless_crest', val: `+${crests * dbl}` }] : []),
+    ...(loot.length > 0 ? [{ icon: 'ui_weapon_fragment', val: `+${loot.length * dbl}` }] : []),
+    ...(villageLoot.length > 0 ? [{ icon: 'ui_village_gate', val: `+${villageLoot.length * dbl}` }] : []),
+    ...(ingredientLoot.length > 0 ? [{ icon: 'ui_kitchen_pot', val: `+${ingredientLoot.length * dbl}` }] : []),
   ];
   const twoRows = coreChips.length >= 5;
 
@@ -698,8 +823,40 @@ function drawResultModal(
     });
   }
 
-  if (won && coins > 0 && settlement.adDoubleCoinsAvailable && !settlement.adDoubleClaimed) {
-    drawPillButton(c, hits, 'result:ad-double', 908, rewY + 8, 210, 56, zh ? `🎬 双倍 (+${coins})` : `🎬 2× (+${coins})`, 'gold', { fontSize: 21 });
+  const hasDoubleableRewards = coins > 0 || loot.length > 0 || ingredientLoot.length > 0 || villageLoot.length > 0 || crests > 0;
+  if (won && hasDoubleableRewards && settlement.adDoubleCoinsAvailable) {
+    const doubleAdRem = getAdRemainingToday(profile, 'double_settlement', localDay());
+    const doubleAdMax = AD_DAILY_LIMITS.double_settlement ?? 3;
+    if (settlement.adDoubleClaimed) {
+      round(c, 892, rewY + 8, 276, 56, 28, '#dff5d6', '#3d8633', 2.4);
+      drawText(c, zh ? '✓ 已领取双倍全奖励' : '✓ 2× Loot Claimed', 892 + 138, rewY + 37, 21, '#22591b', 'center', 900);
+    } else if (doubleAdRem > 0) {
+      drawPillButton(
+        c,
+        hits,
+        'result:ad-double',
+        892,
+        rewY + 6,
+        292,
+        62,
+        zh ? `🎬 双倍全奖励 (${doubleAdRem}/${doubleAdMax})` : `🎬 2× All Loot (${doubleAdRem}/${doubleAdMax})`,
+        'gold',
+        { fontSize: 20.5 },
+      );
+    } else {
+      drawPillButton(
+        c,
+        hits,
+        'result:ad-double',
+        892,
+        rewY + 8,
+        286,
+        56,
+        zh ? `🎬 今日双倍已用完 (0/${doubleAdMax})` : `🎬 Daily Limit (0/${doubleAdMax})`,
+        'muted',
+        { fontSize: 18.5, disabled: true },
+      );
+    }
   }
 
   // 4. BIG Next-Goal Progress Pill right beneath the Winged Shield (`y = 496..572`)
@@ -727,7 +884,7 @@ function drawResultModal(
   if (won) {
     actions.push({ id: 'result:share', w: 176, label: zh ? '炫耀战绩' : 'Share', variant: 'gold', icon: 'ui_star_rank', fontSize: 24 });
   } else if (result.reason === 'oranges' && settlement.adReviveAvailable) {
-    actions.push({ id: 'result:ad-revive', w: 236, label: zh ? '🎬 看视频复活' : '🎬 Ad Revive', variant: 'gold', fontSize: 23 });
+    actions.push({ id: 'result:ad-revive', w: 280, label: zh ? '🎬 复活重打本波 (+3🍊)' : '🎬 Revive Wave (+3🍊)', variant: 'gold', fontSize: 21 });
   }
   actions.push({ id: 'modal:again', w: 246, label: t(won ? 'p15.continue' : 'p15.again'), variant: 'green', icon: 'ui_horn_continue', fontSize: 26 });
 

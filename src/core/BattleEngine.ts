@@ -89,6 +89,39 @@ export class BattleEngine {
     this.beginWave(11,false);
     return{ok:true,key:'hint.wave'};
   }
+  /** Rewarded-ad revive after an oranges defeat: restores 3 oranges and cleanly restarts the current wave (no extra wave income). */
+  reviveCurrentWave(oranges=3):CommandResult {
+    const s=this.state,result=s.result;
+    if(s.phase!=='finished'||s.endless||!result||result.winner==='player'||result.reason!=='oranges')return{ok:false,key:'hint.invalid'};
+    this.restoreClippedUnits();
+    s.enemies=[];
+    this.pendingBosses=[];
+    this.announcedElites.clear();
+    s.sides.player.fog=0;
+    for(const unit of s.units){
+      if(unit.side!=='player')continue;
+      delete unit.statuses.SEALED;
+      delete unit.statuses.KNOCKDOWN;
+      delete unit.statuses.CONFUSED;
+      delete unit.statuses.WET;
+      delete unit.statuses.MERGE_LOCK;
+    }
+    s.result=null;
+    s.phase='playing';
+    s.sides.player.oranges=Math.max(1,Math.trunc(oranges));
+    const wave=Math.max(1,s.wave);
+    s.wave=wave;
+    s.waveTime=0;
+    s.spawned=0;
+    s.nextSpawn=wave===1?FIRST_WAVE_PREPARATION:1;
+    this.tutorialHold=false;
+    this.transitionHold=false;
+    this.event({type:'bubble',side:'player',col:3.5,row:4.5,textKey:'hint.wave',value:wave,duration:1.8});
+    const bosses=this.bossesForCurrentSchedule(wave);
+    this.pendingBosses=bosses.slice(1).map((kind,index)=>({kind,at:5*(index+1)}));
+    if(bosses[0])this.spawnBoss(bosses[0]);
+    return{ok:true,key:'hint.wave',value:wave};
+  }
   tick(dt:number):void {
     if(!Number.isFinite(dt)||dt<=0||this.state.phase!=='playing')return;
     if(this.state.sides.player.oranges<=0){this.finish('ai','oranges');return;}

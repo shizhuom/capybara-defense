@@ -3,7 +3,7 @@ import type { Profile } from './types';
 export const STAMINA_MAX = 30;
 export const STAMINA_COST_PER_BATTLE = 5;
 export const STAMINA_REGEN_SECONDS = 300; // +1 stamina every 5 minutes
-export const STAMINA_REFILL_AMOUNT = 15;
+export const STAMINA_REFILL_AMOUNT = 10;
 export const STAMINA_REFILL_COIN_COST = 60;
 export const STAMINA_HARD_CAP = 99;
 

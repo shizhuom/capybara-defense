@@ -5,6 +5,8 @@ import { PROPS } from '../../config/props';
 import { getSummonCost } from '../../config/units';
 import type { BattleEngine } from '../../core/BattleEngine';
 import { isFeatureUnlocked, maxBattleSpeed } from '../../core/FeatureUnlocks';
+import { localDay } from '../../core/VillageProgression';
+import { getAdRemainingToday } from '../adConfig';
 import { getHeroMergeOptions } from '../../core/MergeTargets';
 import type { TutorialStep } from '../../core/Tutorial';
 import type { BattleState, Profile, StageRect } from '../../core/types';
@@ -40,6 +42,10 @@ export interface BattleOverlayContext {
   viewport: ViewportMetrics;
   /** Brief opening battle curtain reveal countdown (0 = hidden). */
   curtainRemaining: number;
+  /** Whether a rewarded-ad 3× speed trial is active for the current battle. */
+  speed3xTrialActive?: boolean;
+  /** Whether the 3× speed trial rewarded ad placement is configured. */
+  adSpeed3xAvailable?: boolean;
 }
 
 export interface BattleOverlayResult {
@@ -125,7 +131,8 @@ export function drawBattleOverlay(
   const shopW = compactRight ? 116 : 132;
   const guideW = compactRight ? 116 : 132;
   const ctrlH = 66;
-  const maxSpd = maxBattleSpeed(profile);
+  const permMaxSpd = maxBattleSpeed(profile);
+  const maxSpd = ctx.speed3xTrialActive ? 3 : permMaxSpd;
   const showSpeed = maxSpd > 1 || (profile.matches ?? 0) >= 1;
   const showShop = isFeatureUnlocked(profile, 'market') || isFeatureUnlocked(profile, 'armory');
 
@@ -193,6 +200,21 @@ export function drawBattleOverlay(
       ...(speed > 1 ? BTN_STYLES.gold : BTN_STYLES.cream),
       radius: 18,
       fontSize: maxSpd <= 1 ? 20 : 28,
+    });
+  }
+  const canOffer3xTrial = permMaxSpd < 3
+    && !ctx.speed3xTrialActive
+    && Boolean(ctx.adSpeed3xAvailable)
+    && tutorialStep === 'done'
+    && getAdRemainingToday(profile, 'speed3x_trial', localDay()) > 0;
+  if (canOffer3xTrial) {
+    const trialW = 132;
+    const trialH = 38;
+    const trialX = Math.min(pauseX + pauseW - trialW, Math.max(guideX, speedX - 18));
+    drawButton(c, hits, 'battle:speed3x-trial', trialX, waveY + ctrlH + 6, trialW, trialH, zh ? '🎬 3×试用' : '🎬 3× Trial', {
+      ...BTN_STYLES.gold,
+      radius: 14,
+      fontSize: 18,
     });
   }
   drawButton(c, hits, 'battle:pause', pauseX, waveY, pauseW, ctrlH, '⏸', {

@@ -39,6 +39,7 @@ import {
 } from '../../core/VillageProgression';
 import type { Profile } from '../../core/types';
 import { getLanguage, t } from '../../i18n/i18n';
+import { AD_DAILY_LIMITS, getAdRemainingToday } from '../adConfig';
 import { assets } from '../../render/AssetRegistry';
 import { round } from '../../render/StickerArt';
 import { brothEffectText, kitchenAuraText } from '../../ui/KitchenScreen';
@@ -75,6 +76,7 @@ export interface KitchenUiState {
   tab: 'broths' | 'pantry';
   detailBrothId: BrothId | null;
   lastBasketGained: IngredientId[];
+  adFreeBasketAvailable?: boolean;
 }
 
 const RESIDENT_OFFSETS: Record<FacilityId, readonly [number, number][]> = {
@@ -329,7 +331,21 @@ export function drawVillageModal(
     if (showAdDouble) {
       const adX = claimX + claimW + 10;
       const adW = rx + rw - 16 - adX;
-      drawPillButton(c, hits, 'village:ad-harvest', adX, btnY, adW, btnH, zh ? '🎬 双倍' : '🎬 2×', 'green', { fontSize: compact ? 20 : 21.5 });
+      const adRem = getAdRemainingToday(profile, 'double_harvest', localDay());
+      const adMax = AD_DAILY_LIMITS.double_harvest ?? 1;
+      const canAd = adRem > 0;
+      drawPillButton(
+        c,
+        hits,
+        'village:ad-harvest',
+        adX,
+        btnY,
+        adW,
+        btnH,
+        canAd ? (zh ? `🎬 双倍(${adRem}/${adMax})` : `🎬 2×(${adRem}/${adMax})`) : (zh ? `已用(0/${adMax})` : `0/${adMax}`),
+        canAd ? 'green' : 'muted',
+        { fontSize: compact ? 18.5 : 20, disabled: !canAd },
+      );
     }
     return {};
   }
@@ -500,6 +516,9 @@ export function drawKitchenModal(
 
       const buyY = y + cardH - 68;
       const afford = profile.coins >= INGREDIENT_BASKET_PRICE;
+      const zh = getLanguage() === 'zh-CN';
+      const showAdBasket = Boolean(kitchen.adFreeBasketAvailable);
+      const buyW = showAdBasket ? 364 : 436;
       if (buyY + 56 > vy && buyY < vy + vh) {
         drawPillButton(
           c,
@@ -507,14 +526,42 @@ export function drawKitchenModal(
           'kitchen:basket',
           vx + 18,
           buyY,
-          436,
+          buyW,
           56,
           t('p14.basketBuy', { price: INGREDIENT_BASKET_PRICE, count: INGREDIENT_BASKET_SIZE }).replace(/^🪙\s*/, ''),
           afford ? 'gold' : 'muted',
-          { fontSize: 21, icon: 'ui_coin_gold', disabled: !afford },
+          { fontSize: showAdBasket ? 19.5 : 21, icon: 'ui_coin_gold', disabled: !afford },
         );
+        if (showAdBasket) {
+          const adRem = getAdRemainingToday(profile, 'free_basket', localDay());
+          const adMax = AD_DAILY_LIMITS.free_basket ?? 2;
+          const canAd = adRem > 0;
+          drawPillButton(
+            c,
+            hits,
+            'kitchen:ad-basket',
+            vx + 18 + buyW + 14,
+            buyY,
+            278,
+            56,
+            canAd
+              ? (zh ? `🎬 免费领1篮 (${adRem}/${adMax})` : `🎬 Free Basket (${adRem}/${adMax})`)
+              : (zh ? `🎬 今日已领完 (0/${adMax})` : `🎬 Limit (0/${adMax})`),
+            canAd ? 'green' : 'muted',
+            { fontSize: 19.5, disabled: !canAd },
+          );
+        }
       }
-      drawIconLabel(c, 'ui_coin_gold', t('p14.coins', { coins: profile.coins }), vx + 474, buyY + 28, 28, 22, PALETTE.inkSoft);
+      drawIconLabel(
+        c,
+        'ui_coin_gold',
+        t('p14.coins', { coins: profile.coins }),
+        showAdBasket ? vx + 18 + buyW + 308 : vx + 474,
+        buyY + 28,
+        28,
+        22,
+        PALETTE.inkSoft,
+      );
     }
     y += cardH + 10;
 

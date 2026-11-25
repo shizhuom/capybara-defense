@@ -1,12 +1,12 @@
 import { BattleEngine } from '../core/BattleEngine';
 import { HEROES } from '../config/heroes';
-import { BROTH_IDS, type BrothId } from '../config/kitchen';
+import { BROTH_IDS, INGREDIENT_BASKET_PRICE, type BrothId } from '../config/kitchen';
 import { PROPS } from '../config/props';
 import { getRank } from '../config/ranks';
 import { getMap, setMobileWideStage, STAGE } from '../config/maps';
 import { ECONOMY } from '../config/units';
 import { isFacilityId } from '../config/village';
-import { WEAPONS } from '../config/weapons';
+import { WEAPONS, rollWeapon } from '../config/weapons';
 import {
   buildDebugStageProfile,
   claimFeatureStarterGift,
@@ -21,6 +21,7 @@ import {
   brewBroth,
   buyIngredientBasket,
   equipBroth,
+  grantIngredients,
   upgradeBroth,
 } from '../core/KitchenProgression';
 import { upgradeMedallion } from '../core/MedallionProgression';
@@ -31,6 +32,7 @@ import {
   ensureDailyShop,
   equipProp,
   equipWeapon,
+  grantWeaponFragments,
   recycleFragments,
   refreshShop,
   spinLottery,
@@ -58,7 +60,10 @@ import { advanceTutorial, finishTutorial, replayTutorial, type TutorialStep } fr
 import {
   buildFacility,
   claimOfflineHarvest,
+  computeOfflineHarvest,
   getVillageResidents,
+  grantVillageResources,
+  hasHarvest,
   localDay,
   petVillageResident,
   settleVillageClock,
@@ -92,8 +97,10 @@ import type { PlatformAdapter, TouchEventData, ViewportMetrics } from '../platfo
 import {
   MINIGAME_LEADERBOARD_URL,
   buildSharePayload,
+  canUseAdToday,
   getAdUnitId,
   isAdPlacementAvailable,
+  recordAdUse,
   type AdPlacement,
 } from './adConfig';
 import { MinigameAssetManager } from './MinigameAssetManager';
@@ -192,6 +199,9 @@ export class MinigameApp {
   private expandedPassiveId?: string;
   private tutorialStep: TutorialStep = 'done';
   private reviveUsedThisBattle = false;
+  private speed3xTrialThisBattle = false;
+  private preDefeatProfile: Profile | null = null;
+  private adInFlight = false;
   private curtainRemaining = 0;
   private drag?: DragState;
   private toast: ToastMessage | null = null;
@@ -251,6 +261,7 @@ export class MinigameApp {
       interacted: false,
       adDoubleHarvestAvailable: isAdPlacementAvailable(platform.kind, 'double_harvest'),
     };
+    this.kitchenUi.adFreeBasketAvailable = isAdPlacementAvailable(platform.kind, 'free_basket');
     this.leaderboardUi = {
       endlessSnap: this.leaderboardClient.snapshot(),
       rankSnap: this.leaderboardClient.rankSnapshot(),
@@ -527,22 +538,46 @@ export class MinigameApp {
   }
 
   private async runRewardedAd(placement: AdPlacement, onReward: () => void): Promise<void> {
-    const unitId = getAdUnitId(this.platform.kind, placement);
-    const outcome = await this.platform.showRewardedAd(unitId);
-    if (outcome === 'completed') {
-      onReward();
-    } else if (outcome === 'skipped') {
+    if (this.adInFlight) return;
+    const day = localDay();
+    if (!canUseAdToday(this.profile, placement, day)) {
       this.showToast(
-        getLanguage() === 'zh-CN' ? '需看完完整视频才能领取奖励哦' : 'Watch the full video to claim the reward!',
+        getLanguage() === 'zh-CN' ? '今日该奖励次数已用完，明天再来吧' : 'Daily limit reached — come back tomorrow!',
         'warn',
-        2.2,
+        2.0,
       );
-    } else {
-      this.showToast(
-        getLanguage() === 'zh-CN' ? '广告暂时不可用，请稍后再试' : 'Ad unavailable right now — try again later.',
-        'warn',
-        2.2,
-      );
+      return;
+    }
+    this.adInFlight = true;
+    const pausedForAd = this.engine?.state.phase === 'playing';
+    if (pausedForAd) this.engine?.pause(true);
+    try {
+      const unitId = getAdUnitId(this.platform.kind, placement);
+      const outcome = await this.platform.showRewardedAd(unitId);
+      // STRICT completion check: ONLY grant reward when full video finished (`outcome === 'completed'`).
+      // Closing early (`skipped`) or error (`unavailable`) NEVER grants any bonus or consumes daily quota!
+      if (outcome === 'completed') {
+        if (canUseAdToday(this.profile, placement, localDay())) {
+          onReward();
+        }
+      } else if (outcome === 'skipped') {
+        this.showToast(
+          getLanguage() === 'zh-CN' ? '需看完完整视频才能领取奖励哦' : 'Watch the full video to claim the reward!',
+          'warn',
+          2.2,
+        );
+      } else {
+        this.showToast(
+          getLanguage() === 'zh-CN' ? '广告暂时不可用，请稍后再试' : 'Ad unavailable right now — try again later.',
+          'warn',
+          2.2,
+        );
+      }
+    } finally {
+      this.adInFlight = false;
+      if (pausedForAd && this.engine?.state.phase === 'paused' && !this.modal) {
+        this.engine.pause(false);
+      }
     }
   }
 
@@ -611,6 +646,11 @@ export class MinigameApp {
     }
 
     if (!this.profile.awardedBattles.includes(state.id)) {
+      const canReviveDefeat = result.winner !== 'player'
+        && result.reason === 'oranges'
+        && !this.reviveUsedThisBattle
+        && isAdPlacementAvailable(this.platform.kind, 'revive');
+      this.preDefeatProfile = canReviveDefeat ? (JSON.parse(JSON.stringify(this.profile)) as Profile) : null;
       const prevStars = this.profile.stars;
       const prevRank = getRank(prevStars).index;
       const prevAvatars = this.profile.unlockedAvatars;
@@ -629,7 +669,7 @@ export class MinigameApp {
           statsOpen: false,
           adDoubleCoinsAvailable: result.winner === 'player' && isAdPlacementAvailable(this.platform.kind, 'double_settlement'),
           adDoubleClaimed: false,
-          adReviveAvailable: result.winner !== 'player' && result.reason === 'oranges' && !this.reviveUsedThisBattle && isAdPlacementAvailable(this.platform.kind, 'revive'),
+          adReviveAvailable: canReviveDefeat,
         };
         this.platform.audio.play(result.winner === 'player' ? 'victory' : 'defeat');
         void this.leaderboardClient.submitRank(this.profile, getLanguage());
@@ -702,6 +742,8 @@ export class MinigameApp {
           topRightEdge: topRight,
           viewport: vp,
           curtainRemaining: this.curtainRemaining,
+          speed3xTrialActive: this.speed3xTrialThisBattle,
+          adSpeed3xAvailable: isAdPlacementAvailable(this.platform.kind, 'speed3x_trial'),
         });
       }
     }
@@ -728,6 +770,8 @@ export class MinigameApp {
         devUnlocked: this.devUnlocked,
         isTestSave: isTestProfile(this.platform.storage),
         adStaminaAvailable: isAdPlacementAvailable(this.platform.kind, 'stamina_refill'),
+        adSpeed3xAvailable: isAdPlacementAvailable(this.platform.kind, 'speed3x_trial'),
+        speed3xTrialActive: this.speed3xTrialThisBattle,
         elapsed: this.elapsedSec,
         viewport: vp,
       });
@@ -811,6 +855,8 @@ export class MinigameApp {
     this.modal = null;
     this.modalReturnTo = null;
     this.reviveUsedThisBattle = false;
+    this.speed3xTrialThisBattle = false;
+    this.preDefeatProfile = null;
     this.curtainRemaining = guided ? 0 : 0.85;
     this.selectedId = undefined;
     this.shovelSelected = false;
@@ -1400,15 +1446,16 @@ export class MinigameApp {
     if (id === 'market:ad-gacha') {
       if (this.market.spinAnim) return;
       void this.runRewardedAd('free_gacha', () => {
+        const day = localDay();
         this.syncDailyLottery();
         if (this.market.pendingRefreshAt !== null) {
           this.market.prizes = [...this.profile.lottery!.prizes];
           this.market.pendingRefreshAt = null;
         }
         const temp = { ...this.profile, freeLotteryTickets: this.profile.freeLotteryTickets + 1 };
-        const res = spinLottery(temp, this.market.prizes, Math.random, 'ticket', localDay());
+        const res = spinLottery(temp, this.market.prizes, Math.random, 'ticket', day);
         if (res.ok && res.prize) {
-          this.profile = res.profile;
+          this.profile = recordAdUse(res.profile, 'free_gacha', day);
           this.save();
           const label = this.formatPrizeLabel(res.prize);
           this.startGachaSpin(res.index ?? 0, label, `🎬 🎉 ${label}`);
@@ -1481,14 +1528,37 @@ export class MinigameApp {
       return;
     }
     if (id === 'village:ad-harvest') {
+      if (!hasHarvest(computeOfflineHarvest(this.profile, Date.now()))) return;
       void this.runRewardedAd('double_harvest', () => {
-        const res = claimOfflineHarvest(this.profile, Date.now(), Math.random);
+        const now = Date.now();
+        const day = localDay();
+        const res = claimOfflineHarvest(this.profile, now, Math.random);
         if (res.ok) {
-          this.profile = { ...res.profile, coins: res.profile.coins + res.harvest.coins };
+          let next = {
+            ...res.profile,
+            coins: res.profile.coins + res.harvest.coins,
+            freeLotteryTickets: res.profile.freeLotteryTickets + res.harvest.tickets,
+          };
+          if (res.harvest.yuzu > 0) {
+            next = grantIngredients(next, Array.from({ length: res.harvest.yuzu }, () => 'ing_yuzu'));
+          }
+          if (res.harvest.fragments > 0) {
+            const extraFrags = grantWeaponFragments(
+              next,
+              Array.from({ length: res.harvest.fragments }, () => rollWeapon(Math.random, undefined, 1, next.unlockedWeapons)),
+            );
+            next = { ...extraFrags.profile, village: next.village };
+          }
+          this.profile = recordAdUse(next, 'double_harvest', day);
           this.save();
           this.villageUi.interacted = true;
           this.platform.audio.play('gacha_win');
-          this.showToast(zh ? `🎬 双倍收菜成功！🪙+${res.harvest.coins * 2}` : `🎬 2× Harvest! 🪙+${res.harvest.coins * 2}`, 'good', 2.4);
+          const parts: string[] = [];
+          if (res.harvest.coins > 0) parts.push(`🪙+${res.harvest.coins * 2}`);
+          if (res.harvest.yuzu > 0) parts.push(`🍊+${res.harvest.yuzu * 2}`);
+          if (res.harvest.fragments > 0) parts.push(`🗡️+${res.harvest.fragments * 2}`);
+          if (res.harvest.tickets > 0) parts.push(`🎟️+${res.harvest.tickets * 2}`);
+          this.showToast(zh ? `🎬 双倍领取成功！${parts.join(' ')}` : `🎬 2× Harvest! ${parts.join(' ')}`, 'good', 2.6);
         }
       });
       return;
@@ -1555,6 +1625,22 @@ export class MinigameApp {
       } else {
         this.showToast(t(res.key), 'warn', 1.8);
       }
+      return;
+    }
+    if (id === 'kitchen:ad-basket') {
+      void this.runRewardedAd('free_basket', () => {
+        const day = localDay();
+        const temp = { ...this.profile, coins: this.profile.coins + INGREDIENT_BASKET_PRICE };
+        const res = buyIngredientBasket(temp, Math.random);
+        if (res.ok && res.gained) {
+          this.profile = recordAdUse(res.profile, 'free_basket', day);
+          this.save();
+          this.kitchenUi.lastBasketGained = [...res.gained];
+          this.platform.audio.play('gacha_win');
+          const names = res.gained.map(g => t(`ingredient.${g}`)).join('、');
+          this.showToast(zh ? `🎬 免费食材篮：${names}` : `🎬 Free Basket: ${names}`, 'good', 2.6);
+        }
+      });
       return;
     }
     if (id.startsWith('kitchen:brew:')) {
@@ -1658,13 +1744,32 @@ export class MinigameApp {
 
     // ── Battle HUD Actions ──────────────────────────────────────────────────
     if (id === 'battle:speed') {
-      const maxSpd = maxBattleSpeed(this.profile);
+      const maxSpd = this.speed3xTrialThisBattle ? 3 : maxBattleSpeed(this.profile);
       if (maxSpd <= 1) {
         const need = Math.max(1, 2 - Math.max(this.profile.stars, this.profile.highestStars));
         this.showToast(t('p19.lockedToast', { name: t('p19.feature.speed2x'), stars: 2, need }), 'warn', 2.2);
       } else {
         this.speed = nextBattleSpeed(this.speed, maxSpd);
       }
+      return;
+    }
+    if (id === 'battle:speed3x-trial') {
+      if (this.speed3xTrialThisBattle || maxBattleSpeed(this.profile) >= 3) return;
+      if (this.engine?.state.phase === 'playing') this.engine.pause(true);
+      this.openModal('speed3x-trial');
+      return;
+    }
+    if (id === 'battle:ad-speed3x') {
+      if (this.speed3xTrialThisBattle || maxBattleSpeed(this.profile) >= 3) return;
+      void this.runRewardedAd('speed3x_trial', () => {
+        this.profile = recordAdUse(this.profile, 'speed3x_trial', localDay());
+        this.save();
+        this.speed3xTrialThisBattle = true;
+        this.speed = 3;
+        this.resumeBattle();
+        this.platform.audio.play('gacha_win');
+        this.showToast(zh ? '🎬 3× 极速已开启（本局生效）！' : '🎬 3× Speed unlocked for this battle!', 'good', 2.4);
+      });
       return;
     }
     if (id === 'battle:guide') {
@@ -1760,29 +1865,70 @@ export class MinigameApp {
     if (id === 'result:ad-double' && this.engine?.state.result && !this.settlement.adDoubleClaimed) {
       const st = this.engine.state;
       const r = st.result!;
-      const bonus = r.endless && st.standardResult ? st.standardResult.coins + (r.endlessCoins ?? 0) : r.coins;
+      const bonusCoins = r.endless && st.standardResult ? st.standardResult.coins + (r.endlessCoins ?? 0) : r.coins;
+      const bonusLoot = r.endless && st.standardResult ? [...st.standardResult.loot, ...(r.endlessLoot ?? [])] : [...r.loot];
+      const bonusIngredients = r.endless && st.standardResult
+        ? [...(st.standardResult.ingredientLoot ?? []), ...(r.endlessIngredientLoot ?? [])]
+        : [...(r.ingredientLoot ?? [])];
+      const bonusVillage = r.endless && st.standardResult
+        ? [...(st.standardResult.villageLoot ?? []), ...(r.endlessVillageLoot ?? [])]
+        : [...(r.villageLoot ?? [])];
+      const bonusCrests = r.endless && st.standardResult
+        ? (st.standardResult.endlessCrests ?? 0) + (r.endlessCrests ?? 0)
+        : (r.endlessCrests ?? 0);
       void this.runRewardedAd('double_settlement', () => {
         if (this.settlement.adDoubleClaimed) return;
         this.settlement.adDoubleClaimed = true;
-        this.profile = { ...this.profile, coins: this.profile.coins + bonus };
+        const day = localDay();
+        let next = this.profile;
+        if (bonusLoot.length > 0) {
+          const granted = grantWeaponFragments(next, bonusLoot);
+          next = granted.profile;
+          if (granted.newWeapons.length > 0) {
+            this.settlement.newWeapons = [...new Set([...this.settlement.newWeapons, ...granted.newWeapons])];
+          }
+        }
+        if (bonusIngredients.length > 0) {
+          next = grantIngredients(next, bonusIngredients);
+        }
+        if (bonusVillage.length > 0) {
+          next = grantVillageResources(next, bonusVillage);
+        }
+        next = {
+          ...next,
+          coins: next.coins + bonusCoins,
+          endlessCrests: (next.endlessCrests ?? 0) + bonusCrests,
+        };
+        this.profile = recordAdUse(next, 'double_settlement', day);
         this.save();
         this.platform.audio.play('gacha_win');
-        this.showToast(zh ? `🎬 双倍领奖成功！额外 +${bonus} 金币` : `🎬 2× Bonus! +${bonus} coins`, 'good', 2.4);
+        this.showToast(
+          zh ? '🎬 双倍全奖励领取成功！金币/食材/材料/碎片/纹章全部 ×2！' : '🎬 2× All Rewards claimed!',
+          'good',
+          2.6,
+        );
       });
       return;
     }
     if (id === 'result:ad-revive' && this.engine && !this.reviveUsedThisBattle) {
       void this.runRewardedAd('revive', () => {
         if (!this.engine || this.reviveUsedThisBattle) return;
+        const revived = this.engine.reviveCurrentWave(3);
+        if (!revived.ok) return;
         this.reviveUsedThisBattle = true;
-        const st = this.engine.state;
-        st.result = null;
-        st.phase = 'playing';
-        st.sides.player.oranges = 2;
-        for (const en of st.enemies) this.engine.knockback(en, 3.5);
+        if (this.preDefeatProfile) {
+          this.profile = this.preDefeatProfile;
+          this.preDefeatProfile = null;
+          this.save();
+        }
         this.modal = null;
+        this.modalReturnTo = null;
         this.platform.audio.play('sprinkler');
-        this.showToast(zh ? '🎬 紧急复活成功！+2 橘子并全路击退！' : '🎬 Revived! +2 Oranges & lane knockback!', 'good', 2.6);
+        this.showToast(
+          zh ? `🎬 复活成功！恢复 3 颗橘子，重新开始第 ${revived.value ?? this.engine.state.wave} 波！` : `🎬 Revived! +3 Oranges — Wave ${revived.value ?? this.engine.state.wave} restarted!`,
+          'good',
+          2.6,
+        );
       });
       return;
     }
@@ -1987,6 +2133,10 @@ export class MinigameApp {
     this.modal = null;
     this.modalReturnTo = null;
     this.engine = null;
+    this.speed3xTrialThisBattle = false;
+    this.preDefeatProfile = null;
+    const maxSpd = maxBattleSpeed(this.profile);
+    if (this.speed > maxSpd) this.speed = maxSpd;
     this.selectedId = undefined;
     this.shovelSelected = false;
     this.activePropId = undefined;
