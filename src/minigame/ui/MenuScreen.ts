@@ -14,7 +14,6 @@ import { getMapUnlockRequirement, getUnlockedMaps } from '../../core/PlayerProgr
 import { villageBadge, villageStars } from '../../core/VillageProgression';
 import {
   STAMINA_COST_PER_BATTLE,
-  formatStaminaCountdown,
   getStaminaStatus,
 } from '../../core/Stamina';
 import { formatCompactNumber } from '../../core/formatNumber';
@@ -155,10 +154,9 @@ export function drawMenuScreen(
     drawText(c, t('app.title'), 640, 128 + bob, 76, '#fff7dc', 'center', 900, INK, 10);
   }
 
-  // ── 3B. GIANT STAMINA BAR (体力栏: 初始 30，每局消耗 5，每 5 分钟自然恢复 1) ─
-  // Drawn cleanly on top & sized to stay strictly LEFT of the giant title logo!
+  // ── 3B. CLEAN STAMINA PILL (⚡ xx/30 + — no progress bar!) ────────────────
   const stamina = getStaminaStatus(profile, Date.now());
-  drawStaminaBar(c, hits, leftAnchor, hasRank ? 112 : 16, stamina, zh, widePhone);
+  drawStaminaBar(c, hits, leftAnchor, hasRank ? 112 : 16, stamina);
 
   // ── 4. GIANT ILLUSTRATED START BUTTON (+37% LARGER!) ─────────────────────
   const startW = 456;
@@ -180,16 +178,6 @@ export function drawMenuScreen(
     drawText(c, t('menu.start'), 0, 2, 42, PALETTE.ink, 'center', 900);
   }
   c.restore();
-
-  // Crisp Stamina Cost Badge (`⚡ -5`) snugly hugging bottom-right corner of Start Button
-  const enoughStamina = stamina.current >= STAMINA_COST_PER_BATTLE;
-  const costW = 90, costH = 38;
-  const costX = startX + startW - costW - 22;
-  const costY = startY + startH - costH - 12 + (pressedStart ? 3 : 0);
-  round(c, costX, costY + 3, costW, costH, 19, 'rgba(46,24,8,0.42)', 'transparent', 0);
-  round(c, costX, costY, costW, costH, 19, enoughStamina ? '#fff5cf' : '#f4cbc4', enoughStamina ? '#7a4510' : '#8f2c1f', 2.8);
-  drawVectorLightning(c, costX + 22, costY + costH / 2, 1.0, enoughStamina ? '#f2a318' : '#c74332');
-  drawText(c, `-${STAMINA_COST_PER_BATTLE}`, costX + 58, costY + costH / 2 + 1, 23, enoughStamina ? '#5a2d0a' : '#8f2418', 'center', 900);
 
   // ── 5. ENLARGED BOTTOM-CENTER MAP SIGNPOST BAR ───────────────────────────
   if (hasRank) {
@@ -549,48 +537,28 @@ function drawStaminaBar(
   x: number,
   y: number,
   stamina: ReturnType<typeof getStaminaStatus>,
-  zh: boolean,
-  widePhone: boolean,
 ): void {
-  const w = widePhone ? 280 : 254;
-  const h = 66;
+  const w = 236;
+  const h = 60;
   const pressed = hits.isPressed('menu:stamina');
   const dy = pressed ? 2 : 0;
   hits.add({ id: 'menu:stamina', x, y, w, h });
 
   if (!pressed) {
-    round(c, x, y + 4, w, h, 33, 'rgba(46,26,10,0.36)', 'transparent', 0);
+    round(c, x, y + 4, w, h, 30, 'rgba(46,26,10,0.36)', 'transparent', 0);
   }
-  round(c, x, y + dy, w, h, 33, 'rgba(255,248,232,0.96)', '#5c3b1e', 3.2);
+  round(c, x, y + dy, w, h, 30, 'rgba(255,248,232,0.96)', '#5c3b1e', 3.2);
 
   // Warm golden lightning seal on the left
-  round(c, x + 7, y + dy + 7, 52, 52, 26, '#ffe594', '#5c3b1e', 2.6);
-  drawVectorLightning(c, x + 33, y + dy + 33, 1.28, '#eb8a12');
+  round(c, x + 6, y + dy + 6, 48, 48, 24, '#ffe594', '#5c3b1e', 2.6);
+  drawVectorLightning(c, x + 30, y + dy + 30, 1.25, '#eb8a12');
 
-  // Center text + progress gauge
-  const barX = x + 66;
-  const barW = w - 122;
-  const frac = Math.max(0, Math.min(1, stamina.current / stamina.max));
+  // Crisp bold `xx/30` centered cleanly between lightning icon and `+`
   const low = stamina.current < STAMINA_COST_PER_BATTLE;
-  const mainLabel = `${stamina.current}/${stamina.max}`;
-  drawText(c, mainLabel, barX, y + dy + 22, 25, low ? '#b83224' : PALETTE.ink, 'left', 900);
-  if (stamina.nextRegenSeconds > 0) {
-    drawText(c, formatStaminaCountdown(stamina.nextRegenSeconds), barX + barW, y + dy + 23, 17, '#8a5928', 'right', 900);
-  } else {
-    drawText(c, zh ? '体力满' : 'FULL', barX + barW, y + dy + 23, 17, '#2c763d', 'right', 900);
-  }
+  drawText(c, `${stamina.current}/${stamina.max}`, x + 118, y + dy + h / 2 + 1, 29, low ? '#b83224' : PALETTE.ink, 'center', 900);
 
-  // Crisp golden stamina gauge
-  const gy = y + dy + 40;
-  const gh = 16;
-  round(c, barX, gy, barW, gh, 8, '#e6d6b5', '#785028', 2);
-  if (frac > 0.01) {
-    round(c, barX + 2, gy + 2, Math.max(12, (barW - 4) * frac), gh - 4, 6, low ? '#e25c48' : '#f4b52c', 'transparent', 0);
-    round(c, barX + 4, gy + 3, Math.max(8, (barW - 8) * frac), 4, 2, 'rgba(255,255,255,0.42)', 'transparent', 0);
-  }
-
-  // Plump green `+` button on the right to open Stamina Refill modal
-  const plusCx = x + w - 29;
+  // Plump green `+` button on the right to open Stamina countdown / future ad modal
+  const plusCx = x + w - 28;
   const plusCy = y + dy + h / 2;
   c.beginPath();
   c.arc(plusCx, plusCy, 20, 0, Math.PI * 2);

@@ -49,7 +49,6 @@ import {
   STAMINA_COST_PER_BATTLE,
   STAMINA_MAX,
   STAMINA_REFILL_AMOUNT,
-  buyStaminaWithCoins,
   grantStamina,
   settleStamina,
   spendStamina,
@@ -1067,18 +1066,6 @@ export class MinigameApp {
     // ── Menu Actions ────────────────────────────────────────────────────────
     if (id === 'menu:start') { void this.startBattle(); return; }
     if (id === 'menu:stamina') { this.openModal('stamina'); return; }
-    if (id === 'stamina:buy') {
-      const res = buyStaminaWithCoins(this.profile, Date.now());
-      if (res.ok) {
-        this.profile = res.profile;
-        this.save();
-        this.platform.audio.play('coin');
-        this.showToast(zh ? `⚡ 体力 +${STAMINA_REFILL_AMOUNT}！精力充沛！` : `⚡ +${STAMINA_REFILL_AMOUNT} Energy!`, 'good', 2.0);
-      } else {
-        this.showToast(zh ? '金币不足，无法购买茶歇体力' : 'Not enough coins for Energy refill', 'warn', 1.8);
-      }
-      return;
-    }
     if (id === 'stamina:ad') {
       void this.runRewardedAd('stamina_refill', () => {
         this.profile = grantStamina(this.profile, STAMINA_REFILL_AMOUNT, Date.now());

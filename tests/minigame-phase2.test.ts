@@ -280,7 +280,7 @@ describe('Mini-Game Phase 2: Canvas UI Toolkit, Full Menu, Battle Loop, Tutorial
       h.cleanup();
     }
 
-    // Low stamina (< 5) blocks battle start and opens Stamina Refill modal, where buying +15 works cleanly!
+    // Low stamina (< 5) blocks battle start and opens Stamina countdown modal (no coin buy button)
     const tired = {
       ...createProfile(),
       matches: 2,
@@ -289,7 +289,7 @@ describe('Mini-Game Phase 2: Canvas UI Toolkit, Full Menu, Battle Loop, Tutorial
       highestStars: 2,
       coins: 120,
       stamina: 3,
-      staminaUpdatedAt: Date.now(),
+      staminaUpdatedAt: Date.now() - 30_000,
       tutorialCompleted: true,
       tutorialRewardClaimed: true,
       onboardedFeatures: allOnboardedTokens(),
@@ -301,9 +301,10 @@ describe('Mini-Game Phase 2: Canvas UI Toolkit, Full Menu, Battle Loop, Tutorial
       await vi.waitFor(() => expect(h2.app.getDebugState().modal).toBe('stamina'));
       expect(h2.app.getDebugState().screen).toBe('menu');
       h2.stepFrame(120);
-      h2.tapHit('stamina:buy');
-      expect(h2.app.getDebugState().profile.stamina).toBe(18);
-      expect(h2.app.getDebugState().profile.coins).toBe(60);
+      expect(h2.app.findHitBox('stamina:buy')).toBeUndefined();
+      expect(getStaminaStatus(h2.app.getDebugState().profile).nextRegenSeconds).toBeGreaterThan(0);
+      h2.tapHit('modal:close');
+      expect(h2.app.getDebugState().modal).toBe(null);
     } finally {
       h2.cleanup();
     }

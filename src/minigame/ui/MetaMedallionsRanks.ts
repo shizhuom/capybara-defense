@@ -219,13 +219,11 @@ export function drawProfileHubModal(
     : ['leaderboard', 'profile', 'settings'];
 
   const mascot = activeTab === 'leaderboard' || activeTab === 'endless-board' ? 'ui_rank_peek_capy' : 'ui_profile_peek_capy';
-  const showStarsBadge = activeTab === 'leaderboard' || activeTab === 'profile';
 
   const body = drawLedgerShell(c, hits, {
     title: t(`p11.title.${activeTab}`),
     mascot,
     titleHitId: activeTab === 'settings' ? 'settings:title-tap' : undefined,
-    badgeSegments: showStarsBadge ? [{ icon: 'ui_star_rank', text: String(profile.stars) }] : undefined,
     tabs: tabIds.map(tab => ({
       id: `profilehub:tab:${tab}`,
       label: t(`p11.tab.${tab}`),

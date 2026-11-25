@@ -7,12 +7,11 @@ import type { BattleEngine } from '../../core/BattleEngine';
 import { isFeatureUnlocked, maxBattleSpeed } from '../../core/FeatureUnlocks';
 import { getHeroMergeOptions } from '../../core/MergeTargets';
 import type { TutorialStep } from '../../core/Tutorial';
-import { formatCompactNumber } from '../../core/formatNumber';
 import type { BattleState, Profile, StageRect } from '../../core/types';
 import { getLanguage, t } from '../../i18n/i18n';
 import type { ViewportMetrics } from '../../platform/types';
 import { INK, round } from '../../render/StickerArt';
-import { getBossHUD, getWaveHUD } from '../../ui/BattleHUD';
+import { getWaveHUD } from '../../ui/BattleHUD';
 import { placeTutorialBubble, tutorialTargets, type TutorialRect } from '../../ui/TutorialView';
 import {
   BTN_STYLES,
@@ -20,7 +19,6 @@ import {
   UI_FONT,
   drawButton,
   drawIvorySlab,
-  drawProgressBar,
   drawSpriteContain,
   drawText,
   drawWoodPanel,
@@ -202,41 +200,6 @@ export function drawBattleOverlay(
     radius: 18,
     fontSize: 28,
   });
-
-  // Boss / Elite Arrival Alert Banner (GIANT phone-readable 28px title + 22px tip!)
-  const alertEvent = [...state.events].reverse().find(
-    ev => ev.side === 'player' && ev.enemyKind && (ev.effect === 'boss_spawn' || ev.effect === 'elite_spawn'),
-  );
-  if (alertEvent?.enemyKind) {
-    const isBoss = Boolean(alertEvent.boss);
-    const aw = 780, ah = 104, ax = (1280 - aw) / 2, ay = 82;
-    round(c, ax, ay + 6, aw, ah, 24, 'rgba(28,10,6,0.48)', 'transparent', 0);
-    round(c, ax, ay, aw, ah, 24, isBoss ? '#5c1c16' : '#4a2f18', isBoss ? '#ffd35c' : '#f5cc74', 4);
-    drawSpriteContain(c, 'ui_alert_siren', ax + 16, ay + 25, 54, 54);
-    drawSpriteContain(c, alertEvent.enemyKind, ax + 76, ay + 14, 76, 76);
-    const eName = t(`${isBoss ? 'boss' : 'enemy'}.${alertEvent.enemyKind}`);
-    drawText(c, isBoss ? t('p9.boss', { name: eName }) : `${t('p9.elite')} · ${eName}`, ax + 166, ay + 34, 28, '#fff9e0', 'left', 900);
-    const tipKey = isBoss ? `p1.boss.${alertEvent.enemyKind}.tip` : `p9.alert.${alertEvent.enemyKind}`;
-    const tip = t(tipKey);
-    drawText(c, tip.length > 26 ? `${tip.slice(0, 26)}…` : tip, ax + 166, ay + 74, 22, '#ffe5bd', 'left', 800);
-  }
-
-  // Boss Health Bar (GIANT 560×78 bar; drops cleanly below arrival banner if both are live!)
-  const bossHud = getBossHUD(state);
-  if (bossHud) {
-    const bw = 560;
-    const bx = (1280 - bw) / 2;
-    const by = alertEvent?.enemyKind ? 194 : 84;
-    const bh = 78;
-    round(c, bx, by + 4, bw, bh, 22, 'rgba(30,10,6,0.38)', 'transparent', 0);
-    round(c, bx, by, bw, bh, 22, bossHud.warning ? '#6b2019' : '#4d241c', bossHud.warning ? '#ffcf5c' : '#e68c64', 3.4);
-    drawSpriteContain(c, bossHud.kind, bx + 10, by + 8, 62, 62);
-    const bossName = `${t(`boss.${bossHud.kind}`)}${bossHud.count > 1 ? ` ×${bossHud.count}` : ''}`;
-    drawText(c, bossName, bx + 82, by + 26, 25, '#fff8e4', 'left', 900);
-    drawText(c, `${formatCompactNumber(bossHud.hp)}/${formatCompactNumber(bossHud.maxHp)}`, bx + bw - 16, by + 26, 21, '#ffe0b3', 'right', 900);
-    drawProgressBar(c, bx + 82, by + 45, bw - 98, 16, bossHud.fraction, '#eb5442', 'rgba(255,255,255,0.22)', '#2d120c');
-    drawProgressBar(c, bx + 82, by + 65, bw - 98, 6, 1 - bossHud.cooldownFraction, bossHud.warning ? '#ffe066' : '#76c5d9', 'rgba(255,255,255,0.16)', 'transparent');
-  }
 
   // ── 2. LEFT VERTICAL MEDALLION RAIL (matches 10×4 wide board!) ───────────
   drawLeftToolRail(c, hits, state, profile, preparation, activePropId, highlightPropId, elapsed);
@@ -499,11 +462,9 @@ function drawBottomControls(
     round(c, sx + 8, sy + dy + 6, sw - 16, 18, 10, 'rgba(255,255,255,0.34)', 'transparent', 0);
   }
 
-  drawSpriteContain(c, 'ui_bell_summon', sx + 22, sy + dy + Math.round((sh - 74) / 2), 74, 74, canAfford ? 1 : 0.45);
-  drawSpriteContain(c, 'ui_fish_food', sx + 106, sy + dy + Math.round((sh - 48) / 2), 48, 48, canAfford ? 1 : 0.45);
-  drawText(c, String(cost), sx + 166 + (sw - 246) / 2, sy + dy + sh / 2 + 2, 46, canAfford ? '#3f220d' : '#736757', 'center', 900);
-  round(c, sx + sw - 86, sy + dy + 12, 74, 30, 15, 'rgba(92,54,18,0.16)', 'rgba(92,54,18,0.34)', 1.5);
-  drawText(c, zh ? '招5只' : 'Draw 5', sx + sw - 49, sy + dy + 28, 18, '#5a3614', 'center', 900);
+  drawSpriteContain(c, 'ui_bell_summon', sx + 44, sy + dy + Math.round((sh - 76) / 2), 76, 76, canAfford ? 1 : 0.45);
+  drawSpriteContain(c, 'ui_fish_food', sx + 144, sy + dy + Math.round((sh - 50) / 2), 50, 50, canAfford ? 1 : 0.45);
+  drawText(c, String(cost), sx + 206 + (sw - 240) / 2, sy + dy + sh / 2 + 2, 48, canAfford ? '#3f220d' : '#736757', 'center', 900);
 
   // Clean targeting Cancel pill ONLY when player actively selected a Prop or Shovel
   if (activePropId || shovelSelected) {
