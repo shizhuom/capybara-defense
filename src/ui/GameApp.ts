@@ -33,7 +33,7 @@ import './p3.css';
 import './p5.css';
 import './p6.css';
 import {lootMarkup as illustratedLoot, pauseMarkup, resultMarkup, endlessOfferMarkup} from './SettlementView';
-import {earlyWaveCoachmarkMarkup,nextBattleSpeed,passiveRailMarkup,p13WaveMarkup} from './P13HUD';
+import {BATTLE_SPEED_BASELINE,earlyWaveCoachmarkMarkup,nextBattleSpeed,passiveRailMarkup,p13WaveMarkup} from './P13HUD';
 import {propTargetKind,resolvePropDrop} from '../core/PropTargets';
 import { liveUnitCardMarkup, momentumText, breakthroughBreakdown } from './LiveUnitCard';
 import { getBeeProduction } from '../core/UnitStats';
@@ -354,7 +354,7 @@ export class GameApp {
     const dt = Math.min(Math.max((now - this.lastFrame) / 1000, 0), 0.06);
     this.lastFrame = now;
     if (this.engine) {
-      this.engine.tick(dt * this.speed);
+      this.engine.tick(dt * BATTLE_SPEED_BASELINE * this.speed);
       const state = this.engine.state;
       if(!this.transitionUntil)this.sound.setMode(getMusicMode(state,!!this.dialogKind));
       this.renderEnemyAlerts(now);

@@ -37,6 +37,11 @@ export interface MiniGameGlobalApi {
   }): { abort?: () => void } | void;
   loadSubpackage?: (opts: { name: string; success?: () => void; fail?: (err: unknown) => void }) => void;
   createWebAudioContext?: () => unknown;
+  setInnerAudioOption?: (opts: { mixWithOther?: boolean; obeyMuteSwitch?: boolean; speakerOn?: boolean; success?: () => void; fail?: (err: unknown) => void }) => void;
+  onAudioInterruptionBegin?: (cb: () => void) => void;
+  offAudioInterruptionBegin?: (cb: () => void) => void;
+  onAudioInterruptionEnd?: (cb: () => void) => void;
+  offAudioInterruptionEnd?: (cb: () => void) => void;
   onTouchStart: (cb: (e: MiniTouchEvent) => void) => void;
   onTouchMove: (cb: (e: MiniTouchEvent) => void) => void;
   onTouchEnd: (cb: (e: MiniTouchEvent) => void) => void;
@@ -324,7 +329,7 @@ export function createMiniGameAdapter(api: MiniGameGlobalApi, kind: Exclude<Plat
     if (sig !== lastLoggedVpSig) {
       lastLoggedVpSig = sig;
       try {
-        console.log('[CapyVP r19-armory-detail]', sig, 'rawSA=', info.safeArea ?? null, 'rawCap=', rawMenuBtn);
+        console.log('[CapyVP r20-speed-audio]', sig, 'rawSA=', info.safeArea ?? null, 'rawCap=', rawMenuBtn);
       } catch { /* ignore */ }
     }
     return vp;
@@ -337,7 +342,22 @@ export function createMiniGameAdapter(api: MiniGameGlobalApi, kind: Exclude<Plat
     if (canvas.height !== ph) canvas.height = ph;
   }
 
+  // Allow game sound even when iOS physical silent switch is on, and recover cleanly from system audio interruptions.
+  try {
+    api.setInnerAudioOption?.({ obeyMuteSwitch: false, mixWithOther: true });
+  } catch { /* optional on older runtimes */ }
+
   const audio = new MinigameAudio(() => (api.createWebAudioContext?.() as never) ?? null);
+  const onAudioIntBegin = () => { audio.setPaused(true); };
+  const onAudioIntEnd = () => { audio.setPaused(false); audio.unlock(); };
+  try {
+    api.onAudioInterruptionBegin?.(onAudioIntBegin);
+    api.onAudioInterruptionEnd?.(onAudioIntEnd);
+    disposers.push(() => {
+      try { api.offAudioInterruptionBegin?.(onAudioIntBegin); } catch { /* ignore */ }
+      try { api.offAudioInterruptionEnd?.(onAudioIntEnd); } catch { /* ignore */ }
+    });
+  } catch { /* optional */ }
   const storage = createMiniStorage(api);
   const miniFetch = createMiniFetch(api);
 
@@ -498,6 +518,7 @@ export function createMiniGameAdapter(api: MiniGameGlobalApi, kind: Exclude<Plat
         cachedViewport = measure();
         syncCanvasSize(cachedViewport);
         audio.setPaused(false);
+        audio.unlock();
         callback();
       };
       api.onShow?.(handler);

@@ -81,7 +81,7 @@ import {
   type BattleLessonKey,
   type DialogGuideStep,
 } from '../ui/OnboardingGuide';
-import { nextBattleSpeed } from '../ui/P13HUD';
+import { BATTLE_SPEED_BASELINE, nextBattleSpeed } from '../ui/P13HUD';
 import {
   awardBattle,
   awardEndless,
@@ -642,7 +642,7 @@ export class MinigameApp {
     this.scroll.tick(rawDt);
 
     if (this.screen === 'battle' && this.engine && this.engine.state.phase === 'playing' && !this.modal) {
-      this.engine.tick(rawDt * this.speed);
+      this.engine.tick(rawDt * BATTLE_SPEED_BASELINE * this.speed);
       this.audioBridge.observe(this.engine.state, this.platform.audio, ts);
       if (this.engine.state.result) {
         this.handleBattleFinished(this.engine.state);
@@ -1243,6 +1243,7 @@ export class MinigameApp {
         ? { musicVolume: 0, soundVolume: 0 }
         : { musicVolume: 0.5, soundVolume: 0.75 });
       this.platform.audio.setSettings(this.profile.settings);
+      if (!this.muted) this.platform.audio.unlock();
       this.save();
       return;
     }

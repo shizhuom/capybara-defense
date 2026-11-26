@@ -14,6 +14,9 @@ export function brothRailMarkup(state:BattleState,preparation:boolean,expanded=f
  return `<button type="button" class="broth-rail-pill ${expanded?'is-expanded':''}" data-action="broth-info" data-broth-id="${def.id}" style="--broth-color:${def.bathColor}" aria-expanded="${expanded}" aria-label="${esc(t('p14.railTitle'))}: ${esc(name)} Lv.${level}. ${esc(effect)}" title="${esc(name)} Lv.${level}: ${esc(effect)}"><span aria-hidden="true">${sceneSticker(def.id,'',36)}</span><small>Lv.${level}</small><span class="passive-tooltip broth-tooltip" role="tooltip"><em>${esc(t('p14.railTitle'))}</em><strong>${esc(name)} · Lv.${level}</strong><span>${esc(effect)}</span><span class="broth-tooltip-live">${esc(t('p14.railLive'))} · ${esc(kitchenAuraText(loadout))}</span></span></button>`;
 }
 
+/** Baseline simulation speed multiplier: former 2× speed is now the default 1× pace (so HUD 1×/2×/3× run at 2×/4×/6× engine time). */
+export const BATTLE_SPEED_BASELINE = 2;
+
 export const nextBattleSpeed=(speed:1|2|3,maxSpeed:1|2|3=3):1|2|3=>{
   if(maxSpeed<=1)return 1;
   if(maxSpeed===2)return speed===2?1:2;
