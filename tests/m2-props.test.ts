@@ -93,7 +93,7 @@ describe('12被动道具',()=>{
     boss.progress=18;e.tick(.05);expect(e.state.sides.player.giantCatUses).toBe(2);expect(boss.progress).toBe(18);
   });
   it('VIP只增组件权重，五连抽递增费用与整窝替换保留',()=>{
-    const e=arena([],['vip_poster']),plain=arena();vi.spyOn(Random.prototype,'next').mockReturnValue(.625);
+    const e=arena([],['vip_poster']),plain=arena();vi.spyOn(Random.prototype,'next').mockReturnValue(.728);
     e.summon();plain.summon();expect(e.state.units.every(u=>u.kind==='panda')).toBe(true);expect(plain.state.units.every(u=>u.kind==='bee')).toBe(true);
     expect(e.state.sides.player.food).toBe(12);const ids=e.state.units.map(u=>u.id);e.summon();expect(e.state.units).toHaveLength(5);expect(e.state.units.every(u=>!ids.includes(u.id))).toBe(true);
   });

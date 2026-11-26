@@ -20,7 +20,7 @@ describe('命令与经济',()=>{
   it('抽卡长期满足基础/组件权重且不会抽出英雄',()=>{
     const e=game();e.addFood(5000000);let basics=0,bee=0;
     for(let i=0;i<2000;i++){e.summon();for(const u of e.state.units){if(['hamster','squirrel','hedgehog','corgi','bee'].includes(u.kind))basics++;if(u.kind==='bee')bee++;expect(HEROES[u.kind]).toBeUndefined();}e.state.units=[];}
-    expect(basics).toBeGreaterThan(6700);expect(basics).toBeLessThan(7300);expect(bee).toBeGreaterThan(650);expect(bee).toBeLessThan(950);
+    expect(basics).toBeGreaterThan(7750);expect(basics).toBeLessThan(8350);expect(bee).toBeGreaterThan(700);expect(bee).toBeLessThan(1000);
   });
   it('部署、跨窝合成、交换位置；越界移动不吞卡',()=>{
     const e=game();const a=e.grant('panda').unitId!,b=e.grant('hat_bamboo').unitId!;

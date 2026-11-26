@@ -11,7 +11,7 @@ import {rollWeapon} from '../config/weapons';
 import {getVillageBuff,type VillageBuffKey,type VillageResourceId} from '../config/village';
 import {AWAKENED_DAMAGE,AWAKENED_RATE,STANDARD_VICTORY_CRESTS,armorPenetration,bossResist,bossSlayerMultiplier,breakthroughAttackMultiplier,capyShieldCooldown,computeBreakthroughChance,endlessCrestsForWave,getMedallionLevel,momentumMultiplier,type BreakthroughChance,type MedallionId} from '../config/medallions';
 import {ELITE_ENEMY_IDS,INGREDIENT_IDS,MAP_SIGNATURE_INGREDIENT,getActiveBroth,getBrothEffect,getKitchenCollectionAura,getUnitCombatFamily,type BrothEffectKey,type IngredientId} from '../config/kitchen';
-import { BOSS_UNSTOPPABLE_TIME, FIRST_WAVE_PREPARATION, WAVE_DURATION,bossesForWave,waveEnemyCount,minionForWave,getWaveConfig } from '../config/waves';
+import { BOSS_UNSTOPPABLE_TIME, FIRST_WAVE_PREPARATION, WAVE_DURATION,bossesForWave,getStandardBossScaling,getStandardMinionPressure,waveEnemyCount,minionForWave,getWaveConfig } from '../config/waves';
 import { MergeSystem } from './MergeSystem';
 import {CombatRecords} from './CombatRecords';
 import type {OpponentTuning} from '../config/opponents';
@@ -379,7 +379,14 @@ export class BattleEngine {
     if(!this.actionAllowed())return{ok:false,key:'hint.paused'};
     if(!ENEMIES[kind]?.boss)return{ok:false,key:'hint.invalid'};
     if(side==='ai')return{ok:false,key:'hint.invalid'};
-    this.spawnEnemy(kind,'player');
+    if(!this.state.endless&&this.state.wave>=1&&this.state.wave<=10){
+      const resolved=this.unlockedEnemy(kind);
+      const scaling=getStandardBossScaling(ENEMIES[resolved].hp,this.state.wave,this.options.tutorialGuided);
+      const boss=this.spawnEnemy(kind,'player',scaling.hpScale);
+      boss.speed*=scaling.speedMult;
+    }else {
+      this.spawnEnemy(kind,'player');
+    }
     return{ok:true,key:'hint.boss'};
   }
   spawnEnemy(kind:string,side:Side,scale=this.state.endless?getWaveConfig(this.state.wave).hpScale:1):Enemy {
@@ -571,7 +578,12 @@ export class BattleEngine {
     this.pendingBosses=this.pendingBosses.filter(b=>this.state.waveTime+1e-8<b.at);
     if(this.state.spawned<this.currentWaveTargetCount()&&this.state.nextSpawn<=0){
       const kind=minionForWave(this.state.wave,this.state.spawned,this.state.rankIndex);
-      for(const side of ['player'] as Side[])this.spawnEnemy(kind,side,config.hpScale);
+      const stdPressure=!this.state.endless?getStandardMinionPressure(this.state.wave,this.options.tutorialGuided):undefined;
+      const spawnScale=stdPressure?config.hpScale*stdPressure.hpMult:config.hpScale;
+      for(const side of ['player'] as Side[]){
+        const m=this.spawnEnemy(kind,side,spawnScale);
+        if(stdPressure&&stdPressure.speedMult!==1)m.speed*=stdPressure.speedMult;
+      }
       this.state.spawned++;
       // Carry sub-step overshoot in endless so each exponential density interval stays exact.
       this.state.nextSpawn=this.state.endless?this.state.nextSpawn+config.interval:config.interval*getRankDifficulty(this.state.rankIndex).intervalScale;

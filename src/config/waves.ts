@@ -18,6 +18,39 @@ export const FIRST_WAVE_PREPARATION = 18;
 /** After 60s in a wave (or 60s alive), bosses enter overtime Unstoppable state (immune to knockback & stun) to prevent infinite stall loops. */
 export const BOSS_UNSTOPPABLE_TIME = 60;
 export interface WaveConfig {count:number;interval:number;hpScale:number;speedScale:number;armorBonus:number}
+export interface StandardWavePressure {hpMult:number;speedMult:number}
+
+/** Standard W1–W10 minion pressure ramp (applied on top of WAVES in live standard waves; Endless W11+ stays anchored independently). */
+const STANDARD_MINION_HP_MULT = [1, 1, 1.05, 1.12, 1.2, 1.3, 1.4, 1.52, 1.65, 1.8] as const;
+const STANDARD_MINION_SPEED_MULT = [1, 1, 1.02, 1.04, 1.06, 1.08, 1.1, 1.11, 1.12, 1.14] as const;
+
+/** Minimum Boss HP floor & wave multiplier for standard Waves 1–10 so 0★ early bosses (e.g. Husky) still escalate meaningfully into W6–W10. */
+const STANDARD_BOSS_HP_FLOOR: Readonly<Record<number, number>> = {
+  3: 1400, 4: 1900, 6: 3600, 8: 5800, 9: 7800, 10: 10200,
+};
+const STANDARD_BOSS_WAVE_MULT: Readonly<Record<number, number>> = {
+  3: 1.05, 4: 1.2, 6: 1.5, 8: 1.9, 9: 2.3, 10: 2.7,
+};
+
+export function getStandardMinionPressure(wave: number, tutorialGuided = false): StandardWavePressure {
+  if (tutorialGuided) return { hpMult: 0.7, speedMult: 0.9 };
+  const idx = Math.max(0, Math.min(9, Math.trunc(wave) - 1));
+  return { hpMult: STANDARD_MINION_HP_MULT[idx], speedMult: STANDARD_MINION_SPEED_MULT[idx] };
+}
+
+export function getStandardBossScaling(
+  baseHp: number,
+  wave: number,
+  tutorialGuided = false,
+): { hpScale: number; speedMult: number } {
+  const safeBase = Math.max(1, Number.isFinite(baseHp) ? baseHp : 1);
+  if (tutorialGuided) return { hpScale: 0.72, speedMult: 0.9 };
+  const w = Math.max(1, Math.min(10, Math.trunc(wave)));
+  const floor = STANDARD_BOSS_HP_FLOOR[w] ?? 0;
+  const mult = STANDARD_BOSS_WAVE_MULT[w] ?? 1;
+  const targetHp = Math.max(floor, safeBase * mult);
+  return { hpScale: targetHp / safeBase, speedMult: 1.08 };
+}
 /** Endless HP grows by this factor per wave after the tenth (P17: a gentle ×1.25 instead of ×2). */
 export const ENDLESS_HP_GROWTH=1.25;
 /** Standard waves retain their table; endless pressure starts at k=1 on wave 11. */
