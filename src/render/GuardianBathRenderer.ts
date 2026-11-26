@@ -276,25 +276,34 @@ export function drawGuardianBath(p:BathPainter,input:GuardianBathInput):void {
  * (the soak animation and soup stay fully visible). While recharging, a 32×4 bar sits just under the tub.
  */
 export function shieldDome(spot:GuardianBathSpot,oranges:number):{x:number;y:number;rx:number;ry:number} {
-  const top=-spot.size*.62-Math.max(0,Math.min(6,Math.floor(oranges)))*15,bottom=spot.water.y+spot.water.ry*.72;
+  const step=isMobileWideStage()?18:15;
+  const top=-spot.size*.62-Math.max(0,Math.min(6,Math.floor(oranges)))*step,bottom=spot.water.y+spot.water.ry*.72;
   return{x:spot.water.x,y:(top+bottom)/2,rx:Math.max(spot.water.rx*1.08,spot.size*.66),ry:(bottom-top)/2};
 }
 function drawBathShield(c:C,spot:GuardianBathSpot,input:GuardianBathInput,shield:BathShield):void {
-  const dome=shieldDome(spot,input.oranges);
+  const dome=shieldDome(spot,input.oranges),wide=isMobileWideStage();
   c.save();c.translate(spot.x,spot.y);
   if(shield.ready){
-    const breath=1+Math.sin(input.seconds*1.6)*.012;
-    c.beginPath();c.ellipse(dome.x,dome.y,dome.rx*breath,dome.ry*breath,0,0,Math.PI*2);
-    c.fillStyle='rgba(255, 250, 225, 0.14)';c.fill();
-    c.lineWidth=2.2;c.strokeStyle='rgba(255, 224, 128, 0.75)';c.stroke();
-    // Soft sheen arc on the upper left; no glow, no bloom.
-    c.beginPath();c.ellipse(dome.x,dome.y,dome.rx*.84*breath,dome.ry*.84*breath,0,Math.PI*1.08,Math.PI*1.42);
-    c.lineWidth=3;c.strokeStyle='rgba(255, 250, 225, 0.55)';c.stroke();
+    const breath=1+Math.sin(input.seconds*2.1)*.018;
+    // Translucent aqua-gold bubble dome so it reads unmistakably on sunlit & sakura maps without hiding the capybara.
+    c.beginPath();c.ellipse(dome.x,dome.y,dome.rx*breath,dome.ry*breath,0,0,TAU);
+    c.fillStyle='rgba(170, 238, 255, 0.2)';c.fill();
+    c.lineWidth=wide?4.2:3;c.strokeStyle='rgba(110, 214, 245, 0.55)';c.stroke();
+    c.beginPath();c.ellipse(dome.x,dome.y,dome.rx*breath,dome.ry*breath,0,0,TAU);
+    c.lineWidth=wide?2.8:2.2;c.strokeStyle='rgba(255, 216, 94, 0.94)';c.stroke();
+    // Crisp specular arc on the upper-left curve of the bubble.
+    c.beginPath();c.ellipse(dome.x,dome.y,dome.rx*.84*breath,dome.ry*.84*breath,0,Math.PI*1.06,Math.PI*1.44);
+    c.lineWidth=wide?4:3;c.strokeStyle='rgba(255, 253, 242, 0.8)';c.stroke();
   }else{
-    // Cream track with a hairline cocoa edge so the 32×4 charge bar reads on wood, grass and soup alike.
-    const width=32,height=4,x=dome.x-width/2,y=spot.rim.dy+spot.rim.dh-spot.y+3;
-    c.beginPath();c.roundRect(x-1,y-1,width+2,height+2,3);c.fillStyle='rgba(255, 248, 230, 0.92)';c.fill();c.lineWidth=1;c.strokeStyle='rgba(74, 50, 43, 0.75)';c.stroke();
-    c.beginPath();c.roundRect(x,y,Math.max(2,width*Math.max(0,Math.min(1,shield.progress))),height,2);c.fillStyle='rgba(240, 176, 52, 1)';c.fill();
+    // Subtle dashed outline while recharging + high-contrast golden pill charge bar directly below the tub rim.
+    c.save();
+    if(typeof c.setLineDash==='function')c.setLineDash([6,5]);
+    c.beginPath();c.ellipse(dome.x,dome.y,dome.rx*.96,dome.ry*.96,0,0,TAU);
+    c.lineWidth=wide?2.2:1.6;c.strokeStyle='rgba(255, 224, 128, 0.5)';c.stroke();
+    c.restore();
+    const width=wide?58:40,height=wide?9:6,x=dome.x-width/2,y=spot.rim.dy+spot.rim.dh-spot.y+(wide?4:3);
+    c.beginPath();c.roundRect(x-1.5,y-1.5,width+3,height+3,height/2+2);c.fillStyle='rgba(255, 248, 230, 0.95)';c.fill();c.lineWidth=1.6;c.strokeStyle='rgba(74, 50, 43, 0.88)';c.stroke();
+    c.beginPath();c.roundRect(x,y,Math.max(4,width*Math.max(0,Math.min(1,shield.progress))),height,height/2);c.fillStyle='rgba(244, 178, 42, 1)';c.fill();
   }
   c.restore();
 }

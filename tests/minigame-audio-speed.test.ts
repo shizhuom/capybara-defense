@@ -1,6 +1,9 @@
 import { describe, expect, it, vi } from 'vitest';
 import { MinigameAudio, encodePcmToWav, type MinimalAudioContext } from '../src/platform/MinigameAudio';
 import { createMiniGameAdapter, type MiniGameGlobalApi } from '../src/platform/minigameAdapter';
+import { BattleAudioBridge } from '../src/minigame/BattleAudioBridge';
+import { BattleEngine } from '../src/core/BattleEngine';
+import { getMap } from '../src/config/maps';
 import { BATTLE_SPEED_BASELINE, nextBattleSpeed } from '../src/ui/P13HUD';
 import type { SpriteImage } from '../src/render/AssetRegistry';
 
@@ -179,5 +182,32 @@ describe('r20: Baseline 2× speed & WeChat PCM WebAudio engine', () => {
     intEnd?.();
     expect(mock.startedSources).toHaveLength(2);
     expect(mock.startedSources[1].loop).toBe(true);
+  });
+
+  it('plays orange_gain audio in BattleAudioBridge when Capybara Bubble Shield blocks an Endless leak & syncs in Wave-1 prep', () => {
+    const e = new BattleEngine({ seed: 77 });
+    e.start();
+    // Upgrade med_capy_shield during Wave-1 preparation and sync loadout
+    expect(e.canSyncPreparationLoadout()).toBe(true);
+    expect(e.syncPreparationLoadout({ endlessMedallions: { med_capy_shield: 10 } }).ok).toBe(true);
+    // Clear standard waves 1-10 -> enter Endless Wave 11
+    while (e.state.phase !== 'finished') e.skipWave();
+    expect(e.enterEndless().ok).toBe(true);
+    expect(e.state.sides.player.capyShieldReady).toBe(true);
+
+    const bridge = new BattleAudioBridge();
+    bridge.reset(e.state.id);
+    const played: string[] = [];
+    const fakeAudio = { unlock: () => {}, setSettings: () => {}, setPaused: () => {}, play: (c: string) => played.push(c) };
+
+    const orangesBefore = e.state.sides.player.oranges;
+    const boss = e.spawnEnemy('husky_wrecker', 'player');
+    boss.progress = getMap(e.state.mapId).paths.player.length - 1.001;
+    e.tick(0.05);
+
+    expect(e.state.sides.player.oranges).toBe(orangesBefore); // Boss 2-orange theft completely blocked!
+    expect(e.state.sides.player.capyShieldReady).toBe(false);
+    bridge.observe(e.state, fakeAudio as never, 1000);
+    expect(played).toContain('orange_gain');
   });
 });

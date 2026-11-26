@@ -1,7 +1,7 @@
 import type { BattleLoadout, BattleState, Enemy, Interaction, MapId, Side, StageRect, Unit, VisualEvent } from '../core/types';
 import {combatRange,combatCharge} from '../core/CombatRules';
 import { getMap, isMobileWideStage, STAGE } from '../config/maps';
-import {GUARDIAN_BATH_SPOTS} from '../config/guardianBaths';
+import {GUARDIAN_BATH_SPOTS,WIDE_GUARDIAN_BATH_SPOTS} from '../config/guardianBaths';
 import {getActiveBroth} from '../config/kitchen';
 import {drawGuardianBath,HAPPY_DURATION,rgba,shieldDome} from './GuardianBathRenderer';
 import {EnemyMotion} from './EnemyMotion';
@@ -779,20 +779,25 @@ export class StickerRenderer {
     }
     c.globalAlpha=1-fade;this.label(t(event.textKey||'p17.breakthroughSuccess'),from.x,from.y-48-fade*14,17,'#9a4d16','center',900,180);
   }
-  /** Bubble shield pop above the tub: a soft ring and droplets for 0.5s, then the floating label. */
+  /** Bubble shield pop above the tub: a bright burst ring, droplets and clear floating badge. */
   private drawShieldBlock(event:VisualEvent,from:Position,oranges:number):void {
-    const c=this.c,spot=GUARDIAN_BATH_SPOTS[getMap(this.battleMap).id];
+    const c=this.c,mapId=getMap(this.battleMap).id,wide=isMobileWideStage();
+    const spot=(wide?WIDE_GUARDIAN_BATH_SPOTS:GUARDIAN_BATH_SPOTS)[mapId];
     const dome=spot?shieldDome(spot,oranges):{x:0,y:-30,rx:46,ry:50},x=(spot?.x??from.x)+dome.x,y=(spot?.y??from.y)+dome.y;
-    const pop=clamp(event.age/.5,0,1),fade=clamp(event.age/event.duration,0,1);
+    const pop=clamp(event.age/.65,0,1),fade=clamp(event.age/event.duration,0,1);
     c.save();
     if(pop<1){
-      // The dome itself springs outward and fades, shedding a few soft droplets.
-      const grow=1+pop*.22;c.globalAlpha=(1-pop)*.85;ellipse(c,x,y,dome.rx*grow,dome.ry*grow,'rgba(255,250,225,0)','rgba(255, 224, 128, 0.85)',2.6);
-      for(let i=0;i<6;i++){const a=i*Math.PI/3+.3;ellipse(c,x+Math.cos(a)*dome.rx*grow*1.06,y+Math.sin(a)*dome.ry*grow*1.06,2.6*(1-pop)+.8,2.6*(1-pop)+.8,'rgba(255,240,190,.95)','',0);}
+      const grow=1+pop*.32;c.globalAlpha=(1-pop)*.95;
+      ellipse(c,x,y,dome.rx*grow,dome.ry*grow,'rgba(180,242,255,0.14)','rgba(255,214,92,0.95)',wide?4:3);
+      ellipse(c,x,y,dome.rx*(1+pop*.18),dome.ry*(1+pop*.18),'rgba(255,255,255,0)','rgba(170,240,255,0.85)',wide?2.4:1.8);
+      for(let i=0;i<8;i++){const a=i*Math.PI/4+.25;ellipse(c,x+Math.cos(a)*dome.rx*grow*1.08,y+Math.sin(a)*dome.ry*grow*1.08,3.6*(1-pop)+1.2,3.6*(1-pop)+1.2,'rgba(255,244,196,.98)','',0);}
     }
-    // Label floats above the dome (never across the orange stack), paper-edged for contrast.
-    const text=t(event.textKey||'p17.shieldBlock'),ty=y-dome.ry-14-fade*14;
-    c.globalAlpha=1-fade;c.font=`900 16px ${FONT}`;c.textAlign='center';c.lineWidth=4;c.strokeStyle=PAPER;c.strokeText(text,x,ty);c.fillStyle='#9a5a12';c.fillText(text,x,ty);
+    const text=`🛡️ ${t(event.textKey||'p17.shieldBlock')}`,fontSize=wide?19:16;
+    const lx=clamp(x,86,STAGE.width-86),ty=Math.max(96,y-dome.ry-18-fade*22);
+    c.globalAlpha=Math.min(1,(1-fade)*2.2);c.font=`900 ${fontSize}px ${FONT}`;
+    const pillW=Math.min(200,c.measureText(text).width+22),pillH=wide?32:26;
+    round(c,lx-pillW/2,ty-pillH/2,pillW,pillH,pillH/2,'#fff4cc','#c87a16',2.4);
+    c.textAlign='center';c.textBaseline='middle';c.fillStyle='#6e3808';c.fillText(text,lx,ty+1);
     c.restore();
   }
   private drawUltimateBurst(state:BattleState,event:VisualEvent,from:Position,p:number):boolean {
@@ -897,9 +902,9 @@ export class StickerRenderer {
 
   private observeOranges(state:BattleState,dt:number):void {
     if(this.previousOranges)for(const side of ['player'] as const) {
-      const spot=GUARDIAN_BATH_SPOTS[state.mapId];
+      const wide=isMobileWideStage(),spot=(wide?WIDE_GUARDIAN_BATH_SPOTS:GUARDIAN_BATH_SPOTS)[state.mapId],step=wide?18:15;
       const old=this.previousOranges[side],now=state.sides[side].oranges,diff=now-old;
-      for(let i=0;i<Math.min(Math.abs(diff),12);i++)this.orangeMotions.push({x:spot.x,y:spot.y+spot.orangeBaseY-Math.max(0,old-1-i)*15,age:0,index:i,add:diff>0,direction:-1,targetY:spot.y+spot.orangeBaseY-Math.max(0,now-1-i)*15});
+      for(let i=0;i<Math.min(Math.abs(diff),12);i++)this.orangeMotions.push({x:spot.x,y:spot.y+spot.orangeBaseY-Math.max(0,old-1-i)*step,age:0,index:i,add:diff>0,direction:-1,targetY:spot.y+spot.orangeBaseY-Math.max(0,now-1-i)*step});
     }
     this.previousOranges={player:state.sides.player.oranges,ai:state.sides.ai.oranges};
     this.orangeMotions=this.orangeMotions.filter(motion=>(motion.age+=dt)<1.1);

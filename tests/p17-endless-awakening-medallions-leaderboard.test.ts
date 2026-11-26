@@ -165,7 +165,7 @@ describe('P17 medallion effect formulas',()=>{
     expect([bossResist(25),bossResist(40),bossResist(50)].map(v=>+v.toFixed(3))).toEqual([.45,.72,.9]);
     expect([bossSlayerMultiplier(25),bossSlayerMultiplier(40),bossSlayerMultiplier(50)].map(v=>+v.toFixed(3))).toEqual([3,4.2,5]);
     expect([armorPenetration(25),armorPenetration(50)].map(v=>+v.toFixed(3))).toEqual([.45,.9]);
-    expect([capyShieldCooldown(0),capyShieldCooldown(1),capyShieldCooldown(25),capyShieldCooldown(40),capyShieldCooldown(50)]).toEqual([Infinity,20,11.67,6.47,3]);
+    expect([capyShieldCooldown(0),capyShieldCooldown(1),capyShieldCooldown(25),capyShieldCooldown(40),capyShieldCooldown(50)]).toEqual([Infinity,60,32.08,14.63,3]);
   });
   it('computes the breakthrough chance as base + pre-ten spirit (cap 30%) + clover luck + 5% per miss, capped at 100%',()=>{
     expect(computeBreakthroughChance({preEndlessKills:0,preEndlessBossKills:0,luckMedallionLevel:0,previousFails:0}).total).toBeCloseTo(.3);
@@ -178,7 +178,7 @@ describe('P17 medallion effect formulas',()=>{
   it('formats hall effects as current → next values',()=>{
     expect(medallionEffectText('med_boss_resist',25)).toBe('45%');expect(medallionEffectText('med_boss_resist',26)).toBe('46.8%');
     expect(medallionEffectText('med_breakthrough_atk',25)).toBe('×196');expect(medallionEffectText('med_momentum',25)).toBe('×3');
-    expect(medallionEffectText('med_boss_slayer',50)).toBe('×5 / 90%');expect(medallionEffectText('med_capy_shield',25)).toBe('11.67s');
+    expect(medallionEffectText('med_boss_slayer',50)).toBe('×5 / 90%');expect(medallionEffectText('med_capy_shield',25)).toBe('32.08s');
     expect(medallionEffectText('med_capy_shield',0)).toBe(t('p17.effect.none'));expect(medallionEffectText('med_luck_rate',50)).toBe('+70%');
   });
 });
@@ -266,17 +266,17 @@ describe('P17 Sovereign Piercer, Calm Ward and the capybara bubble shield',()=>{
     const before=endless().state.grid.flat().filter(t=>t==='B').length;
     expect(crater(.5)).toEqual({broken:before,warded:true});expect(crater(.95)).toEqual({broken:before+1,warded:false});
   });
-  it('grants one shield on entering endless, blocks one orange theft, recharges 20s → 3s and never stacks',()=>{
+  it('grants one shield on entering endless, blocks one orange theft, recharges 60s → 3s and never stacks',()=>{
     const theft=(e:BattleEngine,n=1)=>{const end=getMap(e.state.mapId).paths.player.length-1;
       for(let i=0;i<n;i++){const rat=e.spawnEnemy('rat','player');rat.progress=end-.001;}e.tick(.05);};
     const none=endless();expect(none.state.sides.player.capyShieldReady).toBe(false);const o0=none.state.sides.player.oranges;theft(none);expect(none.state.sides.player.oranges).toBe(o0-1);
     const e=endless(medals({med_capy_shield:1})),player=e.state.sides.player,oranges=player.oranges;
     expect(player.capyShieldReady).toBe(true);
-    theft(e);expect(player.oranges).toBe(oranges);expect(player.capyShieldReady).toBe(false);expect(player.capyShieldTimer).toBe(20);
+    theft(e);expect(player.oranges).toBe(oranges);expect(player.capyShieldReady).toBe(false);expect(player.capyShieldTimer).toBe(60);
     expect(e.state.events.some(ev=>ev.type==='shield_block'&&ev.textKey==='p17.shieldBlock')).toBe(true);
     theft(e);expect(player.oranges).toBe(oranges-1);
-    e.state.enemies=[];e.tick(19.8);expect(player.capyShieldReady).toBe(false);e.tick(.2);expect(player.capyShieldReady).toBe(true);
-    e.tick(60);theft(e,2);expect(player.oranges).toBe(oranges-2);// two arrivals, one charge
+    e.state.enemies=[];e.tick(59.8);expect(player.capyShieldReady).toBe(false);e.tick(.2);expect(player.capyShieldReady).toBe(true);
+    e.tick(90);theft(e,2);expect(player.oranges).toBe(oranges-2);// two arrivals, one charge
     const fast=endless(medals({med_capy_shield:50}));theft(fast);fast.state.enemies=[];fast.tick(2.9);expect(fast.state.sides.player.capyShieldReady).toBe(false);fast.tick(.1);expect(fast.state.sides.player.capyShieldReady).toBe(true);
   });
 });

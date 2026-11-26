@@ -78,10 +78,10 @@ export const bossResist=(lv:number):number=>Math.min(.9,.018*clampMedallionLevel
 export const bossSlayerMultiplier=(lv:number):number=>1+.08*clampMedallionLevel(lv);
 /** Sovereign Piercer: share of enemy armor ignored by every endless attack. */
 export const armorPenetration=(lv:number):number=>Math.min(.9,.018*clampMedallionLevel(lv));
-/** Capybara Bubble Shield recharge seconds: Lv.1 = 20s → Lv.50 = 3s; no medallion never recharges. */
+/** Capybara Bubble Shield recharge seconds: Lv.1 = 60s → Lv.50 = 3s; no medallion never recharges. */
 export function capyShieldCooldown(lv:number):number {
   const level=clampMedallionLevel(lv);
-  return level<=0?Infinity:Number(Math.max(3,20-(level-1)*(17/49)).toFixed(2));
+  return level<=0?Infinity:Number(Math.max(3,60-(level-1)*(57/49)).toFixed(2));
 }
 
 export interface BreakthroughChance {total:number;base:number;preTenBonus:number;medallionBonus:number;failBonus:number}

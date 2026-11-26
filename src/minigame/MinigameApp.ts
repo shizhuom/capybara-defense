@@ -406,6 +406,9 @@ export class MinigameApp {
 
   private save(): void {
     saveProfile(this.profile, this.platform.storage);
+    if (this.screen === 'battle' && this.engine?.canSyncPreparationLoadout()) {
+      this.engine.syncPreparationLoadout(villageLoadout(this.profile));
+    }
   }
 
   private topRightEdge(vp: ViewportMetrics): number {

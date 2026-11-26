@@ -329,7 +329,7 @@ export function createMiniGameAdapter(api: MiniGameGlobalApi, kind: Exclude<Plat
     if (sig !== lastLoggedVpSig) {
       lastLoggedVpSig = sig;
       try {
-        console.log('[CapyVP r20-speed-audio]', sig, 'rawSA=', info.safeArea ?? null, 'rawCap=', rawMenuBtn);
+        console.log('[CapyVP r21-capy-shield]', sig, 'rawSA=', info.safeArea ?? null, 'rawCap=', rawMenuBtn);
       } catch { /* ignore */ }
     }
     return vp;

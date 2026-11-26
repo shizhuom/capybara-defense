@@ -42,6 +42,9 @@ export class BattleAudioBridge {
         case 'orange':
           audio.play((ev.value ?? -1) < 0 ? 'orange_loss' : 'orange_gain');
           break;
+        case 'shield_block':
+          audio.play('orange_gain');
+          break;
         case 'sprinkler':
           audio.play('sprinkler');
           break;
