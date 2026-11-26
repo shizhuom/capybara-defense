@@ -97,21 +97,22 @@
 #game-dialog.meta-dialog .compendium-detail-bar>div { display:flex;align-items:center;gap:8px;min-width:0; }
 #game-dialog.meta-dialog .ledger-body .compendium-detail-bar button { padding:7px 11px;min-height:39px;border:1.5px solid #6B5047;border-radius:999px;background:#F4ECE1;font-size:14px!important;box-shadow:none; }
 #game-dialog.meta-dialog :is(.storybook-detail-sheet,.storybook-recycle-card,.storybook-lottery-card) { margin:0;padding:20px;background:#FCF9F4!important;border:1.5px solid #E5DBD0!important;border-radius:12px;box-shadow:0 3px 0 #7a5f5224; }
-#game-dialog.meta-dialog .storybook-detail-sheet { display:flex;flex-direction:column;gap:18px; }
-#game-dialog.meta-dialog .storybook-detail-showcase { display:flex;flex-direction:column;align-items:center;gap:12px;text-align:center; }
-#game-dialog.meta-dialog .storybook-detail-showcase>.storybook-frame { width:136px;height:136px; }
-#game-dialog.meta-dialog .storybook-detail-showcase>.storybook-frame [data-sticker] { width:116px;height:116px; }
-#game-dialog.meta-dialog .ledger-body .storybook-detail-showcase h3 { margin:0;font-size:25px!important; }
-#game-dialog.meta-dialog .storybook-weapon-stats { display:flex;flex-wrap:wrap;justify-content:center;gap:8px; }
-#game-dialog.meta-dialog .storybook-damage { padding:4px 12px;background:#F6ECD8;border-radius:999px; }
-#game-dialog.meta-dialog .ledger-body :is(.storybook-detail-showcase p,.storybook-fragments) { margin:0;font-size:16px!important;line-height:1.5; }
-#game-dialog.meta-dialog .storybook-fragments { width:min(100%,320px); }
-#game-dialog.meta-dialog .ledger-body .storybook-equip-heading { margin:0;font-size:16px!important;text-align:center; }
-#game-dialog.meta-dialog .storybook-hero-equip { display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:9px; }
-#game-dialog.meta-dialog .ledger-body .storybook-hero-button { display:flex;flex-direction:column;align-items:center;justify-content:flex-start;gap:6px;min-width:0;padding:10px 5px;background:#F4ECE1;border:1.5px solid #C7B0A3;border-radius:12px;box-shadow:none;font-size:14px!important;line-height:1.3; }
-#game-dialog.meta-dialog .storybook-hero-button [data-sticker] { width:56px;height:56px; }
-#game-dialog.meta-dialog .storybook-hero-button [data-sticker="ui_storybook_check"] { width:24px;height:24px; }
-#game-dialog.meta-dialog .storybook-hero-button :is(small,b,span) { font-size:13px!important; }
+#game-dialog.meta-dialog .storybook-detail-sheet { display:flex;flex-direction:column;gap:16px; }
+#game-dialog.meta-dialog .storybook-detail-showcase { display:flex;flex-direction:column;align-items:center;gap:10px;text-align:center; }
+#game-dialog.meta-dialog .storybook-detail-showcase>.storybook-frame { width:124px;height:124px; }
+#game-dialog.meta-dialog .storybook-detail-showcase>.storybook-frame [data-sticker] { width:108px;height:108px; }
+#game-dialog.meta-dialog .ledger-body .storybook-detail-showcase h3 { margin:0;font-size:26px!important; }
+#game-dialog.meta-dialog .storybook-weapon-stats { display:flex;flex-wrap:wrap;justify-content:center;gap:8px;font-size:17px!important; }
+#game-dialog.meta-dialog .storybook-damage { padding:5px 14px;background:#F6ECD8;border-radius:999px;font-size:17px!important; }
+#game-dialog.meta-dialog .ledger-body :is(.storybook-detail-showcase p,.storybook-fragments) { margin:0;font-size:17px!important;line-height:1.5; }
+#game-dialog.meta-dialog .storybook-fragments { width:min(100%,340px); }
+#game-dialog.meta-dialog .ledger-body .storybook-equip-heading { margin:0;font-size:18px!important;text-align:center; }
+#game-dialog.meta-dialog .storybook-hero-equip { display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px; }
+#game-dialog.meta-dialog .ledger-body .storybook-hero-button { display:flex;flex-direction:row;align-items:center;justify-content:flex-start;gap:10px;min-width:0;padding:12px 14px;background:#F4ECE1;border:2px solid #C7B0A3;border-radius:14px;box-shadow:none;font-size:17px!important;line-height:1.3;text-align:left; }
+#game-dialog.meta-dialog .storybook-hero-button [data-sticker] { flex:none;width:68px;height:68px; }
+#game-dialog.meta-dialog .storybook-hero-button [data-sticker="ui_storybook_check"] { width:26px;height:26px;margin-left:auto; }
+#game-dialog.meta-dialog .storybook-hero-button span { font-size:18px!important;font-weight:900; }
+#game-dialog.meta-dialog .storybook-hero-button :is(small,b) { font-size:15px!important;font-weight:800; }
 #game-dialog.meta-dialog .storybook-hero-button.equipped { background:#F6E4B6!important;border-color:#B48C4C!important; }
 #game-dialog.meta-dialog .storybook-recycle-options { display:flex;flex-direction:column;gap:0;margin:16px 0; }
 #game-dialog.meta-dialog .storybook-rarity-row { display:flex;align-items:center;gap:10px;min-height:46px;padding:8px 4px;border-bottom:1px solid #E5DBD0; }
@@ -207,6 +208,17 @@
  #game-dialog:is(.meta-dialog,.profile-dialog,.settings-dialog) .ledger-body .portrait-name { font-size:18px!important; }
  #game-dialog:is(.meta-dialog,.profile-dialog,.settings-dialog) .ledger-body .storybook-tagline { font-size:14px!important; }
  #game-dialog.meta-dialog :is(.storybook-detail-sheet,.storybook-recycle-card,.storybook-lottery-card) { padding:14px; }
+ #game-dialog.meta-dialog .storybook-detail-sheet { display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.08fr);grid-template-rows:auto 1fr;column-gap:14px;row-gap:8px;align-items:start; }
+ #game-dialog.meta-dialog .storybook-detail-showcase { grid-column:1;grid-row:1 / span 2;gap:8px; }
+ #game-dialog.meta-dialog .storybook-detail-showcase>.storybook-frame { width:84px;height:84px; }
+ #game-dialog.meta-dialog .storybook-detail-showcase>.storybook-frame [data-sticker] { width:72px;height:72px; }
+ #game-dialog.meta-dialog .ledger-body .storybook-detail-showcase h3 { font-size:21px!important; }
+ #game-dialog.meta-dialog .ledger-body :is(.storybook-detail-showcase p,.storybook-fragments) { font-size:15px!important;line-height:1.4; }
+ #game-dialog.meta-dialog .storybook-equip-heading,#game-dialog.meta-dialog .storybook-unlock-note { grid-column:2;text-align:left;font-size:16px!important; }
+ #game-dialog.meta-dialog .storybook-hero-equip { grid-column:2;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px; }
+ #game-dialog.meta-dialog .ledger-body .storybook-hero-button { padding:8px 10px;gap:8px; }
+ #game-dialog.meta-dialog .storybook-hero-button [data-sticker] { width:50px;height:50px; }
+ #game-dialog.meta-dialog .storybook-hero-button span { font-size:16px!important; }
 }
 @media (max-width:600px) and (orientation:portrait) {
  #game-dialog:is(.recipe-dialog,.meta-dialog,.profile-dialog,.settings-dialog) { width:94vw;height:91dvh;max-height:91dvh; }

@@ -10,6 +10,7 @@ import {
   BTN_STYLES,
   PALETTE,
   ScrollRegion,
+  UI_FONT,
   drawButton,
   drawDetailNavBar,
   drawGuideRipple,
@@ -22,6 +23,7 @@ import {
   drawSpriteContain,
   drawText,
   drawWrappedText,
+  wrapText,
   type UiHitManager,
 } from './CanvasUI';
 import { getLotteryPrizeRarity, type LotteryPrize } from '../../core/MetaProgression';
@@ -78,6 +80,37 @@ export function getSortedArmoryWeapons(profile: Profile, family: ArmoryTab): Wea
   return Object.values(WEAPONS)
     .filter(w => family === 'all' || family === 'recycle' || w.family === family)
     .sort((a, b) => Number(profile.unlockedWeapons.includes(b.id)) - Number(profile.unlockedWeapons.includes(a.id)) || b.rarity - a.rarity);
+}
+
+function fitFontSize(
+  c: CanvasRenderingContext2D,
+  text: string,
+  maxW: number,
+  baseSize: number,
+  minSize = 15.5,
+  weight = 900,
+): number {
+  let size = baseSize;
+  while (size > minSize) {
+    c.font = `${weight} ${size}px ${UI_FONT}`;
+    if (c.measureText(text).width <= maxW) return size;
+    size -= 0.5;
+  }
+  return minSize;
+}
+
+function truncateToWidth(
+  c: CanvasRenderingContext2D,
+  text: string,
+  maxW: number,
+  fontSize: number,
+  weight = 800,
+): string {
+  c.font = `${weight} ${fontSize}px ${UI_FONT}`;
+  if (c.measureText(text).width <= maxW) return text;
+  let out = text;
+  while (out.length > 1 && c.measureText(`${out}…`).width > maxW) out = out.slice(0, -1);
+  return `${out}…`;
 }
 
 /**
@@ -206,7 +239,7 @@ export function drawArmoryModal(
   const weapons = getSortedArmoryWeapons(profile, armory.family);
   const detailWeapon = armory.detailWeaponId ? weapons.find(w => w.id === armory.detailWeaponId) ?? WEAPONS[armory.detailWeaponId] : null;
 
-  // ── WEAPON DETAIL SUB-PAGE (EXACT `p19_05_armory_done_guide.png`!) ────────
+  // ── WEAPON DETAIL SUB-PAGE (MOBILE LANDSCAPE 2-COLUMN SPLIT DESIGN) ──────
   if (detailWeapon) {
     const id = detailWeapon.id;
     const rule = RARITY_RULES[detailWeapon.rarity];
@@ -231,94 +264,235 @@ export function drawArmoryModal(
     );
 
     const vx = body.x, vy = body.y + navH + 8, vw = body.w, vh = body.h - navH - 8;
-    c.save();
-    c.beginPath();
-    c.rect(vx, vy, vw, vh);
-    c.clip();
+    const compact = vh < 365;
+    const panelY = vy + 2;
+    const panelH = Math.max(280, vh - 6);
+    const colGap = 14;
+    const leftW = Math.floor((vw - 8 - colGap) * 0.48);
+    const rightW = vw - 8 - colGap - leftW;
+    const lx = vx + 4;
+    const rx = lx + leftW + colGap;
 
-    const cx = vx + 4, cw = vw - 14;
-    const y0 = vy + 2 - scroll.offset;
-    const hasSig = Boolean(detailWeapon.signatureHero);
-    const cardH = hasSig ? 364 : 340;
-    drawIvorySlab(c, cx, y0, cw, cardH, 18, '#fffdf8', '#f6e8cb', rColor, 2.4);
+    // ── LEFT COLUMN: WEAPON SHOWCASE CARD ──────────────────────────────────
+    drawIvorySlab(c, lx, panelY, leftW, panelH, 20, '#fffdf8', '#f6e8cb', rColor, 2.6);
 
-    // Compact centered weapon showcase so all 4 hero equip cards stay 100% visible even with P19 coaching banner!
-    const fS = 78;
-    round(c, cx + cw / 2 - fS / 2, y0 + 10, fS, fS, 16, RARITY_BG[detailWeapon.rarity], rColor, 2.4);
-    if (!drawSpriteContain(c, `weapon_${id}`, cx + cw / 2 - 33, y0 + 16, 66, 66, unlocked ? 1 : 0.45)) {
-      drawSpriteContain(c, 'ui_weapon_fragment', cx + cw / 2 - 33, y0 + 16, 66, 66, 0.6);
+    const iconBox = compact ? 88 : 112;
+    const iconX = lx + 16;
+    const iconY = panelY + (compact ? 12 : 16);
+    round(c, iconX, iconY, iconBox, iconBox, 18, RARITY_BG[detailWeapon.rarity], rColor, 2.6);
+    const spSz = iconBox - 14;
+    if (!drawSpriteContain(c, `weapon_${id}`, iconX + 7, iconY + 7, spSz, spSz, unlocked ? 1 : 0.46)) {
+      drawSpriteContain(c, 'ui_weapon_fragment', iconX + 7, iconY + 7, spSz, spSz, 0.6);
     }
 
-    drawText(c, t(`weapon.${id}`), cx + cw / 2, y0 + 105, 22, PALETTE.ink, 'center', 900);
-    drawText(c, `${t(`m2.rarity.${detailWeapon.rarity}`)} · ${t(`p11.meta.family.${detailWeapon.family}`)}`, cx + cw / 2, y0 + 127, 14.5, rColor, 'center', 800);
+    const tx = iconX + iconBox + 16;
+    const tMaxW = lx + leftW - 16 - tx;
+    const weaponTitle = t(`weapon.${id}`);
+    const titleSize = fitFontSize(c, weaponTitle, tMaxW, compact ? 25 : 28, 19, 900);
+    drawText(c, weaponTitle, tx, iconY + (compact ? 18 : 24), titleSize, PALETTE.ink, 'left', 900);
 
-    // Base damage capsule pill
-    round(c, cx + cw / 2 - 80, y0 + 139, 160, 26, 13, '#f0dec0', '#966b3c', 1.6);
-    drawText(c, t('m2.damage', { value: Math.round(rule.damageBonus * 100) }), cx + cw / 2, y0 + 153, 14.5, '#59371a', 'center', 900);
+    const metaLabel = `${t(`m2.rarity.${detailWeapon.rarity}`)} · ${t(`p11.meta.family.${detailWeapon.family}`)}`;
+    const metaSize = fitFontSize(c, metaLabel, tMaxW, compact ? 18.5 : 20.5, 16, 800);
+    drawText(c, metaLabel, tx, iconY + (compact ? 45 : 58), metaSize, rColor, 'left', 800);
 
-    drawWrappedText(c, t(`weapon.${id}.desc`), cx + 32, y0 + 170, cw - 64, 15, 19, PALETTE.ink, 'center', 700, 2);
+    const dmgLabel = `⚔ ${t('m2.damage', { value: Math.round(rule.damageBonus * 100) })}`;
+    const dmgFont = fitFontSize(c, dmgLabel, tMaxW - 26, compact ? 17.5 : 19.5, 15.5, 900);
+    c.font = `900 ${dmgFont}px ${UI_FONT}`;
+    const dmgW = Math.min(tMaxW, Math.max(188, Math.ceil(c.measureText(dmgLabel).width) + 32));
+    const dmgH = compact ? 30 : 34;
+    const dmgY = iconY + iconBox - dmgH;
+    round(c, tx, dmgY, dmgW, dmgH, dmgH / 2, '#f0dec0', '#966b3c', 1.8);
+    drawText(c, dmgLabel, tx + dmgW / 2, dmgY + dmgH / 2 + 1, dmgFont, '#4c2c12', 'center', 900);
 
-    let nextY = y0 + 208;
+    // Middle Effect Description & Signature Box
+    const descY = iconY + iconBox + (compact ? 10 : 14);
+    const footH = compact ? 52 : 62;
+    const descH = Math.max(88, panelY + panelH - footH - descY - (compact ? 8 : 10));
+    round(c, lx + 16, descY, leftW - 32, descH, 14, 'rgba(232,213,178,0.34)', 'rgba(138,98,57,0.28)', 1.5);
+
+    const descPadX = 14;
+    const descInnerX = lx + 16 + descPadX;
+    const descInnerW = leftW - 32 - descPadX * 2;
+    const descText = t(`weapon.${id}.desc`);
+
     if (detailWeapon.signatureHero) {
-      drawText(c, `★ ${t('m2.signature', { hero: t(`hero.${detailWeapon.signatureHero}`) })}`, cx + cw / 2, nextY, 15, '#b55a0c', 'center', 900);
-      nextY += 22;
+      const sigH = compact ? 32 : 38;
+      const sigY = descY + descH - sigH - (compact ? 7 : 10);
+      const sigLabel = `★ ${t('m2.signature', { hero: t(`hero.${detailWeapon.signatureHero}`) })}`;
+      const sigFont = fitFontSize(c, sigLabel, leftW - 76, compact ? 17.5 : 19.5, 15, 900);
+      round(c, lx + 26, sigY, leftW - 52, sigH, sigH / 2, '#fff0c9', '#d18224', 1.8);
+      drawText(c, sigLabel, lx + leftW / 2, sigY + sigH / 2 + 1, sigFont, '#9e4806', 'center', 900);
+
+      const availDescH = Math.max(40, sigY - descY - 12);
+      let dFont = compact ? 17.5 : 19.5;
+      let dLineH = compact ? 22 : 26;
+      let maxLines = Math.max(2, Math.floor(availDescH / dLineH));
+      if (wrapText(c, descText, descInnerW, dFont, 800).length > maxLines) {
+        dFont = compact ? 16 : 17.5;
+        dLineH = compact ? 20 : 23;
+        maxLines = Math.max(2, Math.floor(availDescH / dLineH));
+      }
+      const lines = wrapText(c, descText, descInnerW, dFont, 800).slice(0, maxLines);
+      const blockH = lines.length * dLineH;
+      const startY = descY + Math.max(8, Math.round((availDescH - blockH) / 2) + 4);
+      drawWrappedText(c, descText, descInnerX, startY, descInnerW, dFont, dLineH, PALETTE.ink, 'left', 800, maxLines);
+    } else {
+      const dFont = compact ? 19 : 21;
+      const dLineH = compact ? 25 : 28;
+      const maxLines = Math.max(2, Math.floor((descH - 16) / dLineH));
+      const lines = wrapText(c, descText, descInnerW, dFont, 800).slice(0, maxLines);
+      const blockH = lines.length * dLineH;
+      const startY = descY + Math.max(10, Math.round((descH - blockH) / 2));
+      drawWrappedText(c, descText, descInnerX, startY, descInnerW, dFont, dLineH, PALETTE.ink, 'left', 800, maxLines);
     }
 
-    // Fragment progress bar + equip hint
-    drawText(c, `${t('m2.progress', { count: have, total: rule.fragments })} · ${unlocked ? t('p11.meta.equipHint') : t('p11.meta.fragmentUnlock', { fragments: rule.fragments })}`, cx + cw / 2, nextY + 2, 14.5, PALETTE.inkSoft, 'center', 800);
-    drawProgressBar(c, cx + 110, nextY + 14, cw - 220, 8, have / rule.fragments, '#82b354', 'rgba(72,46,24,0.16)', '#694828');
-    nextY += 28;
+    // Bottom Fragment Progress Bar
+    const fy = panelY + panelH - footH;
+    const fragLabel = t('m2.progress', { count: have, total: rule.fragments });
+    const statusLabel = unlocked
+      ? (zh ? '✓ 已解锁' : '✓ Unlocked')
+      : t('p11.meta.fragmentUnlock', { fragments: rule.fragments });
+    const footFont = compact ? 18 : 19.5;
+    drawText(c, fragLabel, lx + 18, fy + (compact ? 16 : 20), footFont, PALETTE.ink, 'left', 900);
+    const statusFont = fitFontSize(c, statusLabel, leftW * 0.58, compact ? 17.5 : 19, 15, 900);
+    drawText(c, statusLabel, lx + leftW - 18, fy + (compact ? 16 : 20), statusFont, unlocked ? '#236b2c' : '#8a5220', 'right', 900);
+    drawProgressBar(
+      c,
+      lx + 18,
+      fy + (compact ? 31 : 37),
+      leftW - 36,
+      compact ? 12 : 14,
+      have / rule.fragments,
+      unlocked ? '#76b843' : rColor,
+      'rgba(72,46,24,0.18)',
+      '#694828',
+    );
 
-    // 4 Horizontal Matching-Family Hero Portrait Buttons (EXACT `p19_05_armory_done_guide.png`!)
-    const hGap = 12;
-    const hw = Math.floor((cw - 48 - hGap * 3) / 4);
-    const hh = 96;
+    // ── RIGHT COLUMN: 2×2 HERO EQUIP MATRIX ────────────────────────────────
+    drawIvorySlab(c, rx, panelY, rightW, panelH, 20, '#fffdf8', '#f6e8cb', '#7a5230', 2.4);
+
+    const hdrY = panelY + (compact ? 25 : 32);
+    const rightTitle = unlocked
+      ? (zh ? '点击英雄穿戴 / 卸下' : 'Tap Hero to Equip / Remove')
+      : (zh ? '适用同流派英雄' : 'Matching Heroes');
+    const rightTitleFont = fitFontSize(c, rightTitle, rightW - 178, compact ? 20 : 22.5, 17, 900);
+    drawText(c, rightTitle, rx + 18, hdrY, rightTitleFont, PALETTE.ink, 'left', 900);
+
+    const famTag = zh ? `${t(`p11.meta.family.${detailWeapon.family}`)}流派` : `${t(`p11.meta.family.${detailWeapon.family}`)}`;
+    const famFont = compact ? 17 : 18.5;
+    c.font = `900 ${famFont}px ${UI_FONT}`;
+    const famW = Math.max(106, Math.ceil(c.measureText(famTag).width) + 26);
+    const famH = compact ? 30 : 34;
+    round(c, rx + rightW - 16 - famW, hdrY - famH / 2, famW, famH, famH / 2, '#efe0be', '#966b3c', 1.8);
+    drawText(c, famTag, rx + rightW - 16 - famW / 2, hdrY + 1, famFont, '#59371a', 'center', 900);
+
+    const gX = rx + 16;
+    const gY = panelY + (compact ? 48 : 60);
+    const gGapX = 12;
+    const gGapY = compact ? 10 : 12;
+    const hw = Math.floor((rightW - 32 - gGapX) / 2);
+    const hh = Math.floor((panelY + panelH - 14 - gY - gGapY) / 2);
     const pulseStep2 = opts?.guideStep?.pulseSelector === `[data-action="meta-equip:m01_swatter:kungfu_po"]`;
+
     heroes.forEach((heroId, i) => {
-      const hx = cx + 24 + i * (hw + hGap);
+      const col = i % 2;
+      const row = Math.floor(i / 2);
+      const hx = gX + col * (hw + gGapX);
+      const hy = gY + row * (hh + gGapY);
       const equippedHere = wearer === heroId;
+      const otherWeaponId = !equippedHere ? profile.equippedWeapons[heroId] : undefined;
       const isSig = detailWeapon.signatureHero === heroId;
       const shouldPulse = pulseStep2 && id === 'm01_swatter' && heroId === 'kungfu_po';
 
-      if (unlocked && nextY + hh > vy && nextY < vy + vh) {
+      if (unlocked) {
         hits.add({
           id: `armory:equip:${heroId}:${id}`,
           x: hx,
-          y: Math.max(vy, nextY),
+          y: hy,
           w: hw,
-          h: Math.min(nextY + hh, vy + vh) - Math.max(vy, nextY),
+          h: hh,
           data: { heroId, weaponId: id, equippedHere },
         });
       }
+
       drawIvorySlab(
         c,
         hx,
-        nextY,
+        hy,
         hw,
         hh,
-        15,
+        16,
         equippedHere ? '#fff4c4' : unlocked ? '#fffdf8' : '#efe7d8',
-        equippedHere ? '#f7df8a' : unlocked ? '#f4e3c0' : '#e2d7c4',
+        equippedHere ? '#f7df8a' : unlocked ? '#f5e5c4' : '#e2d7c4',
         shouldPulse ? '#e68c19' : equippedHere ? '#c97416' : isSig ? '#d18426' : '#8a6239',
-        shouldPulse ? 3.8 : equippedHere || isSig ? 2.6 : 1.8,
+        shouldPulse ? 3.8 : equippedHere || isSig ? 2.8 : 2,
       );
       if (shouldPulse) {
-        drawGuideRipple(c, hx, nextY, hw, hh, 15, elapsed, { maxExpand: 16, waves: 3, showBullseye: true });
+        drawGuideRipple(c, hx, hy, hw, hh, 16, elapsed, { maxExpand: 16, waves: 3, showBullseye: true });
       }
-      drawSpriteContain(c, heroId, hx + hw / 2 - 22, nextY + 4, 44, 44, unlocked ? 1 : 0.4);
-      drawText(c, t(`hero.${heroId}`), hx + hw / 2, nextY + 58, 14.5, unlocked ? PALETTE.ink : PALETTE.muted, 'center', 900);
-      if (equippedHere) {
-        drawSpriteContain(c, 'ui_storybook_check', hx + hw / 2 - 10, nextY + 70, 20, 20);
-      } else if (isSig) {
-        drawText(c, t('p11.meta.signatureShort'), hx + hw / 2, nextY + 80, 12.5, '#b55c0e', 'center', 900);
+
+      // Large Hero Portrait Frame on Left
+      const pSz = Math.min(hh - 20, compact ? 84 : 104);
+      const px = hx + 12;
+      const py = hy + Math.round((hh - pSz) / 2);
+      round(c, px, py, pSz, pSz, 16, equippedHere ? '#fff9df' : '#f7ecda', equippedHere ? '#c97416' : '#a88356', 2);
+      drawSpriteContain(c, heroId, px + 5, py + 5, pSz - 10, pSz - 10, unlocked ? 1 : 0.42);
+
+      // Right Info & Action Stack
+      const ix = px + pSz + 12;
+      const iw = hx + hw - 12 - ix;
+      const heroName = t(`hero.${heroId}`);
+      const nameSize = fitFontSize(c, heroName, iw, compact ? 20.5 : 23, 16.5, 900);
+      drawText(c, heroName, ix, hy + (compact ? 25 : 34), nameSize, unlocked ? PALETTE.ink : PALETTE.muted, 'left', 900);
+
+      // Middle Sub-Line: Signature badge / Currently held weapon / Idle hint
+      const midY = hy + (compact ? 53 : 71);
+      if (isSig) {
+        const sigShort = t('p11.meta.signatureShort');
+        const sigF = compact ? 15.5 : 17;
+        c.font = `900 ${sigF}px ${UI_FONT}`;
+        const sigW = Math.min(iw, Math.max(82, Math.ceil(c.measureText(sigShort).width) + 20));
+        const sigH = compact ? 24 : 28;
+        round(c, ix, midY - sigH / 2, sigW, sigH, sigH / 2, '#ffe7a8', '#c97a16', 1.6);
+        drawText(c, sigShort, ix + sigW / 2, midY + 1, sigF, '#964406', 'center', 900);
+      } else if (otherWeaponId && WEAPONS[otherWeaponId]) {
+        const subFont = compact ? 15.5 : 16.5;
+        const heldText = truncateToWidth(
+          c,
+          (zh ? '已配: ' : 'Has: ') + t(`weapon.${otherWeaponId}`),
+          iw,
+          subFont,
+          800,
+        );
+        drawText(c, heldText, ix, midY, subFont, '#7d562c', 'left', 800);
+      } else {
+        const idleText = equippedHere
+          ? (zh ? '点击可卸下' : 'Tap to remove')
+          : (zh ? '未佩戴神兵' : 'No weapon');
+        const subFont = fitFontSize(c, idleText, iw, compact ? 15.5 : 17, 14.5, 800);
+        drawText(c, idleText, ix, midY, subFont, PALETTE.inkSoft, 'left', 800);
       }
+
+      // Bottom Tactile Action Status Pill
+      const pillH = compact ? 36 : 42;
+      const pillY = hy + hh - pillH - (compact ? 11 : 14);
+      const actionLabel = !unlocked
+        ? t('m2.locked')
+        : equippedHere
+          ? (zh ? '✓ 佩戴中' : '✓ Equipped')
+          : otherWeaponId
+            ? (zh ? '替换穿戴' : 'Swap')
+            : (zh ? '点击穿戴' : 'Equip');
+      const actionFill = !unlocked ? '#e3d9c6' : equippedHere ? '#dff5d6' : otherWeaponId ? '#fce08b' : '#f8cd52';
+      const actionStroke = !unlocked ? '#a6967f' : equippedHere ? '#3d8633' : '#8c4e12';
+      const actionText = !unlocked ? '#756552' : equippedHere ? '#1f5918' : '#46250b';
+      const actionFont = fitFontSize(c, actionLabel, iw - 14, compact ? 18 : 19.5, 15.5, 900);
+      round(c, ix, pillY, iw, pillH, pillH / 2, actionFill, actionStroke, equippedHere || unlocked ? 2 : 1.6);
+      drawText(c, actionLabel, ix + iw / 2, pillY + pillH / 2 + 1, actionFont, actionText, 'center', 900);
     });
 
-    const contentH = cardH + 16;
-    c.restore();
-    scroll.setContentBounds(contentH, vh);
-    drawScrollbar(c, vx, vy, vw, vh, contentH, scroll);
-    return { scrollViewport: { x: vx, y: vy, w: vw, h: vh } };
+    scroll.setContentBounds(vh, vh);
+    return {};
   }
 
   // ── 3-COLUMN GIANT MOBILE WEAPON CARDS ───────────────────────────────────
