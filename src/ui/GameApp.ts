@@ -260,15 +260,17 @@ export class GameApp {
     const guided=!this.profile.tutorialCompleted,bestStars=Math.max(this.profile.stars,this.profile.highestStars);
     const allUnlocked=isTestProfile();
     const featureDrops=allUnlocked
-      ? { armory: true, village: true, kitchen: true, medallions: true }
+      ? { armory: true, market: true, village: true, kitchen: true, medallions: true }
       : {
         armory: isFeatureUnlocked(this.profile, 'armory'),
+        market: isFeatureUnlocked(this.profile, 'market'),
         village: isFeatureUnlocked(this.profile, 'village'),
         kitchen: isFeatureUnlocked(this.profile, 'kitchen'),
         medallions: isFeatureUnlocked(this.profile, 'medallions'),
       };
     this.engine = new BattleEngine({
       tutorialGuided: guided,
+      tutorialEase: guided && this.profile.matches === 0,
       progressionStars: allUnlocked ? undefined : bestStars,
       progressionHeroes: this.profile.mergedHeroes,
       mapId: this.devMapOverride ?? (guided ? 'sunny_backyard' : pickBattleMap(this.profile).id),
@@ -276,6 +278,8 @@ export class GameApp {
       loadouts: { player: structuredClone(villageLoadout(this.profile)) },
       featureDrops,
       unlockedWeapons: this.profile.unlockedWeapons,
+      permanentProps: this.profile.ownedProps,
+      propBlueprints: this.profile.propBlueprints,
     });
     this.engine.start();
     this.tutorialStep = this.profile.tutorialCompleted ? 'done' : 1;
@@ -881,11 +885,13 @@ export class GameApp {
     if (!this.activeMenuOnboarding || isTestProfile()) return null;
     return computeDialogGuideStep(this.activeMenuOnboarding, this.profile, {
       dialogKind: this.dialogKind,
+      armoryTab: this.meta.family === 'recycle' ? 'recycle' : 'weapons',
       detailWeaponId: this.meta.detailWeapon,
       marketTab: this.meta.tab,
       marketSpun: this.onboardingMarketSpun,
       villageTab: this.village.tab,
       villageInteracted: this.onboardingVillageInteracted,
+      kitchenTab: this.kitchen.tab,
     });
   }
 
@@ -1127,7 +1133,7 @@ export class GameApp {
     } else if (kind === 'recipes') {
       this.dialog.innerHTML=this.compendium.markup(this.profile);
     } else if (kind === 'endless-offer' && this.engine?.state.result) {
-      this.dialog.innerHTML=endlessOfferMarkup(this.engine.state,this.savedResult,this.endlessFirstUnlock,this.ticketAwarded,isTestProfile()||isFeatureUnlocked(this.profile,'medallions'));
+      this.dialog.innerHTML=endlessOfferMarkup(this.engine.state,this.savedResult,this.endlessFirstUnlock,this.ticketAwarded,Boolean(this.engine.state.result.endlessCrests));
     } else if (kind === 'result' && this.engine?.state.result) {
       this.dialog.innerHTML=resultMarkup({state:this.engine.state,profile:this.profile,savedResult:this.savedResult,resultStars:this.resultStars,previousRank:this.previousRank,newWeapons:this.newWeapons,newAvatars:this.newAvatars,newRoster:this.newRoster,statsOpen:this.resultStatsOpen,globalRank:this.engine.state.endless?this.globalRank:undefined,ticketAwarded:this.ticketAwarded});
     }
@@ -1196,7 +1202,10 @@ export class GameApp {
   private closeModal(): void {
     const doneGuide = this.currentDialogGuideStep();
     if (doneGuide?.done) this.finishMenuOnboarding(doneGuide.feature);
-    else this.activeMenuOnboarding = null;
+    else if (this.activeMenuOnboarding) {
+      this.persistProfile(markOnboarded(this.profile, this.activeMenuOnboarding));
+      this.activeMenuOnboarding = null;
+    }
     const previous=this.modalReturn; this.modalReturn=null;
     if(previous?.dialog) this.showDialog(previous.dialog);
     else this.closeDialog(previous?.resume ?? false);
@@ -1313,11 +1322,11 @@ export class GameApp {
     this.notify(result.key, !result.ok, result.key === 'hint.noFood' ? { cost, count: Math.max(0, Math.ceil(cost - (this.engine?.state.sides.player.food ?? 0))) } : result.value !== undefined ? { value: result.value } : {});
     if(result.ok){
       if(dug)this.progressTutorial('dig');
-      if(result.key==='hint.deployed'){
+      if(result.key==='hint.deployed'||result.key==='hint.swapped'){
         const deployed=this.engine?.state.units.find(unit=>unit.id===result.unitId&&unit.side==='player'&&unit.location.zone==='board');
         if(deployed){
           if(this.tutorialStep===6){if(deployed.kind==='bee')this.progressTutorial('deploy-bee');}
-          else this.progressTutorial('deploy');
+          else if(result.key==='hint.deployed') this.progressTutorial('deploy');
         }
       }
       if((result.key==='hint.merged'||result.key==='hint.fed')&&(this.tutorialStep!==5||this.engine?.state.units.some(unit=>unit.id===result.unitId&&!!HEROES[unit.kind])))this.progressTutorial('merge');
@@ -1382,7 +1391,8 @@ export class GameApp {
       if(target?.id===selected.id){this.clearSelection();this.refresh();return;}
       if(target&&selected.kind!=='shovel'){
         const outcome=MergeSystem.combine(selected,target);
-        if(!outcome.ok||!outcome.unit||outcome.swap){this.selectedId=target.id;this.refresh();return;}
+        const canBreakthrough=Boolean(this.engine.state.endless&&MergeSystem.breakthroughPair(selected,target));
+        if((!outcome.ok||!outcome.unit||outcome.swap)&&!canBreakthrough){this.selectedId=target.id;this.refresh();return;}
       }
       if(!target){
         const tile=hit.kind==='cell'?this.engine.state.grid[hit.row]?.[hit.col]:undefined;
@@ -1536,7 +1546,7 @@ export class GameApp {
       const point = this.point(event);
       const hit = this.renderer.hitTest(point.x, point.y,{state:this.engine!.state,allowBenchLock:this.tutorialStep==='done'&&!this.selectedProp,dragging:drag.moved,touch:event.pointerType==='touch'});
       this.cancelDrag();
-      if (!this.canInteract() || !hit) { if(!drag.moved)this.clearSelection();this.refresh(); return; }
+      if (!this.canInteract() || !hit) { this.clearSelection(); this.refresh(); return; }
       if (drag.moved) {
         this.selectedId = drag.id;
         this.shovelSelected = drag.shovel;
@@ -1849,6 +1859,7 @@ export class GameApp {
       this.refresh();return;
     }
     if (action === 'summon') {
+      if (this.tutorialStep !== 'done' && this.tutorialStep !== 1) return;
       const result = this.engine.summon();
       if (result.ok) { this.cancelDrag(); this.sound.play('summon'); this.progressTutorial('summon'); }
       this.apply(result);

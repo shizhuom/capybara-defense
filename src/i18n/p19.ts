@@ -10,7 +10,7 @@ const copy = {
   // Feature display names
   'p19.feature.armory': ['神兵锻造坊', 'Weapon Armory'],
   'p19.feature.speed2x': ['2× 战斗加速', '2× Battle Speed'],
-  'p19.feature.market': ['浣熊黑市 & 道具', 'Raccoon Market & Props'],
+  'p19.feature.market': ['浣熊超市 & 道具', 'Raccoon Mart & Props'],
   'p19.feature.endless': ['无尽模式 & 觉醒突破', 'Endless Mode & Awakening'],
   'p19.feature.village': ['水豚温泉山庄', 'Capybara Onsen Village'],
   'p19.feature.kitchen': ['温泉料理屋', 'Onsen Kitchen'],
@@ -28,15 +28,15 @@ const copy = {
   'p19.guideGo': ['立刻去体验 →', 'Try it now →'],
   // 1. Armory onboarding (after Match 1)
   'p19.onboard.armory.title': ['解锁「神兵锻造坊」！', 'Weapon Armory Unlocked!'],
-  'p19.onboard.armory.body': ['完成首战啦！送上 2 枚【塑料苍蝇拍】碎片，快去锻造解锁并给功夫阿宝佩戴上吧！', 'First battle done! Here are 2 Fly Swatter fragments — forge it and equip it on Kung-Fu Po!'],
-  'p19.onboard.armory.step1': ['点亮中的【塑料苍蝇拍】，打开详情准备给英雄穿戴！', 'Tap the glowing Fly Swatter to open its forge sheet!'],
+  'p19.onboard.armory.body': ['完成首战啦！送上 2 枚【塑料苍蝇拍】碎片已自动解锁，快去给功夫阿宝佩戴上吧！', 'First battle done! Here are 2 Fly Swatter fragments (unlocked automatically) — go equip it on Kung-Fu Po!'],
+  'p19.onboard.armory.step1': ['点亮中的【塑料苍蝇拍】，打开详情准备给英雄穿戴！', 'Tap the glowing Fly Swatter to open its equip sheet!'],
   'p19.onboard.armory.step2': ['点一下【功夫阿宝】头像，立刻佩戴塑料苍蝇拍（基础伤害 +12%）！', 'Tap Kung-Fu Po below to equip the Fly Swatter (+12% base damage)!'],
-  'p19.onboard.armory.done': ['穿戴成功！以后每局击败 Boss 都会掉落神兵碎片，后续开启商店扭蛋与山庄樱花茶亭也能收获更多碎片！', 'Equipped! Boss kills drop weapon fragments every match, and Market Gacha & Village Pavilion bring even more!'],
+  'p19.onboard.armory.done': ['穿戴成功！击败首领有机会掉落神兵碎片（第 10 波必掉），后续商店扭蛋与山庄樱花茶亭也能收获更多碎片！', 'Equipped! Boss kills drop weapon fragments (guaranteed on Wave 10), and Market Gacha & Village Pavilion bring even more!'],
   // 2. 2x Speed onboarding (at 2★)
   'p19.onboard.speed2x.title': ['解锁 2× 战斗加速！', '2× Battle Speed Unlocked!'],
   'p19.onboard.speed2x.body': ['点右上角【1×】按钮即可切换 2× 加速守护，节奏更丝滑，随时可再点切回 1×！', 'Tap the 1× speed button at top-right to toggle brisk 2× speed anytime!'],
   // 3. Market & Props onboarding (at 5★)
-  'p19.onboard.market.title': ['解锁「浣熊黑市」！', 'Raccoon Market Unlocked!'],
+  'p19.onboard.market.title': ['解锁「浣熊超市」！', 'Raccoon Mart Unlocked!'],
   'p19.onboard.market.body': ['达到 5 星啦！送你主动道具【强力粘鼠板】×1 和免费扭蛋券 ×1，快去抽一发并把道具装进背包吧！', '5 stars reached! You got 1 Super Glue Trap + 1 Free Gacha Ticket — spin once and equip your trap!'],
   'p19.onboard.market.step1': ['先点【幸运扭蛋】页签，用免费券试抽一发吧！', 'Switch to the Lucky Gacha tab to try your free ticket!'],
   'p19.onboard.market.step2': ['点中央绿色【扭一次】，看看能抽出什么宝贝！', 'Tap the green Spin button in the center!'],
@@ -49,14 +49,15 @@ const copy = {
   // 4. Endless & Wave-11 Awakening onboarding (at 10★)
   'p19.onboard.endless.badge': ['✨ 全新解锁 · 无尽试炼', '✨ NEWLY UNLOCKED · ENDLESS'],
   'p19.onboard.endless_battle.title': ['无尽模式 & 觉醒突破！', 'Endless Mode & Awakening!'],
-  'p19.onboard.endless_battle.body': ['第 11 波起害虫更强、奖励更丰厚！把 Lv.5 传说英雄再喂 1 次合成组件（或同款 Lv.5）即可掷骰【觉醒突破】战力暴涨！前 10 波攒的 🔥战意 会提高成功率，失败零损失且每次保底 +5%！', 'Wave 11+ brings tougher foes and richer loot! Feed a Lv.5 hero one more part (or Lv.5 twin) to roll Awakening Breakthrough! Pre-wave-10 Momentum boosts odds, and misses lose nothing while adding +5% pity!'],
+  'p19.onboard.endless_battle.body': ['第 11 波起害虫更强、奖励更丰厚！把 Lv.5 传说英雄再喂 1 次合成组件（或同款 Lv.5）即可尝试【觉醒突破】战力暴涨！前 10 波攒的 🔥战意 会提高成功率，失败保留原英雄与战意且每次保底 +5%！', 'Wave 11+ brings tougher foes and richer loot! Feed a Lv.5 hero one more part (or Lv.5 twin) to roll Awakening Breakthrough! Pre-wave-10 Momentum boosts odds, and misses keep your hero & momentum intact while adding +5% pity!'],
   // 5. Village onboarding (at 16★)
   'p19.onboard.village.title': ['解锁「水豚温泉山庄」！', 'Onsen Village Unlocked!'],
-  'p19.onboard.village.body': ['达到 16 星！送上 10 温泉木料 + 3 柚子精粹，去亲手建造你的第一座【竹林露天汤池】吧！', '16 stars! Here are 10 Onsen Wood + 3 Yuzu Essence — go build your very first Bamboo Onsen Pool!'],
+  'p19.onboard.village.body': ['达到 16 星！送上 10 温泉木料 + 3 柚子精华，去亲手建造你的第一座【竹林露天汤池】吧！', '16 stars! Here are 10 Onsen Wood + 3 Yuzu Essence — go build your very first Bamboo Onsen Pool!'],
   'p19.onboard.village.step1': ['先切到【设施建造】页签，把竹林露天汤池盖起来！', 'Open the Build tab to construct the Bamboo Onsen Pool!'],
-  'p19.onboard.village.step2': ['点击【建造 Lv.1】，亲手落成你的第一座山庄建筑！', 'Tap Build Lv.1 to construct your first courtyard facility!'],
+  'p19.onboard.village.step2': ['点击【建造】，亲手落成你的第一座山庄建筑！', 'Tap Build to construct your first courtyard facility!'],
   'p19.onboard.village.step3': ['切回【温泉庭院】，摸摸院子里的萌宠或点「一键收菜」试试！', 'Switch back to Courtyard — pat a pet for pocket coins or claim the Harvest Basket!'],
-  'p19.onboard.village.done': ['山庄正式开张！以后通关与无尽都会掉木料和精粹，山庄离线也能持续攒金币、碎片与柚子，并永久加成战斗！', 'Open for business! Wins & Endless drop wood and essence; your village earns offline rewards and permanent battle buffs!'],
+  'p19.onboard.village.step3b': ['摸摸院子里的萌宠领零花钱，或点「一键收菜」试试！', 'Pat a pet for pocket coins or tap Harvest All!'],
+  'p19.onboard.village.done': ['山庄正式开张！以后通关与无尽都会掉木料和精华，山庄离线也能持续攒金币、碎片与柚子，并永久加成战斗！', 'Open for business! Wins & Endless drop wood and essence; your village earns offline rewards and permanent battle buffs!'],
   // 6. Kitchen onboarding (at 23★)
   'p19.onboard.kitchen.title': ['解锁「温泉料理屋」！', 'Onsen Kitchen Unlocked!'],
   'p19.onboard.kitchen.body': ['达到 23 星！送上 4 颗黄金柚子，快去熬煮你的第一锅【柚子安神汤】带去泡澡迎战吧！', '23 stars! Here are 4 Golden Yuzu — brew your first pot of Yuzu Calm Soak for battle!'],
@@ -98,6 +99,7 @@ const copy = {
   'p19.hook.featureStars': ['🎯 还差 {need} ★ 解锁「{name}」（{current}/{target}★）', '🎯 {need}★ away from unlocking {name} ({current}/{target}★)'],
   'p19.hook.gacha': ['🎟️ 再赢 1 局就领免费扭蛋券（2/3 胜）！', '🎟️ 1 more win for a Free Gacha Ticket (2/3)!'],
   'p19.hook.weapon': ['⚔️ 「{name}」还差 {need} 枚碎片即可合成（{current}/{target}）！', '⚔️ {name} needs just {need} more fragment(s) ({current}/{target})!'],
+  'p19.hook.prop': ['🛍️ 「{name}」还差 {need} 张图纸永久解锁（{current}/{target}）！', '🛍️ {name} needs just {need} more blueprint(s) ({current}/{target})!'],
   'p19.hook.village': ['🏡 「{name}」建料已攒 {pct}%，再来几局就能开建！', '🏡 {name} materials at {pct}% — almost ready to build!'],
   'p19.hook.kitchen': ['🍲 「{name}」食材已凑齐 {pct}%，马上就能开锅！', '🍲 {name} ingredients at {pct}% — almost ready to brew!'],
   // Developer Panel Onboarding Stage Debugger
@@ -107,7 +109,7 @@ const copy = {
   'p19.devStage.0': ['0 · 开局纯塔防 (0★)', '0 · Fresh Start (0★)'],
   'p19.devStage.1': ['1 · 解锁神兵坊 (完赛1局)', '1 · Armory Unlock (1 match)'],
   'p19.devStage.2': ['2 · 解锁 2× 加速 (2★)', '2 · 2× Speed Unlock (2★)'],
-  'p19.devStage.3': ['3 · 解锁浣熊黑市 (5★)', '3 · Market & Props (5★)'],
+  'p19.devStage.3': ['3 · 解锁浣熊超市 (5★)', '3 · Raccoon Mart & Props (5★)'],
   'p19.devStage.4': ['4 · 解锁无尽模式 (10★)', '4 · Endless Mode (10★)'],
   'p19.devStage.5': ['5 · 解锁温泉山庄 (16★)', '5 · Onsen Village (16★)'],
   'p19.devStage.6': ['6 · 解锁温泉料理屋 (23★)', '6 · Onsen Kitchen (23★)'],

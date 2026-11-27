@@ -5,7 +5,7 @@ const phrases:Record<string,[string,string]>={
   'p10.tab.heroes':['传说英雄','Heroes'],
   'p10.tab.bosses':['捣蛋怪物','Pests'],
   'p10.tab.weapons':['奇葩神兵','Arms'],
-  'p10.tab.props':['黑市道具','Props'],
+  'p10.tab.props':['超市道具','Props'],
   'p10.collected':['已收录','Recorded'],
   'p10.canMerge':['可合成','Can merge'],
   'p10.unlocked':['已解锁','Unlocked'],
@@ -45,11 +45,11 @@ const phrases:Record<string,[string,string]>={
   'p10.hero.meowfia':['鱼骨弹幕藏不住守护伙伴的心','A fishbone flurry for treasured friends'],
   'p10.hero.purrcerer':['拨动毛线球唤来跳跃小雷云','A ball of yarn calls playful thunder'],
   'p10.hero.samurai_doge':['挥起正义重槌敲开顽固护甲','A brave hammer cracks stubborn shells'],
-  'p10.hero.doge_wick':['双枪穿过长路捎回丰盛补给','Twin shots bring supper back to friends'],
+  'p10.hero.doge_wick':['双发穿过长路捎回丰盛补给','Twin shots bring supper back to friends'],
   'p10.hero.ronin_goose':['伸长脖子快步掠过捣蛋队伍','Dashes past pests with a fearless honk'],
   'p10.hero.ballin_rooster':['跃起灌篮让火焰球欢快弹跳','A fiery dunk bounces down the path'],
-  'p10.hero.rocket_coon':['把捡来的小破烂装成威风重炮','Turns treasured scraps into a mighty cannon'],
-  'p10.hero.pepe_king':['孤寡合唱让捣蛋鬼慢下脚步','A wistful chorus slows the garden rush'],
+  'p10.hero.rocket_coon':['把捡来的小宝贝装成威风重炮','Turns treasured scraps into a mighty cannon'],
+  'p10.hero.pepe_king':['呱呱合唱让捣蛋鬼慢下脚步','A wistful chorus slows the garden rush'],
 
   'p10.enemy.rat':['悄悄溜向温泉惦记香甜小橘子','Sneaks toward the sweet spring oranges'],
   'p10.enemy.roach':['踩着急匆匆的小步穿过庭院','Scurries past on busy little feet'],
@@ -72,8 +72,8 @@ const phrases:Record<string,[string,string]>={
   'p10.weapon.melee':['近战奇葩神兵 · 为身旁伙伴添勇气','Melee treasure · courage for close company'],
   'p10.weapon.ranged':['远程奇葩神兵 · 把守护送到更远处','Ranged treasure · a helping paw from afar'],
   'p10.weapon.magic':['魔法奇葩神兵 · 编织奇妙庭院法术','Magic treasure · weaves a garden spell'],
-  'p10.prop.active':['黑市主动法宝 · 关键时刻帮个小忙','Active market charm · a timely helping paw'],
-  'p10.prop.passive':['黑市随身宝贝 · 默默陪伴每次守护','Passive market charm · a faithful companion'],
+  'p10.prop.active':['超市主动法宝 · 关键时刻帮个小忙','Active mart charm · a timely helping paw'],
+  'p10.prop.passive':['超市随身宝贝 · 默默陪伴每次守护','Passive mart charm · a faithful companion'],
 };
 
 export const p10Zh:Record<string,string>=Object.fromEntries(Object.entries(phrases).map(([key,pair])=>[key,pair[0]]));

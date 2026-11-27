@@ -22,6 +22,8 @@ import {
   drawSpriteContain,
   drawText,
   drawWrappedText,
+  fitFontSize,
+  truncateToWidth,
   type UiHitManager,
 } from './CanvasUI';
 
@@ -105,7 +107,7 @@ const FRAME_TONE: Record<CompendiumTab, string> = {
 
 /**
  * Strict 1:1 Web Storybook 6-Tab Compendium (`Compendium.ts` + `p18_preview_d02_compendium_list.png`):
- * - 6 equal Honey-Oak tabs: 合成总览 / 基础萌宠 / 传说英雄 / 捣蛋怪物 / 奇葩神兵 / 黑市道具
+ * - 6 equal Honey-Oak tabs: 合成总览 / 基础萌宠 / 传说英雄 / 捣蛋怪物 / 奇葩神兵 / 超市道具
  * - Single-column sculpted ivory row cards with `已收录` + `ui_storybook_check`
  * - Tap any row for the full Detail Sheet (Lv.1–5 Growth Table, Awakened Form Toggle, Recipes & Weapons!)
  */
@@ -157,6 +159,7 @@ export function drawCompendiumModal(
     c.beginPath();
     c.rect(vx, vy, vw, vh);
     c.clip();
+    hits.pushClip(vx, vy, vw, vh);
 
     const available = isAvailable(id);
     const collected = entryCollected(id, profile);
@@ -410,6 +413,7 @@ export function drawCompendiumModal(
     }
 
     const contentH = Math.max(vh, y + scroll.offset - vy + 12);
+    hits.popClip();
     c.restore();
     scroll.setContentBounds(contentH, vh);
     drawScrollbar(c, vx, vy, vw, vh, contentH, scroll);
@@ -422,6 +426,7 @@ export function drawCompendiumModal(
   c.beginPath();
   c.rect(vx, vy, vw, vh);
   c.clip();
+  hits.pushClip(vx, vy, vw, vh);
 
   const innerW = vw - 16;
   const gapX = 16, gapY = 14;
@@ -490,9 +495,13 @@ export function drawCompendiumModal(
         drawSpriteContain(c, 'ui_weapon_fragment', rx + 20, ry + 20, 96, 96, 0.45);
       }
 
-      // Giant title (28px!) + status pill + family chip
-      drawText(c, entryName(id), rx + 134, ry + 36, 27, avail ? PALETTE.ink : PALETTE.muted, 'left', 900);
-      drawEntryStatusBadge(c, rx + cardW - 12, ry + 16, avail, coll, isHero, id);
+      // Fitted title strictly clear of the right-hand status pill + family chip
+      const badgeW = drawEntryStatusBadge(c, rx + cardW - 12, ry + 16, avail, coll, isHero, id);
+      const maxTitleW = Math.max(88, cardW - 134 - badgeW - 18);
+      const rawTitle = entryName(id);
+      const titleFont = fitFontSize(c, rawTitle, maxTitleW, 25, 17, 900);
+      const fitTitle = truncateToWidth(c, rawTitle, maxTitleW, titleFont, 900);
+      drawText(c, fitTitle, rx + 134, ry + 35, titleFont, avail ? PALETTE.ink : PALETTE.muted, 'left', 900);
       round(c, rx + 134, ry + 64, cardW - 148, 34, 12, '#efe0be', '#a67f4e', 1.6);
       drawText(c, entryFamily(id), rx + 134 + (cardW - 148) / 2, ry + 82, 19, '#4c2c12', 'center', 900);
 
@@ -503,6 +512,7 @@ export function drawCompendiumModal(
   }
 
   const contentH = 12 + totalRows * (cardH + gapY);
+  hits.popClip();
   c.restore();
   scroll.setContentBounds(contentH, vh);
   drawScrollbar(c, vx, vy, vw, vh, contentH, scroll);
@@ -517,27 +527,28 @@ function drawEntryStatusBadge(
   collected: boolean,
   isHero: boolean,
   id: string,
-): void {
+): number {
   const bh = 38;
   if (!available) {
     const label = t('p9.starUnlock', { stars: requiredStars(id) });
     c.font = '900 21px "Trebuchet MS", "PingFang SC", "Microsoft YaHei", sans-serif';
-    const bw = Math.max(126, Math.ceil(c.measureText(label).width) + 24);
+    const bw = Math.max(118, Math.ceil(c.measureText(label).width) + 22);
     const bx = rightX - bw;
     round(c, bx, topY, bw, bh, 19, '#5e3c1f', '#ffd978', 2.4);
     drawText(c, label, bx + bw / 2, topY + bh / 2 + 1, 21, '#fff6df', 'center', 900);
-    return;
+    return bw;
   }
   const isOwnedType = Object.hasOwn(WEAPONS, id) || Object.hasOwn(PROPS, id);
   const key = collected ? (isOwnedType ? 'p10.owned' : 'p10.collected') : isHero ? 'p10.canMerge' : 'p10.uncollected';
   const label = t(key);
-  c.font = '900 19px "Trebuchet MS", "PingFang SC", "Microsoft YaHei", sans-serif';
-  const bw = Math.max(96, Math.ceil(c.measureText(label).width) + 22);
+  c.font = '900 18.5px "Trebuchet MS", "PingFang SC", "Microsoft YaHei", sans-serif';
+  const bw = Math.max(88, Math.ceil(c.measureText(label).width) + 20);
   const bx = rightX - bw;
   const fill = collected ? (isHero ? '#f6c542' : '#6db33f') : '#dfd2b8';
   const color = collected ? (isHero ? '#452208' : '#fffdf5') : '#5d4630';
   round(c, bx, topY, bw, 34, 17, fill, '#4c2d12', 2);
-  drawText(c, label, bx + bw / 2, topY + 18, 19, color, 'center', 900);
+  drawText(c, label, bx + bw / 2, topY + 18, 18.5, color, 'center', 900);
+  return bw;
 }
 
 export { LEDGER };

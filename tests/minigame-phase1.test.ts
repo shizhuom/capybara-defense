@@ -202,7 +202,7 @@ describe('Mini-Game Phase 1: Platform layer, Viewport safe-area, Assets & Subpac
     expect(counts.main).toBeGreaterThan(60);
     expect(counts.maps).toBeGreaterThanOrEqual(10);
     expect(counts.meta).toBeGreaterThan(100);
-    expect(counts.omitted).toBe(1); // unused legacy menu_banner
+    expect(counts.omitted).toBe(18); // unused legacy menu_banner + 17 unused *_walk2 frames
   });
 
   it('rejects portrait-stale iOS WeChat safeArea & menuButton rects on landscape phones so HUD stays at screen edges', () => {

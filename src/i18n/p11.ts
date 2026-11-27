@@ -2,7 +2,7 @@ import {p11MetaZh,p11MetaEn} from './p11-meta';
 import {p11ProfileZh,p11ProfileEn} from './p11-profile';
 const phrases:Record<string,[string,string]>={
  'p11.title.armory':['神兵工坊','Armory'],
- 'p11.title.market':['浣熊黑市','Raccoon Market'],
+ 'p11.title.market':['浣熊超市','Raccoon Mart'],
  'p11.title.leaderboard':['温泉段位榜','Onsen Rankings'],
  'p11.title.profile':['水豚通行证','Keeper Passport'],
  'p11.title.settings':['庭院设置','Courtyard Settings'],
@@ -19,11 +19,11 @@ const phrases:Record<string,[string,string]>={
  'p11.tab.lottery':['幸运扭蛋','Lucky Gacha'],
  'p11.unlocked':['已解锁 {count}/36','Unlocked {count}/36'],
  'p11.switch.armory':['切至神兵','Visit Armory'],
- 'p11.switch.market':['切至黑市','Visit Market'],
+ 'p11.switch.market':['切至超市','Visit Mart'],
  'p11.tip.armory.1':['轻点神兵，查看特效并为同流派英雄穿戴','Tap a weapon for its effect and matching heroes'],
  'p11.tip.armory.2':['集齐碎片自动解锁，多余碎片可在工坊分解','Collect fragments to unlock; recycle extras in Fragments'],
- 'p11.tip.market.1':['每日特惠添新物，道具背包轻松管理出战装备','Find daily deals, then manage your loadout in Backpack'],
- 'p11.tip.market.2':['每次守护胜利都能获得一张免费扭蛋券','Every successful defense earns a free gacha ticket'],
+ 'p11.tip.market.1':['每日特惠可低价试用 24h 并赠 1 张图纸，集齐图纸永久解锁！','Rent 24h trials in Daily Deals (+1 blueprint) and unlock props permanently!'],
+ 'p11.tip.market.2':['每累计 3 次守护胜利即可获得一张免费扭蛋券','Every 3 successful defenses earn a free gacha ticket'],
  'p11.tip.leaderboard.1':['慢慢积攒星星，和庭院伙伴一起成长','Gather stars and grow alongside your garden friends'],
  'p11.tip.leaderboard.2':['提高段位，逐步解锁更多地图与萌宠','Rank up to discover new maps and furry friends'],
  'p11.tip.profile.1':['轻点已解锁的头像，换上今天的心情','Tap an unlocked portrait to match today’s mood'],

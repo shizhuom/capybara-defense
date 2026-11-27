@@ -1,5 +1,5 @@
 import { FRAGMENTS } from '../config/enemies';
-import { createProfile, grantWeaponFragments, normalizeProfile, unlockAllProfile } from '../core/MetaProgression';
+import { createProfile, grantPropBlueprints, grantWeaponFragments, normalizeProfile, unlockAllProfile } from '../core/MetaProgression';
 import { applyBattleProgress,recordMergedHeroes } from '../core/PlayerProgression';
 import { grantIngredients } from '../core/KitchenProgression';
 import { grantVillageResources } from '../core/VillageProgression';
@@ -48,12 +48,14 @@ export function saveProfile(profile: Profile, storage = browserStorage()): boole
 }
 
 /** A receipt and its rewards are saved together, so revisiting a result cannot pay twice. */
-export function awardBattle(profile: Profile, battleId: string, result: BattleResult): { profile: Profile; awarded: boolean; newWeapons:string[]; ticketAwarded?:boolean } {
-  if (!battleId || result?.endless || profile.awardedBattles.includes(battleId)) return { profile, awarded: false, newWeapons:[] };
+export function awardBattle(profile: Profile, battleId: string, result: BattleResult): { profile: Profile; awarded: boolean; newWeapons:string[]; newProps:string[]; ticketAwarded?:boolean } {
+  if (!battleId || result?.endless || profile.awardedBattles.includes(battleId)) return { profile, awarded: false, newWeapons:[], newProps:[] };
   const won = result.winner === 'player';
   const p=normalizeProfile(profile);
   const legacy=won ? result.loot.filter(id=>validFragments.has(id)) : [];
   const granted=grantWeaponFragments(p,won ? [...result.loot,...legacy.map(()=>'m01_swatter')] : []);
+  const propDrops=won && Array.isArray(result.propLoot) ? result.propLoot : [];
+  const propGranted=grantPropBlueprints(granted.profile, propDrops);
   // Ingredients are banked on victory and as defeat salvage, under this same receipt.
   const ingredients=grantIngredients(p,Array.isArray(result.ingredientLoot)?result.ingredientLoot:[]).ingredients;
   const village=grantVillageResources(p,Array.isArray(result.villageLoot)?result.villageLoot:[]).village;
@@ -68,22 +70,23 @@ export function awardBattle(profile: Profile, battleId: string, result: BattleRe
   return {
     awarded: true,
     newWeapons:granted.newWeapons,
+    newProps:propGranted.newProps,
     ticketAwarded,
     profile: applyBattleProgress({
-      ...granted.profile,
-      coins: profile.coins + (won ? counter(result.coins) : 0),
-      wins: profile.wins + (won ? 1 : 0), matches: profile.matches + 1,
+      ...propGranted.profile,
+      coins: propGranted.profile.coins + (won ? counter(result.coins) : 0),
+      wins: p.wins + (won ? 1 : 0), matches: p.matches + 1,
       fragments: [...p.fragments, ...legacy],
-      awardedBattles: [...profile.awardedBattles, battleId],
+      awardedBattles: [...p.awardedBattles, battleId].slice(-200),
       freeLotteryTickets:p.freeLotteryTickets+(ticketAwarded?1:0),gachaWinCounter,ingredients,village,
       endlessCrests:p.endlessCrests+crestsGain,
-    },won,result.mergedHeroes),
+    },won,result.mergedHeroes,result.remainingOranges),
   };
 }
 
 /** The standard receipt must already be banked. Save this bonus and its own receipt atomically. */
-export function awardEndless(profile:Profile,battleId:string,result:BattleResult):{profile:Profile;awarded:boolean;newWeapons:string[]} {
-  const p=normalizeProfile(profile),rejected={profile:p,awarded:false,newWeapons:[] as string[]};
+export function awardEndless(profile:Profile,battleId:string,result:BattleResult):{profile:Profile;awarded:boolean;newWeapons:string[];newProps:string[]} {
+  const p=normalizeProfile(profile),rejected={profile:p,awarded:false,newWeapons:[] as string[],newProps:[] as string[]};
   if(typeof battleId!=='string'||!battleId.trim()||battleId.length>191||!p.awardedBattles.includes(battleId))return rejected;
   const receipt=`${battleId}:endless`,wave=result?.endlessWave,bonus=result?.endlessCoins,loot=result?.endlessLoot;
   if(p.awardedBattles.includes(receipt)||!result||result.endless!==true||result.winner!=='player'||
@@ -94,6 +97,8 @@ export function awardEndless(profile:Profile,battleId:string,result:BattleResult
   if(harvest!==undefined&&(!Array.isArray(harvest)||!harvest.every(id=>typeof id==='string')))return rejected;
   const materials=result.endlessVillageLoot;
   if(materials!==undefined&&(!Array.isArray(materials)||!materials.every(id=>typeof id==='string')))return rejected;
+  const propDrops=result.endlessPropLoot;
+  if(propDrops!==undefined&&(!Array.isArray(propDrops)||!propDrops.every(id=>typeof id==='string')))return rejected;
   const coins=p.coins+bonus;
   if(!Number.isSafeInteger(coins))return rejected;
   // P17 crests: optional on older receipts, never more than the cleared waves can pay.
@@ -101,10 +106,11 @@ export function awardEndless(profile:Profile,battleId:string,result:BattleResult
   if(typeof crests!=='number'||!Number.isSafeInteger(crests)||crests<0||crests>endlessCrestsThroughWave(wave))return rejected;
   const legacy=loot.filter(id=>validFragments.has(id));
   const granted=grantWeaponFragments(p,[...loot,...legacy.map(()=>'m01_swatter')]);
+  const propGranted=grantPropBlueprints(granted.profile,propDrops??[]);
   const heroes=Array.isArray(result.mergedHeroes)?result.mergedHeroes.filter(id=>typeof id==='string'):[];
   const ingredients=grantIngredients(p,harvest??[]).ingredients,village=grantVillageResources(p,materials??[]).village;
-  const next:Profile={...granted.profile,coins,ingredients,village,
-    fragments:[...p.fragments,...legacy],awardedBattles:[...p.awardedBattles,receipt],
+  const next:Profile={...propGranted.profile,coins:propGranted.profile.coins+bonus,ingredients,village,
+    fragments:[...p.fragments,...legacy],awardedBattles:[...p.awardedBattles,receipt].slice(-200),
     bestEndlessWave:Math.max(p.bestEndlessWave??0,wave),endlessCrests:p.endlessCrests+crests};
   const record=bestEndlessRecord(p,wave,result);
   if(record){
@@ -112,7 +118,7 @@ export function awardEndless(profile:Profile,battleId:string,result:BattleResult
     delete next.bestEndlessTime;delete next.bestEndlessMvp;delete next.bestEndlessMvpAwakened;delete next.bestEndlessAwakened;
     Object.assign(next,record);
   }
-  return {awarded:true,newWeapons:granted.newWeapons,profile:recordMergedHeroes(next,heroes)};
+  return {awarded:true,newWeapons:granted.newWeapons,newProps:propGranted.newProps,profile:recordMergedHeroes(next,heroes)};
 }
 
 /** A higher wave (or the same wave in less time) refreshes the run metadata the global board shows. */

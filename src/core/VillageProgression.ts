@@ -6,7 +6,7 @@ import {HEROES} from '../config/heroes';
 import {progressionFor} from '../config/progression';
 import {rollWeapon} from '../config/weapons';
 import {grantIngredients} from './KitchenProgression';
-import {grantWeaponFragments} from './MetaProgression';
+import {grantWeaponFragments,pruneExpiredTrials} from './MetaProgression';
 import {copyVillage,villageFacilityLevels} from './VillageState';
 import type {BattleLoadout,Profile} from './types';
 
@@ -18,25 +18,41 @@ export const villageLevel=level;
 
 // ── Offline harvest ──────────────────────────────────────────────────────────────────────────────────
 export interface OfflineHarvest {elapsedMs:number;coins:number;fragments:number;yuzu:number;tickets:number;full:boolean}
-/** Pure: what the basket holds at `nowMs`, clamped to [0, 12h] so clock rollbacks never go negative. */
-export function computeOfflineHarvest(profile:Profile,nowMs:number):OfflineHarvest {
+const HOUR_MS=3600_000;
+function evaluateHarvest(profile:Profile,nowMs:number):{harvest:OfflineHarvest;nextRare:Record<string,number>} {
   const anchor=profile.village.lastHarvestAt,delta=Number.isFinite(nowMs)&&Number.isFinite(anchor)?nowMs-anchor:0;
-  const elapsedMs=Math.max(0,Math.min(VILLAGE_OFFLINE_CAP_MS,delta)),hours=elapsedMs/3600_000;
+  const elapsedMs=Math.max(0,Math.min(VILLAGE_OFFLINE_CAP_MS,delta)),hours=elapsedMs/HOUR_MS;
+  const carry=profile.village.rareProgressMs??{},nextRare:Record<string,number>={};
   let perHour=0,fragments=0,yuzu=0,tickets=0;
   for(const id of FACILITY_IDS){
     const lv=level(profile,id);if(!lv)continue;const def=FACILITIES[id];
     perHour+=def.coinsPerHour[lv-1];
-    const every=(table?:readonly number[])=>{const n=table?.[lv-1]??0;return n>0?Math.floor(hours/n):0;};
-    fragments+=every(def.fragmentEveryHours);yuzu+=every(def.yuzuEveryHours);tickets+=every(def.ticketEveryHours);
+    const roll=(kind:'fragment'|'yuzu'|'ticket',table?:readonly number[]):number=>{
+      const n=table?.[lv-1]??0;if(n<=0)return 0;
+      const periodMs=n*HOUR_MS,key=`${id}:${kind}`;
+      const prior=Math.max(0,Math.min(periodMs-1,Math.trunc(carry[key]??0)));
+      const totalMs=prior+elapsedMs,gained=Math.floor(totalMs/periodMs),rem=totalMs%periodMs;
+      if(rem>0)nextRare[key]=rem;
+      return gained;
+    };
+    fragments+=roll('fragment',def.fragmentEveryHours);
+    yuzu+=roll('yuzu',def.yuzuEveryHours);
+    tickets+=roll('ticket',def.ticketEveryHours);
   }
-  return{elapsedMs,coins:Math.floor(perHour*hours),fragments,yuzu,tickets,full:elapsedMs>=VILLAGE_OFFLINE_CAP_MS};
+  return{harvest:{elapsedMs,coins:Math.floor(perHour*hours),fragments,yuzu,tickets,full:elapsedMs>=VILLAGE_OFFLINE_CAP_MS},nextRare};
+}
+/** Pure: what the basket holds at `nowMs`, clamped to [0, 12h] so clock rollbacks never go negative. */
+export function computeOfflineHarvest(profile:Profile,nowMs:number):OfflineHarvest {
+  return evaluateHarvest(profile,nowMs).harvest;
 }
 export const hasHarvest=(h:OfflineHarvest)=>h.coins>=1||h.fragments>0||h.yuzu>0||h.tickets>0;
-/** Banks coins, tickets, golden yuzu and random weapon fragments atomically, then restarts the basket clock. */
+/** Banks coins, tickets, golden yuzu and random weapon fragments atomically, preserving partial rare-drop progress. */
 export function claimOfflineHarvest(profile:Profile,nowMs:number,random:()=>number=Math.random):VillageResult&{harvest:OfflineHarvest;newWeapons:string[]} {
-  const harvest=computeOfflineHarvest(profile,nowMs);
+  const {harvest,nextRare}=evaluateHarvest(profile,nowMs);
   if(!hasHarvest(harvest))return{...fail(profile,'p16.nothingToHarvest'),harvest,newWeapons:[]};
-  let p=withVillage({...profile,coins:profile.coins+harvest.coins,freeLotteryTickets:profile.freeLotteryTickets+harvest.tickets},{lastHarvestAt:nowMs});
+  const nextVillage:Profile['village']={...copyVillage(profile.village),lastHarvestAt:nowMs};
+  if(Object.keys(nextRare).length)nextVillage.rareProgressMs=nextRare;else delete nextVillage.rareProgressMs;
+  let p:Profile={...profile,coins:profile.coins+harvest.coins,freeLotteryTickets:profile.freeLotteryTickets+harvest.tickets,village:nextVillage};
   if(harvest.yuzu)p=grantIngredients(p,Array.from({length:harvest.yuzu},()=>'ing_yuzu'));
   let newWeapons:string[]=[];
   if(harvest.fragments){const granted=grantWeaponFragments(p,Array.from({length:harvest.fragments},()=>rollWeapon(random,undefined,1,p.unlockedWeapons)));p={...granted.profile,village:p.village};newWeapons=granted.newWeapons;}
@@ -102,8 +118,15 @@ export function petVillageResident(profile:Profile,petId:string,day:string):Vill
 export const petTapsLeft=(profile:Profile,day:string)=>PET_TAP_DAILY_LIMIT-(profile.village.petTapDay===day?profile.village.petTapCount:0);
 
 // ── Battle bridge ────────────────────────────────────────────────────────────────────────────────────
-/** Profile → battle loadout: the facility levels travel as `villageFacilities`. */
-export function villageLoadout(profile:Profile):Profile&BattleLoadout {return{...profile,villageFacilities:villageFacilityLevels(profile.village)};}
+/** Profile → battle loadout: active 24h trials travel as usable props and facility levels travel as `villageFacilities`. */
+export function villageLoadout(profile:Profile,now=Date.now()):Profile&BattleLoadout {
+  const cleaned=pruneExpiredTrials(profile,now);
+  const effectiveOwned:Record<string,number>={...cleaned.ownedProps};
+  for(const [id,expiresAt] of Object.entries(cleaned.trialProps??{})){
+    if(expiresAt>now&&!effectiveOwned[id])effectiveOwned[id]=1;
+  }
+  return{...cleaned,ownedProps:effectiveOwned,villageFacilities:villageFacilityLevels(cleaned.village)};
+}
 /** Banks battle materials (`res_onsen_wood` / `res_yuzu_essence`); unknown ids are ignored. */
 export function grantVillageResources(profile:Profile,ids:readonly string[]):Profile {
   const list=Array.isArray(ids)?ids:[];

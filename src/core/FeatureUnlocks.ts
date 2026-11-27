@@ -1,5 +1,6 @@
 import { BROTHS, BROTH_IDS, INGREDIENT_IDS, type IngredientId } from '../config/kitchen';
 import { FACILITIES, FACILITY_IDS, type FacilityId } from '../config/village';
+import { PROPS, propBlueprintGoal } from '../config/props';
 import { RARITY_RULES, WEAPONS } from '../config/weapons';
 import { grantWeaponFragments } from './MetaProgression';
 import type { Profile } from './types';
@@ -163,24 +164,42 @@ export function claimFeatureStarterGift(profile: Profile, feature: FeatureId, no
       break;
     }
     case 'market': {
-      // Gift 1 Super Glue Trap (active prop for hands-on battle tutorial) + 1 free gacha ticket.
+      // Gift 1 permanent Super Glue Trap (active prop for hands-on battle tutorial) + 1 free gacha ticket.
+      const ownedProps = { ...next.ownedProps, glue_trap: Math.max(1, next.ownedProps.glue_trap ?? 0) };
+      const propBlueprints = { ...(next.propBlueprints ?? {}), glue_trap: propBlueprintGoal('glue_trap') };
+      const trialProps = { ...(next.trialProps ?? {}) };
+      delete trialProps.glue_trap;
+      let shop = next.shop;
+      if (shop && shop.offers.includes('glue_trap')) {
+        const offers = shop.offers.filter(id => id !== 'glue_trap');
+        const bought = shop.bought?.filter(id => id !== 'glue_trap' && offers.includes(id));
+        shop = { day: shop.day, offers, ...(bought?.length ? { bought } : {}) };
+      }
       next = {
         ...next,
-        ownedProps: { ...next.ownedProps, glue_trap: Math.max(1, next.ownedProps.glue_trap ?? 0) },
+        ownedProps,
+        propBlueprints,
+        trialProps,
+        shop,
         freeLotteryTickets: (next.freeLotteryTickets ?? 0) + 1,
       };
       break;
     }
     case 'village': {
-      // Exact materials to hand-build Bamboo Onsen Pool Lv.1 (10 wood, 3 essence) + fresh harvest anchor.
+      // Exact materials to hand-build Bamboo Onsen Pool Lv.1 (10 wood, 3 essence); preserve any older harvest anchor.
       const cost = FACILITIES.fac_bamboo_pool.costs[0]!;
+      const welcomeAnchor = now - 15 * 60_000;
+      const existingAnchor = next.village?.lastHarvestAt;
+      const preservedAnchor = typeof existingAnchor === 'number' && Number.isFinite(existingAnchor) && existingAnchor > 0 && existingAnchor < welcomeAnchor
+        ? existingAnchor
+        : welcomeAnchor;
       next = {
         ...next,
         village: {
           ...next.village,
           wood: (next.village?.wood ?? 0) + cost.wood,
           essence: (next.village?.essence ?? 0) + cost.essence,
-          lastHarvestAt: now - 15 * 60_000,
+          lastHarvestAt: preservedAnchor,
         },
       };
       break;
@@ -209,7 +228,7 @@ export function claimFeatureStarterGift(profile: Profile, feature: FeatureId, no
 }
 
 export interface NextGoalHook {
-  kind: 'feature' | 'gacha_ticket' | 'weapon' | 'village' | 'kitchen';
+  kind: 'feature' | 'gacha_ticket' | 'weapon' | 'prop' | 'village' | 'kitchen';
   id: string;
   current: number;
   target: number;
@@ -251,6 +270,22 @@ export function computeNextGoalHook(profile: Profile): NextGoalHook | null {
     if (closeWeapons.length) {
       const best = closeWeapons[0];
       return { kind: 'weapon', id: best.w.id, current: best.current, target: best.target, percent: Math.round((best.current / best.target) * 100) };
+    }
+  }
+  // 3.5 Any prop blueprint within 1-2 sheets of permanent unlock
+  if (isFeatureUnlocked(profile, 'market')) {
+    const closeProps = Object.values(PROPS)
+      .filter(p => (profile.ownedProps[p.id] ?? 0) < p.maxLevel)
+      .map(p => {
+        const target = propBlueprintGoal(p.id);
+        const current = profile.propBlueprints?.[p.id] ?? 0;
+        return { p, current, target, missing: target - current };
+      })
+      .filter(x => x.current > 0 && x.missing > 0 && x.missing <= 2)
+      .sort((a, b) => a.missing - b.missing || b.p.rarity - a.p.rarity);
+    if (closeProps.length) {
+      const best = closeProps[0];
+      return { kind: 'prop', id: best.p.id, current: best.current, target: best.target, percent: Math.round((best.current / best.target) * 100) };
     }
   }
   // 4. Any Lv.1 village facility >= 65% wood+essence progress

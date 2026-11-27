@@ -27,6 +27,7 @@ import {
   PALETTE,
   UI_FONT,
   drawButton,
+  drawGuideRipple,
   drawIconLabel,
   drawSpriteContain,
   drawText,
@@ -103,41 +104,63 @@ export function drawMenuScreen(
     hits.add({ id: 'menu:profile', x: px, y: py, w: pw, h: ph });
   }
 
-  // ── 2. RIGHT-SIDE SYSTEM CONTROLS (2×2 GIANT BLOCK STRICTLY BELOW WECHAT [🎮][···|◉]!) ─
+  // ── 2. RIGHT-SIDE SYSTEM CONTROLS (STRICTLY BELOW WECHAT [🎮][···|◉]!) ────
   // Placing controls below y=104 clears BOTH WeChat floating buttons (even on Dynamic Island iPhones!) AND the giant Title Logo!
   void topRightEdge;
   const ctrlRight = bottomRightAnchor;
   const ctrlY = 104;
-  const rowGap = 12;
-  const colGap = 12;
-  const sqW = 92;
-  const wideW = 112;
-  const btnH = 66;
-  const rightColX = ctrlRight - sqW;
-  const leftColX = rightColX - colGap - wideW;
+  if (__ENABLE_ENGLISH__) {
+    const rowGap = 12;
+    const colGap = 12;
+    const sqW = 92;
+    const wideW = 112;
+    const btnH = 66;
+    const rightColX = ctrlRight - sqW;
+    const leftColX = rightColX - colGap - wideW;
 
-  // Row 1: [中 | EN] + [⚙]
-  round(c, leftColX, ctrlY + 4, wideW, btnH, 18, '#b89464', '#5c3b1e', 2.4);
-  round(c, leftColX, ctrlY, wideW, btnH, 18, '#fff8e8', '#5c3b1e', 3.2);
-  const activeHalfX = zh ? leftColX + 5 : leftColX + wideW / 2;
-  round(c, activeHalfX, ctrlY + 5, wideW / 2 - 5, btnH - 10, 13, '#6a4526', 'transparent', 0);
-  drawText(c, '中', leftColX + wideW * 0.25 + 1, ctrlY + btnH / 2 + 1, 25, zh ? '#fffdf6' : '#5a3a1e', 'center', 900);
-  drawText(c, 'EN', leftColX + wideW * 0.75 - 1, ctrlY + btnH / 2 + 1, 23, zh ? '#5a3a1e' : '#fffdf6', 'center', 900);
-  hits.add({ id: 'menu:lang', x: leftColX, y: ctrlY, w: wideW, h: btnH });
+    // Row 1: [中 | EN] + [⚙]
+    round(c, leftColX, ctrlY + 4, wideW, btnH, 18, '#b89464', '#5c3b1e', 2.4);
+    round(c, leftColX, ctrlY, wideW, btnH, 18, '#fff8e8', '#5c3b1e', 3.2);
+    const activeHalfX = zh ? leftColX + 5 : leftColX + wideW / 2;
+    round(c, activeHalfX, ctrlY + 5, wideW / 2 - 5, btnH - 10, 13, '#6a4526', 'transparent', 0);
+    drawText(c, '中', leftColX + wideW * 0.25 + 1, ctrlY + btnH / 2 + 1, 25, zh ? '#fffdf6' : '#5a3a1e', 'center', 900);
+    drawText(c, 'EN', leftColX + wideW * 0.75 - 1, ctrlY + btnH / 2 + 1, 23, zh ? '#5a3a1e' : '#fffdf6', 'center', 900);
+    hits.add({ id: 'menu:lang', x: leftColX, y: ctrlY, w: wideW, h: btnH });
 
-  drawButton(c, hits, 'menu:settings', rightColX, ctrlY, sqW, btnH, '⚙', {
-    ...BTN_STYLES.cream,
-    radius: 18,
-    fontSize: 34,
-  });
+    drawButton(c, hits, 'menu:settings', rightColX, ctrlY, sqW, btnH, '⚙', {
+      ...BTN_STYLES.cream,
+      radius: 18,
+      fontSize: 34,
+    });
 
-  // Row 2: [Mute] + [Share]
-  const row2Y = ctrlY + btnH + rowGap;
-  drawButton(c, hits, 'menu:mute', leftColX, row2Y, wideW, btnH, '', { ...BTN_STYLES.cream, radius: 18 });
-  drawVectorSpeaker(c, leftColX + wideW / 2, row2Y + btnH / 2 + (hits.isPressed('menu:mute') ? 3 : 0), muted);
+    // Row 2: [Mute] + [Share]
+    const row2Y = ctrlY + btnH + rowGap;
+    drawButton(c, hits, 'menu:mute', leftColX, row2Y, wideW, btnH, '', { ...BTN_STYLES.cream, radius: 18 });
+    drawVectorSpeaker(c, leftColX + wideW / 2, row2Y + btnH / 2 + (hits.isPressed('menu:mute') ? 3 : 0), muted);
 
-  drawButton(c, hits, 'menu:share', rightColX, row2Y, sqW, btnH, '', { ...BTN_STYLES.cream, radius: 18 });
-  drawVectorShare(c, rightColX + sqW / 2, row2Y + btnH / 2 + (hits.isPressed('menu:share') ? 3 : 0));
+    drawButton(c, hits, 'menu:share', rightColX, row2Y, sqW, btnH, '', { ...BTN_STYLES.cream, radius: 18 });
+    drawVectorShare(c, rightColX + sqW / 2, row2Y + btnH / 2 + (hits.isPressed('menu:share') ? 3 : 0));
+  } else {
+    // Chinese-only WeChat layout: sleek 3-button horizontal cluster ([Mute] [Share] [⚙]) cleanly clearing logo & capsule!
+    const btnW = 74;
+    const btnH = 66;
+    const gap = 10;
+    const gearX = ctrlRight - btnW;
+    const shareX = gearX - gap - btnW;
+    const muteX = shareX - gap - btnW;
+
+    drawButton(c, hits, 'menu:mute', muteX, ctrlY, btnW, btnH, '', { ...BTN_STYLES.cream, radius: 18 });
+    drawVectorSpeaker(c, muteX + btnW / 2, ctrlY + btnH / 2 + (hits.isPressed('menu:mute') ? 3 : 0), muted);
+
+    drawButton(c, hits, 'menu:share', shareX, ctrlY, btnW, btnH, '', { ...BTN_STYLES.cream, radius: 18 });
+    drawVectorShare(c, shareX + btnW / 2, ctrlY + btnH / 2 + (hits.isPressed('menu:share') ? 3 : 0));
+
+    drawButton(c, hits, 'menu:settings', gearX, ctrlY, btnW, btnH, '⚙', {
+      ...BTN_STYLES.cream,
+      radius: 18,
+      fontSize: 32,
+    });
+  }
 
   // ── 3. GIANT POSTER-SIZED TITLE LOGO (+38% LARGER FOR PHONE CLARITY!) ────
   const logoId = zh ? 'title_logo_zh' : 'title_logo_en';
@@ -290,7 +313,10 @@ export function drawMenuScreen(
     const crests = formatCompactNumber(profile.endlessCrests ?? 0);
     const waveTag = (profile.bestEndlessWave ?? 0) >= 11 ? ` · W${profile.bestEndlessWave}` : '';
     const label = `${t('p17.hallPill')}${waveTag} · ${ready ? t('p17.canUpgrade') : `×${crests}`}`;
-    drawFloatingCornerPill(c, hits, 'menu:hub:medallions', bottomRightAnchor, floatingPillY, 'ui_endless_crest', label, ready ? '#f6cf59' : '#efe3fa', true);
+    const pillRect = drawFloatingCornerPill(c, hits, 'menu:hub:medallions', bottomRightAnchor, floatingPillY, 'ui_endless_crest', label, ready ? '#f6cf59' : '#efe3fa', true);
+    if (highlightFeature === 'medallions' && pillRect) {
+      drawGuideRipple(c, pillRect.x, pillRect.y, pillRect.w, pillRect.h, 28, elapsed, { maxExpand: 20, waves: 3, showBullseye: true });
+    }
   } else if (nextDock?.id === 'medallions') {
     drawFloatingCornerPill(c, hits, 'menu:locked:medallions', bottomRightAnchor, floatingPillY, 'ui_endless_crest', `${t('p17.hallPill')} 🔒${lockText}`, '#d8ccb8', true);
   }
@@ -412,7 +438,7 @@ function drawFloatingCornerPill(
   text: string,
   fill: string,
   alignRight = false,
-): void {
+): { x: number; y: number; w: number; h: number } {
   c.font = `900 22px ${UI_FONT}`;
   const pw = Math.min(344, Math.max(194, Math.ceil(c.measureText(text).width) + 68));
   const ph = 56;
@@ -425,6 +451,7 @@ function drawFloatingCornerPill(
   round(c, x, y + dy, pw, ph, 28, fill, '#5a391e', 2.8);
   drawSpriteContain(c, icon, x + 10, y + dy + 9, 38, 38);
   drawText(c, text, x + 54, y + dy + ph / 2 + 1, 22, PALETTE.ink, 'left', 900);
+  return { x, y, w: pw, h: ph };
 }
 
 function drawCompactMapBar(

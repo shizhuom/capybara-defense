@@ -26,16 +26,17 @@ const normal:BattleResult={winner:'player',reason:'waves',loot:['m02_slipper'],p
 const honor:BattleResult={...normal,reason:'oranges',endless:true,endlessWave:13,endlessCoins:45,
   endlessLoot:['m01_swatter','bamboo_blade'],coins:120,loot:['m02_slipper','m01_swatter','bamboo_blade'],mergedHeroes:['kungfu_po']};
 
-// P17 rebalance: endless HP grows ×1.25 per wave (was ×2), speed +1.2%/wave (cap +60%), armor +0.9%/wave (cap +45%).
-const hp=(k:number)=>9*Math.pow(1.25,k);
+// P17 rebalance + smooth W11 anchor above W10 (16.2 HP, 1.14× speed): ×1.25 HP/wave, +1.2% speed/wave (cap +60%), +0.9% armor/wave (cap +45%).
+const hp=(k:number)=>waves.ENDLESS_BASE_HP_SCALE*Math.pow(1.25,k);
+const spd=(k:number)=>waves.ENDLESS_BASE_SPEED_SCALE+Math.min(.60,.012*k);
 describe('P13 exact endless pressure (P17 ×1.25 curve)',()=>{
   it.each([
-    [11,29,hp(1),1.104,1.012,.009,1],
-    [12,32,hp(2),1.01568,1.024,.018,1],
-    [13,35,hp(3),.9344256,1.036,.027,2],
-    [15,41,hp(5),.79089782784,1.06,.045,2],
-    [16,44,hp(6),.7276260016128,1.072,.054,3],
-    [24,56,hp(14),.55,1.168,.126,3],
+    [11,29,hp(1),1.104,spd(1),.009,1],
+    [12,32,hp(2),1.01568,spd(2),.018,1],
+    [13,35,hp(3),.9344256,spd(3),.027,2],
+    [15,41,hp(5),.79089782784,spd(5),.045,2],
+    [16,44,hp(6),.7276260016128,spd(6),.054,3],
+    [24,56,hp(14),.55,spd(14),.126,3],
   ])('wave %i scales HP, pressure and mandatory bosses',(wave,count,hpScale,interval,speedScale,armorBonus,bossCount)=>{
     expect(waves).toHaveProperty('getWaveConfig');
     const config=waves.getWaveConfig(wave);
@@ -50,11 +51,16 @@ describe('P13 exact endless pressure (P17 ×1.25 curve)',()=>{
   });
   it('applies wave11 pressure to both a scheduled boss and the first actual minion',()=>{
     const e=endless({progressionStars:0});const boss=e.state.enemies.find(enemy=>enemy.boss)!;
-    expect(boss.maxHp).toBe(700*11.25);expect(boss.speed).toBeCloseTo(.22*1.012);expect(boss.armor).toBeCloseTo(.059);
-    e.tick(1);const rat=e.state.enemies.find(enemy=>!enemy.boss)!;
-    expect(rat.maxHp).toBe(28*11.25);expect(rat.speed).toBeCloseTo(.38*1.012);expect(rat.armor).toBeCloseTo(.009);
+    const bossDef=ENEMIES[boss.kind];
+    expect(boss.maxHp).toBeCloseTo(bossDef.hp*waves.getEndlessBossScaling(bossDef.hp,11),6);
+    expect(boss.speed).toBeCloseTo(bossDef.speed*spd(1));expect(boss.armor).toBeCloseTo(bossDef.armor+.009);
+    e.tick(1);const mob=e.state.enemies.find(enemy=>!enemy.boss)!;
+    const mobDef=ENEMIES[mob.kind];
+    expect(mob.maxHp).toBeCloseTo(mobDef.hp*hp(1),6);expect(mob.speed).toBeCloseTo(mobDef.speed*spd(1));expect(mob.armor).toBeCloseTo(mobDef.armor+.009);
     expect(e.currentWaveTargetCount()).toBe(29);e.skipWave();
-    expect(e.state.enemies.find(enemy=>enemy.boss)!.maxHp).toBe(700*hp(2));
+    const boss12=e.state.enemies.find(enemy=>enemy.boss)!;
+    const boss12Def=ENEMIES[boss12.kind];
+    expect(boss12.maxHp).toBeCloseTo(boss12Def.hp*waves.getEndlessBossScaling(boss12Def.hp,12),6);
   });
   it('preserves fractional spawn intervals instead of rounding every spawn up to a fixed step',()=>{
     const e=endless({progressionStars:0});
@@ -64,8 +70,8 @@ describe('P13 exact endless pressure (P17 ×1.25 curve)',()=>{
   });
   it('applies endless pressure to default direct spawns without scaling explicit HP multipliers twice',()=>{
     const e=endless({progressionStars:0});
-    expect(e.spawnEnemy('rat','player').maxHp).toBe(315);
-    expect(e.spawnEnemy('rat','player',11.25).maxHp).toBe(315);
+    expect(e.spawnEnemy('rat','player').maxHp).toBeCloseTo(28*hp(1),6);
+    expect(e.spawnEnemy('rat','player',hp(1)).maxHp).toBeCloseTo(28*hp(1),6);
   });
   it('saturates only the unreachable numeric extreme instead of generating infinite health',()=>{
     expect(waves.getWaveConfig(10000).hpScale).toBe(Number.MAX_SAFE_INTEGER);
@@ -80,8 +86,8 @@ describe('P13 exact endless pressure (P17 ×1.25 curve)',()=>{
     const children=e.state.enemies.filter(enemy=>enemy.kind===childKind);
     expect(children).toHaveLength(count);
     for(const child of children){
-      expect(child.maxHp).toBeCloseTo(ENEMIES[childKind].hp*11.25*hpFactor);
-      expect(child.speed).toBeCloseTo(ENEMIES[childKind].speed*1.012);
+      expect(child.maxHp).toBeCloseTo(ENEMIES[childKind].hp*hp(1)*hpFactor);
+      expect(child.speed).toBeCloseTo(ENEMIES[childKind].speed*spd(1));
       expect(child.armor).toBeCloseTo(ENEMIES[childKind].armor+.009);
     }
   });
@@ -134,11 +140,15 @@ describe('P13 standard victory continuation',()=>{
     e.summon();control.summon();expect(e.state.units.map(u=>u.kind)).toEqual(control.state.units.map(u=>u.kind));
     for(let i=0;i<8;i++)expect(e.rollWeaponFragment()).toBe(control.rollWeaponFragment());
   });
-  it('keeps boss counts at locked progression tiers without leaking locked species',()=>{
-    const e=endless({progressionStars:0});while(e.state.wave<16)e.skipWave();
-    expect(e.getUpcomingWavePreview()!.bosses).toEqual(['husky_wrecker','husky_wrecker','husky_wrecker']);
-    e.tick(10.1);expect(e.state.enemies.filter(enemy=>enemy.boss).map(enemy=>enemy.kind)).toEqual(['husky_wrecker','husky_wrecker','husky_wrecker']);
-    expect(e.getUpcomingWavePreview()!.minion).toBe('roach');
+  it('uses the identical full endless boss and minion pools across all ranks, maps and progression tiers',()=>{
+    const low=endless({progressionStars:0,rankIndex:0,mapId:'sunny_backyard'});
+    const high=endless({progressionStars:53,rankIndex:53,mapId:'cat_tower_maze'});
+    while(low.state.wave<16){low.skipWave();high.skipWave();}
+    expect(low.getUpcomingWavePreview()!.bosses).toEqual(high.getUpcomingWavePreview()!.bosses);
+    expect(new Set(low.getUpcomingWavePreview()!.bosses).size).toBe(3);
+    expect(low.getUpcomingWavePreview()!.minion).toBe(high.getUpcomingWavePreview()!.minion);
+    low.tick(10.1);high.tick(10.1);
+    expect(low.state.enemies.filter(enemy=>enemy.boss).map(enemy=>enemy.kind)).toEqual(high.state.enemies.filter(enemy=>enemy.boss).map(enemy=>enemy.kind));
   });
 });
 
@@ -194,7 +204,7 @@ describe('P13 safe distinct endless receipts',()=>{
     expect(storage).toHaveProperty('awardEndless');
     const banked=storage.awardBattle({...createProfile(),stars:5,highestStars:5,gachaWinCounter:2,winStreak:2,bestWinStreak:2},'run',normal).profile;
     const bonus=storage.awardEndless(banked,'run',honor);
-    expect(bonus.awarded).toBe(true);expect(bonus.profile).toMatchObject({coins:120,matches:1,wins:1,stars:7,winStreak:3,bestWinStreak:3,freeLotteryTickets:1,bestEndlessWave:13});
+    expect(bonus.awarded).toBe(true);expect(bonus.profile).toMatchObject({coins:120,matches:1,wins:1,stars:6,winStreak:3,bestWinStreak:3,freeLotteryTickets:1,bestEndlessWave:13});
     expect(bonus.profile.awardedBattles).toEqual(['run','run:endless']);
     expect(bonus.profile.weaponFragments).toEqual({m02_slipper:1,m01_swatter:2});expect(bonus.profile.fragments).toEqual(['bamboo_blade']);
     expect(bonus.newWeapons).toEqual(['m01_swatter']);

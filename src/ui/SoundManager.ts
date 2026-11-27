@@ -290,7 +290,7 @@ export class SoundManager {
         if((event.value??0)<0)this.play('orange_lost');else if((event.value??0)>0)this.play('orange_gain');
       }
       else if(event.type==='sprinkler')this.play('sprinkler');
-      else if(event.type==='purge'&&event.effect!=='legendary'&&event.effect!=='sprinkler')this.play('merge_upgrade');
+      else if(event.type==='purge'&&event.effect!=='legendary'&&event.effect!=='sprinkler'&&event.effect!=='clipped')this.play('merge_upgrade');
     }
   }
   private async loadAssets(context:AudioContext):Promise<void> {

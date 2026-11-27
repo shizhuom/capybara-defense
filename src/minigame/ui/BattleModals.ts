@@ -1,6 +1,6 @@
 import { HEROES } from '../../config/heroes';
 import { INGREDIENT_IDS, isIngredientId, type IngredientId } from '../../config/kitchen';
-import { STANDARD_VICTORY_CRESTS } from '../../config/medallions';
+import { PROPS } from '../../config/props';
 import { RANKS, getRank } from '../../config/ranks';
 import { VILLAGE_RESOURCE_IDS, type VillageResourceId } from '../../config/village';
 import { WEAPONS } from '../../config/weapons';
@@ -9,6 +9,7 @@ import { localDay } from '../../core/VillageProgression';
 import { AD_DAILY_LIMITS, getAdRemainingToday } from '../adConfig';
 import {
   STAMINA_COST_PER_BATTLE,
+  STAMINA_HARD_CAP,
   STAMINA_REFILL_AMOUNT,
   formatStaminaCountdown,
   getStaminaStatus,
@@ -71,8 +72,10 @@ export interface SettlementMeta {
   resultStars: number;
   previousRank: number;
   newWeapons: readonly string[];
+  newProps?: readonly string[];
   newAvatars: readonly string[];
   ticketAwarded: boolean;
+  endlessFirstUnlock?: boolean;
   statsOpen: boolean;
   adDoubleCoinsAvailable: boolean;
   adDoubleClaimed: boolean;
@@ -103,6 +106,7 @@ export interface ModalDrawContext {
   wxFriendMode?: boolean;
   elapsed: number;
   viewport: ViewportMetrics;
+  topRightEdge: number;
 }
 
 export interface ModalLayoutInfo {
@@ -118,6 +122,7 @@ export function drawActiveModal(
   hits: UiHitManager,
   ctx: ModalDrawContext,
 ): ModalLayoutInfo {
+  hits.modalRightEdge = ctx.topRightEdge;
   const { left, top, width, height } = ctx.viewport.visible;
   // Courtyard welcome & battle lesson cards stay lightweight over the live scene (exact `p19_03` / `p19_06`!)
   const lightBackdrop = ctx.modal === 'onboard' || ctx.modal === 'battle-lesson';
@@ -194,7 +199,9 @@ export function drawActiveModal(
         wxFriendMode: ctx.wxFriendMode,
       });
     case 'dev':
-      drawDevToolsModal(c, hits, ctx.profile, ctx.state, ctx.isTestSave);
+      if (__ENABLE_DEV_TOOLS__) {
+        drawDevToolsModal(c, hits, ctx.profile, ctx.state, ctx.isTestSave);
+      }
       return {};
     case 'stamina':
       drawStaminaModal(c, hits, ctx.profile, Boolean(ctx.adStaminaAvailable));
@@ -266,11 +273,14 @@ function drawPauseModal(
   }
 
   const secCount = 1 + extraSections.length;
-  const secH = secCount === 1 ? 132 : secCount === 2 ? 116 : secCount === 3 ? 100 : 88;
+  const compact = secCount >= 3;
+  const mapH = compact ? 86 : 112;
+  const secGap = compact ? 8 : 10;
+  const secH = secCount === 1 ? 132 : secCount === 2 ? 112 : secCount === 3 ? 90 : 76;
   const pw = 840;
   const px = (1280 - pw) / 2;
-  const ph = Math.min(454, 178 + secCount * secH + (secCount - 1) * 10);
-  const py = Math.max(76, Math.round((528 - ph) / 2) + 22);
+  const ph = Math.min(476, 48 + mapH + 10 + secCount * secH + (secCount - 1) * secGap + 14);
+  const py = Math.max(66, Math.round((528 - ph) / 2) + 18);
 
   drawHinokiBoard(c, px, py, pw, ph, 28);
   hits.add({ id: 'modal:card', x: px, y: py, w: pw, h: ph });
@@ -278,7 +288,7 @@ function drawPauseModal(
   // Peeking towel capybara layered ON TOP of rim
   drawSpriteContain(c, 'ui_pause_peek_capy', px + 22, py - 86, 106, 106);
   drawMatchaSignboard(c, 640, py - 44, t('p12.pauseTitle'), undefined, 320);
-  drawYuzuCloseButton(c, hits, 'modal:resume', Math.min(1084, px + pw - 16), py - 12, 30);
+  drawYuzuCloseButton(c, hits, 'modal:resume', Math.max(850, Math.min(1084, px + pw - 16, hits.modalRightEdge - 34)), py - 12, 30);
 
   // Stacked Inner Ivory Sections (GIANT readable phone fonts!)
   let cy = py + 42;
@@ -286,21 +296,22 @@ function drawPauseModal(
   const cx = px + 24;
 
   // 1. Map & Status Card
-  drawIvorySlab(c, cx, cy, cw, 112, 20);
-  round(c, cx + 16, cy + 14, 84, 84, 18, '#fff4dc', '#8a6239', 2.4);
-  drawSpriteContain(c, 'ui_map_sign', cx + 24, cy + 22, 68, 68);
-  drawText(c, t(`map.${state.mapId}`), cx + 116, cy + 36, 32, PALETTE.ink, 'left', 900);
+  drawIvorySlab(c, cx, cy, cw, mapH, 20);
+  const signSz = compact ? 64 : 84;
+  round(c, cx + 16, cy + Math.round((mapH - signSz) / 2), signSz, signSz, 16, '#fff4dc', '#8a6239', 2.4);
+  drawSpriteContain(c, 'ui_map_sign', cx + 22, cy + Math.round((mapH - signSz) / 2) + 6, signSz - 12, signSz - 12);
+  drawText(c, t(`map.${state.mapId}`), cx + 32 + signSz, cy + (compact ? 29 : 36), compact ? 28 : 32, PALETTE.ink, 'left', 900);
   const waveStr = state.endless ? t('p13.endlessWave', { wave: state.wave }) : t('p12.pauseWave', { wave: state.wave });
   const statLine = `${waveStr}  ·  ${t('p12.pauseTime', { time: formatClock(state.time) })}  ·  ${t('p12.pauseOranges', { count: state.sides.player.oranges })}`;
-  drawText(c, statLine, cx + 116, cy + 78, 24, PALETTE.inkSoft, 'left', 900);
-  cy += 122;
+  drawText(c, statLine, cx + 32 + signSz, cy + (compact ? 62 : 78), compact ? 22 : 24, PALETTE.inkSoft, 'left', 900);
+  cy += mapH + secGap;
 
   drawPauseLootSection(c, cx, cy, cw, secH, 'ui_weapon_fragment', t('p12.pauseLoot'), fragChips, t('p12.pauseEmpty'));
-  cy += secH + 10;
+  cy += secH + secGap;
 
   for (const sec of extraSections) {
     drawPauseLootSection(c, cx, cy, cw, secH, sec.icon, sec.title, sec.chips, '');
-    cy += secH + 10;
+    cy += secH + secGap;
   }
 
   // GIANT Footer BELOW the wooden board (HUGE 28px/25px bold buttons!)
@@ -360,22 +371,26 @@ function drawPauseLootSection(
   chips: readonly { icon: string; label: string; count: string }[],
   emptyText: string,
 ): void {
+  const tight = h <= 82;
   drawIvorySlab(c, x, y, w, h, 18, '#fffdf8', '#f6e8cb', '#7e5530', 2.2);
-  drawIconLabel(c, icon, title, x + 20, y + 28, 30, 23, PALETTE.ink);
+  drawIconLabel(c, icon, title, x + 20, y + (tight ? 21 : 28), tight ? 24 : 30, tight ? 20 : 23, PALETTE.ink);
   if (chips.length === 0) {
-    drawText(c, emptyText, x + w / 2, y + h / 2 + 16, 22, PALETTE.inkSoft, 'center', 800);
+    drawText(c, emptyText, x + w / 2, y + h / 2 + (tight ? 10 : 16), tight ? 19 : 22, PALETTE.inkSoft, 'center', 800);
     return;
   }
   let cx = x + 20;
-  const pillY = y + 52;
+  const pillH = tight ? 34 : 44;
+  const pillY = y + h - pillH - (tight ? 6 : 10);
+  const iconS = tight ? 26 : 34;
+  const fontSz = tight ? 18 : 20;
   for (const ch of chips.slice(0, 3)) {
     const labelStr = `${ch.label.slice(0, 7)} ${ch.count}`;
-    c.font = '900 20px "Trebuchet MS", "PingFang SC", "Microsoft YaHei", sans-serif';
-    const pw = Math.min(248, Math.max(140, Math.ceil(c.measureText(labelStr).width) + 56));
+    c.font = `900 ${fontSz}px "Trebuchet MS", "PingFang SC", "Microsoft YaHei", sans-serif`;
+    const pw = Math.min(248, Math.max(132, Math.ceil(c.measureText(labelStr).width) + iconS + 22));
     if (cx + pw > x + w - 16) break;
-    round(c, cx, pillY, pw, 48, 24, '#fff7e6', '#a87f4e', 2);
-    drawSpriteContain(c, ch.icon, cx + 10, pillY + 6, 36, 36);
-    drawText(c, labelStr, cx + 52, pillY + 25, 20, PALETTE.ink, 'left', 900);
+    round(c, cx, pillY, pw, pillH, pillH / 2, '#fff7e6', '#a87f4e', 2);
+    drawSpriteContain(c, ch.icon, cx + 8, pillY + Math.round((pillH - iconS) / 2), iconS, iconS);
+    drawText(c, labelStr, cx + iconS + 14, pillY + pillH / 2 + 1, fontSz, PALETTE.ink, 'left', 900);
     cx += pw + 10;
   }
 }
@@ -397,7 +412,7 @@ function drawStaminaModal(
   hits.add({ id: 'modal:card', x: px, y: py, w: pw, h: ph });
   drawSpriteContain(c, 'ui_pause_peek_capy', px + 22, py - 84, 102, 102);
   drawMatchaSignboard(c, 640, py - 44, zh ? '体力恢复' : 'Energy', undefined, 300);
-  drawYuzuCloseButton(c, hits, 'modal:close', Math.min(1084, px + pw - 18), py - 12, 30);
+  drawYuzuCloseButton(c, hits, 'modal:close', Math.max(850, Math.min(1084, px + pw - 18, hits.modalRightEdge - 34)), py - 12, 30);
 
   const cx = px + 30, cw = pw - 60;
   let cy = py + 46;
@@ -429,6 +444,7 @@ function drawStaminaModal(
   cy += 224;
 
   if (adAvailable) {
+    const atHardCap = st.current >= STAMINA_HARD_CAP;
     drawPillButton(
       c,
       hits,
@@ -437,9 +453,11 @@ function drawStaminaModal(
       cy,
       cw,
       62,
-      zh ? `🎬 看视频免费补充 +${STAMINA_REFILL_AMOUNT} 体力` : `🎬 Watch Ad for +${STAMINA_REFILL_AMOUNT} Energy`,
-      'green',
-      { fontSize: 25 },
+      atHardCap
+        ? (zh ? `✦ 体力已达上限 (${STAMINA_HARD_CAP})` : `✦ Energy at max cap (${STAMINA_HARD_CAP})`)
+        : (zh ? `🎬 看视频免费补充 +${STAMINA_REFILL_AMOUNT} 体力` : `🎬 Watch Ad for +${STAMINA_REFILL_AMOUNT} Energy`),
+      atHardCap ? 'muted' : 'green',
+      { fontSize: 25, disabled: atHardCap },
     );
     cy += 74;
   }
@@ -546,7 +564,11 @@ function drawEndlessOfferModal(
   }
 
   drawIvorySlab(c, px + 24, py + 58, pw - 48, ph - 154, 22);
-  drawText(c, t('p13.endlessOfferTitle'), px + pw / 2, py + 94, 32, '#5f2685', 'center', 900);
+  if (settlement.endlessFirstUnlock) {
+    round(c, px + pw / 2 - 170, py + 62, 340, 28, 14, '#7a3ab0', '#ffd966', 2);
+    drawText(c, t('p19.onboard.endless.badge'), px + pw / 2, py + 76, 16, '#fff7cf', 'center', 900);
+  }
+  drawText(c, t('p13.endlessOfferTitle'), px + pw / 2, py + (settlement.endlessFirstUnlock ? 106 : 94), 30, '#5f2685', 'center', 900);
 
   round(c, px + 68, py + 124, pw - 136, 42, 21, '#dff5d8', '#3c8532', 2.2);
   drawText(c, `✓ ${t('p13.endlessBanked')}`, px + pw / 2, py + 146, 21, '#23591c', 'center', 900);
@@ -556,7 +578,8 @@ function drawEndlessOfferModal(
   round(c, px + 140, py + 266, pw - 280, 36, 18, '#593373', '#c89cf0', 2);
   drawText(c, '×1.25  →  ×1.56  →  ×1.95  →  …', px + pw / 2, py + 285, 20, '#ffe9a3', 'center', 900);
 
-  const crests = result?.endlessCrests ?? STANDARD_VICTORY_CRESTS;
+  // Only show Endless Crests when actually awarded on this receipt (never ghost +3 before 32★ medallions unlock!)
+  const crests = result?.endlessCrests ?? 0;
   const pills: Array<{ icon: string; text: string }> = [
     { icon: 'ui_star_rank', text: t('p13.rankBanked') },
     { icon: 'ui_coin_gold', text: `+${result?.coins ?? 0}` },
@@ -605,11 +628,17 @@ function drawResultModal(
   const crests = won
     ? (endless && state.standardResult ? (state.standardResult.endlessCrests ?? 0) + (result.endlessCrests ?? 0) : (result.endlessCrests ?? 0))
     : 0;
-  const villageLoot = won
-    ? (endless && state.standardResult ? [...(state.standardResult.villageLoot ?? []), ...(result.endlessVillageLoot ?? [])] : (result.villageLoot ?? []))
-    : [];
-  const ingredientLoot = won
-    ? (endless && state.standardResult ? [...(state.standardResult.ingredientLoot ?? []), ...(result.endlessIngredientLoot ?? [])] : (result.ingredientLoot ?? []))
+  // Defeat salvage still banks half of gathered village materials & kitchen ingredients — show them honestly!
+  const villageLoot = endless && state.standardResult
+    ? [...(state.standardResult.villageLoot ?? []), ...(result.endlessVillageLoot ?? [])]
+    : (result.villageLoot ?? []);
+  const ingredientLoot = endless && state.standardResult
+    ? [...(state.standardResult.ingredientLoot ?? []), ...(result.endlessIngredientLoot ?? [])]
+    : (result.ingredientLoot ?? []);
+  const propLoot = won
+    ? (endless && state.standardResult
+      ? [...(state.standardResult.propLoot ?? []), ...(result.endlessPropLoot ?? [])]
+      : (result.propLoot ?? []))
     : [];
   const guardianStars = endless ? 3 : won ? Math.min(3, Math.max(1, Math.floor(state.sides.player.oranges))) : 0;
 
@@ -617,10 +646,11 @@ function drawResultModal(
   const displayLoot = settlement.adDoubleClaimed ? [...loot, ...loot] : loot;
   const displayIngredients = settlement.adDoubleClaimed ? [...ingredientLoot, ...ingredientLoot] : ingredientLoot;
   const displayVillage = settlement.adDoubleClaimed ? [...villageLoot, ...villageLoot] : villageLoot;
+  const displayPropLoot = settlement.adDoubleClaimed ? [...propLoot, ...propLoot] : propLoot;
   const allShelfChips: ShelfChip[] = [
     { icon: 'ui_coin_gold', label: t('profile.coins'), count: `+${coins * dbl}` },
     ...(won && settlement.ticketAwarded ? [{ icon: 'ui_ticket_gacha', label: t('p5.tickets'), count: '+1' }] : []),
-    ...collectShelfChips(displayLoot, displayIngredients, displayVillage, crests * dbl),
+    ...collectShelfChips(displayLoot, displayIngredients, displayVillage, crests * dbl, displayPropLoot),
   ];
 
   // ── VISUAL BATTLE REPORT DRAWER (`statsOpen === true`) ────────────────────
@@ -630,7 +660,7 @@ function drawResultModal(
     drawHinokiBoard(c, px, py, pw, ph, 26);
     hits.add({ id: 'modal:card', x: px, y: py, w: pw, h: ph });
     drawMatchaSignboard(c, 640, py - 42, t('p12.report'), undefined, 310);
-    drawYuzuCloseButton(c, hits, 'modal:toggle-stats', Math.min(1084, px + pw - 16), py - 12, 30);
+    drawYuzuCloseButton(c, hits, 'modal:toggle-stats', Math.max(850, Math.min(1084, px + pw - 16, hits.modalRightEdge - 34)), py - 12, 30);
 
     const cx = px + 26, cw = pw - 52;
     let cy = py + 34;
@@ -670,7 +700,8 @@ function drawResultModal(
     cy += mvpH + 12;
 
     // 2. Visual Treasure Shelf (up to 2 full rows × 6 columns = 12 distinct items — zero silent 6-item cutoff!)
-    const hasUnlocks = settlement.newWeapons.length + settlement.newAvatars.length > 0;
+    const newProps = settlement.newProps ?? [];
+    const hasUnlocks = settlement.newWeapons.length + newProps.length + settlement.newAvatars.length > 0;
     const multiRowShelf = allShelfChips.length > 6;
     const shelfH = hasUnlocks ? (multiRowShelf ? 248 : 196) : (multiRowShelf ? 286 : 254);
     drawIvorySlab(c, cx, cy, cw, shelfH, 20);
@@ -694,6 +725,7 @@ function drawResultModal(
       drawText(c, t('p6.unlock'), cx + 92, cy + 23, 20, '#22591b', 'left', 900);
       const unlockSprites = [
         ...settlement.newWeapons.map(id => `weapon_${id}`),
+        ...newProps.map(id => `prop_${id}`),
         ...settlement.newAvatars.map(id => `avatar_${id}`),
       ];
       unlockSprites.slice(0, 8).forEach((sp, i) => {
@@ -720,14 +752,19 @@ function drawResultModal(
   }
 
   // ── MAIN CREST STAGE (BIG FONTS + ALL ACTION BUTTONS GROUPED TOGETHER IN THE CENTER!) ──
+  const hasDoubleableRewards = coins > 0 || loot.length > 0 || propLoot.length > 0 || ingredientLoot.length > 0 || villageLoot.length > 0 || crests > 0;
+  const showDoubleAdBar = won && hasDoubleableRewards && settlement.adDoubleCoinsAvailable;
+  const hook = computeNextGoalHook(profile);
+  const compactStack = showDoubleAdBar && Boolean(hook);
+
   if (won) {
-    drawSunburst(c, 640, 260, 440, elapsed, 'rgba(255,222,110,0.28)');
+    drawSunburst(c, 640, compactStack ? 240 : 260, 440, elapsed, 'rgba(255,222,110,0.28)');
   }
 
-  // Winged Shield Plaque centered prominently (`y: 10..496`)
-  const sSize = 486;
+  // Winged Shield Plaque centered prominently (`y: 4..468` when double-reward bar is shown, else `10..496`)
+  const sSize = compactStack ? 462 : 486;
   const sx = 640 - sSize / 2;
-  const sy = 10;
+  const sy = compactStack ? 2 : 10;
   const shieldId = won ? 'ui_victory_shield_wings' : 'ui_defeat_shield_wings';
   drawSpriteContain(c, shieldId, sx, sy, sSize, sSize);
   hits.add({ id: 'modal:card', x: sx + 84, y: sy + 80, w: sSize - 168, h: sSize - 120 });
@@ -735,9 +772,9 @@ function drawResultModal(
   // 3 Arcing Guardian Stars perched directly over the shield crown
   for (let i = 0; i < 3; i++) {
     const lit = i < guardianStars;
-    const starCx = 640 + (i - 1) * 88;
-    const starY = i === 1 ? 2 : 20;
-    const sz = i === 1 ? 82 : 68;
+    const starCx = 640 + (i - 1) * (compactStack ? 84 : 88);
+    const starY = compactStack ? (i === 1 ? 0 : 16) : (i === 1 ? 2 : 20);
+    const sz = compactStack ? (i === 1 ? 76 : 64) : (i === 1 ? 82 : 68);
     if (!drawSpriteContain(c, lit ? 'ui_victory_star_lit' : 'ui_victory_star_dim', starCx - sz / 2, starY, sz, sz)) {
       drawText(c, lit ? '★' : '☆', starCx, starY + sz / 2, 46, lit ? '#ffd449' : '#b89f82', 'center', 900);
     }
@@ -750,7 +787,7 @@ function drawResultModal(
     headline,
     640,
     sy + Math.round(sSize * 0.315),
-    40,
+    compactStack ? 38 : 40,
     won ? '#ffe869' : '#f4ede6',
     'center',
     900,
@@ -758,35 +795,38 @@ function drawResultModal(
     7,
   );
 
-  // Build ALL core reward categories (Coins, Ticket, Endless Crests, Weapon Frags, Village Wood/Essence, Kitchen Ingredients)
+  // Build ALL core reward categories (Coins, Ticket, Endless Crests, Weapon Frags, Prop Blueprints, Village Wood/Essence, Kitchen Ingredients)
   const coreChips: Array<{ icon: string; val: string }> = [
     { icon: 'ui_coin_gold', val: `+${coins * dbl}` },
     ...(won && settlement.ticketAwarded ? [{ icon: 'ui_ticket_gacha', val: '+1' }] : []),
     ...(crests > 0 ? [{ icon: 'ui_endless_crest', val: `+${crests * dbl}` }] : []),
     ...(loot.length > 0 ? [{ icon: 'ui_weapon_fragment', val: `+${loot.length * dbl}` }] : []),
+    ...(propLoot.length > 0 ? [{ icon: PROPS[propLoot[0]] ? `prop_${propLoot[0]}` : 'ui_market_peek_raccoon', val: `+${propLoot.length * dbl}` }] : []),
     ...(villageLoot.length > 0 ? [{ icon: 'ui_village_gate', val: `+${villageLoot.length * dbl}` }] : []),
     ...(ingredientLoot.length > 0 ? [{ icon: 'ui_kitchen_pot', val: `+${ingredientLoot.length * dbl}` }] : []),
   ];
   const twoRows = coreChips.length >= 5;
 
   // Inside the Shield Plaque (auto-switches cleanly between 1-row (<=4) and 2×3 grid (5–6) inside the cream belly!)
-  const pW = 248;
+  const pW = compactStack ? 236 : 248;
   const pLeft = 640 - pW / 2;
 
   // 1. Rank Name + Star Delta
-  const rankY = twoRows ? sy + 218 : sy + 236;
+  const rankY = compactStack
+    ? (twoRows ? sy + 206 : sy + 222)
+    : (twoRows ? sy + 218 : sy + 236);
   const dStr = settlement.resultStars === 0 && !won
     ? '0★'
     : settlement.resultStars > 0
       ? `+${settlement.resultStars}★`
       : `${settlement.resultStars}★`;
-  drawText(c, t(`rank.${rank.index}`), 640 - 30, rankY, twoRows ? 24 : 26, '#fff4b8', 'center', 900, '#2b1b14', 5.5);
+  drawText(c, t(`rank.${rank.index}`), 640 - 30, rankY, twoRows ? 23 : 25, '#fff4b8', 'center', 900, '#2b1b14', 5.5);
   drawText(
     c,
     dStr,
-    640 + 94,
+    640 + 90,
     rankY,
-    twoRows ? 22 : 24,
+    twoRows ? 21 : 23,
     settlement.resultStars > 0 ? '#9ff584' : settlement.resultStars < 0 ? '#ff9d8f' : '#efe3cc',
     'center',
     900,
@@ -798,25 +838,25 @@ function drawResultModal(
   const nextRank = RANKS[rank.index + 1];
   const progressMax = nextRank ? nextRank.minStars - rank.minStars : 1;
   const progress = nextRank ? Math.min(progressMax, Math.max(0, profile.stars - rank.minStars)) : 1;
-  drawProgressBar(c, pLeft + 12, rankY + (twoRows ? 20 : 24), pW - 24, twoRows ? 13 : 15, progress / Math.max(1, progressMax), '#ffd242', '#e6dac4', '#4a2912');
-  drawText(c, nextRank ? `${progress} / ${progressMax}` : 'MAX', 640, rankY + (twoRows ? 46 : 54), twoRows ? 19 : 21, '#4a2912', 'center', 900);
+  drawProgressBar(c, pLeft + 12, rankY + (twoRows ? 18 : 22), pW - 24, twoRows ? 12 : 15, progress / Math.max(1, progressMax), '#ffd242', '#e6dac4', '#4a2912');
+  drawText(c, nextRank ? `${progress} / ${progressMax}` : 'MAX', 640, rankY + (twoRows ? 43 : 52), twoRows ? 18 : 21, '#4a2912', 'center', 900);
 
-  // 3. Core Visual Rewards Strip (1 row for 1..4 categories, neat 2×3 mini-grid for 5..6 categories!)
-  const rewY = twoRows ? rankY + 60 : rankY + 72;
+  // 3. Core Visual Rewards Strip (1 row for 1..4 categories, neat 2-row mini-grid for 5..7 categories!)
+  const rewY = twoRows ? rankY + (compactStack ? 56 : 60) : rankY + 70;
   if (twoRows) {
-    const cols = 3;
-    const rw = 74;
-    const rowStep = 62;
-    coreChips.slice(0, 6).forEach((rc, i) => {
+    const cols = coreChips.length > 6 ? 4 : 3;
+    const rw = cols === 4 ? (compactStack ? 55 : 58) : (compactStack ? 70 : 74);
+    const rowStep = compactStack ? 57 : 62;
+    coreChips.slice(0, 8).forEach((rc, i) => {
       const row = Math.floor(i / cols);
       const col = i % cols;
       const itemsInRow = row === 0 ? Math.min(cols, coreChips.length) : Math.min(cols, coreChips.length - cols);
       const rowStartX = 640 - (itemsInRow * rw) / 2;
       const rcx = rowStartX + col * rw;
       const rcy = rewY + row * rowStep;
-      const sz = i === 0 ? 40 : 36;
-      drawSpriteContain(c, rc.icon, rcx + (rw - sz) / 2, rcy + (40 - sz) / 2, sz, sz);
-      drawText(c, rc.val, rcx + rw / 2, rcy + 49, i === 0 ? 21 : 19.5, '#4f2406', 'center', 900);
+      const sz = i === 0 ? (compactStack ? 35 : 38) : (compactStack ? 31 : 34);
+      drawSpriteContain(c, rc.icon, rcx + (rw - sz) / 2, rcy + (36 - sz) / 2, sz, sz);
+      drawText(c, rc.val, rcx + rw / 2, rcy + (compactStack ? 44 : 49), i === 0 ? 19.5 : 18, '#4f2406', 'center', 900);
     });
   } else {
     const rw = Math.min(72, Math.floor((pW - 14) / Math.max(1, coreChips.length)));
@@ -830,56 +870,62 @@ function drawResultModal(
     });
   }
 
-  const hasDoubleableRewards = coins > 0 || loot.length > 0 || ingredientLoot.length > 0 || villageLoot.length > 0 || crests > 0;
-  if (won && hasDoubleableRewards && settlement.adDoubleCoinsAvailable) {
+  // 3.5 Centered Double-All-Rewards Ad Banner directly beneath the Winged Shield rewards
+  let nextBlockY = compactStack ? 464 : 496;
+  if (showDoubleAdBar) {
     const doubleAdRem = getAdRemainingToday(profile, 'double_settlement', localDay());
     const doubleAdMax = AD_DAILY_LIMITS.double_settlement ?? 3;
+    const dw = 388;
+    const dh = 56;
+    const dx = Math.round(640 - dw / 2);
+    const dy = nextBlockY;
     if (settlement.adDoubleClaimed) {
-      round(c, 892, rewY + 8, 276, 56, 28, '#dff5d6', '#3d8633', 2.4);
-      drawText(c, zh ? '✓ 已领取双倍全奖励' : '✓ 2× Loot Claimed', 892 + 138, rewY + 37, 21, '#22591b', 'center', 900);
+      round(c, dx, dy, dw, dh, 28, '#dff5d6', '#3d8633', 2.6);
+      drawText(c, zh ? '✓ 已领取双倍全部奖励' : '✓ 2× All Rewards Claimed', 640, dy + dh / 2 + 1, 22, '#22591b', 'center', 900);
     } else if (doubleAdRem > 0) {
       drawPillButton(
         c,
         hits,
         'result:ad-double',
-        892,
-        rewY + 6,
-        292,
-        62,
-        zh ? `🎬 双倍全奖励 (${doubleAdRem}/${doubleAdMax})` : `🎬 2× All Loot (${doubleAdRem}/${doubleAdMax})`,
+        dx,
+        dy,
+        dw,
+        dh,
+        zh ? `🎬 看视频双倍领全部奖励 (${doubleAdRem}/${doubleAdMax})` : `🎬 2× All Rewards (${doubleAdRem}/${doubleAdMax})`,
         'gold',
-        { fontSize: 20.5 },
+        { fontSize: 21.5 },
       );
     } else {
       drawPillButton(
         c,
         hits,
         'result:ad-double',
-        892,
-        rewY + 8,
-        286,
-        56,
-        zh ? `🎬 今日双倍已用完 (0/${doubleAdMax})` : `🎬 Daily Limit (0/${doubleAdMax})`,
+        dx,
+        dy,
+        dw,
+        dh,
+        zh ? `🎬 今日双倍奖励已用完 (0/${doubleAdMax})` : `🎬 Daily 2× Limit Reached (0/${doubleAdMax})`,
         'muted',
-        { fontSize: 18.5, disabled: true },
+        { fontSize: 19, disabled: true },
       );
     }
+    nextBlockY += dh + 12;
   }
 
-  // 4. BIG Next-Goal Progress Pill right beneath the Winged Shield (`y = 496..572`)
-  const hook = computeNextGoalHook(profile);
+  // 4. BIG Next-Goal Progress Pill right beneath the Shield / Double-Reward CTA
   if (hook) {
-    const hw = 700, hh = 76, hx = 640 - hw / 2, hy = 496;
-    drawIvorySlab(c, hx, hy, hw, hh, 22, '#fffaf0', '#f4e0b6', '#b87a24', 2.8);
+    const hw = 700, hh = compactStack ? 64 : 76, hx = 640 - hw / 2, hy = nextBlockY;
+    drawIvorySlab(c, hx, hy, hw, hh, 20, '#fffaf0', '#f4e0b6', '#b87a24', 2.8);
     const hookSprite = hookIconSprite(hook);
     const cleanText = formatNextGoalText(hook).replace(/^[\p{Emoji}\uFE0F\s]+/u, '');
-    drawIconLabel(c, hookSprite, cleanText, hx + 22, hy + 26, 30, 22.5, '#592c08');
-    drawProgressBar(c, hx + 22, hy + 50, hw - 44, 14, Math.max(0.06, hook.percent / 100), '#f2b838', 'rgba(72,46,24,0.18)', PALETTE.woodDark);
+    drawIconLabel(c, hookSprite, cleanText, hx + 22, hy + (compactStack ? 22 : 26), compactStack ? 28 : 30, compactStack ? 21 : 22.5, '#592c08');
+    drawProgressBar(c, hx + 22, hy + (compactStack ? 42 : 50), hw - 44, compactStack ? 12 : 14, Math.max(0.06, hook.percent / 100), '#f2b838', 'rgba(72,46,24,0.18)', PALETTE.woodDark);
+    nextBlockY += hh + (compactStack ? 12 : 18);
   }
 
-  // 5. ALL Action Buttons Grouped Together Tightly Under the Center Emblem (`y = 590..658`!)
-  const fy = hook ? 590 : 530;
-  const bh = 68;
+  // 5. ALL Action Buttons Grouped Together Tightly Under the Center Emblem
+  const fy = hook || showDoubleAdBar ? nextBlockY : 530;
+  const bh = compactStack ? 64 : 68;
   const gap = 14;
   const reportLabel = allShelfChips.length > 4
     ? `${t('p15.report')} (${allShelfChips.length})`
@@ -889,7 +935,7 @@ function drawResultModal(
     { id: 'modal:toggle-stats', w: allShelfChips.length > 4 ? 204 : 168, label: reportLabel, variant: 'cream', icon: 'ui_stats_scroll', fontSize: 23 },
   ];
   if (won) {
-    actions.push({ id: 'result:share', w: 176, label: zh ? '炫耀战绩' : 'Share', variant: 'gold', icon: 'ui_star_rank', fontSize: 24 });
+    actions.push({ id: 'result:share', w: 176, label: zh ? '炫耀战绩' : 'Share', variant: showDoubleAdBar ? 'cream' : 'gold', icon: 'ui_star_rank', fontSize: 24 });
   } else if (result.reason === 'oranges' && settlement.adReviveAvailable) {
     actions.push({ id: 'result:ad-revive', w: 280, label: zh ? '🎬 复活重打本波 (+3🍊)' : '🎬 Revive Wave (+3🍊)', variant: 'gold', fontSize: 21 });
   }
@@ -901,11 +947,17 @@ function drawResultModal(
     drawPillButton(c, hits, act.id, ax, fy, act.w, bh, act.label, act.variant, { fontSize: act.fontSize, icon: act.icon });
     ax += act.w + gap;
   }
+  if (!settlement.savedResult) {
+    const warnText = t('result.memory');
+    round(c, 220, fy + bh + 6, 840, 32, 16, 'rgba(166, 59, 45, 0.94)', '#ffd5c9', 2);
+    drawText(c, warnText, 640, fy + bh + 22, 16.5, '#fffdf5', 'center', 900);
+  }
 }
 
 function hookIconSprite(hook: NextGoalHook): string {
   if (hook.kind === 'gacha_ticket') return 'ui_ticket_gacha';
   if (hook.kind === 'weapon') return WEAPONS[hook.id] ? `weapon_${hook.id}` : 'ui_weapon_fragment';
+  if (hook.kind === 'prop') return PROPS[hook.id] ? `prop_${hook.id}` : 'ui_market_peek_raccoon';
   if (hook.kind === 'village') return 'ui_village_gate';
   if (hook.kind === 'kitchen') return 'ui_kitchen_pot';
   return 'ui_star_rank';
@@ -922,10 +974,17 @@ function collectShelfChips(
   ingredients: readonly string[] | undefined,
   village: readonly string[] | undefined,
   crests: number | undefined,
+  propLoot?: readonly string[],
 ): ShelfChip[] {
+  const zh = getLanguage() === 'zh-CN';
   const chips: ShelfChip[] = [];
   if (crests && crests > 0) {
     chips.push({ icon: 'ui_endless_crest', label: t('p17.crests'), count: `×${crests}` });
+  }
+  const propMap = new Map<string, number>();
+  for (const id of propLoot ?? []) if (PROPS[id]) propMap.set(id, (propMap.get(id) ?? 0) + 1);
+  for (const [id, n] of propMap) {
+    chips.push({ icon: `prop_${id}`, label: zh ? `${t(`prop.${id}`)}图纸` : `${t(`prop.${id}`)} Plan`, count: `×${n}` });
   }
   const fragMap = new Map<string, number>();
   for (const id of loot ?? []) fragMap.set(id, (fragMap.get(id) ?? 0) + 1);
@@ -1002,6 +1061,9 @@ function formatNextGoalText(hook: NextGoalHook): string {
   if (hook.kind === 'gacha_ticket') return t('p19.hook.gacha');
   if (hook.kind === 'weapon') {
     return t('p19.hook.weapon', { name: t(`weapon.${hook.id}`), need: Math.max(1, hook.target - hook.current), current: hook.current, target: hook.target });
+  }
+  if (hook.kind === 'prop') {
+    return t('p19.hook.prop', { name: t(`prop.${hook.id}`), need: Math.max(1, hook.target - hook.current), current: hook.current, target: hook.target });
   }
   if (hook.kind === 'village') {
     return t('p19.hook.village', { name: t(`facility.${hook.id}`), pct: hook.percent });

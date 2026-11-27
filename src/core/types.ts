@@ -34,6 +34,8 @@ export interface Enemy {
 export interface BattleLoadout {
   equippedWeapons: Record<string,string>; ownedProps: Record<string,number>;
   equippedActiveProps: string[]; equippedPassiveProps: string[];
+  /** Optional active 24h trial timestamps (ms since epoch) for direct loadout snapshots. */
+  trialProps?: Record<string, number>;
   /** P14 Onsen Kitchen snapshot. Absent/empty keeps every battle number identical to P13. */
   unlockedBroths?: string[]; brothLevels?: Record<string, number>; activeBrothId?: string | null;
   /** P16 village facility levels. Absent, or only the starter pool at Lv.1, keeps every battle number identical to P15. */
@@ -43,7 +45,7 @@ export interface BattleLoadout {
 }
 export interface SideState {
   lockedBenchSlot?:number|null;
-  food: number; summons:number; oranges: number; shovels: number; shovelTimer:number; kills: number; damage: number; loot: string[]; ingredientLoot: string[]; villageLoot: string[]; fog: number;
+  food: number; summons:number; oranges: number; shovels: number; shovelTimer:number; kills: number; damage: number; loot: string[]; ingredientLoot: string[]; villageLoot: string[]; propLoot: string[]; fog: number;
   loadout:BattleLoadout; propCooldowns:Record<string,number>; sprinklerUsed:boolean; giantCatUses:number; catnipTime:number;
   /** P17 endless-only state: one bubble-shield charge, its recharge countdown (seconds) and crests banked this run. */
   capyShieldReady:boolean; capyShieldTimer:number; endlessCrests:number;
@@ -64,12 +66,16 @@ export interface VisualEvent {
 }
 export interface BattleMVP {kind:string;level:number;damage:number;kills:number;awakened?:boolean}
 export interface BattleResult { winner: Side; reason: 'oranges' | 'waves' | 'surrender'; loot: string[]; playerLoot: string[]; aiLoot: string[]; coins: number; elapsed: number; rankIndex?:number; mergedHeroes?:string[];mvp?:BattleMVP;
+  /** Remaining guardian oranges at standard battle finish (3+ grants +2★; 1–2 grants +1★). */
+  remainingOranges?:number;
   /** Display totals stay in coins/loot; these fields contain only the additional award. */
   endless?:boolean;endlessWave?:number;endlessCoins?:number;endlessLoot?:string[];
   /** Ingredients banked by this receipt (victory: all; defeat: salvage); endless adds only the post-wave-10 share. */
   ingredientLoot?:string[];endlessIngredientLoot?:string[];
   /** Village building materials (`res_onsen_wood` / `res_yuzu_essence`), banked with the same victory/salvage rules. */
   villageLoot?:string[];endlessVillageLoot?:string[];
+  /** Prop blueprint drops (`propId`), banked on victory / endless milestones toward permanent prop unlock. */
+  propLoot?:string[];endlessPropLoot?:string[];
   /** P17: crests from this receipt (standard victory: 3; endless: only the post-wave-10 share) and awakened heroes on the board. */
   endlessCrests?:number;awakenedCount?:number;
   /** P19: number of lucky crit drops triggered during the battle (for celebration polish). */
@@ -92,7 +98,11 @@ export interface Profile extends BattleLoadout {
   earlyWaveTipSeen?:boolean;bestEndlessWave?:number;
   coins:number; wins:number; matches:number; fragments:string[]; awardedBattles:string[];
   schemaVersion:2; weaponFragments:Record<string,number>; unlockedWeapons:string[]; freeLotteryTickets:number;
-  shop:{day:string;offers:string[]}|null;
+  /** Collected prop blueprints per propId toward permanent unlock (`ownedProps[id] = 1`). */
+  propBlueprints?:Record<string,number>;
+  /** Active 24-hour daily-deal trial expiry timestamps (ms since epoch). */
+  trialProps?:Record<string,number>;
+  shop:{day:string;offers:string[];bought?:string[]}|null;
   lottery?:{day:string;prizes:{type:'prop'|'coins'|'fragment';id?:string;amount:number}[]}|null;
   stars:number; highestStars:number; winStreak:number; bestWinStreak:number;
   selectedMap:'auto'|MapId; avatarId:string; unlockedAvatars:string[]; mergedHeroes:string[]; settings:GameSettings;
@@ -122,6 +132,8 @@ export interface VillageState {
   lastHarvestAt:number;
   /** `YYYY-MM-DD` of the current pet-tap allowance and how many paid taps were used that day. */
   petTapDay:string; petTapCount:number;
+  /** Partial accumulated ms toward periodic rare drops (fragment / yuzu / ticket), preserved across early claims. */
+  rareProgressMs?:Record<string,number>;
 }
 export interface StageRect { x:number; y:number; w:number; h:number }
 export interface Interaction { draggingId?: number; previewSourceId?:number; pointer?: { x: number; y: number }; shovel?: boolean; hover?: Point; selectedId?: number; propId?:string; showDamageNumbers?:boolean; allowBenchLock?:boolean; mergeAvoidRects?:StageRect[];

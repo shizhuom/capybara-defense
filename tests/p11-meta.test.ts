@@ -124,7 +124,8 @@ describe('P11 dedicated market tabs',()=>{
     expect(html.match(/data-action="meta-tab:/g)).toHaveLength(3);
     expect(html.match(/class="ledger-tabs /g)).toHaveLength(1);
     expect(html).toContain('data-action="meta-refresh"');
-    expect(html).toContain(t('prop.washer.desc'));
+    const firstOffer=h.profile().shop!.offers[0];
+    expect(html).toContain(t(`prop.${firstOffer}.desc`));
     expect(html).not.toMatch(/class="prop-slot |class="lottery-cell |prop-row|market-split|market-subtabs| hidden/);
   });
 
@@ -136,7 +137,7 @@ describe('P11 dedicated market tabs',()=>{
     expect(html).toContain('storybook-loadout-strip');
     expect(html.match(/class="prop-slot /g)).toHaveLength(8);
     expect(html.match(/class="storybook-row-card prop-row /g)).toHaveLength(20);
-    expect([...html.matchAll(/<article[^>]*data-prop-id="([^"]+)"/g)].map(match=>match[1]).slice(0,4)).toEqual(['auto_shovel','washer','clay','milk_bottle']);
+    expect([...html.matchAll(/<article[^>]*data-prop-id="([^"]+)"/g)].map(match=>match[1]).slice(0,4)).toEqual(['auto_shovel','washer','clay','glue_trap']);
     expect(html).not.toMatch(/meta-buy:|meta-refresh|class="lottery-cell | hidden/);
     h.meta.action('meta-prop:washer');
     expect(loadProfile().equippedActiveProps).toEqual(['washer']);
@@ -204,13 +205,13 @@ describe('P11 dedicated market tabs',()=>{
     expect(h.storage.setItem).not.toHaveBeenCalled();
   });
 
-  it('purchases and upgrades from the visible shelf while retaining unchanged offers',()=>{
-    const h=host({coins:1000,shop:{day:'2026-11-15',offers:['washer','promo_badge','clay']}});
+  it('purchases 24h trials and completes permanent unlocks from the visible shelf while retaining unchanged offers',()=>{
+    const h=host({coins:1000,propBlueprints:{washer:19,promo_badge:1},shop:{day:'2026-11-15',offers:['washer','promo_badge','clay']}});
     h.meta.action('meta-buy:washer');
-    expect(loadProfile()).toMatchObject({coins:780,ownedProps:{washer:1},shop:{offers:['milk_bottle','promo_badge','clay']}});
+    expect(loadProfile()).toMatchObject({coins:900,ownedProps:{washer:1},shop:{offers:['glue_trap','promo_badge','clay']}});
     h.meta.action('meta-buy:promo_badge');
-    expect(loadProfile()).toMatchObject({coins:530,ownedProps:{promo_badge:1},shop:{offers:['milk_bottle','promo_badge','clay']}});
-    expect(h.meta.markup('market')).toContain(t('p11.meta.upgradeShort'));
+    expect(loadProfile()).toMatchObject({coins:875,propBlueprints:{promo_badge:2},shop:{offers:['glue_trap','promo_badge','clay'],bought:['promo_badge']}});
+    expect(loadProfile().trialProps?.promo_badge).toBeGreaterThan(Date.now());
   });
 });
 

@@ -222,7 +222,7 @@ describe('P2 solo UI',()=>{
     const dictionary=language==='en'?en:zhCN;
     expect([...Object.values(dictionary),...Object.values(language==='en'?p1En:p1Zh)].join(' ')).not.toMatch(/对手|双方|下半场|两边|rival|opponent|both sides|both gardens|lower (?:half|garden)|your half/i);
     expect(t('prop.shared_oranges')).toBe(language==='en'?'Hot Spring Feast Pass':'温泉加餐券');
-    expect(t('prop.shared_oranges.desc')).toMatch(/15%/);expect(t('prop.hyper_party.desc')).toMatch(/38%/);
+    expect(t('prop.shared_oranges.desc')).toMatch(/\+4/);expect(t('prop.hyper_party.desc')).toMatch(/10%/);
     expect(t('prop.auto_shovel.desc')).toMatch(/55/);expect(t('prop.auto_shovel.desc')).toMatch(/30/);
   });
 });

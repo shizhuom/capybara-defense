@@ -24,6 +24,10 @@ export function propUnitTargetError(state:BattleState,id:string,unit:Unit|undefi
   if(id==='washer'&&!(basic?.category==='component'||basic?.category==='basic'&&unit.level===1))return 'm2.invalidTarget';
   if(id==='clay'&&basic?.category!=='component')return 'm2.invalidTarget';
   if(id==='milk_bottle'&&(max===1||unit.level>=max))return 'hint.maxLevel';
+  if(id==='whistle'){
+    if(max===1)return 'm2.invalidTarget';
+    if(unit.level>=max||unit.awakened)return 'hint.maxLevel';
+  }
   if(id==='recycle_bin'&&unit.level!==1)return 'm2.invalidTarget';
   return undefined;
 }

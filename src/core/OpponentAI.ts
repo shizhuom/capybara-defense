@@ -15,11 +15,11 @@ const shuffled=<T>(values:T[],random:()=>number):T[]=>{
 };
 const npcRows=[
   ['橘子汽水豚','Yuzu Capy','capybara'],['瓜子不离手','Seed Snack Captain','hamster'],
-  ['早八遛狗人','Morning Dog Walker','doge_agent'],['猫咖打工喵','Cafe Cat Keeper','cat_swordsman'],
-  ['温泉泡泡糖','Onsen Bubblegum','sakura_capy'],['厨房摸鱼王','Kitchen Daydreamer','salted_fish'],
+  ['早八遛狗人','Morning Dog Walker','doge_agent'],['猫咖值班喵','Cafe Cat Keeper','cat_swordsman'],
+  ['温泉泡泡糖','Onsen Bubblegum','sakura_capy'],['厨房干饭王','Kitchen Daydreamer','salted_fish'],
   ['鹅村扛把子','Village Goose Boss','goose_bully'],['熊猫不熬夜','Early Bedtime Panda','kungfu_panda'],
   ['篮球练习生','Basketball Trainee','rooster_star'],['皇冠小短腿','Crowned Short Legs','corgi_crown'],
-  ['黑市常客','Market Regular','market_coon'],['孤寡不孤单','Never Lonely Frog','frog_king'],
+  ['超市常客','Mart Regular','market_coon'],['呱呱不孤单','Never Lonely Frog','frog_king'],
   ['竹林扫地僧','Bamboo Sweeper','bamboo_master'],['后院退休园长','Retired Garden Warden','capybara'],
   ['情绪稳定祖师爷','Grandmaster of Calm','zen_capy'],
 ];

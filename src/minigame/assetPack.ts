@@ -25,12 +25,9 @@ const MAIN_CORE_IDS = new Set([
   'capybara_soak_dizzy', 'capybara_soak_dizzy_2',
   'tub_rim_sunny_backyard', 'tile_open', 'tile_broken',
   'orange', 'shovel', 'sprinkler', 'glue_trap_placed',
-  // Basic minions + Sunny Backyard bosses
-  'rat', 'rat_walk2', 'roach', 'roach_walk2', 'crab', 'crab_walk2',
-  'killer_bee', 'killer_bee_walk2', 'charmed_rat', 'charmed_rat_walk2',
-  'husky_wrecker', 'husky_wrecker_walk2', 'diva_kitty', 'diva_kitty_walk2',
-  'mega_roomba', 'mega_roomba_walk2', 'sad_rain_frog', 'sad_rain_frog_walk2',
-  'king_skunk', 'king_skunk_walk2',
+  // Basic minions + Sunny Backyard bosses (walk2 frames omitted — PuppetAnimator animates single base sprite!)
+  'rat', 'roach', 'crab', 'killer_bee', 'charmed_rat',
+  'husky_wrecker', 'diva_kitty', 'mega_roomba', 'sad_rain_frog', 'king_skunk',
   // Splash + HUD + dock icons
   'logo_capy', 'avatar_capybara', 'title_logo_zh', 'title_logo_en', 'ui_btn_start_zh', 'ui_btn_start_en',
   'ui_bell_summon', 'ui_fish_food', 'ui_coin_gold', 'ui_star_rank', 'ui_compendium_book',
@@ -50,7 +47,7 @@ const MAIN_CORE_IDS = new Set([
 
 /** Single source of truth for mini-game sprite compression & WeChat/Bilibili subpackage assignment. */
 export function classifySprite(id: string): SpritePackRule {
-  if (id === 'menu_banner') {
+  if (id === 'menu_banner' || id.endsWith('_walk2') || (!__ENABLE_ENGLISH__ && (id === 'title_logo_en' || id === 'ui_btn_start_en'))) {
     return { pkg: 'meta', format: 'jpg', maxDim: 640, quality: 0.78, omit: true };
   }
   if (OPAQUE_MAIN_BGS.has(id)) {

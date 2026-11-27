@@ -100,24 +100,24 @@ describe('12被动道具',()=>{
   it('果盘/同乐券只开局加命，暂停恢复不会重复添加',()=>{
     const e=arena([],['extra_oranges','shared_oranges']);expect(e.state.sides.player.oranges).toBe(9);expect(e.state.sides.ai.oranges).toBe(3);e.start();e.pause();e.pause(false);expect(e.state.sides.player.oranges).toBe(9);
   });
-  it('狂欢己方38%，望远镜只增基础射程至少2格的单位',()=>{
+  it('狂欢己方+10%无负面，望远镜只增基础射程至少2格的单位',()=>{
     const e=arena([],['hyper_party','tall_perch']);const own=pet(e,'squirrel'),melee=pet(e);
-    expect(e.getUnitStats(own).rate).toBeCloseTo(1.1*1.38);
+    expect(e.getUnitStats(own).rate).toBeCloseTo(1.1*1.10);
     expect(e.getUnitStats(own).range).toBe(3.5);expect(e.getUnitStats(melee).range).toBe(1.6);
   });
   it('香蕉皮永久减少己方道路敌人速度12%，对方不受影响',()=>{
     const e=arena([],['banana_peel']),a=e.spawnEnemy('rat','player'),b=e.spawnEnemy('rat','ai');e.tick(2);
     expect(a.progress).toBeCloseTo(.38*2*.88);expect(b.progress).toBe(0);
   });
-  it('断电45%技能失败并反噬8%最大血，失败时不会施加雨湿',()=>{
-    vi.spyOn(Random.prototype,'next').mockReturnValue(.44);const e=arena([],['emp_jammer']),u=pet(e);u.location={zone:'board',col:2,row:1};const boss=e.spawnEnemy('sad_rain_frog','player');
-    expect(u.statuses.WET).toBeUndefined();expect(boss.hp).toBeCloseTo(boss.maxHp*.92);
-    vi.mocked(Random.prototype.next).mockReturnValue(.45);e.spawnEnemy('sad_rain_frog','player');expect(u.statuses.WET).toBe(18);
+  it('断电50%技能失败并反噬10%最大血，失败时不会施加雨湿',()=>{
+    vi.spyOn(Random.prototype,'next').mockReturnValue(.49);const e=arena([],['emp_jammer']),u=pet(e);u.location={zone:'board',col:2,row:1};const boss=e.spawnEnemy('sad_rain_frog','player');
+    expect(u.statuses.WET).toBeUndefined();expect(boss.hp).toBeCloseTo(boss.maxHp*.9);
+    vi.mocked(Random.prototype.next).mockReturnValue(.5);e.spawnEnemy('sad_rain_frog','player');expect(u.statuses.WET).toBe(18);
   });
-  it.each([[1,.079,.08],[2,.149,.15],[3,.219,.22]])('训宠证Lv%s按相应概率抽出Lv2基础宠，不升级组件',(level,yes,no)=>{
-    const e=arena([],['promo_badge'],level);const r=vi.spyOn(Random.prototype,'next').mockReturnValue(0);
-    r.mockReturnValueOnce(0).mockReturnValueOnce(yes);e.summon();expect(e.state.units[0].level).toBe(2);
-    r.mockReturnValueOnce(0).mockReturnValueOnce(no);e.summon();expect(e.state.units[0].level).toBe(1);
+  it('训宠证单级固定15%概率抽出Lv2基础宠，不升级组件',()=>{
+    const e=arena([],['promo_badge'],1);const r=vi.spyOn(Random.prototype,'next').mockReturnValue(0);
+    r.mockReturnValueOnce(0).mockReturnValueOnce(.149);e.summon();expect(e.state.units[0].level).toBe(2);
+    r.mockReturnValueOnce(0).mockReturnValueOnce(.15);e.summon();expect(e.state.units[0].level).toBe(1);
   });
   it('蜜蜂加班初始+10粮，产粮间隔乘0.75，基础数值未改',()=>{
     const e=arena([],['bee_overtime']),u=pet(e,'bee');u.location={zone:'board',col:2,row:1};expect(e.state.sides.player.food).toBe(32);e.tick(13.4);expect(e.state.sides.player.food).toBe(32);e.tick(.11);expect(e.state.sides.player.food).toBe(33);

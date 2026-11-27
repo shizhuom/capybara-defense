@@ -43,11 +43,16 @@ describe('M2 catalogs', () => {
     const props = Object.values(catalog.PROPS);
     expect(props.filter(p => p.type === 'active')).toHaveLength(8);
     expect(props.filter(p => p.type === 'passive')).toHaveLength(12);
-    expect(Object.fromEntries(props.map(p=>[p.id,[p.price,p.cooldown]]))).toEqual({
-      washer:[220,28],clay:[300,35],milk_bottle:[380,50],whistle:[200,40],expired_can:[150,65],catnip:[280,55],glue_trap:[160,35],recycle_bin:[210,6],
-      gold_doge:[400,0],auto_shovel:[320,0],giant_orange_cat:[450,0],vip_poster:[320,0],extra_oranges:[180,0],shared_oranges:[160,0],hyper_party:[250,0],banana_peel:[180,0],emp_jammer:[310,0],promo_badge:[250,0],tall_perch:[190,0],bee_overtime:[240,0],
+    expect(Object.fromEntries(props.map(p=>[p.id,[p.rarity,p.price,p.cooldown,p.maxLevel]]))).toEqual({
+      glue_trap:[1,25,35,1],expired_can:[1,25,65,1],whistle:[2,40,40,1],recycle_bin:[2,40,6,1],
+      catnip:[3,65,55,1],milk_bottle:[3,65,50,1],washer:[4,100,28,1],clay:[4,100,35,1],
+      extra_oranges:[1,25,0,1],hyper_party:[1,25,0,1],promo_badge:[1,25,0,1],
+      banana_peel:[2,40,0,1],tall_perch:[2,40,0,1],shared_oranges:[2,40,0,1],bee_overtime:[2,40,0,1],
+      gold_doge:[3,65,0,1],giant_orange_cat:[3,65,0,1],auto_shovel:[3,65,0,1],
+      emp_jammer:[4,100,0,1],vip_poster:[4,100,0,1],
     });
-    expect(catalog.PROPS.promo_badge).toMatchObject({price:250,maxLevel:3});
+    expect(catalog.META_PRICES).toEqual({ shopRefresh: 15, lottery: 200 });
+    expect(catalog.PROPS.promo_badge).toMatchObject({rarity:1,price:25,maxLevel:1});
     for (const prop of props) for (const lang of ['zh-CN','en'] as const) {
       expect(prop.name[lang].length).toBeGreaterThan(2);
       expect(prop.description[lang]).toMatch(/\d/);
@@ -83,7 +88,7 @@ describe('M2 pure progression', () => {
     const p=m.normalizeProfile({schemaVersion:2,coins:-1,wins:100,matches:2,weaponFragments:{m01_swatter:2,m09_cat_blade:16,fake:40},
       equippedWeapons:{kungfu_po:'m01_swatter',puss_in_hat:'m01_swatter',zen_master:'m09_cat_blade',fake:'m09_cat_blade'},
       ownedProps:{washer:9,clay:1,milk_bottle:1,promo_badge:99,fake:1},equippedActiveProps:['washer','washer','clay','milk_bottle'],equippedPassiveProps:['promo_badge','washer']});
-    expect(p).toMatchObject({coins:0,wins:2,matches:2,weaponFragments:{m01_swatter:2,m09_cat_blade:16},ownedProps:{washer:1,clay:1,milk_bottle:1,promo_badge:3},equippedActiveProps:['washer','clay'],equippedPassiveProps:['promo_badge']});
+    expect(p).toMatchObject({coins:0,wins:2,matches:2,weaponFragments:{m01_swatter:2,m09_cat_blade:16},ownedProps:{washer:1,clay:1,milk_bottle:1,promo_badge:1},equippedActiveProps:['washer','clay'],equippedPassiveProps:['promo_badge']});
     expect(Object.keys(p.equippedWeapons)).toHaveLength(1);
     expect(m.normalizeProfile(null)).toEqual(m.createProfile());
   });
@@ -128,37 +133,52 @@ describe('M2 pure progression', () => {
     expect(p.equippedWeapons.puss_in_hat).toBe('m09_cat_blade');
     expect(m.equipWeapon(moved,'kungfu_po',null).profile.equippedWeapons.kungfu_po).toBeUndefined();
   });
-  it('buys every prop with its actual price, upgrades badge 3 times, and refuses invalid or maxed purchases atomically', async () => {
-    const m=await progression();const {PROPS}=await import('../src/config/props');
+  it('buys 24h trial +1 blueprint for every prop, unlocks permanently at blueprint goal, and refuses duplicate shelf or maxed purchases atomically', async () => {
+    const m=await progression();const {PROPS,PROP_TRIAL_DURATION_MS,propBlueprintGoal}=await import('../src/config/props');
+    const now=1_700_000_000_000;
     for(const prop of Object.values(PROPS)) {
-      let p:Profile={...m.createProfile(),coins:1000,shop:{day:'2026-11-12',offers:[prop.id]}};
-      for(let level=1;level<=prop.maxLevel;level++) {
-        const r=m.buyProp(p,prop.id);expect(r.ok).toBe(true);expect(r.profile.ownedProps[prop.id]).toBe(level);
-        expect(r.profile.coins).toBe(1000-level*prop.price);p=r.profile;
-      }
-      const before=JSON.stringify(p);expect(m.buyProp(p,prop.id).ok).toBe(false);expect(JSON.stringify(p)).toBe(before);
+      const goal=propBlueprintGoal(prop.id);
+      const start:Profile={...m.createProfile(),coins:1000,shop:{day:'2026-11-12',offers:[prop.id]}};
+      const trial=m.buyProp(start,prop.id,now);
+      expect(trial.ok).toBe(true);
+      expect(trial.profile.coins).toBe(1000-prop.price);
+      expect(trial.profile.propBlueprints?.[prop.id]).toBe(1);
+      expect(trial.profile.trialProps?.[prop.id]).toBe(now+PROP_TRIAL_DURATION_MS);
+      expect(trial.profile.ownedProps[prop.id]).toBeUndefined();
+      // Duplicate click on same shelf offer is rejected atomically
+      const dupBefore=JSON.stringify(trial.profile);
+      expect(m.buyProp(trial.profile,prop.id,now).ok).toBe(false);
+      expect(JSON.stringify(trial.profile)).toBe(dupBefore);
+      // One blueprint away: buying unlocks permanently and clears trial timer
+      const almost:Profile={...m.createProfile(),coins:1000,propBlueprints:{[prop.id]:goal-1},trialProps:{[prop.id]:now+1000},shop:{day:'2026-11-12',offers:[prop.id]}};
+      const unlocked=m.buyProp(almost,prop.id,now);
+      expect(unlocked.ok).toBe(true);expect(unlocked.newProps).toEqual([prop.id]);
+      expect(unlocked.profile.ownedProps[prop.id]).toBe(1);
+      expect(unlocked.profile.trialProps?.[prop.id]).toBeUndefined();
+      const before=JSON.stringify(unlocked.profile);expect(m.buyProp(unlocked.profile,prop.id,now).ok).toBe(false);expect(JSON.stringify(unlocked.profile)).toBe(before);
     }
-    const p=m.createProfile();expect(m.buyProp(p,'washer').profile).toEqual(p);
+    const p=m.createProfile();expect(m.buyProp(p,'washer',now).profile).toEqual(p);
     const poor={...p,shop:{day:'2026-11-12',offers:['washer']}};
-    expect(m.buyProp(poor,'washer')).toMatchObject({ok:false,profile:poor});
+    expect(m.buyProp(poor,'washer',now)).toMatchObject({ok:false,profile:poor});
   });
-  it('fills only the purchased max-level shop slot while preserving the other offers and date',async()=>{
-    const m=await progression();
-    const p:Profile={...m.createProfile(),coins:1000,shop:{day:'2026-11-13',offers:['washer','clay','milk_bottle']}};
-    const purchased=m.buyProp(p,'washer');
-    expect(purchased.profile.shop).toEqual({day:'2026-11-13',offers:['whistle','clay','milk_bottle']});
-    expect(purchased.profile.coins).toBe(780);expect(p.shop?.offers).toEqual(['washer','clay','milk_bottle']);
-    const badge:Profile={...p,shop:{day:'2026-11-13',offers:['promo_badge','clay','milk_bottle']}};
-    const first=m.buyProp(badge,'promo_badge');
-    expect(first.profile.ownedProps.promo_badge).toBe(1);expect(first.profile.shop).toEqual(badge.shop);
-    const second=m.buyProp(first.profile,'promo_badge');
-    expect(second.profile.ownedProps.promo_badge).toBe(2);expect(second.profile.shop).toEqual(badge.shop);
-    const third=m.buyProp(second.profile,'promo_badge');
-    expect(third.profile.shop).toEqual({day:'2026-11-13',offers:['washer','clay','milk_bottle']});
+  it('fills only the permanently-unlocked shop slot while preserving the other offers and date',async()=>{
+    const m=await progression();const {propBlueprintGoal}=await import('../src/config/props');
+    const now=1_700_000_000_000;
+    const p:Profile={...m.createProfile(),coins:1000,propBlueprints:{washer:propBlueprintGoal('washer')-1},shop:{day:'2026-11-13',offers:['washer','clay','milk_bottle']}};
+    const purchased=m.buyProp(p,'washer',now);
+    expect(purchased.profile.shop).toEqual({day:'2026-11-13',offers:['glue_trap','clay','milk_bottle']});
+    expect(purchased.profile.coins).toBe(900);expect(p.shop?.offers).toEqual(['washer','clay','milk_bottle']);
+    const trialOnly:Profile={...m.createProfile(),coins:1000,shop:{day:'2026-11-13',offers:['promo_badge','clay','milk_bottle']}};
+    const first=m.buyProp(trialOnly,'promo_badge',now);
+    expect(first.profile.ownedProps.promo_badge).toBeUndefined();
+    expect(first.profile.propBlueprints?.promo_badge).toBe(1);
+    expect(first.profile.shop).toEqual({day:'2026-11-13',offers:['promo_badge','clay','milk_bottle'],bought:['promo_badge']});
   });
   it('keeps fewer than 3 offers when every remaining unsold prop is already on the shelf',async()=>{
-    const m=await progression();const full=m.unlockAllProfile(m.createProfile());
+    const m=await progression();const {propBlueprintGoal}=await import('../src/config/props');
+    const full=m.unlockAllProfile(m.createProfile());
     delete full.ownedProps.washer;delete full.ownedProps.clay;delete full.ownedProps.milk_bottle;
+    full.propBlueprints={...full.propBlueprints,washer:propBlueprintGoal('washer')-1,clay:propBlueprintGoal('clay')-1,milk_bottle:propBlueprintGoal('milk_bottle')-1};
     full.shop={day:'2026-11-13',offers:['washer','clay','milk_bottle']};
     const first=m.buyProp(full,'washer');expect(first.profile.shop?.offers).toEqual(['clay','milk_bottle']);
     const second=m.buyProp(first.profile,'clay');expect(second.profile.shop?.offers).toEqual(['milk_bottle']);
@@ -178,21 +198,32 @@ describe('M2 pure progression', () => {
     }
     expect(m.equipProp(m.createProfile(),'washer').ok).toBe(false);
   });
-  it('persists a calendar-day shop, excludes max-level stock, and refreshes for exactly 40 coins', async () => {
-    const m=await progression();const p={...m.createProfile(),coins:100};
+  it('persists a calendar-day shop, uses exact 4:3:2:1 rarity weights, excludes permanent stock, and refreshes for 15 coins', async () => {
+    const m=await progression();const {PROPS}=await import('../src/config/props');const p={...m.createProfile(),coins:100};
     const today=m.ensureDailyShop(p,'2026-11-12',()=>0);
     expect(today.shop?.offers).toHaveLength(3);expect(new Set(today.shop?.offers).size).toBe(3);
     expect(m.ensureDailyShop(today,'2026-11-12',()=>{throw Error('must not reroll');})).toEqual(today);
     const tomorrow=m.ensureDailyShop(today,'2026-11-13',()=>.9);expect(tomorrow.shop?.day).toBe('2026-11-13');
-    const refreshed=m.refreshShop(today,'2026-11-12',()=>.8);expect(refreshed).toMatchObject({ok:true,profile:{coins:60}});
-    const poor={...today,coins:39};expect(m.refreshShop(poor,'2026-11-12',()=>0)).toMatchObject({ok:false,profile:poor});
+    const refreshed=m.refreshShop(today,'2026-11-12',()=>.8);expect(refreshed).toMatchObject({ok:true,profile:{coins:85}});
+    const poor={...today,coins:14};expect(m.refreshShop(poor,'2026-11-12',()=>0)).toMatchObject({ok:false,profile:poor});
     const full=m.unlockAllProfile(p);expect(m.ensureDailyShop({...full,shop:null},'2026-11-12',()=>0).shop?.offers).toEqual([]);
     expect(m.refreshShop(full,'2026-11-12',()=>0)).toMatchObject({ok:false,profile:full});
     const storage=memoryStorage();const s=await storageModule();s.saveProfile(today,storage);
     expect(m.ensureDailyShop(s.loadProfile(storage),'2026-11-12',()=>.2).shop).toEqual(today.shop);
+    // Exact 4:3:2:1 rarity weight check on rollShopProp
+    const pool=Object.values(PROPS);
+    const counts={1:0,2:0,3:0,4:0} as Record<number,number>;
+    for(let i=0;i<10000;i++){
+      let first=true;
+      const picked=m.rollShopProp(pool,()=>{if(first){first=false;return (i+.5)/10000;}return 0;})!;
+      counts[picked.rarity]++;
+    }
+    expect(counts).toEqual({1:4000,2:3000,3:2000,4:1000});
   });
   it('generates exact 3-tier rarity 8-slot wheels (2.5/9/1 over 12.5) with uniform 1/8 odds, persists across restarts until spun or next day, and settles rewards', async () => {
-    const m=await progression();const s=await storageModule();const p={...m.createProfile(),coins:300,freeLotteryTickets:1};
+    const m=await progression();const s=await storageModule();const {PROP_RARITY_RULES,PROP_TRIAL_DURATION_MS,propBlueprintGoal}=await import('../src/config/props');
+    const now=1_700_000_000_000;
+    const p={...m.createProfile(),coins:300,freeLotteryTickets:1};
     const countRarities=(list:ReturnType<typeof m.createLotteryPrizes>)=>list.map(pr=>m.getLotteryPrizeRarity(pr)).sort((a,b)=>a-b);
     const seq=(first:number)=>{let used=false;return()=>{if(!used){used=true;return first;}return .25;};};
 
@@ -222,7 +253,7 @@ describe('M2 pure progression', () => {
     expect(day2.lottery?.day).toBe('2026-11-25');
     expect(countRarities(day2.lottery!.prizes)).toEqual([0,0,1,1,2,2,3,4]);
     // Spinning atomically replaces the persisted board with a new next-round wheel!
-    const spun=m.spinLottery(day1,day1.lottery!.prizes,()=>.95,'auto','2026-11-24');
+    const spun=m.spinLottery(day1,day1.lottery!.prizes,()=>.95,'auto','2026-11-24',now);
     expect(spun.ok).toBe(true);
     expect(spun.profile.lottery?.day).toBe('2026-11-24');
     expect(countRarities(spun.profile.lottery!.prizes)).toEqual([0,0,1,1,2,2,3,4]);
@@ -233,15 +264,20 @@ describe('M2 pure progression', () => {
     expect(prizes).toHaveLength(8);
     // Exact uniform 1/8 chance for each of the 8 slots
     const hitSlots=new Set<number>();
-    for(let slot=0;slot<8;slot++) hitSlots.add(m.spinLottery(p,prizes,()=>(slot+.5)/8).index!);
+    for(let slot=0;slot<8;slot++) hitSlots.add(m.spinLottery(p,prizes,()=>(slot+.5)/8,'auto',undefined,now).index!);
     expect([...hitSlots].sort((a,b)=>a-b)).toEqual([0,1,2,3,4,5,6,7]);
 
-    // Capped prop refund, fragment unlock, atomic ticket/coin payment & invalid prize rejection
-    prizes[0]={type:'prop',id:'washer',amount:1};
+    // Blueprint + 24h trial grant, permanent conversion refund, fragment unlock & atomic rejection
+    prizes[0]={type:'prop',id:'washer',amount:3};
     prizes[6]={type:'fragment',id:'m07_rolling_pin',amount:1};
-    const first=m.spinLottery(p,prizes,()=>0);expect(first).toMatchObject({ok:true,index:0,profile:{coins:300,freeLotteryTickets:0,ownedProps:{washer:1}}});
+    const first=m.spinLottery(p,prizes,()=>0,'auto',undefined,now);
+    expect(first).toMatchObject({ok:true,index:0,profile:{coins:300,freeLotteryTickets:0,propBlueprints:{washer:3},trialProps:{washer:now+PROP_TRIAL_DURATION_MS}}});
     expect(p.freeLotteryTickets).toBe(1);expect(p.ownedProps).toEqual({});
-    const paid=m.spinLottery(first.profile,prizes,()=>0);expect(paid.profile.coins).toBe(320); // P19: 300 - 200 + capped washer's 220
+    // Already permanent prop converts to rarity lotteryOverflowCoins (320 for orange washer)
+    const permWasher:Profile={...first.profile,ownedProps:{washer:1},propBlueprints:{washer:propBlueprintGoal('washer')},trialProps:{}};
+    const paid=m.spinLottery(permWasher,prizes,()=>0,'coins',undefined,now);
+    expect(paid.convertedCoins).toBe(PROP_RARITY_RULES[4].lotteryOverflowCoins);
+    expect(paid.profile.coins).toBe(300-200+PROP_RARITY_RULES[4].lotteryOverflowCoins);
     const frag=m.spinLottery({...p,weaponFragments:{m07_rolling_pin:7}},prizes,()=>.76);
     expect(frag.newWeapons).toEqual(['m07_rolling_pin']);expect(frag.profile.weaponFragments.m07_rolling_pin).toBe(8);
     const poor={...m.createProfile(),coins:199};expect(m.spinLottery(poor,prizes,()=>0)).toMatchObject({ok:false,profile:poor});
@@ -249,14 +285,15 @@ describe('M2 pure progression', () => {
     expect(m.spinLottery(p,[...prizes.slice(0,7),{type:'coins',amount:-1}],()=>.99)).toMatchObject({ok:false,profile:p});
   });
   it.each([
-    {id:'washer',level:0,replacement:'whistle'},
-    {id:'promo_badge',level:2,replacement:'washer'},
-  ])('replaces only the lottery-capped $id shelf slot and preserves the same-day offers',async({id,level,replacement})=>{
-    const m=await progression();const s=await storageModule();
-    const p:Profile={...m.createProfile(),coins:500,freeLotteryTickets:1,ownedProps:level?{[id]:level}:{},
+    {id:'washer',replacement:'glue_trap'},
+    {id:'promo_badge',replacement:'glue_trap'},
+  ])('replaces only the lottery-unlocked $id shelf slot and preserves the same-day offers',async({id,replacement})=>{
+    const m=await progression();const s=await storageModule();const {propBlueprintGoal}=await import('../src/config/props');
+    const p:Profile={...m.createProfile(),coins:500,freeLotteryTickets:1,propBlueprints:{[id]:propBlueprintGoal(id)-1},
       shop:{day:'2026-11-13',offers:[id,'clay','milk_bottle']}};
     const prizes=m.createLotteryPrizes(p,()=>0);prizes[0]={type:'prop',id,amount:1};
     const won=m.spinLottery(p,prizes,()=>0);
+    expect(won.newProps).toEqual([id]);
     expect(won.profile.shop).toEqual({day:'2026-11-13',offers:[replacement,'clay','milk_bottle']});
     expect(won.profile.coins).toBe(500);expect(won.profile.freeLotteryTickets).toBe(0);
     expect(p.shop?.offers).toEqual([id,'clay','milk_bottle']);
@@ -264,14 +301,19 @@ describe('M2 pure progression', () => {
     const reloaded=m.ensureDailyShop(s.loadProfile(storage),'2026-11-13',()=>{throw Error('same-day shop must not reroll');});
     expect(reloaded.shop).toEqual(won.profile.shop);
   });
-  it('keeps lottery-upgraded badge stock until max level and permits fewer offers when no replacement remains',async()=>{
-    const m=await progression();
+  it('keeps lottery-progressed props on the shelf until permanent unlock and permits fewer offers when no replacement remains',async()=>{
+    const m=await progression();const {propBlueprintGoal}=await import('../src/config/props');
     const badge:Profile={...m.createProfile(),freeLotteryTickets:2,shop:{day:'2026-11-13',offers:['promo_badge','clay','milk_bottle']}};
-    const prizes=m.createLotteryPrizes(badge,()=>0);prizes[0]={type:'prop',id:'promo_badge',amount:1};
-    const first=m.spinLottery(badge,prizes,()=>0);expect(first.profile.shop).toEqual(badge.shop);
-    const second=m.spinLottery(first.profile,prizes,()=>0);expect(second.profile.shop).toEqual(badge.shop);
-    expect(second.profile.ownedProps.promo_badge).toBe(2);
+    const prizes=m.createLotteryPrizes(badge,()=>0);prizes[0]={type:'prop',id:'promo_badge',amount:2};
+    const first=m.spinLottery(badge,prizes,()=>0);
+    expect(first.profile.shop).toEqual(badge.shop);
+    expect(first.profile.propBlueprints?.promo_badge).toBe(2);
+    expect(first.profile.ownedProps.promo_badge).toBeUndefined();
+    const second=m.spinLottery(first.profile,prizes,()=>0);
+    expect(second.profile.ownedProps.promo_badge).toBe(1);
+    expect(second.newProps).toEqual(['promo_badge']);
     const nearlyFull=m.unlockAllProfile(m.createProfile());delete nearlyFull.ownedProps.washer;delete nearlyFull.ownedProps.clay;
+    nearlyFull.propBlueprints={...nearlyFull.propBlueprints,washer:propBlueprintGoal('washer')-1,clay:propBlueprintGoal('clay')-1};
     nearlyFull.freeLotteryTickets=1;nearlyFull.shop={day:'2026-11-13',offers:['washer','clay']};
     const lastPrizes=m.createLotteryPrizes(nearlyFull,()=>0);lastPrizes[0]={type:'prop',id:'washer',amount:1};
     expect(m.spinLottery(nearlyFull,lastPrizes,()=>0).profile.shop).toEqual({day:'2026-11-13',offers:['clay']});

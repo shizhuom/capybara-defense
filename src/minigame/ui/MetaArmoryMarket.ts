@@ -1,4 +1,4 @@
-import { META_PRICES, PROPS } from '../../config/props';
+import { META_PRICES, PROPS, propBlueprintGoal } from '../../config/props';
 import { HERO_FAMILIES, RARITY_RULES, WEAPONS, type WeaponDefinition, type WeaponFamily } from '../../config/weapons';
 import type { Profile } from '../../core/types';
 import { getLanguage, t } from '../../i18n/i18n';
@@ -26,7 +26,24 @@ import {
   wrapText,
   type UiHitManager,
 } from './CanvasUI';
-import { getLotteryPrizeRarity, type LotteryPrize } from '../../core/MetaProgression';
+import {
+  getLotteryPrizeRarity,
+  getPropBlueprintCount,
+  getPropTrialRemainingMs,
+  isPropPermanent,
+  isPropUsable,
+  type LotteryPrize,
+} from '../../core/MetaProgression';
+
+function formatTrialCountdown(ms: number, zh: boolean): string {
+  if (ms <= 0) return zh ? '已到期' : 'Expired';
+  const totalMin = Math.max(1, Math.ceil(ms / 60_000));
+  const h = Math.floor(totalMin / 60);
+  const m = totalMin % 60;
+  if (h >= 24) return zh ? '24时' : '24h';
+  if (h > 0) return m > 0 ? (zh ? `${h}时${m}分` : `${h}h${m}m`) : (zh ? `${h}时` : `${h}h`);
+  return zh ? `${m}分` : `${m}m`;
+}
 
 export type ArmoryTab = 'all' | WeaponFamily | 'recycle';
 export type MarketTab = 'shop' | 'backpack' | 'lottery';
@@ -501,6 +518,7 @@ export function drawArmoryModal(
   c.beginPath();
   c.rect(vx, vy, vw, vh);
   c.clip();
+  hits.pushClip(vx, vy, vw, vh);
 
   const wornBy = new Map<string, string>();
   for (const [heroId, weaponId] of Object.entries(profile.equippedWeapons)) {
@@ -577,6 +595,7 @@ export function drawArmoryModal(
   });
 
   const contentH = 12 + Math.ceil(weapons.length / cols) * (cardH + gapY);
+  hits.popClip();
   c.restore();
   scroll.setContentBounds(contentH, vh);
   drawScrollbar(c, vx, vy, vw, vh, contentH, scroll);
@@ -630,8 +649,10 @@ export function drawMarketModal(
 
   // ── TAB 1: DAILY SHOP (`每日特惠`) ─────────────────────────────────────────
   if (market.tab === 'shop') {
+    const nowMs = Date.now();
     const offers = profile.shop?.offers ?? [];
-    const allMaxed = !Object.values(PROPS).some(p => (profile.ownedProps[p.id] ?? 0) < p.maxLevel);
+    const boughtSet = new Set(profile.shop?.bought ?? []);
+    const allMaxed = !Object.values(PROPS).some(p => !isPropPermanent(profile, p.id));
     const whisper = allMaxed ? t('p11.meta.merchantMaxed') : t(`p11.meta.merchant${market.merchantQuip % 3}`);
 
     // Top Raccoon Whisper Bar + Refresh Pill (ENLARGED!)
@@ -643,7 +664,8 @@ export function drawMarketModal(
     hits.add({ id: 'market:merchant', x: body.x + 2, y: hy, w: whisperW, h: 54 });
     drawIvorySlab(c, body.x + 2, hy, whisperW, 54, 18, '#fffaf0', '#f4e3c0', '#855a2e', 2.2);
     drawSpriteContain(c, 'ui_market_peek_raccoon', body.x + 12, hy + 7, 40, 40);
-    drawText(c, whisper, body.x + 60, hy + 28, 20, PALETTE.ink, 'left', 800);
+    const whisperSize = fitFontSize(c, whisper, whisperW - 72, 19.5, 15.5, 800);
+    drawText(c, whisper, body.x + 60, hy + 28, whisperSize, PALETTE.ink, 'left', 800);
 
     const canRefresh = !allMaxed && profile.coins >= META_PRICES.shopRefresh;
     drawPillButton(c, hits, 'market:refresh', body.x + whisperW + 12, hy + 2, refreshW, 50, `${t('p6.refresh')} · ${META_PRICES.shopRefresh}`, canRefresh ? 'gold' : 'muted', {
@@ -652,7 +674,10 @@ export function drawMarketModal(
       disabled: !canRefresh,
     });
     if (market.adRefreshAvailable) {
-      drawPillButton(c, hits, 'market:ad-refresh', body.x + body.w - adW, hy + 2, adW, 50, zh ? '🎬 免费刷新' : '🎬 Ad Free', 'teal', { fontSize: 19 });
+      drawPillButton(c, hits, 'market:ad-refresh', body.x + body.w - adW, hy + 2, adW, 50, zh ? '🎬 免费刷新' : '🎬 Ad Free', allMaxed ? 'muted' : 'teal', {
+        fontSize: 19,
+        disabled: allMaxed,
+      });
     }
 
     const vx = body.x, vy = hy + 66, vw = body.w, vh = body.h - 68;
@@ -662,7 +687,7 @@ export function drawMarketModal(
       return {};
     }
 
-    // 3 GIANT SIDE-BY-SIDE SHOWCASE OFFER CARDS!
+    // 3 GIANT SIDE-BY-SIDE 24h TRIAL + BLUEPRINT OFFER CARDS!
     const gap = 16;
     const cardW = Math.floor((vw - 8 - gap * 2) / 3);
     const cardH = Math.min(392, vh - 4);
@@ -671,40 +696,82 @@ export function drawMarketModal(
       if (!prop) return;
       const rx = vx + 4 + i * (cardW + gap);
       const ry = vy;
-      const lv = profile.ownedProps[propId] ?? 0;
-      const maxed = lv >= prop.maxLevel;
+      const permanent = isPropPermanent(profile, propId);
+      const bought = boughtSet.has(propId);
+      const bp = getPropBlueprintCount(profile, propId);
+      const goal = propBlueprintGoal(propId);
+      const remMs = getPropTrialRemainingMs(profile, propId, nowMs);
+      const oneAway = !permanent && bp + 1 >= goal;
       const afford = profile.coins >= prop.price;
       const rColor = RARITY_COLORS[prop.rarity];
 
       drawIvorySlab(c, rx, ry, cardW, cardH, 22, '#fffdf8', '#f6e8cb', rColor, 3);
-      const iconS = 114;
-      round(c, rx + (cardW - iconS) / 2, ry + 18, iconS, iconS, 20, RARITY_BG[prop.rarity], rColor, 2.6);
-      if (!drawSpriteContain(c, `prop_${propId}`, rx + (cardW - 96) / 2, ry + 27, 96, 96)) {
-        drawText(c, prop.icon, rx + cardW / 2, ry + 75, 52, PALETTE.ink, 'center', 700);
+
+      // Full-width, big-font top header pill (rarity is already communicated by card border & icon frame!)
+      const tagY = ry + 12;
+      const tagH = 34;
+      const tagW = cardW - 28;
+      const trialTag = permanent
+        ? (zh ? '✓ 已永久解锁' : '✓ Permanent')
+        : oneAway
+          ? (zh ? '★ 购入即永久解锁' : '★ Final Blueprint!')
+          : (zh ? '24h 试用 · 赠 +1 图纸' : '24h Trial · +1 Plan');
+      const tagFill = permanent || oneAway ? '#dff5d6' : '#fff1c4';
+      const tagStroke = permanent || oneAway ? '#3d8633' : '#c27b18';
+      const tagInk = permanent || oneAway ? '#1c5915' : '#7c3e06';
+      round(c, rx + 14, tagY, tagW, tagH, tagH / 2, tagFill, tagStroke, 2);
+      const trialFont = fitFontSize(c, trialTag, tagW - 20, 19.5, 16, 900);
+      drawText(c, trialTag, rx + cardW / 2, tagY + tagH / 2 + 1, trialFont, tagInk, 'center', 900);
+
+      // Icon Box (rarity tinted background + border)
+      const iconS = 88;
+      round(c, rx + (cardW - iconS) / 2, ry + 54, iconS, iconS, 18, RARITY_BG[prop.rarity], rColor, 2.6);
+      if (!drawSpriteContain(c, `prop_${propId}`, rx + (cardW - 74) / 2, ry + 61, 74, 74)) {
+        drawText(c, prop.icon, rx + cardW / 2, ry + 98, 46, PALETTE.ink, 'center', 700);
       }
 
-      drawText(c, t(`prop.${propId}`), rx + cardW / 2, ry + 156, 28, PALETTE.ink, 'center', 900);
-      drawText(c, `${t(`m2.${prop.type}`)} · Lv.${lv}/${prop.maxLevel}`, rx + cardW / 2, ry + 188, 20, prop.type === 'active' ? '#c2502c' : '#2d7a64', 'center', 800);
+      const nameStr = t(`prop.${propId}`);
+      const nameFont = fitFontSize(c, nameStr, cardW - 28, 25.5, 19.5, 900);
+      drawText(c, nameStr, rx + cardW / 2, ry + 162, nameFont, PALETTE.ink, 'center', 900);
 
-      round(c, rx + 16, ry + 208, cardW - 32, Math.max(82, cardH - 294), 14, 'rgba(232,212,172,0.42)', '#cbb082', 1.5);
-      drawWrappedText(c, t(`prop.${propId}.desc`), rx + 26, ry + 218, cardW - 52, 20.5, 27, PALETTE.ink, 'left', 700, 3);
+      // Type + Blueprint Progress Bar Row
+      const progY = ry + 182;
+      const typeLabel = t(`m2.${prop.type}`);
+      drawText(c, typeLabel, rx + 18, progY + 10, 18, prop.type === 'active' ? '#c2502c' : '#2d7a64', 'left', 900);
+      const bpText = zh ? `图纸 ${bp}/${goal}` : `${bp}/${goal}`;
+      drawText(c, bpText, rx + cardW - 18, progY + 10, 18, oneAway ? '#226619' : PALETTE.inkSoft, 'right', 900);
+      const barX = rx + 70;
+      const barW = Math.max(70, cardW - 186);
+      drawProgressBar(c, barX, progY + 3, barW, 13, bp / Math.max(1, goal), oneAway ? '#4fa832' : rColor, 'rgba(72,46,24,0.16)', '#7a5230');
 
-      const btnY = ry + cardH - 68;
-      if (maxed) {
-        round(c, rx + 24, btnY, cardW - 48, 52, 26, '#dff5d6', '#3d8633', 2.2);
-        drawText(c, `✓ ${t('m2.maxed')}`, rx + cardW / 2, btnY + 27, 22, '#22591b', 'center', 900);
+      const descY = ry + 208;
+      const descH = Math.max(82, cardH - 284);
+      round(c, rx + 16, descY, cardW - 32, descH, 14, 'rgba(232,212,172,0.42)', '#cbb082', 1.5);
+      drawWrappedText(c, t(`prop.${propId}.desc`), rx + 25, descY + 10, cardW - 50, 19.5, 25, PALETTE.ink, 'left', 700, 3);
+
+      const btnY = ry + cardH - 64;
+      if (permanent) {
+        round(c, rx + 22, btnY, cardW - 44, 50, 25, '#dff5d6', '#3d8633', 2.2);
+        drawText(c, `✓ ${t('m2.maxed')}`, rx + cardW / 2, btnY + 26, 21, '#22591b', 'center', 900);
+      } else if (bought) {
+        round(c, rx + 22, btnY, cardW - 44, 50, 25, '#e8f5ef', '#3a876f', 2.2);
+        const rentedText = remMs > 0
+          ? (zh ? `✓ 试用中 · 剩${formatTrialCountdown(remMs, true)}` : `✓ Trial · ${formatTrialCountdown(remMs, false)}`)
+          : (zh ? '✓ 本轮已租' : '✓ Claimed');
+        const rentedFont = fitFontSize(c, rentedText, cardW - 60, 19.5, 15, 900);
+        drawText(c, rentedText, rx + cardW / 2, btnY + 26, rentedFont, '#1e5b47', 'center', 900);
       } else {
         drawPillButton(
           c,
           hits,
           `market:buy:${propId}`,
-          rx + 24,
+          rx + 22,
           btnY,
-          cardW - 48,
-          54,
-          `${prop.price} ${t(lv ? 'p11.meta.upgradeShort' : 'p11.meta.buyShort')}`,
-          afford ? 'green' : 'muted',
-          { fontSize: 22, icon: 'ui_coin_gold', disabled: !afford },
+          cardW - 44,
+          52,
+          `${prop.price} ${t(oneAway ? 'p11.meta.upgradeShort' : 'p11.meta.buyShort')}`,
+          afford ? (oneAway ? 'gold' : 'green') : 'muted',
+          { fontSize: 21, icon: 'ui_coin_gold', disabled: !afford },
         );
       }
     });
@@ -713,6 +780,7 @@ export function drawMarketModal(
 
   // ── TAB 2: BACKPACK (`道具背包`) ───────────────────────────────────────────
   if (market.tab === 'backpack') {
+    const nowMs = Date.now();
     // Top Loadout Strip: 2 Active Slots + 6 Passive Slots — GIANT icons (>= candidate items below!)
     const stripY = body.y + 2;
     const stripH = 148;
@@ -720,7 +788,17 @@ export function drawMarketModal(
 
     const slotY = stripY + 38;
     const slotH = 100;
-    const slotIconSz = 86; // Strictly larger than 80×80 candidate prop icons below!
+    const slotIconSz = 86;
+
+    const drawTrialSlotTag = (sx: number, sw: number, pid: string) => {
+      const remMs = getPropTrialRemainingMs(profile, pid, nowMs);
+      if (remMs <= 0) return;
+      const hrs = Math.max(1, Math.ceil(remMs / 3600_000));
+      const tag = zh ? `⏱${hrs}时` : `⏱${hrs}h`;
+      const tw = Math.min(sw - 10, 68);
+      round(c, sx + (sw - tw) / 2, slotY + slotH - 24, tw, 22, 11, '#fff0c2', '#b86e14', 1.8);
+      drawText(c, tag, sx + sw / 2, slotY + slotH - 12, 14, '#7c3c06', 'center', 900);
+    };
 
     // Left: Active · 2
     const activeX0 = body.x + 20;
@@ -736,6 +814,7 @@ export function drawMarketModal(
         drawSpriteContain(c, `prop_${pid}`, sx + (activeW - slotIconSz) / 2, slotY + (slotH - slotIconSz) / 2, slotIconSz, slotIconSz);
         round(c, sx + activeW - 22, slotY - 6, 28, 28, 14, '#d95843', '#fffdf5', 2);
         drawText(c, '×', sx + activeW - 8, slotY + 8, 19, '#fffdf5', 'center', 900);
+        drawTrialSlotTag(sx, activeW, pid);
       } else {
         drawText(c, '+', sx + activeW / 2, slotY + slotH / 2, 36, '#9a8062', 'center', 900);
       }
@@ -765,34 +844,52 @@ export function drawMarketModal(
         drawSpriteContain(c, `prop_${pid}`, sx + (pSlotW - slotIconSz) / 2, slotY + (slotH - slotIconSz) / 2, slotIconSz, slotIconSz);
         round(c, sx + pSlotW - 22, slotY - 6, 28, 28, 14, '#d95843', '#fffdf5', 2);
         drawText(c, '×', sx + pSlotW - 8, slotY + 8, 19, '#fffdf5', 'center', 900);
+        drawTrialSlotTag(sx, pSlotW, pid);
       } else {
         drawText(c, '+', sx + pSlotW / 2, slotY + slotH / 2, 36, '#9a8062', 'center', 900);
       }
     }
 
-    // Scrollable Single-Column Prop Rows
+    // Scrollable 2-Column Prop Cards
     const vx = body.x, vy = stripY + stripH + 10, vw = body.w, vh = body.h - stripH - 12;
     const eqSet = new Set([...profile.equippedActiveProps, ...profile.equippedPassiveProps]);
-    const order = (id: string) => (eqSet.has(id) ? 0 : profile.ownedProps[id] ? 1 : 2);
-    const props = Object.values(PROPS).sort((a, b) => order(a.id) - order(b.id));
+    const rankOrder = (id: string) => {
+      if (eqSet.has(id)) return 0;
+      if (isPropPermanent(profile, id)) return 1;
+      if (getPropTrialRemainingMs(profile, id, nowMs) > 0) return 2;
+      return 3;
+    };
+    const props = Object.values(PROPS).sort((a, b) => {
+      const ro = rankOrder(a.id) - rankOrder(b.id);
+      if (ro !== 0) return ro;
+      if (rankOrder(a.id) === 3) {
+        const pctDiff = getPropBlueprintCount(profile, b.id) / propBlueprintGoal(b.id) - getPropBlueprintCount(profile, a.id) / propBlueprintGoal(a.id);
+        if (Math.abs(pctDiff) > 1e-6) return pctDiff;
+      }
+      return a.rarity - b.rarity;
+    });
     const pulseGlue = pulseSel === '[data-action="meta-prop:glue_trap"]';
 
     c.save();
     c.beginPath();
     c.rect(vx, vy, vw, vh);
     c.clip();
+    hits.pushClip(vx, vy, vw, vh);
 
-    // 2-Column GIANT Prop Cards in Backpack
-    const cols = 2, gapX = 16, gapY = 12;
+    const cols = 2, gapX = 16, gapY = 10;
     const cardW = Math.floor((vw - 16 - gapX) / cols);
-    const cardH = 148;
+    const cardH = 144;
     props.forEach((prop, idx) => {
       const col = idx % cols, row = Math.floor(idx / cols);
       const rx = vx + 4 + col * (cardW + gapX);
       const ry = vy + 2 + row * (cardH + gapY) - scroll.offset;
       if (ry + cardH < vy - 20 || ry > vy + vh + 20) return;
 
-      const lv = profile.ownedProps[prop.id] ?? 0;
+      const permanent = isPropPermanent(profile, prop.id);
+      const remMs = getPropTrialRemainingMs(profile, prop.id, nowMs);
+      const usable = isPropUsable(profile, prop.id, nowMs);
+      const bp = getPropBlueprintCount(profile, prop.id);
+      const goal = propBlueprintGoal(prop.id);
       const worn = eqSet.has(prop.id);
       const rColor = RARITY_COLORS[prop.rarity];
       const shouldPulse = pulseGlue && prop.id === 'glue_trap';
@@ -804,28 +901,53 @@ export function drawMarketModal(
         cardW,
         cardH,
         18,
-        shouldPulse ? '#fff8d4' : worn ? '#ebf9e4' : lv > 0 ? '#fffdf8' : '#efe7d8',
-        shouldPulse ? '#f8df91' : worn ? '#d6f0ca' : lv > 0 ? '#f6e8cb' : '#e3d8c4',
-        shouldPulse ? '#e08b19' : worn ? '#3d8633' : rColor,
+        shouldPulse ? '#fff8d4' : worn ? '#ebf9e4' : permanent ? '#fffdf8' : remMs > 0 ? '#fff9ea' : '#efe7d8',
+        shouldPulse ? '#f8df91' : worn ? '#d6f0ca' : permanent ? '#f6e8cb' : remMs > 0 ? '#fae7be' : '#e3d8c4',
+        shouldPulse ? '#e08b19' : worn ? '#3d8633' : remMs > 0 ? '#d18219' : rColor,
         shouldPulse ? 3.8 : worn ? 2.8 : 2.2,
       );
-      round(c, rx + 14, ry + 26, 94, 94, 18, RARITY_BG[prop.rarity], rColor, 2.2);
-      if (!drawSpriteContain(c, `prop_${prop.id}`, rx + 21, ry + 33, 80, 80, lv > 0 ? 1 : 0.36)) {
-        drawText(c, prop.icon, rx + 61, ry + 73, 44, PALETTE.ink, 'center', 700);
+      round(c, rx + 14, ry + 25, 94, 94, 18, RARITY_BG[prop.rarity], rColor, 2.2);
+      if (!drawSpriteContain(c, `prop_${prop.id}`, rx + 21, ry + 32, 80, 80, usable ? 1 : 0.36)) {
+        drawText(c, prop.icon, rx + 61, ry + 72, 44, PALETTE.ink, 'center', 700);
       }
 
-      drawText(c, t(`prop.${prop.id}`), rx + 122, ry + 30, 25, lv > 0 ? PALETTE.ink : PALETTE.muted, 'left', 900);
-      drawText(c, `${t(`m2.${prop.type}`)}${lv > 0 ? ` · Lv.${lv}/${prop.maxLevel}` : ''}`, rx + 122, ry + 60, 19, prop.type === 'active' ? '#c2502c' : '#2d7a64', 'left', 800);
-      drawWrappedText(c, t(`prop.${prop.id}.desc`), rx + 122, ry + 78, cardW - 266, 18.5, 24, PALETTE.inkSoft, 'left', 700, 2);
+      const textMaxW = cardW - 266;
+      const titleStr = t(`prop.${prop.id}`);
+      const titleFont = fitFontSize(c, titleStr, textMaxW - 86, 23, 18, 900);
+      drawText(c, titleStr, rx + 120, ry + 23, titleFont, usable ? PALETTE.ink : PALETTE.muted, 'left', 900);
+
+      // Right-of-title status pill (Permanent / Active Trial timer)
+      if (permanent) {
+        round(c, rx + 120 + textMaxW - 62, ry + 11, 62, 24, 12, '#dff5d6', '#3d8633', 1.5);
+        drawText(c, zh ? '永久' : 'PERM', rx + 120 + textMaxW - 31, ry + 24, 14, '#1f5918', 'center', 900);
+      } else if (remMs > 0) {
+        const badge = `⏱${formatTrialCountdown(remMs, zh)}`;
+        const bw = Math.min(98, Math.max(72, badge.length * 11 + 14));
+        round(c, rx + 120 + textMaxW - bw, ry + 11, bw, 24, 12, '#fff0c2', '#c47514', 1.6);
+        const bf = fitFontSize(c, badge, bw - 8, 14, 11.5, 900);
+        drawText(c, badge, rx + 120 + textMaxW - bw / 2, ry + 24, bf, '#854506', 'center', 900);
+      }
+
+      const metaLine = t(`m2.${prop.type}`);
+      drawText(c, metaLine, rx + 120, ry + 48, 18, prop.type === 'active' ? '#c2502c' : '#2d7a64', 'left', 800);
+      drawWrappedText(c, t(`prop.${prop.id}.desc`), rx + 120, ry + 64, textMaxW, 17.5, 21.5, PALETTE.inkSoft, 'left', 700, 2);
+
+      // Bottom Blueprint Progress Bar on all non-permanent props
+      if (!permanent) {
+        const barY = ry + cardH - 24;
+        const bpLabel = zh ? `图纸 ${bp}/${goal}` : `${bp}/${goal}`;
+        drawProgressBar(c, rx + 120, barY, Math.max(60, textMaxW - 86), 11, bp / Math.max(1, goal), rColor, 'rgba(72,46,24,0.16)', '#7a5230');
+        drawText(c, bpLabel, rx + 120 + textMaxW, barY + 6, 15, PALETTE.inkSoft, 'right', 900);
+      }
 
       if (ry + cardH > vy && ry < vy + vh) {
-        if (lv > 0) {
+        if (usable) {
           drawPillButton(
             c,
             hits,
             `market:equip:${prop.id}`,
             rx + cardW - 134,
-            ry + 48,
+            ry + 46,
             120,
             52,
             t(worn ? 'p11.meta.deployed' : 'p11.meta.deploy'),
@@ -833,16 +955,18 @@ export function drawMarketModal(
             { fontSize: 19.5, icon: worn ? 'ui_storybook_check' : undefined },
           );
           if (shouldPulse && !worn) {
-            drawGuideRipple(c, rx + cardW - 134, ry + 48, 120, 52, 26, elapsed, { maxExpand: 16, waves: 3, showBullseye: true });
+            drawGuideRipple(c, rx + cardW - 134, ry + 46, 120, 52, 26, elapsed, { maxExpand: 16, waves: 3, showBullseye: true });
           }
         } else {
-          drawText(c, t('p11.meta.unowned'), rx + cardW - 72, ry + 54, 18.5, PALETTE.muted, 'center', 800);
-          drawSpriteContain(c, 'ui_lock_closed', rx + cardW - 87, ry + 74, 30, 30);
+          drawSpriteContain(c, 'ui_lock_closed', rx + cardW - 88, ry + 36, 32, 32);
+          drawText(c, `${bp}/${goal}`, rx + cardW - 72, ry + 86, 19, PALETTE.inkSoft, 'center', 900);
+          drawText(c, zh ? '收集图纸' : 'Blueprints', rx + cardW - 72, ry + 110, 15, PALETTE.muted, 'center', 800);
         }
       }
     });
 
     const contentH = 12 + Math.ceil(props.length / cols) * (cardH + gapY);
+    hits.popClip();
     c.restore();
     scroll.setContentBounds(contentH, vh);
     drawScrollbar(c, vx, vy, vw, vh, contentH, scroll);
@@ -1098,7 +1222,8 @@ export function drawMarketModal(
     } else if (prize.type === 'prop' && prize.id) {
       drawSpriteContain(c, `prop_${prize.id}`, ix + 6, iy + 6, sprSz, sprSz);
       label = t(`prop.${prize.id}`);
-      subLabel = `×${prize.amount}`;
+      subLabel = zh ? `图纸 ×${prize.amount}` : `Plan ×${prize.amount}`;
+      isFragment = true;
     } else if (prize.type === 'fragment' && prize.id) {
       if (!drawSpriteContain(c, `weapon_${prize.id}`, ix + 6, iy + 6, sprSz, sprSz)) {
         drawSpriteContain(c, 'ui_weapon_fragment', ix + 6, iy + 6, sprSz, sprSz);

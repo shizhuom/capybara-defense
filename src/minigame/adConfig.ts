@@ -128,7 +128,7 @@ export function buildSharePayload(
   if (context === 'profile') {
     return {
       title: zh
-        ? `「${rankName}」已收录 ${profile.mergedHeroes.length}/12 位传奇英雄，快来和我一起摸鱼泡澡！`
+        ? `「${rankName}」已收录 ${profile.mergedHeroes.length}/12 位传奇英雄，快来和我一起舒心泡澡！`
         : `${rankName} with ${profile.mergedHeroes.length}/12 Heroes unlocked — come chill in the onsen!`,
       query: 'ref=profile',
     };

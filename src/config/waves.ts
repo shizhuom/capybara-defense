@@ -53,15 +53,24 @@ export function getStandardBossScaling(
 }
 /** Endless HP grows by this factor per wave after the tenth (P17: a gentle ×1.25 instead of ×2). */
 export const ENDLESS_HP_GROWTH=1.25;
-/** Standard waves retain their table; endless pressure starts at k=1 on wave 11. */
+/** Anchor Endless W11+ cleanly above Standard W10 effective minion pressure (9 × 1.8 = 16.2 HP, 1.14× speed). */
+export const ENDLESS_BASE_HP_SCALE=WAVES[9].hpScale*STANDARD_MINION_HP_MULT[9];
+export const ENDLESS_BASE_SPEED_SCALE=STANDARD_MINION_SPEED_MULT[9];
+/** Smooth, fair Endless Boss HP scaling across all 12 bosses (clamps raw base HP spread so W11 smoothly exceeds W10's 10.2k–12.4k). */
+export function getEndlessBossScaling(baseHp:number,waveNumber:number):number {
+  const safeBase=Math.max(1,Number.isFinite(baseHp)?baseHp:1);
+  const effectiveBase=Math.max(2200,Math.min(3400,safeBase));
+  return (effectiveBase*.36*getWaveConfig(waveNumber).hpScale)/safeBase;
+}
+/** Standard waves retain their table; endless pressure starts at k=1 on wave 11 strictly above W10. */
 export function getWaveConfig(waveNumber:number):WaveConfig {
   const wave=Number.isFinite(waveNumber)?Math.max(1,Math.trunc(waveNumber)):1;
   if(wave<=10)return {...WAVES[wave-1],speedScale:1,armorBonus:0};
   const k=wave-10;
-  // P17 curve: ×1.25 per wave so devoted lineups top out around Wave 70-80; saturation is numerical only.
-  const hpScale=Math.min(Number.MAX_SAFE_INTEGER,WAVES[9].hpScale*Math.pow(ENDLESS_HP_GROWTH,Math.min(200,k)));
+  // P17 curve: ×1.25 per wave anchored to W10's effective pressure so W11 never drops below W10.
+  const hpScale=Math.min(Number.MAX_SAFE_INTEGER,ENDLESS_BASE_HP_SCALE*Math.pow(ENDLESS_HP_GROWTH,Math.min(200,k)));
   return {count:Math.min(56,26+3*k),interval:Math.max(.55,1.2*Math.pow(.92,k)),hpScale,
-    speedScale:1+Math.min(.60,.012*k),armorBonus:Math.min(.45,.009*k)};
+    speedScale:ENDLESS_BASE_SPEED_SCALE+Math.min(.60,.012*k),armorBonus:Math.min(.45,.009*k)};
 }
 const BOSS_WAVES=[4,6,8,9,10];
 export const THEME_BOSSES:Record<MapId,string[]>={
@@ -72,7 +81,8 @@ export const THEME_BOSSES:Record<MapId,string[]>={
 };
 export function bossForWave(mapId:MapId,rankIndex:number,wave:number,random:()=>number):string|null {
   const index=wave>=11?(Math.trunc(wave)-11)%5:wave===3&&rankIndex>=20?0:BOSS_WAVES.indexOf(wave);if(index<0)return null;
-  return rankIndex>=40?BOSS_IDS[Math.floor(Math.max(0,Math.min(.999999999,random()))*BOSS_IDS.length)]:THEME_BOSSES[mapId][index];
+  // Endless (Wave 11+) uses the identical full 12-boss pool regardless of rank or map for Global Endless Board fairness.
+  return wave>=11||rankIndex>=40?BOSS_IDS[Math.floor(Math.max(0,Math.min(.999999999,random()))*BOSS_IDS.length)]:THEME_BOSSES[mapId][index];
 }
 export function bossCountForWave(wave:number,rankIndex:number):number {
   if(wave>=11){const k=wave-10;return k<=2?1:k<=5?2:3;}
@@ -84,7 +94,7 @@ export function bossCountForWave(wave:number,rankIndex:number):number {
 export function bossesForWave(mapId:MapId,rankIndex:number,wave:number,random:()=>number):string[] {
   const first=bossForWave(mapId,rankIndex,wave,random);if(!first)return [];
   const count=bossCountForWave(wave,rankIndex);if(count<2)return [first];
-  const pool=(rankIndex>=40?BOSS_IDS:THEME_BOSSES[mapId]).filter(id=>id!==first);
+  const pool=(wave>=11||rankIndex>=40?BOSS_IDS:THEME_BOSSES[mapId]).filter(id=>id!==first);
   const chosen=[first];
   while(chosen.length<count)chosen.push(pool.splice(Math.floor(Math.max(0,Math.min(.999999999,random()))*pool.length),1)[0]);
   return chosen;
@@ -95,6 +105,13 @@ export function waveEnemyCount(waveNumber:number,rankIndex:number):number {
 }
 export function minionForWave(waveNumber:number,spawnIndex:number,rankIndex:number):string {
   const rank=clampRank(rankIndex),i=Math.max(0,Math.trunc(spawnIndex));
+  // Endless (Wave 11+) uses one uniform full-roster minion mix across every rank & map.
+  if(waveNumber>=11){
+    if(i%7===5)return 'charmed_rat';
+    if(i%6===3)return 'killer_bee';
+    if(i%3===2)return 'crab';
+    return i%3===1?'roach':'rat';
+  }
   if(rank>=30&&waveNumber>=4&&i%7===5)return 'charmed_rat';
   if(rank>=15&&waveNumber>=5&&i%6===3)return 'killer_bee';
   if(rank>=5&&waveNumber>=3&&i%(rank>=10?3:4)===2)return 'crab';

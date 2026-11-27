@@ -21,7 +21,7 @@ describe('P13 pure prop eligibility',()=>{
     ['washer','hamster',1,true],['washer','hamster',2,false],['washer','panda',1,true],['washer','kungfu_po',1,false],
     ['clay','hamster',1,false],['clay','panda',1,true],['clay','kungfu_po',1,false],
     ['milk_bottle','hamster',4,true],['milk_bottle','hamster',5,false],['milk_bottle','bee',3,false],['milk_bottle','kungfu_po',4,true],['milk_bottle','kungfu_po',5,false],['milk_bottle','panda',1,false],
-    ['whistle','hamster',5,true],['whistle','panda',1,true],['recycle_bin','panda',1,true],['recycle_bin','panda',2,false],['recycle_bin','kungfu_po',1,true],['recycle_bin','hamster',2,false],
+    ['whistle','hamster',2,true],['whistle','kungfu_po',2,true],['whistle','hamster',5,false],['whistle','panda',1,false],['recycle_bin','panda',1,true],['recycle_bin','panda',2,false],['recycle_bin','kungfu_po',1,true],['recycle_bin','hamster',2,false],
   ] as const)('%s preview agrees with activation for %s level %i',(id,kind,level,valid)=>{
     const engine=battle(id),unit=pet(engine,{kind,level});
     expect(isValidPropUnit(engine.state,id,unit)).toBe(valid);

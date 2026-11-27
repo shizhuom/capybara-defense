@@ -101,8 +101,14 @@ export class MinigameAssetManager {
 
   /** Frees heavy off-screen panoramic backgrounds when entering battle to protect iOS mini-game RAM. */
   releaseHeavyIdleSprites(activeMapId: string): number {
-    return assets.unloadSprites(id =>
+    const freed = assets.unloadSprites(id =>
       id === 'bg_onsen_village' || (id.startsWith('map_') && id !== `map_${activeMapId}`),
     );
+    if (freed > 0) {
+      // Invalidate the cached 'maps' subpackage flag so reopening Village or another map reloads unloaded sprites cleanly.
+      this.loadedPackages.delete('maps');
+      this.packagePromises.delete('maps');
+    }
+    return freed;
   }
 }

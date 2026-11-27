@@ -26,7 +26,7 @@ execSync('npx vite build --config vite.minigame.config.ts', {
   env: { ...process.env, MINIGAME_TARGET: target },
 });
 
-const assetsSummary = await buildMinigameAssets(outDir);
+const assetsSummary = await buildMinigameAssets(outDir, { omitEnglish: target === 'wx' });
 
 // Copy official free WeChat Open Data Context (好友排行榜开放数据域) for `wx` builds.
 let openDataBytes = 0;
@@ -76,8 +76,9 @@ const projectConfig = {
 writeFileSync(projectConfigPath, `${JSON.stringify(projectConfig, null, 2)}\n`);
 
 const jsBytes = statSync(join(outDir, 'game.js')).size;
+const gameJsonBytes = statSync(join(outDir, 'game.json')).size;
 const spritesTotalBytes = assetsSummary.sizes.main + assetsSummary.sizes.maps + assetsSummary.sizes.meta;
-const totalBytes = jsBytes + openDataBytes + spritesTotalBytes;
+const totalBytes = jsBytes + gameJsonBytes + openDataBytes + spritesTotalBytes;
 const mb = n => `${(n / (1024 * 1024)).toFixed(2)} MB`;
 
 console.log(`\n[${target.toUpperCase()}] Built ${outDirName}/ successfully (single package, zero subpackages):`);

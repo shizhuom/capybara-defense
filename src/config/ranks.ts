@@ -11,12 +11,13 @@ export const clampRank = (index:number):number => Number.isFinite(index)?Math.ma
  * - Waves 1–10 gently spawn +0..+8 extra 1×-HP small minions at higher ranks for livelier wave-clearing, extra fish food & faster momentum.
  * - Endless Mode (Wave 11+) is 100% identical across all ranks so the Global Endless Board is completely fair.
  */
-export function getRankDifficulty(rankIndex:number,options:{tutorialGuided?:boolean}={}):RankDifficulty {
+export function getRankDifficulty(rankIndex:number,options:{tutorialGuided?:boolean;tutorialEase?:boolean}={}):RankDifficulty {
   const rank=clampRank(rankIndex);
   const extraCount=Math.min(8,Math.floor(rank/6));
   const intervalScale=Number(Math.max(.76,1-extraCount*.03).toFixed(4));
+  const ease=options.tutorialEase??options.tutorialGuided;
   return {
-    hpMultiplier:rank===0&&options.tutorialGuided?.85:1,
+    hpMultiplier:rank===0&&ease?.85:1,
     speedMultiplier:1,
     extraCount,
     intervalScale,
@@ -39,7 +40,7 @@ const tiers = [
   {zh:'训宠宗师',en:'Pet Grandmaster'},
   {zh:'萌宠统帅',en:'Critter Marshal'},
   {zh:'皇家园长',en:'Royal Warden'},
-  {zh:'后院霸主',en:'Backyard Overlord'},
+  {zh:'后院守护王',en:'Backyard Overlord'},
   {zh:'森林君王',en:'Forest Monarch'},
 ];
 export const RANKS:RankDefinition[]=Array.from({length:54},(_,index)=>{

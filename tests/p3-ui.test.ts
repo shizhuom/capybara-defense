@@ -168,14 +168,14 @@ describe('P3 stage integration',()=>{
     expect(app.selectedId).toBe(id);expect(app.toast).toBeUndefined();
     engine.state.sides.player.food=0;app.action('summon');expect(app.toast.key).toBe('hint.noFood');
   });
-  it('routes persisted purchases, upgrades, active slots and weapons into preparation only',()=>{
+  it('routes persisted 24h trial purchases, active slots and weapons into preparation only',()=>{
     const {app,engine}=harness();app.refresh=()=>{};
     app.profile={...app.profile,coins:10000,unlockedWeapons:['m01_swatter'],shop:{day:'2026-11-14',offers:['washer','promo_badge']}};
     app.meta=new MetaScreens(()=>app.profile,p=>app.acceptPersistedProfile(p),()=>{},()=>{});
     app.action('meta-buy:washer');expect(engine.state.sides.player.loadout.ownedProps.washer).toBe(1);
     app.action('meta-prop:washer');expect(engine.state.sides.player.loadout.equippedActiveProps).toEqual(['washer']);
-    app.action('meta-buy:promo_badge');app.action('meta-prop:promo_badge');app.action('meta-buy:promo_badge');
-    expect(engine.state.sides.player.loadout.ownedProps.promo_badge).toBe(2);
+    app.action('meta-buy:promo_badge');app.action('meta-prop:promo_badge');
+    expect(engine.state.sides.player.loadout.ownedProps.promo_badge).toBe(1);
     expect(engine.state.sides.player.loadout.equippedPassiveProps).toEqual(['promo_badge']);
     app.meta.change({dataset:{weapon:'m01_swatter'},value:'kungfu_po'} as unknown as HTMLSelectElement);
     expect(engine.state.sides.player.loadout.equippedWeapons.kungfu_po).toBe('m01_swatter');

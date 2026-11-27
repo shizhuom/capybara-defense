@@ -1,12 +1,13 @@
 import { BattleEngine } from '../core/BattleEngine';
 import { HEROES } from '../config/heroes';
 import { BROTH_IDS, INGREDIENT_BASKET_PRICE, type BrothId } from '../config/kitchen';
-import { PROPS } from '../config/props';
+import { META_PRICES, PROPS, propBlueprintGoal } from '../config/props';
 import { getRank } from '../config/ranks';
 import { getMap, setMobileWideStage, STAGE } from '../config/maps';
 import { ECONOMY } from '../config/units';
 import { isFacilityId } from '../config/village';
 import { WEAPONS, rollWeapon } from '../config/weapons';
+import { MergeSystem } from '../core/MergeSystem';
 import {
   buildDebugStageProfile,
   claimFeatureStarterGift,
@@ -32,11 +33,16 @@ import {
   ensureDailyShop,
   equipProp,
   equipWeapon,
+  getPropBlueprintCount,
+  grantPropBlueprints,
   grantWeaponFragments,
+  isPropPermanent,
+  pruneExpiredTrials,
   recycleFragments,
   refreshShop,
   spinLottery,
   type LotteryPrize,
+  type MetaResult,
 } from '../core/MetaProgression';
 import { displayNickname, validateNickname } from '../core/PlayerIdentity';
 import {
@@ -50,8 +56,10 @@ import {
 import { propTargetKind, resolvePropDrop } from '../core/PropTargets';
 import {
   STAMINA_COST_PER_BATTLE,
+  STAMINA_HARD_CAP,
   STAMINA_MAX,
   STAMINA_REFILL_AMOUNT,
+  getStaminaStatus,
   grantStamina,
   settleStamina,
   spendStamina,
@@ -70,7 +78,7 @@ import {
   villageLoadout,
 } from '../core/VillageProgression';
 import type { BattleState, MapId, Profile, Unit, UnitLocation } from '../core/types';
-import { getLanguage, setLanguage, t } from '../i18n/i18n';
+import { bindLanguageStorage, getLanguage, setLanguage, t } from '../i18n/i18n';
 import { PET_QUOTE_COUNT } from '../i18n/p16';
 import { StickerRenderer, type HitTarget } from '../render/StickerRenderer';
 import { getMusicMode } from '../ui/BattleHUD';
@@ -214,6 +222,7 @@ export class MinigameApp {
     resultStars: 0,
     previousRank: 0,
     newWeapons: [],
+    newProps: [],
     newAvatars: [],
     ticketAwarded: false,
     statsOpen: false,
@@ -222,9 +231,11 @@ export class MinigameApp {
     adReviveAvailable: false,
   };
   private disposed = false;
+  private lastStaminaCheckMs = 0;
 
   constructor(private readonly platform: PlatformAdapter) {
     setMobileWideStage(true);
+    bindLanguageStorage(platform.storage);
     this.profile = settleStamina(settleVillageClock(loadProfile(platform.storage), Date.now()), Date.now());
     const bootDay = localDay();
     const prevLotteryDay = this.profile.lottery?.day;
@@ -336,8 +347,18 @@ export class MinigameApp {
     return this.hits.findById(id);
   }
 
-  /** Developer QA API exposed on `globalThis.__capyDev` for WeChat DevTools Console & QA testing. */
-  getDevApi() {
+  /** Developer QA API exposed on `globalThis.__capyDev` in dev builds only (tree-shaken out of dist-wx/dist-bl). */
+  getDevApi(): {
+    openDev: () => void;
+    stage: (stage: number) => void;
+    unlockAll: () => void;
+    restore: () => void;
+    reset: () => void;
+  } {
+    if (!__ENABLE_DEV_TOOLS__) {
+      const noop = () => {};
+      return { openDev: noop, stage: noop, unlockAll: noop, restore: noop, reset: noop };
+    }
     return {
       openDev: () => {
         this.devUnlocked = true;
@@ -360,6 +381,7 @@ export class MinigameApp {
   }
 
   private jumpToOnboardingStage(stage: number): void {
+    if (!__ENABLE_DEV_TOOLS__) return;
     const s = Math.max(0, Math.min(8, Math.trunc(stage)));
     const today = localDay();
     this.profile = buildDebugStageProfile(this.profile, s);
@@ -371,6 +393,7 @@ export class MinigameApp {
   }
 
   private applyDevUnlockAll(): void {
+    if (!__ENABLE_DEV_TOOLS__) return;
     const today = localDay();
     this.profile = enableTestProfile(this.platform.storage);
     this.profile = ensureDailyLottery(ensureDailyShop({ ...this.profile, stamina: STAMINA_MAX, staminaUpdatedAt: Date.now() }, today, Math.random), today, Math.random);
@@ -381,6 +404,7 @@ export class MinigameApp {
   }
 
   private applyDevRestore(): void {
+    if (!__ENABLE_DEV_TOOLS__) return;
     const today = localDay();
     this.profile = restoreNormalProfile(this.platform.storage);
     this.profile = ensureDailyLottery(ensureDailyShop(this.profile, today, Math.random), today, Math.random);
@@ -391,6 +415,7 @@ export class MinigameApp {
   }
 
   private applyDevReset(): void {
+    if (!__ENABLE_DEV_TOOLS__) return;
     const today = localDay();
     resetOwnStorage(this.platform.storage);
     this.profile = ensureDailyLottery(ensureDailyShop(emptyProfile(), today, Math.random), today, Math.random);
@@ -404,11 +429,15 @@ export class MinigameApp {
     this.renderer.setViewportTransform(vp.stageScale, vp.stageOffsetX, vp.stageOffsetY);
   }
 
-  private save(): void {
-    saveProfile(this.profile, this.platform.storage);
+  private save(): boolean {
+    const ok = saveProfile(this.profile, this.platform.storage);
+    if (!ok) {
+      this.showToast(t('hint.storage'), 'warn', 2.8);
+    }
     if (this.screen === 'battle' && this.engine?.canSyncPreparationLoadout()) {
       this.engine.syncPreparationLoadout(villageLoadout(this.profile));
     }
+    return ok;
   }
 
   private topRightEdge(vp: ViewportMetrics): number {
@@ -448,10 +477,13 @@ export class MinigameApp {
     return computeDialogGuideStep(this.activeGuideFeature, this.profile, {
       dialogKind: this.modal,
       detailWeaponId: this.armory.detailWeaponId,
+      armoryTab: this.armory.family,
       marketTab: this.market.tab,
       marketSpun: this.market.spunThisVisit,
       villageTab: this.villageUi.tab,
       villageInteracted: this.villageUi.interacted,
+      kitchenTab: this.kitchenUi.tab,
+      medallionTab: this.leaderboardUi.medallionTab,
     });
   }
 
@@ -481,15 +513,21 @@ export class MinigameApp {
       this.market.prizes = [...this.profile.lottery!.prizes];
       this.market.highlightIndex = null;
       this.market.lastPrizeIndex = null;
+      this.market.lastPrizeLabel = '';
       void this.assetManager.ensureSubpackage('meta');
     } else if (kind === 'village') {
       this.villageUi.nowMs = Date.now();
       this.villageUi.focusFacilityId = null;
       this.villageUi.interacted = false;
-      this.profile = settleVillageClock(this.profile, this.villageUi.nowMs);
+      const settledVillage = settleVillageClock(this.profile, this.villageUi.nowMs);
+      if (settledVillage !== this.profile) {
+        this.profile = settledVillage;
+        this.save();
+      }
       void this.assetManager.ensureSubpackage('maps');
     } else if (kind === 'kitchen') {
       this.kitchenUi.detailBrothId = null;
+      this.kitchenUi.lastBasketGained = [];
       void this.assetManager.ensureSubpackage('meta');
     } else if (kind === 'medallions') {
       void this.assetManager.ensureSubpackage('meta');
@@ -506,7 +544,12 @@ export class MinigameApp {
     }
   }
 
+  private canSubmitLeaderboards(): boolean {
+    return !this.profile.rankTainted && !isTestProfile(this.platform.storage);
+  }
+
   private syncWxFriendCloud(): void {
+    if (!this.canSubmitLeaderboards()) return;
     const entries = buildFriendCloudPayload(this.profile, getLanguage());
     if (entries.length > 0) {
       this.platform.setFriendCloudStorage?.(entries);
@@ -549,9 +592,11 @@ export class MinigameApp {
         this.modal === 'endless-board' || (this.modal === 'medallions' && this.leaderboardUi.medallionTab === 'endless-board')
       ) ? 'endless' : 'rank';
       this.renderWxFriendBoard(activeBoard, force);
-      void this.leaderboardClient.submitRank(this.profile, lang);
-      if ((this.profile.bestEndlessWave ?? 0) >= 11) {
-        void this.leaderboardClient.submitScore(this.profile, lang);
+      if (this.canSubmitLeaderboards()) {
+        void this.leaderboardClient.submitRank(this.profile, lang);
+        if ((this.profile.bestEndlessWave ?? 0) >= 11) {
+          void this.leaderboardClient.submitScore(this.profile, lang);
+        }
       }
       const [rankSnap, endlessSnap] = await Promise.all([
         this.leaderboardClient.refreshRank(this.profile.playerId, force),
@@ -644,7 +689,7 @@ export class MinigameApp {
     this.tickGachaSpin(rawDt);
     this.scroll.tick(rawDt);
 
-    if (this.screen === 'battle' && this.engine && this.engine.state.phase === 'playing' && !this.modal) {
+    if (this.screen === 'battle' && this.engine && this.engine.state.phase === 'playing' && !this.modal && this.curtainRemaining <= 0) {
       this.engine.tick(rawDt * BATTLE_SPEED_BASELINE * this.speed);
       this.audioBridge.observe(this.engine.state, this.platform.audio, ts);
       if (this.engine.state.result) {
@@ -656,10 +701,15 @@ export class MinigameApp {
     this.platform.audio.setMusicMode?.(getMusicMode(this.engine?.state, browsing));
 
     if (this.screen === 'menu' || this.modal === 'stamina') {
-      const settled = settleStamina(this.profile, Date.now());
-      if (settled !== this.profile) {
-        this.profile = settled;
-        this.save();
+      const nowMs = Date.now();
+      if (nowMs - this.lastStaminaCheckMs >= 1000) {
+        this.lastStaminaCheckMs = nowMs;
+        let settled = settleStamina(this.profile, nowMs);
+        settled = pruneExpiredTrials(settled, nowMs);
+        if (settled !== this.profile) {
+          this.profile = settled;
+          this.save();
+        }
       }
     }
     this.drawFrame();
@@ -679,14 +729,18 @@ export class MinigameApp {
           this.profile = res.profile;
           const newlyUnlockedAvatars = res.profile.unlockedAvatars.filter(a => !prevAvatars.includes(a));
           this.settlement.savedResult = saveProfile(this.profile, this.platform.storage);
+          if (!this.settlement.savedResult) this.showToast(t('hint.storage'), 'warn', 3.0);
           this.settlement.newWeapons = [...this.settlement.newWeapons, ...res.newWeapons];
+          this.settlement.newProps = [...(this.settlement.newProps ?? []), ...res.newProps];
           this.settlement.newAvatars = [...this.settlement.newAvatars, ...newlyUnlockedAvatars];
           this.settlement.adDoubleCoinsAvailable = isAdPlacementAvailable(this.platform.kind, 'double_settlement');
           this.settlement.adDoubleClaimed = false;
           this.settlement.adReviveAvailable = false;
           this.platform.audio.play('victory');
           this.syncWxFriendCloud();
-          void this.leaderboardClient.submitScore(this.profile, getLanguage());
+          if (this.canSubmitLeaderboards()) {
+            void this.leaderboardClient.submitScore(this.profile, getLanguage());
+          }
         }
       }
       this.modal = 'result';
@@ -699,6 +753,7 @@ export class MinigameApp {
         && !this.reviveUsedThisBattle
         && isAdPlacementAvailable(this.platform.kind, 'revive');
       this.preDefeatProfile = canReviveDefeat ? (JSON.parse(JSON.stringify(this.profile)) as Profile) : null;
+      const hadEndless = isFeatureUnlocked(this.profile, 'endless');
       const prevStars = this.profile.stars;
       const prevRank = getRank(prevStars).index;
       const prevAvatars = this.profile.unlockedAvatars;
@@ -707,13 +762,16 @@ export class MinigameApp {
         this.profile = res.profile;
         const newlyUnlockedAvatars = res.profile.unlockedAvatars.filter(a => !prevAvatars.includes(a));
         const saved = saveProfile(this.profile, this.platform.storage);
+        if (!saved) this.showToast(t('hint.storage'), 'warn', 3.0);
         this.settlement = {
           savedResult: saved,
           resultStars: this.profile.stars - prevStars,
           previousRank: prevRank,
           newWeapons: res.newWeapons,
+          newProps: res.newProps,
           newAvatars: newlyUnlockedAvatars,
           ticketAwarded: Boolean(res.ticketAwarded),
+          endlessFirstUnlock: !hadEndless && isFeatureUnlocked(this.profile, 'endless'),
           statsOpen: false,
           adDoubleCoinsAvailable: result.winner === 'player' && isAdPlacementAvailable(this.platform.kind, 'double_settlement'),
           adDoubleClaimed: false,
@@ -721,7 +779,9 @@ export class MinigameApp {
         };
         this.platform.audio.play(result.winner === 'player' ? 'victory' : 'defeat');
         this.syncWxFriendCloud();
-        void this.leaderboardClient.submitRank(this.profile, getLanguage());
+        if (this.canSubmitLeaderboards()) {
+          void this.leaderboardClient.submitRank(this.profile, getLanguage());
+        }
       }
     }
 
@@ -731,6 +791,10 @@ export class MinigameApp {
       !state.endless &&
       isFeatureUnlocked(this.profile, 'endless')
     ) {
+      if (!hasOnboarded(this.profile, 'endless')) {
+        this.profile = markOnboarded(this.profile, 'endless');
+        this.save();
+      }
       this.modal = 'endless-offer';
     } else {
       this.modal = 'result';
@@ -767,6 +831,11 @@ export class MinigameApp {
       const mapTheme = getMap(state.mapId).theme;
       drawFullBleedBackdrop(c, `map_${state.mapId}`, vp, 102, 62, mapTheme.grass[0], 24);
       const breakthroughChances = state.endless ? this.computeBreakthroughChances(state) : undefined;
+      const mergeAvoidRects = [
+        { x: 0, y: 0, w: STAGE.width, h: 78 },
+        { x: 0, y: 78, w: 118, h: 520 },
+        { x: STAGE.summonX - 10, y: STAGE.summonY - 48, w: STAGE.summonW + 20, h: STAGE.summonH + 56 },
+      ];
       this.renderer.draw(state, this.elapsedSec, {
         draggingId: this.drag?.moved ? this.drag.unitId : undefined,
         pointer: this.drag?.moved ? { x: this.drag.x, y: this.drag.y } : undefined,
@@ -774,10 +843,12 @@ export class MinigameApp {
         selectedId: this.selectedId,
         propId: this.activePropId ?? (this.drag?.moved ? this.drag.propId : undefined),
         showDamageNumbers: this.profile.settings.showDamageNumbers,
-        allowBenchLock: true,
+        allowBenchLock: this.tutorialStep === 'done' && !this.activePropId,
+        mergeAvoidRects,
         breakthroughChances,
       });
       if (this.modal !== 'result') {
+        const lessonActiveProp = this.profile.equippedActiveProps[0] ?? 'glue_trap';
         drawBattleOverlay(c, this.hits, {
           engine: this.engine,
           profile: this.profile,
@@ -787,7 +858,8 @@ export class MinigameApp {
           shovelSelected: this.shovelSelected,
           activePropId: this.activePropId,
           expandedPassiveId: this.expandedPassiveId,
-          highlightPropId: this.modal === 'battle-lesson' && this.battleLesson === 'prop_battle' ? 'glue_trap' : undefined,
+          highlightPropId: this.modal === 'battle-lesson' && this.battleLesson === 'prop_battle' ? lessonActiveProp : undefined,
+          highlightSpeed: this.modal === 'battle-lesson' && (this.battleLesson === 'speed2x' || this.battleLesson === 'speed3x'),
           tutorialStep: this.tutorialStep,
           topRightEdge: topRight,
           viewport: vp,
@@ -802,6 +874,7 @@ export class MinigameApp {
       this.hits.clear();
       this.villageUi.elapsed = this.elapsedSec;
       this.villageUi.nowMs = Date.now();
+      const wxFriendCanvas = this.platform.getFriendLeaderboardCanvas?.() ?? null;
       this.modalLayout = drawActiveModal(c, this.hits, {
         modal: this.modal,
         profile: this.profile,
@@ -817,15 +890,16 @@ export class MinigameApp {
         onboardingFeature: this.onboardingFeature,
         battleLesson: this.battleLesson,
         dialogGuideStep: this.computeCurrentDialogGuideStep(),
-        devUnlocked: this.devUnlocked,
+        devUnlocked: __ENABLE_DEV_TOOLS__ && this.devUnlocked,
         isTestSave: isTestProfile(this.platform.storage),
         adStaminaAvailable: isAdPlacementAvailable(this.platform.kind, 'stamina_refill'),
         adSpeed3xAvailable: isAdPlacementAvailable(this.platform.kind, 'speed3x_trial'),
         speed3xTrialActive: this.speed3xTrialThisBattle,
-        wxFriendCanvas: this.platform.getFriendLeaderboardCanvas?.() ?? null,
-        wxFriendMode: this.platform.kind === 'wx' && Boolean(this.platform.getFriendLeaderboardCanvas?.()),
+        wxFriendCanvas,
+        wxFriendMode: this.platform.kind === 'wx' && Boolean(wxFriendCanvas),
         elapsed: this.elapsedSec,
         viewport: vp,
+        topRightEdge: topRight,
       });
     } else {
       this.modalLayout = {};
@@ -847,7 +921,9 @@ export class MinigameApp {
   }
 
   private async startBattle(opts?: { freeStamina?: boolean }): Promise<void> {
-    if (!opts?.freeStamina) {
+    const guided = !this.profile.tutorialCompleted;
+    const freeFirstMatch = Boolean(opts?.freeStamina) && this.profile.matches === 0;
+    if (!freeFirstMatch) {
       const spent = spendStamina(this.profile, STAMINA_COST_PER_BATTLE, Date.now());
       if (!spent.ok) {
         const zh = getLanguage() === 'zh-CN';
@@ -864,7 +940,7 @@ export class MinigameApp {
       this.profile = spent.profile;
       this.save();
     }
-    const map = pickBattleMap(this.profile);
+    const map = guided ? getMap('sunny_backyard') : pickBattleMap(this.profile);
     await this.assetManager.ensureMap(map.id);
     if (
       map.id !== 'sunny_backyard' ||
@@ -877,18 +953,27 @@ export class MinigameApp {
     }
     this.assetManager.releaseHeavyIdleSprites(map.id);
 
-    const guided = !this.profile.tutorialCompleted;
+    const nowMs = Date.now();
+    const cleaned = pruneExpiredTrials(this.profile, nowMs);
+    if (cleaned !== this.profile) {
+      this.profile = cleaned;
+      this.save();
+    }
     const bestStars = Math.max(this.profile.stars, this.profile.highestStars);
     this.engine = new BattleEngine({
       mapId: map.id,
       rankIndex: getRank(this.profile.stars).index,
-      loadouts: { player: villageLoadout(this.profile) },
+      loadouts: { player: villageLoadout(this.profile, nowMs) },
       unlockedWeapons: this.profile.unlockedWeapons,
+      permanentProps: this.profile.ownedProps,
+      propBlueprints: this.profile.propBlueprints,
       progressionStars: bestStars,
       progressionHeroes: this.profile.mergedHeroes,
       tutorialGuided: guided,
+      tutorialEase: guided && this.profile.matches === 0,
       featureDrops: {
         armory: isFeatureUnlocked(this.profile, 'armory'),
+        market: isFeatureUnlocked(this.profile, 'market'),
         village: isFeatureUnlocked(this.profile, 'village'),
         kitchen: isFeatureUnlocked(this.profile, 'kitchen'),
         medallions: isFeatureUnlocked(this.profile, 'medallions'),
@@ -900,8 +985,8 @@ export class MinigameApp {
     this.tutorialStep = guided ? 1 : 'done';
     if (guided) this.engine.setTutorialHold(true);
 
-    const maxSpd = maxBattleSpeed(this.profile);
-    if (this.speed > maxSpd) this.speed = maxSpd;
+    // Always start each fresh match at 1× so players have full Wave-1 preparation time!
+    this.speed = 1;
 
     this.screen = 'battle';
     this.modal = null;
@@ -937,7 +1022,8 @@ export class MinigameApp {
     const next = advanceTutorial(prev, action);
     if (next === prev) return;
     this.tutorialStep = next;
-    if (next === 7 || next === 'done') {
+    // Hold Wave 1 until Step 7 finishes so enemies don't march in while the Step 7 bubble is covering the board!
+    if (next === 'done') {
       this.engine?.setTutorialHold(false);
     }
     if (next === 'done') {
@@ -1025,7 +1111,7 @@ export class MinigameApp {
 
     const boardHit = this.renderer.hitTest(p.stageX, p.stageY, {
       state: this.engine.state,
-      allowBenchLock: true,
+      allowBenchLock: this.tutorialStep === 'done' && !this.activePropId,
       touch: p.pointerType === 'touch',
     });
     if (!boardHit) {
@@ -1138,12 +1224,13 @@ export class MinigameApp {
 
     const hit = this.renderer.hitTest(p.stageX, p.stageY, {
       state: this.engine.state,
-      allowBenchLock: true,
+      allowBenchLock: this.tutorialStep === 'done' && !this.activePropId,
       dragging: drag.moved,
       touch: p.pointerType === 'touch',
     });
     if (!hit) {
-      if (!drag.moved) { this.selectedId = undefined; this.shovelSelected = false; }
+      this.selectedId = undefined;
+      this.shovelSelected = false;
       return;
     }
     this.handleBoardTapOrDrop(hit, drag.moved);
@@ -1198,11 +1285,18 @@ export class MinigameApp {
     }
   }
 
-  private formatPrizeLabel(prize: LotteryPrize): string {
+  private formatPrizeLabel(prize: LotteryPrize, res?: MetaResult): string {
     const zh = getLanguage() === 'zh-CN';
     if (prize.type === 'coins') return `🪙 +${prize.amount}`;
     if (prize.type === 'prop' && prize.id && PROPS[prize.id]) {
-      return `${PROPS[prize.id].icon} ${zh ? PROPS[prize.id].name['zh-CN'] : PROPS[prize.id].name.en}`;
+      const name = zh ? PROPS[prize.id].name['zh-CN'] : PROPS[prize.id].name.en;
+      if (res?.newProps?.includes(prize.id)) {
+        return zh ? `${PROPS[prize.id].icon} ${name} 永久解锁！` : `${PROPS[prize.id].icon} ${name} Unlocked!`;
+      }
+      if (res?.convertedCoins && !res?.trialExpiresAt) {
+        return zh ? `${PROPS[prize.id].icon} ${name} → 🪙+${res.convertedCoins}` : `${PROPS[prize.id].icon} ${name} → 🪙+${res.convertedCoins}`;
+      }
+      return zh ? `${PROPS[prize.id].icon} ${name} 图纸×${prize.amount} + 24h试用` : `${PROPS[prize.id].icon} ${name} Plan ×${prize.amount} + 24h`;
     }
     if (prize.type === 'fragment' && prize.id && WEAPONS[prize.id]) {
       const wName = zh ? WEAPONS[prize.id].name['zh-CN'] : WEAPONS[prize.id].name.en;
@@ -1218,6 +1312,7 @@ export class MinigameApp {
 
     if (id === 'modal:backdrop') {
       if (this.modal === 'pause') this.resumeBattle();
+      else if (this.modal === 'result' && this.settlement.statsOpen) this.settlement.statsOpen = false;
       else if (this.modal && !['endless-offer', 'result', 'onboard', 'battle-lesson'].includes(this.modal)) {
         this.closeOverlayModal();
       }
@@ -1228,9 +1323,10 @@ export class MinigameApp {
     this.platform.audio.play('click');
 
     // ── Menu Actions ────────────────────────────────────────────────────────
-    if (id === 'menu:start') { void this.startBattle(); return; }
+    if (id === 'menu:start') { void this.startBattle({ freeStamina: this.profile.matches === 0 }); return; }
     if (id === 'menu:stamina') { this.openModal('stamina'); return; }
     if (id === 'stamina:ad') {
+      if (getStaminaStatus(this.profile, Date.now()).current >= STAMINA_HARD_CAP) return;
       void this.runRewardedAd('stamina_refill', () => {
         this.profile = grantStamina(this.profile, STAMINA_REFILL_AMOUNT, Date.now());
         this.save();
@@ -1239,7 +1335,7 @@ export class MinigameApp {
       });
       return;
     }
-    if (id === 'menu:lang' || id === 'settings:lang') { setLanguage(zh ? 'en' : 'zh-CN'); return; }
+    if (__ENABLE_ENGLISH__ && (id === 'menu:lang' || id === 'settings:lang')) { setLanguage(zh ? 'en' : 'zh-CN'); return; }
     if (id === 'menu:mute') {
       this.muted = !this.muted;
       this.profile = updateSettings(this.profile, this.muted
@@ -1340,6 +1436,7 @@ export class MinigameApp {
       this.profile = markOnboarded(this.profile, lesson);
       this.save();
       this.battleLesson = null;
+      if (this.tryOpenPendingBattleLesson()) return;
       this.resumeBattle();
       return;
     }
@@ -1472,7 +1569,18 @@ export class MinigameApp {
         this.profile = res.profile;
         this.save();
         this.platform.audio.play('coin');
-        this.showToast(zh ? `🛍️ 已购入「${PROPS[propId]?.name['zh-CN']}」！` : `🛍️ Bought ${PROPS[propId]?.name.en}!`, 'good', 2.0);
+        const pName = zh ? PROPS[propId]?.name['zh-CN'] : PROPS[propId]?.name.en;
+        if (res.newProps?.includes(propId)) {
+          this.showToast(zh ? `🎉 图纸集齐！已永久解锁「${pName}」！` : `🎉 Permanently unlocked ${pName}!`, 'good', 2.6);
+        } else {
+          const bp = getPropBlueprintCount(this.profile, propId);
+          const goal = propBlueprintGoal(propId);
+          this.showToast(
+            zh ? `⏱ 已租用「${pName}」24小时（图纸 ${bp}/${goal}）！` : `⏱ 24h trial: ${pName} (${bp}/${goal} plans)!`,
+            'good',
+            2.2,
+          );
+        }
       } else {
         this.showToast(t(res.key), 'warn', 1.8);
       }
@@ -1490,8 +1598,10 @@ export class MinigameApp {
       return;
     }
     if (id === 'market:ad-refresh') {
+      const hasMoreProps = Object.values(PROPS).some(p => !isPropPermanent(this.profile, p.id));
+      if (!hasMoreProps) return;
       void this.runRewardedAd('free_shop_refresh', () => {
-        const freeTemp = { ...this.profile, coins: this.profile.coins + 40 };
+        const freeTemp = { ...this.profile, coins: this.profile.coins + META_PRICES.shopRefresh };
         const res = refreshShop(freeTemp, localDay(), Math.random);
         if (res.ok) {
           this.profile = res.profile;
@@ -1514,7 +1624,7 @@ export class MinigameApp {
       if (res.ok && res.prize) {
         this.profile = res.profile;
         this.save();
-        const label = this.formatPrizeLabel(res.prize);
+        const label = this.formatPrizeLabel(res.prize, res);
         this.startGachaSpin(res.index ?? 0, label, `🎉 ${label}`);
       } else {
         this.showToast(t(res.key), 'warn', 1.8);
@@ -1535,7 +1645,7 @@ export class MinigameApp {
         if (res.ok && res.prize) {
           this.profile = recordAdUse(res.profile, 'free_gacha', day);
           this.save();
-          const label = this.formatPrizeLabel(res.prize);
+          const label = this.formatPrizeLabel(res.prize, res);
           this.startGachaSpin(res.index ?? 0, label, `🎬 🎉 ${label}`);
         }
       });
@@ -1861,6 +1971,7 @@ export class MinigameApp {
     }
     if (id === 'battle:shop') {
       if (this.engine?.state.phase === 'playing') this.engine.pause(true);
+      this.market.tab = 'shop';
       this.openModal(isFeatureUnlocked(this.profile, 'market') ? 'market' : 'armory');
       return;
     }
@@ -1875,7 +1986,7 @@ export class MinigameApp {
       this.openModal('pause');
       return;
     }
-    if (id === 'battle:early-wave' && this.engine?.state.phase === 'playing') {
+    if (id === 'battle:early-wave' && this.tutorialStep === 'done' && this.engine?.state.phase === 'playing') {
       const res = this.engine.callEarlyWave();
       if (res.ok) {
         this.platform.audio.play('wave_start');
@@ -1890,6 +2001,7 @@ export class MinigameApp {
       return;
     }
     if (id === 'battle:summon' && this.engine?.state.phase === 'playing') {
+      if (this.tutorialStep !== 'done' && this.tutorialStep !== 1) return;
       const res = this.engine.summon();
       if (res.ok) {
         this.platform.audio.play('summon');
@@ -1954,6 +2066,9 @@ export class MinigameApp {
       const bonusVillage = r.endless && st.standardResult
         ? [...(st.standardResult.villageLoot ?? []), ...(r.endlessVillageLoot ?? [])]
         : [...(r.villageLoot ?? [])];
+      const bonusProps = r.endless && st.standardResult
+        ? [...(st.standardResult.propLoot ?? []), ...(r.endlessPropLoot ?? [])]
+        : [...(r.propLoot ?? [])];
       const bonusCrests = r.endless && st.standardResult
         ? (st.standardResult.endlessCrests ?? 0) + (r.endlessCrests ?? 0)
         : (r.endlessCrests ?? 0);
@@ -1961,6 +2076,7 @@ export class MinigameApp {
         if (this.settlement.adDoubleClaimed) return;
         this.settlement.adDoubleClaimed = true;
         const day = localDay();
+        const prevAvatars = this.profile.unlockedAvatars;
         let next = this.profile;
         if (bonusLoot.length > 0) {
           const granted = grantWeaponFragments(next, bonusLoot);
@@ -1968,6 +2084,17 @@ export class MinigameApp {
           if (granted.newWeapons.length > 0) {
             this.settlement.newWeapons = [...new Set([...this.settlement.newWeapons, ...granted.newWeapons])];
           }
+        }
+        if (bonusProps.length > 0) {
+          const grantedProps = grantPropBlueprints(next, bonusProps);
+          next = grantedProps.profile;
+          if (grantedProps.newProps.length > 0) {
+            this.settlement.newProps = [...new Set([...(this.settlement.newProps ?? []), ...grantedProps.newProps])];
+          }
+        }
+        const gainedAvatars = next.unlockedAvatars.filter(a => !prevAvatars.includes(a));
+        if (gainedAvatars.length > 0) {
+          this.settlement.newAvatars = [...new Set([...this.settlement.newAvatars, ...gainedAvatars])];
         }
         if (bonusIngredients.length > 0) {
           next = grantIngredients(next, bonusIngredients);
@@ -1984,7 +2111,7 @@ export class MinigameApp {
         this.save();
         this.platform.audio.play('gacha_win');
         this.showToast(
-          zh ? '🎬 双倍全奖励领取成功！金币/食材/材料/碎片/纹章全部 ×2！' : '🎬 2× All Rewards claimed!',
+          zh ? '🎬 双倍全奖励领取成功！金币/图纸/食材/材料/碎片/纹章全部 ×2！' : '🎬 2× All Rewards claimed!',
           'good',
           2.6,
         );
@@ -2024,75 +2151,77 @@ export class MinigameApp {
       this.profile = replayTutorial(this.profile);
       this.save();
       this.modal = null;
-      void this.startBattle({ freeStamina: true });
+      void this.startBattle({ freeStamina: this.profile.matches === 0 });
       return;
     }
-    if (id === 'settings:title-tap') {
-      const now = Date.now();
-      this.devTapCount = now - this.devTapLastAt < 2500 ? this.devTapCount + 1 : 1;
-      this.devTapLastAt = now;
-      if (this.devTapCount >= 5) {
-        this.devUnlocked = true;
-        this.devTapCount = 0;
-        this.openModal('dev', this.modalReturnTo);
-        this.showToast(zh ? '🧪 开发者调试模式已开启！' : '🧪 Developer QA mode unlocked!', 'good', 2.2);
+    if (__ENABLE_DEV_TOOLS__) {
+      if (id === 'settings:title-tap') {
+        const now = Date.now();
+        this.devTapCount = now - this.devTapLastAt < 2500 ? this.devTapCount + 1 : 1;
+        this.devTapLastAt = now;
+        if (this.devTapCount >= 5) {
+          this.devUnlocked = true;
+          this.devTapCount = 0;
+          this.openModal('dev', this.modalReturnTo);
+          this.showToast(zh ? '🧪 开发者调试模式已开启！' : '🧪 Developer QA mode unlocked!', 'good', 2.2);
+        }
+        return;
       }
-      return;
-    }
-    if (id === 'settings:open-dev') {
-      this.openModal('dev', this.modalReturnTo);
-      return;
-    }
+      if (id === 'settings:open-dev') {
+        this.openModal('dev', this.modalReturnTo);
+        return;
+      }
 
-    // ── Hidden Developer QA Modal Actions ───────────────────────────────────
-    if (id.startsWith('dev:stage:')) {
-      this.jumpToOnboardingStage(Number(id.slice('dev:stage:'.length)));
-      return;
-    }
-    if (id === 'dev:unlock-all') { this.applyDevUnlockAll(); return; }
-    if (id === 'dev:restore') { this.applyDevRestore(); return; }
-    if (id === 'dev:reset') { this.applyDevReset(); return; }
-    if (id === 'dev:add-coins') {
-      this.profile = { ...this.profile, coins: this.profile.coins + 5000 };
-      this.save();
-      this.platform.audio.play('coin');
-      this.showToast('🪙 +5000', 'good', 1.6);
-      return;
-    }
-    if (id === 'dev:refill-stamina') {
-      this.profile = { ...this.profile, stamina: STAMINA_MAX, staminaUpdatedAt: Date.now() };
-      this.save();
-      this.platform.audio.play('coin');
-      this.showToast(zh ? `⚡ 体力已补满（${STAMINA_MAX}/${STAMINA_MAX}）` : `⚡ Energy full (${STAMINA_MAX}/${STAMINA_MAX})`, 'good', 1.8);
-      return;
-    }
-    if (id === 'dev:battle-food' && this.engine) {
-      this.engine.pause(false);
-      this.engine.addFood(500);
-      this.engine.pause(true);
-      this.showToast(t('hint.foodAdded'), 'good', 1.6);
-      return;
-    }
-    if (id === 'dev:battle-skip' && this.engine) {
-      this.modal = null;
-      this.modalReturnTo = null;
-      this.engine.pause(false);
-      this.engine.skipWave();
-      if (this.engine.state.result) this.handleBattleFinished(this.engine.state);
-      else this.showToast(t('hint.waveSkipped'), 'good', 1.8);
-      return;
-    }
-    if (id === 'dev:battle-orange-up' && this.engine) {
-      this.engine.pause(false);
-      this.engine.adjustOranges(1);
-      this.engine.pause(true);
-      return;
-    }
-    if (id === 'dev:battle-orange-down' && this.engine) {
-      this.engine.pause(false);
-      this.engine.adjustOranges(-1);
-      if (this.engine.state.result) this.handleBattleFinished(this.engine.state);
-      else this.engine.pause(true);
+      // ── Hidden Developer QA Modal Actions (stripped in production builds) ──
+      if (id.startsWith('dev:stage:')) {
+        this.jumpToOnboardingStage(Number(id.slice('dev:stage:'.length)));
+        return;
+      }
+      if (id === 'dev:unlock-all') { this.applyDevUnlockAll(); return; }
+      if (id === 'dev:restore') { this.applyDevRestore(); return; }
+      if (id === 'dev:reset') { this.applyDevReset(); return; }
+      if (id === 'dev:add-coins') {
+        this.profile = { ...this.profile, coins: this.profile.coins + 5000 };
+        this.save();
+        this.platform.audio.play('coin');
+        this.showToast('🪙 +5000', 'good', 1.6);
+        return;
+      }
+      if (id === 'dev:refill-stamina') {
+        this.profile = { ...this.profile, stamina: STAMINA_MAX, staminaUpdatedAt: Date.now() };
+        this.save();
+        this.platform.audio.play('coin');
+        this.showToast(zh ? `⚡ 体力已补满（${STAMINA_MAX}/${STAMINA_MAX}）` : `⚡ Energy full (${STAMINA_MAX}/${STAMINA_MAX})`, 'good', 1.8);
+        return;
+      }
+      if (id === 'dev:battle-food' && this.engine) {
+        this.engine.pause(false);
+        this.engine.addFood(500);
+        this.engine.pause(true);
+        this.showToast(t('hint.foodAdded'), 'good', 1.6);
+        return;
+      }
+      if (id === 'dev:battle-skip' && this.engine) {
+        this.modal = null;
+        this.modalReturnTo = null;
+        this.engine.pause(false);
+        this.engine.skipWave();
+        if (this.engine.state.result) this.handleBattleFinished(this.engine.state);
+        else this.showToast(t('hint.waveSkipped'), 'good', 1.8);
+        return;
+      }
+      if (id === 'dev:battle-orange-up' && this.engine) {
+        this.engine.pause(false);
+        this.engine.adjustOranges(1);
+        this.engine.pause(true);
+        return;
+      }
+      if (id === 'dev:battle-orange-down' && this.engine) {
+        this.engine.pause(false);
+        this.engine.adjustOranges(-1);
+        if (this.engine.state.result) this.handleBattleFinished(this.engine.state);
+        else this.engine.pause(true);
+      }
     }
   }
 
@@ -2202,12 +2331,26 @@ export class MinigameApp {
       return;
     }
     if (this.screen === 'battle' && this.engine?.state.phase === 'paused') {
+      if (this.tryOpenPendingBattleLesson()) return;
       this.resumeBattle();
       return;
     }
     this.clearWxFriendBoard();
     this.modal = null;
     this.checkMenuOnboarding();
+  }
+
+  private tryOpenPendingBattleLesson(): boolean {
+    if (this.screen !== 'battle' || !this.engine || this.tutorialStep !== 'done') return false;
+    const lesson = nextBattleLesson(this.profile, {
+      endless: Boolean(this.engine.state.endless),
+      hasActiveProp: this.engine.state.sides.player.loadout.equippedActiveProps.length > 0,
+    });
+    if (!lesson) return false;
+    this.battleLesson = lesson;
+    this.engine.pause(true);
+    this.modal = 'battle-lesson';
+    return true;
   }
 
   private returnToMenu(): void {
@@ -2257,18 +2400,49 @@ export class MinigameApp {
       }
       return;
     }
-    if (this.shovelSelected && hit.kind === 'cell') {
-      const res = this.engine.dig(hit.col, hit.row);
-      if (res.ok) {
-        this.platform.audio.play('shovel');
-        this.advanceBattleTutorial('dig');
-        if (this.engine.state.sides.player.shovels <= 0) this.shovelSelected = false;
-      } else {
-        this.showToast(t(res.key), 'warn', 1.6);
+    if (this.shovelSelected) {
+      if (!moved && (hit.kind !== 'cell' || !['G', 'B'].includes(this.engine.state.grid[hit.row]?.[hit.col]))) {
+        this.shovelSelected = false;
+        return;
+      }
+      if (hit.kind === 'cell') {
+        const res = this.engine.dig(hit.col, hit.row);
+        if (res.ok) {
+          this.platform.audio.play('shovel');
+          this.advanceBattleTutorial('dig');
+          if (this.engine.state.sides.player.shovels <= 0) this.shovelSelected = false;
+        } else {
+          this.showToast(t(res.key), 'warn', 1.6);
+        }
       }
       return;
     }
     const target = this.unitAt(hit);
+    const selected = this.selectedId ? this.engine.state.units.find(u => u.id === this.selectedId) : undefined;
+    if (!moved && selected) {
+      if (target?.id === selected.id) {
+        this.selectedId = undefined;
+        return;
+      }
+      if (target && selected.kind !== 'shovel') {
+        const outcome = MergeSystem.combine(selected, target);
+        const canBreakthrough = Boolean(this.engine.state.endless && MergeSystem.breakthroughPair(selected, target));
+        if ((!outcome.ok || !outcome.unit || outcome.swap) && !canBreakthrough) {
+          this.selectedId = target.id;
+          this.platform.audio.play('click');
+          return;
+        }
+      }
+      if (!target) {
+        const tile = hit.kind === 'cell' ? this.engine.state.grid[hit.row]?.[hit.col] : undefined;
+        if (selected.kind === 'shovel'
+          ? hit.kind === 'cell' && !['G', 'B'].includes(tile ?? '')
+          : selected.location.zone === 'board' || (hit.kind === 'cell' && tile !== 'O')) {
+          this.selectedId = undefined;
+          return;
+        }
+      }
+    }
     if (this.selectedId && target?.id !== this.selectedId) {
       const loc: UnitLocation = hit.kind === 'bench' ? { zone: 'bench', slot: hit.slot } : { zone: 'board', col: hit.col, row: hit.row };
       const res = this.engine.move(this.selectedId, loc);

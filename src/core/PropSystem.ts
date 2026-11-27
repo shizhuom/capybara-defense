@@ -15,11 +15,12 @@ import {isValidPropRoad,propUnitTargetError,type PropTarget} from './PropTargets
 export type {PropTarget} from './PropTargets';
 
 /** Snapshot validation keeps outside profile edits from changing a running match. */
-export function copyLoadout(input:Partial<BattleLoadout>={}):BattleLoadout {
+export function copyLoadout(input:Partial<BattleLoadout>={},now=Date.now()):BattleLoadout {
   if(!input||typeof input!=='object')input={};
   const entries=(value:unknown)=>value&&typeof value==='object'&&!Array.isArray(value)?Object.entries(value):[];
   const ownedProps:Record<string,number>={};
   for(const [id,value] of entries(input.ownedProps))if(Object.hasOwn(PROPS,id)&&Number.isInteger(value)&&value>0)ownedProps[id]=Math.min(value,PROPS[id].maxLevel);
+  for(const [id,expiresAt] of entries(input.trialProps))if(Object.hasOwn(PROPS,id)&&typeof expiresAt==='number'&&Number.isFinite(expiresAt)&&expiresAt>now&&!ownedProps[id])ownedProps[id]=1;
   const slots=(ids:string[]|undefined,type:'active'|'passive',limit:number)=>[...new Set(Array.isArray(ids)?ids:[])].filter(id=>typeof id==='string'&&Object.hasOwn(ownedProps,id)&&PROPS[id]?.type===type).slice(0,limit);
   const equippedWeapons:Record<string,string>={},used=new Set<string>();
   for(const [hero,id] of entries(input.equippedWeapons))if(typeof id==='string'&&Object.hasOwn(WEAPONS,id)&&Object.hasOwn(HERO_FAMILIES,hero)&&HERO_FAMILIES[hero]===WEAPONS[id].family&&!used.has(id)){equippedWeapons[hero]=id;used.add(id);}
@@ -44,16 +45,17 @@ export function copyLoadout(input:Partial<BattleLoadout>={}):BattleLoadout {
 export function orangeBonus(loadout:BattleLoadout):number {
   return(loadout.equippedPassiveProps.includes('extra_oranges')?2:0)+(loadout.equippedPassiveProps.includes('shared_oranges')?4:0)+getBrothEffect(loadout,'startOranges')+getVillageBuff(loadout,'startOranges');
 }
-/** Extra starting fish food from the equipped broth and the village fish stall. */
-export const bonusFood=(loadout:BattleLoadout):number=>getBrothEffect(loadout,'startFood')+getVillageBuff(loadout,'startFood');
+/** Extra starting fish food from the equipped broth, village fish stall, and bee_overtime passive. */
+export const bonusFood=(loadout:BattleLoadout):number=>getBrothEffect(loadout,'startFood')+getVillageBuff(loadout,'startFood')+(loadout.equippedPassiveProps.includes('bee_overtime')?10:0);
 
 export class PropSystem {
   private trapSequence=1;
-  private beeFoodGranted=false;
   private orangeDeficit=0;
-  /** Bonus food (broth + fish stall) currently credited to the player, and bonus food not yet taken back. */
+  /** Bonus food (broth + fish stall + bee_overtime) currently credited to the player, and bonus food not yet taken back. */
   private bonusFoodCredit=0;
   private bonusFoodDeficit=0;
+  /** Distinct active prop IDs cast during Wave-1 preparation (capped at 2 to prevent hot-swap cycling). */
+  private prepActivePropsUsed=new Set<string>();
   constructor(private engine:BattleEngine,private random:()=>number){}
   has(side:Side,id:string):boolean {return this.engine.state.sides[side].loadout.equippedPassiveProps.includes(id);}
   initialize():void {
@@ -61,18 +63,19 @@ export class PropSystem {
     for(const side of ['player'] as Side[]){
       sides[side].oranges+=orangeBonus(sides[side].loadout);
       this.bonusFoodCredit=bonusFood(sides[side].loadout);sides[side].food+=this.bonusFoodCredit;
-      this.grantBeeFood();
     }
   }
   syncPreparationLoadout(loadout:BattleLoadout):void {
     const resources=this.engine.state.sides.player;
     const delta=orangeBonus(loadout)-orangeBonus(resources.loadout),food=bonusFood(loadout);
     resources.loadout=loadout;this.adjustOranges(delta);
-    // Swapping soups during Wave 1 preparation only moves the difference. Food already spent
-    // stays owed, so toggling a broth off and on can never mint extra fish.
+    // Swapping soups or bee_overtime during Wave 1 preparation only moves the difference.
+    // Food already spent stays owed, so toggling off and on can never mint extra fish.
     const balance=resources.food-this.bonusFoodDeficit+food-this.bonusFoodCredit;
     this.bonusFoodDeficit=Math.max(0,-balance);resources.food=Math.max(0,balance);this.bonusFoodCredit=food;
-    this.grantBeeFood();
+  }
+  resetOrangeDeficit():void {
+    this.orangeDeficit=0;
   }
   adjustOranges(delta:number):void {
     const resources=this.engine.state.sides.player;
@@ -81,17 +84,13 @@ export class PropSystem {
     const balance=resources.oranges-this.orangeDeficit+delta;
     this.orangeDeficit=Math.max(0,-balance);resources.oranges=Math.max(0,balance);
   }
-  private grantBeeFood():void {
-    if(this.beeFoodGranted||!this.has('player','bee_overtime'))return;
-    this.engine.state.sides.player.food+=10;this.beeFoodGranted=true;
-  }
   shovelRules(side:Side):{interval:number;maxStored:number}{
     const rules=this.has(side,'auto_shovel')?{interval:30,maxStored:6}:{interval:SHOVEL_PRODUCTION.interval,maxStored:SHOVEL_PRODUCTION.maxStored};
     const speed=getBrothEffect(this.engine.state.sides[side].loadout,'shovelSpeed');
     return speed?{...rules,interval:rules.interval*(1-speed)}:rules;
   }
   haste(side:Side):number {
-    return(this.has(side,'hyper_party')?.38:0)+(this.engine.state.sides[side].catnipTime>0?.45:0);
+    return(this.has(side,'hyper_party')?.10:0)+(this.engine.state.sides[side].catnipTime>0?.45:0);
   }
   draw(side:Side,allowShovel=true):string {
     const pool=DRAW_POOL.filter(item=>(allowShovel||item.id!=='shovel')&&this.engine.isDrawUnlocked(item.id));
@@ -101,20 +100,23 @@ export class PropSystem {
   }
   promoteDraw(unit:Unit):void {
     if(!this.has(unit.side,'promo_badge')||UNITS[unit.kind]?.category!=='basic')return;
-    const level=this.engine.state.sides[unit.side].loadout.ownedProps.promo_badge;
-    if(this.random()<[.08,.15,.22][Math.min(2,Math.max(0,level-1))])unit.level=2;
+    if(this.random()<.15)unit.level=2;
   }
   use(id:string,target:PropTarget={},side:Side='player'):CommandResult {
     const state=this.engine.state,resources=state.sides[side],prop=PROPS[id];
     if(state.phase!=='playing')return{ok:false,key:'hint.paused'};
     if(!prop||!resources.loadout.equippedActiveProps.includes(id))return{ok:false,key:'m2.propNotEquipped'};
     if((resources.propCooldowns[id]??0)>1e-8)return{ok:false,key:'m2.propCooldown'};
+    if(side==='player'&&this.engine.canSyncPreparationLoadout()&&!this.prepActivePropsUsed.has(id)&&this.prepActivePropsUsed.size>=2){
+      return{ok:false,key:'m2.propCooldown'};
+    }
     const unit=state.units.find(u=>u.id===target.unitId&&u.side===side);
     if(prop.target==='unit'){
       const key=propUnitTargetError(state,id,unit,side);
       if(key)return{ok:false,key};
     }
     if(prop.target==='road'&&!isValidPropRoad(state,target.col!,target.row!,side))return{ok:false,key:'m2.invalidTarget'};
+    if(side==='player'&&this.engine.canSyncPreparationLoadout())this.prepActivePropsUsed.add(id);
     resources.propCooldowns[id]=prop.cooldown;
     let key='m2.upgraded';
     switch(id){
@@ -148,7 +150,7 @@ export class PropSystem {
       this.engine.event({type:'purge',side,...this.engine.unitPosition(unit),unitId:unit.id,effect:'sprinkler',textKey:'hint.purged',duration:1.1});
     }
     for(const enemy of this.engine.lane(side)){
-      this.engine.knockback(enemy,4.5);this.engine.hurt(enemy,120,undefined,false,false,true);enemy.slow=Math.max(enemy.slow,2);enemy.slowFactor=.5;
+      this.engine.knockback(enemy,4.5);this.engine.hurt(enemy,120,undefined,false,false,true);this.engine.applySlow(enemy,2,.5);
     }
     return{ok:true,key:'m2.sprinklerReady'};
   }
@@ -178,8 +180,8 @@ export class PropSystem {
     }
   }
   blockBoss(enemy:Enemy):boolean {
-    if(!this.has(enemy.side,'emp_jammer')||this.random()>=.45)return false;
-    this.engine.hurt(enemy,enemy.maxHp*.08,undefined,true,false,true);
+    if(!this.has(enemy.side,'emp_jammer')||this.random()>=.5)return false;
+    this.engine.hurt(enemy,enemy.maxHp*.1,undefined,true,false,true);
     this.engine.event({type:'bubble',side:enemy.side,col:enemy.col,row:enemy.row,textKey:'m2.empBackfire',duration:1.2});return true;
   }
   treasure(side:Side,col:number,row:number):void {

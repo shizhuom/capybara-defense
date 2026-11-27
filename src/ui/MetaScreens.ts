@@ -1,8 +1,25 @@
 import {ledger} from './LedgerView';
 import type { Profile } from '../core/types';
 import { WEAPONS, HERO_FAMILIES, RARITY_RULES, type WeaponFamily, type WeaponDefinition } from '../config/weapons';
-import { PROPS,META_PRICES } from '../config/props';
-import { buyProp, createLotteryPrizes, ensureDailyLottery, ensureDailyShop, equipProp, equipWeapon, recycleFragments, refreshShop, spinLottery, type LotteryPayment, type LotteryPrize, type MetaResult } from '../core/MetaProgression';
+import { PROPS, META_PRICES, propBlueprintGoal } from '../config/props';
+import {
+  buyProp,
+  createLotteryPrizes,
+  ensureDailyLottery,
+  ensureDailyShop,
+  equipProp,
+  equipWeapon,
+  getPropBlueprintCount,
+  getPropTrialRemainingMs,
+  isPropPermanent,
+  isPropUsable,
+  recycleFragments,
+  refreshShop,
+  spinLottery,
+  type LotteryPayment,
+  type LotteryPrize,
+  type MetaResult,
+} from '../core/MetaProgression';
 import { t } from '../i18n/i18n';
 import { escapeHtml as esc } from './art';
 import { saveProfile } from './storage';
@@ -21,7 +38,7 @@ export function propSlots(profile: Profile, quick = false): string {
     const ids = type === 'active' ? profile.equippedActiveProps : profile.equippedPassiveProps;
     const id = ids[index];
     const label = t('m2.slot', { type: t(`m2.${type}`), slot: index + 1 });
-    if (quick) return `<label><span>${esc(label)}</span><select data-prop-slot="${type}:${index}" aria-label="${esc(label)}"><option value="">${tr('m2.emptySlot')}</option>${Object.values(PROPS).filter(item => item.type === type && profile.ownedProps[item.id]).map(item => `<option value="${item.id}"${id === item.id ? ' selected' : ''}>${tr(`prop.${item.id}`)}</option>`).join('')}</select></label>`;
+    if (quick) return `<label><span>${esc(label)}</span><select data-prop-slot="${type}:${index}" aria-label="${esc(label)}"><option value="">${tr('m2.emptySlot')}</option>${Object.values(PROPS).filter(item => item.type === type && isPropUsable(profile, item.id)).map(item => `<option value="${item.id}"${id === item.id ? ' selected' : ''}>${tr(`prop.${item.id}`)}</option>`).join('')}</select></label>`;
     return `<button type="button" class="prop-slot ${id ? 'filled' : ''}" ${id ? `data-action="meta-prop:${id}" title="${tr(`prop.${id}.desc`)}"` : 'disabled'} aria-label="${esc(label)}${id ? `: ${tr(`prop.${id}`)} · ${tr('m2.unequip')}` : ''}"><span>${id ? propSticker(id,36) : '+'}</span>${id?'<b class="slot-remove" aria-hidden="true">×</b>':''}<small>${id ? tr(`prop.${id}`) : tr('m2.emptySlot')}</small></button>`;
   }).join('')}</div></section>`).join('');
 }
@@ -121,7 +138,7 @@ export class MetaScreens {
     if (result.profile.unlockedAvatars.some(id => !before.unlockedAvatars.includes(id))) this.notify('m3.newAvatars');
     this.spinning = true; this.prize = undefined;
     this.newWeapons = result.newWeapons ?? [];
-    this.convertedCoins = result.prize?.type === 'prop' && (before.ownedProps[result.prize.id!] ?? 0) >= PROPS[result.prize.id!].maxLevel ? PROPS[result.prize.id!].price : undefined;
+    this.convertedCoins = result.convertedCoins;
     const winner = result.index ?? 0;
     let step = 0;
     const total = 24 + winner;
@@ -194,22 +211,27 @@ export class MetaScreens {
 
   private shop(profile: Profile): string {
     const offers = profile.shop?.offers ?? [];
-    const allMaxed = !Object.values(PROPS).some(p => (profile.ownedProps[p.id] ?? 0) < p.maxLevel);
+    const bought = new Set(profile.shop?.bought ?? []);
+    const allMaxed = !Object.values(PROPS).some(p => !isPropPermanent(profile, p.id));
     const whisper = allMaxed ? tr('p11.meta.merchantMaxed') : tr(`p11.meta.merchant${this.merchantQuip}`);
     return `<div class="storybook-shop-heading"><button type="button" class="storybook-whisper" data-action="meta-merchant"><span aria-hidden="true">${sceneSticker('ui_market_peek_raccoon','',32)}</span><span>${whisper}</span></button><button type="button" class="storybook-pill-btn" data-action="meta-refresh"${allMaxed ? ' disabled' : ''}>↻ ${tr('p6.refresh')} · ${sceneSticker('ui_coin_gold','',18)}${META_PRICES.shopRefresh}</button></div><div class="storybook-list">${offers.map(id => {
       if (!Object.hasOwn(PROPS,id)) return '';
-      const prop = PROPS[id], level = profile.ownedProps[id] ?? 0;
-      return `<article class="storybook-row-card shop-row rarity-${prop.rarity}" data-prop-id="${id}"><span class="storybook-frame tone-props">${propSticker(id,68)}</span><span class="storybook-copy"><strong class="portrait-name">${tr(`prop.${id}`)}</strong><span class="storybook-meta">${tr(`m2.${prop.type}`)} · Lv.${level}/${prop.maxLevel}</span><span class="storybook-tagline">${tr(`prop.${id}.desc`)}</span></span><span class="storybook-action-col">${level >= prop.maxLevel ? `<span class="storybook-status is-owned"><b>${tr('m2.maxed')}</b>${sceneSticker('ui_storybook_check','',24)}</span>` : `<button type="button" class="storybook-buy-btn" data-action="meta-buy:${id}" aria-label="${tr(level ? 'p11.meta.upgradeShort' : 'p11.meta.buyShort')} ${tr(`prop.${id}`)} · ${prop.price}">${sceneSticker('ui_coin_gold','',18)} ${prop.price}<span>${tr(level ? 'p11.meta.upgradeShort' : 'p11.meta.buyShort')}</span></button>`}</span></article>`;
+      const prop = PROPS[id], permanent = isPropPermanent(profile, id), bp = getPropBlueprintCount(profile, id), goal = propBlueprintGoal(id);
+      const oneAway = !permanent && bp + 1 >= goal;
+      return `<article class="storybook-row-card shop-row rarity-${prop.rarity}" data-prop-id="${id}"><span class="storybook-frame tone-props">${propSticker(id,68)}</span><span class="storybook-copy"><strong class="portrait-name">${tr(`prop.${id}`)}</strong><span class="storybook-meta">${tr(`m2.${prop.type}`)} · ${bp}/${goal}</span><span class="storybook-tagline">${tr(`prop.${id}.desc`)}</span></span><span class="storybook-action-col">${permanent ? `<span class="storybook-status is-owned"><b>${tr('m2.maxed')}</b>${sceneSticker('ui_storybook_check','',24)}</span>` : bought.has(id) ? `<span class="storybook-status is-owned"><b>24h</b>${sceneSticker('ui_storybook_check','',24)}</span>` : `<button type="button" class="storybook-buy-btn" data-action="meta-buy:${id}" aria-label="${tr(oneAway ? 'p11.meta.upgradeShort' : 'p11.meta.buyShort')} ${tr(`prop.${id}`)} · ${prop.price}">${sceneSticker('ui_coin_gold','',18)} ${prop.price}<span>${tr(oneAway ? 'p11.meta.upgradeShort' : 'p11.meta.buyShort')}</span></button>`}</span></article>`;
     }).join('') || `<p class="storybook-empty">${tr('m2.shopEmpty')}</p>`}</div>`;
   }
 
   private backpack(profile: Profile): string {
+    const nowMs = Date.now();
     const equipped = new Set([...profile.equippedActiveProps,...profile.equippedPassiveProps]);
-    const order = (id: string) => equipped.has(id) ? 0 : profile.ownedProps[id] ? 1 : 2;
-    const props = Object.values(PROPS).sort((a,b) => order(a.id) - order(b.id));
+    const order = (id: string) => equipped.has(id) ? 0 : isPropPermanent(profile, id) ? 1 : getPropTrialRemainingMs(profile, id, nowMs) > 0 ? 2 : 3;
+    const props = Object.values(PROPS).sort((a,b) => order(a.id) - order(b.id) || a.rarity - b.rarity);
     return `<section class="storybook-loadout-strip storybook-loadout-bar" aria-label="${tr('m2.loadout')}">${propSlots(profile)}</section><div class="storybook-list">${props.map(prop => {
-      const level = profile.ownedProps[prop.id] ?? 0, worn = equipped.has(prop.id);
-      return `<article class="storybook-row-card prop-row rarity-${prop.rarity} ${level ? 'owned' : 'unowned'} ${worn ? 'equipped' : ''}" data-prop-id="${prop.id}"><span class="storybook-frame tone-props"><span${level ? '' : ' class="unowned-art"'}>${propSticker(prop.id,60)}</span></span><span class="storybook-copy"><strong class="portrait-name">${tr(`prop.${prop.id}`)}</strong><span class="storybook-meta">${tr(`m2.${prop.type}`)}${level ? ` · Lv.${level}/${prop.maxLevel}` : ''}</span><span class="storybook-tagline">${tr(`prop.${prop.id}.desc`)}</span></span><span class="storybook-action-col">${level ? `<button type="button" class="storybook-equip-btn ${worn ? 'equipped' : ''}" data-action="meta-prop:${prop.id}" aria-pressed="${worn}" aria-label="${tr(worn ? 'm2.unequip' : 'p11.meta.deploy')} ${tr(`prop.${prop.id}`)}">${worn ? sceneSticker('ui_storybook_check','',20) : ''}<span>${tr(worn ? 'p11.meta.deployed' : 'p11.meta.deploy')}</span></button>` : `<span class="storybook-status is-locked"><span>${tr('p11.meta.unowned')}</span>${sceneSticker('ui_lock_closed','',20)}</span>`}</span></article>`;
+      const permanent = isPropPermanent(profile, prop.id), remMs = getPropTrialRemainingMs(profile, prop.id, nowMs), usable = isPropUsable(profile, prop.id, nowMs);
+      const bp = getPropBlueprintCount(profile, prop.id), goal = propBlueprintGoal(prop.id), worn = equipped.has(prop.id);
+      const metaStatus = permanent ? tr('m2.maxed') : remMs > 0 ? `24h · ${bp}/${goal}` : `${bp}/${goal}`;
+      return `<article class="storybook-row-card prop-row rarity-${prop.rarity} ${usable ? 'owned' : 'unowned'} ${worn ? 'equipped' : ''}" data-prop-id="${prop.id}"><span class="storybook-frame tone-props"><span${usable ? '' : ' class="unowned-art"'}>${propSticker(prop.id,60)}</span></span><span class="storybook-copy"><strong class="portrait-name">${tr(`prop.${prop.id}`)}</strong><span class="storybook-meta">${tr(`m2.${prop.type}`)} · ${metaStatus}</span><span class="storybook-tagline">${tr(`prop.${prop.id}.desc`)}</span></span><span class="storybook-action-col">${usable ? `<button type="button" class="storybook-equip-btn ${worn ? 'equipped' : ''}" data-action="meta-prop:${prop.id}" aria-pressed="${worn}" aria-label="${tr(worn ? 'm2.unequip' : 'p11.meta.deploy')} ${tr(`prop.${prop.id}`)}">${worn ? sceneSticker('ui_storybook_check','',20) : ''}<span>${tr(worn ? 'p11.meta.deployed' : 'p11.meta.deploy')}</span></button>` : `<span class="storybook-status is-locked"><span>${bp}/${goal}</span>${sceneSticker('ui_lock_closed','',20)}</span>`}</span></article>`;
     }).join('')}</div>`;
   }
 

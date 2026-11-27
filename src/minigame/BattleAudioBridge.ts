@@ -9,11 +9,13 @@ export class BattleAudioBridge {
   private lastEventId = 0;
   private battleId = '';
   private lastHitAt = 0;
+  private lastDeathAt = 0;
 
   reset(battleId = ''): void {
     this.battleId = battleId;
     this.lastEventId = 0;
     this.lastHitAt = 0;
+    this.lastDeathAt = 0;
   }
 
   observe(state: BattleState, audio: MinigameAudioController, nowMs: number): void {
@@ -28,16 +30,20 @@ export class BattleAudioBridge {
       if (ev.side !== 'player') continue;
 
       switch (ev.type) {
-        case 'hit':
-        case 'slash':
-        case 'projectile':
+        case 'damage':
           if (nowMs - this.lastHitAt > 95) {
             this.lastHitAt = nowMs;
             audio.play(ev.hitCue ?? 'hit_melee');
           }
           break;
+        case 'dash':
+          audio.play('hero_ult');
+          break;
         case 'death':
-          audio.play('enemy_defeat');
+          if (ev.boss || nowMs - this.lastDeathAt > 65) {
+            this.lastDeathAt = nowMs;
+            audio.play('enemy_defeat');
+          }
           break;
         case 'orange':
           audio.play((ev.value ?? -1) < 0 ? 'orange_loss' : 'orange_gain');
@@ -57,12 +63,16 @@ export class BattleAudioBridge {
         case 'purge':
           if (ev.effect === 'legendary' || ev.effect === 'awakened') {
             audio.play('hero_ult');
-          } else {
+          } else if (ev.effect === 'clipped') {
+            audio.play('orange_loss');
+          } else if (ev.effect !== 'sprinkler') {
             audio.play('merge_hero');
           }
           break;
         case 'bubble':
           if (ev.effect === 'boss_spawn') audio.play('boss_arrive');
+          else if (ev.effect === 'resist_block') audio.play('hit_heavy');
+          else if (ev.effect === 'treasure') audio.play('gacha_win');
           break;
         case 'alert':
           if (ev.effect === 'elite_spawn') audio.play('wave_start');

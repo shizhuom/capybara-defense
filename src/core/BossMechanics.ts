@@ -2,13 +2,18 @@ import type {BattleEngine} from './BattleEngine';
 import type {Enemy,Point,Unit} from './types';
 import {UNITS} from '../config/units';
 import {getMap} from '../config/maps';
-import {getWaveConfig} from '../config/waves';
+import {getStandardMinionPressure,getWaveConfig} from '../config/waves';
 import {GridSystem} from './GridSystem';
 
 /** Extra bosses share the engine's EMP gate; summons are ordinary lane enemies. */
 export function applyNewBossMechanic(engine:BattleEngine,boss:Enemy,units:Unit[]):void {
   const targets:Point[]=[];
-  const summon=(kind:string,offset:number,scale=engine.state.endless?getWaveConfig(engine.state.wave).hpScale:1,boneShield=false)=>{
+  const waveScale=engine.state.endless
+    ?getWaveConfig(engine.state.wave).hpScale
+    :engine.state.wave>=1
+      ?getWaveConfig(engine.state.wave).hpScale*getStandardMinionPressure(engine.state.wave,engine.options.tutorialGuided).hpMult
+      :1;
+  const summon=(kind:string,offset:number,scale=waveScale,boneShield=false)=>{
     const enemy=engine.spawnEnemy(kind,boss.side,scale);
     enemy.progress=Math.max(0,Math.min(getMap(engine.state.mapId).paths.player.length-1,boss.progress+offset));
     Object.assign(enemy,GridSystem.pathPosition(boss.side,enemy.progress,engine.state.mapId));

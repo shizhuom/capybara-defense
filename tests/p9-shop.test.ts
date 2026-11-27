@@ -14,9 +14,11 @@ function host(coins=500,tickets=1){
 }
 it('charges exactly 200 coins while explicitly preserving tickets',()=>{
  const p={...createProfile(),coins:200,freeLotteryTickets:2},prizes=createLotteryPrizes(p,()=>0);
- prizes[0]={type:'prop',id:'washer',amount:1};
- const result=spinLottery(p,prizes,()=>0,'coins');
- expect(META_PRICES.lottery).toBe(200);expect(result).toMatchObject({ok:true,profile:{coins:0,freeLotteryTickets:2,ownedProps:{washer:1}}});
+ prizes[0]={type:'prop',id:'washer',amount:3};
+ const now=1_700_000_000_000;
+ const result=spinLottery(p,prizes,()=>0,'coins',undefined,now);
+ expect(META_PRICES.lottery).toBe(200);expect(result).toMatchObject({ok:true,profile:{coins:0,freeLotteryTickets:2,propBlueprints:{washer:3}}});
+ expect(result.profile.trialProps?.washer).toBeGreaterThan(now);
  expect(p.coins).toBe(200);expect(p.ownedProps).toEqual({});
  expect(spinLottery({...p,coins:199},prizes,()=>0,'coins')).toMatchObject({ok:false,profile:{coins:199,freeLotteryTickets:2}});
 });

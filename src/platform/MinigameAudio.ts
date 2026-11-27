@@ -233,6 +233,7 @@ export class MinigameAudio implements MinigameAudioController {
   private bufferCache = new Map<string, MinimalAudioBuffer>();
   private pendingDecode = new Set<string>();
   private musicGain: MinimalGainNode | null = null;
+  private sfxGain: MinimalGainNode | null = null;
   private bgmSource: MinimalBufferSourceNode | null = null;
   private bgmPlayingMode: MinigameMusicMode | null = null;
   private oscMusicStep = 0;
@@ -241,16 +242,22 @@ export class MinigameAudio implements MinigameAudioController {
 
   constructor(private readonly factory?: () => MinimalAudioContext | null) {}
 
+  private isSuspended(ctx: MinimalAudioContext): boolean {
+    const st = ctx.state as string | undefined;
+    return st === 'suspended' || st === 'interrupted';
+  }
+
   unlock(): void {
     this.unlocked = true;
     const ctx = this.ensureContext();
     if (!ctx) return;
     this.logDiagOnce(ctx);
-    if (ctx.state === 'suspended' && typeof ctx.resume === 'function') {
+    if (this.isSuspended(ctx) && typeof ctx.resume === 'function') {
       try {
         const res = ctx.resume();
         if (res && typeof (res as Promise<void>).then === 'function') {
           (res as Promise<void>).then(() => this.syncMusicLoop(), () => { /* ignore */ });
+          if (this.isSuspended(ctx)) return;
         }
       } catch { /* ignore */ }
     }
@@ -285,16 +292,17 @@ export class MinigameAudio implements MinigameAudioController {
       }
       return;
     }
+    // After OS audio interruption or backgrounding on iOS WeChat, restart looping BGM cleanly once resumed.
+    if (wasPaused) this.stopBgmSource();
     if (this.ctx && typeof this.ctx.resume === 'function') {
       try {
         const res = this.ctx.resume();
         if (res && typeof (res as Promise<void>).then === 'function') {
           (res as Promise<void>).then(() => this.syncMusicLoop(), () => { /* ignore */ });
+          if (this.isSuspended(this.ctx)) return;
         }
       } catch { /* ignore */ }
     }
-    // After OS audio interruption or backgrounding on iOS WeChat, restart looping BGM cleanly.
-    if (wasPaused) this.stopBgmSource();
     this.syncMusicLoop();
   }
 
@@ -302,8 +310,13 @@ export class MinigameAudio implements MinigameAudioController {
     if (this.paused || this.soundVolume <= 0.001) return;
     const ctx = this.ensureContext();
     if (!ctx) return;
-    if (ctx.state === 'suspended' && typeof ctx.resume === 'function') {
-      try { void ctx.resume(); } catch { /* ignore */ }
+    if (this.isSuspended(ctx) && typeof ctx.resume === 'function') {
+      try {
+        const res = ctx.resume();
+        if (res && typeof (res as Promise<void>).then === 'function') {
+          (res as Promise<void>).then(() => this.syncMusicLoop(), () => { /* ignore */ });
+        }
+      } catch { /* ignore */ }
     }
 
     const gainVol = this.soundVolume * 0.46;
@@ -332,6 +345,7 @@ export class MinigameAudio implements MinigameAudioController {
   }
 
   private logDiagOnce(ctx: MinimalAudioContext): void {
+    if (!__ENABLE_DEV_TOOLS__) return;
     if (this.diagLogged) return;
     this.diagLogged = true;
     const backend = typeof ctx.createBufferSource === 'function'
@@ -404,21 +418,36 @@ export class MinigameAudio implements MinigameAudioController {
     }
   }
 
+  private ensureSfxGain(ctx: MinimalAudioContext): MinimalGainNode | null {
+    if (this.sfxGain) return this.sfxGain;
+    try {
+      const gain = ctx.createGain();
+      gain.connect(ctx.destination);
+      this.sfxGain = gain;
+      return gain;
+    } catch {
+      return null;
+    }
+  }
+
   private playOneShotBuffer(ctx: MinimalAudioContext, buf: MinimalAudioBuffer, vol: number): void {
     if (this.paused || vol <= 0.0005 || typeof ctx.createBufferSource !== 'function') return;
+    let src: MinimalBufferSourceNode | null = null;
     try {
-      const src = ctx.createBufferSource();
-      const gain = ctx.createGain();
-      src.buffer = buf;
+      const gain = this.ensureSfxGain(ctx);
+      if (!gain) return;
       this.setGainValue(ctx, gain, vol, false);
+      src = ctx.createBufferSource();
+      src.buffer = buf;
       src.connect(gain);
-      gain.connect(ctx.destination);
+      const boundSrc = src;
       src.onended = () => {
-        try { src.disconnect?.(); } catch { /* ignore */ }
-        try { gain.disconnect?.(); } catch { /* ignore */ }
+        try { boundSrc.disconnect?.(); } catch { /* ignore */ }
       };
       src.start(0);
-    } catch { /* ignore */ }
+    } catch {
+      try { src?.disconnect?.(); } catch { /* ignore */ }
+    }
   }
 
   private setGainValue(ctx: MinimalAudioContext, node: MinimalGainNode, target: number, smooth: boolean): void {
@@ -473,6 +502,21 @@ export class MinigameAudio implements MinigameAudioController {
     }
     const ctx = this.ensureContext();
     if (!ctx) return;
+    // Do not start or cache a looping BGM source while iOS/WeChat AudioContext is still suspended/interrupted;
+    // wait for resume() to resolve so the source actually plays instead of stalling permanently.
+    if (this.isSuspended(ctx)) {
+      if (typeof ctx.resume === 'function') {
+        try {
+          const res = ctx.resume();
+          if (res && typeof (res as Promise<void>).then === 'function') {
+            (res as Promise<void>).then(() => {
+              if (!this.isSuspended(ctx)) this.syncMusicLoop();
+            }, () => { /* ignore */ });
+          }
+        } catch { /* ignore */ }
+      }
+      return;
+    }
 
     const targetGain = this.musicVolume * 0.34;
     if (typeof ctx.createBufferSource === 'function') {
@@ -488,13 +532,20 @@ export class MinigameAudio implements MinigameAudioController {
         `bgm:${wantedMode}`,
         () => renderBgmPcm(wantedMode, SYNTH_SAMPLE_RATE),
         buf => {
-          if (!this.unlocked || this.paused || this.musicVolume <= 0.005 || this.musicMode !== wantedMode) return;
+          if (!this.unlocked || this.paused || this.musicVolume <= 0.005 || this.musicMode !== wantedMode || this.isSuspended(ctx)) return;
           if (this.bgmSource && this.bgmPlayingMode === wantedMode) return;
           try {
             const src = ctx.createBufferSource!();
             src.buffer = buf;
             src.loop = true;
             src.connect(mGain);
+            src.onended = () => {
+              if (this.bgmSource === src) {
+                this.bgmSource = null;
+                this.bgmPlayingMode = null;
+              }
+              try { src.disconnect?.(); } catch { /* ignore */ }
+            };
             src.start(0);
             this.bgmSource = src;
             this.bgmPlayingMode = wantedMode;
@@ -546,6 +597,10 @@ export class MinigameAudio implements MinigameAudioController {
       gain.gain.exponentialRampToValueAtTime?.(0.0001, start + dur);
       osc.connect(gain);
       gain.connect(ctx.destination);
+      (osc as unknown as { onended?: (() => void) | null }).onended = () => {
+        try { (osc as unknown as { disconnect?: () => void }).disconnect?.(); } catch { /* ignore */ }
+        try { gain.disconnect?.(); } catch { /* ignore */ }
+      };
       osc.start(start);
       osc.stop(start + dur + 0.025);
     } catch { /* ignore unsupported runtime node errors */ }

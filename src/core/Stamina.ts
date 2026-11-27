@@ -29,7 +29,11 @@ function validStamp(value: unknown, nowMs: number): number {
 export function getStaminaStatus(profile: Pick<Profile, 'stamina' | 'staminaUpdatedAt'>, nowMs = Date.now()): StaminaStatus {
   const base = clampRawStamina(profile.stamina);
   if (base >= STAMINA_MAX) {
-    return { current: base, max: STAMINA_MAX, nextRegenSeconds: 0, updatedAt: nowMs };
+    // Keep any valid past timestamp when full so settleStamina() stays referentially stable instead of dirtying storage every frame.
+    const preserved = typeof profile.staminaUpdatedAt === 'number' && Number.isFinite(profile.staminaUpdatedAt) && profile.staminaUpdatedAt > 0 && profile.staminaUpdatedAt <= nowMs
+      ? Math.trunc(profile.staminaUpdatedAt)
+      : nowMs;
+    return { current: base, max: STAMINA_MAX, nextRegenSeconds: 0, updatedAt: preserved };
   }
   const stamp = validStamp(profile.staminaUpdatedAt, nowMs);
   const elapsedSec = Math.max(0, Math.floor((nowMs - stamp) / 1000));
@@ -85,7 +89,7 @@ export function grantStamina(profile: Profile, amount: number, nowMs = Date.now(
   return { ...settled, stamina: next, staminaUpdatedAt: updatedAt };
 }
 
-/** Spends 60 coins for +15 stamina (cozy onsen tea break). */
+/** Spends 60 coins for +10 stamina (cozy onsen tea break). */
 export function buyStaminaWithCoins(
   profile: Profile,
   nowMs = Date.now(),

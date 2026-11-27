@@ -45,7 +45,7 @@ export class WeaponSystem {
       case 'm07_rolling_pin':if(m.attacks%8===0)this.area(unit,target,1.6,damage*1.8,'wave');break;
       case 'm10_bamboo_staff':if(chance(.18))this.bamboo(unit,target,1,damage);break;
       case 'm12_iron_wok':if(chance(.15)){for(const e of near(1.2))e.stun=Math.max(e.stun,.8);this.area(unit,target,1.2,damage*3,'wok');}break;
-      case 'r03_bubble_gun':if(chance(.15)){target.slow=Math.max(target.slow,1.5);target.slowFactor=.75;this.effect(unit,target,'bubble');}break;
+      case 'r03_bubble_gun':if(chance(.15)){this.engine.applySlow(target,1.5,.75);this.effect(unit,target,'bubble');}break;
       case 'r04_tennis_launcher':if(chance(.2))this.bounce(unit,target,damage*.7,1.6,'ball');break;
       case 'r05_hair_dryer':if(chance(.15)){this.burn(target,damage,unit);this.effect(unit,target,'heat');}break;
       case 'r07_popcorn_cannon':if(m.attacks%8===0)this.area(unit,target,1.2,damage*2,'popcorn');break;

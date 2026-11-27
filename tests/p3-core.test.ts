@@ -27,9 +27,9 @@ describe('P3 shared base and effective stats',()=>{
  });
  it('reports WET/buff/prop cadence exactly once and uses it for the actual next attack',()=>{
   const e=prep(loadout(['hyper_party'],['catnip'])),u=pet(e);e.useProp('catnip');u.statuses.WET=8;u.buffTime=8;u.location={zone:'board',col:2,row:1};
-  const base=e.getUnitStats(u);expect(base.rate).toBeCloseTo(1.25*1.83);expect(e.getEffectiveUnitStats(u)).toEqual({...base,rate:base.rate*.55*4});
+  const base=e.getUnitStats(u);expect(base.rate).toBeCloseTo(1.25*1.55);expect(e.getEffectiveUnitStats(u)).toEqual({...base,rate:base.rate*.55*4});
   const m=e.spawnEnemy('rat','player');m.speed=0;m.progress=2;m.col=1;m.row=1;m.hp=m.maxHp=10000;e.tick(.05);
-  expect(u.cooldown).toBeCloseTo(1/(1.25*1.83*.55*4)-.05);
+  expect(u.cooldown).toBeCloseTo(1/(1.25*1.55*.55*4)-.05);
  });
 });
 
@@ -56,9 +56,9 @@ describe('P3 preparation loadout sync',()=>{
   expect(e.syncPreparationLoadout(next).ok).toBe(true);expect(r.oranges).toBe(8);e.syncPreparationLoadout(loadout());expect(r.oranges).toBe(4);expect(r.shovels).toBe(6);
   const shovel=pet(e,'shovel');expect(e.storeShovel(shovel.id).ok).toBe(false);e.tick(.1);expect(r.shovels).toBe(6);r.shovels=3;e.tick(55);expect(r.shovels).toBe(4);
  });
- it('grants overtime food only once, including an initial grant, while live bee timing follows swaps',()=>{
+ it('grants overtime food reversibly during Wave 1 prep without minting extra fish, while live bee timing follows swaps',()=>{
   for(const initial of [loadout(),loadout(['bee_overtime'])]){
-   const e=prep(initial),r=e.state.sides.player;for(let i=0;i<3;i++){e.syncPreparationLoadout(loadout(['bee_overtime']));expect(r.food).toBe(32);e.syncPreparationLoadout(loadout());expect(r.food).toBe(32);}
+   const e=prep(initial),r=e.state.sides.player;for(let i=0;i<3;i++){e.syncPreparationLoadout(loadout(['bee_overtime']));expect(r.food).toBe(32);e.syncPreparationLoadout(loadout());expect(r.food).toBe(22);}
   }
   const e=prep(),bee=pet(e,'bee');bee.location={zone:'board',col:2,row:1};e.tick(10);expect(bee.production).toBeCloseTo(10);e.syncPreparationLoadout(loadout(['bee_overtime']));e.tick(3.5);expect(e.state.sides.player.food).toBe(33);
  });

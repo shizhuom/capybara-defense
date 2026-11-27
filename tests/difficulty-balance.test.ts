@@ -83,9 +83,12 @@ describe('r18 Difficulty Balance: draw weights, standard boss/wave scaling, tuto
     }
   });
 
-  it('preserves Endless Wave 11+ anchor and direct spawnEnemy invariants', () => {
+  it('preserves Endless Wave 11+ smooth continuity above W10 and direct spawnEnemy invariants', () => {
     expect(WAVES[9].hpScale).toBe(9);
-    expect(getWaveConfig(11).hpScale).toBeCloseTo(9 * 1.25, 6);
+    const w10EffectiveHp = WAVES[9].hpScale * getStandardMinionPressure(10, false).hpMult;
+    expect(getWaveConfig(11).hpScale).toBeGreaterThan(w10EffectiveHp);
+    expect(getWaveConfig(11).hpScale).toBeCloseTo(w10EffectiveHp * 1.25, 6);
+    expect(getWaveConfig(11).speedScale).toBeGreaterThan(getStandardMinionPressure(10, false).speedMult);
 
     const e = new BattleEngine({ seed: 7, autoWaves: false });
     e.start();

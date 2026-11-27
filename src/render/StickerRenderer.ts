@@ -32,6 +32,15 @@ type OrangeMotion = Position & { add: boolean; age: number; index: number; direc
 const FONT = '"Trebuchet MS", "Microsoft YaHei", "PingFang SC", sans-serif';
 const TEAL = '#5f9b8c';
 const CORAL = '#d28e78';
+const canvasFilterSupport = new WeakMap<CanvasRenderingContext2D, boolean>();
+function hasCanvasFilter(c: CanvasRenderingContext2D): boolean {
+  const cached = canvasFilterSupport.get(c);
+  if (cached !== undefined) return cached;
+  const raw = (c as unknown as { filter?: unknown }).filter;
+  const supported = typeof raw === 'string' || typeof raw === 'function';
+  canvasFilterSupport.set(c, supported);
+  return supported;
+}
 const cellCenter = (col:number,row:number):Position => ({x:STAGE.boardX+(col+.5)*STAGE.cell,y:STAGE.boardY+(row+.5)*STAGE.cell});
 const clamp = (v:number,min:number,max:number) => Math.max(min,Math.min(max,v));
 
@@ -418,9 +427,13 @@ export class StickerRenderer {
     c.scale(size*pose.squashX*(1+pose.jello*.19+pose.roar*.10)*pose.visualFlip*pose.spawnScale,size*pose.squashY*(1-pose.jello*.15+pose.roar*.14)*pose.spawnScale);
     drawEnemyAccents(c,enemy,pose,base);
     const override=this.assets.get(enemy.kind);
-    if(enemy.hitFlash>0)c.filter='brightness(0) invert(1)';
+    const supportsFilter=hasCanvasFilter(c);
+    if(enemy.hitFlash>0&&supportsFilter)c.filter='brightness(0) invert(1)';
     if(override){c.save();c.translate(0,-4);drawPuppetSprite(c,override,base,pose.rig);c.restore();}
     else {c.scale(base/79,base/79);drawEnemyArt(c,enemy.kind,pose.artSeconds);}
+    if(enemy.hitFlash>0&&!supportsFilter){
+      c.save();c.globalAlpha*=.52;ellipse(c,0,-4,base*.36,base*.34,'#fffdf6','',0);c.restore();
+    }
     if(enemy.boneShield)boneShield(c);c.restore();
     const width=boss?68:42,height=boss?9:7,y=-base*size*.5-8;
     round(c,-width/2,y,width,height,3,'#d9bea4',INK,1);
@@ -479,8 +492,9 @@ export class StickerRenderer {
       const tile=state.grid[point.row]?.[point.col],own=point.row>=0&&point.row<STAGE.rows&&point.col>=0&&point.col<STAGE.cols;
       const p=cellCenter(point.col,point.row),target=state.units.find(unit=>unit.side==='player'&&unit.location.zone==='board'&&unit.location.col===point.col&&unit.location.row===point.row);
       const outcome=!digging&&drag&&target&&drag.id!==target.id?MergeSystem.combine(drag,target):null;
-      const valid=own&&(digging?canDig&&(tile==='G'||tile==='B'):tile==='O')&&(!outcome||outcome.ok);
-      const merging=!!outcome?.unit;
+      const breakthrough=!digging&&drag&&target&&drag.id!==target.id&&!!state.endless&&!!MergeSystem.breakthroughPair(drag,target);
+      const valid=own&&(digging?canDig&&(tile==='G'||tile==='B'):tile==='O')&&(!outcome||outcome.ok||breakthrough);
+      const merging=Boolean(outcome?.unit||breakthrough);
       round(c,p.x-34,p.y-34,68,68,12,valid?'rgba(251,237,163,.4)':'rgba(218,138,119,.22)',valid?(merging?'#cfaa54':TEAL):CORAL,3);
       if(valid&&merging){star(c,p.x+25,p.y-25,7,'#f1cf75',1.6);star(c,p.x-24,p.y+24,5,'#f1cf75',1.3);}
       else if(!valid){line(c,[[p.x-6,p.y-6],[p.x+6,p.y+6]],CORAL,2.7);line(c,[[p.x+6,p.y-6],[p.x-6,p.y+6]],CORAL,2.7);}
@@ -722,7 +736,7 @@ export class StickerRenderer {
       if(drawM2Event(this.c,event))continue;
       const eventUnit=isForeground?state.units.find(unit=>unit.id===event.unitId):undefined;
       const p=clamp(event.age/event.duration,0,1),from=eventUnit?this.position(eventUnit):cellCenter(event.col,event.row),c=this.c;
-      if(event.type==='orange')continue; // Count observation also covers debug additions/removals.
+      if(event.type==='orange'||event.type==='alert')continue; // Count observation and HUD banners handle these cleanly.
       if(event.type==='shield_block'){this.drawShieldBlock(event,from,state.sides.player.oranges);continue;}
       if(event.type==='lucky_drop'){
         c.save();
@@ -903,20 +917,20 @@ export class StickerRenderer {
   private observeOranges(state:BattleState,dt:number):void {
     if(this.previousOranges)for(const side of ['player'] as const) {
       const wide=isMobileWideStage(),spot=(wide?WIDE_GUARDIAN_BATH_SPOTS:GUARDIAN_BATH_SPOTS)[state.mapId],step=wide?18:15;
-      const old=this.previousOranges[side],now=state.sides[side].oranges,diff=now-old;
-      for(let i=0;i<Math.min(Math.abs(diff),12);i++)this.orangeMotions.push({x:spot.x,y:spot.y+spot.orangeBaseY-Math.max(0,old-1-i)*step,age:0,index:i,add:diff>0,direction:-1,targetY:spot.y+spot.orangeBaseY-Math.max(0,now-1-i)*step});
+      const old=this.previousOranges[side],now=state.sides[side].oranges,diff=now-old,dir=spot.x<STAGE.width/2?1:-1;
+      for(let i=0;i<Math.min(Math.abs(diff),12);i++)this.orangeMotions.push({x:spot.x,y:spot.y+spot.orangeBaseY-Math.max(0,old-1-i)*step,age:0,index:i,add:diff>0,direction:dir,targetY:spot.y+spot.orangeBaseY-Math.max(0,now-1-i)*step});
     }
     this.previousOranges={player:state.sides.player.oranges,ai:state.sides.ai.oranges};
     this.orangeMotions=this.orangeMotions.filter(motion=>(motion.age+=dt)<1.1);
   }
 
   private drawOrangeMotions():void {
-    const c=this.c;
+    const c=this.c,radius=isMobileWideStage()?12.5:10;
     for(const motion of this.orangeMotions){
       const p=motion.age/1.1;c.save();c.globalAlpha=motion.add?Math.sin(p*Math.PI):1-p;
       const x=motion.add?motion.x+motion.direction*(1-p)*72:motion.x+motion.direction*(25+motion.index*12)*p;
       const y=motion.add?motion.targetY-70*(1-p):motion.y-24*p+150*p*p;
-      this.drawOrangeArt(x,y,10,motion.add?-.3*(1-p):motion.direction*p*5);c.restore();
+      this.drawOrangeArt(x,y,radius,motion.add?-.3*(1-p):motion.direction*p*5);c.restore();
     }
   }
 

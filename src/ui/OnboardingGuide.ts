@@ -49,6 +49,9 @@ export interface DialogGuideContext {
   marketSpun: boolean;
   villageTab: string;
   villageInteracted: boolean;
+  armoryTab?: string;
+  kitchenTab?: string;
+  medallionTab?: string;
 }
 
 export interface DialogGuideStep {
@@ -73,6 +76,14 @@ export function computeDialogGuideStep(
         textKey: 'p19.onboard.armory.step2',
         done: false,
         pulseSelector: '[data-action="meta-equip:m01_swatter:kungfu_po"]',
+      };
+    }
+    if (ctx.armoryTab && ctx.armoryTab !== 'all' && ctx.armoryTab !== 'melee') {
+      return {
+        feature,
+        textKey: 'p19.onboard.armory.step1',
+        done: false,
+        pulseSelector: '[data-action="meta-tab:melee"]',
       };
     }
     return {
@@ -154,7 +165,7 @@ export function computeDialogGuideStep(
     }
     return {
       feature,
-      textKey: 'p19.onboard.village.step3',
+      textKey: 'p19.onboard.village.step3b',
       done: false,
       pulseSelector: '.village-pet, .village-harvest-btn:not(:disabled)',
     };
@@ -163,6 +174,14 @@ export function computeDialogGuideStep(
   if (feature === 'kitchen' && ctx.dialogKind === 'kitchen') {
     if ((profile.unlockedBroths?.length ?? 0) > 0) {
       return { feature, textKey: 'p19.onboard.kitchen.done', done: true };
+    }
+    if (ctx.kitchenTab && ctx.kitchenTab !== 'broths') {
+      return {
+        feature,
+        textKey: 'p19.onboard.kitchen.step1',
+        done: false,
+        pulseSelector: '[data-action="kitchen-tab:broths"]',
+      };
     }
     return {
       feature,
@@ -175,6 +194,14 @@ export function computeDialogGuideStep(
   if (feature === 'medallions' && ctx.dialogKind === 'medallions') {
     if (profileMedallionTotal(profile) > 0) {
       return { feature, textKey: 'p19.onboard.medallions.done', done: true };
+    }
+    if (ctx.medallionTab && ctx.medallionTab !== 'medallions') {
+      return {
+        feature,
+        textKey: 'p19.onboard.medallions.step1',
+        done: false,
+        pulseSelector: '[data-action="medallion-tab:medallions"]',
+      };
     }
     return {
       feature,

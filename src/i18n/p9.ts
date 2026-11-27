@@ -4,7 +4,7 @@ const pairs:Record<string,readonly [string,string]>={
  'p9.elite':['精英害虫来袭','Elite pest incoming'],
  'p9.boss':['首领来袭：{name}！','Boss incoming: {name}!'],
  'p9.alert.crab':['厚重甲壳减免伤害，快用破甲或魔法宠克制！','Heavy armor! Counter with armor breakers or magic pets.'],
- 'p9.alert.killer_bee':['高速飞行的杀人蜂！快铺高频范围火力！','Fast flying bees! Use rapid area attacks.'],
+ 'p9.alert.killer_bee':['高速飞行的大马蜂！快铺高频范围火力！','Fast flying bees! Use rapid area attacks.'],
  'p9.alert.charmed_rat':['迷糊小耗子冲刺来袭，集中火力快速拦截！','Dizzy mice are rushing in! Focus fire to intercept.'],
  'p9.starUnlock':['★{stars} 解锁','★{stars} Unlock'],
  'p9.heroAvailable':['✦ 可合成 · 待收录','✦ Ready to synthesize'],
@@ -34,7 +34,7 @@ const pairs:Record<string,readonly [string,string]>={
  'enemy.dr_clippers':['魔发剃毛总监','Dr. Buzzcut'],
  'enemy.diva_kitty':['傲娇波斯猫','Prima Donna Kitty'],
  'skill.diva_kitty':['来做我的小跟班吧～','Minions, escort me!'],
- 'enemy.hornet_queen':['暴躁大马蜂后','Furious Hornet Queen'],
+ 'enemy.hornet_queen':['嗡嗡大蜂后','Furious Hornet Queen'],
 };
 export const p9Zh=Object.fromEntries(Object.entries(pairs).map(([key,value])=>[key,value[0]]));
 export const p9En=Object.fromEntries(Object.entries(pairs).map(([key,value])=>[key,value[1]]));

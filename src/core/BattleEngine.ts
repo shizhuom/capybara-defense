@@ -2,16 +2,17 @@ import { GridSystem } from './GridSystem';
 import { ECONOMY, getSummonCost, SHOVEL_PRODUCTION, UNITS } from '../config/units';
 import { HEROES } from '../config/heroes';
 import { BOX_SEAL_DURATION, ENEMIES } from '../config/enemies';
-import {getMap,GRID_ROWS,GRID_COLS,STAGE} from '../config/maps';
+import {getMap,STAGE} from '../config/maps';
 import {COMBAT_STYLES} from '../config/combat';
 import {progressionFor,getUnlockedBossIds,getUnlockedMinionIds} from '../config/progression';
 import {RANKS,getRankDifficulty} from '../config/ranks';
 import {applyNewBossMechanic} from './BossMechanics';
 import {rollWeapon} from '../config/weapons';
+import {rollPropBlueprint} from '../config/props';
 import {getVillageBuff,type VillageBuffKey,type VillageResourceId} from '../config/village';
 import {AWAKENED_DAMAGE,AWAKENED_RATE,STANDARD_VICTORY_CRESTS,armorPenetration,bossResist,bossSlayerMultiplier,breakthroughAttackMultiplier,capyShieldCooldown,computeBreakthroughChance,endlessCrestsForWave,getMedallionLevel,momentumMultiplier,type BreakthroughChance,type MedallionId} from '../config/medallions';
 import {ELITE_ENEMY_IDS,INGREDIENT_IDS,MAP_SIGNATURE_INGREDIENT,getActiveBroth,getBrothEffect,getKitchenCollectionAura,getUnitCombatFamily,type BrothEffectKey,type IngredientId} from '../config/kitchen';
-import { BOSS_UNSTOPPABLE_TIME, FIRST_WAVE_PREPARATION, WAVE_DURATION,bossesForWave,getStandardBossScaling,getStandardMinionPressure,waveEnemyCount,minionForWave,getWaveConfig } from '../config/waves';
+import { BOSS_UNSTOPPABLE_TIME, FIRST_WAVE_PREPARATION, WAVE_DURATION,bossesForWave,getEndlessBossScaling,getStandardBossScaling,getStandardMinionPressure,waveEnemyCount,minionForWave,getWaveConfig } from '../config/waves';
 import { MergeSystem } from './MergeSystem';
 import {CombatRecords} from './CombatRecords';
 import type {OpponentTuning} from '../config/opponents';
@@ -20,8 +21,8 @@ import {copyLoadout,PropSystem,type PropTarget} from './PropSystem';
 import {WeaponSystem} from './WeaponSystem';
 import {getBaseUnitStats,getBeeProduction,type UnitStats} from './UnitStats';
 import type { BattleLoadout,BattleState, CommandResult, Enemy, Point, Side, Unit, UnitLocation, VisualEvent,SideState,MapId,WavePreview } from './types';
-export interface FeatureDropFlags { armory?:boolean; village?:boolean; kitchen?:boolean; medallions?:boolean }
-export interface EngineOptions { seed?:number; autoWaves?:boolean; ai?:boolean; loadouts?:Partial<Record<Side,Partial<BattleLoadout>>>; mapId?:MapId; rankIndex?:number; aiOverrides?:Partial<OpponentTuning>; tutorialGuided?:boolean; progressionStars?:number; progressionHeroes?:string[]; featureDrops?:FeatureDropFlags; unlockedWeapons?:readonly string[] }
+export interface FeatureDropFlags { armory?:boolean; market?:boolean; village?:boolean; kitchen?:boolean; medallions?:boolean }
+export interface EngineOptions { seed?:number; autoWaves?:boolean; ai?:boolean; loadouts?:Partial<Record<Side,Partial<BattleLoadout>>>; mapId?:MapId; rankIndex?:number; aiOverrides?:Partial<OpponentTuning>; tutorialGuided?:boolean; tutorialEase?:boolean; progressionStars?:number; progressionHeroes?:string[]; featureDrops?:FeatureDropFlags; unlockedWeapons?:readonly string[]; permanentProps?:Readonly<Record<string,number>>; propBlueprints?:Readonly<Record<string,number>> }
 let battleSequence=0;
 export class BattleEngine {
   state:BattleState;
@@ -33,6 +34,8 @@ export class BattleEngine {
   private villageRandom:Random;
   /** P17 breakthrough rolls and Calm Ward resist checks; only ever drawn in endless with a qualifying action. */
   private endlessRandom:Random;
+  /** Dedicated stream for prop blueprint drops so combat & other drop streams stay bit-identical. */
+  private propRandom:Random;
   private props:PropSystem;
   private weapons:WeaponSystem;
   private enemyEverSpawned=false;
@@ -46,6 +49,8 @@ export class BattleEngine {
   private lockedBenchUnit?:Unit;
   private combatRecords=new CombatRecords();
   private luckyDrops=0;
+  private revivedWaves=new Set<number>();
+  private bossKillsAwarded=new Map<number,number>();
   private effectOwners=new WeakMap<Enemy,Partial<Record<'burn'|'poison'|'bleed',Unit>>>();
   constructor(public options:EngineOptions={}) {
     const seed=options.seed??Math.floor(Math.random()*0xffffffff);
@@ -53,6 +58,7 @@ export class BattleEngine {
     this.ingredientRandom=new Random(((seed^0x27d4eb2d)>>>0)||1);
     this.villageRandom=new Random(((seed^0x517cc1b7)>>>0)||1);
     this.endlessRandom=new Random(((seed^0x9e3779b1)>>>0)||1);
+    this.propRandom=new Random(((seed^0x85ebca6b)>>>0)||1);
     const mapId=getMap(options.mapId).id,rankIndex=Number.isFinite(options.rankIndex)?Math.max(0,Math.min(53,Math.trunc(options.rankIndex!))):0;
     this.bossSeed=((seed^0x6d2b79f5)>>>0)||1;
     const scheduleRandom=new Random(this.bossSeed);
@@ -61,7 +67,7 @@ export class BattleEngine {
       const originals=bossesForWave(mapId,rankIndex,i+1,()=>scheduleRandom.next());
       return Object.freeze(this.restrictBosses(originals,i+1));
     });
-    const side=(side:Side):SideState=>({lockedBenchSlot:null,food:ECONOMY.initialFood,summons:0,oranges:ECONOMY.initialOranges,shovels:ECONOMY.initialShovels,shovelTimer:0,kills:0,damage:0,loot:[],ingredientLoot:[],villageLoot:[],fog:0,loadout:copyLoadout(side==='player'?options.loadouts?.player:undefined),propCooldowns:{},sprinklerUsed:false,giantCatUses:0,catnipTime:0,capyShieldReady:false,capyShieldTimer:0,endlessCrests:0});
+    const side=(side:Side):SideState=>({lockedBenchSlot:null,food:ECONOMY.initialFood,summons:0,oranges:ECONOMY.initialOranges,shovels:ECONOMY.initialShovels,shovelTimer:0,kills:0,damage:0,loot:[],ingredientLoot:[],villageLoot:[],propLoot:[],fog:0,loadout:copyLoadout(side==='player'?options.loadouts?.player:undefined),propCooldowns:{},sprinklerUsed:false,giantCatUses:0,catnipTime:0,capyShieldReady:false,capyShieldTimer:0,endlessCrests:0});
     this.state={id:`${Date.now()}-${++battleSequence}`,phase:'ready',time:0,wave:0,waveTime:0,nextSpawn:0,spawned:0,mapId,rankIndex,mergedHeroes:{player:[],ai:[]},grid:GridSystem.create(mapId),craterHits:{},sides:{player:side('player'),ai:side('ai')},units:[],enemies:[],events:[],traps:[],result:null};
     this.props=new PropSystem(this,()=>this.random.next());this.props.initialize();this.weapons=new WeaponSystem(this,()=>this.random.next());
   }
@@ -77,7 +83,8 @@ export class BattleEngine {
     s.standardResult={...result,loot:[...result.loot],playerLoot:[...result.playerLoot],aiLoot:[...result.aiLoot],
       mergedHeroes:result.mergedHeroes?[...result.mergedHeroes]:undefined,mvp:result.mvp?{...result.mvp}:undefined,
       ingredientLoot:result.ingredientLoot?Object.freeze([...result.ingredientLoot]) as string[]:undefined,
-      villageLoot:result.villageLoot?Object.freeze([...result.villageLoot]) as string[]:undefined};
+      villageLoot:result.villageLoot?Object.freeze([...result.villageLoot]) as string[]:undefined,
+      propLoot:result.propLoot?Object.freeze([...result.propLoot]) as string[]:undefined};
     Object.freeze(s.standardResult.loot);Object.freeze(s.standardResult.playerLoot);Object.freeze(s.standardResult.aiLoot);
     if(s.standardResult.mergedHeroes)Object.freeze(s.standardResult.mergedHeroes);
     if(s.standardResult.mvp)Object.freeze(s.standardResult.mvp);
@@ -108,15 +115,17 @@ export class BattleEngine {
     }
     s.result=null;
     s.phase='playing';
+    this.props.resetOrangeDeficit();
     s.sides.player.oranges=Math.max(1,Math.trunc(oranges));
     const wave=Math.max(1,s.wave);
+    this.revivedWaves.add(wave);
     s.wave=wave;
     s.waveTime=0;
     s.spawned=0;
     s.nextSpawn=wave===1?FIRST_WAVE_PREPARATION:1;
     this.tutorialHold=false;
     this.transitionHold=false;
-    this.event({type:'bubble',side:'player',col:3.5,row:4.5,textKey:'hint.wave',value:wave,duration:1.8});
+    this.event({type:'bubble',side:'player',col:(STAGE.cols-1)/2,row:(STAGE.rows-1)/2,textKey:'hint.wave',value:wave,duration:1.8});
     const bosses=this.bossesForCurrentSchedule(wave);
     this.pendingBosses=bosses.slice(1).map((kind,index)=>({kind,at:5*(index+1)}));
     if(bosses[0])this.spawnBoss(bosses[0]);
@@ -144,13 +153,14 @@ export class BattleEngine {
   }
   setTransitionHold(active:boolean):void {this.transitionHold=active;}
   isDrawUnlocked(kind:string):boolean {return !this.unlockedDraws||this.unlockedDraws.has(kind);}
-  private unlockedEnemy(kind:string):string {
-    if(this.options.progressionStars===undefined)return kind;
-    if(ENEMIES[kind]?.boss){const pool=getUnlockedBossIds(this.options.progressionStars);return pool.includes(kind)?kind:pool[Math.max(0,this.state.wave-1)%pool.length];}
+  private unlockedEnemy(kind:string,wave=this.state?.wave??0):string {
+    // Endless (Wave 11+) always uses the full canonical enemy roster for Global Endless Board fairness.
+    if(this.state?.endless||wave>=11||this.options.progressionStars===undefined)return kind;
+    if(ENEMIES[kind]?.boss){const pool=getUnlockedBossIds(this.options.progressionStars);return pool.includes(kind)?kind:pool[Math.max(0,wave-1)%pool.length];}
     return getUnlockedMinionIds(this.options.progressionStars).includes(kind)?kind:kind==='killer_bee'?'roach':'rat';
   }
   private restrictBosses(originals:readonly string[],wave:number):string[] {
-    if(this.options.progressionStars===undefined)return [...originals];
+    if(this.state?.endless||wave>=11||this.options.progressionStars===undefined)return [...originals];
     const pool=getUnlockedBossIds(this.options.progressionStars),chosen:string[]=[];
     originals.forEach((id,n)=>{
       const available=pool.filter(b=>!chosen.includes(b)),index=wave-1+n;
@@ -169,7 +179,7 @@ export class BattleEngine {
     if(this.state.phase==='finished'||(!this.state.endless&&this.state.wave>=10))return null;
     const wave=this.state.wave<=1&&this.state.spawned===0?1:this.state.wave+1;
     const count=waveEnemyCount(wave,this.state.rankIndex);
-    const kinds=new Set(Array.from({length:count},(_,i)=>this.unlockedEnemy(minionForWave(wave,i,this.state.rankIndex))));
+    const kinds=new Set(Array.from({length:count},(_,i)=>this.unlockedEnemy(minionForWave(wave,i,this.state.rankIndex),wave)));
     const minion=['charmed_rat','killer_bee','crab','roach','rat'].find(kind=>kinds.has(kind))!;
     return{wave,count,bosses:[...this.bossesForCurrentSchedule(wave)],minion};
   }
@@ -381,9 +391,11 @@ export class BattleEngine {
     if(side==='ai')return{ok:false,key:'hint.invalid'};
     if(!this.state.endless&&this.state.wave>=1&&this.state.wave<=10){
       const resolved=this.unlockedEnemy(kind);
-      const scaling=getStandardBossScaling(ENEMIES[resolved].hp,this.state.wave,this.options.tutorialGuided);
+      const scaling=getStandardBossScaling(ENEMIES[resolved].hp,this.state.wave,this.options.tutorialEase??this.options.tutorialGuided);
       const boss=this.spawnEnemy(kind,'player',scaling.hpScale);
       boss.speed*=scaling.speedMult;
+    }else if(this.state.endless&&this.state.wave>=11){
+      this.spawnEnemy(kind,'player',getEndlessBossScaling(ENEMIES[kind].hp,this.state.wave));
     }else {
       this.spawnEnemy(kind,'player');
     }
@@ -395,9 +407,9 @@ export class BattleEngine {
     const config=ENEMIES[kind];if(!config)throw new Error('Unknown enemy');
     const difficulty=getRankDifficulty(this.state.rankIndex,this.options);
     const pressure=this.state.endless?getWaveConfig(this.state.wave):undefined;
-    scale*=difficulty.hpMultiplier*(this.props.has('player','shared_oranges')?1.15:1);
+    scale*=difficulty.hpMultiplier;
     const p=GridSystem.pathPosition(side,0,this.state.mapId);
-    const enemy:Enemy={id:side==='player'?this.sequence++:0,kind,side,boss:config.boss,hp:config.hp*scale,maxHp:config.hp*scale,progress:0,col:p.col,row:p.row,speed:config.speed*difficulty.speedMultiplier*(pressure?.speedScale??1)*(this.props.has('player','hyper_party')?1.12:1),armor:Math.min(.8,config.armor+((config.armor>0||config.boss)?difficulty.armorBonus:0)+(pressure?.armorBonus??0)),size:1,abilityCooldown:config.interval*difficulty.bossCooldownScale,stun:0,slow:0,slowFactor:1,burn:0,burnDps:0,poison:0,poisonDps:0,stolenBy:[],hitFlash:0};
+    const enemy:Enemy={id:side==='player'?this.sequence++:0,kind,side,boss:config.boss,hp:config.hp*scale,maxHp:config.hp*scale,progress:0,col:p.col,row:p.row,speed:config.speed*difficulty.speedMultiplier*(pressure?.speedScale??1),armor:Math.min(.8,config.armor+((config.armor>0||config.boss)?difficulty.armorBonus:0)+(pressure?.armorBonus??0)),size:1,abilityCooldown:config.interval*difficulty.bossCooldownScale,stun:0,slow:0,slowFactor:1,burn:0,burnDps:0,poison:0,poisonDps:0,stolenBy:[],hitFlash:0};
     if(side!=='player')return enemy;
     this.enemyEverSpawned=true;
     this.state.enemies.push(enemy);
@@ -468,18 +480,40 @@ export class BattleEngine {
       const stats=this.stats(unit);
       unit.cooldown-=dt;
       if(unit.cooldown>1e-8)continue;
-      const candidates=this.state.enemies.filter(e=>e.side===unit.side&&e.hp>0&&GridSystem.distance(unit.location as Point,e)<=stats.range).sort((a,b)=>b.progress-a.progress);
-      if(!candidates.length){unit.cooldown=0;continue;}
-      this.attack(unit,candidates[0],stats.damage);
-      // Preserve the fractional overshoot so fixed steps never reduce the configured attack rate.
-      unit.cooldown+=1/this.getEffectiveUnitStats(unit).rate;
-      unit.animation=1;
-      // The barrage is the reward for charging, not a source of its own next charge.
-      // Otherwise four-times fire rate refreshes Meowfia's buff before it can expire.
-      if(HEROES[unit.kind]&&!(unit.kind==='meowfia'&&unit.buffTime>0)){
-        unit.energy++;
-        const required=this.stats(unit).charge;
-        if(unit.energy>=required){unit.energy=0;this.ultimate(unit,candidates[0],stats.damage);}
+      let attacksThisStep=0;
+      while(unit.cooldown<=1e-8&&attacksThisStep<8){
+        const candidates=this.state.enemies.filter(e=>e.side===unit.side&&e.hp>0&&GridSystem.distance(unit.location as Point,e)<=stats.range).sort((a,b)=>b.progress-a.progress);
+        if(!candidates.length){unit.cooldown=0;break;}
+        const currentStats=this.getEffectiveUnitStats(unit);
+        this.attack(unit,candidates[0],currentStats.damage);
+        // Preserve the fractional overshoot so fixed steps never reduce high attack rates (e.g. Meowfia at 3x speed).
+        unit.cooldown+=1/Math.max(.05,this.getEffectiveUnitStats(unit).rate);
+        unit.animation=1;
+        attacksThisStep++;
+        // The barrage is the reward for charging, not a source of its own next charge.
+        // Otherwise four-times fire rate refreshes Meowfia's buff before it can expire.
+        if(HEROES[unit.kind]&&!(unit.kind==='meowfia'&&unit.buffTime>0)){
+          unit.energy++;
+          const required=this.stats(unit).charge;
+          if(unit.energy>=required){
+            const live=this.lane(unit.side);
+            const liveInRange=live.filter(e=>GridSystem.distance(unit.location as Point,e)<=stats.range).sort((a,b)=>b.progress-a.progress);
+            const localUlt=['kungfu_po','samurai_doge','rocket_coon','doge_wick'].includes(unit.kind);
+            const ultTarget=unit.kind==='puss_in_hat'
+              ?candidates[0]
+              :candidates[0].hp>0
+                ?candidates[0]
+                :liveInRange[0]??(localUlt?undefined:live.sort((a,b)=>b.progress-a.progress)[0]);
+            if(ultTarget){
+              unit.energy=0;
+              this.ultimate(unit,ultTarget,this.stats(unit).damage);
+            }else{
+              // Hold full charge for the next live enemy instead of whiffing onto an empty lane or dead corpse.
+              unit.energy=required;
+              break;
+            }
+          }
+        }
       }
     }
     for(const enemy of [...this.state.enemies]){
@@ -540,8 +574,9 @@ export class BattleEngine {
       const coins=Math.min(120,12+3*k),multiplier=this.coinMultiplier();
       s.endlessCoins=(s.endlessCoins??0)+(multiplier!==1?Math.round(coins*multiplier):coins);s.endlessClearedWave=s.wave;
       if(this.dropEnabled('medallions'))s.sides.player.endlessCrests+=endlessCrestsForWave(s.wave);
-      // Balanced endless drops (20-30h Kitchen Lv.3 target @ 2x): 1 fragment / 3 waves; 1 ingredient / 3 waves (incl. yuzu) + truffle / 6 waves + feast roll / 2 waves; 1 wood / 3 waves & 1 essence / 5 waves.
+      // Balanced endless drops (20-30h Kitchen Lv.3 target @ 2x): 1 fragment / 3 waves; 1 prop blueprint / 5 waves; 1 ingredient / 3 waves (incl. yuzu) + truffle / 6 waves + feast roll / 2 waves; 1 wood / 3 waves & 1 essence / 5 waves.
       if(this.dropEnabled('armory')&&k%3===0)s.sides.player.loot.push(this.rollWeaponFragment());
+      if(this.dropEnabled('market')&&k%5===0)s.sides.player.propLoot.push(this.rollPropDrop('endless'));
       if(this.dropEnabled('kitchen')){
         if(k%3===0)this.harvest(this.pickIngredient(['ing_yuzu','ing_sakura','ing_chili','ing_bamboo','ing_honey']));
         if(k%6===0)this.harvest('ing_mushroom');
@@ -565,7 +600,7 @@ export class BattleEngine {
       if(wave>1&&grantIncome)this.state.sides[side].food+=ECONOMY.waveIncome+this.broth('waveIncome');
     }
     if(wave===7&&this.dropEnabled('village'))this.gather('res_onsen_wood');
-    this.event({type:'bubble',side:'player',col:3.5,row:4.5,textKey:'hint.wave',value:wave,duration:1.8});
+    this.event({type:'bubble',side:'player',col:(STAGE.cols-1)/2,row:(STAGE.rows-1)/2,textKey:'hint.wave',value:wave,duration:1.8});
     const bosses=this.bossesForCurrentSchedule(wave);
     this.pendingBosses=bosses.slice(1).map((kind,index)=>({kind,at:5*(index+1)}));if(bosses[0])this.spawnBoss(bosses[0]);
   }
@@ -578,7 +613,7 @@ export class BattleEngine {
     this.pendingBosses=this.pendingBosses.filter(b=>this.state.waveTime+1e-8<b.at);
     if(this.state.spawned<this.currentWaveTargetCount()&&this.state.nextSpawn<=0){
       const kind=minionForWave(this.state.wave,this.state.spawned,this.state.rankIndex);
-      const stdPressure=!this.state.endless?getStandardMinionPressure(this.state.wave,this.options.tutorialGuided):undefined;
+      const stdPressure=!this.state.endless?getStandardMinionPressure(this.state.wave,this.options.tutorialEase??this.options.tutorialGuided):undefined;
       const spawnScale=stdPressure?config.hpScale*stdPressure.hpMult:config.hpScale;
       for(const side of ['player'] as Side[]){
         const m=this.spawnEnemy(kind,side,spawnScale);
@@ -649,9 +684,9 @@ export class BattleEngine {
     const chance=this.broth('dropBonus');
     if(chance&&this.dropEnabled('kitchen')&&this.ingredientRandom.next()<chance)this.harvest(this.pickIngredient(INGREDIENT_IDS));
   }
-  private waveClearIngredients(wave:3|6|10|number):void {
+  private waveClearIngredients():void {
     if(!this.dropEnabled('kitchen'))return;
-    this.harvest(wave===3?'ing_yuzu':wave===6?'ing_honey':MAP_SIGNATURE_INGREDIENT[this.state.mapId]);this.goldenFeastRoll();
+    this.harvest(MAP_SIGNATURE_INGREDIENT[this.state.mapId]);this.goldenFeastRoll();
   }
   private dropKillIngredients(enemy:Enemy):void {
     if(!this.dropEnabled('kitchen'))return;
@@ -683,8 +718,26 @@ export class BattleEngine {
   private shot(unit:Unit,enemy:Enemy,color?:string):void {
     this.event({type:'projectile',side:unit.side,...this.unitPosition(unit),targetCol:enemy.col,targetRow:enemy.row,color:color??HEROES[unit.kind]?.color??UNITS[unit.kind]?.color,duration:.25,unitId:unit.id,effect:unit.kind});
   }
+  applyStun(enemy:Enemy,duration:number):void {
+    if(enemy.boss&&enemy.knockbackImmune)return;
+    enemy.stun=Math.max(enemy.stun,duration);
+  }
+  applySlow(enemy:Enemy,duration:number,factor:number):void {
+    if(enemy.slow<=0||factor<=enemy.slowFactor){
+      enemy.slowFactor=factor;
+      enemy.slow=Math.max(enemy.slow,duration);
+    }
+  }
   hurt(enemy:Enemy,amount:number,unit?:Unit,critical=false,weaponHooks=true,trueDamage=false,periodic=false):void {
     if(enemy.side!=='player'||unit?.side==='ai'||enemy.hp<=0||amount<=0)return;
+    // Trash Necro-Coon's summoned bone-shield rats absorb the first incoming hit completely.
+    if(enemy.boneShield){
+      enemy.boneShield=false;
+      enemy.hitFlash=.14;
+      this.event({type:'hit',side:enemy.side,col:enemy.col,row:enemy.row,effect:'vfx_hit_burst',duration:.18});
+      this.event({type:'burst',side:enemy.side,col:enemy.col,row:enemy.row,color:'#f3ebd2',duration:.45});
+      return;
+    }
     const bossBroth=unit&&enemy.boss?this.broth('bossDamage'):0,bossVillage=unit&&enemy.boss?this.village('bossDamage'):0;
     // P17 Sovereign Piercer (endless only): extra boss damage and a share of every target's armor ignored.
     const slayer=unit&&this.state.endless?this.medallion('med_boss_slayer'):0;
@@ -706,8 +759,15 @@ export class BattleEngine {
     if(enemy.hp<=0){
       if(enemy.kind==='dr_clippers')this.restoreClippedUnits(enemy.id);
       const owner=this.state.sides[enemy.side];owner.kills++;
-      this.dropKillIngredients(enemy);this.dropVillageKill(enemy);
-      if(enemy.boss&&this.dropEnabled('armory')){
+      const bossWaveCap=!this.state.endless&&enemy.boss&&this.revivedWaves.has(this.state.wave)
+        &&(this.bossKillsAwarded.get(this.state.wave)??0)>=this.bossesForCurrentSchedule(this.state.wave).length;
+      if(!this.state.endless&&enemy.boss&&!bossWaveCap){
+        this.bossKillsAwarded.set(this.state.wave,(this.bossKillsAwarded.get(this.state.wave)??0)+1);
+      }
+      if(!bossWaveCap){
+        this.dropKillIngredients(enemy);this.dropVillageKill(enemy);
+      }
+      if(enemy.boss&&!bossWaveCap&&this.dropEnabled('armory')){
         // P19 rebalanced weapon fragment drops (~2.2-2.4/win) + 5% Lucky Crit Legendary drop on W10/Endless bosses.
         if(!this.state.endless){
           const chance=this.state.wave===10?1:this.state.wave===8?.65:this.state.wave===6?.55:this.state.wave===9?.35:.30;
@@ -773,7 +833,7 @@ export class BattleEngine {
     this.event({type:'bubble',side:unit.side,...position,textKey:`ult.${unit.kind}`,duration:1.7,unitId:unit.id});
     if(!['ronin_goose','purrcerer','ballin_rooster'].includes(unit.kind))this.event({type:'burst',side:unit.side,...position,color:HEROES[unit.kind].color,unitId:unit.id,duration:.7});
     switch(unit.kind){
-      case 'kungfu_po':for(const e of lane)if(GridSystem.distance(position,e)<=2.2*(awakened?1.3:1)){this.hurt(e,damage*3.5,unit,true);e.stun=2;}if(awakened)this.weapons.bamboo(unit,position,2.2*1.3,damage,'bamboo_ring');break;
+      case 'kungfu_po':for(const e of lane)if(GridSystem.distance(position,e)<=2.2*(awakened?1.3:1)){this.hurt(e,damage*3.5,unit,true);this.applyStun(e,2);}if(awakened)this.weapons.bamboo(unit,position,2.2*1.3,damage,'bamboo_ring');break;
       case 'bamboo_mafia':
         for(let i=0;i<(awakened?8:5);i++){const live=this.lane(unit.side);if(!live.length)break;const e=live[Math.floor(this.random.next()*live.length)];this.shot(unit,e,'#ee8d59');for(const hit of live)if(GridSystem.distance(e,hit)<=.85){this.hurt(hit,damage*1.5,unit,true);this.applyDot(hit,'burn',3,damage*.35,unit);}}
         break;
@@ -785,7 +845,7 @@ export class BattleEngine {
       case 'meowfia':unit.buffTime=awakened?4:2.5;unit.cooldown=.02;break;
       case 'purrcerer':{
         const points:Point[]=[{...position}];
-        for(const e of lane.sort((a,b)=>GridSystem.distance(target,a)-GridSystem.distance(target,b)).slice(0,awakened?10:6)){points.push({col:e.col,row:e.row});this.hurt(e,damage*2.4,unit,true);e.stun=.6;}
+        for(const e of lane.sort((a,b)=>GridSystem.distance(target,a)-GridSystem.distance(target,b)).slice(0,awakened?10:6)){points.push({col:e.col,row:e.row});this.hurt(e,damage*2.4,unit,true);this.applyStun(e,.6);}
         this.event({type:'bounce',side:unit.side,...position,points,effect:'yarn',duration:1.1,unitId:unit.id});break;
       }
       case 'samurai_doge':
@@ -805,7 +865,7 @@ export class BattleEngine {
         this.event({type:'bounce',side:unit.side,...position,points,effect:'basketball',duration:1.1,unitId:unit.id});break;
       }
       case 'rocket_coon':this.splash(unit,target,1.4*(awakened?1.4:1),damage*3.2,true);break;
-      case 'pepe_king':for(const e of lane){e.slow=awakened?6:4;e.slowFactor=.6;this.applyDot(e,'poison',awakened?6:4,damage*.65,unit);if(awakened)e.armorBreak=6;}break;
+      case 'pepe_king':for(const e of lane){this.applySlow(e,awakened?6:4,.6);this.applyDot(e,'poison',awakened?6:4,damage*.65,unit);if(awakened)e.armorBreak=6;}break;
     }
   }
   knockback(enemy:Enemy,amount:number):void {
@@ -882,6 +942,10 @@ export class BattleEngine {
     }
     this.event({type:'bubble',side:enemy.side,col:enemy.col,row:enemy.row,textKey:`boss.${enemy.kind}.bubble`,duration:1.5});
   }
+  private rollPropDrop(source:'standard'|'endless'):string {
+    const permanent=this.options.permanentProps??this.options.loadouts?.player?.ownedProps??{};
+    return rollPropBlueprint(()=>this.propRandom.next(),permanent,this.options.propBlueprints??{},source);
+  }
   private finishByScore():void {
     this.finish(this.state.sides.player.oranges>0?'player':'ai','waves');
   }
@@ -893,19 +957,24 @@ export class BattleEngine {
     const playerLoot=[...this.state.sides.player.loot],aiLoot:string[]=[];
     if(this.state.endless&&this.state.standardResult){
       const standard=this.state.standardResult,endlessCoins=this.state.endlessCoins??0,harvest=[...this.state.sides.player.ingredientLoot];
+      const propLoot=[...this.state.sides.player.propLoot],endlessPropLoot=propLoot.slice(standard.propLoot?.length??0);
       this.state.result={winner:'player',reason,loot:[...playerLoot],playerLoot,aiLoot,coins:standard.coins+endlessCoins,
         elapsed:this.state.time,rankIndex:this.state.rankIndex,mergedHeroes:[...this.state.mergedHeroes.player],mvp:this.combatRecords.mvp(this.state.units),
         endless:true,endlessWave:this.state.wave,endlessCoins,endlessLoot:playerLoot.slice(standard.playerLoot.length),
         // The standard receipt already banked its share; endless keeps 100% of every later ingredient.
         ingredientLoot:harvest,endlessIngredientLoot:harvest.slice(standard.ingredientLoot?.length??0),
         villageLoot:[...this.state.sides.player.villageLoot],endlessVillageLoot:this.state.sides.player.villageLoot.slice(standard.villageLoot?.length??0),
+        ...(propLoot.length?{propLoot,endlessPropLoot}:{}),
         endlessCrests:this.state.sides.player.endlessCrests,awakenedCount:this.state.units.filter(u=>u.side==='player'&&u.awakened).length,
         ...(this.luckyDrops?{luckyDrops:this.luckyDrops}:{})};
       this.state.phase='finished';return;
     }
     const won=winner==='player';
     if(won&&reason==='waves'){
-      this.waveClearIngredients(10);
+      this.waveClearIngredients();
+      if(this.dropEnabled('market')){
+        this.state.sides.player.propLoot.push(this.rollPropDrop('standard'));
+      }
       if(this.dropEnabled('village')){
         // W10 win pays 2 wood total (1 at W7 + 1 at W10) + 60% chance of 1 essence.
         this.gather('res_onsen_wood');
@@ -915,8 +984,11 @@ export class BattleEngine {
     // Anti-frustration salvage: a loss or surrender still carries home at least half (rounded up).
     const salvage=<T,>(list:readonly T[])=>won?[...list]:list.slice(0,Math.ceil(list.length/2));
     const ingredientLoot=salvage(this.state.sides.player.ingredientLoot),villageLoot=salvage(this.state.sides.player.villageLoot);
+    const propLoot=won?[...this.state.sides.player.propLoot]:[];
     const baseCoins=RANKS[this.state.rankIndex].winCoins+Math.min(45,Math.floor(this.state.sides.player.food*.5)),multiplier=this.coinMultiplier();
-    this.state.result={winner,reason,loot:won?[...playerLoot]:[],playerLoot,aiLoot,coins:won?(multiplier!==1?Math.round(baseCoins*multiplier):baseCoins):0,elapsed:this.state.time,rankIndex:this.state.rankIndex,mergedHeroes:[...this.state.mergedHeroes.player],mvp:this.combatRecords.mvp(this.state.units),ingredientLoot,villageLoot,
+    const remainingOranges=Math.max(0,Math.floor(this.state.sides.player.oranges));
+    this.state.result={winner,reason,loot:won?[...playerLoot]:[],playerLoot,aiLoot,coins:won?(multiplier!==1?Math.round(baseCoins*multiplier):baseCoins):0,elapsed:this.state.time,rankIndex:this.state.rankIndex,mergedHeroes:[...this.state.mergedHeroes.player],mvp:this.combatRecords.mvp(this.state.units),remainingOranges,ingredientLoot,villageLoot,
+      ...(propLoot.length?{propLoot}:{}),
       ...(won&&reason==='waves'&&this.dropEnabled('medallions')?{endlessCrests:STANDARD_VICTORY_CRESTS}:{}),
       ...(this.luckyDrops?{luckyDrops:this.luckyDrops}:{})};this.state.phase='finished';
   }

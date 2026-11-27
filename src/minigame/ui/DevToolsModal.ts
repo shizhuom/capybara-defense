@@ -35,7 +35,7 @@ export function drawDevToolsModal(
     ? `当前星级 ★${profile.stars} · 对局 ${profile.matches} · 金币 ${profile.coins}（点任意节点立即跳转并预览新手指引）`
     : `Stars ★${profile.stars} · Matches ${profile.matches} · Coins ${profile.coins} (Tap any node to preview onboarding)`;
   drawMatchaSignboard(c, 640, 16, zh ? '开发者调试 & 新手预览' : 'Developer QA & Stage Preview', sub, 430);
-  drawYuzuCloseButton(c, hits, 'modal:close', Math.min(1084, px + pw - 22), 50, 30);
+  drawYuzuCloseButton(c, hits, 'modal:close', Math.max(880, Math.min(1084, px + pw - 22, hits.modalRightEdge - 34)), 50, 30);
 
   // ── 1. 9 Onboarding Stage Jump Buttons (0..8) ─────────────────────────────
   const sy = py + 44;

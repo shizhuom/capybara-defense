@@ -108,6 +108,7 @@ export function drawMedallionsModal(
   c.beginPath();
   c.rect(vx, vy, vw, vh);
   c.clip();
+  hits.pushClip(vx, vy, vw, vh);
 
   const rowW = vw - 14;
   let y = vy + 4 - scroll.offset;
@@ -204,6 +205,7 @@ export function drawMedallionsModal(
   y += Math.ceil(MEDALLION_IDS.length / cols) * (cardH + gapY);
 
   const contentH = Math.max(vh, y + scroll.offset - vy + 10);
+  hits.popClip();
   c.restore();
   scroll.setContentBounds(contentH, vh);
   drawScrollbar(c, vx, vy, vw, vh, contentH, scroll);
@@ -255,7 +257,7 @@ export function drawProfileHubModal(
   const body = drawLedgerShell(c, hits, {
     title: headerTitle,
     mascot,
-    titleHitId: activeTab === 'settings' ? 'settings:title-tap' : undefined,
+    titleHitId: __ENABLE_DEV_TOOLS__ && activeTab === 'settings' ? 'settings:title-tap' : undefined,
     tabs: tabIds.map(tab => ({
       id: `profilehub:tab:${tab}`,
       label: tabLabel(tab),
@@ -338,6 +340,7 @@ function drawRankBoardBody(
   c.beginPath();
   c.rect(vx, vy, vw, vh);
   c.clip();
+  hits.pushClip(vx, vy, vw, vh);
 
   const rowW = vw - 14;
   let y = vy + 4 - scroll.offset;
@@ -397,7 +400,14 @@ function drawRankBoardBody(
         drawText(c, t(`rank.${i}`), vx + 168, y + 30, 25, PALETTE.ink, 'left', 900);
         const extra = getRankDifficulty(i).extraCount;
         const mapTag = i === 0 ? t('map.sunny_backyard') : i === 10 ? t('map.sakura_onsen') : i === 20 ? t('map.midnight_kitchen') : i === 30 ? t('map.cat_tower_maze') : '';
-        drawText(c, `+${rk.winCoins}金币 · 碎片×${rk.fragmentMultiplier.toFixed(1)}${extra ? ` · +${extra}怪` : ''}${mapTag ? ` · ${mapTag}` : ''}`, vx + 168, y + 62, 19, PALETTE.inkSoft, 'left', 800);
+        const multStr = Number(rk.fragmentMultiplier.toFixed(2)).toString();
+        const details = [
+          t('p19.rankWinCoins', { coins: rk.winCoins }),
+          t('p19.rankFragBoost', { mult: multStr }),
+          ...(extra ? [t('p19.rankExtraMinions', { count: extra })] : []),
+          ...(mapTag ? [mapTag] : []),
+        ].join(' · ');
+        drawText(c, details, vx + 168, y + 62, 18.5, PALETTE.inkSoft, 'left', 800);
         const pillText = isCur ? t('p19.rankCurrent') : reached ? '✓' : `+${Math.max(1, rk.minStars - profile.stars)}★`;
         round(c, vx + 4 + rowW - 114, y + 24, 98, 38, 19, isCur ? '#f5c23b' : reached ? '#dff5d6' : '#eee3cf', '#8a5d32', 1.8);
         drawText(c, pillText, vx + 4 + rowW - 65, y + 44, 19, isCur ? '#4a250a' : reached ? '#22591b' : PALETTE.inkSoft, 'center', 900);
@@ -491,6 +501,7 @@ function drawRankBoardBody(
   });
 
   const contentH = Math.max(vh, y + scroll.offset - vy + 10);
+  hits.popClip();
   c.restore();
   scroll.setContentBounds(contentH, vh);
   drawScrollbar(c, vx, vy, vw, vh, contentH, scroll);
@@ -556,6 +567,7 @@ function drawEndlessBoardBody(
   c.beginPath();
   c.rect(vx, vy, vw, vh);
   c.clip();
+  hits.pushClip(vx, vy, vw, vh);
 
   const rowW = vw - 14;
   let y = vy + 4 - scroll.offset;
@@ -620,6 +632,7 @@ function drawEndlessBoardBody(
   }
 
   const contentH = Math.max(vh, y + scroll.offset - vy + 10);
+  hits.popClip();
   c.restore();
   scroll.setContentBounds(contentH, vh);
   drawScrollbar(c, vx, vy, vw, vh, contentH, scroll);
@@ -646,6 +659,7 @@ function drawPassportBody(
   c.beginPath();
   c.rect(vx, vy, vw, vh);
   c.clip();
+  hits.pushClip(vx, vy, vw, vh);
 
   const rowW = vw - 14;
   let y = vy + 4 - scroll.offset;
@@ -734,6 +748,7 @@ function drawPassportBody(
   y += Math.ceil(avatars.length / cols) * (rh + gapY);
 
   const contentH = Math.max(vh, y + scroll.offset - vy + 10);
+  hits.popClip();
   c.restore();
   scroll.setContentBounds(contentH, vh);
   drawScrollbar(c, vx, vy, vw, vh, contentH, scroll);
@@ -759,6 +774,7 @@ function drawSettingsBody(
   c.beginPath();
   c.rect(vx, vy, vw, vh);
   c.clip();
+  hits.pushClip(vx, vy, vw, vh);
 
   const rowW = vw - 14;
   let y = vy + 4 - scroll.offset;
@@ -775,7 +791,7 @@ function drawSettingsBody(
     drawGoldSlider(c, sliderX, y + 56, sliderW, 34, profile.settings.musicVolume);
     drawText(c, `${Math.round(profile.settings.musicVolume * 100)}%`, vx + 4 + rowW - 50, y + 54, 23, PALETTE.inkSoft, 'center', 900);
     if (y + volH > vy && y < vy + vh) {
-      hits.add({ id: 'settings:music', x: sliderX - 14, y: Math.max(vy, y + 40), w: sliderW + 28, h: 56 });
+      hits.add({ id: 'settings:music', x: sliderX - 14, y: y + 40, w: sliderW + 28, h: 56 });
     }
   }
   y += volH + 14;
@@ -790,13 +806,14 @@ function drawSettingsBody(
     drawGoldSlider(c, sliderX, y + 56, sliderW, 34, profile.settings.soundVolume);
     drawText(c, `${Math.round(profile.settings.soundVolume * 100)}%`, vx + 4 + rowW - 50, y + 54, 23, PALETTE.inkSoft, 'center', 900);
     if (y + volH > vy && y < vy + vh) {
-      hits.add({ id: 'settings:sound', x: sliderX - 14, y: Math.max(vy, y + 40), w: sliderW + 28, h: 56 });
+      hits.add({ id: 'settings:sound', x: sliderX - 14, y: y + 40, w: sliderW + 28, h: 56 });
     }
   }
   y += volH + 14;
 
-  // Card 3: Grouped Toggle Slab (`显示伤害数字` + `语言切换` + optional `开发者调试`)
-  const rowsInToggle = opts.devUnlocked ? 3 : 2;
+  // Card 3: Grouped Toggle Slab (`显示伤害数字` + `语言切换` + optional `开发者调试` in dev builds only!)
+  const showDevRow = __ENABLE_DEV_TOOLS__ && opts.devUnlocked;
+  const rowsInToggle = 1 + (__ENABLE_ENGLISH__ ? 1 : 0) + (showDevRow ? 1 : 0);
   const rowStep = 90;
   const togH = rowsInToggle * rowStep;
   if (y + togH >= vy - 20 && y <= vy + vh + 20) {
@@ -808,25 +825,28 @@ function drawSettingsBody(
       drawToggleSwitch(c, hits, 'settings:damage', vx + 4 + rowW - 94, y + 28, profile.settings.showDamageNumbers);
     }
 
-    // Divider 1
+    let nextRowY = y + rowStep;
     c.strokeStyle = 'rgba(138,98,57,0.22)';
     c.lineWidth = 1.5;
-    c.beginPath();
-    c.moveTo(vx + 24, y + rowStep);
-    c.lineTo(vx + 4 + rowW - 24, y + rowStep);
-    c.stroke();
 
-    // Row 2: Language Switch
-    const r2y = y + rowStep;
-    drawText(c, zh ? '显示语言' : 'Language', vx + 26, r2y + 32, 24, PALETTE.ink, 'left', 900);
-    drawText(c, zh ? '切换简体中文 / English 界面' : 'Switch between Chinese & English', vx + 26, r2y + 64, 19, PALETTE.inkSoft, 'left', 700);
-    if (r2y + rowStep > vy && r2y < vy + vh) {
-      drawPillButton(c, hits, 'settings:lang', vx + 4 + rowW - 184, r2y + 20, 162, 50, zh ? '中文 ⇄ EN' : 'EN ⇄ 中文', 'cream', { fontSize: 20 });
+    // Row 2: Language Switch (omitted in Chinese-only WeChat builds)
+    if (__ENABLE_ENGLISH__) {
+      const r2y = nextRowY;
+      c.beginPath();
+      c.moveTo(vx + 24, r2y);
+      c.lineTo(vx + 4 + rowW - 24, r2y);
+      c.stroke();
+      drawText(c, zh ? '显示语言' : 'Language', vx + 26, r2y + 32, 24, PALETTE.ink, 'left', 900);
+      drawText(c, zh ? '切换简体中文 / English 界面' : 'Switch between Chinese & English', vx + 26, r2y + 64, 19, PALETTE.inkSoft, 'left', 700);
+      if (r2y + rowStep > vy && r2y < vy + vh) {
+        drawPillButton(c, hits, 'settings:lang', vx + 4 + rowW - 184, r2y + 20, 162, 50, zh ? '中文 ⇄ EN' : 'EN ⇄ 中文', 'cream', { fontSize: 20 });
+      }
+      nextRowY += rowStep;
     }
 
-    // Row 3 (when hidden 5-tap Dev Mode unlocked)
-    if (opts.devUnlocked) {
-      const r3y = y + rowStep * 2;
+    // Optional Row (when hidden 5-tap Dev Mode unlocked in dev builds only)
+    if (showDevRow) {
+      const r3y = nextRowY;
       c.beginPath();
       c.moveTo(vx + 24, r3y);
       c.lineTo(vx + 4 + rowW - 24, r3y);
@@ -857,6 +877,7 @@ function drawSettingsBody(
   }
 
   const contentH = Math.max(vh, y + scroll.offset - vy + 6);
+  hits.popClip();
   c.restore();
   scroll.setContentBounds(contentH, vh);
   drawScrollbar(c, vx, vy, vw, vh, contentH, scroll);

@@ -112,10 +112,10 @@ describe('P16 twelve-hour offline harvest',()=>{
   it('pays a fully built village coins, weapon fragments and golden yuzu per 12 hours — exactly once',()=>{
     const full=village(Object.fromEntries(FACILITY_IDS.map(id=>[id,3])));
     const h=computeOfflineHarvest(full,NOW+12*HOUR);
-    expect(h).toEqual({elapsedMs:12*HOUR,coins:(28+20+16+20+26)*12,fragments:1+1,yuzu:1,tickets:0,full:true});
+    expect(h).toEqual({elapsedMs:12*HOUR,coins:(28+20+16+20+26)*12,fragments:1+1,yuzu:1,tickets:2,full:true});
     const claimed=claimOfflineHarvest({...full,ingredients:{}},NOW+12*HOUR,()=>.3);
     expect(claimed).toMatchObject({ok:true,key:'p16.harvested'});
-    expect(claimed.profile.coins).toBe(full.coins+1320);expect(claimed.profile.freeLotteryTickets).toBe(full.freeLotteryTickets);
+    expect(claimed.profile.coins).toBe(full.coins+1320);expect(claimed.profile.freeLotteryTickets).toBe(full.freeLotteryTickets+2);
     expect(claimed.profile.ingredients.ing_yuzu).toBe(1);expect(Object.values(claimed.profile.weaponFragments).reduce((a,b)=>a+b,0)).toBe(2);
     expect(claimed.profile.village.lastHarvestAt).toBe(NOW+12*HOUR);
     expect(claimOfflineHarvest(claimed.profile,NOW+12*HOUR)).toMatchObject({ok:false,key:'p16.nothingToHarvest'});

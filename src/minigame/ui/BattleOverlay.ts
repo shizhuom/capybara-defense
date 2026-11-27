@@ -5,6 +5,7 @@ import { PROPS } from '../../config/props';
 import { getSummonCost } from '../../config/units';
 import type { BattleEngine } from '../../core/BattleEngine';
 import { isFeatureUnlocked, maxBattleSpeed } from '../../core/FeatureUnlocks';
+import { formatCompactNumber } from '../../core/formatNumber';
 import { localDay } from '../../core/VillageProgression';
 import { getAdRemainingToday } from '../adConfig';
 import { getHeroMergeOptions } from '../../core/MergeTargets';
@@ -14,6 +15,7 @@ import { getLanguage, t } from '../../i18n/i18n';
 import type { ViewportMetrics } from '../../platform/types';
 import { INK, round } from '../../render/StickerArt';
 import { getWaveHUD } from '../../ui/BattleHUD';
+import { brothEffectText } from '../../ui/KitchenScreen';
 import { placeTutorialBubble, tutorialTargets, type TutorialRect } from '../../ui/TutorialView';
 import {
   BTN_STYLES,
@@ -39,6 +41,7 @@ export interface BattleOverlayContext {
   activePropId?: string;
   expandedPassiveId?: string;
   highlightPropId?: string;
+  highlightSpeed?: boolean;
   tutorialStep: TutorialStep;
   topRightEdge: number;
   viewport: ViewportMetrics;
@@ -73,65 +76,65 @@ export function drawBattleOverlay(
   const player = state.sides.player;
   const zh = getLanguage() === 'zh-CN';
   const avoidRects: StageRect[] = [];
-  const preparation = state.wave === 1 && state.spawned === 0;
+  const preparation = engine.canSyncPreparationLoadout();
 
   // ── 1. GIANT MOBILE TOP HUD BAR (y: 8..74 — HUGE 32~36px bold counters, 0 overlap with WeChat [🎮][···|◉]!) ──
   const waveHud = getWaveHUD(state);
+  const rightEdge = topRightEdge;
+  const compactRight = rightEdge < 1060;
   const leftStart = vp.visible.left < -10
     ? Math.round(Math.min(14, Math.max(vp.safeStage.left + 10, -28)))
     : 12;
-  const waveX = leftStart, waveY = 8, waveW = 216, waveH = 66;
+  const waveX = leftStart, waveY = 8, waveW = compactRight ? 186 : 216, waveH = 66;
   drawIvorySlab(c, waveX, waveY, waveW, waveH, 20, '#fffdf7', '#f5e4c2', '#5c3b1e', 3);
   if (state.endless) {
-    drawSpriteContain(c, 'ui_endless_emblem', waveX + 10, waveY + 12, 42, 42);
-    drawText(c, `W${state.wave}`, waveX + 104, waveY + 34, 30, '#6b2f94', 'center', 900);
+    drawSpriteContain(c, 'ui_endless_emblem', waveX + 8, waveY + 13, 40, 40);
+    drawText(c, `W${state.wave}`, waveX + (compactRight ? 86 : 104), waveY + 34, compactRight ? 27 : 30, '#6b2f94', 'center', 900);
   } else {
-    drawBlueWaveIcon(c, waveX + 32, waveY + 33);
-    drawText(c, `${state.wave}/10`, waveX + 104, waveY + 34, 31, PALETTE.ink, 'center', 900);
+    drawBlueWaveIcon(c, waveX + (compactRight ? 26 : 32), waveY + 33);
+    drawText(c, `${state.wave}/10`, waveX + (compactRight ? 88 : 104), waveY + 34, compactRight ? 27 : 31, PALETTE.ink, 'center', 900);
   }
   drawText(
     c,
     waveHud.kind === 'boss' ? (zh ? '首领' : 'BOSS') : `${waveHud.remaining}s`,
-    waveX + waveW - 36,
+    waveX + waveW - (compactRight ? 30 : 36),
     waveY + 35,
-    22,
+    compactRight ? 20 : 22,
     waveHud.kind === 'boss' ? '#b83526' : '#7a4d22',
     'center',
     900,
   );
 
   // Fish Food Pill (HUGE 36px bold!)
-  let nextX = waveX + waveW + 10;
-  const foodW = 132;
+  let nextX = waveX + waveW + (compactRight ? 6 : 10);
+  const foodW = compactRight ? 112 : 132;
   drawIvorySlab(c, nextX, waveY, foodW, waveH, 20, '#fffdf7', '#f5e4c2', '#5c3b1e', 3);
-  if (drawSpriteContain(c, 'ui_fish_food', nextX + 10, waveY + 11, 44, 44)) {
-    drawText(c, String(player.food), nextX + 90, waveY + 34, 35, PALETTE.ink, 'center', 900);
+  if (drawSpriteContain(c, 'ui_fish_food', nextX + 8, waveY + 12, 42, 42)) {
+    drawText(c, String(player.food), nextX + (compactRight ? 78 : 90), waveY + 34, compactRight ? 31 : 35, PALETTE.ink, 'center', 900);
   } else {
-    drawText(c, `🐟${player.food}`, nextX + foodW / 2, waveY + 34, 30, PALETTE.ink, 'center', 900);
+    drawText(c, `🐟${player.food}`, nextX + foodW / 2, waveY + 34, 28, PALETTE.ink, 'center', 900);
   }
-  nextX += foodW + 10;
+  nextX += foodW + (compactRight ? 6 : 10);
 
   // Oranges Pill (HUGE 34px bold!)
-  const orangeW = state.endless && player.capyShieldReady ? 148 : 126;
+  const orangeW = state.endless && player.capyShieldReady ? (compactRight ? 128 : 148) : (compactRight ? 106 : 126);
   drawIvorySlab(c, nextX, waveY, orangeW, waveH, 20, '#fffdf7', '#f5e4c2', '#5c3b1e', 3);
-  if (drawSpriteContain(c, 'orange', nextX + 10, waveY + 11, 44, 44)) {
-    drawText(c, `×${player.oranges}`, nextX + 86, waveY + 34, 33, player.oranges <= 1 ? '#c73a2b' : PALETTE.ink, 'center', 900);
+  if (drawSpriteContain(c, 'orange', nextX + 8, waveY + 12, 42, 42)) {
+    drawText(c, `×${player.oranges}`, nextX + (compactRight ? 72 : 86), waveY + 34, compactRight ? 29 : 33, player.oranges <= 1 ? '#c73a2b' : PALETTE.ink, 'center', 900);
     if (state.endless && player.capyShieldReady) {
-      drawSpriteContain(c, 'ui_rank_protect_shield', nextX + orangeW - 30, waveY + 18, 26, 26);
+      drawSpriteContain(c, 'ui_rank_protect_shield', nextX + orangeW - 28, waveY + 18, 24, 24);
     }
   } else {
-    drawText(c, `🍊×${player.oranges}`, nextX + orangeW / 2, waveY + 34, 28, PALETTE.ink, 'center', 900);
+    drawText(c, `🍊×${player.oranges}`, nextX + orangeW / 2, waveY + 34, 26, PALETTE.ink, 'center', 900);
   }
-  nextX += orangeW + 10;
+  nextX += orangeW + (compactRight ? 6 : 10);
 
-  // Early Wave Horn button OR Upcoming Wave Preview (when space permits between Oranges & top-right controls!)
-  const rightEdge = topRightEdge;
-  const compactRight = rightEdge < 1060;
-  const ctrlGap = compactRight ? 8 : 10;
-  const pauseW = compactRight ? 74 : 80;
-  const speedW = compactRight ? 74 : 82;
-  const shopW = compactRight ? 116 : 132;
-  const guideW = compactRight ? 116 : 132;
+  // Early Wave Horn button OR Upcoming Wave Preview (guaranteed space even on 16:9 WeChat devices with capsule!)
+  const ctrlGap = compactRight ? 6 : 10;
+  const pauseW = compactRight ? 64 : 80;
+  const speedW = compactRight ? 66 : 82;
+  const shopW = compactRight ? 96 : 132;
+  const guideW = compactRight ? 96 : 132;
   const ctrlH = 66;
   const permMaxSpd = maxBattleSpeed(profile);
   const maxSpd = ctx.speed3xTrialActive ? 3 : permMaxSpd;
@@ -153,9 +156,16 @@ export function drawBattleOverlay(
   const guideX = cursorX - ctrlGap - guideW;
   const guideRect: TutorialRect = { x: guideX, y: waveY, w: guideW, h: ctrlH };
 
-  const early = engine.canCallEarlyWave();
-  const midGap = guideX - nextX - 10;
-  if (early.allowed && midGap >= 116) {
+  // Record top HUD & side-control rects so tutorial bubbles never overlap top bar or summon controls
+  avoidRects.push(
+    { x: leftStart, y: waveY, w: Math.max(400, rightEdge - leftStart), h: ctrlH + 6 },
+    { x: 0, y: 78, w: 118, h: 520 },
+    { x: STAGE.summonX - 10, y: STAGE.summonY - 48, w: STAGE.summonW + 20, h: STAGE.summonH + 56 },
+  );
+
+  const early = tutorialStep === 'done' ? engine.canCallEarlyWave() : { allowed: false, bonusFood: 0 };
+  const midGap = guideX - nextX - (compactRight ? 6 : 10);
+  if (early.allowed && midGap >= 100) {
     const hornW = Math.min(144, midGap);
     const pulse = 1 + Math.sin(elapsed * 5) * 0.03;
     c.save();
@@ -165,20 +175,28 @@ export function drawBattleOverlay(
     drawButton(c, hits, 'battle:early-wave', nextX, waveY, hornW, waveH, `+${early.bonusFood}`, {
       ...BTN_STYLES.gold,
       radius: 20,
-      fontSize: 28,
+      fontSize: hornW < 118 ? 23 : 28,
       icon: 'ui_wave_horn',
     });
     c.restore();
-    nextX += hornW + 10;
-  } else if (!early.allowed && midGap >= 118) {
+    nextX += hornW + 8;
+  } else if (early.allowed) {
+    // Fallback below Wave pill when ultra-narrow capsule crowds top bar (left of board, never overlaps row 0)
+    drawButton(c, hits, 'battle:early-wave', 6, 80, 108, 44, `+${early.bonusFood}`, {
+      ...BTN_STYLES.gold,
+      radius: 16,
+      fontSize: 20,
+      icon: 'ui_wave_horn',
+    });
+  } else if (!early.allowed && midGap >= 102) {
     const preview = engine.getUpcomingWavePreview();
     if (preview) {
       const pw = Math.min(126, midGap);
       drawIvorySlab(c, nextX, waveY, pw, waveH, 20, '#fffdf7', '#f5e4c2', '#5c3b1e', 2.8);
       const previewIcon = preview.bosses[0] ?? preview.minion;
-      drawText(c, preview.bosses.length > 0 ? (zh ? '首领' : 'Boss') : (zh ? '来袭' : 'Next'), nextX + 38, waveY + 34, 21, preview.bosses.length > 0 ? '#b6392c' : PALETTE.inkSoft, 'center', 900);
-      drawSpriteContain(c, previewIcon, nextX + pw - 52, waveY + 8, 48, 48);
-      nextX += pw + 10;
+      drawText(c, preview.bosses.length > 0 ? (zh ? '首领' : 'Boss') : (zh ? '来袭' : 'Next'), nextX + Math.round(pw * 0.3), waveY + 34, pw < 116 ? 18 : 21, preview.bosses.length > 0 ? '#b6392c' : PALETTE.inkSoft, 'center', 900);
+      drawSpriteContain(c, previewIcon, nextX + pw - 50, waveY + 9, 46, 46);
+      nextX += pw + 8;
     }
   }
 
@@ -186,14 +204,14 @@ export function drawBattleOverlay(
   drawButton(c, hits, 'battle:guide', guideX, waveY, guideW, ctrlH, zh ? '图鉴' : 'Guide', {
     ...BTN_STYLES.cream,
     radius: 18,
-    fontSize: 25,
+    fontSize: compactRight ? 21 : 25,
     icon: 'ui_compendium_book',
   });
   if (showShop) {
     drawButton(c, hits, 'battle:shop', shopX, waveY, shopW, ctrlH, zh ? '商店' : 'Shop', {
       ...BTN_STYLES.cream,
       radius: 18,
-      fontSize: 25,
+      fontSize: compactRight ? 21 : 25,
       icon: isFeatureUnlocked(profile, 'market') ? 'ui_shop_bag' : 'weapon_m10_bamboo_staff',
     });
   }
@@ -201,29 +219,30 @@ export function drawBattleOverlay(
     drawButton(c, hits, 'battle:speed', speedX, waveY, speedW, ctrlH, maxSpd <= 1 ? '1×🔒' : `${speed}×`, {
       ...(speed > 1 ? BTN_STYLES.gold : BTN_STYLES.cream),
       radius: 18,
-      fontSize: maxSpd <= 1 ? 20 : 28,
+      fontSize: maxSpd <= 1 ? (compactRight ? 18 : 20) : (compactRight ? 24 : 28),
     });
+    if (ctx.highlightSpeed) {
+      drawGuideRipple(c, speedX, waveY, speedW, ctrlH, 18, elapsed, { maxExpand: 16, waves: 3, showBullseye: true });
+    }
   }
   const canOffer3xTrial = permMaxSpd < 3
     && !ctx.speed3xTrialActive
     && Boolean(ctx.adSpeed3xAvailable)
     && tutorialStep === 'done'
     && getAdRemainingToday(profile, 'speed3x_trial', localDay()) > 0;
-  if (canOffer3xTrial) {
-    const trialW = 132;
-    const trialH = 38;
-    const trialX = Math.min(pauseX + pauseW - trialW, Math.max(guideX, speedX - 18));
-    drawButton(c, hits, 'battle:speed3x-trial', trialX, waveY + ctrlH + 6, trialW, trialH, zh ? '🎬 3×试用' : '🎬 3× Trial', {
-      ...BTN_STYLES.gold,
-      radius: 14,
-      fontSize: 18,
-    });
-  }
   drawButton(c, hits, 'battle:pause', pauseX, waveY, pauseW, ctrlH, '⏸', {
     ...BTN_STYLES.cream,
     radius: 18,
-    fontSize: 28,
+    fontSize: compactRight ? 24 : 28,
   });
+
+  // Compact Non-Blocking Live Boss HP & Skill Cooldown Pill (centered neatly at top of stage, never blocks board taps!)
+  if (tutorialStep === 'done') {
+    const liveBoss = state.enemies.find(e => e.side === 'player' && e.boss && e.hp > 0);
+    if (liveBoss) {
+      drawBossBanner(c, liveBoss, elapsed, zh);
+    }
+  }
 
   // ── 2. LEFT VERTICAL MEDALLION RAIL (matches 10×4 wide board!) ───────────
   drawLeftToolRail(c, hits, state, profile, preparation, activePropId, highlightPropId, elapsed);
@@ -232,7 +251,7 @@ export function drawBattleOverlay(
   drawRightAuraRail(c, hits, state, profile, preparation, expandedPassiveId, vp);
 
   // ── 4. BOTTOM SUMMON BELL & GOLDEN HERO MERGE CALLOUT (clean open right grass!) ─
-  drawBottomControls(c, hits, engine, activePropId, shovelSelected, elapsed);
+  drawBottomControls(c, hits, engine, activePropId, shovelSelected, elapsed, tutorialStep, canOffer3xTrial);
 
   // ── 5. MATCH-1 7-STEP GUIDED TUTORIAL OVERLAY (Expanding Ripple Beacons!) ─
   if (tutorialStep !== 'done') {
@@ -370,10 +389,15 @@ function drawRightAuraRail(
   const showPrepPassives = preparation && isFeatureUnlocked(profile, 'market');
   if (!activeBroth && passives.length === 0 && !showPrepPassives) return;
 
-  // Sit cleanly in the right garden bleed on wide phones (zero board overlap!), or compact right edge on 16:9
-  const tileW = 76;
-  const tileH = 70;
-  const rx = vp.visible.right > 1350 ? 1268 : Math.min(1200, STAGE.boardX + STAGE.cols * STAGE.cell - tileW - 4);
+  // Strictly outside board column 9 (x=1128..1240) & inside safe area on every screen ratio:
+  // Wide phones (>1320): full 72px rail in right garden bleed; 16:9 / 4:3 (<=1320): slim 38px edge strip at x=1241..1279!
+  const boardRight = STAGE.boardX + STAGE.cols * STAGE.cell; // 1240
+  const wideRail = vp.visible.right > 1320;
+  const tileW = wideRail ? 72 : 38;
+  const tileH = wideRail ? 68 : 44;
+  const rx = wideRail
+    ? Math.max(boardRight + 4, Math.min(vp.safeStage.right - tileW - 4, 1254))
+    : boardRight + 1;
   let y = 92;
   const zh = getLanguage() === 'zh-CN';
 
@@ -382,40 +406,58 @@ function drawRightAuraRail(
     const id = 'broth';
     const expanded = expandedPassiveId === id;
     hits.add({ id: `battle:passive:${id}`, x: rx, y, w: tileW, h: tileH });
-    drawIvorySlab(c, rx, y, tileW, tileH, 16, expanded ? '#fff2b2' : '#fffdf6', expanded ? '#f7d56a' : '#f5e4c2', '#5c3b1e', 2.6);
-    round(c, rx + 12, y + 4, 52, 44, 11, activeBroth.def.bathColor, '#6e4b2b', 1.5);
-    drawSpriteContain(c, activeBroth.def.id, rx + 16, y + 6, 44, 40);
-    round(c, rx + 5, y + tileH - 22, tileW - 10, 20, 10, '#4a2b16', 'transparent', 0);
-    drawText(c, `Lv.${activeBroth.level}`, rx + tileW / 2, y + tileH - 11, 15, '#fffdf5', 'center', 900);
+    drawIvorySlab(c, rx, y, tileW, tileH, wideRail ? 16 : 10, expanded ? '#fff2b2' : '#fffdf6', expanded ? '#f7d56a' : '#f5e4c2', '#5c3b1e', wideRail ? 2.6 : 2);
+    if (wideRail) {
+      round(c, rx + 10, y + 4, 52, 42, 11, activeBroth.def.bathColor, '#6e4b2b', 1.5);
+      drawSpriteContain(c, activeBroth.def.id, rx + 14, y + 6, 44, 38);
+      round(c, rx + 5, y + tileH - 21, tileW - 10, 19, 9, '#4a2b16', 'transparent', 0);
+      drawText(c, `Lv.${activeBroth.level}`, rx + tileW / 2, y + tileH - 11, 14.5, '#fffdf5', 'center', 900);
+    } else {
+      round(c, rx + 3, y + 3, tileW - 6, tileH - 6, 8, activeBroth.def.bathColor, '#6e4b2b', 1.2);
+      drawSpriteContain(c, activeBroth.def.id, rx + 4, y + 5, tileW - 8, tileH - 10);
+    }
 
     if (expanded) {
-      drawRightTooltip(c, rx - 350, y, 336, `${t(`broth.${activeBroth.def.id}`)} Lv.${activeBroth.level}`, t('p14.railLive'));
+      drawRightTooltip(
+        c,
+        rx - 350,
+        y,
+        336,
+        `${t(`broth.${activeBroth.def.id}`)} Lv.${activeBroth.level}`,
+        brothEffectText(activeBroth.def.id, activeBroth.level),
+      );
     }
-    y += tileH + 8;
+    y += tileH + (wideRail ? 8 : 5);
   }
 
   // Passive Aura Header Badge
   if (passives.length > 0 || showPrepPassives) {
-    round(c, rx + 14, y - 2, 48, 36, 18, 'rgba(255,248,232,0.88)', '#6e4926', 1.8);
-    drawSpriteContain(c, 'ui_passive_aura_badge', rx + 21, y, 34, 32);
-    round(c, rx + 8, y + 28, tileW - 16, 22, 11, 'rgba(62,38,18,0.92)', 'transparent', 0);
-    drawText(c, t('p13.passives'), rx + tileW / 2, y + 39, 14.5, '#fffdf5', 'center', 900);
-    y += 56;
+    if (wideRail) {
+      round(c, rx + 12, y - 2, 48, 36, 18, 'rgba(255,248,232,0.88)', '#6e4926', 1.8);
+      drawSpriteContain(c, 'ui_passive_aura_badge', rx + 19, y, 34, 32);
+      round(c, rx + 6, y + 28, tileW - 12, 22, 11, 'rgba(62,38,18,0.92)', 'transparent', 0);
+      drawText(c, t('p13.passives'), rx + tileW / 2, y + 39, 14, '#fffdf5', 'center', 900);
+      y += 56;
+    } else {
+      round(c, rx + 2, y, tileW - 4, 30, 10, 'rgba(255,248,232,0.92)', '#6e4926', 1.6);
+      drawSpriteContain(c, 'ui_passive_aura_badge', rx + 6, y + 2, 26, 26);
+      y += 35;
+    }
   }
 
   // Passive Props (+ dashed `+` slots during Wave-1 prep)
   const slotCount = showPrepPassives ? 6 : passives.length;
-  const pH = slotCount > 4 ? 62 : tileH;
+  const pH = wideRail ? (slotCount > 4 ? 62 : tileH) : 44;
   for (let i = 0; i < slotCount; i++) {
     const propId = passives[i];
     if (!propId) {
       hits.add({ id: 'battle:backpack', x: rx, y, w: tileW, h: pH });
       c.save();
       c.setLineDash([5, 4]);
-      round(c, rx + 5, y, tileW - 10, pH, 14, 'rgba(235,244,218,0.56)', '#4a6b3e', 2);
+      round(c, rx + (wideRail ? 5 : 2), y, tileW - (wideRail ? 10 : 4), pH, wideRail ? 14 : 9, 'rgba(235,244,218,0.68)', '#4a6b3e', 1.8);
       c.restore();
-      drawText(c, '+', rx + tileW / 2, y + pH / 2, 28, '#3a5730', 'center', 900);
-      y += pH + 6;
+      drawText(c, '+', rx + tileW / 2, y + pH / 2, wideRail ? 28 : 22, '#3a5730', 'center', 900);
+      y += pH + (wideRail ? 6 : 4);
       continue;
     }
 
@@ -423,18 +465,57 @@ function drawRightAuraRail(
     const lv = loadout.ownedProps[propId] ?? 1;
     const expanded = expandedPassiveId === propId;
     hits.add({ id: `battle:passive:${propId}`, x: rx, y, w: tileW, h: pH });
-    drawIvorySlab(c, rx, y, tileW, pH, 15, expanded ? '#fff2b2' : '#fffdf6', expanded ? '#f7d56a' : '#f5e4c2', '#5c3b1e', 2.4);
-    if (!drawSpriteContain(c, `prop_${propId}`, rx + 14, y + 4, 48, pH - 24)) {
-      drawText(c, def.icon, rx + tileW / 2, y + pH / 2 - 6, 28, PALETTE.ink, 'center', 700);
+    drawIvorySlab(c, rx, y, tileW, pH, wideRail ? 15 : 10, expanded ? '#fff2b2' : '#fffdf6', expanded ? '#f7d56a' : '#f5e4c2', '#5c3b1e', wideRail ? 2.4 : 1.8);
+    if (wideRail) {
+      if (!drawSpriteContain(c, `prop_${propId}`, rx + 12, y + 4, 48, pH - 24)) {
+        drawText(c, def.icon, rx + tileW / 2, y + pH / 2 - 6, 28, PALETTE.ink, 'center', 700);
+      }
+      round(c, rx + 5, y + pH - 21, tileW - 10, 19, 9, '#4a2b16', 'transparent', 0);
+      drawText(c, `Lv.${lv}`, rx + tileW / 2, y + pH - 11, 14.5, '#fffdf5', 'center', 900);
+    } else {
+      if (!drawSpriteContain(c, `prop_${propId}`, rx + 4, y + 4, tileW - 8, pH - 8)) {
+        drawText(c, def.icon, rx + tileW / 2, y + pH / 2, 20, PALETTE.ink, 'center', 700);
+      }
     }
-    round(c, rx + 5, y + pH - 21, tileW - 10, 19, 9, '#4a2b16', 'transparent', 0);
-    drawText(c, `Lv.${lv}`, rx + tileW / 2, y + pH - 11, 14.5, '#fffdf5', 'center', 900);
 
     if (expanded) {
       drawRightTooltip(c, rx - 350, Math.min(520, y), 336, `${zh ? def.name['zh-CN'] : def.name.en} Lv.${lv}`, zh ? def.description['zh-CN'] : def.description.en);
     }
-    y += pH + 6;
+    y += pH + (wideRail ? 6 : 4);
   }
+}
+
+function drawBossBanner(
+  c: CanvasRenderingContext2D,
+  boss: BattleState['enemies'][number],
+  elapsed: number,
+  zh: boolean,
+): void {
+  const bw = 396, bh = 32;
+  const bx = Math.round(640 - bw / 2);
+  const by = 76;
+  const ratio = Math.max(0, Math.min(1, boss.hp / Math.max(1, boss.maxHp)));
+  const soon = boss.abilityCooldown <= 2.2;
+  const border = soon && Math.sin(elapsed * 14) > 0 ? '#ff6b4a' : '#7a3022';
+
+  c.save();
+  round(c, bx, by, bw, bh, 16, 'rgba(66, 28, 18, 0.88)', border, 2.2);
+  drawSpriteContain(c, boss.kind, bx + 6, by + 2, 28, 28);
+  const name = t(`boss.${boss.kind}`);
+  drawText(c, name.length > 8 ? `${name.slice(0, 7)}…` : name, bx + 40, by + 16, 15.5, '#ffe8b8', 'left', 900);
+
+  // HP Bar
+  const barX = bx + 154, barW = 152, barY = by + 9, barH = 14;
+  round(c, barX, barY, barW, barH, 7, 'rgba(255,244,224,0.22)', '#4a1b10', 1.4);
+  if (ratio > 0) round(c, barX + 1.5, barY + 1.5, Math.max(6, (barW - 3) * ratio), barH - 3, 5.5, '#ef5d48', 'transparent', 0);
+  drawText(c, formatCompactNumber(Math.ceil(boss.hp)), barX + barW / 2, barY + barH / 2 + 0.5, 11.5, '#fffdf7', 'center', 900);
+
+  // Skill Cooldown tag
+  const cdText = soon
+    ? (zh ? '⚡技能将至' : '⚡SOON!')
+    : `${Math.max(1, Math.ceil(boss.abilityCooldown))}s`;
+  drawText(c, cdText, bx + bw - 12, by + 16, 14, soon ? '#ffd95e' : '#f2d9b8', 'right', 900);
+  c.restore();
 }
 
 function drawRightTooltip(c: CanvasRenderingContext2D, x: number, y: number, w: number, title: string, body: string): void {
@@ -450,6 +531,8 @@ function drawBottomControls(
   activePropId: string | undefined,
   shovelSelected: boolean,
   elapsed: number,
+  tutorialStep: TutorialStep,
+  canOffer3xTrial: boolean,
 ): void {
   const state = engine.state;
   const player = state.sides.player;
@@ -470,8 +553,10 @@ function drawBottomControls(
   }
 
   // GIANT Warm Gold Summon Bell Button (`46px` bold fish cost!)
+  // Lock during Tutorial Steps 2–6 so players don't accidentally wipe their teaching pack!
+  const summonLockedByTutorial = tutorialStep !== 'done' && tutorialStep !== 1;
   const cost = getSummonCost(player.summons);
-  const canAfford = player.food >= cost && state.phase === 'playing';
+  const canAfford = !summonLockedByTutorial && player.food >= cost && state.phase === 'playing';
   const pressed = canAfford && hits.isPressed('battle:summon');
   const dy = pressed ? 3 : 0;
   const sx = STAGE.summonX, sy = STAGE.summonY, sw = STAGE.summonW, sh = STAGE.summonH;
@@ -489,15 +574,21 @@ function drawBottomControls(
   drawSpriteContain(c, 'ui_fish_food', sx + 144, sy + dy + Math.round((sh - 50) / 2), 50, 50, canAfford ? 1 : 0.45);
   drawText(c, String(cost), sx + 206 + (sw - 240) / 2, sy + dy + sh / 2 + 2, 48, canAfford ? '#3f220d' : '#736757', 'center', 900);
 
-  // Clean targeting Cancel pill ONLY when player actively selected a Prop or Shovel
+  // Clean targeting Cancel pill ONLY when player actively selected a Prop or Shovel, otherwise optional 3× Trial pill cleanly clear of board!
   if (activePropId || shovelSelected) {
     const label = activePropId
-      ? (zh ? `取消「${PROPS[activePropId]?.name['zh-CN']}」` : `Cancel ${PROPS[activePropId]?.name.en}`)
+      ? (zh ? '取消施放' : 'Cancel')
       : (zh ? '取消开垦' : 'Cancel Dig');
     drawButton(c, hits, 'battle:cancel-mode', sx + sw + 12, sy + 20, 134, 76, label, {
       ...BTN_STYLES.coral,
       radius: 20,
-      fontSize: 19,
+      fontSize: 20,
+    });
+  } else if (canOffer3xTrial) {
+    drawButton(c, hits, 'battle:speed3x-trial', sx + sw + 12, sy + 32, 134, 52, zh ? '🎬 3×试用' : '🎬 3× Trial', {
+      ...BTN_STYLES.gold,
+      radius: 18,
+      fontSize: 18,
     });
   }
 }
@@ -611,9 +702,9 @@ function drawTutorialOverlay(
     ? shovelSelected
     : rectContainsUnit(targets.source, selectedUnit);
 
-  // Expanding ripple beacons: on 2-step tap guides, spotlight Source first, then shift primary ripple to Target once picked!
+  // Expanding ripple beacons: spotlight Source first, then shift primary ripple cleanly to Target once picked!
   if (targets.source) {
-    drawTutorialRipple(c, targets.source, elapsed, step === 4 ? true : !sourceActive, false);
+    drawTutorialRipple(c, targets.source, elapsed, !sourceActive, false);
   }
   if (targets.target) {
     const targetPrimary = !targets.source || sourceActive;
@@ -731,7 +822,7 @@ function drawTutorialOverlay(
   }
 
   if (acknowledge) {
-    drawButton(c, hits, 'battle:tutorial-ack', b.x + b.w / 2 - 120, b.y + b.h - 56, 240, 46, t('p1.tutorialAck'), {
+    drawButton(c, hits, 'battle:tutorial-ack', b.x + b.w / 2 - 120, b.y + b.h - 56, 240, 46, t(step === 7 ? 'p1.tutorialAck' : 'p1.tutorialNext'), {
       ...BTN_STYLES.teal,
       radius: 16,
       fontSize: 21,

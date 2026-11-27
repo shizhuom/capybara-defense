@@ -25,7 +25,7 @@ describe('M3 complete boss roster and real mechanisms',()=>{
   for(const [id,hp,armor,interval] of bosses)it(`${id}: actual spawn stats, interval and EMP interception`,()=>{
     const e=game(true),m=boss(e,id);expect(m.hp).toBe(hp);expect(m.armor).toBe(armor);expect(m.abilityCooldown).toBe(interval);
     const u=put(e,'hamster');vi.spyOn(Random.prototype,'next').mockReturnValue(.1);activate(e,m);
-    expect(m.hp).toBeCloseTo(hp*.92);expect(e.state.units).toContain(u);expect(u.statuses).toEqual({});
+    expect(m.hp).toBeCloseTo(hp*.9);expect(e.state.units).toContain(u);expect(u.statuses).toEqual({});
     expect(e.state.enemies).toHaveLength(1);expect(e.state.events.filter(event=>event.type==='boss_skill')).toHaveLength(0);
   });
   it('charms only the lowest-level eligible basic pet; heroes, components and level 2 bees survive',()=>{

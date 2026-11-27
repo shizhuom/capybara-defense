@@ -73,13 +73,21 @@ describe('M3 stars and permanent maps', () => {
     const m=await progression(); const p=m.applyBattleProgress({...createProfile(),stars,highestStars:stars,winStreak:5,bestWinStreak:5},false);
     expect(p).toMatchObject({stars:want,highestStars:stars,winStreak:0,bestWinStreak:5,coins:0,wins:0,matches:0});
   });
-  it('awards +1, +1, then +2 stars from the third win and retains best streak after a loss', async()=>{
+  it('awards +2★ on 3+ remaining oranges and +1★ on 1–2 oranges without win-streak doubling, while still tracking best streak', async()=>{
     const m=await progression(); let p=createProfile();
-    for (const stars of [1,2,4,6,8]) { p=m.applyBattleProgress(p,true); expect(p.stars).toBe(stars); }
-    expect(p).toMatchObject({winStreak:5,bestWinStreak:5,highestStars:8});
+    // Even across a 5-win streak, finishing with <3 oranges awards strictly +1★ each win (no streak bonus)
+    for (const [oranges, expectedStars] of [[2,1],[1,2],[2,3],[1,4],[2,5]] as const) {
+      p=m.applyBattleProgress(p,true,[],oranges);
+      expect(p.stars).toBe(expectedStars);
+    }
+    expect(p).toMatchObject({winStreak:5,bestWinStreak:5,highestStars:5});
     expect(p.unlockedAvatars).toEqual(expect.arrayContaining(['doge_agent','goose_bully']));
-    p=m.applyBattleProgress(p,false); p=m.applyBattleProgress(p,true);
-    expect(p).toMatchObject({winStreak:1,bestWinStreak:5,stars:9});
+    // Winning with 3+ oranges awards +2★ immediately even right after a loss (winStreak=1)
+    p=m.applyBattleProgress(p,false);
+    p=m.applyBattleProgress(p,true,[],3);
+    expect(p).toMatchObject({winStreak:1,bestWinStreak:5,stars:7,highestStars:7});
+    p=m.applyBattleProgress(p,true,[],5);
+    expect(p).toMatchObject({winStreak:2,bestWinStreak:5,stars:9,highestStars:9});
   });
   it('unlocks four maps at rank 0/10/20/30 and preserves manual choice after demotion', async()=>{
     const m=await progression(); let p=createProfile();
@@ -150,9 +158,9 @@ describe('M3 avatars and local leaderboard',()=>{
   });
   it('evaluates prop purchases, lottery payouts and fragment unlock achievements immediately',()=>{
     const five={washer:1,clay:1,milk_bottle:1,whistle:1,expired_can:1};
-    const p={...createProfile(),coins:1000,ownedProps:five,shop:{day:'2026-11-13',offers:['catnip']}};
+    const p={...createProfile(),coins:1000,ownedProps:five,propBlueprints:{catnip:9},shop:{day:'2026-11-13',offers:['catnip']}};
     expect(buyProp(p,'catnip').profile.unlockedAvatars).toContain('market_coon');
-    const prizes=createLotteryPrizes(p,()=>0);prizes[0]={type:'prop',id:'catnip',amount:1};
+    const prizes=createLotteryPrizes(p,()=>0);prizes[0]={type:'prop',id:'catnip',amount:2};
     expect(spinLottery(p,prizes,()=>0).profile.unlockedAvatars).toContain('market_coon');
     expect(grantWeaponFragments(createProfile(),Array(16).fill('m09_cat_blade')).profile.unlockedAvatars).toContain('bamboo_master');
     const eleven={...createProfile(),unlockedWeapons:Object.keys(WEAPONS).slice(0,11)};

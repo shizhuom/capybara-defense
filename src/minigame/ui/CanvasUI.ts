@@ -41,10 +41,49 @@ export interface UiHitBox {
 
 export class UiHitManager {
   private boxes: UiHitBox[] = [];
+  private clipStack: Array<{ x: number; y: number; w: number; h: number }> = [];
   activeId: string | null = null;
+  /** Rightmost safe X for top-right modal close buttons (keeps clear of WeChat native capsule on 16:9 devices). */
+  modalRightEdge = 1118;
 
-  clear(): void { this.boxes = []; }
-  add(box: UiHitBox): void { this.boxes.push(box); }
+  clear(): void {
+    this.boxes = [];
+    this.clipStack = [];
+  }
+
+  pushClip(x: number, y: number, w: number, h: number): void {
+    const prev = this.clipStack[this.clipStack.length - 1];
+    if (!prev) {
+      this.clipStack.push({ x, y, w, h });
+      return;
+    }
+    const nx = Math.max(prev.x, x);
+    const ny = Math.max(prev.y, y);
+    const nr = Math.min(prev.x + prev.w, x + w);
+    const nb = Math.min(prev.y + prev.h, y + h);
+    this.clipStack.push({ x: nx, y: ny, w: Math.max(0, nr - nx), h: Math.max(0, nb - ny) });
+  }
+
+  popClip(): void {
+    this.clipStack.pop();
+  }
+
+  add(box: UiHitBox): void {
+    const clip = this.clipStack[this.clipStack.length - 1];
+    if (!clip) {
+      this.boxes.push(box);
+      return;
+    }
+    const x = Math.max(box.x, clip.x);
+    const y = Math.max(box.y, clip.y);
+    const r = Math.min(box.x + box.w, clip.x + clip.w);
+    const b = Math.min(box.y + box.h, clip.y + clip.h);
+    const w = r - x;
+    const h = b - y;
+    if (w <= 0 || h <= 0) return;
+    this.boxes.push({ ...box, x, y, w, h });
+  }
+
   findById(id: string): UiHitBox | undefined { return this.boxes.find(b => b.id === id); }
 
   hit(x: number, y: number): UiHitBox | undefined {
@@ -131,7 +170,7 @@ export function drawText(
   c.font = `${weight} ${size}px ${UI_FONT}`;
   c.textAlign = align;
   c.textBaseline = 'middle';
-  if (stroke) {
+  if (stroke && strokeWidth > 0) {
     c.lineJoin = 'round';
     c.lineWidth = strokeWidth;
     c.strokeStyle = stroke;
@@ -194,6 +233,51 @@ export function drawWrappedText(
     c.fillText(clipped[i], drawX, y + i * lineHeight);
   }
   return clipped.length * lineHeight;
+}
+
+/** Shrinks font size downward from `maxSize` to `minSize` until `text` fits inside `maxWidth`. */
+export function fitFontSize(
+  c: CanvasRenderingContext2D,
+  text: string,
+  maxWidth: number,
+  maxSize: number,
+  minSize: number,
+  weight: number | string = 800,
+): number {
+  if (!text || maxWidth <= 0) return minSize;
+  for (let size = maxSize; size > minSize; size--) {
+    c.font = `${weight} ${size}px ${UI_FONT}`;
+    if (c.measureText(text).width <= maxWidth) return size;
+  }
+  return minSize;
+}
+
+/** Truncates `text` with an ellipsis so its measured width does not exceed `maxWidth`. */
+export function truncateToWidth(
+  c: CanvasRenderingContext2D,
+  text: string,
+  maxWidth: number,
+  size: number,
+  weight: number | string = 800,
+): string {
+  if (!text || maxWidth <= 0) return '';
+  c.font = `${weight} ${size}px ${UI_FONT}`;
+  if (c.measureText(text).width <= maxWidth) return text;
+  const chars = Array.from(text);
+  let lo = 1;
+  let hi = chars.length;
+  let best = '…';
+  while (lo <= hi) {
+    const mid = (lo + hi) >> 1;
+    const candidate = `${chars.slice(0, mid).join('')}…`;
+    if (c.measureText(candidate).width <= maxWidth) {
+      best = candidate;
+      lo = mid + 1;
+    } else {
+      hi = mid - 1;
+    }
+  }
+  return best;
 }
 
 /** Draws a sprite scaled to fit cleanly inside a box while preserving aspect ratio. */
@@ -931,7 +1015,7 @@ export interface LedgerShellOptions {
   closeId?: string;
   /** Optional hit target on the Matcha Signboard title (used for hidden 5-tap Dev Mode in Settings). */
   titleHitId?: string;
-  /** Optional in-battle switch link beside the header badge (`去黑市 ›` / `去神兵 ›`). */
+  /** Optional in-battle switch link beside the header badge (`去超市 ›` / `去神兵 ›`). */
   switchLink?: { id: string; label: string };
   /** Optional P19 in-dialog coaching strip rendered right inside the top of the wooden board. */
   guideStep?: DialogGuideStep | null;
@@ -960,14 +1044,16 @@ export function drawLedgerShell(
 ): { x: number; y: number; w: number; h: number } {
   const { x: lx, y: ly, w: lw, h: lh } = LEDGER;
 
-  // 1. Matcha-Bamboo Signboard straddling top center
+  // 1. Matcha-Bamboo Signboard straddling top center (guard header clicks from accidentally triggering modal:backdrop)
+  hits.add({ id: 'modal:card', x: 640 - 200, y: 6, w: 400, h: 114 });
   drawMatchaSignboard(c, 640, 8, opts.title, undefined, 340);
   if (opts.titleHitId) {
     hits.add({ id: opts.titleHitId, x: 640 - 190, y: 6, w: 380, h: 72 });
   }
 
-  // 2. Plump Yuzu-Gold Close Button perched strictly LEFT of WeChat [🎮][···|◉] (x=1084 -> 100% clear on all iPhones!)
-  drawYuzuCloseButton(c, hits, opts.closeId ?? 'modal:close', 1084, 44, 30);
+  // 2. Plump Yuzu-Gold Close Button dynamically clamped LEFT of WeChat [🎮][···|◉] on every aspect ratio (16:9 & wide!)
+  const closeCx = Math.max(878, Math.min(1084, hits.modalRightEdge - 34));
+  drawYuzuCloseButton(c, hits, opts.closeId ?? 'modal:close', closeCx, 44, 30);
 
   // 3. Enlarged Cream Pill Header Badge directly below signboard (crisp 23px bold for `已解锁 36/36`, `★ 180`, etc.!)
   if (opts.badgeSegments && opts.badgeSegments.length > 0) {

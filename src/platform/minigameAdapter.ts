@@ -325,12 +325,14 @@ export function createMiniGameAdapter(api: MiniGameGlobalApi, kind: Exclude<Plat
       }
     } catch { /* optional on older runtimes */ }
     const vp = computeViewport(w, h, dpr, safe, true, menuBtn);
-    const sig = `${w}x${h}@${dpr}|${Math.round(vp.safeStage.left)}..${Math.round(vp.safeStage.right)}|cap=${vp.capsuleStageLeft !== undefined ? Math.round(vp.capsuleStageLeft) : 'none'}`;
-    if (sig !== lastLoggedVpSig) {
-      lastLoggedVpSig = sig;
-      try {
-        console.log('[CapyVP r21-capy-shield]', sig, 'rawSA=', info.safeArea ?? null, 'rawCap=', rawMenuBtn);
-      } catch { /* ignore */ }
+    if (__ENABLE_DEV_TOOLS__) {
+      const sig = `${w}x${h}@${dpr}|${Math.round(vp.safeStage.left)}..${Math.round(vp.safeStage.right)}|cap=${vp.capsuleStageLeft !== undefined ? Math.round(vp.capsuleStageLeft) : 'none'}`;
+      if (sig !== lastLoggedVpSig) {
+        lastLoggedVpSig = sig;
+        try {
+          console.log('[CapyVP]', sig, 'rawSA=', info.safeArea ?? null, 'rawCap=', rawMenuBtn);
+        } catch { /* ignore */ }
+      }
     }
     return vp;
   }
@@ -360,6 +362,17 @@ export function createMiniGameAdapter(api: MiniGameGlobalApi, kind: Exclude<Plat
   } catch { /* optional */ }
   const storage = createMiniStorage(api);
   const miniFetch = createMiniFetch(api);
+  let cachedOpenDataContext: ReturnType<NonNullable<MiniGameGlobalApi['getOpenDataContext']>> | null = null;
+  const getOdc = () => {
+    if (cachedOpenDataContext) return cachedOpenDataContext;
+    if (kind !== 'wx' || typeof api.getOpenDataContext !== 'function') return null;
+    try {
+      cachedOpenDataContext = api.getOpenDataContext() ?? null;
+      return cachedOpenDataContext;
+    } catch {
+      return null;
+    }
+  };
 
   const toTouchData = (ev: MiniTouchEvent): TouchEventData | null => {
     const touch = ev.changedTouches?.[0] ?? ev.touches?.[0];
@@ -450,13 +463,18 @@ export function createMiniGameAdapter(api: MiniGameGlobalApi, kind: Exclude<Plat
         const onComplete = (res: { value: string }) => finish(typeof res?.value === 'string' ? res.value : null);
         api.onKeyboardConfirm?.(onConfirm);
         api.onKeyboardComplete?.(onComplete);
-        api.showKeyboard!({
-          defaultValue: options.value,
-          maxLength: options.maxLength,
-          multiple: false,
-          confirmHold: false,
-          confirmType: 'done',
-        });
+        try {
+          api.showKeyboard!({
+            defaultValue: options.value,
+            maxLength: options.maxLength,
+            multiple: false,
+            confirmHold: false,
+            confirmType: 'done',
+            fail: () => finish(null),
+          } as Parameters<NonNullable<MiniGameGlobalApi['showKeyboard']>>[0]);
+        } catch {
+          finish(null);
+        }
       });
     },
     showRewardedAd(adUnitId?: string): Promise<RewardedAdOutcome> {
@@ -496,18 +514,12 @@ export function createMiniGameAdapter(api: MiniGameGlobalApi, kind: Exclude<Plat
       } catch { /* ignore in unsupported simulator states */ }
     },
     getFriendLeaderboardCanvas(): HTMLCanvasElement | null {
-      if (kind !== 'wx' || typeof api.getOpenDataContext !== 'function') return null;
-      try {
-        const odc = api.getOpenDataContext();
-        return odc && odc.canvas ? odc.canvas : null;
-      } catch {
-        return null;
-      }
+      const odc = getOdc();
+      return odc && odc.canvas ? odc.canvas : null;
     },
     postFriendLeaderboardMessage(message: Record<string, unknown>): void {
-      if (kind !== 'wx' || typeof api.getOpenDataContext !== 'function') return;
       try {
-        api.getOpenDataContext().postMessage(message);
+        getOdc()?.postMessage(message);
       } catch { /* ignore */ }
     },
     now: () => (typeof performance !== 'undefined' && typeof performance.now === 'function' ? performance.now() : Date.now()),

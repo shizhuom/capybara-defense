@@ -23,7 +23,7 @@ export const p5En:Record<string,string>={
   'p5.tutorial5.body':'Tap Guide at the top right for recipes, damage and attack speed by level. A pet card’s book opens it too. Finish for 20 coins!',
 };
 Object.assign(p5Zh,{
- 'p5.page.compendium':'温泉图鉴百科','p5.page.armory':'神兵锻造坊','p5.page.market':'浣熊黑市 & 扭蛋','p5.page.profile':'守护者名片','p5.page.leaderboard':'温泉风云榜','p5.page.settings':'温泉小设置',
+ 'p5.page.compendium':'温泉图鉴百科','p5.page.armory':'神兵锻造坊','p5.page.market':'浣熊超市 & 扭蛋','p5.page.profile':'守护者名片','p5.page.leaderboard':'温泉风云榜','p5.page.settings':'温泉小设置',
  'p5.subtitle.compendium':'每一位伙伴，都有自己的高光时刻','p5.subtitle.armory':'奇葩神兵，也要配给合适的英雄','p5.subtitle.market':'挑点好东西，带上伙伴去守护','p5.subtitle.profile':'您的温泉守护手账','p5.subtitle.leaderboard':'铲屎官们，今天也要稳稳守住！','p5.subtitle.settings':'调到最舒服的节奏，再慢慢玩',
  'p5.notebookTabs':'手账书签','p5.tickets':'免费扭蛋券','p5.collection':'英雄 {heroes}/12 · 神兵 {weapons}/36','p5.matrixCorner':'🐾 基底 ╲ 穿搭 🎩',
  'p5.collected':'💮 已收录','p5.locked':'❔ 待解锁','p5.threat':'当前怪物强度','p5.threatHP':'HP ×{value}','p5.threatSpeed':'移速 +{value}%','p5.threatCount':'每波 +{value}',

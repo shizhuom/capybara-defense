@@ -357,6 +357,7 @@ export function drawVillageModal(
   c.beginPath();
   c.rect(vx, vy, vw, vh);
   c.clip();
+  hits.pushClip(vx, vy, vw, vh);
 
   const cols = 2, gapX = 16, gapY = 14;
   const cardW = Math.floor((vw - 16 - gapX) / cols);
@@ -427,6 +428,7 @@ export function drawVillageModal(
   });
 
   const contentH = 12 + Math.ceil(FACILITY_IDS.length / cols) * (cardH + gapY);
+  hits.popClip();
   c.restore();
   scroll.setContentBounds(contentH, vh);
   drawScrollbar(c, vx, vy, vw, vh, contentH, scroll);
@@ -470,6 +472,7 @@ export function drawKitchenModal(
     c.beginPath();
     c.rect(vx, vy, vw, vh);
     c.clip();
+    hits.pushClip(vx, vy, vw, vh);
 
     const cols = 3, gapX = 16, gapY = 14;
     const cardW = Math.floor((vw - 16 - gapX * (cols - 1)) / cols);
@@ -570,6 +573,7 @@ export function drawKitchenModal(
     y += cardH + 10;
 
     const contentH = Math.max(vh, y + scroll.offset - vy);
+    hits.popClip();
     c.restore();
     scroll.setContentBounds(contentH, vh);
     drawScrollbar(c, vx, vy, vw, vh, contentH, scroll);
@@ -590,6 +594,7 @@ export function drawKitchenModal(
     c.beginPath();
     c.rect(vx, vy, vw, vh);
     c.clip();
+    hits.pushClip(vx, vy, vw, vh);
 
     const cx = vx + 4, cw = vw - 14;
     let y = vy + 2 - scroll.offset;
@@ -662,6 +667,7 @@ export function drawKitchenModal(
     }
 
     const contentH = Math.max(vh, y + scroll.offset - vy + 10);
+    hits.popClip();
     c.restore();
     scroll.setContentBounds(contentH, vh);
     drawScrollbar(c, vx, vy, vw, vh, contentH, scroll);
@@ -674,6 +680,7 @@ export function drawKitchenModal(
   c.beginPath();
   c.rect(vx, vy, vw, vh);
   c.clip();
+  hits.pushClip(vx, vy, vw, vh);
 
   const rowW = vw - 14;
   let y = vy + 4 - scroll.offset;
@@ -739,9 +746,10 @@ export function drawKitchenModal(
         shouldPulse ? 3.8 : isActive ? 3 : 2.2,
       );
 
-      // Left open-detail tap zone
+      // Open-detail tap zone (full width when missing ingredients so tapping the muted badge opens source hints!)
       if (ry + cardH > vy && ry < vy + vh) {
-        hits.add({ id: `kitchen:dish:${brothId}`, x: rx, y: Math.max(vy, ry), w: cardW - 168, h: Math.min(ry + cardH, vy + vh) - Math.max(vy, ry) });
+        const hasRightActionBtn = lv > 0 || afford;
+        hits.add({ id: `kitchen:dish:${brothId}`, x: rx, y: ry, w: hasRightActionBtn ? cardW - 168 : cardW, h: cardH });
       }
 
       round(c, rx + 16, ry + 18, 98, 98, 18, def.bathColor, isActive ? '#3d8633' : '#7a5230', isActive ? 3 : 2.2);
@@ -800,6 +808,7 @@ export function drawKitchenModal(
   y += Math.ceil(BROTH_IDS.length / cols) * (cardH + gapY);
 
   const contentH = Math.max(vh, y + scroll.offset - vy + 10);
+  hits.popClip();
   c.restore();
   scroll.setContentBounds(contentH, vh);
   drawScrollbar(c, vx, vy, vw, vh, contentH, scroll);

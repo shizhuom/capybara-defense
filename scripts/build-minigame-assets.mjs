@@ -25,11 +25,8 @@ const MAIN_CORE_IDS = new Set([
   'capybara_soak_dizzy', 'capybara_soak_dizzy_2',
   'tub_rim_sunny_backyard', 'tile_open', 'tile_broken',
   'orange', 'shovel', 'sprinkler', 'glue_trap_placed',
-  'rat', 'rat_walk2', 'roach', 'roach_walk2', 'crab', 'crab_walk2',
-  'killer_bee', 'killer_bee_walk2', 'charmed_rat', 'charmed_rat_walk2',
-  'husky_wrecker', 'husky_wrecker_walk2', 'diva_kitty', 'diva_kitty_walk2',
-  'mega_roomba', 'mega_roomba_walk2', 'sad_rain_frog', 'sad_rain_frog_walk2',
-  'king_skunk', 'king_skunk_walk2',
+  'rat', 'roach', 'crab', 'killer_bee', 'charmed_rat',
+  'husky_wrecker', 'diva_kitty', 'mega_roomba', 'sad_rain_frog', 'king_skunk',
   'logo_capy', 'avatar_capybara', 'title_logo_zh', 'title_logo_en', 'ui_btn_start_zh', 'ui_btn_start_en',
   'ui_bell_summon', 'ui_fish_food', 'ui_coin_gold', 'ui_star_rank', 'ui_compendium_book',
   'ui_shop_bag', 'ui_trophy_rank', 'ui_map_sign', 'ui_village_gate', 'ui_kitchen_pot',
@@ -48,7 +45,7 @@ const MAIN_CORE_IDS = new Set([
 
 /** Keep in exact sync with `src/minigame/assetPack.ts` (iOS WeChat supports `.jpg` + `.png`, NOT `.webp`). */
 function classifySprite(id) {
-  if (id === 'menu_banner') return { pkg: 'meta', format: 'jpg', maxDim: 640, quality: 0.78, omit: true };
+  if (id === 'menu_banner' || id.endsWith('_walk2')) return { pkg: 'meta', format: 'jpg', maxDim: 640, quality: 0.78, omit: true };
   if (OPAQUE_MAIN_BGS.has(id)) return { pkg: 'main', format: 'jpg', maxDim: 1512, quality: 0.72 };
   if (OPAQUE_MAP_BGS.has(id)) return { pkg: 'maps', format: 'jpg', maxDim: id === 'bg_onsen_village' ? 1280 : 1512, quality: id === 'bg_onsen_village' ? 0.74 : 0.70 };
   if (id === 'title_logo_zh' || id === 'title_logo_en') return { pkg: 'main', format: 'png', maxDim: 720, quality: 1 };
@@ -257,7 +254,8 @@ function findBrowserExecutable() {
   return undefined;
 }
 
-export async function buildMinigameAssets(outDir) {
+export async function buildMinigameAssets(outDir, opts = {}) {
+  const omitEnglish = Boolean(opts.omitEnglish);
   const manifest = JSON.parse(readFileSync(join(SPRITES_DIR, 'manifest.json'), 'utf8'));
   mkdirSync(CACHE_DIR, { recursive: true });
   mkdirSync(join(outDir, 'assets', 'sprites'), { recursive: true });
@@ -265,6 +263,7 @@ export async function buildMinigameAssets(outDir) {
   const work = [];
   const entries = [];
   for (const id of manifest) {
+    if (omitEnglish && (id === 'title_logo_en' || id === 'ui_btn_start_en')) continue;
     const rule = classifySprite(id);
     if (rule.omit) continue;
     const wideOverride = join(MINIGAME_MAPS_DIR, `${id}.png`);

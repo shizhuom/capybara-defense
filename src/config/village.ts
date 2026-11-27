@@ -28,7 +28,7 @@ export const FACILITY_IDS=['fac_bamboo_pool','fac_fish_stall','fac_yuzu_tree','f
 const cost=(wood:number,essence:number,coins:number):VillageCost=>({wood,essence,coins});
 export const FACILITIES:Record<FacilityId,FacilityDefinition>={
   fac_bamboo_pool:{id:'fac_bamboo_pool',spot:{left:50,top:37},costs:[cost(10,3,0),cost(200,65,1200),cost(420,140,2600)],coinsPerHour:[8,16,28],
-    fragmentEveryHours:[0,12,8],ticketEveryHours:[0,0,24],buffs:{damage:[0,.04,.08],rate:[0,0,.04]}},
+    fragmentEveryHours:[0,12,8],ticketEveryHours:[0,0,12],buffs:{damage:[0,.04,.08],rate:[0,0,.04]}},
   fac_fish_stall:{id:'fac_fish_stall',spot:{left:77,top:36},costs:[cost(70,20,300),cost(220,70,1300),cost(450,150,2800)],coinsPerHour:[6,12,20],
     buffs:{startFood:[2,4,6]}},
   fac_yuzu_tree:{id:'fac_yuzu_tree',spot:{left:24.5,top:40},costs:[cost(100,30,500),cost(250,85,1500),cost(500,170,3200)],coinsPerHour:[5,10,16],
@@ -36,7 +36,7 @@ export const FACILITIES:Record<FacilityId,FacilityDefinition>={
   fac_cat_nap:{id:'fac_cat_nap',spot:{left:26,top:75},costs:[cost(125,40,750),cost(280,95,1700),cost(540,185,3600)],coinsPerHour:[6,12,20],
     residents:[1,2,3],buffs:{rate:[.03,.06,.09]}},
   fac_sakura_pavilion:{id:'fac_sakura_pavilion',spot:{left:71.5,top:70},costs:[cost(155,50,1000),cost(320,110,2000),cost(600,210,4200)],coinsPerHour:[8,16,26],
-    fragmentEveryHours:[12,10,8],ticketEveryHours:[0,0,24],buffs:{bossDamage:[.04,.07,.1],bossFragment:[.15,.25,.35]}},
+    fragmentEveryHours:[12,10,8],ticketEveryHours:[0,0,12],buffs:{bossDamage:[.04,.07,.1],bossFragment:[.15,.25,.35]}},
 };
 export const VILLAGE_RESOURCE_IDS=['res_onsen_wood','res_yuzu_essence'] as const satisfies readonly VillageResourceId[];
 export const VILLAGE_OFFLINE_CAP_MS=12*3600_000;

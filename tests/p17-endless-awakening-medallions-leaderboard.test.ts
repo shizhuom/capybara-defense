@@ -102,14 +102,14 @@ describe('P17 assets: 288 sprites with twenty exact RGBA P17 stickers',()=>{
 });
 
 describe('P17 endless curve ×1.25 and the Wave 70-80 sweet spot',()=>{
-  it.each([[11,11.25],[20,83.82],[45,22186],[70,5872774],[80,54694467]])('wave %i scales HP to %f',(wave,expected)=>{
+  it.each([[11,20.25],[20,150.87],[45,39936],[70,10570993],[80,98450046]])('wave %i scales HP to %f',(wave,expected)=>{
     const config=getWaveConfig(wave),k=wave-10;
-    expect(config.hpScale).toBe(WAVES[9].hpScale*Math.pow(ENDLESS_HP_GROWTH,k));
+    expect(config.hpScale).toBe(16.2*Math.pow(ENDLESS_HP_GROWTH,k));
     expect(config.hpScale/expected).toBeCloseTo(1,3);
-    expect(config.speedScale).toBeCloseTo(1+Math.min(.6,.012*k),10);expect(config.armorBonus).toBeCloseTo(Math.min(.45,.009*k),10);
+    expect(config.speedScale).toBeCloseTo(1.14+Math.min(.6,.012*k),10);expect(config.armorBonus).toBeCloseTo(Math.min(.45,.009*k),10);
   });
   it('caps speed and armor at Wave 60 and keeps the first ten waves untouched',()=>{
-    for(const wave of [60,95]){expect(getWaveConfig(wave).speedScale).toBeCloseTo(1.6,12);expect(getWaveConfig(wave).armorBonus).toBeCloseTo(.45,12);}
+    for(const wave of [60,95]){expect(getWaveConfig(wave).speedScale).toBeCloseTo(1.74,12);expect(getWaveConfig(wave).armorBonus).toBeCloseTo(.45,12);}
     expect(getWaveConfig(95).armorBonus).toBe(.45);
     for(let w=1;w<=10;w++)expect(getWaveConfig(w)).toEqual({...WAVES[w-1],speedScale:1,armorBonus:0});
     expect(getWaveConfig(100_000).hpScale).toBe(Number.MAX_SAFE_INTEGER);

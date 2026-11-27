@@ -136,7 +136,14 @@ export function drawM2Event(c:C,event:VisualEvent):boolean {
   } else if(event.type==='giant_cat') {
     const destination=pixel(points[points.length-1]);c.translate(destination.x,destination.y);giantCat(c,progress);
   } else {
-    const destination=pixel(points[points.length-1]);c.translate(destination.x,destination.y);weapon(c,event.effect||'',progress);
+    if(event.points&&event.points.length>=2){
+      c.translate(current.x,current.y);
+      c.rotate(current.angle);
+    }else {
+      const destination=pixel(points[points.length-1]);
+      c.translate(destination.x,destination.y);
+    }
+    weapon(c,event.effect||'',progress);
   }
   c.restore();return true;
 }

@@ -34,16 +34,16 @@ const phrases: Record<string, [string, string]> = {
   'm3.starChange': ['本局星数 {change} · 当前 {stars} 星', 'Stars {change} · Total {stars}'],
   'm3.protected': ['新手段位保护 · 本局不扣星', 'Rookie protection · no stars lost'],
   'm3.floorProtected': ['20 星底线保护', '20-star floor protection'],
-  'm3.streakBonus': ['三连胜奖励 · 额外 +1 星', 'Winning streak · extra +1 star'],
+  'm3.streakBonus': ['完美守橘奖励 · 额外 +1 星', '3+ Oranges · extra +1 star'],
   'm3.promotion': ['晋级！{rank}', 'Promoted! {rank}'],
   'm3.newAvatars': ['新头像解锁', 'New avatars unlocked'],
-  'enemy.killer_bee': ['杀人蜂', 'Killer Bee'], 'enemy.charmed_rat': ['迷糊小耗子', 'Dizzy Mouse'],
+  'enemy.killer_bee': ['大马蜂', 'Killer Bee'], 'enemy.charmed_rat': ['迷糊小耗子', 'Dizzy Mouse'],
   'boss.diva_kitty': ['傲娇波斯猫', 'Prima Donna Kitty'], 'boss.diva_kitty.bubble': ['来做我的小跟班吧～', 'Minions, escort me!'],
   'boss.buff_roo': ['澳洲拳王袋鼠', 'Buff Roo'], 'boss.buff_roo.bubble': ['来一拳醒醒神！', 'Time for a knockout!'],
-  'boss.hornet_queen': ['暴躁大马蜂后', 'Furious Hornet Queen'], 'boss.hornet_queen.bubble': ['小的们，冲呀！', 'Swarm, charge!'],
+  'boss.hornet_queen': ['嗡嗡大蜂后', 'Furious Hornet Queen'], 'boss.hornet_queen.bubble': ['小的们，冲呀！', 'Swarm, charge!'],
   'boss.screaming_marmot': ['尖叫土拨鼠', 'Screaming Marmot'], 'boss.screaming_marmot.bubble': ['啊——！！', 'AAAAAH!!'],
-  'boss.trash_coon': ['死灵垃圾浣熊', 'Trash Necro-Coon'], 'boss.trash_coon.bubble': ['垃圾里也有第二春！', 'Rise from the rubbish!'],
-  'boss.dj_rat_king': ['打鸡血鼠王', 'DJ Rat King'], 'boss.dj_rat_king.bubble': ['全场一起嗨！', 'Everybody, turn it up!'],
+  'boss.trash_coon': ['捣蛋大浣熊', 'Trash Necro-Coon'], 'boss.trash_coon.bubble': ['旧物里也有第二春！', 'Rise from the rubbish!'],
+  'boss.dj_rat_king': ['摇滚DJ鼠王', 'DJ Rat King'], 'boss.dj_rat_king.bubble': ['全场一起嗨！', 'Everybody, turn it up!'],
 };
 
 export const m3Zh: Record<string, string> = Object.fromEntries(Object.entries(phrases).map(([key, pair]) => [key, pair[0]]));

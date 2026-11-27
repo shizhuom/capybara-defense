@@ -67,9 +67,10 @@ export function setRank(profile:Profile,index:number):Profile {
   if(p.selectedMap!=='auto'&&!getUnlockedMaps(p).includes(p.selectedMap)) p={...p,selectedMap:'auto'};
   return p;
 }
-export function applyBattleProgress(profile:Profile,won:boolean,mergedHeroes:string[]=[]):Profile {
+export function applyBattleProgress(profile:Profile,won:boolean,mergedHeroes:string[]=[],remainingOranges?:number):Profile {
   const winStreak=won?profile.winStreak+1:0;
-  const stars=won?profile.stars+(winStreak>=3?2:1):getRank(profile.stars).index<10?profile.stars:Math.max(20,profile.stars-1);
+  const perfectWin=won&&typeof remainingOranges==='number'&&Number.isFinite(remainingOranges)&&remainingOranges>=3;
+  const stars=won?profile.stars+(perfectWin?2:1):getRank(profile.stars).index<10?profile.stars:Math.max(20,profile.stars-1);
   return recordMergedHeroes({...profile,stars,highestStars:Math.max(profile.highestStars,stars),winStreak,bestWinStreak:Math.max(profile.bestWinStreak,winStreak)},mergedHeroes);
 }
 
@@ -78,15 +79,15 @@ const npcRows:Array<[string,string,number,string,number,number]>=[
   ['隔壁二哈主人','The Husky Next Door',6,'hamster',6,12],
   ['瓜子不离手','Seed Snack Captain',12,'hamster',11,19],
   ['早八遛狗人','Morning Dog Walker',18,'doge_agent',16,25],
-  ['猫咖打工喵','Cafe Cat Keeper',24,'cat_swordsman',21,33],
+  ['猫咖值班喵','Cafe Cat Keeper',24,'cat_swordsman',21,33],
   ['温泉泡泡糖','Onsen Bubblegum',32,'sakura_capy',28,42],
-  ['厨房摸鱼王','Kitchen Daydreamer',40,'salted_fish',35,51],
-  ['鹅村扛把子','Village Goose Boss',50,'goose_bully',42,60],
+  ['厨房干饭王','Kitchen Daydreamer',40,'salted_fish',35,51],
+  ['鹅村小队长','Village Goose Captain',50,'goose_bully',42,60],
   ['熊猫不熬夜','Early Bedtime Panda',60,'kungfu_panda',51,70],
   ['篮球练习生','Basketball Trainee',72,'rooster_star',60,81],
   ['皇冠小短腿','Crowned Short Legs',84,'corgi_crown',69,92],
-  ['黑市常客','Market Regular',96,'market_coon',79,103],
-  ['孤寡不孤单','Never Lonely Frog',110,'frog_king',91,116],
+  ['超市常客','Mart Regular',96,'market_coon',79,103],
+  ['呱呱不孤单','Never Lonely Frog',110,'frog_king',91,116],
   ['竹林扫地僧','Bamboo Sweeper',130,'bamboo_master',106,131],
   ['后院退休园长','Retired Garden Warden',150,'capybara',121,148],
   ['情绪稳定祖师爷','Grandmaster of Calm',168,'zen_capy',137,163],
