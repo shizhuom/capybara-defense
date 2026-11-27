@@ -66,6 +66,15 @@ export function createWebPreviewAdapter(options: WebPreviewOptions = {}): Platfo
   syncCanvasSize(cachedViewport);
 
   const audio = new MinigameAudio();
+  const onVisChange = () => {
+    if (document.hidden) {
+      audio.setPaused(true);
+    } else {
+      audio.setPaused(false);
+    }
+  };
+  document.addEventListener('visibilitychange', onVisChange);
+  disposers.push(() => document.removeEventListener('visibilitychange', onVisChange));
   let storage: Storage;
   try { storage = window.localStorage; } catch { storage = memoryStorage(); }
 

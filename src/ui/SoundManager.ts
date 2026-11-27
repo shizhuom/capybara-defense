@@ -81,7 +81,13 @@ export class SoundManager {
   private readonly buffers=new Map<AssetKey,AudioBuffer>();
   private assetsStarted=false;
   private readonly pending=typeof AbortController!=='undefined'?new AbortController():null;
-  private readonly visibility=()=>this.applyVolumes(true);
+  private readonly visibility=()=>{
+    const hidden=typeof document!=='undefined'&&document.hidden;
+    if(!hidden&&this.unlocked&&this.context&&this.context.state!=='running'){
+      try{void this.context.resume().then(()=>{this.applyVolumes(true);this.scheduleMusic();}).catch(()=>{});}catch{/* ignore */}
+    }
+    this.applyVolumes(true);
+  };
   constructor(settings:Partial<GameSettings>={}) {
     this.settings={musicVolume:volume(settings.musicVolume,.5),soundVolume:volume(settings.soundVolume,.75),showDamageNumbers:settings.showDamageNumbers??true};
     if(typeof document!=='undefined')document.addEventListener('visibilitychange',this.visibility);

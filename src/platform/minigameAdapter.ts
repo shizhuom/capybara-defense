@@ -344,20 +344,34 @@ export function createMiniGameAdapter(api: MiniGameGlobalApi, kind: Exclude<Plat
     if (canvas.height !== ph) canvas.height = ph;
   }
 
-  // Allow game sound even when iOS physical silent switch is on, and recover cleanly from system audio interruptions.
-  try {
-    api.setInnerAudioOption?.({ obeyMuteSwitch: false, mixWithOther: true });
-  } catch { /* optional on older runtimes */ }
+  // Allow game sound even when iOS physical silent switch is on, and recover cleanly from system audio interruptions & lifecycle changes.
+  const applyAudioOption = () => {
+    try {
+      api.setInnerAudioOption?.({ obeyMuteSwitch: false, mixWithOther: true });
+    } catch { /* optional on older runtimes */ }
+  };
+  applyAudioOption();
 
   const audio = new MinigameAudio(() => (api.createWebAudioContext?.() as never) ?? null);
   const onAudioIntBegin = () => { audio.setPaused(true); };
-  const onAudioIntEnd = () => { audio.setPaused(false); audio.unlock(); };
+  const onAudioIntEnd = () => { applyAudioOption(); audio.setPaused(false); };
+  const onLifecycleShow = () => {
+    cachedViewport = measure();
+    syncCanvasSize(cachedViewport);
+    applyAudioOption();
+    audio.setPaused(false);
+  };
+  const onLifecycleHide = () => { audio.setPaused(true); };
   try {
     api.onAudioInterruptionBegin?.(onAudioIntBegin);
     api.onAudioInterruptionEnd?.(onAudioIntEnd);
+    api.onShow?.(onLifecycleShow);
+    api.onHide?.(onLifecycleHide);
     disposers.push(() => {
       try { api.offAudioInterruptionBegin?.(onAudioIntBegin); } catch { /* ignore */ }
       try { api.offAudioInterruptionEnd?.(onAudioIntEnd); } catch { /* ignore */ }
+      try { api.offShow?.(onLifecycleShow); } catch { /* ignore */ }
+      try { api.offHide?.(onLifecycleHide); } catch { /* ignore */ }
     });
   } catch { /* optional */ }
   const storage = createMiniStorage(api);
@@ -488,6 +502,9 @@ export function createMiniGameAdapter(api: MiniGameGlobalApi, kind: Exclude<Plat
             settled = true;
             ad.offClose?.(onClose);
             ad.offError?.(onError);
+            // Rewarded video ads take over the OS audio session on iOS/Android; always restore options & resume BGM cleanly.
+            applyAudioOption();
+            audio.setPaused(false);
             resolve(outcome);
           };
           // Strict completion check: ONLY grant reward when WeChat/Bilibili explicitly reports `isEnded === true`.
@@ -496,8 +513,11 @@ export function createMiniGameAdapter(api: MiniGameGlobalApi, kind: Exclude<Plat
           const onError = () => done('unavailable');
           ad.onClose(onClose);
           ad.onError?.(onError);
+          audio.setPaused(true);
           ad.show().catch(() => ad.load().then(() => ad.show()).catch(() => done('unavailable')));
         } catch {
+          applyAudioOption();
+          audio.setPaused(false);
           resolve('unavailable');
         }
       });
@@ -529,8 +549,8 @@ export function createMiniGameAdapter(api: MiniGameGlobalApi, kind: Exclude<Plat
       const handler = () => {
         cachedViewport = measure();
         syncCanvasSize(cachedViewport);
+        applyAudioOption();
         audio.setPaused(false);
-        audio.unlock();
         callback();
       };
       api.onShow?.(handler);

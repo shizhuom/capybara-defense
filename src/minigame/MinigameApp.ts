@@ -297,6 +297,10 @@ export class MinigameApp {
     });
 
     platform.onResize(vp => this.syncViewport(vp));
+    platform.onShow(() => {
+      this.syncViewport(platform.viewport());
+      this.platform.audio.setPaused(false);
+    });
     platform.onHide(() => {
       if (this.screen === 'battle' && this.engine?.state.phase === 'playing') {
         this.engine.pause(true);
@@ -667,6 +671,7 @@ export class MinigameApp {
       }
     } finally {
       this.adInFlight = false;
+      this.platform.audio.setPaused(false);
       if (pausedForAd && this.engine?.state.phase === 'paused' && !this.modal) {
         this.engine.pause(false);
       }
